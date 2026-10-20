@@ -61,7 +61,7 @@ final class Locations
      *
      * @param list<FunctionCall> $calls The calls of functions the server does not find
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @return array{array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>, array<int, true>}
+     * @return array{array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
     public function located(Operation|QueryPreparation $operation, array $calls, array $diagnostics, Session $session, bool $prepared = false): array
     {
@@ -98,7 +98,7 @@ final class Locations
      *
      * @param list<FunctionCall> $calls The calls of functions the server does not find
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @return array{array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>, array<int, true>}
+     * @return array{array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
     public function names(Operation|QueryPreparation $operation, Locator $locator, array $calls, array $diagnostics): array
     {
@@ -130,8 +130,8 @@ final class Locations
     /**
      * Adds the refusals of DEFAULT() of a column without a default in a query, each placed right after the column it reads.
      *
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function defaults(Operation|QueryPreparation $operation, Locator $locator, Session $session, array $located): array
     {
@@ -154,8 +154,8 @@ final class Locations
      * live 8.0, 8.4 and 9.1 servers).
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function wildcards(Locator $locator, array $diagnostics, array $located): array
     {
@@ -178,8 +178,8 @@ final class Locations
      * EXISTS selects nothing and takes it (verified on live 5.6.51 and 8.4.7 servers).
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function stars(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
@@ -217,8 +217,8 @@ final class Locations
      * Places window lookup and unsupported aggregate diagnostics within their query blocks.
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function windows(Locator $locator, array $diagnostics, array $located): array
     {
@@ -231,9 +231,9 @@ final class Locations
      * The server refuses such a call where it resolves it, with ER_WINDOW_INVALID_WINDOW_FUNC_USE
      * (verified on a live 8.4 server).
      *
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
      * @param bool $ungrouped Whether the expression has no query block to supply groups or windows
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function misplaced(Locator $locator, array $located, bool $ungrouped = false): array
     {
@@ -270,8 +270,8 @@ final class Locations
      * operation (verified on a live 8.4 server).
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function sets(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
@@ -298,8 +298,8 @@ final class Locations
      * Adds the problems of IN, ANY and ALL over a subquery of the wrong width, each placed before or after its operand; a problem of the statement answers one predicate only.
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function widths(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
@@ -318,8 +318,8 @@ final class Locations
     /**
      * Answers the located problem the server resolves first, or null when there is none; of two at the same order, the one located first.
      *
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}|null
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}|null
      */
     public static function first(array $located): ?array
     {
@@ -357,13 +357,13 @@ final class Locations
     /**
      * Answers the problem of a located node: the diagnostic a name or an ordinal resolves to, a call of a function the server does not find, or a clock call whose precision is above 6.
      */
-    public function problem(ColumnUse|OutputOrdinal|FunctionCall|ClockCall $node, Operation|QueryPreparation $operation): Diagnostic|FunctionCall|ClockCall|null
+    public function problem(ColumnUse|OutputOrdinal|FunctionCall|ClockCall $node, Operation|QueryPreparation $operation): Diagnostic|FunctionCall|null
     {
         if ($node instanceof FunctionCall) {
             return self::undeclared($node, $operation) ? $node : null;
         }
         if ($node instanceof ClockCall) {
-            return $node->decimals() > 6 ? $node : null;
+            return null;
         }
         $fact = $operation->facts->scalar($node);
         if ($fact->resolution instanceof Diagnostic) {

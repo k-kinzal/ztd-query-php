@@ -38,16 +38,23 @@ final class UpdateOperands
     /**
      * Prepares the complete write after its relation dependencies have opened.
      *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
+     * @return bool Whether MySQL 5.6 preparation defers the assignment values
      * @throws SqlError When a reached clause, destination or value cannot prepare
      */
-    public function prepare(DeferredUpdate $write, Facts $facts, Session $session): void
+    public function prepare(DeferredUpdate $write, Facts $facts, Session $session, bool $prepared = false, array $parameters = []): bool
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure();
         if ($rules->target($write->tables, $write->assignments, $write->with) !== null) {
-            return;
+            return false;
         }
         $multiple = count((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($write->tables)) > 1;
         $legacy = $session->settings()->legacy();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $connection = new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, program: $session->program, session: WeakReference::create($session));
+        $planner = new Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $inputs = new UpdateInputs();
+        $scope = $inputs->scope($write->tables, $planner);
         if ($legacy && $multiple) {
             $this->destinations($write, $facts, $session);
             $constraint = $write->orderBy !== [] ? WriteRule::OrderedMultipleUpdate : ($write->limit === null ? null : WriteRule::LimitedMultipleUpdate);
@@ -55,21 +62,34 @@ final class UpdateOperands
                 throw (new Errors())->error(new WriteMisuse($constraint), $session);
             }
         }
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-        $connection = new Connection($session->variables, $context, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        if ($prepared && $multiple && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $this->values($write, $planner, $scope);
+        }
         try {
-            $scope = new Scope();
-            $planner->relations->plan(count($write->tables) === 1 ? $write->tables[0] : new \SqlSemantics\Platform\MySql\Statement\Relation\TableList($write->tables), $scope);
+            $inputs->conditions($write->tables, $planner, $scope);
             $this->operand($write->where, $planner, $scope, 'where clause');
             $this->ordering($legacy ? $write->orderBy : [], $planner, $scope);
             $this->destinations($write, $facts, $session);
-            foreach ($write->assignments as $assignment) {
-                $this->operand($assignment->value, $planner, $scope, 'field list');
+            if ($prepared && $multiple && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                return true;
             }
+            $this->values($write, $planner, $scope);
             $this->ordering($legacy ? [] : $write->orderBy, $planner, $scope);
         } catch (SqlError $error) {
-            throw $legacy && $multiple ? new SqlError($error->error, $error->getMessage(), $error, [...$error->following, [StatementError::UnknownError->value, StatementError::UnknownError->message()]], $error->signalled, $error->getCode(), $error->recorded) : $error;
+            throw !$prepared && $legacy && $multiple ? new SqlError($error->error, $error->getMessage(), $error, [...$error->following, [StatementError::UnknownError->value, StatementError::UnknownError->message()]], $error->signalled, $error->getCode(), $error->recorded) : $error;
+        }
+        return false;
+    }
+
+    /**
+     * Binds the complete assignment list in its selected preparation phase.
+     *
+     * @throws SqlError When an assignment value cannot bind
+     */
+    public function values(DeferredUpdate $write, Planner $planner, Scope $scope): void
+    {
+        foreach ($write->assignments as $assignment) {
+            $this->operand($assignment->value, $planner, $scope, 'field list');
         }
     }
 

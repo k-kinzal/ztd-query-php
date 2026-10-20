@@ -286,7 +286,7 @@ final class Definitions
      */
     public function default(array $attributes, ColumnDefinition $column, CreateTable|DeferredCreateTable $create): Fill
     {
-        foreach ($attributes as $attribute) {
+        foreach (array_reverse($attributes) as $attribute) {
             if ($attribute instanceof DefaultExpression) {
                 return Fill::none();
             }
@@ -296,7 +296,7 @@ final class Definitions
                 if ($default !== null) {
                     return $default;
                 }
-                $evaluable = $this->planner->compiler->compile($value, new Scope());
+                $evaluable = $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp ? new \MySqlMemory\Evaluation\Leaf\Clock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, $column->domain) : $this->planner->compiler->compile($value, new Scope());
                 return (new Constraint\LiteralDefaults())->value($evaluable, $column, $this->planner->compiler->connection->context);
             }
         }

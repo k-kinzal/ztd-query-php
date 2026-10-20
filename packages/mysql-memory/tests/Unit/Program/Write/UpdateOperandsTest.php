@@ -53,4 +53,13 @@ final class UpdateOperandsTest extends TestCase
         $this->expectExceptionMessage("Unknown column 'missing' in 'where clause'");
         $session->query('UPDATE t SET a=1 WHERE ROW(missing,2)');
     }
+    public function testValuesBindsPreparedParametersBeforeThePrecisionCondition(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
+        $reply = $session->run("PREPARE st FROM 'UPDATE t,u SET t.a=?+NOW(9)'");
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply[0]);
+        self::assertSame(1426, $reply[0]->getCode());
+    }
+
 }

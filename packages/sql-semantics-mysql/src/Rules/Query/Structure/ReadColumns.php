@@ -84,6 +84,9 @@ final class ReadColumns
                     return $problem;
                 }
             }
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable && ($node->on instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $node->on instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand)) {
+                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->on]);
+            }
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable) {
                 $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($node->columns);
                 if ($problem !== null) {

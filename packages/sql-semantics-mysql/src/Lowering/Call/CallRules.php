@@ -102,9 +102,10 @@ final class CallRules
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function currentTimestamp(Node $now): \SqlSemantics\Platform\MySql\Statement\Call\ClockCall
+    public function currentTimestamp(Node $now): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp
     {
-        return (new TemporalRule($this->lowering))->currentTimestamp($now);
+        $call = (new TemporalRule($this->lowering))->currentTimestamp($now);
+        return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp($call->precision, $call instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall ? $call->parentheses : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
     }
 
     /**

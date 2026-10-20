@@ -307,17 +307,7 @@ final class Relations
         $right = $this->plan($join->right, $scope);
         $after = array_keys($scope->offsets);
         $kind = $join->operator->keepsRight() ? JoinKind::Right : ($join->operator->keepsLeft() ? JoinKind::Left : JoinKind::Inner);
-        $condition = null;
-        if ($join->on !== null) {
-            $predicate = clone $scope;
-            $predicate->clause = 'on clause';
-            $condition = $this->planner->compiler->compile($join->on, $predicate);
-        } elseif ($join->using !== [] || $join->operator->natural()) {
-            $leftIds = array_values(array_diff($middle, $before));
-            $rightIds = array_values(array_diff($after, $middle));
-            $names = $join->operator->natural() ? $this->common($scope, $leftIds, $rightIds) : array_map(static fn ($name): string => $name->value, $join->using);
-            $condition = $this->equalities($scope, $leftIds, $rightIds, $names);
-        }
+        $condition = $this->condition($join, $scope, array_values(array_diff($middle, $before)), array_values(array_diff($after, $middle)));
 
         $path = new NestedLoopJoin($left, $right, $kind, $condition, $this->lateral($join->right));
         if ($kind === JoinKind::Inner && $join->on !== null && $this->planner->compiler->constancy($join->on)->constant()) {
@@ -325,6 +315,28 @@ final class Relations
         }
 
         return $path;
+    }
+
+    /**
+     * Prepares the join predicate after its input occurrences have been placed.
+     *
+     * @param list<int> $leftIds Left relation occurrence identities
+     * @param list<int> $rightIds Right relation occurrence identities
+     * @throws SqlError When the predicate or a USING column cannot bind
+     */
+    public function condition(JoinedTable $join, Scope $scope, array $leftIds, array $rightIds): ?Evaluable
+    {
+        $condition = null;
+        if ($join->on !== null) {
+            $predicate = clone $scope;
+            $predicate->clause = 'on clause';
+            $condition = $this->planner->compiler->compile($join->on, $predicate);
+        } elseif ($join->using !== [] || $join->operator->natural()) {
+            $names = $join->operator->natural() ? $this->common($scope, $leftIds, $rightIds) : array_map(static fn ($name): string => $name->value, $join->using);
+            $condition = $this->equalities($scope, $leftIds, $rightIds, $names);
+        }
+
+        return $condition;
     }
 
     /**

@@ -1986,7 +1986,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JoinedTable": {
         "left": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource",
-        "on": "?SqlSemantics\\Statement\\Scalar",
+        "on": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Join\\JoinOperator",
         "right": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource",
         "using": "array"
@@ -2672,6 +2672,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Predicate\\DeferredSoundsLike": {
         "operand": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "pattern": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Time\\DeferredClock": {
+        "clock": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Clock",
+        "precision": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\ConditionalBranch": {
         "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
@@ -3395,7 +3399,7 @@
         "expression": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral": {
-        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal|SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal|SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Value\\CurrentTimestamp"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EnforcementAttribute": {
         "enforced": "bool"
@@ -3443,7 +3447,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\OnUpdate": {
-        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Value\\CurrentTimestamp"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\OrdinaryColumn": {
         "attributes": "array",
@@ -3455,6 +3459,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\StorageAttribute": {
         "medium": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Value\\CurrentTimestamp": {
+        "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "precision": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\CreateIndex": {
         "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",

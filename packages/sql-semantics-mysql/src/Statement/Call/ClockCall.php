@@ -24,8 +24,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * Rule: MYSQL-CLOCK-CALL-001. The result is a DATETIME, TIME or DATE with
  * the written precision and is never NULL. The server keeps the written
  * precision in one byte, so it is read modulo 256: a precision of 256 is 0.
- * A precision above 6 is then the error ER_TOO_BIG_PRECISION, which the
- * server reports when it resolves the call; the precision is kept as written. The function is written with
+ * Ordinary Scalar calls require the effective precision to be at most 6.
+ * Stored instructions retain a larger effective precision in DeferredClock,
+ * outside Scalar. Column timestamp clauses have their own attribute role.
+ * The precision is kept as written. The function is written with
  * parentheses, which are optional and change nothing (`NOW` alone would be
  * a column name).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now,
@@ -50,7 +52,8 @@ final class ClockCall implements Scalar
      */
     public function __construct(public readonly Clock $clock, public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written)
     {
-        Check::input($precision === null || ($clock->precise() && !$precision->hexadecimal && ctype_digit($precision->text)), 'Only a time function takes a precision, and a precision is a decimal integer.');
+        Check::input($precision === null || ($clock->precise() && $precision->isIntegerToken()), 'Only a time function takes a precision, and a precision is a NUM integer token.');
+        Check::input($precision === null || (int) $precision->text % 256 <= 6, 'A scalar clock precision resolves to at most six fractional seconds digits.');
         Check::input($parentheses === OptionalWords::Written || ($precision === null && $clock->bare() !== null), 'A precision is written in parentheses, and SYSDATE is only written with them.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

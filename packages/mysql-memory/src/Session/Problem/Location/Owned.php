@@ -6,7 +6,6 @@ namespace MySqlMemory\Session\Problem\Location;
 
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Locator;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
@@ -27,8 +26,8 @@ final class Owned
      * Adds each condition at the resolution position of its semantic owner.
      *
      * @param list<Diagnostic> $diagnostics
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function located(Locator $locator, array $diagnostics, array $located): array
     {

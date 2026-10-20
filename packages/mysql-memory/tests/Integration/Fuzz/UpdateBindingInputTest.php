@@ -34,6 +34,12 @@ final class UpdateBindingInputTest extends TestCase
             'UPDATE t,u SET t.a=(SELECT missing)',
             'UPDATE t,u SET t.a=(SELECT absent FROM absent_table)',
             'UPDATE t,u SET t.a=NOW(9)',
+            'UPDATE t JOIN u ON absent SET t.a=NOW(9)',
+            'UPDATE t JOIN u ON NOW(9) SET t.a=missing',
+            'UPDATE t,u SET t.a=NOW(9) WHERE absent',
+            'UPDATE t JOIN (SELECT absent) q ON TRUE SET t.a=NOW(9)',
+            'UPDATE t JOIN u ON ROW(t.a,u.a) SET t.a=1',
+            'UPDATE t JOIN u USING(missing) SET t.a=NOW(9)',
             'UPDATE t,u SET t.a=1 WHERE NOW(9)',
             'UPDATE t JOIN u ON NOW(9) SET t.a=1',
             'UPDATE t,u SET t.a=AVG(u.a)',
@@ -49,6 +55,7 @@ final class UpdateBindingInputTest extends TestCase
         foreach ($writes as $sql) {
             array_push($prepared, "PREPARE st FROM '" . $sql . "'", 'EXECUTE st');
         }
+        $prepared = [...$prepared, 'SET @a=1,@b=2', "PREPARE st FROM 'UPDATE t,u SET t.a=?+NOW(9) WHERE u.a=?'", 'EXECUTE st USING @a,@b', "PREPARE st FROM 'UPDATE t JOIN u ON t.a=? SET t.a=?+NOW(9)'", 'EXECUTE st USING @a,@b'];
         $statements = ['SET NAMES utf8mb4', 'CREATE DATABASE d', 'USE d', 'CREATE TABLE t(a INT,b INT)', 'CREATE TABLE u(a INT,b INT)', 'CREATE TABLE v(a INT)', ...$writes, ...$prepared, 'INSERT INTO t VALUES(1,2)', 'INSERT INTO u VALUES(3,4)', 'INSERT INTO v VALUES(5),(7)', ...$writes, ...$prepared, 'SELECT * FROM t', 'SELECT * FROM u'];
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];

@@ -598,4 +598,14 @@ final class RelationsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(\MySqlMemory\Result\ColumnFlag::NotNull->value, $result->columns[0]->flags & (\MySqlMemory\Result\ColumnFlag::NotNull->value | \MySqlMemory\Result\ColumnFlag::PrimaryKey->value));
     }
+
+    public function testConditionBindsUsingColumnsOfBothPreparedInputs(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT); INSERT INTO t VALUES(1),(2); INSERT INTO u VALUES(2),(3)');
+        $result = $session->query('SELECT t.a FROM t JOIN u USING(a)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
 }

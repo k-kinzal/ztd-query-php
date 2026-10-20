@@ -8,7 +8,6 @@ use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Locator;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Statement\Fact\Diagnostic;
 
@@ -26,8 +25,8 @@ final class Calls
     /**
      * Adds modern target-count conditions before the call's argument positions.
      *
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function located(Locator $locator, Session $session, array $located): array
     {

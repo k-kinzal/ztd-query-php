@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn as DuplicateWrittenColumn;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite;
@@ -119,12 +118,11 @@ final class Errors
      *
      * A problem of a column of MATCH is followed by the error of its AGAINST (ER_WRONG_ARGUMENTS).
      */
-    public function located(Diagnostic|FunctionCall|ClockCall|SqlError $problem, string $clause, bool $matched, Session $session, Node $statement): SqlError
+    public function located(Diagnostic|FunctionCall|SqlError $problem, string $clause, bool $matched, Session $session, Node $statement): SqlError
     {
         $error = match (true) {
             $problem instanceof SqlError => $problem,
             $problem instanceof FunctionCall => $this->routine($problem, $session),
-            $problem instanceof ClockCall => $this->precision($problem),
             default => $this->error($problem, $session, $clause, $statement),
         };
 
@@ -431,26 +429,6 @@ final class Errors
         $name = self::named($misuse);
 
         return $misuse->name instanceof QualifiedName && $misuse->name->schema !== null ? '`' . $misuse->name->schema->value . '`.`' . $name . '`' : '`' . $name . '`';
-    }
-
-    /**
-     * Answers the error of a clock call whose precision is above 6, named as the server names the function.
-     *
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
-     */
-    public function precision(ClockCall $call): SqlError
-    {
-        $name = match ($call->clock) {
-            Clock::Now => 'now',
-            Clock::CurrentTime => 'curtime',
-            Clock::SystemDate => 'sysdate',
-            Clock::UtcTime => 'utc_time',
-            Clock::UtcTimestamp => 'utc_timestamp',
-            Clock::CurrentDate => 'curdate',
-            Clock::UtcDate => 'utc_date',
-        };
-
-        return SchemaError::TooBigPrecision->error($call->decimals(), $name, 6);
     }
 
     /**

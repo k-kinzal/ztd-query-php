@@ -73,6 +73,19 @@ These diagnostics retain neither SQL text nor parser objects. Empty rows remain
 available as direct INSERT sources, where MySQL interprets them as default rows.
 The restriction does not yet establish every query's read-role invariant.
 
+Clock calls separate three roles. Ordinary `ClockCall` scalars take a decimal
+`NUM` token (at most 2147483647), whose precision modulo 256 must be at most six.
+`DeferredClock` retains an excessive effective precision in a stored instruction;
+a skipped instruction does not prepare it. A column's `CurrentTimestamp` value
+is a declaration operand outside Scalar: a later DEFAULT or ON UPDATE can
+replace it. Column construction validates the effective attribute against the
+temporal type. Memory chooses that final default, and the diagnostic formatter
+preserves MySQL 5.6 wording when a deferred instruction reaches its condition.
+Direct type-driven clock generation executes accepted values without source SQL
+or execution-based filtering. Native histories compare precision boundaries,
+prepared execution, skipped and reached procedures, local declarations and
+superseded column attributes.
+
 Account password and lock options enforce their numeric domains before ordinary
 statement construction. Decimal integer tokens allow the unsigned 64-bit range;
 hexadecimal option operands saturate at the signed 64-bit maximum. Expiry

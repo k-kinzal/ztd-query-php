@@ -128,7 +128,7 @@ final class ReferenceRule
             $left,
             $this->operator($form->node(1)),
             $right,
-            $condition === 'on' ? $this->lowering->expressions->expression($form->node(4)) : null,
+            $condition === 'on' ? $this->lowering->expressions->operand($form->node(4)) : null,
             $condition === 'using' ? (new TableRule($this->lowering))->names($form->node(5)) : [],
         );
     }

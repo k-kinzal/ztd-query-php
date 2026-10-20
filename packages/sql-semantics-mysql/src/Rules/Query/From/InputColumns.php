@@ -39,6 +39,7 @@ final class InputColumns
     {
         foreach ((new ReadDependencies())->inputs($inputs, $with instanceof With ? $with : null) as $node) {
             $problem = match (true) {
+                $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable && ($node->on instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $node->on instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) => (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->on]),
                 $node instanceof JsonTable => (new JsonColumns())->problem($node->columns),
                 $node instanceof DerivedTable, $node instanceof CommonTableExpression => (new ReadColumns())->problem($node->query),
                 default => null,

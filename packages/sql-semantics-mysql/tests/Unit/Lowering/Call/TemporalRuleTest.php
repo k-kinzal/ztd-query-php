@@ -178,4 +178,14 @@ final class TemporalRuleTest extends TestCase
         $node = $platform->parser($profile)->parse('SELECT GET_FORMAT(TIME, a)')->find('date_time_type')[0];
         self::assertSame(TemporalFormat::Time, (new TemporalRule($lowering))->format($node));
     }
+    public function testClockKeepsAnIntrinsicPrecisionOutsideScalar(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT NOW(263)')->find('func_datetime_precision')[0];
+        $clock = (new TemporalRule($lowering))->clock(Clock::Now, $node);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock::class, $clock);
+        self::assertSame(7, $clock->problem()->precision);
+    }
 }

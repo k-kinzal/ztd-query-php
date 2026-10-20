@@ -29,6 +29,7 @@ final class DefaultLiteralTest extends TestCase
         $attribute = $column->specification->columnAttributes()[0];
 
         self::assertInstanceOf(DefaultLiteral::class, $attribute);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operand::class, $attribute->value);
         self::assertSame($create->facts->scalar($attribute->value)->nullability, \SqlSemantics\Statement\Type\Nullability::NotNull);
     }
 

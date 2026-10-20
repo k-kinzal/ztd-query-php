@@ -146,7 +146,7 @@ final class InputErrors
         try {
             (new \MySqlMemory\Program\Expression\RowUse())->raise($problem->operand, $session, false);
         } catch (SqlError $error) {
-            return $error;
+            return (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $session->settings()->release());
         }
     }
 
@@ -161,7 +161,7 @@ final class InputErrors
             }
             (new \MySqlMemory\Program\Expression\SelectionUse())->raise($selection, $session, false, $viewDefinition);
         } catch (SqlError $error) {
-            return $error;
+            return (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $session->settings()->release());
         }
     }
 

@@ -10,7 +10,6 @@ use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Plan\Window\Resolution;
 use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Session\Locator;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -28,8 +27,8 @@ final class WriteFunctions
     /**
      * Adds a preparation condition at the ungrouped call, before its arguments.
      *
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
-     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
     public function located(Node $statement, Locator $locator, array $located): array
     {

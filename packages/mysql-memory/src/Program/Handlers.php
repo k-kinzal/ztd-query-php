@@ -75,6 +75,7 @@ final class Handlers
      */
     public function failed(SqlError $error): ?Jump
     {
+        $error = (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $this->interpreter->session->settings()->release());
         $diagnostics = $this->interpreter->session->diagnostics;
         if (!$error->recorded) {
             $diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);

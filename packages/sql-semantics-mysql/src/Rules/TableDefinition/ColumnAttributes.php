@@ -117,8 +117,8 @@ final class ColumnAttributes
         if ($attribute instanceof SridAttribute && !$type instanceof Spatial) {
             return 'SRID';
         }
-        if (($attribute instanceof DefaultLiteral || $attribute instanceof OnUpdate) && $attribute->value instanceof ClockCall) {
-            if (!$type instanceof Temporal || !in_array($type->kind, [TemporalKind::DateTime, TemporalKind::Timestamp], true) || (int) ($type->precision ?? '0') !== $attribute->value->decimals()) {
+        if (($attribute instanceof DefaultLiteral || $attribute instanceof OnUpdate) && ($attribute->value instanceof ClockCall || $attribute->value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp)) {
+            if ($attribute->value->decimals() > 6 || !$type instanceof Temporal || !in_array($type->kind, [TemporalKind::DateTime, TemporalKind::Timestamp], true) || (int) ($type->precision ?? '0') !== $attribute->value->decimals()) {
                 return $attribute instanceof OnUpdate ? 'ON UPDATE' : 'DEFAULT';
             }
         }

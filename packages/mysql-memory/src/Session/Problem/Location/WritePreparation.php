@@ -9,7 +9,6 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problem\WriteOrder;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Node;
 final class WritePreparation
 {
     /**
-     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, true> Conditions left for execution of a prepared statement
      */
     public function deferred(Node $statement, Session $session, bool $prepared, array $located): array

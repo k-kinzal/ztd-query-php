@@ -269,6 +269,7 @@ final class RowUse
         return (new \MySqlMemory\Session\Problem\CallErrors())->error($problem) ?? match (true) {
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow => QueryError::ValuesEmptyRow->error(),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse => (new Errors())->misuse($problem),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision => \MySqlMemory\Error\Family\SchemaError::TooBigPrecision->error($problem->precision, $problem->function, $problem->maximum),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch => (new Errors())->counted($problem),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse => (new Errors())->write($problem, null),
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns => QueryError::OperandColumns->error($problem->expected),

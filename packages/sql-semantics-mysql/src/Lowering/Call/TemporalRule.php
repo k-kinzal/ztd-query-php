@@ -101,7 +101,7 @@ final class TemporalRule
         if (isset(self::CLOCKS[$form->signature])) {
             [$clock, $precise] = self::CLOCKS[$form->signature];
             if ($precise) {
-                return new ClockCall($clock, $this->precision($form->node(1)), $this->parentheses($form->node(1)));
+                return $this->clock($clock, $form->node(1));
             }
 
             return new ClockCall($clock, null, $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
@@ -169,14 +169,25 @@ final class TemporalRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function currentTimestamp(Node $now): ClockCall
+    public function currentTimestamp(Node $now): ClockCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock
     {
         $form = $this->lowering->form($now);
         if ($form->signature !== 'now: NOW_SYM func_datetime_precision') {
             throw ImplementationGap::production($form);
         }
 
-        return new ClockCall(Clock::Now, $this->precision($form->node(1)), $this->parentheses($form->node(1)));
+        return $this->clock(Clock::Now, $form->node(1));
+    }
+
+    /**
+     * Separates an ordinary scalar clock from a stored precision condition.
+     */
+    public function clock(Clock $clock, Node $operand): ClockCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock
+    {
+        $precision = $this->precision($operand);
+        return $precision !== null && (int) $precision->text % 256 > 6
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock($clock, $precision)
+            : new ClockCall($clock, $precision, $this->parentheses($operand));
     }
 
     /**

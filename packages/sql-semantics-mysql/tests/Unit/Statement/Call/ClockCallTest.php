@@ -38,7 +38,7 @@ final class ClockCallTest extends TestCase
 
     public function testDecimalsReadsThePrecisionModulo256(): void
     {
-        self::assertSame([0, 0, 2, 19], [(new ClockCall(Clock::Now))->decimals(), (new ClockCall(Clock::Now, new Numeral('256')))->decimals(), (new ClockCall(Clock::UtcTimestamp, new Numeral('258')))->decimals(), (new ClockCall(Clock::CurrentTime, new Numeral('00000000058387')))->decimals()]);
+        self::assertSame([0, 0, 2, 6], [(new ClockCall(Clock::Now))->decimals(), (new ClockCall(Clock::Now, new Numeral('256')))->decimals(), (new ClockCall(Clock::UtcTimestamp, new Numeral('258')))->decimals(), (new ClockCall(Clock::CurrentTime, new Numeral('00000000058374')))->decimals()]);
     }
 
     public function testRenderWritesEmptyParenthesesWithoutAPrecision(): void
@@ -49,5 +49,21 @@ final class ClockCallTest extends TestCase
         (new ClockCall(Clock::Now))->render($out);
 
         self::assertSame('NOW()', (new Lexical())->join($out->pieces()));
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['263'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['2147483647'])]
+    public function testPrecisionDomainRejectsAnIntrinsicCondition(string $precision): void
+    {
+        $this->expectExceptionMessage('A scalar clock precision resolves to at most six');
+        new ClockCall(Clock::Now, new Numeral($precision));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['2147483648'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['4294967296'])]
+    public function testPrecisionDomainRequiresAGrammarToken(string $precision): void
+    {
+        $this->expectExceptionMessage('a precision is a NUM integer token');
+        new ClockCall(Clock::Now, new Numeral($precision));
     }
 }

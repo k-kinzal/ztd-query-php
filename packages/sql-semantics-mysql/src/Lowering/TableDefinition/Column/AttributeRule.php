@@ -11,7 +11,6 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyOptionRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
@@ -165,7 +164,7 @@ final class AttributeRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function value(Node $value): Literal|ClockCall
+    public function value(Node $value): Literal|\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp
     {
         $form = $this->lowering->productions->form($value);
 

@@ -29,27 +29,42 @@ final class UpdateUse
         try {
             $this->raise($write, $session, false);
         } catch (SqlError $error) {
-            return $error;
+            return (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $session->settings()->release());
         }
     }
 
     /**
      * Opens the original inputs in the current state without replacing the statement.
      *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
      * @throws SqlError When a dependency or retained input constraint is reached
      * @throws LogicException When the retained constraint loses its native error
      */
-    public function raise(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $invocation = true): never
+    public function raise(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $invocation = true, array $parameters = []): never
     {
         if ($invocation) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
             \MySqlMemory\Session\State\StatementCounters::command($session, count($write->tables) > 1 ? 'Com_update_multi' : 'Com_update');
             $session->diagnostics->clear();
         }
+        $this->check($write, $session, parameters: $parameters);
+        throw new LogicException('A retained UPDATE keeps its input, target or clause contradiction.');
+    }
+
+    /**
+     * Checks reached preparation phases while retaining deferred assignment values.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
+     * @throws SqlError When an input, destination or reached clause cannot bind
+     */
+    public function check(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $prepared = false, array $parameters = []): void
+    {
         $database = $session->variables->database;
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
-        $derivation = new Derivation($context);
+        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution((new \MySqlMemory\Session\Statement\Binding())->parameters($session, $parameters)));
+        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($session->settings()->release()));
+        $write->render($output);
+        $derivation = new Derivation($context, parameters: $output->parameters());
         if ($write instanceof DeferredUpdate) {
             $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         } else {
@@ -73,12 +88,14 @@ final class UpdateUse
             throw $input;
         }
         if ($write instanceof DeferredUpdate) {
-            (new UpdateOperands())->prepare($write, $facts, $session);
+            if ((new UpdateOperands())->prepare($write, $facts, $session, $prepared, $parameters)) {
+                return;
+            }
         }
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }
-        throw new LogicException('A retained UPDATE keeps its input, target or clause contradiction.');
+
     }
     /**
      * Resolves implicit input databases before reaching an exact alias collision.

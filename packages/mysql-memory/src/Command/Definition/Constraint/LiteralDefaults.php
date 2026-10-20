@@ -37,7 +37,7 @@ final class LiteralDefaults
      *
      * @throws SqlError When the column's type refuses a literal default
      */
-    public function check(ColumnDefinition $column, Literal|ClockCall $value, Context $context): ?Fill
+    public function check(ColumnDefinition $column, Literal|ClockCall|\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp $value, Context $context): ?Fill
     {
         if ($value instanceof NullLiteral || !in_array($column->domain->field, [Field::Blob, Field::Json, Field::Geometry], true)) {
             return null;

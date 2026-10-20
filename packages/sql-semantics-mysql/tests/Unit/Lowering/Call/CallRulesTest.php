@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Lowering\Call\CallRules;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
-use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
@@ -68,7 +67,7 @@ final class CallRulesTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (c DATETIME ON UPDATE NOW())')->find('now')[0];
-        self::assertEquals(new ClockCall(Clock::Now), (new CallRules($lowering))->currentTimestamp($node));
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(), (new CallRules($lowering))->currentTimestamp($node));
     }
 
     public function testWindowNameLowersAWindowName(): void

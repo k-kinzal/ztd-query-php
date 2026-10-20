@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
-use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
@@ -680,9 +679,10 @@ final class ErrorsTest extends TestCase
         self::assertSame(3568, (new Errors())->misuse(new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('W'))))->getCode());
     }
 
-    public function testPrecisionNamesTheClockWithItsPrecisionModulo256(): void
+    public function testErrorNamesTheDeferredClockWithItsPrecisionModulo256(): void
     {
-        $error = (new Errors())->precision(new ClockCall(Clock::CurrentTime, new Numeral('00000000058387')));
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(Clock::CurrentTime, new Numeral('00000000058387'));
+        $error = (new Errors())->error($clock->problem(), (new Instance())->connect());
 
         self::assertSame([1426, "Too-big precision 19 specified for 'curtime'. Maximum is 6."], [$error->getCode(), $error->getMessage()]);
     }
@@ -696,7 +696,7 @@ final class ErrorsTest extends TestCase
         $matched = (new Errors())->located(new \SqlSemantics\Statement\Reference\Column\MissingColumn(new Name('x')), 'where clause', true, $session, $statement);
 
         self::assertSame($refusal, (new Errors())->located($refusal, 'field list', false, $session, $statement));
-        self::assertSame("Too-big precision 7 specified for 'now'. Maximum is 6.", (new Errors())->located(new ClockCall(Clock::Now, new Numeral('7')), 'field list', false, $session, $statement)->getMessage());
+        self::assertSame("Too-big precision 7 specified for 'now'. Maximum is 6.", (new Errors())->located(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, 'now'), 'field list', false, $session, $statement)->getMessage());
         self::assertSame('FUNCTION d.f does not exist', (new Errors())->located(new FunctionCall(new Name('f')), 'field list', false, $session, $statement)->getMessage());
         self::assertSame([1054, "Unknown column 'x' in 'where clause'", [[1210, 'Incorrect arguments to AGAINST']]], [$matched->getCode(), $matched->getMessage(), $matched->following]);
     }

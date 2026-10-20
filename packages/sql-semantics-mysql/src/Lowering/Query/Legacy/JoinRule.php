@@ -183,7 +183,7 @@ final class JoinRule
             $left,
             $operator,
             $operand,
-            $on === null ? null : $this->lowering->expressions->expression($form->node($on)),
+            $on === null ? null : $this->lowering->expressions->operand($form->node($on)),
             $using === null ? [] : (new TableRule($this->lowering))->names($form->node($using)),
         );
     }

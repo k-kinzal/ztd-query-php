@@ -49,4 +49,15 @@ final class UpdateUseTest extends TestCase
         self::assertSame(1066, (new UpdateUse())->error($write, $session)->getCode());
     }
 
+
+    public function testCheckBindsPreparedValuesBeforeJoinConditionsInMySql57(): void
+    {
+        $session = (new \MySqlMemory\Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
+        $reply = $session->run("PREPARE st FROM 'UPDATE t JOIN u ON missing SET t.a=NOW(9)'");
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply[0]);
+        self::assertSame(1426, $reply[0]->getCode());
+        self::assertSame([1426], array_column($session->diagnostics->conditions, 1));
+    }
+
 }
