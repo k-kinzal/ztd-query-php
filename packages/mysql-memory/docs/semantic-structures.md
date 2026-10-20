@@ -58,6 +58,14 @@ A repeated condition stops expansion and remains unresolved. Complete generated
 statements never receive these ambient relations. Later value, index or binding
 conditions are retained and do not cause the input to be discarded.
 
+Routine histories create missing stored functions and procedures under the
+original referenced names. Calls retain their argument objects and argument
+count; ALTER, DROP and SHOW CREATE retain the original request. Definitions,
+schema selection and the unchanged retry all compare with MySQL. The fixture
+has a deterministic integer return or an empty procedure body. Loadable routines
+with named arguments and unavailable debug-only reports remain unresolved;
+creating an unrelated stored routine is not evidence for those dependencies.
+
 Temporal input interpretation consumes decoded literal and variable operands
 from SQL Semantics in their contextual order. The input adapter retains view
 context and input ranges only while reading the statement. A refused temporal
