@@ -94,4 +94,24 @@ final class StoredSelectionsTest extends TestCase
         self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
     }
 
+    public function testBodyRetainsAnIntoDestinationAndTheOuterWriteOfADeferredPredicate(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        try {
+            $semantics->analyze("REPLACE absent.t SELECT 1 INTO DUMPFILE 'text' WHERE ROW(1,2)");
+            self::fail('A row predicate retains the complete deferred write.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery::class, $failure->problem);
+            self::assertSame('absent', $failure->problem->write->into->table->name->schema?->value);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $failure->problem->write->source);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDumpfile::class, $failure->problem->write->source->selection->into);
+        }
+    }
+
+    public function testReadRetainsIntoInAStoredDefinitionWithoutAQuerySurrogate(): void
+    {
+        $sql = 'CREATE PROCEDURE p() SELECT 1 INTO @x WHERE (1, 2)';
+        self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze($sql)->toString());
+    }
+
 }

@@ -2431,6 +2431,7 @@
         "from": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource|SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual|null",
         "groupBy": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\Grouping|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredGrouping|null",
         "having": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Into\\IntoDestination",
         "items": "array",
         "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
         "options": "array",

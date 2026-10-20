@@ -64,6 +64,23 @@ final class CommandPrefixTest extends TestCase
         yield 'unrelated command' => ['5.6.51', 'SELECT 1 FROM t (', null];
     }
 
+    public function testBindingsResolveOnlyACompleteLegacyPrefix(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $prefix = new CommandPrefix();
+        $complete = 'SELECT 1 INTO x';
+        self::assertSame(1327, $prefix->bindings($complete . ' WHERE (', strlen($complete), $session)?->getCode());
+        self::assertNull($prefix->bindings($complete . ' FROM', strlen($complete) + 5, $session));
+        self::assertNull($prefix->bindings('SELECT 1 INTO @x', 16, $session));
+        self::assertNull($prefix->bindings($complete, strlen($complete), (new Instance('8.4.7'))->connect()));
+        self::assertNull($prefix->bindings('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT 1 INTO x; END', 100, $session));
+    }
+
+    public function testBindingsKeepTheRoutineDatabaseAheadOfItsBody(): void
+    {
+        self::assertSame(1046, (new CommandPrefix())->bindings('CREATE PROCEDURE p() SELECT 1 INTO x', 100, (new Instance('5.7.44'))->connect())?->getCode());
+    }
+
     public function testFormatRetainsLegacyUnknownNamesBeforeLaterInput(): void
     {
         $session = (new Instance('5.7.44'))->connect();

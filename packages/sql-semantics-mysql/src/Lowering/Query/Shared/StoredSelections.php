@@ -66,14 +66,13 @@ final class StoredSelections
         $options = isset($clauses['options']) ? (new ItemRule($this->lowering))->options($clauses['options']) : [];
         $grouping = isset($clauses['group']) ? (new StoredClauses($this->lowering))->grouping($clauses['group']) : null;
         $having = isset($clauses['having']) ? $this->predicate($clauses['having']) : null;
-        $ordering = isset($clauses['order']) ? (new StoredClauses($this->lowering))->ordering($clauses['order']) : [];
-        $limit = isset($clauses['limit']) ? (new TailRule($this->lowering))->limit($clauses['limit']) : null;
-        $procedure = isset($clauses['procedure']) ? (new TailRule($this->lowering))->procedure($clauses['procedure']) : null;
+        $tail = (new StoredClauses($this->lowering))->tail($clauses);
         $windows = isset($clauses['windows']) ? (new ClauseRule($this->lowering))->windows($clauses['windows']) : [];
         $qualify = isset($clauses['qualify']) ? $this->predicate($clauses['qualify']) : null;
-        $deferred = $this->deferred($items, $predicate, $grouping, $having, $ordering, $qualify);
+        $into = isset($clauses['into']) ? (new TailRule($this->lowering))->into($clauses['into']) : null;
+        $deferred = $this->deferred($items, $predicate, $grouping, $having, $tail->orderBy, $qualify);
         if ($deferred) {
-            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $ordering, $limit, $windows, $procedure, $qualify);
+            return new DeferredSelection($items, $input, $predicate, $options, $grouping, $having, $tail->orderBy, $tail->limit, $windows, $tail->procedure, $qualify, $into);
         }
         $ordinary = [];
         foreach ($items as $item) {
@@ -84,7 +83,7 @@ final class StoredSelections
         \SqlSemantics\Diagnostic\Check::invariant($having === null || $having instanceof Scalar, 'An ordinary group predicate is scalar.');
         \SqlSemantics\Diagnostic\Check::invariant($grouping === null || $grouping instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping, 'An ordinary grouping has scalar or ordinal items.');
         \SqlSemantics\Diagnostic\Check::invariant($qualify === null || $qualify instanceof Scalar, 'An ordinary QUALIFY predicate is scalar.');
-        return new Block($options, $ordinary, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, qualify: $qualify, trailer: new Trailer($ordering, $limit, $procedure), source: $node, origins: $this->lowering->origins);
+        return new Block($options, $ordinary, into: $into, from: $input, where: $predicate, groupBy: $grouping, having: $having, windows: $windows, qualify: $qualify, trailer: $tail, source: $node, origins: $this->lowering->origins);
     }
 
     /**
@@ -160,6 +159,7 @@ final class StoredSelections
             'opt_limit_clause', 'opt_limit_clause_init', 'limit_clause' => 'limit',
             'opt_window_clause' => 'windows',
             'opt_qualify_clause' => 'qualify',
+            'into_clause' => 'into',
             'procedure_analyse_clause', 'opt_procedure_analyse_clause' => 'procedure',
             default => null,
         };

@@ -54,21 +54,31 @@ final class TailFacts
     public function derive(Derivation $derivation, Environment $outer, QueryFact $fact, Select|QueryStatement $query): void
     {
         (new LockedTables())->check($derivation, $outer, $query);
-        $into = $query->into;
+        $this->destination($query->into, $derivation, $outer, $fact);
+        $last = $query instanceof QueryStatement && $query->into === null ? $this->trailing($query->query) : null;
+        if ($query->locking !== [] && ($query->intoPosition === IntoPosition::AfterQuery || ($last !== null && $last->into !== null && !$last->clauses()))) {
+            Deprecation::raise(Deprecated::IntoInsideQuery, $derivation);
+        }
+    }
+
+    /**
+     * Derives the destination independently of ordinary or deferred query operands.
+     */
+    public function destination(?\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination $into, Derivation $derivation, Environment $outer, QueryFact $fact): void
+    {
         if ($into instanceof \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile && $into->format instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat && $into->format->charset?->name !== null) {
             Deprecation::charset($into->format->charset->name->value, $derivation);
         }
         if ($into instanceof IntoVariables) {
             foreach ($into->targets as $target) {
                 $derivation->scalar($target, new Environment($derivation->context, $outer));
+                if ($target instanceof ProgramVariable && !$derivation->inProgram() && Settings::of($derivation->context)->variable($target->name->value) === null) {
+                    $derivation->report(new UndeclaredVariable($target->name));
+                }
             }
             if ($fact->shape->complete() && count($fact->shape->slots) !== count($into->targets)) {
                 $derivation->report(new CountMismatch(CountedList::IntoVariables, count($fact->shape->slots), count($into->targets)));
             }
-        }
-        $last = $query instanceof QueryStatement && $query->into === null ? $this->trailing($query->query) : null;
-        if ($query->locking !== [] && ($query->intoPosition === IntoPosition::AfterQuery || ($last !== null && $last->into !== null && !$last->clauses()))) {
-            Deprecation::raise(Deprecated::IntoInsideQuery, $derivation);
         }
     }
 

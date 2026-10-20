@@ -67,6 +67,7 @@ final class SelectionFacts
                 $derivation->scalar($argument, $scope->environment);
             }
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts())->destination($selection->into, $derivation, $scope->environment, new \SqlSemantics\Statement\Fact\QueryFact($fields, $derivation->context->columnNames));
         return $fields;
     }
 

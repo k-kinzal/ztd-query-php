@@ -26,6 +26,14 @@ use SqlSemantics\Statement\Type\Dependent;
 #[Medium]
 final class TailFactsTest extends TestCase
 {
+    public function testDestinationReportsAnUnboundProgramVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        self::assertEquals([new UndeclaredVariable(new Name('x'))], $semantics->analyze('SELECT 1 INTO x')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SELECT 1 INTO @x')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT 1 INTO x; END')->facts->diagnostics);
+    }
+
     public function testDeriveReportsAnUnknownLockedTable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t AS u FOR UPDATE OF d.t');
@@ -135,4 +143,13 @@ final class TailFactsTest extends TestCase
 
         self::assertEquals([new UndeclaredVariable(new Name('b')), new UndeclaredVariable(new Name('a'))], $operation->facts->diagnostics);
     }
+    public function testDestinationDerivesTheTargetsOfADeferredSelection(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW(1,2) INTO @x FROM DUAL');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables::class, $operation->statement->body->into);
+        self::assertTrue($operation->facts->covers($operation->statement->body->into->targets[0]));
+    }
+
 }

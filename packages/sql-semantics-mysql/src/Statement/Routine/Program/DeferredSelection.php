@@ -72,8 +72,9 @@ final class DeferredSelection implements ProgramStatement
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition> $windows The complete WINDOW clause
      * @param \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse|null $procedure The legacy result-analysis clause
      * @param Scalar|RowOperand|DeferredOperand|null $qualify The complete QUALIFY predicate
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination|null $into The destination written after the projection
      */
-    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null, public readonly Scalar|RowOperand|DeferredOperand|null $qualify = null)
+    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null, public readonly Scalar|RowOperand|DeferredOperand|null $qualify = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination $into = null)
     {
         $this->windows = Check::listOf($windows, \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition::class, 'A stored selection retains its named window definitions.');
         $this->options = Check::listOf($options, SelectOption::class, 'A stored selection retains SELECT modifiers.');
@@ -148,6 +149,9 @@ final class DeferredSelection implements ProgramStatement
             $out->keyword($option->value);
         }
         $out->list($this->items);
+        if ($this->into !== null) {
+            $out->keyword('INTO')->node($this->into);
+        }
         if ($this->from !== null) {
             $out->keyword('FROM')->node($this->from);
         }

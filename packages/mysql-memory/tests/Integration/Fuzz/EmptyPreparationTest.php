@@ -50,6 +50,10 @@ final class EmptyPreparationTest extends TestCase
                 $actual = array_map(static fn (string $sql): string => serialize((new Native())->observe($memory, $sql)), $statements);
 
                 self::assertSame($expected, $actual, $release);
+                $sources = [';', ';;', '; SELECT 1', ";'unfinished", ';/* after */ ;', '/* before */;', '/* before */;SELECT 1'];
+                $expectedProtocol = array_map(static fn (string $sql): string => serialize((new Native())->observe($native, $sql, prepared: true)), $sources);
+                $actualProtocol = array_map(static fn (string $sql): string => serialize((new Native())->observe($memory, $sql, prepared: true)), $sources);
+                self::assertSame($expectedProtocol, $actualProtocol, $release . ':COM_STMT_PREPARE');
             } finally {
                 $native->close();
                 $server->stop();

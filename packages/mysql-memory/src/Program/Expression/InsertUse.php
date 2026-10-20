@@ -68,6 +68,7 @@ final class InsertUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        (new \MySqlMemory\Session\Problem\Reading())->into($write, $session);
         (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($write, $session);
         foreach ($facts->diagnostics as $problem) {
             if ($problem instanceof MissingTable) {

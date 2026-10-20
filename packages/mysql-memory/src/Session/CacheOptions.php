@@ -150,7 +150,8 @@ final class CacheOptions
         $end = $cause?->token->offset ?? strlen($statement);
 
         return (new Parse\VariablePrefix())->before($tokens, $statement, $end, $session)
-            ?? (new Parse\CommandPrefix())->before($tokens, $statement, $end, $session);
+            ?? (new Parse\CommandPrefix())->before($tokens, $statement, $end, $session)
+            ?? (new Parse\CommandPrefix())->bindings($statement, $end, $session);
     }
 
     /**

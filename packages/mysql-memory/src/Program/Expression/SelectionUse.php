@@ -74,6 +74,9 @@ final class SelectionUse
                 throw (new Errors())->error($problem, $session);
             }
         }
+        if ($selection !== null) {
+            (new \MySqlMemory\Session\Problem\Reading())->into($selection, $session);
+        }
         foreach ($facts->diagnostics as $problem) {
             if (!$viewDefinition && $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
                 throw (new Errors())->error($problem, $session);

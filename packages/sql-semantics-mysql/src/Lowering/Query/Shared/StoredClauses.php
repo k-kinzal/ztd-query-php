@@ -33,6 +33,21 @@ final class StoredClauses
     }
 
     /**
+     * Collects the complete trailing ordering, limit and analysis clauses.
+     *
+     * @param array<string, Node> $clauses The inspected query frontier
+     */
+    public function tail(array $clauses): Trailer
+    {
+        $rules = new TailRule($this->lowering);
+        return new Trailer(
+            isset($clauses['order']) ? $this->ordering($clauses['order']) : [],
+            isset($clauses['limit']) ? $rules->limit($clauses['limit']) : null,
+            isset($clauses['procedure']) ? $rules->procedure($clauses['procedure']) : null,
+        );
+    }
+
+    /**
      * @return list<OrderItem|DeferredOrderItem> Complete ordered items
      */
     public function ordering(Node $clause): array

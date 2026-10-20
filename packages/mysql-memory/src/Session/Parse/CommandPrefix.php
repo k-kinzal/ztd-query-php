@@ -74,6 +74,32 @@ final class CommandPrefix
     }
 
     /**
+     * Resolves MySQL 5.7 variables after a complete statement prefix, before a
+     * trailing unexpected token. An unfinished FROM, UNION or variable list
+     * does not reach this binding stage.
+     */
+    public function bindings(string $statement, int $end, Session $session): ?SqlError
+    {
+        if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            return null;
+        }
+        $semantics = $session->semantics();
+        try {
+            $tree = $semantics->parser()->parse(substr($statement, 0, $end));
+            $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
+        } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
+            return null;
+        }
+        foreach ($operation->facts->diagnostics as $problem) {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable) {
+                return (new RoutinePrefix())->database($statement, $end, $session)
+                    ?? (new \MySqlMemory\Session\CacheOptions())->undeclared((new \MySqlMemory\Session\Problem\Errors())->error($problem, $session), $statement, $session);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Selects commands whose completed prefixes can reject later malformed input.
      *
      * @param list<Token> $tokens The input statement tokens
