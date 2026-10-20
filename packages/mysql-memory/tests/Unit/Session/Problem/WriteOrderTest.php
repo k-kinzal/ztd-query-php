@@ -40,7 +40,7 @@ final class WriteOrderTest extends TestCase
 
         (new WriteOrder($locator))->update($statement);
 
-        self::assertSame([['where clause', [1, 1]], ['field list', [2, 0, 0]], ['field list', [2, 1, 0]], ['order clause', [6, 0, 0]]], array_values($locator->places));
+        self::assertSame([['where clause', [3, 1]], ['field list', [5, 0]], ['field list', [6, 0]], ['order clause', [7, 0, 0]]], array_values($locator->places));
     }
 
     public function testValuesLocatesTheFirstRowBeforeTheColumnsInMySql56(): void

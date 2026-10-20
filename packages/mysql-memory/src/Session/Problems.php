@@ -101,18 +101,7 @@ final class Problems
         (new Problem\IndexHints())->check($operation->statement, $this->reached($operation->statement), $session);
         (new Problem\Delayed())->check($operation->statement, $session);
         $this->resolution($operation, $session, $diagnostics);
-        [$located, $matched] = (new Locations())->located($operation, $calls, $diagnostics, $session);
-        $this->unlocated($diagnostics, $located, $session, $operation->statement);
-        $first = Locations::first($located);
-        if ($first !== null) {
-            throw (new Errors())->located($first[0], $first[1][0], isset($matched[spl_object_id($first[0])]), $session, $operation->statement);
-        }
-        foreach ($calls as $call) {
-            throw (new \MySqlMemory\Command\Replication\PurgeErrors())->prepared((new Errors())->routine($call, $session), $operation->statement, $call->schema !== null || $session->variables->database !== '');
-        }
-        foreach ($diagnostics as $diagnostic) {
-            throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
-        }
+        (new Problem\Location\Conditions())->check($operation, $session, $calls, $diagnostics, $prepared);
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : $operation->statement);
         }

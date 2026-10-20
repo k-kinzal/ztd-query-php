@@ -65,7 +65,7 @@ final class LocatorTest extends TestCase
         $locator = (new Locator())->statement($session->analyze('UPDATE t SET a = b WHERE c = 1 ORDER BY a')->statement);
 
         self::assertSame(['c', 'a', 'b', 'a'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
-        self::assertSame([['where clause', [1, 1]], ['field list', [2, 0, 0]], ['field list', [2, 1, 0]], ['order clause', [6, 0, 0]]], array_values($locator->places));
+        self::assertSame([['where clause', [3, 1]], ['field list', [5, 0]], ['field list', [6, 0]], ['order clause', [7, 0, 0]]], array_values($locator->places));
     }
 
     public function testStatementLocatesTheNamesOfAnInsertInTheOrderTheServerResolvesThem(): void

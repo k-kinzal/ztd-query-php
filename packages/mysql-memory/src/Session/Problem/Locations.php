@@ -63,9 +63,9 @@ final class Locations
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
      * @return array{array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
-    public function located(Operation|QueryPreparation $operation, array $calls, array $diagnostics, Session $session): array
+    public function located(Operation|QueryPreparation $operation, array $calls, array $diagnostics, Session $session, bool $prepared = false): array
     {
-        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release()))->statement($operation->statement);
+        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release(), $prepared))->statement($operation->statement);
         [$located, $matched] = $this->names($operation, $locator, $calls, $diagnostics);
         $located = (new Location\Calls())->located($locator, $session, $located);
         foreach ($locator->arrays as [$cast, $clause, $at]) {
@@ -73,6 +73,7 @@ final class Locations
             $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
         }
         $located = (new Location\Owned())->located($locator, $diagnostics, $located);
+        $located = (new Location\WriteFunctions())->located($operation->statement, $locator, $located);
         $located = $this->defaults($operation, $locator, $session, $located);
         $located = $this->wildcards($locator, $diagnostics, $located);
         $located = $this->stars($operation, $locator, $diagnostics, $located);

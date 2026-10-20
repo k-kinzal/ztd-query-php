@@ -31,6 +31,16 @@ use SqlSemantics\Statement\Node;
 final class WriteOrder
 {
     /**
+     * Initial destination binding in a legacy multiple-table UPDATE.
+     */
+    public const UPDATE_DESTINATIONS = 1;
+
+    /**
+     * Assignment values, including their nested subqueries.
+     */
+    public const UPDATE_VALUES = 6;
+
+    /**
      * @param Locator $locator The locator that records the names
      */
     public function __construct(public readonly Locator $locator)
@@ -67,13 +77,21 @@ final class WriteOrder
     }
 
     /**
-     * Locates the names of an UPDATE: WHERE, the assignments, then ORDER BY.
+     * Locates each UPDATE role at its release-specific preparation phase.
      */
     public function update(Update $statement): void
     {
-        $this->locator->visit($statement->where, 'where clause', [1]);
-        $this->locator->assignments($statement->assignments, [2]);
-        $this->locator->visit($statement->orderBy, 'order clause', [6]);
+        $legacy = in_array($this->locator->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $multiple = count((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($statement->tables)) > 1;
+        $relations = new \MySqlMemory\Session\FromClause($this->locator);
+        foreach ($statement->tables as $index => $table) {
+            $relations->derived($table, [0, $index]);
+            $relations->conditions($table, [2, $index]);
+        }
+        $this->locator->visit($statement->where, 'where clause', [3]);
+        $this->locator->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->assignments), 'field list', $legacy && $multiple ? [self::UPDATE_DESTINATIONS, 0] : [5]);
+        $this->locator->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->assignments), 'field list', $multiple && $this->locator->prepared && $this->locator->release === GrammarRelease::MySql5744 ? [self::UPDATE_DESTINATIONS, 1] : [self::UPDATE_VALUES]);
+        $this->locator->visit($statement->orderBy, 'order clause', [$legacy ? 4 : 7]);
     }
 
     /**

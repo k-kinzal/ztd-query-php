@@ -128,9 +128,10 @@ final class Locator
 
     /**
      * @param bool $operandFirst Whether the operand of IN, ANY and ALL over a subquery is resolved before the subquery, and the width of the subquery checked after both, as MySQL 8.0 does
-     * @param \SqlSemantics\Contract\GrammarRelease $release The release whose order an INSERT is resolved in
+     * @param \SqlSemantics\Contract\GrammarRelease $release The release whose preparation order is used
+     * @param bool $prepared Whether names are bound for a prepared statement
      */
-    public function __construct(public readonly bool $operandFirst = false, public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847)
+    public function __construct(public readonly bool $operandFirst = false, public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847, public readonly bool $prepared = false)
     {
     }
 

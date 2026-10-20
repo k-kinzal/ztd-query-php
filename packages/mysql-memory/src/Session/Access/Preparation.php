@@ -49,6 +49,7 @@ final class Preparation
             $application->report($session);
             (new Problems())->raise($operation, $session, true);
         } catch (SqlError $error) {
+            $error = (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $session->settings()->release());
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
             }
