@@ -46,4 +46,21 @@ final class SyntaxParametersTest extends TestCase
 
         self::assertSame([], $notices);
     }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerTypeBoundaries(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.4.7', 'mysql-9.1.0'] as $release) {
+            yield $release => [$release, 'CREATE FUNCTION d.f(a TIMESTAMP(7459), b NCHAR) RETURNS LONG VARCHAR COLLATE missing_collation ITERATE missing_label'];
+        }
+    }
+
+    #[DataProvider('providerTypeBoundaries')]
+    public function testCompletedPreservesTheFirstParameterTypeBeforeLaterWarningsAndRefusals(string $release, string $sql): void
+    {
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser($release), $sql, strlen($sql), new LanguageProfile(GrammarRelease::from($release)));
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision, '', 7459, 6), true)], array_column($notices, 1));
+    }
+
 }
