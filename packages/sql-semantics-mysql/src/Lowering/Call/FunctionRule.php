@@ -282,6 +282,18 @@ final class FunctionRule
     }
 
     /**
+     * @return list<int>|null The subject followed by the removed operand, or null for another call
+     */
+    public function trimOrder(Form $form): ?array
+    {
+        if (!isset(self::TRIMS[$form->signature])) {
+            return null;
+        }
+        [, $removed, $subject] = self::TRIMS[$form->signature];
+        return $removed === null ? [$subject] : [$subject, $removed];
+    }
+
+    /**
      * Retains both TRIM roles before checking their scalar interpretation.
      */
     public function trim(Form $form, int $subject, ?TrimSide $side, ?int $removed): Trim|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim

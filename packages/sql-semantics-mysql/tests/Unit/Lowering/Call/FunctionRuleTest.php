@@ -25,6 +25,19 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Small]
 final class FunctionRuleTest extends TestCase
 {
+    public function testTrimOrderNamesTheSubjectBeforeItsRemovedOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new FunctionRule($lowering);
+        $tree = $platform->parser($profile)->parse("SELECT TRIM('x' FROM 'xy'), TRIM('x'), TRIM(BOTH FROM 'x'), LEFT('x',1)");
+        self::assertSame([4, 2], $rule->trimOrder($lowering->form($tree->find('function_call_keyword')[0])));
+        self::assertSame([2], $rule->trimOrder($lowering->form($tree->find('function_call_keyword')[1])));
+        self::assertSame([4], $rule->trimOrder($lowering->form($tree->find('function_call_keyword')[2])));
+        self::assertNull($rule->trimOrder($lowering->form($tree->find('function_call_keyword')[3])));
+    }
+
     public function testTrimRetainsBothOperandRoles(): void
     {
         $platform = new Platform();

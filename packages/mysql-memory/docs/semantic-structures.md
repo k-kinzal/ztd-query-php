@@ -20,6 +20,22 @@ the witness. A later error remains visible for separate classification. These
 histories do not label unrelated matching errors as state-dependent or certify
 that all constructible values have been exercised.
 
+Catalog histories also establish missing foreign-server entries and open handler
+cursors under the original referenced names. Handler fixtures contain four rows
+and an index with enough columns for the original seek. The repeated read keeps
+its predicate, key operands and limit, so an empty table cannot hide those
+expressions. Subsequent missing-column, key or value errors remain observations
+to explain; creating the cursor does not certify every later operand.
+
+Temporal input interpretation consumes decoded literal and variable operands
+from SQL Semantics in their contextual order. The input adapter retains view
+context and input ranges only while reading the statement. A refused temporal
+literal is a typed input diagnostic, not an ordinary scalar. Variable names,
+scopes and deprecation notices use the same semantic rules as ordinary reads;
+runtime calendar modes and time zones remain the consumer's responsibility.
+Neither the planning input nor the published semantic value retains the parser
+tree used by this adapter.
+
 Before choosing a nested type, the generator checks whether its constructor types admit a value within the remaining depth. Interface choices and constructors that require nested objects sample a depth from the type-admissible range, including the maximum: recursive types can produce small inhabitants without always expanding every operand to the full limit. Nullable values, empty collections and default arguments provide terminating alternatives. The selected root can use the shared 10,000-attempt cap. Each nested constructor retains a smaller depth-dependent cap that includes its descendants, preventing one nested alternative from taking the entire root search budget. These bounds inspect types only; they do not inspect SQL diagnostics or execution outcomes. A selected root is never replaced by a different root when generation fails.
 
 A rejected constructor keeps its completed arguments so the next trial can resample one argument instead of rebuilding unrelated children. Under a repeated invariant, the argument positions are visited in order so that no slot is starved by random selection. Repeated rejection by the same invariant switches that candidate to complete resampling until the rejected constraint changes. The invariant is identified by its constructor type and check call site, rather than a message containing generated names. Detailed messages remain in the rejection report. Both strategies use the same shared attempt cap. They inspect constructor types and invariant refusals only; they do not use MySQL outcomes to choose or discard values. Exhaustion remains a failure. The bounded search can still exhaust; neither a passing inventory run nor a repaired seed establishes that every random construction search will finish.

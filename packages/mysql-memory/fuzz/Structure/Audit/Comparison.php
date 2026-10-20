@@ -136,7 +136,7 @@ final class Comparison
     }
 
     /**
-     * Repeats an unchanged structure after establishing the session object it needs.
+     * Repeats an unchanged structure after establishing its session or catalog dependency.
      * Setup errors and differences remain failures; a later target error remains
      * visible for separate classification.
      *
@@ -149,6 +149,9 @@ final class Comparison
         $error = $before['error'] ?? null;
         $code = is_array($error) ? $error[0] ?? null : null;
         $steps = is_int($code) ? (new SessionHistory())->steps($node, $code) : [];
+        if ($steps === [] && is_int($code)) {
+            $steps = (new CatalogHistory())->steps($node, $code);
+        }
         if ($steps === []) {
             return [];
         }

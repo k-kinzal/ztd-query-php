@@ -29,6 +29,25 @@ final class TemporalInputTest extends TestCase
         yield 'assignment after literal' => ["SELECT DATE 'text', @a:=1", [1287, 1525]];
     }
 
+    public function testLiteralAppliesRuntimeCalendarModesToDecodedText(): void
+    {
+        $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, '2026-02-31');
+        self::assertSame(1525, (new TemporalInput())->literal($literal, new \MySqlMemory\Session\SqlModes([]))?->getCode());
+        self::assertNull((new TemporalInput())->literal($literal, new \MySqlMemory\Session\SqlModes(['ALLOW_INVALID_DATES'])));
+    }
+
+    public function testVariableUsesSemanticNameAndScopeResolution(): void
+    {
+        $input = new TemporalInput();
+        $modern = (new Instance('8.4.7'))->connect();
+        $unknown = new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('missing'));
+        $scope = new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('max_connections'), \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session);
+        self::assertSame(1193, $input->variable($unknown, $modern)?->getCode());
+        self::assertSame(1238, $input->variable($scope, $modern)?->getCode());
+        self::assertNull($input->variable($scope, (new Instance('5.7.44'))->connect()));
+        self::assertNull($input->variable(new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('sql_mode')), $modern));
+    }
+
     public function testNoticesKeepsOperatorWarningsBeforeARefusedCast(): void
     {
         $session = (new Instance())->connect();
@@ -61,6 +80,15 @@ final class TemporalInputTest extends TestCase
         $session->run("SELECT DATE 'text', 1 COLLATE missing");
 
         self::assertSame([1525], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testLegacyResolvesACompletedVariableBeforeInvalidSyntax(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $node = $session->semantics()->parser()->parse('SELECT @@missing')->find('variable_aux')[0];
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1193);
+        (new TemporalInput())->legacy($node, $session);
     }
 
     public function testBeforeFindsACompletedLegacyLiteralBeforeInvalidSyntax(): void

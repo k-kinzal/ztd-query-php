@@ -37,8 +37,9 @@ final class TemporalInput
      */
     public function check(Node $tree, string $statement, int $end, Session $session): void
     {
+        $contextual = [];
         try {
-            (new Syntax(Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement, $end);
+            (new Syntax(Charset::named((string) $session->variables->read('character_set_client'))))->temporals($tree, $session->modes(), $session, $statement, $end, $contextual);
         } catch (SqlError $failure) {
             $parser = $session->semantics()->parser();
             Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
@@ -57,8 +58,52 @@ final class TemporalInput
                 }
                 throw $failure;
             }
-            throw (new ModernWarnings())->recorded(array_column($notices, 1), $failure, $session);
+            throw (new ModernWarnings())->recorded([...array_column($notices, 1), ...$contextual], $failure, $session);
         }
+    }
+
+    /**
+     * Interprets a decoded temporal value under the current runtime modes and zone.
+     */
+    public function literal(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral|\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral $literal, \MySqlMemory\Session\SqlModes $modes, ?Session $session = null): ?SqlError
+    {
+        $form = $literal->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $literal->form->value;
+        $text = $literal->text;
+        $value = $form === 'DATETIME'
+            ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) ($session?->variables->read('time_zone') ?? 'SYSTEM'), $modes->release) ?? \MySqlMemory\Value\Zone::utc()))
+            : \MySqlMemory\Value\Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
+        if ($value !== null) {
+            return null;
+        }
+        return $form === 'DATETIME' ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($text, $modes) : \MySqlMemory\Error\Family\DataError::WrongValue->error($form, substr($text, 0, 128));
+    }
+
+    /**
+     * Resolves a decoded variable read before a later temporal value is interpreted.
+     * Legacy releases defer scope misuse until ordinary expression preparation.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $notices Contextual warnings reached before a later refusal
+     */
+    public function variable(\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable $variable, Session $session, array &$notices = [], bool $view = false): ?SqlError
+    {
+        if ($view) {
+            return \MySqlMemory\Error\Family\SchemaError::ViewSelectVariable->error();
+        }
+        if ($variable instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable) {
+            return null;
+        }
+        $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context([], session: $session->resolution()));
+        $variable->deriveScalar($derivation, $derivation->environment());
+        foreach ($derivation->facts()->warnings as $warning) {
+            Check::invariant($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation, 'System-variable warnings describe deprecated names.');
+            $notices[] = $warning;
+        }
+        foreach ($derivation->facts()->diagnostics as $problem) {
+            if (!$session->settings()->legacy() || !$problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse) {
+                return (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+            }
+        }
+        return null;
     }
 
     /**
@@ -80,6 +125,28 @@ final class TemporalInput
     }
 
     /**
+     * Interprets a completed legacy value before a later grammar refusal.
+     *
+     * @throws SqlError When a completed temporal or variable operand is refused
+     */
+    public function legacy(Node $node, Session $session): void
+    {
+        $client = Charset::named((string) $session->variables->read('character_set_client'));
+        if ($node->name === 'temporal_literal') {
+            (new Syntax($client))->temporals($node, $session->modes());
+            return;
+        }
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\Expression\ContextualReading())->read($node, $session->semantics()->profile(), $client) as [, , $value]) {
+            if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
+                $failure = $this->variable($value, $session);
+                if ($failure !== null) {
+                    throw $failure;
+                }
+            }
+        }
+    }
+
+    /**
      * Finds a literal refusal interpreted before a later syntax failure.
      *
      * MySQL 5.6 interprets individual literals during parsing. MySQL 5.7 also
@@ -91,7 +158,7 @@ final class TemporalInput
     public function before(string $statement, int $end, Session $session): ?array
     {
         $legacy = $session->settings()->release() === GrammarRelease::MySql5651;
-        $kinds = $legacy ? ['temporal_literal'] : ($session->settings()->legacy() ? ['statement', 'sp_proc_stmt', 'ev_sql_stmt_inner'] : ['sp_proc_stmt', 'ev_sql_stmt_inner']);
+        $kinds = $legacy ? ['temporal_literal', 'variable_aux'] : ($session->settings()->legacy() ? ['statement', 'sp_proc_stmt', 'ev_sql_stmt_inner'] : ['sp_proc_stmt', 'ev_sql_stmt_inner']);
         $parser = $session->semantics()->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         $found = null;
@@ -102,7 +169,7 @@ final class TemporalInput
                 }
                 try {
                     if ($legacy) {
-                        (new Syntax(Charset::named((string) $session->variables->read('character_set_client'))))->temporals($node, $session->modes());
+                        (new self())->legacy($node, $session);
                     } else {
                         (new self())->check($node, $statement, $lookahead->offset, $session);
                     }

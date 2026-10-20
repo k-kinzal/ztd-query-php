@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Value\Temporal;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
@@ -146,32 +144,38 @@ final class Syntax
      * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html.
      *
      * @throws SqlError When a temporal literal holds no value of its form
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> $contextual Warnings from contextual operands before the refusal
      */
-    public function temporals(Node $tree, SqlModes $modes, ?Session $session = null, string $statement = '', int $end = PHP_INT_MAX): void
+    public function temporals(Node $tree, SqlModes $modes, ?Session $session = null, string $statement = '', int $end = PHP_INT_MAX, array &$contextual = []): void
     {
-        foreach ($tree->find('temporal_literal') as $literal) {
-            $tokens = $literal->tokens();
-            if (count($tokens) !== 2 || $tokens[0]->offset >= $end) {
+        if ($tree->find('temporal_literal') === []) {
+            return;
+        }
+        $profile = $session?->semantics()->profile() ?? new \SqlSemantics\Contract\LanguageProfile($modes->release, new \SqlSemantics\Contract\LexicalSettings(\SqlSemantics\Platform\MySql\Mode::fromString($modes->toString())->toString()));
+        $earlier = null;
+        $earlierAt = null;
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\Expression\ContextualReading())->read($tree, $profile, $this->client) as [$start, $finish, $operand, $view]) {
+            if ($start >= $end) {
                 continue;
             }
-            $form = match ($tokens[0]->name) {
-                'DATE_SYM' => 'DATE',
-                'TIME_SYM' => 'TIME',
-                default => 'DATETIME',
-            };
-            $text = $this->unquote($tokens[1]->text, !$modes->has('NO_BACKSLASH_ESCAPES'));
-            $value = $form === 'DATETIME' ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) ($session?->variables->read('time_zone') ?? 'SYSTEM'), $modes->release) ?? \MySqlMemory\Value\Zone::utc())) : Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
-            if ($value === null) {
-                $prefix = $session === null ? null : (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $tokens[1]->end() + 1, $session->semantics()->profile());
+            if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable) {
+                $earlier ??= $session === null ? null : (new Parse\TemporalInput())->variable($operand, $session, $contextual, $view);
+                $earlierAt ??= $earlier === null ? null : $start;
+                continue;
+            }
+            $error = (new Parse\TemporalInput())->literal($operand, $modes, $session);
+            if ($error !== null) {
+                $prefix = $session === null ? null : (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $finish + 1, $session->semantics()->profile());
                 if ($prefix !== null && !$prefix->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
                     throw (new Problem\Errors())->error($prefix->problem, $session);
                 }
-                $error = $form === 'DATETIME' ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($text, $modes) : DataError::WrongValue->error($form, substr($text, 0, 128));
+                $error = ($session === null ? null : (new Parse\Definition\DefinitionPrefix())->database($statement, $finish, $session)) ?? $earlier ?? $error;
                 if ($session === null || !$session->settings()->legacy()) {
                     throw $error;
                 }
-                $variable = $this->variable($tree, $tokens[0]->offset, $session->program);
-                throw $variable === null ? (new CacheOptions())->literal($error, $tokens[0]->offset, $statement, $session) : (new CacheOptions())->undeclared(\MySqlMemory\Error\Family\ProgramError::UndeclaredVariable->error($variable), $statement, $session);
+                $start = $earlierAt ?? $start;
+                $variable = $this->variable($tree, $start, $session->program);
+                throw $variable === null ? (new CacheOptions())->literal($error, $start, $statement, $session) : (new CacheOptions())->undeclared(\MySqlMemory\Error\Family\ProgramError::UndeclaredVariable->error($variable), $statement, $session);
             }
         }
     }

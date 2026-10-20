@@ -26,6 +26,12 @@ final class StructureSessionTransitionTest extends TestCase
         $name = new Name("state ' あ");
         $xid = new M\Server\Transaction\Xa\Xid(new M\Literal\Text("state ' あ"), new M\Literal\Text('branch'), new M\Literal\Numeral('7'));
         $structures = [
+            [new M\Dml\Handler\HandlerClose($name), 1109],
+            [new M\Dml\Handler\HandlerScan(new M\Dml\Handler\OpenHandler($name), M\Dml\Handler\ScanDirection::First), 1109],
+            [new M\Dml\Handler\HandlerIndexRead(new M\Dml\Handler\OpenHandler($name), new Name('PRIMARY'), M\Dml\Handler\IndexDirection::Last), 1109],
+            [new M\Dml\Handler\HandlerIndexSeek(new M\Dml\Handler\OpenHandler($name), new Name('key_b'), M\Dml\Handler\KeyComparison::GreaterOrEqual, [new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('1')]), 1109],
+            [new M\Server\ForeignServer\AlterServer($name, [new M\Server\ForeignServer\ServerOption(M\Server\ForeignServer\ServerOptionKind::User, new M\Literal\Text('reader'))]), 1477],
+            [new M\Server\ForeignServer\DropServer(false, $name), 1477],
             [new M\Dml\Prepared\Execute($name, [new M\Variable\UserVariable(new Name('a')), new M\Variable\UserVariable(new Name('b'))]), 1243],
             [new M\Dml\Prepared\Deallocate($name), 1243],
             [new M\Server\Transaction\ReleaseSavepoint($name), 1305],
