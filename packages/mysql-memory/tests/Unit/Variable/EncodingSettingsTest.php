@@ -18,6 +18,32 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 #[Small]
 final class EncodingSettingsTest extends TestCase
 {
+    public function testAssignedKeepsGlobalPairsAndSessionStateSeparate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET GLOBAL collation_connection=latin1_bin');
+        self::assertSame('latin1', $session->instance->globals->values['character_set_connection']);
+        self::assertSame('latin1_bin', $session->instance->globals->values['collation_connection']);
+        self::assertSame('utf8mb4_0900_ai_ci', $session->variables->read('collation_connection'));
+        $session->query('SET character_set_connection=latin1');
+        self::assertSame('latin1_swedish_ci', $session->variables->read('collation_connection'));
+        $session->query('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
+        self::assertSame('utf8mb4_bin', $session->variables->read('collation_connection'));
+        self::assertSame('utf8mb4', $session->variables->read('character_set_connection'));
+    }
+
+    public function testAssignedDoesNotPublishPersistOnlyCompanionValues(): void
+    {
+        $session = (new Instance())->connect();
+        $before = $session->instance->globals->values;
+        $session->query('SET PERSIST_ONLY collation_connection=latin1_bin');
+        self::assertSame($before, $session->instance->globals->values);
+        self::assertSame('latin1_bin', $session->instance->globals->persisted['collation_connection']);
+        $session->query('SET PERSIST collation_connection=latin1_bin');
+        self::assertSame('latin1', $session->instance->globals->values['character_set_connection']);
+        self::assertSame('latin1_bin', $session->instance->globals->values['collation_connection']);
+    }
+
     public function testNameResolvesIntegerIdsWithoutChangingWrittenAliases(): void
     {
         $session = (new Instance('8.4.7'))->connect();

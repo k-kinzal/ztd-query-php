@@ -8,6 +8,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
@@ -36,7 +37,10 @@ final class ConnectionEncoding
     }
 
     /**
-     * Installs the negotiated input, connection and result encodings.
+     * Installs changed negotiation settings. A handshake matching the inherited
+     * client character set's default collation preserves the global connection
+     * and result defaults, including NULL result conversion. Verified on isolated
+     * MySQL 5.6, 5.7, 8.0, 8.4 and 9.1 instances.
      */
     public function apply(Session $session, ?Collation $collation): void
     {
@@ -44,6 +48,10 @@ final class ConnectionEncoding
             return;
         }
         $release = $session->settings()->release();
+        $inherited = Charset::named((string) $session->variables->read('character_set_client'));
+        if ($inherited?->defaultCollation($release) === $collation) {
+            return;
+        }
         foreach (['character_set_client', 'character_set_connection', 'character_set_results'] as $name) {
             $session->variables->session[$name] = $collation->charset->nameIn($release);
         }

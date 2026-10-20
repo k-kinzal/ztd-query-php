@@ -79,7 +79,7 @@ final class Client
     public function greet(): void
     {
         $this->sequence = 0;
-        $connection = $this->instance->catalog->find('collation_connection');
+        $connection = $this->instance->catalog->find('collation_server');
         $collation = $connection === null ? null : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named((string) $this->instance->globals->value($connection));
         $this->packet($this->messages->handshake($this->instance->version, $this->id, random_bytes(20), 2, $collation->id ?? 255));
     }

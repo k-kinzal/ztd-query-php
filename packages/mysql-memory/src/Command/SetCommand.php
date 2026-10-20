@@ -182,8 +182,8 @@ final class SetCommand implements Command
             foreach (['character_set_client', 'character_set_results'] as $name) {
                 $assigner->assign($name, VariableScope::Session, $charset, $text);
             }
-            $assigner->assign('collation_connection', VariableScope::Session, $collation, $text);
             $assigner->assign('character_set_connection', VariableScope::Session, $connection, $text);
+            $assigner->assign('collation_connection', VariableScope::Session, $collation, $text);
             if ($item instanceof SetNames) {
                 $session->variables->resultsCollation = Collation::named($collation);
             }

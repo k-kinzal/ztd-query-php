@@ -85,6 +85,30 @@ final class EncodingSettings
     }
 
     /**
+     * Keeps connection, server and database character sets paired with their collation.
+     * Client and result encodings are independent. Both GLOBAL and SESSION updates
+     * retain the selected scope; assigning a charset selects its release default.
+     */
+    public function assigned(\MySqlMemory\Session\Variables $variables, string $variable, Scope $scope, string|int|null $value): void
+    {
+        $charset = str_starts_with($variable, 'character_set_');
+        $suffix = substr($variable, $charset ? 14 : 10);
+        if (!is_string($value) || !in_array($suffix, ['connection', 'server', 'database'], true) || (!$charset && !str_starts_with($variable, 'collation_'))) {
+            return;
+        }
+        $release = $this->context->modes->release;
+        $companion = $charset ? Charset::known($value)->defaultCollation($release)->nameIn($release) : Collation::known($value)->charset->nameIn($release);
+        $definition = $variables->catalog->find(($charset ? 'collation_' : 'character_set_') . $suffix);
+        if ($definition !== null) {
+            if ($scope === Scope::Global) {
+                $variables->globals->set($definition, $companion);
+            } else {
+                $variables->session[$definition->name] = $companion;
+            }
+        }
+    }
+
+    /**
      * Checks an explicit SET NAMES collation against the selected character set.
      */
     public function compatible(string $charset, string $collation): void

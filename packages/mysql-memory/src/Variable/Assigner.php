@@ -92,6 +92,7 @@ final class Assigner
                 $this->variables->set($alias, $checked);
             }
         }
+        (new EncodingSettings($this->context))->assigned($this->variables, $definition->name, $scope, $checked);
     }
 
     /**

@@ -24,6 +24,17 @@ final class ConnectionEncodingTest extends TestCase
         self::assertSame(Collation::known('utf8mb4_0900_ai_ci'), $encoding->collation(new Instance(), 255));
     }
 
+    public function testApplyPreservesInheritedDefaultsWhenClientNegotiationAgrees(): void
+    {
+        $session = (new Instance(globals: ['character_set_client' => 'utf8mb4', 'character_set_connection' => 'latin1', 'collation_connection' => 'latin1_bin', 'character_set_results' => null]))->connect();
+        $encoding = new ConnectionEncoding();
+        $encoding->apply($session, Collation::known('utf8mb4_0900_ai_ci'));
+        self::assertSame(['utf8mb4', 'latin1', null, 'latin1_bin'], array_map($session->variables->read(...), ['character_set_client', 'character_set_connection', 'character_set_results', 'collation_connection']));
+        self::assertNull($session->variables->resultsCollation);
+        $encoding->apply($session, Collation::known('utf8mb4_general_ci'));
+        self::assertSame(['utf8mb4', 'utf8mb4', 'utf8mb4', 'utf8mb4_general_ci'], array_map($session->variables->read(...), ['character_set_client', 'character_set_connection', 'character_set_results', 'collation_connection']));
+    }
+
     public function testApplyInstallsTheNegotiatedSetsWithoutAQuerySideEffect(): void
     {
         $session = (new Instance('5.7.44'))->connect();
