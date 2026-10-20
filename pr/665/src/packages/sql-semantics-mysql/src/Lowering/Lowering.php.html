@@ -390,18 +390,20 @@
 <span class="src-line" id="L340" data-diff="added"><a class="ln" href="#L340">340</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L341" data-diff="added"><a class="ln" href="#L341">341</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">inProgram</span>(?<span class="tok-id">\SqlSemantics\Statement\Identifier\QualifiedName</span> <span class="tok-var">$name</span>): <span class="tok-id">self</span></span>
 <span class="src-line" id="L342" data-diff="added"><a class="ln" href="#L342">342</a>    {</span>
-<span class="src-line" id="L343" data-diff="added"><a class="ln" href="#L343">343</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">self</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">productions</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">leaves</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">origins</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">client</span>, <span class="tok-var">$name</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">programName</span>);</span>
-<span class="src-line" id="L344" data-diff="same"><a class="ln" href="#L344">344</a>    }</span>
-<span class="src-line" id="L345" data-diff="same"><a class="ln" href="#L345">345</a></span>
-<span class="src-line" id="L346" data-diff="same"><a class="ln" href="#L346">346</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L347" data-diff="same"><a class="ln" href="#L347">347</a><span class="tok-com">     * Answers the typed view of the production a node matched.</span></span>
-<span class="src-line" id="L348" data-diff="same"><a class="ln" href="#L348">348</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L349" data-diff="same"><a class="ln" href="#L349">349</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">form</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-id">Form</span></span>
-<span class="src-line" id="L350" data-diff="same"><a class="ln" href="#L350">350</a>    {</span>
-<span class="src-line" id="L351" data-diff="same"><a class="ln" href="#L351">351</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">productions</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$node</span>);</span>
-<span class="src-line" id="L352" data-diff="same"><a class="ln" href="#L352">352</a>    }</span>
-<span class="src-line" id="L353" data-diff="same"><a class="ln" href="#L353">353</a>}</span>
-<span class="src-line" id="L354" data-diff="same"><a class="ln" href="#L354">354</a></span>
+<span class="src-line" id="L343" data-diff="added"><a class="ln" href="#L343">343</a>        <span class="tok-var">$lowering</span> = <span class="tok-kw">new</span> <span class="tok-id">self</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">productions</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">leaves</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">origins</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">client</span>, <span class="tok-var">$name</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">programName</span>);</span>
+<span class="src-line" id="L344" data-diff="added"><a class="ln" href="#L344">344</a>        <span class="tok-var">$lowering</span>-&gt;<span class="tok-id">hints</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">hints</span>;</span>
+<span class="src-line" id="L345" data-diff="added"><a class="ln" href="#L345">345</a>        <span class="tok-kw">return</span> <span class="tok-var">$lowering</span>;</span>
+<span class="src-line" id="L346" data-diff="same"><a class="ln" href="#L346">346</a>    }</span>
+<span class="src-line" id="L347" data-diff="same"><a class="ln" href="#L347">347</a></span>
+<span class="src-line" id="L348" data-diff="same"><a class="ln" href="#L348">348</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L349" data-diff="same"><a class="ln" href="#L349">349</a><span class="tok-com">     * Answers the typed view of the production a node matched.</span></span>
+<span class="src-line" id="L350" data-diff="same"><a class="ln" href="#L350">350</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L351" data-diff="same"><a class="ln" href="#L351">351</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">form</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): <span class="tok-id">Form</span></span>
+<span class="src-line" id="L352" data-diff="same"><a class="ln" href="#L352">352</a>    {</span>
+<span class="src-line" id="L353" data-diff="same"><a class="ln" href="#L353">353</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">productions</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$node</span>);</span>
+<span class="src-line" id="L354" data-diff="same"><a class="ln" href="#L354">354</a>    }</span>
+<span class="src-line" id="L355" data-diff="same"><a class="ln" href="#L355">355</a>}</span>
+<span class="src-line" id="L356" data-diff="same"><a class="ln" href="#L356">356</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
