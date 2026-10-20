@@ -346,4 +346,11 @@ final class GenerationsTest extends TestCase
         $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
         $construct();
     }
+    public function testOrdinaryLeavesDeferredTypeOperandsOutsideTheStatementRole(): void
+    {
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Time, '7');
+        (new Generations())->ordinary($type);
+        (new Generations())->ordinary(new NumberLiteral('1'));
+        self::assertSame('7', $type->precision);
+    }
 }

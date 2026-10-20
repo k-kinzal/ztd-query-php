@@ -69,8 +69,8 @@ final class SyntaxColumns
                 $lowering->tableChanges->statement($node);
             }
         } catch (RejectedInput $failure) {
-            return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
-                ? new ParseFailure($failure->problem, $failure->aborts) : null;
+            return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
+                ? new ParseFailure($failure->problem, $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $failure->aborts) : null;
         } catch (\SqlSemantics\Diagnostic\AnalysisException) {
             // Other refusals retain their own declaration and notice boundaries.
         }

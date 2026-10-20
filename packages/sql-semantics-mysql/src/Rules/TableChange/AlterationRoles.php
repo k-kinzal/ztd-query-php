@@ -22,7 +22,8 @@ final class AlterationRoles
      */
     public function deferred(array $commands): bool
     {
-        return $this->invalidValidation($commands)
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($commands) !== null
+            || $this->invalidValidation($commands)
             || array_filter($commands, static fn (A\AlterCommand $command): bool => $command instanceof DeferredDefaultSetting) !== []
             || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->commands($commands);
     }

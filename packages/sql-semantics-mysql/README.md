@@ -491,6 +491,17 @@ of the rejected input, including a stored-program statement's stopping boundary.
 
 See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.
 
+Ordinary statement constructors reject declared sizes that exceed the fixed
+bounds of every supported release, such as `DATETIME(7)`, `BIT(65)` and
+`DECIMAL(66,31)`. The check includes routine parameters, return types, local
+variables and declarations in unused branches. Raw type operands remain
+available to describe rejected input; they do not become an ordinary statement.
+SQL input raises `RejectedInput` with an `InvalidTypeSize` diagnostic, retaining
+its declaration name and default-database dependency. Release-specific cases
+such as `BIT(0)`, accepted by MySQL 5.6, remain representable and are resolved
+against the selected release. These checks do not inspect a catalog or certify
+whether a statement will execute successfully.
+
 `Statement\Routine\Condition\SqlState` accepts quoted values containing five uppercase letters or digits, excluding success class `00`. Invalid PHP construction raises `InvalidConstruction`. An invalid SQL operand such as `SIGNAL SQLSTATE '00000'` instead raises `SqlSemantics\Construction\RejectedInput`; its `problem` is a typed `ProgramProblem`, and `end` is the exclusive byte offset of the operand. No operation containing that invalid value is returned.
 
 Additional authentication factors use `Statement\Account\User\Factor`, whose cases are `Second` and `Third`. Registration and factor-change constructors accept this enum; factor changes also reject duplicates and adding the third factor before the second. Invalid SQL operands produce a typed input refusal during lowering instead of a statement that is intrinsically invalid. Account existence and installed authentication plugins remain execution-state concerns.

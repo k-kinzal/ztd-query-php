@@ -140,6 +140,13 @@ final class ColumnRule
      */
     public function compatible(TypeName $type, array $attributes, ?\SqlSemantics\Statement\Identifier\Name $name, Node $boundary): void
     {
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->type($type, $name->value ?? '');
+        if ($size !== null) {
+            $scope = $this->lowering->programName ?? $this->lowering->columnTable;
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($size->rule, $size->name, $size->actual, $size->maximum, $scope);
+            $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, $legacy);
+        }
         $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $attributes)[0] ?? null;
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute($name ?? new \SqlSemantics\Statement\Identifier\Name(''), $problem, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, true);

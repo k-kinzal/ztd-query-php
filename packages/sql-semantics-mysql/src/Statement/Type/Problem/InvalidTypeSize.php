@@ -27,8 +27,9 @@ final class InvalidTypeSize implements Diagnostic
      * @param string $name The column name, or an empty name for a routine type
      * @param int $actual The requested size
      * @param int $maximum The maximum accepted size
+     * @param \SqlSemantics\Statement\Identifier\QualifiedName|null $scope The table or program whose default database is required first
      */
-    public function __construct(public readonly TypeLimit $rule, public readonly string $name, public readonly int $actual = 0, public readonly int $maximum = 0)
+    public function __construct(public readonly TypeLimit $rule, public readonly string $name, public readonly int $actual = 0, public readonly int $maximum = 0, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $scope = null)
     {
     }
 

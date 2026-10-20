@@ -26,7 +26,6 @@ final class TypeLimitsTest extends TestCase
     public static function providerInvalidTypeSizes(): iterable
     {
         yield 'integer width' => ['INT(256)', TypeLimit::Width];
-        yield 'empty bit' => ['BIT(0)', TypeLimit::Empty];
         yield 'bit width' => ['BIT(65)', TypeLimit::Width];
         yield 'wide unsigned bit' => ['BIT(18446744073709551615)', TypeLimit::Width];
         yield 'wide decimal bit' => ['BIT(18446744073709551616)', TypeLimit::Width];
@@ -40,26 +39,52 @@ final class TypeLimitsTest extends TestCase
         yield 'binary length' => ['BINARY(256)', TypeLimit::Length];
     }
 
-    #[DataProvider('providerInvalidTypeSizes')]
-    public function testCheckSharesBoundsAcrossDeclarations(string $type, TypeLimit $rule): void
+    /**
+     * @return iterable<string, array{string, TypeLimit, string}>
+     */
+    public static function providerDeclarations(): iterable
+    {
+        foreach (self::providerInvalidTypeSizes() as $label => [$type, $rule]) {
+            yield $label . ' column' => ['CREATE TABLE t(a ' . $type . ')', $rule, 'a'];
+            yield $label . ' parameter' => ['CREATE PROCEDURE p(a ' . $type . ') SELECT 1', $rule, ''];
+            yield $label . ' return' => ['CREATE FUNCTION f() RETURNS ' . $type . ' RETURN 1', $rule, ''];
+            yield $label . ' alteration' => ['ALTER TABLE t ADD a ' . $type, $rule, 'a'];
+            yield $label . ' local' => ['CREATE PROCEDURE p() BEGIN DECLARE a ' . $type . '; END', $rule, ''];
+        }
+    }
+
+    #[DataProvider('providerDeclarations')]
+    public function testCheckSharesBoundsAcrossDeclarations(string $sql, TypeLimit $rule, string $name): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $column = $semantics->analyze('CREATE TABLE t(a ' . $type . ')')->facts->diagnostics[0];
-        $parameter = $semantics->analyze('CREATE PROCEDURE p(a ' . $type . ') SELECT 1')->facts->diagnostics[0];
-        $result = $semantics->analyze('CREATE FUNCTION f() RETURNS ' . $type . ' RETURN 1')->facts->diagnostics[0];
-        $altered = $semantics->analyze('ALTER TABLE t ADD a ' . $type)->facts->diagnostics[0];
-        $local = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE a ' . $type . '; END')->facts->diagnostics[0];
+        try {
+            $semantics->analyze($sql);
+            self::fail('An intrinsic size contradiction cannot publish a statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            $problem = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody ? $failure->problem->problem : $failure->problem;
+        }
+        self::assertInstanceOf(InvalidTypeSize::class, $problem);
+        self::assertSame([$rule, $name], [$problem->rule, $problem->name]);
+    }
 
-        self::assertInstanceOf(InvalidTypeSize::class, $column);
-        self::assertInstanceOf(InvalidTypeSize::class, $parameter);
-        self::assertInstanceOf(InvalidTypeSize::class, $result);
-        self::assertInstanceOf(InvalidTypeSize::class, $altered);
-        self::assertInstanceOf(InvalidTypeSize::class, $local);
-        self::assertSame([$rule, 'a'], [$column->rule, $column->name]);
-        self::assertSame([$rule, ''], [$parameter->rule, $parameter->name]);
-        self::assertSame([$rule, ''], [$result->rule, $result->name]);
-        self::assertSame([$rule, 'a'], [$altered->rule, $altered->name]);
-        self::assertSame([$rule, ''], [$local->rule, $local->name]);
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLegacyBitDeclarations(): iterable
+    {
+        yield 'column' => ['CREATE TABLE t(a BIT(0))', 'a'];
+        yield 'parameter' => ['CREATE PROCEDURE p(a BIT(0)) SELECT 1', ''];
+        yield 'return' => ['CREATE FUNCTION f() RETURNS BIT(0) RETURN 1', ''];
+        yield 'alteration' => ['ALTER TABLE t ADD a BIT(0)', 'a'];
+        yield 'local' => ['CREATE PROCEDURE p() BEGIN DECLARE a BIT(0); END', ''];
+    }
+
+    #[DataProvider('providerLegacyBitDeclarations')]
+    public function testCheckKeepsReleaseDependentBoundsInDerivation(string $sql, string $name): void
+    {
+        $problem = (new Semantics(Dialect::MySql))->analyze($sql)->facts->diagnostics[0];
+        self::assertInstanceOf(InvalidTypeSize::class, $problem);
+        self::assertSame([TypeLimit::Empty, $name], [$problem->rule, $problem->name]);
     }
 
     public function testCheckPlacesTheAbortingFailureBeforeLaterWarnings(): void

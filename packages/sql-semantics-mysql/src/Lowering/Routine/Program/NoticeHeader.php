@@ -85,6 +85,10 @@ final class NoticeHeader
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget($notice->problem->targets, $this->name), $notice->aborts, $notice->phase);
         }
+        if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize && $this->kind !== null) {
+            $problem = $notice->problem;
+            return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($problem->rule, $problem->name, $problem->actual, $problem->maximum, $this->name), $notice->aborts, $notice->phase);
+        }
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute($notice->problem->column, $notice->problem->attribute, $this->name), $notice->aborts, $notice->phase);
         }

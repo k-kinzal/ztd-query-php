@@ -53,9 +53,7 @@ final class Generations
      */
     public function check(Node $root): void
     {
-        if ($root instanceof \SqlSemantics\Statement\Statement || $root instanceof \SqlSemantics\Statement\Scalar) {
-            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles())->check($root);
-        }
+        $this->ordinary($root);
         $pending = [$root];
         $seen = new SplObjectStorage();
         $requirements = 0;
@@ -100,6 +98,17 @@ final class Generations
         }
         Check::input((new Signatures())->compatible($calls, $requirements, $transition, $spelling, $releases), 'Native signatures and grammar operands must share a supported language interpretation.');
         Check::input(!$namedParameters || $spelling === null || $spelling->parameters === ParameterStyle::Named, 'A named parameter cannot accompany a spelling that requires native parameters.');
+    }
+
+    /**
+     * Applies complete statement and scalar constraints to ordinary public roots.
+     */
+    public function ordinary(Node $root): void
+    {
+        if ($root instanceof \SqlSemantics\Statement\Statement || $root instanceof \SqlSemantics\Statement\Scalar) {
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles())->check($root);
+            Check::input((new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($root) === null, 'A statement excludes declared type sizes invalid in every supported release.');
+        }
     }
 
     /**

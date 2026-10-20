@@ -89,8 +89,10 @@ final class Errors
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
         $database = $session->variables->database;
-        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            return (new TypeErrors())->size($diagnostic, true);
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize) {
+            return $diagnostic->scope !== null && $diagnostic->scope->schema === null && $database === ''
+                ? QueryError::NoDatabase->error()
+                : (new TypeErrors())->size($diagnostic, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
         }
         if ($diagnostic instanceof TooBigPrecision && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return new SqlError(SchemaError::TooBigPrecision, sprintf("Too big precision %d specified for column '%s'. Maximum is %d.", $diagnostic->precision, $diagnostic->function, $diagnostic->maximum));

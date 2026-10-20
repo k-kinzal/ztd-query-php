@@ -75,8 +75,15 @@ final class VariableDeclarationTest extends TestCase
     }
     public function testDeriveRelationChecksTheTypeAfterDefaultNotices(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(256) DEFAULT !1; END');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(255) DEFAULT !1; END');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(Block::class, $operation->statement->body);
+        $original = $operation->statement->body->declarations[0];
+        self::assertInstanceOf(VariableDeclaration::class, $original);
+        $declaration = new VariableDeclaration($original->names, new Integral(IntegralKind::Int, '256'), default: $original->default);
+        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
+        $declaration->deriveRelation($derivation, $derivation->environment());
 
-        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", "Display width out of range for column '' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", "Display width out of range for column '' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $derivation->facts()->warnings));
     }
 }

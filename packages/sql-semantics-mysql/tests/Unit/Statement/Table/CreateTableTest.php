@@ -73,11 +73,15 @@ final class CreateTableTest extends TestCase
     {
         self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE InnoDB COMMENT \'x\' REPLACE AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
     }
-    public function testDeriveStatementOrdersNoticesBeforeTheTypeFailure(): void
+    public function testInputCompletionOrdersTypeNoticesBeforeTheRefusal(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT(11), b BIT(65) DEFAULT (!1), c INT(11))');
+        $semantics = new Semantics(Dialect::MySql);
+        $parser = $semantics->parser();
+        self::assertInstanceOf(\SqlParser\Parser\ReductionParser::class, $parser);
+        $sql = 'CREATE TABLE t(a INT(11), b BIT(65) DEFAULT (!1), c INT(11))';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $sql, strlen($sql), $semantics->profile());
 
-        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop ? $warning->name : ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated ? $warning->value : $warning->message()), array_column($notices, 1)));
     }
 
 }

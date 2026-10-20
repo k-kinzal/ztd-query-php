@@ -50,6 +50,10 @@ final class DefinitionBody
      */
     public function check(Node $body, ProgramKind $kind, QualifiedName $name, ?Account $definer, int $end, ?ParameterList $parameters = null, ?DeclaredName $returns = null, ?CollationName $collation = null, array $typeEnds = [], int $nameEnd = 0, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch $language = null, ?\SqlSemantics\Statement\Source\SourceMap $sources = null): void
     {
+        $type = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->declaration($body, $parameters, $returns);
+        if ($type !== null) {
+            throw new RejectedInput(new RefusedProgramBody($name, $kind, $type, $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, false);
+        }
         $locals = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
         $binding = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ConditionBindings())->find($body, $locals);
         if ($binding !== null) {
