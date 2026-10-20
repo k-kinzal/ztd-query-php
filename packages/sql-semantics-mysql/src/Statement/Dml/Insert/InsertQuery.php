@@ -57,6 +57,7 @@ final class InsertQuery implements Explainable
     {
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->hasDestination($source), 'An INSERT source supplies rows without an INTO result destination.');
         Check::input($this->values() !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($source) === null, 'An INSERT read source has coherent fixed columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

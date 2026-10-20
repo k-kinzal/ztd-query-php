@@ -33,4 +33,16 @@ final class ValueSourcesTest extends TestCase
         self::assertSame(M\Notice\Deprecated::Utf8Alias, $operation->facts->warnings[0]->construct);
     }
 
+
+    public function testHasDestinationSeparatesInsertRowsFromStatementOutput(): void
+    {
+        $values = new M\Query\ValuesQuery([new M\Query\ValueRow([])]);
+        $query = new M\Query\QueryStatement($values, into: new M\Query\Into\IntoDumpfile(new M\Literal\Text('f')), intoPosition: M\Query\Into\IntoPosition::AfterQuery);
+        self::assertTrue((new ValueSources())->hasDestination(new M\Query\ParenthesizedQuery($query)));
+        self::assertFalse((new ValueSources())->hasDestination($values));
+        $into = new M\Dml\Insert\InsertInto(false, null, false, new M\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+        $this->expectExceptionMessage('An INSERT source supplies rows without an INTO result destination.');
+        new M\Dml\Insert\InsertQuery($into, $query);
+    }
+
 }

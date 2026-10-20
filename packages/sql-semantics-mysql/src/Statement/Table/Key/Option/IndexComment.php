@@ -27,6 +27,7 @@ final class IndexComment implements IndexOption
      */
     public function __construct(public readonly Text $comment)
     {
+        \SqlSemantics\Diagnostic\Check::input($comment->radix === null, 'An index comment is a quoted text string.');
     }
 
     /**

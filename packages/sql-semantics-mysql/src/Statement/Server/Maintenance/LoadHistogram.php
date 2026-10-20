@@ -40,6 +40,7 @@ final class LoadHistogram implements Histogram
      */
     public function __construct(array $columns, public readonly Text $data)
     {
+        Check::input($data->radix === null, 'Histogram data is a quoted text string.');
         $this->columns = Check::listOf($columns, Name::class, 'A histogram request names at least one column.', 1);
     }
 

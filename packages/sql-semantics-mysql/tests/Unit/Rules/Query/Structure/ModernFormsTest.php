@@ -180,4 +180,15 @@ final class ModernFormsTest extends TestCase
         self::assertSame($modern, (new ModernForms())->enumeration($kind));
         self::assertSame($modern, (new ModernForms())->requires($kind));
     }
+
+    public function testAdministrationRetainsAdministrativeAndSizeReleaseBoundaries(): void
+    {
+        $forms = new ModernForms();
+        self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart()));
+        self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent([new \SqlSemantics\Platform\MySql\Statement\Literal\Text('component')])));
+        self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('b', true))));
+        self::assertFalse($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('11'))));
+        self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll(true, [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())])));
+    }
+
 }

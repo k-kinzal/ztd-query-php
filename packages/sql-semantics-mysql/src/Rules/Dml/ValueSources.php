@@ -30,6 +30,27 @@ final class ValueSources
         return $source instanceof ValuesQuery ? $source : null;
     }
     /**
+     * Finds result destinations on an INSERT source's query spine.
+     * Nested scalar subqueries and CTE definitions own their own query roles.
+     */
+    public function hasDestination(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $source): bool
+    {
+        if (($source instanceof QueryStatement || $source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) && $source->into !== null) {
+            return true;
+        }
+        if ($source instanceof QueryStatement || $source instanceof ParenthesizedQuery) {
+            return $this->hasDestination($source->query);
+        }
+        if ($source instanceof QueryExpression || $source instanceof ValuesClauses) {
+            return $this->hasDestination($source->body);
+        }
+        if ($source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation || $source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion) {
+            return $this->hasDestination($source->left) || $this->hasDestination($source->right);
+        }
+        return false;
+    }
+
+    /**
      * Derives unused operands while keeping syntax notices and withholding contextualization.
      *
      * @template T

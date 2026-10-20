@@ -40,6 +40,7 @@ final class Temporal implements DeclaredName
     {
         Check::input($precision === null || $kind !== TemporalKind::Date, 'DATE takes no precision.');
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
+        Check::input($precision === null || $kind === TemporalKind::Year || (new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($precision))->isIntegerToken(), 'A fractional seconds precision is a decimal NUM integer token.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
         Check::input($this->modifiers === [] || $kind === TemporalKind::Year, 'Only YEAR takes numeric attributes.');
     }

@@ -39,7 +39,7 @@ final class ModernForms
      */
     public function requires(object $value): bool
     {
-        return $value instanceof WithClause || $value instanceof WindowSpecification || $this->enumeration($value)
+        return $value instanceof WithClause || $value instanceof WindowSpecification || $this->enumeration($value) || $this->administration($value)
             || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockInstance::class, \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnVisibility::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction::class, \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption::class, \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || $this->definition($value)
             || match (true) {
@@ -58,6 +58,21 @@ final class ModernForms
                 default => in_array($value, [SetOperator::Intersect, SetOperator::Except], true),
             };
     }
+    /**
+     * Identifies administrative statements and operands added after legacy releases.
+     */
+    public function administration(object $value): bool
+    {
+        return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize => $value->number?->hexadecimal === true,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll => $value->ifExists || $value->ignoreUnknownUser,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallComponent => true,
+            default => false,
+        };
+    }
+
     /**
      * Distinguishes wrapped zero counts interpreted as defaults by modern releases.
      */

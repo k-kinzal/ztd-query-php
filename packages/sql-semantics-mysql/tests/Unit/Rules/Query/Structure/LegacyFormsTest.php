@@ -114,4 +114,13 @@ final class LegacyFormsTest extends TestCase
         self::assertFalse((new LegacyForms())->definition(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query, [new \SqlSemantics\Statement\Identifier\Name('a')])));
     }
 
+
+    public function testDefinitionRetainsLegacySetNamesCollationForms(): void
+    {
+        $forms = new LegacyForms();
+        $charset = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null);
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames($charset)));
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames($charset, new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_bin')))));
+    }
+
 }

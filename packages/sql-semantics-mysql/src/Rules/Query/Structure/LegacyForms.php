@@ -71,6 +71,7 @@ final class LegacyForms
     {
         return match (true) {
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRevokePrivileges => (new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RevokeScopes())->globalAll($value->privileges, $value->kind, $value->level),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames => $value->collation !== null && ($value->charset->name === null || $value->collation->name === null),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnName => $value->table !== null || $value->dot === OptionalWords::Written,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition => \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns::explicit($value->columns) !== null,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram => $value->legacyName(),
