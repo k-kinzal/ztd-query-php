@@ -34,6 +34,10 @@ final class Requests
         if ($problem !== null) {
             $derivation->report($problem);
         }
+        $shape = (new Shapes())->problem($statement->kind, $statement->parts);
+        if ($shape !== null) {
+            $derivation->report($shape);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($statement->options, $derivation);
         $targets = new TableTargets();
         $fact = $derivation->relation($statement, $derivation->environment());

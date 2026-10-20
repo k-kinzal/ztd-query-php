@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Session\Problem\Definition;
 
 use MySqlMemory\Error\Family\SchemaError;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName;
 use SqlSemantics\Statement\Fact\Facts;
@@ -60,11 +61,16 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When an added index name or key column is invalid
      */
-    public function alter(\MySqlMemory\Command\Definition\TableLayout $layout, Facts $facts): void
+    public function alter(\MySqlMemory\Command\Definition\TableLayout $layout, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB'): void
     {
         $columns = array_map(static fn (array $column): string => mb_strtolower($column[0]->name->column->value), $layout->columns);
         $indexes = array_values(array_filter(array_map(static fn (array $key): ?IndexDefinition => $key[1] === null && $key[0] instanceof IndexDefinition ? $key[0] : null, $layout->keys)));
-        $this->columns($indexes, $columns, $facts);
+        foreach ($layout->options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) {
+                $engine = $option->engine->value;
+            }
+        }
+        $this->columns($indexes, $columns, $facts, $release, $engine);
     }
 
     /**
@@ -72,18 +78,18 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When a retained name or preceding key column is invalid
      */
-    public function creation(\MySqlMemory\Session\Resolution\TablePreparation $prepared, bool $legacy): void
+    public function creation(\MySqlMemory\Session\Resolution\TablePreparation $prepared, \MySqlMemory\Session\Session $session): void
     {
-        if (array_filter($prepared->facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName) === []) {
+        if (array_filter($prepared->facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity) === []) {
             return;
         }
-        if ($legacy) {
+        if ($session->settings()->legacy()) {
             $this->check($prepared->facts);
-            return;
         }
         $indexes = array_values(array_filter($prepared->statement->elements, static fn ($element): bool => $element instanceof IndexDefinition));
         $columns = array_map(static fn (\SqlSemantics\Statement\Declaration\Column $column): string => mb_strtolower($column->name->value), $prepared->table->columns);
-        $this->columns($indexes, $columns, $prepared->facts);
+        $engine = (new \MySqlMemory\Command\Definition\StorageOptions())->engine($prepared->statement, $session->variables);
+        $this->columns($indexes, $columns, $prepared->facts, $session->settings()->release(), $engine);
     }
 
     /**
@@ -93,13 +99,22 @@ final class IndexNames
      * @param list<string> $columns Folded names from the complete proposed declaration
      * @throws \MySqlMemory\Error\SqlError When the first name or missing key-column condition is reached
      */
-    public function columns(array $indexes, array $columns, Facts $facts): void
+    public function columns(array $indexes, array $columns, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB'): void
     {
         foreach ($indexes as $index) {
             $this->definition($index, $facts);
+            (new IndexShapes())->definition($index, $facts, $release, $engine);
+            $seen = [];
             foreach ($index->parts as $part) {
                 if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart && !in_array(mb_strtolower($part->column->value), $columns, true)) {
                     throw SchemaError::KeyColumnMissing->error($part->column->value);
+                }
+                if ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart) {
+                    $name = mb_strtolower($part->column->value);
+                    if (isset($seen[$name])) {
+                        throw SchemaError::DuplicateFieldName->error($part->column->value);
+                    }
+                    $seen[$name] = true;
                 }
             }
         }

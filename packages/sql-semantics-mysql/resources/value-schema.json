@@ -3647,6 +3647,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Column\\SridRange": {
         "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\DuplicateKeyColumn": {
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\InvalidIndexName": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -3663,6 +3666,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedIndexTemplate": {
         "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\Index\\DeferredCreateIndex"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\SpatialKeyArity": {
+        "owner": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\KeyPart"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"

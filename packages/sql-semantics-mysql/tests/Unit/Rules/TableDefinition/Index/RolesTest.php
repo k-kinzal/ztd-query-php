@@ -38,7 +38,7 @@ final class RolesTest extends TestCase
 
     public function testOrdinaryIndexCannotHoldARetainedRowKey(): void
     {
-        $this->expectExceptionMessage('An ordinary index request requires a valid name and scalar key operands.');
+        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
         new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
     }
 

@@ -32,7 +32,7 @@ final class DeclarationConstraintsTest extends TestCase
     {
         $parts = [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('A'))];
         $rules = new DeclarationConstraints();
-        self::assertInstanceOf(M\Table\Problem\DuplicateColumn::class, $rules->parts($parts, ['a' => true], true, true));
+        self::assertInstanceOf(M\Table\Problem\Creation\DuplicateKeyColumn::class, $rules->parts($parts, ['a' => true], true, true));
         self::assertNull($rules->parts($parts, ['a' => true], true, false));
         self::assertInstanceOf(M\Table\Problem\UnknownKeyColumn::class, $rules->parts($parts, [], true, true));
         self::assertNull($rules->parts([$parts[0]], [], false, true));

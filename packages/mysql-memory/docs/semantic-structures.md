@@ -3740,3 +3740,14 @@ validity from a rendered statement. Native histories include CREATE AS SELECT,
 legacy destination-metadata changes, prepared execution and exact command
 counters. In MySQL 5.6, a skipped invocation may retain the preceding diagnostic;
 the direct-structure properties check that history as well as modern clearing.
+
+Spatial index arity is resolved before ordinary structures are constructed.
+`SpatialKeyArity` identifies the complete retained index by its first operand;
+ordinary CREATE INDEX, ALTER TABLE and CREATE TABLE values exclude a spatial
+index with multiple key parts. Complete stored instructions preserve all parts
+and dependencies, including expression operands, until their branch is reached.
+The consumer uses this diagnostic after functional dependency preparation and
+before ordinary key-column lookup. Storage capability and language release still
+determine the SQL error. `DuplicateKeyColumn` distinguishes repeated key operands
+from duplicate table-column declarations, preserving their different validation
+phases without inspecting input SQL or a parser tree.

@@ -39,6 +39,7 @@ final class FunctionalKeys
      */
     public function columns(CreateTable|DeferredCreateTable $create, TableDefinition $definition, Planner $planner): array
     {
+        (new \MySqlMemory\Session\Problem\Definition\IndexShapes())->prepare($create, $definition, $planner);
         $expressions = new TableExpressions($planner, $create);
         $scope = $expressions->scope($definition);
         $columns = $definition->columns;

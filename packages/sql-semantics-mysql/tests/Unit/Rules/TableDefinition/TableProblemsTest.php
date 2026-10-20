@@ -90,7 +90,7 @@ final class TableProblemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertEquals([new DuplicateColumn(new Name('A'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (a, A, zz))')->facts->diagnostics);
-        self::assertEquals([new UnknownKeyColumn(new Name('zz')), new DuplicateColumn(new Name('a'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (zz, a, a))')->facts->diagnostics);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn(new Name('A'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (a, A, zz))')->facts->diagnostics);
+        self::assertEquals([new UnknownKeyColumn(new Name('zz')), new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn(new Name('a'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (zz, a, a))')->facts->diagnostics);
     }
 }

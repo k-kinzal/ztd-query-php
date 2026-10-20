@@ -59,7 +59,7 @@ final class CreationQueryUse
         if ($problem === null) {
             $prepared = (new \MySqlMemory\Program\Expression\TableUse())->bound($definition, $session);
             (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added((new \MySqlMemory\Evaluation\Compile\Walker())->find($definition, \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class), $prepared->facts, $session);
-            (new \MySqlMemory\Session\Problem\Definition\IndexNames())->creation($prepared, $session->settings()->legacy());
+            (new \MySqlMemory\Session\Problem\Definition\IndexNames())->creation($prepared, $session);
             (new ColumnlessUse())->columns($definition, $schema, $session);
             $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, $definition->query);
         }

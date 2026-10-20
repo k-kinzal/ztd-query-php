@@ -84,7 +84,7 @@ final class DeclarationConstraints
                 return new UnknownKeyColumn($part->column);
             }
             if ($index && isset($seen[$key])) {
-                return new DuplicateColumn($part->column);
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn($part->column);
             }
             $seen[$key] = true;
         }

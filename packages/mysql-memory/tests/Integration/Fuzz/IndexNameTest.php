@@ -24,7 +24,7 @@ final class IndexNameTest extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        $statements = ['CREATE DATABASE d', 'USE d'];
+        $statements = ['CREATE INDEX `PRIMARY` ON t(a)', 'CREATE DATABASE d', 'USE d'];
         foreach (['PRIMARY', 'primary', '', 'a '] as $number => $name) {
             foreach (['CREATE INDEX `' . $name . '` ON t(a)', 'ALTER TABLE t ADD KEY `' . $name . '`(a)', 'CREATE TABLE IF NOT EXISTS t(a INT, KEY `' . $name . '`(a))', 'CREATE TABLE IF NOT EXISTS t(KEY `' . $name . '`(a)) AS SELECT 1 AS a'] as $form => $body) {
                 $procedure = 'p_' . $number . '_' . $form;

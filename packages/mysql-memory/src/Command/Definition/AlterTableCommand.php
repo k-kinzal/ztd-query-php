@@ -178,6 +178,9 @@ final class AlterTableCommand implements Command
         if (!$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable || $session->settings()->legacy()) {
             (new \MySqlMemory\Session\Problem\Definition\IndexNames())->check($operation->facts);
         }
+        if ($operation instanceof \MySqlMemory\Session\Resolution\IndexPreparation) {
+            (new \MySqlMemory\Session\Problem\Definition\IndexShapes())->request($operation, $session);
+        }
     }
 
     /**
@@ -356,7 +359,7 @@ final class AlterTableCommand implements Command
     public function copies(TableDefinition $old, TableDefinition $new, array $origins, TableChange $change, Context $context): bool
     {
         $retyped = false;
-        $copies = $change->copies || $change->algorithm === 'copy' || ($old->primaryKey() !== null && $new->primaryKey() === null) || (new Constraint\FunctionalKeys())->copies($change->layout->keys);
+        $copies = $change->copies || $change->algorithm === 'copy' || TableRebuild::copiesDefinition($old, $new, $change->layout);
         foreach (array_filter($new->columns, static fn (ColumnDefinition $column): bool => $column->functional === null) as $position => $column) {
             $origin = $origins[$position] ?? null;
             if ($origin === null) {

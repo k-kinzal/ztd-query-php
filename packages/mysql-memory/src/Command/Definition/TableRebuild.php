@@ -306,4 +306,12 @@ final class TableRebuild
 
         return false;
     }
+    /**
+     * Identifies storage and key changes that rebuild rows without changing column types.
+     */
+    public static function copiesDefinition(TableDefinition $old, TableDefinition $new, TableLayout $layout): bool
+    {
+        return strcasecmp($old->engine, $new->engine) !== 0 || ($old->primaryKey() !== null && $new->primaryKey() === null) || (new Constraint\FunctionalKeys())->copies($layout->keys);
+    }
+
 }

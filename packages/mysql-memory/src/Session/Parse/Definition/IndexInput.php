@@ -36,6 +36,7 @@ final class IndexInput
                 $use->header($problem->definition, $session);
                 throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingIndex($problem->definition, $session->variables->database));
             }
+            $use->header($problem->definition, $session);
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_index');
             $use->raise($problem->definition, $session, false);
         } catch (SqlError $error) {

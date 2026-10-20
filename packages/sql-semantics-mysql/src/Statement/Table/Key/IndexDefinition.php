@@ -82,6 +82,10 @@ final class IndexDefinition implements TableElement
         if ($problem !== null) {
             $derivation->report($problem);
         }
+        $shape = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Shapes())->problem($this->kind, $this->parts);
+        if ($shape !== null) {
+            $derivation->report($shape);
+        }
         foreach ($this->parts as $part) {
             $part->deriveKeyPart($derivation, $scope);
         }

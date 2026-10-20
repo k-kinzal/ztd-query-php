@@ -547,3 +547,11 @@ set cannot spell it. `Operation::toString()` reports `UnrepresentableName` if
 rendering would replace identifier characters. This does not prevent direct
 structure consumers from resolving or executing the same object. Result labels
 and origin metadata follow the session's result character set independently.
+
+Spatial index declarations have exactly one key part in ordinary CREATE INDEX,
+ALTER TABLE and CREATE TABLE values. Complete stored instructions can retain a
+multi-part declaration with a `SpatialKeyArity` diagnostic, so a skipped branch
+or an existing-table shortcut keeps its meaning. Binding preserves every key
+operand and dependency. Repeated key columns use `DuplicateKeyColumn`, separate
+from duplicate table-column declarations; consumers can preserve their different
+validation phases without recovering source SQL.

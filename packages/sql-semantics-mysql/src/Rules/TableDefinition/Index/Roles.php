@@ -21,9 +21,9 @@ final class Roles
     /**
      * @param list<KeyPart> $parts Complete ordered index operands
      */
-    public function request(\SqlSemantics\Statement\Identifier\Name $name, array $parts): bool
+    public function request(\SqlSemantics\Statement\Identifier\Name $name, array $parts, \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind $kind = \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index): bool
     {
-        return (new Names())->problem($name) !== null || $this->parts($parts);
+        return (new Names())->problem($name) !== null || $this->parts($parts) || (new Shapes())->problem($kind, $parts) !== null;
     }
 
     /**
@@ -39,7 +39,7 @@ final class Roles
      */
     public function elements(array $elements): bool
     {
-        return array_filter($elements, fn (TableElement $element): bool => $element instanceof IndexDefinition && ((new Names())->definition($element) !== null || $this->parts($element->parts))) !== [];
+        return array_filter($elements, fn (TableElement $element): bool => $element instanceof IndexDefinition && ((new Names())->definition($element) !== null || $this->parts($element->parts) || (new Shapes())->problem($element->kind, $element->parts) !== null)) !== [];
     }
 
     /**

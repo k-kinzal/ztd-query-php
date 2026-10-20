@@ -25,11 +25,12 @@ final class DeclarationErrors
      */
     public function check(Facts $facts): void
     {
-        $indexNames = array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName) !== [];
+        $indexConditions = array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity) !== [];
         foreach ($facts->diagnostics as $problem) {
             $error = match (true) {
+                $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn && !$indexConditions => SchemaError::DuplicateFieldName->error($problem->column->value),
                 $problem instanceof DuplicateColumn => SchemaError::DuplicateFieldName->error($problem->column->value),
-                $problem instanceof UnknownKeyColumn && !$indexNames => SchemaError::KeyColumnMissing->error($problem->column->value),
+                $problem instanceof UnknownKeyColumn && !$indexConditions => SchemaError::KeyColumnMissing->error($problem->column->value),
                 $problem instanceof MultiplePrimaryKeys => SchemaError::MultiplePrimaryKey->error(),
                 default => null,
             };

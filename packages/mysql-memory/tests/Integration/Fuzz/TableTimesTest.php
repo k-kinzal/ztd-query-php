@@ -180,4 +180,39 @@ final class TableTimesTest extends TestCase
         self::assertSame([TableTimes::CREATION, TableTimes::LEGACY_UPDATE], $comparable['contracts'] ?? null);
         self::assertSame($observation['warnings'], $comparable['warnings']);
     }
+    /**
+     * @return iterable<string, array{string, array{string, string}, string}>
+     * @throws JsonException When the saved native samples are malformed
+     */
+    public static function providerObservedModernClockLag(): iterable
+    {
+        /** @var list<array{instance: int, iteration: int, table: string, interval: array{string, string}, update: string}> $observations */
+        $observations = json_decode((string) file_get_contents(__DIR__ . '/fixtures/table-clock-lag-8.1.json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($observations as $index => $observation) {
+            yield 'instance ' . $observation['instance'] . ' sample ' . $index => [$observation['table'], $observation['interval'], $observation['update']];
+        }
+    }
+
+    /**
+     * @param array{string, string} $interval The server's unmodified before/after insertion samples
+     */
+    #[DataProvider('providerObservedModernClockLag')]
+    public function testContainsValidatesSavedIndependentModernInstanceLag(string $table, array $interval, string $update): void
+    {
+        $clock = new TableTimes('8.1.0');
+        $clock->intervals = $clock->creations = [$table => $interval];
+        self::assertTrue($clock->contains($table, $update));
+        self::assertFalse($clock->contains($table, $update, true));
+        self::assertSame([0 => $table, 12 => '{' . TableTimes::CACHED_UPDATE . '}'], $clock->row([0 => $table, 12 => $update]));
+    }
+
+    public function testContainsLimitsModernLagToOneSecondOnTheObservedRelease(): void
+    {
+        $clock = new TableTimes('8.1.0');
+        $clock->intervals = ['t1' => ['2026-11-01 00:00:00', '2026-11-01 00:00:00']];
+        self::assertTrue($clock->contains('t1', '2026-10-31 23:59:59'));
+        self::assertFalse($clock->contains('t1', '2026-10-31 23:59:58'));
+        self::assertFalse($clock->contains('t1', '2026-11-01 00:00:01'));
+    }
+
 }

@@ -177,7 +177,7 @@ final class TableProblems
             if ($table->complete && $table->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
                 $derivation->report(new UnknownKeyColumn($part->column));
             } elseif ($index && (new TableDeclaration())->named($part->column, $seen, $derivation->context->columnNames)) {
-                $derivation->report(new DuplicateColumn($part->column));
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn($part->column));
 
                 return;
             }

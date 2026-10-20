@@ -160,4 +160,16 @@ final class TableRebuildTest extends TestCase
         self::assertTrue(TableRebuild::columnInPlace($table->definition->columns[1], $table->definition->columns[1]));
     }
 
+    public function testCopiesDefinitionRequiresStorageTransferForAnEngineChange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT) ENGINE=MyISAM; CREATE TABLE u(a INT) ENGINE=MEMORY');
+        $old = $session->instance->dictionary->table('d', 't');
+        $new = $session->instance->dictionary->table('d', 'u');
+        self::assertNotNull($old);
+        self::assertNotNull($new);
+        self::assertTrue(TableRebuild::copiesDefinition($old->definition, $new->definition, TableLayout::of($old->definition)));
+        self::assertFalse(TableRebuild::copiesDefinition($old->definition, $old->definition, TableLayout::of($old->definition)));
+    }
+
 }
