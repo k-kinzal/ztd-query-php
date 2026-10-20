@@ -38,6 +38,16 @@ it does not manufacture indexes, partitions or other prerequisites. Subsequent
 errors remain separate observations, rather than being counted as a completed
 state witness.
 
+For `EXPLAIN ANALYZE TABLE`, memory runs the table iterator and reports its own
+elapsed milliseconds and actual row count. Its storage cost is zero. The native
+comparison has a narrow measurement contract for a complete single-table scan:
+estimated cost and row count may differ, and finite, nonnegative elapsed times
+must be ordered. Table identity, actual rows, loops, result metadata and warnings
+still compare exactly. Independent native instances exercise this contract; a
+malformed report or a different plan shape receives no normalization. The raw
+reports remain in the audit record. This contract does not establish support for
+every EXPLAIN plan or replace the ordinary SQL Faker comparison policy.
+
 Temporal input interpretation consumes decoded literal and variable operands
 from SQL Semantics in their contextual order. The input adapter retains view
 context and input ranges only while reading the statement. A refused temporal

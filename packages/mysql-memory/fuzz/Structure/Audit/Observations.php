@@ -41,6 +41,8 @@ final class Observations
         $right = $process?->comparable($right, true) ?? $right;
         $left = (new EngineReport())->comparable($node, (new CatalogRows())->comparable($node, $left), false);
         $right = (new EngineReport())->comparable($node, (new CatalogRows())->comparable($node, $right), true);
+        $left = (new Explain\ScanMeasurements())->comparable($node, $left, false);
+        $right = (new Explain\ScanMeasurements())->comparable($node, $right, true);
         $leftContracts = $left['contracts'] ?? [];
         $rightContracts = $right['contracts'] ?? [];
         if (is_array($leftContracts) && is_array($rightContracts)) {

@@ -173,7 +173,7 @@ final class ExplainCommand implements Command
 
             return (new Listing($headings))->sent($rows, $context);
         }
-        $text = $format === 'JSON' ? $this->document($tables) : $this->tree($tables);
+        $text = (new MeasuredTable())->report($operation, $session, $context, $connection) ?? ($format === 'JSON' ? $this->document($tables) : $this->tree($tables));
 
         return (new Listing([Heading::text('EXPLAIN', Field::VarString, 78, ColumnFlag::NotNull->value, 31)]))->sent([[$text]], $context);
     }
