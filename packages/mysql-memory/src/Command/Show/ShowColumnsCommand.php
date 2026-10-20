@@ -80,6 +80,7 @@ final class ShowColumnsCommand implements Command
             }
             $rows[] = $row;
         }
+        $rows = [...$rows, ...(new ExtendedColumns())->listing($statement, $definition)];
         $filter = $statement instanceof ShowColumns ? $statement->filter : ($statement->column === null ? null : new ShowLike(new Text($statement->column instanceof Text ? (new Inspection())->pattern($statement->column) : $statement->column->value)));
 
         $headings = $definition->temporary && !$text->legacy() ? $this->temporary($full) : $this->headings($full, $text->legacy(), $context->modes->strict());
@@ -107,7 +108,7 @@ final class ShowColumnsCommand implements Command
      */
     public function temporary(bool $full): array
     {
-        return array_map(static fn (Heading $heading): Heading => new Heading($heading->name, $heading->field, $heading->name === 'Extra' ? 40 : $heading->length, $heading->flags, $heading->decimals, $heading->text, $heading->originalName, 'TMP_TABLE_COLUMNS', $heading->originalTable, $heading->schema, $heading->collation), $this->legacy($full));
+        return array_map(static fn (Heading $heading): Heading => new Heading($heading->name, $heading->field, $heading->name === 'Extra' ? 40 : $heading->length, $heading->flags, $heading->decimals, $heading->text, $heading->originalName, 'TMP_TABLE_COLUMNS', 'TMP_TABLE_COLUMNS', $heading->schema, $heading->collation), $this->legacy($full));
     }
 
     /**
@@ -174,19 +175,19 @@ final class ShowColumnsCommand implements Command
     public function legacy(bool $full): array
     {
         $required = ColumnFlag::NotNull->value;
-        $headings = [Heading::text('Field', Field::VarString, 64, $required, 0, 'Field', 'COLUMNS'), Heading::text('Type', Field::Blob, 196605, $required | ColumnFlag::Blob->value, 0, 'Type', 'COLUMNS')];
+        $headings = [Heading::text('Field', Field::VarString, 64, $required, 0, 'COLUMN_NAME', 'COLUMNS', 'COLUMNS', 'information_schema'), Heading::text('Type', Field::Blob, 196605, $required | ColumnFlag::Blob->value, 0, 'COLUMN_TYPE', 'COLUMNS', 'COLUMNS', 'information_schema')];
         if ($full) {
-            $headings[] = Heading::text('Collation', Field::VarString, 32, 0, 0, 'Collation', 'COLUMNS');
+            $headings[] = Heading::text('Collation', Field::VarString, 32, 0, 0, 'COLLATION_NAME', 'COLUMNS', 'COLUMNS', 'information_schema');
         }
         array_push(
             $headings,
-            Heading::text('Null', Field::VarString, 3, $required, 0, 'Null', 'COLUMNS'),
-            Heading::text('Key', Field::VarString, 3, $required, 0, 'Key', 'COLUMNS'),
-            Heading::text('Default', Field::Blob, 196605, ColumnFlag::Blob->value, 0, 'Default', 'COLUMNS'),
-            Heading::text('Extra', Field::VarString, 30, $required, 0, 'Extra', 'COLUMNS'),
+            Heading::text('Null', Field::VarString, 3, $required, 0, 'IS_NULLABLE', 'COLUMNS', 'COLUMNS', 'information_schema'),
+            Heading::text('Key', Field::VarString, 3, $required, 0, 'COLUMN_KEY', 'COLUMNS', 'COLUMNS', 'information_schema'),
+            Heading::text('Default', Field::Blob, 196605, ColumnFlag::Blob->value, 0, 'COLUMN_DEFAULT', 'COLUMNS', 'COLUMNS', 'information_schema'),
+            Heading::text('Extra', Field::VarString, 30, $required, 0, 'EXTRA', 'COLUMNS', 'COLUMNS', 'information_schema'),
         );
         if ($full) {
-            array_push($headings, Heading::text('Privileges', Field::VarString, 80, $required, 0, 'Privileges', 'COLUMNS'), Heading::text('Comment', Field::VarString, 1024, $required, 0, 'Comment', 'COLUMNS'));
+            array_push($headings, Heading::text('Privileges', Field::VarString, 80, $required, 0, 'PRIVILEGES', 'COLUMNS', 'COLUMNS', 'information_schema'), Heading::text('Comment', Field::VarString, 1024, $required, 0, 'COLUMN_COMMENT', 'COLUMNS', 'COLUMNS', 'information_schema'));
         }
 
         return $headings;

@@ -157,21 +157,21 @@ final class ShowKeysCommand implements Command
         $number = ColumnFlag::Numeric->value;
 
         return [
-            Heading::text('Table', Field::VarString, 64, $required, 0, 'Table', $table),
-            new Heading('Non_unique', Field::LongLong, 2, $required | $number, 0, false, 'Non_unique', $table),
-            Heading::text('Key_name', Field::VarString, 64, $required, 0, 'Key_name', $table),
-            new Heading('Seq_in_index', Field::LongLong, 3, $required | $number, 0, false, 'Seq_in_index', $table),
-            Heading::text('Column_name', Field::VarString, 64, 0, 0, 'Column_name', $table),
-            Heading::text('Collation', Field::VarString, 1, 0, 0, 'Collation', $table),
-            new Heading('Cardinality', Field::LongLong, 22, $number, 0, false, 'Cardinality', $table),
-            new Heading('Sub_part', Field::LongLong, 4, $number, 0, false, 'Sub_part', $table),
-            Heading::text('Packed', Field::VarString, 10, 0, 0, 'Packed', $table),
-            Heading::text('Null', Field::VarString, 3, $required, 0, 'Null', $table),
-            Heading::text('Index_type', Field::VarString, 16, $required, 0, 'Index_type', $table),
-            Heading::text('Comment', Field::VarString, 16, 0, 0, 'Comment', $table),
-            Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'Index_comment', $table),
-            Heading::text('Visible', Field::VarString, 4, 0, 0, 'Visible', $table),
-            Heading::text('Expression', Field::Blob, 4294967295, ColumnFlag::Blob->value | ColumnFlag::Binary->value, 0, 'Expression', $table),
+            Heading::text('Table', Field::VarString, 64, $required, 0, 'TABLE_NAME', $table, $table, 'information_schema'),
+            new Heading('Non_unique', Field::LongLong, 2, $required | $number, 0, false, 'NON_UNIQUE', $table, $table, 'information_schema'),
+            Heading::text('Key_name', Field::VarString, 64, $required, 0, 'INDEX_NAME', $table, $table, 'information_schema'),
+            new Heading('Seq_in_index', Field::LongLong, 3, $required | $number, 0, false, 'SEQ_IN_INDEX', $table, $table, 'information_schema'),
+            Heading::text('Column_name', Field::VarString, 64, 0, 0, 'COLUMN_NAME', $table, $table, 'information_schema'),
+            Heading::text('Collation', Field::VarString, 1, 0, 0, 'COLLATION', $table, $table, 'information_schema'),
+            new Heading('Cardinality', Field::LongLong, 22, $number, 0, false, 'CARDINALITY', $table, $table, 'information_schema'),
+            new Heading('Sub_part', Field::LongLong, 4, $number, 0, false, 'SUB_PART', $table, $table, 'information_schema'),
+            Heading::text('Packed', Field::VarString, 10, 0, 0, 'PACKED', $table, $table, 'information_schema'),
+            Heading::text('Null', Field::VarString, 3, $required, 0, 'NULLABLE', $table, $table, 'information_schema'),
+            Heading::text('Index_type', Field::VarString, 16, $required, 0, 'INDEX_TYPE', $table, $table, 'information_schema'),
+            Heading::text('Comment', Field::VarString, 16, 0, 0, 'COMMENT', $table, $table, 'information_schema'),
+            Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'INDEX_COMMENT', $table, $table, 'information_schema'),
+            Heading::text('Visible', Field::VarString, 4, 0, 0, 'IS_VISIBLE', $table, $table, 'information_schema'),
+            Heading::text('Expression', Field::Blob, 4294967295, ColumnFlag::Blob->value, 0, 'EXPRESSION', $table, $table, 'information_schema'),
         ];
     }
 
@@ -186,19 +186,19 @@ final class ShowKeysCommand implements Command
         $required = ColumnFlag::NotNull->value;
 
         return [
-            Heading::text('Table', Field::VarString, 64, $required, 0, 'Table', $table),
-            new Heading('Non_unique', Field::LongLong, 1, $required, 0, false, 'Non_unique', $table),
-            Heading::text('Key_name', Field::VarString, 64, $required, 0, 'Key_name', $table),
-            new Heading('Seq_in_index', Field::LongLong, 2, $required, 0, false, 'Seq_in_index', $table),
-            Heading::text('Column_name', Field::VarString, 64, $required, 0, 'Column_name', $table),
-            Heading::text('Collation', Field::VarString, 1, 0, 0, 'Collation', $table),
-            new Heading('Cardinality', Field::LongLong, 21, 0, 0, false, 'Cardinality', $table),
-            new Heading('Sub_part', Field::LongLong, 3, 0, 0, false, 'Sub_part', $table),
-            Heading::text('Packed', Field::VarString, 10, 0, 0, 'Packed', $table),
-            Heading::text('Null', Field::VarString, 3, $required, 0, 'Null', $table),
-            Heading::text('Index_type', Field::VarString, 16, $required, 0, 'Index_type', $table),
-            Heading::text('Comment', Field::VarString, 16, 0, 0, 'Comment', $table),
-            Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'Index_comment', $table),
+            Heading::text('Table', Field::VarString, 64, $required, 0, 'TABLE_NAME', $table, $table, 'information_schema'),
+            new Heading('Non_unique', Field::LongLong, 1, $required | ColumnFlag::Numeric->value, 0, false, 'NON_UNIQUE', $table, $table, 'information_schema'),
+            Heading::text('Key_name', Field::VarString, 64, $required, 0, 'INDEX_NAME', $table, $table, 'information_schema'),
+            new Heading('Seq_in_index', Field::LongLong, 2, $required | ColumnFlag::Numeric->value, 0, false, 'SEQ_IN_INDEX', $table, $table, 'information_schema'),
+            Heading::text('Column_name', Field::VarString, 64, $required, 0, 'COLUMN_NAME', $table, $table, 'information_schema'),
+            Heading::text('Collation', Field::VarString, 1, 0, 0, 'COLLATION', $table, $table, 'information_schema'),
+            new Heading('Cardinality', Field::LongLong, 21, ColumnFlag::Numeric->value, 0, false, 'CARDINALITY', $table, $table, 'information_schema'),
+            new Heading('Sub_part', Field::LongLong, 3, ColumnFlag::Numeric->value, 0, false, 'SUB_PART', $table, $table, 'information_schema'),
+            Heading::text('Packed', Field::VarString, 10, 0, 0, 'PACKED', $table, $table, 'information_schema'),
+            Heading::text('Null', Field::VarString, 3, $required, 0, 'NULLABLE', $table, $table, 'information_schema'),
+            Heading::text('Index_type', Field::VarString, 16, $required, 0, 'INDEX_TYPE', $table, $table, 'information_schema'),
+            Heading::text('Comment', Field::VarString, 16, 0, 0, 'COMMENT', $table, $table, 'information_schema'),
+            Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'INDEX_COMMENT', $table, $table, 'information_schema'),
         ];
     }
 
