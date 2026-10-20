@@ -128,6 +128,9 @@ final class FunctionalQueries
      */
     public function deferred(\SqlSemantics\Statement\Fact\Diagnostic $diagnostic, \SqlSemantics\Statement\Node $statement): bool
     {
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName) {
+            return true;
+        }
         if (!$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion) {
             return false;
         }

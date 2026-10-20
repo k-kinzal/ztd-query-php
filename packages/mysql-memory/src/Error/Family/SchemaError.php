@@ -22,6 +22,7 @@ enum SchemaError: int implements ErrorCode
 {
     use CatalogedError;
 
+    case WrongIndexName = 1280;
     case FullTextColumn = 1283;
     case SpatialIndexUnsupported = 1464;
     case SpatialIndexWithoutSrid = 3674;

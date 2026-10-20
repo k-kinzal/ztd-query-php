@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete index instruction whose non-scalar key is checked when invoked.
+ * A complete index instruction whose name or key condition is checked when invoked.
  *
  * The target and ordered operands are retained for binding and native error priority.
  * This instruction is not an ordinary Statement and holds no SQL or parser node.
@@ -76,7 +76,7 @@ final class DeferredCreateIndex implements \SqlSemantics\Platform\MySql\Statemen
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->check($kind, $this->options);
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->parts($this->parts), 'A retained index instruction requires a deferred key operand.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->request($name, $this->parts), 'A retained index instruction requires a fixed name or operand condition.');
         $this->alterOptions = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($alterOptions);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

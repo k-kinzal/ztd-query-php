@@ -125,4 +125,13 @@ final class IndexOptions
 
         return new IndexDefinition($index->kind, $index->parts, $index->name, $index->algorithm, $options, $index->constraint, $index->keyword);
     }
+    /**
+     * Tells whether an index writes an order for a key part although it is a full-text, spatial
+     * or hash index, which cannot order its key parts.
+     */
+    public function misordered(IndexDefinition $index): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($index->kind, $index->parts, $index->algorithm, $index->options);
+    }
+
 }

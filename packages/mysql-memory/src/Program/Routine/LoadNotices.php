@@ -53,6 +53,7 @@ final class LoadNotices
             $prepared->routineGeneration = $generation;
             $prepared->routines = [];
             $prepared->inspections = null;
+            $prepared->indexCreations = null;
         }
         $identity = spl_object_id($routine);
         if (isset($prepared->routines[$identity]) || $routine->statement === null) {

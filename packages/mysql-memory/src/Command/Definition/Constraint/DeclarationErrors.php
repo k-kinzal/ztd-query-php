@@ -25,10 +25,11 @@ final class DeclarationErrors
      */
     public function check(Facts $facts): void
     {
+        $indexNames = array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName) !== [];
         foreach ($facts->diagnostics as $problem) {
             $error = match (true) {
                 $problem instanceof DuplicateColumn => SchemaError::DuplicateFieldName->error($problem->column->value),
-                $problem instanceof UnknownKeyColumn => SchemaError::KeyColumnMissing->error($problem->column->value),
+                $problem instanceof UnknownKeyColumn && !$indexNames => SchemaError::KeyColumnMissing->error($problem->column->value),
                 $problem instanceof MultiplePrimaryKeys => SchemaError::MultiplePrimaryKey->error(),
                 default => null,
             };

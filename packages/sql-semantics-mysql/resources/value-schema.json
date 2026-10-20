@@ -3647,6 +3647,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Column\\SridRange": {
         "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\InvalidIndexName": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedCreateTail": {
         "elements": "array",
         "ifNotExists": "bool",

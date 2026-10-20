@@ -24,7 +24,7 @@ final class DeferredCreateIndexTest extends TestCase
 
     public function testOrdinaryColumnOnlyIndexRequiresTheOrdinaryRole(): void
     {
-        $this->expectExceptionMessage('A retained index instruction requires a deferred key operand.');
+        $this->expectExceptionMessage('A retained index instruction requires a fixed name or operand condition.');
         new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
     }
     public function testDeriveProgramBindsColumnsWithinTheRetainedRow(): void

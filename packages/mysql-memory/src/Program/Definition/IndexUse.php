@@ -47,7 +47,7 @@ final class IndexUse
     }
 
     /**
-     * Checks target and dependency state before the retained non-scalar key condition.
+     * Checks target and dependency state before the retained name or operand condition.
      *
      * @throws \MySqlMemory\Error\SqlError When lookup or the retained key is refused
      * @throws LogicException When a retained key reaches execution without its required condition
@@ -65,6 +65,6 @@ final class IndexUse
         $alter = new AlterTableCommand();
         $alter->table($session, $definition->table->schema->value ?? $database ?? $session->variables->database, $definition->table->name->value);
         $alter->resolve($prepared, $session);
-        throw new LogicException('A retained non-scalar index operand must report its condition.');
+        throw new LogicException('A retained index instruction must report its name or operand condition.');
     }
 }

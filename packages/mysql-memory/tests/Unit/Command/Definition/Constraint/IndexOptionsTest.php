@@ -89,4 +89,24 @@ final class IndexOptionsTest extends TestCase
 
         $session->query('ALTER TABLE t ALTER INDEX k INVISIBLE');
     }
+    public function testMisorderedAnswersTrueForAnOrderedFullTextKeyPart(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $statement = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex::class, $statement);
+        $index = (new \MySqlMemory\Command\Definition\AlterTableCommand())->indexes((new \MySqlMemory\Command\Definition\AlterTableCommand())->request($statement)[1])[0];
+
+        self::assertTrue((new IndexOptions())->misordered($index));
+    }
+
+    public function testMisorderedAnswersFalseForAnOrderedBTreeKeyPart(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CREATE INDEX i ON t (a DESC)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex::class, $statement);
+        $index = (new \MySqlMemory\Command\Definition\AlterTableCommand())->indexes((new \MySqlMemory\Command\Definition\AlterTableCommand())->request($statement)[1])[0];
+
+        self::assertFalse((new IndexOptions())->misordered($index));
+    }
+
 }

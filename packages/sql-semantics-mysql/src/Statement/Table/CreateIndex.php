@@ -85,7 +85,7 @@ final class CreateIndex implements Statement, Relation
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->check($kind, $this->options);
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->parts($this->parts), 'An ordinary index request requires scalar key operands.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->request($name, $this->parts), 'An ordinary index request requires a valid name and scalar key operands.');
         $this->alterOptions = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($alterOptions);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

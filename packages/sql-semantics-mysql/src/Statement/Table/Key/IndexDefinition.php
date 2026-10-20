@@ -78,6 +78,10 @@ final class IndexDefinition implements TableElement
      */
     public function deriveElement(Derivation $derivation, Environment $scope): void
     {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Names())->definition($this);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
         foreach ($this->parts as $part) {
             $part->deriveKeyPart($derivation, $scope);
         }

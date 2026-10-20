@@ -52,7 +52,7 @@ final class ReleaseDomain
     public function of(object $value): int
     {
         return match (true) {
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($value->kind, $value->parts, $value->algorithm, $value->options) ? 3 : self::ALL,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($value->kind, $value->parts, $value->algorithm, $value->options) ? 3 : self::ALL,
             $value instanceof LanguageProfile => $this->bit($value->grammar),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && (($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->left->limit !== null) || ($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $value->left->selection->limit !== null)) => 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion && ($value->right instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || $value->right->limit !== null) => 1,

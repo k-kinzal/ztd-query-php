@@ -50,7 +50,7 @@ final class RefusedCreateTemplate implements Diagnostic
             return $declaration->message();
         }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->definition->elements)) {
-            return 'The table definition retains a non-scalar index operand.';
+            return 'The table definition retains an index name or operand condition.';
         }
         return 'A MERGE source list and a creation query do not define a base table.';
     }

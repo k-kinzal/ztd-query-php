@@ -18,7 +18,6 @@ use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
@@ -31,11 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
@@ -347,37 +342,7 @@ final class Definitions
      */
     public function key(IndexDefinition $index, array $columns, string $engine = 'InnoDB'): Key
     {
-        (new Constraint\IndexOptions())->warn($index, $engine, $this->planner->compiler->connection->context);
-        $positions = [];
-        $prefixes = [];
-        $descending = [];
-        foreach ($index->parts as $part) {
-            \SqlSemantics\Diagnostic\Check::invariant($part instanceof ColumnPart || $part instanceof ExpressionPart || $part instanceof ArrayPart, 'An index part names a column or supplies its expression.');
-            $name = $part instanceof ColumnPart ? $part->column->value : (new Constraint\FunctionalKeys())->name($part);
-            $position = null;
-            foreach ($columns as $candidate => $column) {
-                if (strcasecmp($column->name, $name) === 0) {
-                    $position = $candidate;
-                }
-            }
-            if ($position === null) {
-                throw SchemaError::KeyColumnMissing->error($name);
-            }
-            $positions[] = $position;
-            $prefixes[] = $part instanceof ColumnPart ? (new Constraint\ColumnPrefixes())->length($part, $columns[$position]->domain, $index->kind) : null;
-            $descending[] = $part->direction === Direction::Descending;
-        }
-        $kind = match ($index->kind) {
-            IndexKind::Primary => KeyKind::Primary,
-            IndexKind::Unique => KeyKind::Unique,
-            IndexKind::FullText => KeyKind::FullText,
-            IndexKind::Spatial => KeyKind::Spatial,
-            IndexKind::Index => KeyKind::Index,
-        };
-
-        $key = new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new Constraint\IndexOptions())->visible($index), algorithm: (new Constraint\IndexOptions())->algorithm($index, $engine, $this->planner->settings->legacy()));
-
-        return (new Constraint\SpatialKeys($this->planner))->resolve($index, $key, $columns, $engine);
+        return (new Constraint\Index\Keys($this->planner))->build($index, $columns, $engine);
     }
 
     /**

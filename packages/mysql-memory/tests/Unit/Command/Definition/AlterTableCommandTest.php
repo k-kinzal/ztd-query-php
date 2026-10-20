@@ -327,25 +327,6 @@ final class AlterTableCommandTest extends TestCase
         self::assertSame(['i', 'j'], array_map(static fn ($index): ?string => $index->name?->column->value, $indexes));
     }
 
-    public function testMisorderedAnswersTrueForAnOrderedFullTextKeyPart(): void
-    {
-        $session = (new Instance('5.7.44'))->connect();
-        $statement = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)')->statement;
-        self::assertInstanceOf(CreateIndex::class, $statement);
-        $index = (new AlterTableCommand())->indexes((new AlterTableCommand())->request($statement)[1])[0];
-
-        self::assertTrue((new AlterTableCommand())->misordered($index));
-    }
-
-    public function testMisorderedAnswersFalseForAnOrderedBTreeKeyPart(): void
-    {
-        $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE INDEX i ON t (a DESC)')->statement;
-        self::assertInstanceOf(CreateIndex::class, $statement);
-        $index = (new AlterTableCommand())->indexes((new AlterTableCommand())->request($statement)[1])[0];
-
-        self::assertFalse((new AlterTableCommand())->misordered($index));
-    }
 
     public function testCopiesColumnAnswersTrueForAColumnBecomingNotNullOutsideAStrictMode(): void
     {

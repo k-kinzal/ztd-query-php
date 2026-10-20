@@ -15,6 +15,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class RolesTest extends TestCase
 {
+    public function testRequestRetainsNameConditionsWithOrdinaryColumnParts(): void
+    {
+        $roles = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles();
+        $parts = [new M\Table\Key\ColumnPart(new Name('a'))];
+        self::assertTrue($roles->request(new Name('PRIMARY'), $parts));
+        self::assertFalse($roles->request(new Name('i'), $parts));
+    }
+
     public function testPartsSeparatesColumnAndRetainedRowKeys(): void
     {
         $roles = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles();
@@ -30,7 +38,7 @@ final class RolesTest extends TestCase
 
     public function testOrdinaryIndexCannotHoldARetainedRowKey(): void
     {
-        $this->expectExceptionMessage('An ordinary index request requires scalar key operands.');
+        $this->expectExceptionMessage('An ordinary index request requires a valid name and scalar key operands.');
         new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
     }
 
@@ -45,7 +53,7 @@ final class RolesTest extends TestCase
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
-        $this->expectExceptionMessage('A non-scalar index operand belongs to a deferred creation instruction.');
+        $this->expectExceptionMessage('An index with a fixed name or operand condition belongs to a deferred creation instruction.');
         new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]);
     }
     public function testElementsLeavesOrdinaryColumnKeysInTheDeclarationRole(): void

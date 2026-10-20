@@ -109,7 +109,7 @@ final class CreateTable implements Statement, Relation
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($query) === null, 'A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->elements, $partitioning, $query), 'An implicit partition key absent from the declaration belongs to a deferred creation instruction.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->elements, $query) === null, 'Fixed column and key contradictions belong to a deferred creation instruction.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->elements), 'A non-scalar index operand belongs to a deferred creation instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->elements), 'An index with a fixed name or operand condition belongs to a deferred creation instruction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

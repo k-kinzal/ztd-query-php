@@ -278,6 +278,17 @@ consumer must bind the row's names and report its scalar-use error if that
 instruction is reached. It must not replace the row with an ordinary scalar or
 require the original SQL to prepare it.
 
+Ordinary CREATE INDEX, CREATE TABLE and ALTER TABLE values exclude fixed invalid
+index names and non-scalar functional key operands. Their constructors reject
+these combinations before `Operation` construction. Stored instructions use
+`DeferredCreateIndex`, `DeferredCreateTable` or `DeferredAlterTable` to retain
+the complete request until its containing program reaches it. The target,
+ordered key parts, index kind and options remain available without SQL text or
+a parser AST. `InvalidIndexName` identifies an explicit secondary-index name
+that is empty, ends in an ASCII space, or equals PRIMARY ignoring case. Primary
+key labels are ignored. This describes the instruction and its condition;
+Semantics does not decide whether execution will reach or report that condition.
+
 `Settings::$fullTextParsers` supplies the available full-text parser plugins as
 a list of `Name` values. An empty list means no parser plugins are available;
 `null` leaves availability unspecified. `WITH PARSER` resolves names without

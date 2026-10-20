@@ -30,6 +30,10 @@ final class Requests
      */
     public function derive(CreateIndex|DeferredCreateIndex $statement, Derivation $derivation): void
     {
+        $problem = (new Names())->problem($statement->name);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($statement->options, $derivation);
         $targets = new TableTargets();
         $fact = $derivation->relation($statement, $derivation->environment());

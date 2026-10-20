@@ -78,4 +78,9 @@ final class Preparation
      * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Account\CreateRole, array<int, bool>>|null Role authentication initialized by each stored definition operand
      */
     public ?WeakMap $roleCreations = null;
+
+    /**
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable, array{\MySqlMemory\Dictionary\TableDefinition|\MySqlMemory\Dictionary\View|null}>|null Destination identities observed by stored retained index declarations
+     */
+    public ?WeakMap $indexCreations = null;
 }

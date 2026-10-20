@@ -242,6 +242,7 @@ final class Errors
             $diagnostic instanceof NoColumns => SchemaError::TableMustHaveColumns->error(),
             $diagnostic instanceof DuplicateColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof IncorrectColumnName => SchemaError::WrongColumnName->error($diagnostic->column->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName => SchemaError::WrongIndexName->error($diagnostic->name->value),
             $diagnostic instanceof NullablePrimaryKey => SchemaError::PrimaryCantHaveNull->error(),
             $diagnostic instanceof UnknownKeyColumn => SchemaError::KeyColumnMissing->error($diagnostic->column->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser => AdministrationError::FunctionNotDefined->error($diagnostic->parser->value),

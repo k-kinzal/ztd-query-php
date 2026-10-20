@@ -32,6 +32,7 @@ final class TableUse
             \MySqlMemory\Session\State\StatementCounters::query($session);
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
             $session->diagnostics->clear();
+            (new \MySqlMemory\Program\Definition\IndexMetadata())->refresh($definition, $session);
         }
         $this->header($definition, $session);
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($definition->elements, $definition->query)) {

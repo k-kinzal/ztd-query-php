@@ -175,6 +175,9 @@ final class AlterTableCommand implements Command
         assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable);
         [, $commands] = $this->request($statement);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added($this->indexes($commands), $operation->facts, $session);
+        if (!$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable || $session->settings()->legacy()) {
+            (new \MySqlMemory\Session\Problem\Definition\IndexNames())->check($operation->facts);
+        }
     }
 
     /**
@@ -254,7 +257,7 @@ final class AlterTableCommand implements Command
             }
         }
         foreach ($indexes as $index) {
-            if (!$legacy && $this->misordered($index)) {
+            if (!$legacy && (new Constraint\IndexOptions())->misordered($index)) {
                 throw StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
             }
         }
@@ -300,14 +303,6 @@ final class AlterTableCommand implements Command
         return $indexes;
     }
 
-    /**
-     * Tells whether an index writes an order for a key part although it is a full-text, spatial
-     * or hash index, which cannot order its key parts.
-     */
-    public function misordered(IndexDefinition $index): bool
-    {
-        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($index->kind, $index->parts, $index->algorithm, $index->options);
-    }
 
     /**
      * Answers the table a statement changes and its actions.

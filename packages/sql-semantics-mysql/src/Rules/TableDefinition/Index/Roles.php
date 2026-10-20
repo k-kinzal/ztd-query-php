@@ -12,12 +12,20 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 
 /**
- * Separates ordinary scalar index definitions from retained non-scalar operands.
+ * Separates ordinary index definitions from retained name and operand conditions.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class Roles
 {
+    /**
+     * @param list<KeyPart> $parts Complete ordered index operands
+     */
+    public function request(\SqlSemantics\Statement\Identifier\Name $name, array $parts): bool
+    {
+        return (new Names())->problem($name) !== null || $this->parts($parts);
+    }
+
     /**
      * @param list<KeyPart> $parts Complete ordered index operands
      */
@@ -31,7 +39,7 @@ final class Roles
      */
     public function elements(array $elements): bool
     {
-        return array_filter($elements, fn (TableElement $element): bool => $element instanceof IndexDefinition && $this->parts($element->parts)) !== [];
+        return array_filter($elements, fn (TableElement $element): bool => $element instanceof IndexDefinition && ((new Names())->definition($element) !== null || $this->parts($element->parts))) !== [];
     }
 
     /**
@@ -39,6 +47,6 @@ final class Roles
      */
     public function commands(array $commands): bool
     {
-        return array_filter($commands, fn (AlterCommand $command): bool => $command instanceof AddConstraint && $command->element instanceof IndexDefinition && $this->parts($command->element->parts)) !== [];
+        return array_filter($commands, fn (AlterCommand $command): bool => $command instanceof AddConstraint && $this->elements([$command->element])) !== [];
     }
 }

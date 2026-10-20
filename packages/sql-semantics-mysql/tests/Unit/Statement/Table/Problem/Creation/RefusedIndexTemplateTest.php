@@ -20,6 +20,6 @@ final class RefusedIndexTemplateTest extends TestCase
         $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $problem = new M\Table\Problem\Creation\RefusedIndexTemplate($definition);
         self::assertSame($definition, $problem->definition);
-        self::assertSame('The index retains an operand with an invocation-time condition.', $problem->message());
+        self::assertSame('The index retains a name or operand condition checked at invocation.', $problem->message());
     }
 }

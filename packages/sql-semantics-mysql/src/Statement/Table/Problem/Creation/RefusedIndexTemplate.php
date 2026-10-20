@@ -31,6 +31,6 @@ final class RefusedIndexTemplate implements Diagnostic
      */
     public function message(): string
     {
-        return 'The index retains an operand with an invocation-time condition.';
+        return 'The index retains a name or operand condition checked at invocation.';
     }
 }

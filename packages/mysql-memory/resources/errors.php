@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    1280 => ['42000', "Incorrect index name '%s'"],
     1445 => ['HY000', 'Not allowed to set autocommit from a stored function or trigger'],
     1003 => ['HY000', '%s'],
     1 => ['HY000', "Can't create/write to file '%s' (Errcode: %d - %s)"],
