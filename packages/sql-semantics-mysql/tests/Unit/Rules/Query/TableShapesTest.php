@@ -88,4 +88,23 @@ final class TableShapesTest extends TestCase
         self::assertSame(1, $operation->fields()?->count());
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
     }
+    public function testExplicitDerivesAConstantProjectionForExistenceWithoutChangingTheInputShape(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
+        $definition = $semantics->analyze('CREATE TABLE t(a INT, b INT)');
+        $operation = $semantics->analyze('SELECT EXISTS(TABLE t UNION SELECT 1)', [$definition]);
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $item = $operation->statement->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $item);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class, $item->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation::class, $item->expression->query);
+        $table = $item->expression->query->left;
+        self::assertInstanceOf(ExplicitTable::class, $table);
+        self::assertCount(2, $operation->facts->relation($table)->shape->slots);
+        self::assertCount(1, $operation->facts->query($table)->projection);
+        self::assertSame(Nullability::NotNull, $operation->field(0)->slot->nullability);
+    }
+
 }

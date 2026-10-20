@@ -124,7 +124,7 @@ final class Planner
             $query instanceof QueryStatement => $this->query($query->query, $outer),
             $query instanceof SetOperation => $this->set($query, $outer),
             $query instanceof ValuesQuery => $this->values($query, $outer),
-            $query instanceof ExplicitTable => $this->blocks->table($query, $outer),
+            $query instanceof ExplicitTable => (new Projection\TableFields())->apply($query, $this->blocks->table($query, $outer), $this->compiler, $outer),
             default => throw StatementError::NotSupportedYet->error('query ' . (new ReflectionClass($query))->getShortName()),
         };
     }

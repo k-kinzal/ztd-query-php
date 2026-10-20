@@ -24,7 +24,7 @@ final class Existence
      */
     public function mark(Query|M\Set\LeadingUnion $query, Derivation $derivation): void
     {
-        if ($query instanceof M\Select) {
+        if ($query instanceof M\Select || $query instanceof M\ExplicitTable) {
             $derivation->existenceQueries->offsetSet($query, null);
         } elseif ($query instanceof M\QueryExpression) {
             $this->mark($query->body, $derivation);

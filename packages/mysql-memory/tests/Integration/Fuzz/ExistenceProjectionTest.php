@@ -25,12 +25,12 @@ final class ExistenceProjectionTest extends TestCase
     public static function providerInputs(): iterable
     {
         $statements = ['CREATE DATABASE d', 'USE d', 'CREATE TABLE t(v INT, n INT NOT NULL)', 'INSERT INTO t VALUES(NULL,1)'];
-        foreach (['SELECT *', 'SELECT * FROM DUAL', 'SELECT * FROM t', 'SELECT t.* FROM t', 'SELECT missing.* FROM t', 'SELECT * FROM absent', 'SELECT *,7', 'SELECT *,7 FROM t'] as $body) {
+        foreach (['TABLE t', 'TABLE absent', 'SELECT *', 'SELECT * FROM DUAL', 'SELECT * FROM t', 'SELECT t.* FROM t', 'SELECT missing.* FROM t', 'SELECT * FROM absent', 'SELECT *,7', 'SELECT *,7 FROM t'] as $body) {
             foreach (['UNION SELECT 1', 'UNION SELECT 1,2', 'INTERSECT SELECT 1', 'INTERSECT SELECT 2', 'EXCEPT SELECT 1'] as $set) {
                 $statements[] = 'SELECT EXISTS(' . $body . ' ' . $set . ') AS answer';
             }
         }
-        foreach (['SELECT NULL', 'SELECT 1', 'SELECT 1 FROM t', 'SELECT NULL FROM t', 'SELECT v FROM t', 'SELECT n FROM t', 'SELECT v+1 FROM t', 'SELECT * FROM t', 'SELECT missing.* FROM t', 'SELECT missing', 'SELECT v FROM t UNION SELECT 1', 'SELECT n FROM t UNION SELECT NULL', 'SELECT * UNION SELECT NULL', 'SELECT 1 WHERE FALSE', 'SELECT COUNT(*) FROM t', 'SELECT MAX(v) FROM t', 'SELECT v FROM t WHERE FALSE'] as $body) {
+        foreach (['TABLE t', 'TABLE t LIMIT 0', 'WITH a AS (TABLE t) TABLE a', 'TABLE t UNION SELECT 1', 'TABLE t UNION SELECT NULL', 'SELECT NULL', 'SELECT 1', 'SELECT 1 FROM t', 'SELECT NULL FROM t', 'SELECT v FROM t', 'SELECT n FROM t', 'SELECT v+1 FROM t', 'SELECT * FROM t', 'SELECT missing.* FROM t', 'SELECT missing', 'SELECT v FROM t UNION SELECT 1', 'SELECT n FROM t UNION SELECT NULL', 'SELECT * UNION SELECT NULL', 'SELECT 1 WHERE FALSE', 'SELECT COUNT(*) FROM t', 'SELECT MAX(v) FROM t', 'SELECT v FROM t WHERE FALSE'] as $body) {
             $statements[] = 'SELECT EXISTS(' . $body . ') AS answer';
         }
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
