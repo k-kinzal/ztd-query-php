@@ -183,4 +183,23 @@ final class RevokeCommandTest extends TestCase
 
         self::assertSame([['Warning', 3523, 'Unknown authorization ID `r`@`%`'], ['Warning', 3162, 'Authorization ID nobody does not exist.'], ['Warning', 3523, 'Unknown authorization ID `r`@`%`']], $session->diagnostics->conditions);
     }
+    public function testEverythingAtGlobalScopeRetainsOnlyMissingRecipientWarnings(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query("REVOKE ALL ON *.* FROM a@'named.host',b@'other.host' IGNORE UNKNOWN USER");
+        self::assertSame([['Warning', 3162, 'Authorization ID a does not exist.'], ['Warning', 3162, 'Authorization ID b does not exist.']], $session->diagnostics->conditions);
+    }
+
+    public function testEverythingAtGlobalScopeRestoresEarlierGrantsWhenTheLastRecipientFails(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query("CREATE USER a@'named.host'; GRANT SELECT ON d.* TO a@'named.host'");
+        $reply = $session->run("REVOKE ALL ON *.* FROM a@'named.host',missing");
+        self::assertInstanceOf(SqlError::class, $reply[0]);
+        self::assertSame(1269, $reply[0]->getCode());
+        $grants = $session->query("SHOW GRANTS FOR a@'named.host'")[0];
+        self::assertInstanceOf(ResultSet::class, $grants);
+        self::assertSame([['GRANT USAGE ON *.* TO `a`@`named.host`'], ['GRANT SELECT ON `d`.* TO `a`@`named.host`']], $grants->rows);
+    }
+
 }

@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Operation;
  * the first error is returned after every occurrence has been checked. Dynamic privileges
  * are processed only at the global level and only until the first error. IF EXISTS tolerates
  * missing grants, but does not tolerate missing accounts. The latter report the target-level
- * error in modern releases and ER_NONEXISTING_GRANT in 5.x. Modern global ALL tolerates them.
+ * error in modern releases and ER_NONEXISTING_GRANT in 5.x. Modern unqualified global ALL uses the all-accounts command boundary.
  * Verified against fresh 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html.
  *
@@ -66,12 +66,11 @@ final class Recipients
     {
         $levels = new Levels($session->settings()->release());
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
-        $globalAll = $target[0] === 'GLOBAL' && $all && !$session->settings()->legacy();
         $account = $session->instance->accounts->find($identity);
         if ($account === null) {
             if ($statement->ignoreUnknownUser) {
                 $session->diagnostics->warning(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->user));
-            } elseif (!$globalAll) {
+            } else {
                 throw $session->settings()->legacy()
                     ? AccountError::NonexistingGrant->error($identity->user, $identity->host)
                     : (new RevokeCommand())->missing($identity, $target);
@@ -80,11 +79,6 @@ final class Recipients
             return;
         }
         $levels->usage($operation);
-        if ($globalAll) {
-            $account->grants->clear();
-
-            return;
-        }
         (new RevokeCommand())->revoke($account, $target, $static, $columns, $option, $all, $statement->ifExists, $session);
         if (!$failed && $target[0] === 'GLOBAL') {
             $this->dynamic($account, $dynamic, $session);

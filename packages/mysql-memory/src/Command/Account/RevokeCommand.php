@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Operation;
  * table or routine the account holds no grant on is ER_NONEXISTING_GRANT,
  * ER_NONEXISTING_TABLE_GRANT or ER_NONEXISTING_PROC_GRANT, a warning under IF EXISTS; the global
  * level never is. In 8.x and later, ALL at the global level revokes every privilege at every
- * level and tolerates missing accounts; in 5.x it removes only global static privileges. REVOKE of
+ * level, using the ALL account checks without per-host warnings; in 5.x it removes only global static privileges. REVOKE of
  * roles refuses an account or a role that does not exist (ER_UNKNOWN_AUTHID, for a role a
  * warning under IF EXISTS); revoking a role that is not granted does nothing. REVOKE ALL, GRANT
  * OPTION keeps the roles. In 5.x every missing account causes ER_REVOKE_GRANTS,
@@ -98,6 +98,10 @@ final class RevokeCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof RevokePrivileges);
+        if (!$session->settings()->legacy() && $statement->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel && count($statement->privileges) === 1 && $statement->privileges[0] instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges) {
+            $this->everything($statement, $session);
+            return;
+        }
         $names = new Names($session->settings()->release());
         $names->check($names->users($statement->users));
         $levels = new Levels($session->settings()->release());
@@ -300,7 +304,7 @@ final class RevokeCommand implements Command
      *
      * @throws SqlError When the versioned recipient policy refuses an absent account
      */
-    public function everything(RevokeAll $statement, Session $session): void
+    public function everything(RevokeAll|RevokePrivileges $statement, Session $session): void
     {
         $names = new Names($session->settings()->release());
         $users = $names->users($statement->users);
