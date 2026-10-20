@@ -185,4 +185,11 @@ final class CreateProcedureTest extends TestCase
 
         new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new Parameter(new Name('x'), new Integral(IntegralKind::Int)));
     }
+
+    public function testRenderPreservesHintsWhenEnteringAStoredBody(): void
+    {
+        $sql = 'CREATE PROCEDURE p() UPDATE /*+ NO_ICP(`t` `i`) RESOURCE_GROUP(`batch`) */ t SET a = 1';
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertSame($sql, $operation->toString());
+    }
 }

@@ -340,7 +340,9 @@ final class Lowering
      */
     public function inProgram(?\SqlSemantics\Statement\Identifier\QualifiedName $name): self
     {
-        return new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName);
+        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName);
+        $lowering->hints = $this->hints;
+        return $lowering;
     }
 
     /**

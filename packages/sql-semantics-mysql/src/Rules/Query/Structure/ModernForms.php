@@ -39,10 +39,8 @@ final class ModernForms
      */
     public function requires(object $value): bool
     {
-        return $value instanceof WithClause || $value instanceof WindowSpecification || $value instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind
-
-            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Row, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Rollup, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Cube], true)
-            || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction::class, \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption::class, \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
+        return $value instanceof WithClause || $value instanceof WindowSpecification || $this->enumeration($value)
+            || in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockInstance::class, \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnVisibility::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction::class, \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility::class, \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConstraintEnforcement::class, \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption::class, \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart::class, \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege::class, \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody::class, CommonTableExpression::class, ValuesQuery::class, \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery::class, ExplicitTable::class, JsonTable::class, JsonValueCall::class, AtTimeZone::class, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone::class, OdbcJoin::class, TableSample::class, DatabaseReadOnly::class, DatabaseEncryption::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs::class], true)
             || $this->definition($value)
             || match (true) {
                 $value instanceof Select => $this->query($value),
@@ -90,6 +88,7 @@ final class ModernForms
             $value === ElementaryKind::Vector, $value === TextOptionKind::EngineAttribute,
             $value === TextOptionKind::SecondaryEngineAttribute, $value instanceof AutoextendSizeOption => true,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'INSTANT',
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateUser => $value->defaultRoles !== [],
             $value instanceof DerivedTable => $value->lateral || $value->columns !== [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure => $value->ifNotExists,
             default => false,
@@ -132,6 +131,16 @@ final class ModernForms
     public function locking(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause $value): bool
     {
         return $value->strength === \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Share || $value->tables !== [] || $value->action !== null;
+    }
+
+    /**
+     * Identifies modern enum operands independently of their enclosing statement.
+     */
+    public function enumeration(object $value): bool
+    {
+        return $value instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind
+            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::PersistOnly, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::CreateRole, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::DropRole, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Row, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::System, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Collect, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Rollup, \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::Cube], true)
+            || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind && !in_array($value, [\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Binary, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::NationalChar, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Unsigned, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Date, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Time, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::DateTime, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Json], true));
     }
 
 }

@@ -104,4 +104,14 @@ final class GeneratedColumnTest extends TestCase
     {
         self::assertSame('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin AS (a) STORED UNIQUE)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE KEY)')->toString());
     }
+
+    public function testRenderExcludesDefaultCollationInAGenerationDeclaration(): void
+    {
+        $this->expectExceptionMessage('A generated column names an explicit collation.');
+        new GeneratedColumn(
+            new Integral(Type\Kind\IntegralKind::Int),
+            new NumberLiteral('1'),
+            new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null),
+        );
+    }
 }

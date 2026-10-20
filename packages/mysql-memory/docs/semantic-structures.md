@@ -3599,3 +3599,18 @@ whereas modern releases leave that batch unchanged. The fixture therefore also
 recreates an account deleted by the initial failed request, including the
 connected account when CURRENT_USER is one of the operands. Neither the setup
 nor a matching initial error certifies the original structure by itself.
+
+Static CREATE ROLE and DROP ROLE privileges require a modern grammar generation,
+including when nested in GRANT or REVOKE. They cannot coexist with the resource
+limits, authentication clauses or repeated WITH options of legacy GRANT. The
+composition check rejects that combination during construction; ordinary modern
+role privileges with GRANT OPTION remain valid. No execution outcome is used to
+select this language domain.
+
+Constraint additions accept only index, foreign-key, and check-constraint values;
+column additions have their own command type. Generated-column collations must
+name a collation, replacement passwords use quoted text, expression subqueries
+exclude `INTO`, and partition predicates require an explicit grouping node.
+Cross-release invariants also account for persistent variable scopes, modern cast
+targets, backup locks, invisible columns, and default roles. Entering a stored
+routine preserves its decoded optimizer hints during lowering.

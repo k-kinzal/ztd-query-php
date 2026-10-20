@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
-use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -60,7 +59,7 @@ final class KeyRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function element(Node $element): TableElement
+    public function element(Node $element): IndexDefinition|ForeignKey|CheckConstraint
     {
         $form = $this->lowering->productions->form($element);
         if (isset(self::INDEXES[$form->signature])) {

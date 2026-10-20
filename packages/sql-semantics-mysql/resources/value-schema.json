@@ -398,7 +398,7 @@
         "default": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultExpression|null"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\AddConstraint": {
-        "element": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableElement"
+        "element": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexDefinition|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ForeignKey|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\CheckConstraint"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ConstraintEnforcement": {
         "constraint": "SqlSemantics\\Statement\\Identifier\\Name",

@@ -81,4 +81,12 @@ final class QuantifiedComparisonTest extends TestCase
 
         new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::NullSafeEqual, Quantifier::Any, $query);
     }
+
+    public function testRenderExcludesAnIntoDestinationWithinTheSelect(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'target'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $this->expectExceptionMessage('An expression subquery cannot have an INTO destination.');
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $operation->statement->query);
+    }
 }

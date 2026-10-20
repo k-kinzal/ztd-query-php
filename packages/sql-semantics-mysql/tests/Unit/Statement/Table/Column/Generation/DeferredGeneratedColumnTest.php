@@ -69,4 +69,14 @@ final class DeferredGeneratedColumnTest extends TestCase
         $this->expectExceptionMessage('A deferred generation declaration retains an invocation-time operand condition.');
         new DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('USER')));
     }
+
+    public function testRenderExcludesDefaultCollationInAGenerationDeclaration(): void
+    {
+        $this->expectExceptionMessage('A generated column names an explicit collation.');
+        new DeferredGeneratedColumn(
+            new M\Type\Integral(M\Type\Kind\IntegralKind::Int),
+            new M\Literal\NumberLiteral('1'),
+            new M\Name\CollationName(null),
+        );
+    }
 }

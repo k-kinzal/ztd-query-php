@@ -306,4 +306,44 @@ final class GenerationsTest extends TestCase
         new \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase(null, [new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly(null), new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset(new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null))]);
     }
 
+
+    /**
+     * @return iterable<string, array{Closure(): object}>
+     */
+    public static function providerDisjointStatementGenerations(): iterable
+    {
+        yield 'persistent variables with a password assignment' => [static fn (): object => new SetVariables([
+            new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment(new Name('v'), new NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist),
+            new PasswordAssignment(new Password(new Text('x'))),
+        ])];
+        yield 'persistent-only variables with a password assignment' => [static fn (): object => new SetVariables([
+            new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment(new Name('v'), new NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::PersistOnly),
+            new PasswordAssignment(new Password(new Text('x'))),
+        ])];
+        yield 'spatial casts with weight levels' => [static fn (): object => new WeightString(
+            new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::MultiPolygon)),
+            levels: [new WeightLevel(new Numeral('1'))],
+        )];
+        yield 'backup locking with legacy parameter collation' => [static fn (): object => new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(
+            new QualifiedName(new Name('p')),
+            new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), collation: new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null))]),
+            new \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockInstance(),
+        )];
+        yield 'column visibility with a legacy dot prefix' => [static fn (): object => new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(
+            new QualifiedName(new Name('t')),
+            [new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnVisibility(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new Name('a'), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), false)],
+        )];
+        yield 'default roles with legacy password hashes' => [static fn (): object => new \SqlSemantics\Platform\MySql\Statement\Account\CreateUser(
+            false,
+            [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash, new Text('x')))],
+            [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('r'))],
+        )];
+    }
+
+    #[DataProvider('providerDisjointStatementGenerations')]
+    public function testCheckExcludesFeaturesWithNoSharedRelease(Closure $construct): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+        $construct();
+    }
 }

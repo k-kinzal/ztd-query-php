@@ -61,6 +61,7 @@ final class UserSpecification implements UserAlteration
         Check::input($initial === null || ($identification?->credential === Credential::None && $this->factors === []), 'INITIAL AUTHENTICATION follows a plugin named alone.');
         Check::input($initial === null || $initial->initial(), 'INITIAL AUTHENTICATION sets a password or an authentication string.');
         Check::input($replace === null || ($identification?->replaceable() ?? false), 'REPLACE follows a password.');
+        Check::input($replace === null || $replace->radix === null, 'A replacement password is a quoted string.');
         Check::input(!$retainCurrent || ($identification?->retainable() ?? false), 'RETAIN CURRENT PASSWORD follows a new password or authentication string.');
         Check::input(!$discardOld || $identification === null, 'DISCARD OLD PASSWORD is written alone.');
         Check::input(($replace === null && !$retainCurrent && !$discardOld) || ($this->factors === [] && $initial === null), 'Password management words and further factors belong to different statements.');

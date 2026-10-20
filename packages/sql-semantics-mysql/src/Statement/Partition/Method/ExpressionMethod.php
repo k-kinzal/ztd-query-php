@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
@@ -33,6 +35,7 @@ final class ExpressionMethod implements PartitionMethod
      */
     public function __construct(public readonly PartitionKind $kind, public readonly Scalar $expression)
     {
+        Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
     }
 
     /**

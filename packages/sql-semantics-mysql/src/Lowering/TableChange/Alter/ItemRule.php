@@ -129,7 +129,7 @@ final class ItemRule
         $definitions = $this->lowering->tableDefinitions;
 
         return match (self::SIMPLE[$form->signature] ?? throw ImplementationGap::production($form)) {
-            'constraint' => new AddConstraint($definitions->tableElement($form->node(1))),
+            'constraint' => new AddConstraint((new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule($this->lowering))->element($form->node(1))),
             'disable' => new ToggleKeys(false),
             'enable' => new ToggleKeys(true),
             'rename' => $this->rename($form),

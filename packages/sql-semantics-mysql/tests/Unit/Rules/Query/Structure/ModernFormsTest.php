@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Query\Structure;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
@@ -162,4 +163,21 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $aliased)));
     }
 
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind, bool}>
+     */
+    public static function providerCastGenerations(): iterable
+    {
+        foreach (\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::cases() as $kind) {
+            yield $kind->name => [$kind, in_array($kind->name, ['Year', 'Real', 'Float', 'Double', 'Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon', 'GeometryCollection'], true)];
+        }
+    }
+
+    #[DataProvider('providerCastGenerations')]
+    public function testEnumerationDistinguishesLegacyAndModernCastTargets(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind $kind, bool $modern): void
+    {
+        self::assertSame($modern, (new ModernForms())->enumeration($kind));
+        self::assertSame($modern, (new ModernForms())->requires($kind));
+    }
 }

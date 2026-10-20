@@ -43,7 +43,7 @@ final class SubqueryOptions
                 $seen[$value] = true;
                 Check::input(!$value instanceof Select || !in_array(SelectOption::Cache, $value->options, true), 'SQL_CACHE is not an option of a subquery.');
                 Check::input(!$value instanceof Select || $value->procedure === null, 'An expression subquery cannot invoke PROCEDURE ANALYSE.');
-                Check::input(!$value instanceof QueryStatement || $value->into === null, 'An expression subquery cannot have an INTO destination after its query expression.');
+                Check::input(!($value instanceof QueryStatement || $value instanceof Select) || $value->into === null, 'An expression subquery cannot have an INTO destination.');
                 if (!$value instanceof Select) {
                     array_push($pending, ...array_values(get_object_vars($value)));
                 }
