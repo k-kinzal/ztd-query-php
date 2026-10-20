@@ -55,7 +55,7 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\MissingTable</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * Prepares a complete retained UPDATE before reporting its input-column constraint.</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * Prepares a complete retained UPDATE before reporting its fixed input, target or clause constraint.</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
@@ -110,7 +110,7 @@
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$facts</span>-&gt;<span class="tok-id">diagnostics</span> <span class="tok-kw">as</span> <span class="tok-var">$problem</span>) {</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-kw">throw</span> (<span class="tok-kw">new</span> <span class="tok-id">Errors</span>())-&gt;<span class="tok-id">error</span>(<span class="tok-var">$problem</span>, <span class="tok-var">$session</span>, <span class="tok-id">statement</span>: <span class="tok-var">$write</span>);</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        }</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained UPDATE keeps its input-column contradiction.&#039;</span>);</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained UPDATE keeps its input, target or clause contradiction.&#039;</span>);</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>}</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
