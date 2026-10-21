@@ -284,7 +284,7 @@ final class Execution
      * decide), CREATE and DROP of a stored routine or an event, and the SHOW statements that read
      * no table of the information schema: SHOW CREATE DATABASE, SHOW CREATE PROCEDURE and
      * FUNCTION, SHOW GRANTS, SHOW PRIVILEGES, SHOW PROCESSLIST, SHOW ENGINE and the replication
-     * SHOW statements, PURGE BINARY LOGS and UNLOCK TABLES (verified on a live 5.6.51 server).
+     * SHOW statements, KILL, PURGE BINARY LOGS and UNLOCK TABLES (verified on a live 5.6.51 server).
      * Source: https://dev.mysql.com/doc/refman/5.6/en/show-warnings.html.
      */
     public function retains(\SqlSemantics\Statement\Node $statement, Command $command): bool
@@ -296,7 +296,7 @@ final class Execution
             return true;
         }
         $kept = [
-            \MySqlMemory\Command\EmptyCommand::class,
+            \MySqlMemory\Command\EmptyCommand::class, \MySqlMemory\Command\Admin\KillCommand::class,
             \MySqlMemory\Command\TransactionCommand::class, \MySqlMemory\Command\Transaction\SetTransactionCommand::class, \MySqlMemory\Command\Transaction\SavepointCommand::class,
             \MySqlMemory\Command\Transaction\XaCommand::class, \MySqlMemory\Command\DatabaseCommand::class, \MySqlMemory\Command\Definition\Database\AlterDatabaseCommand::class, \MySqlMemory\Command\Definition\Database\UpgradeDatabaseCommand::class, \MySqlMemory\Command\Account\CreateUserCommand::class,
             \MySqlMemory\Command\Account\DropUserCommand::class, \MySqlMemory\Command\Account\AlterUserCommand::class, \MySqlMemory\Command\Account\RenameUserCommand::class,

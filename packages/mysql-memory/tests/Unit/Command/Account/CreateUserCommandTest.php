@@ -355,4 +355,21 @@ final class CreateUserCommandTest extends TestCase
         self::assertSame($reply->rows[0][2], $session->instance->accounts->find(new Identity('random_user', '%'))?->password);
     }
 
+    public function testAbsentRecordsInitialCredentialConversionBeforeThePrimaryPluginRefusal(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $error = $session->run("CREATE USER u@'é' IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED BY 'p'")[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1524, $error->getCode());
+        self::assertSame([1366, 1524], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testAbsentRecordsPrimaryConversionBeforeTheAdditionalFactorPolicy(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $error = $session->run("CREATE USER u@'é' IDENTIFIED BY 'p' AND IDENTIFIED BY RANDOM PASSWORD")[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1524, $error->getCode());
+        self::assertSame([1366, 4058, 1524], array_column($session->diagnostics->conditions, 1));
+    }
 }

@@ -18,17 +18,19 @@ final class Native
 {
     /**
      * @param bool $prepared Whether to use COM_STMT_PREPARE even with no parameter markers
+     * @param list<int|float|string|null>|null $bindings Explicit parameter values, or NULL values for the given parameter count
      * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}, warnings: list<list<mixed>>|null, disconnected: bool, warningsError?: array{int, string, string}} All result sets, the terminal error and the separate condition-reading outcome
      * @throws RuntimeException When the driver does not produce an observation
      */
-    public function observe(mysqli $connection, string $sql, int $parameters = 0, bool $prepared = false): array
+    public function observe(mysqli $connection, string $sql, int $parameters = 0, bool $prepared = false, ?array $bindings = null): array
     {
+        $parameters = $bindings === null ? $parameters : count($bindings);
         $observation = ['results' => []];
         $statement = null;
         try {
             if ($prepared || $parameters > 0) {
                 $statement = $connection->prepare($sql);
-                if ($statement === false || !$statement->execute(array_fill(0, $parameters, null))) {
+                if ($statement === false || !$statement->execute($bindings ?? array_fill(0, $parameters, null))) {
                     throw new RuntimeException('Native preparation did not produce an execution.');
                 }
             } elseif (!$connection->real_query($sql)) {

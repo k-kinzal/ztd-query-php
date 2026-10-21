@@ -48,6 +48,15 @@ final class InsertUseTest extends TestCase
         self::assertSame([['Error', 1241, 'Operand should contain 1 column(s)']], $session->diagnostics->conditions);
     }
 
+    public function testErrorChecksReachedLimitBindingsBeforeOpeningTheWriteTarget(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('INSERT INTO absent.dst WITH c AS (TABLE absent.src LIMIT n) SELECT * WHERE EXISTS(TABLE c)');
+        self::assertSame([['Error', 1327, 'Undeclared variable: n']], $session->diagnostics->conditions);
+        $session->run('INSERT INTO absent.dst WITH c AS (TABLE absent.src LIMIT n) SELECT *');
+        self::assertSame([['Error', 1049, "Unknown database 'absent'"]], $session->diagnostics->conditions);
+    }
+
     public function testErrorOpensTheDestinationBeforeNestedValueDependencies(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

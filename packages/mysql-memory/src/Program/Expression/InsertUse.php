@@ -65,7 +65,7 @@ final class InsertUse
         $facts = $derivation->facts();
         (new \MySqlMemory\Session\Access\DefaultDatabase())->write($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
-            if (Stages::parsed($problem)) {
+            if (Stages::parsed($problem) || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable) {
                 throw (new Errors())->error($problem, $session);
             }
         }

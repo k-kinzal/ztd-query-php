@@ -70,6 +70,21 @@ relations. Their null-key and geometry-conversion errors arise when rows are
 evaluated; the empty input succeeds again after truncation. Parameters remain
 bound through the binary protocol throughout these histories.
 
+The generated PREPARE request retains its source literal as instruction data.
+Its payload is parsed when that instruction is reached. A stored procedure
+holds the unchanged generated PREPARE under a session-controlled branch;
+native and memory executions agree while skipped, reached and skipped again.
+The generated invalid payload reports its syntax error only on the reached
+call. The outer statement's source and parser tree are never retained by this
+semantic value.
+
+The generated KILL request retains its parameter operand across a NULL binding,
+a live connection identifier, and the same identifier after the connection is
+closed. The native connection identity is supplied as runtime fixture state to
+both servers. The same object and binding then change from success to a missing
+thread error. MySQL 5.6 retains preceding diagnostics after a successful KILL
+until a new condition replaces them; later releases clear the prior conditions.
+
 The generated JSON extraction retains its column and path across missing, empty,
 populated, NULL and restored-NULL relations. An invalid path is evaluated only
 when a non-NULL JSON document is read; a populated integer column reports its

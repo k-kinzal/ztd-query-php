@@ -49,6 +49,7 @@ final class InitialAuthenticationTest extends TestCase
             'CREATE USER IF NOT EXISTS \'root\'@\'%\' IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED WITH caching_sha2_password BY \'p\'',
         ];
         $statements[] = (string) file_get_contents(__DIR__ . '/fixtures/create-user-initial-authentication.sql');
+        $statements[] = (string) file_get_contents(__DIR__ . '/fixtures/create-user-host-initial.sql');
         /** @var list<string> $ordered */
         $ordered = json_decode((string) file_get_contents(__DIR__ . '/fixtures/initial-authentication-order.json'), true, flags: JSON_THROW_ON_ERROR);
         $statements = [...$statements, ...$ordered];

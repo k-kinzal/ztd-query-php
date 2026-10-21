@@ -117,6 +117,16 @@ final class ReadingTest extends TestCase
         $session->query('WITH c AS (SELECT 1 LIMIT n) SELECT * FROM c');
     }
 
+    public function testDeclaredChecksTheReferencedTableExpressionBeforeItsOwnLimit(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('WITH c AS (TABLE absent.t LIMIT x) SELECT * FROM c LIMIT y');
+        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, Select::class)[0];
+        $session->text = 'unrelated invalid request';
+        $this->expectExceptionMessage('Undeclared variable: x');
+        (new Reading())->declared($select, true, $session, $operation);
+    }
+
     public function testReadConsumesADuplicateCommonTableInsideAnUnusedOne(): void
     {
         $session = (new Instance())->connect();

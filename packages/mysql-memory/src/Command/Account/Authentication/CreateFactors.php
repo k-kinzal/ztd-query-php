@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Account\Authentication;
 
 use MySqlMemory\Account\Credentials;
+use MySqlMemory\Command\Account\Names;
 use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 
 /**
  * Checks additional authentication methods after the first method has been accepted.
+ * An accepted initial or primary credential converts the host before additional plugin
+ * lookup and authentication-policy notices. Invalid primary credentials stop earlier.
  * The first omitted plugin reports the authentication-policy warning. Existing accounts
  * reach their existence error without loading additional plugins; new accounts validate
  * the second factor before the third. CURRENT_USER retains only its primary authentication
@@ -31,6 +35,9 @@ final class CreateFactors
      */
     public function check(UserSpecification $user, bool $exists, Session $session): void
     {
+        $names = new Names($session->settings()->release());
+        $authentication = $user->initial ?? $user->identification;
+        $names->ascii($names->identity($user->user, $session), $authentication !== null && $authentication->credential !== Credential::None ? 1 : 0, $session->diagnostics);
         if (!$exists && $user->initial !== null) {
             $credentials = new Credentials($session->settings()->release());
             throw AccountError::PluginOperationUnsupported->error($credentials->plugin($user->identification->plugin->value ?? $credentials->default()));

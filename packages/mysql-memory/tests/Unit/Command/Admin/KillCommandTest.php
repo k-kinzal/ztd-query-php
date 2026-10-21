@@ -85,6 +85,19 @@ final class KillCommandTest extends TestCase
         self::assertSame([['Error', 1242, 'Subquery returns more than 1 row'], ['Error', 1094, 'Unknown thread id: 0']], $session->diagnostics->conditions);
     }
 
+    public function testExecuteKeepsPriorConditionsUntilItRaisesANewOneInMySql56(): void
+    {
+        $instance = new Instance('5.6.51');
+        $target = $instance->connect();
+        $session = $instance->connect();
+        $session->run('KILL 0');
+        $session->query('KILL ' . $target->id);
+        self::assertTrue($target->released);
+        self::assertSame([['Error', 1094, 'Unknown thread id: 0']], $session->diagnostics->conditions);
+        $session->run('KILL ' . $target->id);
+        self::assertSame([['Error', 1094, 'Unknown thread id: ' . $target->id]], $session->diagnostics->conditions);
+    }
+
     public function testExecuteLeavesAnIdleConnectionOpenForQueryOnly(): void
     {
         $instance = new Instance();

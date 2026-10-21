@@ -196,6 +196,11 @@ final class Reading
     {
         if ($ended) {
             $this->aliased($select, $operation, $session);
+            foreach ((new Walker())->resolved($select, $operation->facts, true) as $query) {
+                if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
+                    $this->limited($query->limit, $session);
+                }
+            }
             $this->limited($select->limit, $session);
         }
         $position = $select->intoPosition;

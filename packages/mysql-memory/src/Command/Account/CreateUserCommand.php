@@ -129,7 +129,6 @@ final class CreateUserCommand implements Command
                 }
                 $options->check($user->initial === null ? $user->identification : null, $plugin);
                 (new Authentication\CreateFactors())->check($user, $exists, $session);
-                $names->ascii($identity, $user->identification !== null && $user->identification->credential !== Credential::None ? 1 : 0, $context->diagnostics);
                 $exists = $exists || $session->instance->accounts->stored($identity->stored()) !== null || array_filter($created, static fn (array $previous): bool => $previous[0]->stored()->key() === $identity->stored()->key()) !== [];
                 if (!$exists) {
                     $this->recipient($statement, $identity, $rolesRefused, $session, $user->initial !== null);
