@@ -11,6 +11,11 @@
 declare(strict_types=1);
 
 return [
+    1148 => ['42000', 'The used command is not allowed with this MySQL version'],
+    1409 => ['HY000', "Can't load value from file with fixed size rows to variable"],
+    1261 => ['01000', "Row %d doesn't contain data for all columns"],
+    1262 => ['01000', 'Row %d was truncated; it contained more data than there were input columns'],
+    1263 => ['22004', "Column set to default value; NULL supplied to NOT NULL column '%s' at row %d"],
     1280 => ['42000', "Incorrect index name '%s'"],
     1445 => ['HY000', 'Not allowed to set autocommit from a stored function or trigger'],
     1003 => ['HY000', '%s'],

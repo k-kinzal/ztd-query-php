@@ -26,9 +26,11 @@ enum StatementError: int implements ErrorCode
     case ParseError = 1064;
     case EmptyQuery = 1065;
     case WrongFieldTerminators = 1083;
+    case FixedRowsToVariable = 1409;
     case TableNotLockedForWrite = 1099;
     case TableNotLocked = 1100;
     case UnknownError = 1105;
+    case NotAllowedCommand = 1148;
     case SyntaxError = 1149;
     case LockedOrActiveTransaction = 1192;
     case SetConstantExpression = 1204;

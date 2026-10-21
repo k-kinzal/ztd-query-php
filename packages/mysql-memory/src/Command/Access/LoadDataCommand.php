@@ -26,9 +26,10 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 /**
  * Checks LOAD DATA and LOAD XML against an empty server file store and client upload transport.
  *
- * The server runs with --secure-file-priv=/var/lib/mysql-files/ and local loading disabled.
+ * The server runs with --secure-file-priv=/var/lib/mysql-files/; modern releases
+ * default to disabled local loading. Enabled LOCAL DATA consumes client records.
  * Several files and a URL need the bulk algorithm, which this server does not support, and
- * local loading is refused; these are checked while the statement is read. MySQL
+ * disabled local loading is refused; these are checked while the statement is read. MySQL
  * 8.0 and 8.1 ignore the bulk annotations and follow ordinary file loading,
  * including table, column and secure-file checks (verified through Testcontainers). Then the table and
  * its columns must exist, and a PARTITION clause needs a partitioned table. A file outside the
@@ -61,7 +62,7 @@ final class LoadDataCommand implements Command
     }
 
     /**
-     * Applies file-store restrictions or receives a legacy client upload.
+     * Applies file-store restrictions or receives an enabled client upload.
      */
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
@@ -80,7 +81,10 @@ final class LoadDataCommand implements Command
             }
             $contents = ($session->running->readFile)($input->file->value);
             if ($contents !== '') {
-                throw StatementError::NotSupportedYet->error('nonempty client file loading');
+                if ($statement->format === \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Xml) {
+                    throw StatementError::NotSupportedYet->error('nonempty client XML loading');
+                }
+                return (new Load\ClientRows())->execute($operation, $session, $context, $connection, $contents);
             }
             return new \MySqlMemory\Result\Completion(0, 0, $context->diagnostics->raised(), 'Records: 0  Deleted: 0  Skipped: 0  Warnings: ' . $context->diagnostics->raised());
         }
@@ -122,8 +126,8 @@ final class LoadDataCommand implements Command
         }
         $input = $statement->input;
         $this->options($statement, $facts, $session);
-        if ($input->local && !$legacy) {
-            throw StatementError::LocalInfileDisabled->error();
+        if ($input->local && !in_array($session->variables->read('local_infile'), ['ON', '1', 1], true)) {
+            throw ($legacy ? StatementError::NotAllowedCommand : StatementError::LocalInfileDisabled)->error();
         }
         if (!$legacy) {
             $this->separators($statement);
@@ -133,6 +137,9 @@ final class LoadDataCommand implements Command
             $session->diagnostics->warning($error, $error->message());
         }
         foreach ($facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition) {
+                throw (new Errors())->error($diagnostic, $session);
+            }
             if (!$diagnostic instanceof MissingTable) {
                 continue;
             }

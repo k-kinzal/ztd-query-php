@@ -29,6 +29,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class LoadTableTest extends TestCase
 {
+    public function testRejectsInputVariablesWithoutAFieldWidth(): void
+    {
+        $this->expectExceptionMessage('Fixed-row LOAD DATA requires column destinations with defined widths.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(true, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), fields: [new \SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, new Text(''))], columns: [new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v'))]);
+    }
+
     public function testRenderKeepsARadixLiteralAsARowTag(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t ROWS IDENTIFIED BY 0x0f");

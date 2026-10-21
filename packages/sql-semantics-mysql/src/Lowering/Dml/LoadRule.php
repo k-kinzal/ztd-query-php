@@ -131,7 +131,7 @@ final class LoadRule
         if ($problem !== null && (($active && $nonScalar) || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->modern($operands['input'], $operands['bulk'], $operands['compression']))) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions($operands['table']->name, $operands['format'], $problem, $operands['charset'], $assignments), $end, false);
         }
-        if ($nonScalar) {
+        if ($nonScalar || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($operands['format'], $operands['fields'], $operands['columns'])) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments(...$operands, assignments: $assignments), $end, false);
         }
         return new LoadTable(...$operands, assignments: $retained->ordinary($assignments, $end));

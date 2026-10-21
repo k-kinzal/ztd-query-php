@@ -30,6 +30,9 @@ enum DataError: int implements ErrorCode
     case ZlibBufferError = 1258;
     case ZlibDataError = 1259;
     case CutByGroupConcat = 1260;
+    case LoadTooFewFields = 1261;
+    case LoadTooManyFields = 1262;
+    case LoadNullToNotNull = 1263;
     case OutOfRange = 1264;
     case DataTruncated = 1265;
     case CantAggregateTwoCollations = 1267;

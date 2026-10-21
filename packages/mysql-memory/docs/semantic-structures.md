@@ -1369,7 +1369,11 @@ generated counterexample and repeat operand combinations without a selected
 database, with absent tables and after the tables contain rows.
 
 A non-scalar assignment without an active option conflict retains the complete
-request as `RefusedLoadAssignments`. This diagnostic is not an ordinary
+request as `RefusedLoadAssignments`. Fixed-row DATA with an input user variable
+uses the same retained-assignment diagnostic: a variable supplies no column
+width. `LoadTable` excludes that combination independently of table and file
+state. Repeated separator options use their final value, and XML does not use
+the fixed-row interpretation. This diagnostic is not an ordinary
 statement. It holds the file source, LOCAL flag, target, character set, separators,
 column list and all assignments. The same input-entry checks operate on ordinary
 loads and retained refusals, followed by operand preparation in the resolved
@@ -3976,3 +3980,29 @@ A deferred event schedule preserves its event ownership when lowering the whole
 scalar fails. Active subqueries retain the schedule-specific condition before
 catalog lookup of those subqueries. The original fuzz counterexample and native
 histories check this precedence with and without a default database.
+
+LOAD input-variable occurrences introduce string bindings before SET expressions
+are derived. Without that binding, an absent legacy variable was compiled as a
+constant NULL and lost the supplied file value. MySQL 5.6 resolves the occurrence
+in the file charset. From 5.7, an existing entry's assignment collation determines
+the prepared read, while an absent entry uses the file charset. The subsequent
+record assignment can change the runtime entry's charset without changing that
+prepared read. The semantic derivation retains these distinctions without
+mutating the input session snapshot.
+
+LOCAL DATA consumes delimited and fixed-width records through the ordinary row
+writer. Direct generated root 56 retains its original relative file name and
+partition identity while the target is absent, nonpartitioned, partitioned,
+truncated and removed. The same object loads populated client data on MySQL 5.6,
+5.7, 8.4 and 9.1. Separate native comparisons retain enclosure, multiline,
+NULL-marker, missing-field, surplus-field, prefix and input-variable behavior,
+including the complete warning sequence. PDO transfer tests also check the
+connection after a nonempty upload.
+
+These witnesses do not close the file-input domain. Nonempty XML input, some
+mixed-charset SET operands, and empty-file variable transitions remain open.
+Empty imports can expose a preceding numeric variable's representation as bytes;
+observed DECIMAL results include process-dependent bytes. That observation is
+retained as an unresolved comparison-contract question, not silently normalized
+or counted as a pass. The implementation does not inspect MySQL source or copy
+its in-process representation.

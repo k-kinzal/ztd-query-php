@@ -36,6 +36,37 @@ use SqlSemantics\Statement\Type\Nullability;
 final class LoadFactsTest extends TestCase
 {
     /**
+     * @return iterable<string, array{array<string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null, string, string}>
+     */
+    public static function providerInputVariables(): iterable
+    {
+        yield 'unknown session' => [null, 'utf8mb4_general_ci', '5.7.44'];
+        yield 'absent entry' => [[], 'utf8mb4_general_ci', '5.7.44'];
+        yield 'prior numeric entry' => [['v' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()], 'latin1_swedish_ci', '5.7.44'];
+        yield '5.6 input collation' => [['v' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()], 'utf8mb4_general_ci', '5.6.51'];
+    }
+
+    /**
+     * @param array<string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null $variables The unchanged session snapshot
+     */
+    #[DataProvider('providerInputVariables')]
+    public function testVariablesResolvesInputBeforeTheSetExpressions(?array $variables, string $collation, string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), userVariables: $variables);
+        $table = $semantics->analyze('CREATE TABLE t(a VARCHAR(30))')->declarations();
+        $operation = $semantics->analyze("LOAD DATA LOCAL INFILE 'file' INTO TABLE t CHARACTER SET utf8mb4 (@v) SET a=@v", $semantics->context($table, session: $settings));
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        $fact = $operation->facts->scalar($operation->statement->assignments[0]->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding::class, $fact->resolution);
+        self::assertTrue($fact->resolution->exists);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $fact->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $fact->type->descriptor);
+        self::assertSame($collation, $fact->type->descriptor->collation->name);
+        self::assertSame($variables, $settings->userVariables);
+    }
+
+    /**
      * @return iterable<string, array{LoadTable, ?LoadRule}>
      */
     public static function providerAlgorithms(): iterable

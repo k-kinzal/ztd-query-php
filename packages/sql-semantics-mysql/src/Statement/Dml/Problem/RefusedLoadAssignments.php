@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete LOAD request whose SET list contains a non-scalar operand.
+ * A complete LOAD request with an intrinsic input or SET assignment constraint.
  *
  * This diagnostic retains input and assignment roles without publishing an
  * ordinary statement. Database and file-entry conditions can precede the
@@ -107,7 +107,7 @@ final class RefusedLoadAssignments implements Diagnostic, Node
             Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'LOAD assignments retain scalar, default and non-scalar roles.');
             $deferred = $deferred || $item instanceof DeferredColumnAssignment;
         }
-        Check::input($deferred, 'A retained LOAD requires a non-scalar assignment.');
+        Check::input($deferred || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns), 'A retained LOAD requires a non-scalar SET assignment or a fixed-row input variable.');
         $this->assignments = $items;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -124,7 +124,10 @@ final class RefusedLoadAssignments implements Diagnostic, Node
                 return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$assignment->value])->message();
             }
         }
-        throw new LogicException('A retained LOAD has a non-scalar assignment.');
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($this->format, $this->fields, $this->columns)) {
+            return 'Fixed-row LOAD DATA requires column destinations with defined widths.';
+        }
+        throw new LogicException('A retained LOAD has an intrinsic assignment condition.');
     }
 
     /**

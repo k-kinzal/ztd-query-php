@@ -105,6 +105,9 @@ final class Assignments
                 throw (new \MySqlMemory\Program\Expression\RowUse())->error($assignment->value);
             }
         }
-        throw new LogicException('A retained LOAD has a non-scalar assignment.');
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($load->format, $load->fields, $load->columns)) {
+            throw \MySqlMemory\Error\Family\StatementError::FixedRowsToVariable->error();
+        }
+        throw new LogicException('A retained LOAD has an intrinsic assignment condition.');
     }
 }

@@ -12,6 +12,7 @@ use SqlSemantics\Statement\Snapshot;
  * Whether a user-variable entry exists when an occurrence is resolved.
  *
  * An earlier expression assignment allocates an entry without evaluating its value.
+ * A LOAD input destination also introduces an entry before its SET expressions.
  * This differs from both an absent variable and an entry explicitly holding NULL.
  * MySQL 5.6 reads an absent occurrence as NULL throughout the statement. Modern
  * control functions infer its operand type from the other branches.

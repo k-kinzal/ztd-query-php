@@ -6,12 +6,16 @@ namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 
 /**
  * Interprets LOAD option compatibility independently of table and file state.
@@ -77,5 +81,23 @@ final class LoadOptions
             }
         }
         return $value;
+    }
+
+    /**
+     * @param list<FieldOption> $fields Written field options
+     * @param list<ColumnUse|UserVariable> $columns Input destinations
+     */
+    public function fixedVariables(LoadFormat $format, array $fields, array $columns): bool
+    {
+        $terminator = "\t";
+        $enclosure = '';
+        foreach ($fields as $field) {
+            if ($field->kind === FieldOptionKind::Terminated) {
+                $terminator = $field->text->bytes();
+            } elseif ($field->kind === FieldOptionKind::Enclosed || $field->kind === FieldOptionKind::OptionallyEnclosed) {
+                $enclosure = $field->text->bytes();
+            }
+        }
+        return $format === LoadFormat::Data && $terminator === '' && $enclosure === '' && array_filter($columns, static fn ($column): bool => $column instanceof UserVariable) !== [];
     }
 }

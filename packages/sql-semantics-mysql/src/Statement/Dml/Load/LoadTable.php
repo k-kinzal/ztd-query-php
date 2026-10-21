@@ -108,6 +108,7 @@ final class LoadTable implements Statement
         }
         $this->columns = $list;
         $this->assignments = Check::listOf($assignments, Assignment::class, 'The SET clause of LOAD holds assignments.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns), 'Fixed-row LOAD DATA requires column destinations with defined widths.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->compatible($input, $bulk, $compression, (new LoadFacts())->algorithm($this)), 'LOAD source features and algorithm options must share a supported language interpretation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

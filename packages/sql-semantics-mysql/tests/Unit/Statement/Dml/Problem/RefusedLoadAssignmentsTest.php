@@ -16,6 +16,19 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments;
 #[Medium]
 final class RefusedLoadAssignmentsTest extends TestCase
 {
+    public function testMessageRetainsAFixedRowVariableOutsideTheStatementDomain(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze("LOAD DATA LOCAL INFILE 'f' INTO TABLE t FIELDS TERMINATED BY '' (@v)");
+            self::fail('A fixed-row input variable must retain its complete refused request.');
+        } catch (RejectedInput $failure) {
+            self::assertInstanceOf(RefusedLoadAssignments::class, $failure->problem);
+            self::assertSame('Fixed-row LOAD DATA requires column destinations with defined widths.', $failure->problem->message());
+            self::assertNotInstanceOf(\SqlSemantics\Statement\Statement::class, $failure->problem);
+            self::assertSame('v', $failure->problem->columns[0]->name->value);
+        }
+    }
+
     public function testMessageDescribesTheRetainedAssignmentCondition(): void
     {
         try {

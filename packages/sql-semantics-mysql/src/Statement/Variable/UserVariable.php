@@ -53,13 +53,15 @@ final class UserVariable implements Scalar
     {
         $settings = Settings::of($derivation->context);
         $name = strtolower($this->name->value);
+        $introduced = $derivation->introducedVariables[$name] ?? null;
+        if ($introduced !== null) {
+            return new ScalarFact($introduced, Nullability::Nullable, new UserVariableBinding($this->name, true));
+        }
         $domain = (new Variables($settings, $derivation->context->profile->grammar))->read($name);
         if ($domain === null) {
             return new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent);
         }
-        $introduced = $derivation->introducedVariables[$name] ?? null;
-
-        return new ScalarFact($introduced ?? new Known($domain), Nullability::Nullable, new UserVariableBinding($this->name, $introduced !== null || isset($settings->userVariables[$name])));
+        return new ScalarFact(new Known($domain), Nullability::Nullable, new UserVariableBinding($this->name, isset($settings->userVariables[$name])));
     }
 
     /**

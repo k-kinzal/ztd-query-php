@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions;
+use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
@@ -16,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(LoadOptions::class)]
 #[Small]
@@ -41,8 +43,8 @@ final class LoadOptionsTest extends TestCase
 
     public function testStartingUsesTheFinalPrefixEvenWhenItIsEmpty(): void
     {
-        $prefix = new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting, new Text('x'));
-        $empty = new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting, new Text(''));
+        $prefix = new M\Dml\Load\LineOption(M\Dml\Load\LineOptionKind::Starting, new Text('x'));
+        $empty = new M\Dml\Load\LineOption(M\Dml\Load\LineOptionKind::Starting, new Text(''));
         $rules = new LoadOptions();
         self::assertSame('', $rules->starting([$prefix, $empty]));
         self::assertSame('x', $rules->starting([$empty, $prefix]));
@@ -54,14 +56,38 @@ final class LoadOptionsTest extends TestCase
     public function testConflictRejectsModernBulkPrefixesBeforeOperationConstruction(): void
     {
         $this->expectExceptionMessage('LOAD source features and algorithm options must share a supported language interpretation.');
-        new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(
+        new M\Dml\Load\LoadTable(
             LoadFormat::Data,
             null,
             new LoadInput(false, LoadSource::S3, new Text('f')),
             null,
-            new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
-            lines: [new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Starting, new Text('x'))],
+            new M\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t'))),
+            lines: [new M\Dml\Load\LineOption(M\Dml\Load\LineOptionKind::Starting, new Text('x'))],
             bulk: new BulkOptions(bulk: true),
         );
+    }
+
+    public function testFixedVariablesRequiresDataAnEmptyTerminatorAndNoEnclosure(): void
+    {
+        $rule = new LoadOptions();
+        $variable = new M\Variable\UserVariable(new Name('v'));
+        $empty = new M\Dml\Load\FieldOption(M\Dml\Load\FieldOptionKind::Terminated, new Text(''));
+        $enclosed = new M\Dml\Load\FieldOption(M\Dml\Load\FieldOptionKind::OptionallyEnclosed, new Text('"'));
+
+        self::assertTrue($rule->fixedVariables(LoadFormat::Data, [$empty], [$variable]));
+        self::assertFalse($rule->fixedVariables(LoadFormat::Data, [], [$variable]));
+        self::assertFalse($rule->fixedVariables(LoadFormat::Data, [$empty, $enclosed], [$variable]));
+        self::assertFalse($rule->fixedVariables(LoadFormat::Xml, [$empty], [$variable]));
+        self::assertFalse($rule->fixedVariables(LoadFormat::Data, [$empty], [new M\Name\ColumnUse(new Name('v'))]));
+    }
+
+    public function testFixedVariablesUsesTheLastWrittenSeparator(): void
+    {
+        $empty = new M\Dml\Load\FieldOption(M\Dml\Load\FieldOptionKind::Terminated, new Text(''));
+        $comma = new M\Dml\Load\FieldOption(M\Dml\Load\FieldOptionKind::Terminated, new Text('2c', M\Literal\Radix::Hexadecimal));
+        $variable = new M\Variable\UserVariable(new Name('v'));
+
+        self::assertFalse((new LoadOptions())->fixedVariables(LoadFormat::Data, [$empty, $comma], [$variable]));
+        self::assertTrue((new LoadOptions())->fixedVariables(LoadFormat::Data, [$comma, $empty], [$variable]));
     }
 }
