@@ -38,6 +38,10 @@ final class LibraryErrorsTest extends TestCase
         yield '8.4 permission errno stays exact' => ['8.4.7', str_replace('errno: 2 ', 'errno: 13 ', $two), $eleven, false];
         yield '8.4 different path stays exact' => ['8.4.7', str_replace('errno: 2 ', 'errno: 0 ', $two), str_replace('/plugin/', '/other/', $eleven), false];
         yield '8.4 unobserved errno stays exact' => ['8.4.7', $two, $eleven, false];
+        yield '9.1 process errno' => ['9.1.0', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
+        yield '9.1 permission errno stays exact' => ['9.1.0', str_replace('errno: 2 ', 'errno: 13 ', $two), $eleven, false];
+        yield '9.1 different path stays exact' => ['9.1.0', str_replace('errno: 2 ', 'errno: 0 ', $two), str_replace('/plugin/', '/other/', $eleven), false];
+        yield '9.1 unobserved errno stays exact' => ['9.1.0', $two, $eleven, false];
         yield 'unobserved errno fails' => ['5.7.44', $two, str_replace('errno: 2 ', 'errno: 13 ', $two), false];
         yield 'different path fails' => ['5.7.44', $two, str_replace('/plugin/', '/other/', $two), false];
         yield 'different loader failure fails' => ['5.7.44', $two, str_replace('No such file or directory', 'Permission denied', $two), false];
@@ -84,5 +88,20 @@ final class LibraryErrorsTest extends TestCase
         self::assertSame($first, $contract->comparable($saved['campaignObservations'][1], '8.4.7'));
         self::assertSame($first, $contract->comparable(array_diff_key($saved['independentObservations'][0], ['instance' => true]), '8.4.7'));
         self::assertSame($first, $contract->comparable(array_diff_key($saved['independentObservations'][1], ['instance' => true]), '8.4.7'));
+    }
+
+    /**
+     * @throws JsonException When the saved observations are malformed
+     */
+    public function testComparableRetainsTheNativeNineOneLoaderObservations(): void
+    {
+        /** @var array{campaignObservation: array{error: array{int, string, string}, warnings: list<array{string, string, string}>}, independentObservations: list<array{instance: int, repeat: int, sql: string, observation: array{results: array{}, error: array{int, string, string}, warnings: list<array{string, string, string}>, disconnected: bool}}>} $saved */
+        $saved = json_decode((string) file_get_contents(__DIR__ . '/fixtures/library-errno-9.1.json'), true, 512, JSON_THROW_ON_ERROR);
+        $contract = new LibraryErrors();
+        $expected = serialize($contract->comparable($saved['campaignObservation'], '9.1.0'));
+        $actual = array_map(static fn (array $entry): string => serialize($contract->comparable(array_intersect_key($entry['observation'], $saved['campaignObservation']), '9.1.0')), $saved['independentObservations']);
+        self::assertCount(40, $actual);
+        self::assertSame(array_fill(0, 40, $expected), $actual);
+        self::assertSame([0, 1], array_values(array_unique(array_column($saved['independentObservations'], 'instance'))));
     }
 }
