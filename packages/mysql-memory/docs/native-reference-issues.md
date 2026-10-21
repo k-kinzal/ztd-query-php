@@ -24,6 +24,13 @@ read deadline. The client returned error 2006 and could not read warnings. That
 error is a consequence of the client deadline; it is not the SQL outcome of the
 request and must not be compared with an emulator SQL error.
 
+A second bounded 8.4.7 probe used fresh containers with a 2 GiB memory limit
+and compared `innodb_extend_and_initialize=OFF` and `ON`. Both exceeded the
+five-second client deadline (5.004 and 5.002 seconds). Disabling physical page
+initialization therefore did not establish a reference result. Each dedicated
+container was terminated afterward. These observations do not identify the
+server's internal cause or change the pending classification.
+
 The request and the adjacent page/block combinations are preserved in
 [`tablespace-reference-pending.json`](../tests/Integration/Fuzz/fixtures/tablespace-reference-pending.json).
 They are pending reference investigation, not passing cases of
