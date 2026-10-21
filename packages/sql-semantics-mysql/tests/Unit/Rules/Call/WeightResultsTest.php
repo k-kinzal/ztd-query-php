@@ -74,6 +74,16 @@ final class WeightResultsTest extends TestCase
         self::assertSame([3, 8, 7, 6], $lengths);
     }
 
+    public function testJsonLengthKeepsNativeJsonTextAndStoredColumnBounds(): void
+    {
+        $rules = new WeightResults();
+        $stored = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Json, 4294967295);
+        $legacy = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Json, 16777216);
+        self::assertSame(4294967292, $rules->jsonLength($stored, 32, true));
+        self::assertSame(67108864, $rules->jsonLength($legacy, 32, true));
+        self::assertSame(3221225469, $rules->jsonLength($stored, 32, false));
+    }
+
     public function testCharacterBytesNarrowsBeforeChoosingTheResultField(): void
     {
         $modern = (new Semantics(Dialect::MySql))->analyze("SELECT WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(1073741824)), WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(65536))");

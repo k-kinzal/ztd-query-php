@@ -50,7 +50,7 @@ final class WeightResults
             $cast !== WeightCast::Binary && $this->stored($fact, $derivation->facts(), $derivation->context->profile->grammar, Settings::of($derivation->context)->derivedMerge) && ($operand->kind->temporal() || (!$legacy && $operand->kind === Kind::Year)) => $legacy ? $this->temporalLength($operand) : 8,
             $resultLength > 0 => $resultLength,
             $cast === WeightCast::Binary => $castLength ?? 0,
-            $operand->kind === Kind::Json => $legacy ? max($operand->length * 4, $count) % 4294967296 : max(intdiv($operand->length, 4), $count) * 3,
+            $operand->kind === Kind::Json => $this->jsonLength($operand, $count, $legacy),
             $operand->kind === Kind::String => $legacy ? $this->characterBytes($operand, $count) : $this->length($operand, $count),
             default => max($count, (new Texts(Settings::of($derivation->context)))->length($operand)),
         };
@@ -60,6 +60,14 @@ final class WeightResults
         $field = $length <= 65535 ? Field::VarString : ($length <= 16777215 ? Field::MediumBlob : Field::LongBlob);
 
         return new ScalarFact(new Known(Domain::string($length, Collation::binary(), $field)), $base->nullability);
+    }
+
+    /**
+     * Resolves JSON text capacity, retaining the legacy unsigned length narrowing.
+     */
+    public function jsonLength(Domain $domain, int $count, bool $legacy): int
+    {
+        return $legacy ? max($domain->length * 4, $count) % 4294967296 : max(intdiv($domain->length, 4), $count) * 3;
     }
 
     /**
