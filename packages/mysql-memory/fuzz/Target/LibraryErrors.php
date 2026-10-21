@@ -8,9 +8,11 @@ namespace Fuzz\Target;
  * Compares the absent-library error despite MySQL's process-local errno.
  *
  * Black-box observations of 5.6.51 and 5.7.44 return errno 2 or 11 for the same failed load,
- * including independent instances. The 8.0.44, 8.1.0 and 8.2.0 supplied corpora and
+ * including independent instances. The 8.0.44, 8.1.0, 8.2.0 and 8.3.0 supplied corpora and
  * an 8.4.7 unseeded campaign also observed 0 and 11 for identical requests. Fresh
- * independent 8.4.7 instances repeated the retained request with errno 11.
+ * independent 8.4.7 instances repeated the retained request with errno 11. Two fresh
+ * 8.3.0 instances repeated the supplied request twenty times each, observing errno
+ * 11 and 33 with the same missing-file message.
  * The 9.0.1 and 9.1.0 supplied corpora observed 0; two fresh independent instances
  * of each release repeated its exact request twenty times each with errno 11.
  * Only these release-specific integers are interchangeable:
@@ -31,7 +33,7 @@ final class LibraryErrors
     public function comparable(array $observation, string $version): array
     {
         $error = $observation['error'] ?? null;
-        $allowed = in_array($version, ['5.6.51', '5.7.44'], true) ? '2|11' : (in_array($version, ['8.0.44', '8.1.0', '8.2.0', '8.4.7', '9.0.1', '9.1.0'], true) ? '0|11' : null);
+        $allowed = in_array($version, ['5.6.51', '5.7.44'], true) ? '2|11' : (in_array($version, ['8.0.44', '8.1.0', '8.2.0', '8.4.7', '9.0.1', '9.1.0'], true) ? '0|11' : ($version === '8.3.0' ? '0|11|33' : null));
         if ($allowed === null || !is_array($error) || ($error[0] ?? null) !== 1126 || ($error[1] ?? null) !== 'HY000' || !is_string($error[2] ?? null)) {
             return $observation;
         }

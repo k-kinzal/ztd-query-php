@@ -7,13 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Access;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\JsonResults;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -27,7 +23,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: MYSQL-JSON-EXTRACTION-001. Facts: `->` yields a JSON value and
  * `->>` a coercible LONGTEXT, both of collation utf8mb4_bin (verified on a
- * live 8.4 server); both are NULL when the path selects nothing, so they
+ * live 8.4 server). MySQL 5.7 retains the same UTF-8 JSON and bounded text
+ * domains as JSON_EXTRACT and JSON_UNQUOTE; both are NULL when the path selects nothing, so they
  * can always be NULL. Terminates: the column is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_json-column-path,
  * https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_json-inline-path.
@@ -60,9 +57,9 @@ final class JsonExtraction implements Scalar
     {
         (new Operands())->single($derivation->scalar($this->column, $environment), $derivation);
 
-        $collation = Collation::known('utf8mb4_bin');
+        $release = $derivation->context->profile->grammar;
 
-        return new ScalarFact(new Known($this->unquote ? Domain::string(4294967295, $collation, Field::LongBlob, Coercibility::Coercible) : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, $collation)), Nullability::Nullable);
+        return new ScalarFact(new Known($this->unquote ? JsonResults::unquoted($release) : JsonResults::json($release)), Nullability::Nullable);
     }
 
     /**

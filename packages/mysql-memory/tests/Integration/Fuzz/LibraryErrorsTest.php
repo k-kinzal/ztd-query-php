@@ -32,6 +32,11 @@ final class LibraryErrorsTest extends TestCase
         yield '8.2 unobserved errno stays exact' => ['8.2.0', $two, $eleven, false];
         yield '8.2 permission errno stays exact' => ['8.2.0', str_replace('errno: 2 ', 'errno: 13 ', $two), $eleven, false];
         yield '8.2 different path stays exact' => ['8.2.0', str_replace('errno: 2 ', 'errno: 0 ', $two), str_replace('/plugin/', '/other/', $eleven), false];
+        yield '8.3 process errno' => ['8.3.0', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
+        yield '8.3 independent errno' => ['8.3.0', str_replace('errno: 2 ', 'errno: 33 ', $two), $eleven, true];
+        yield '8.3 unobserved errno stays exact' => ['8.3.0', $two, $eleven, false];
+        yield '8.3 permission errno stays exact' => ['8.3.0', str_replace('errno: 2 ', 'errno: 13 ', $two), $eleven, false];
+        yield '8.3 different path stays exact' => ['8.3.0', str_replace('errno: 2 ', 'errno: 0 ', $two), str_replace('/plugin/', '/other/', $eleven), false];
         yield '8.0 unobserved errno stays exact' => ['8.0.44', $two, $eleven, false];
         yield 'legacy unobserved zero stays exact' => ['5.7.44', $two, str_replace('errno: 2 ', 'errno: 0 ', $two), false];
         yield '8.4 process errno' => ['8.4.7', str_replace('errno: 2 ', 'errno: 0 ', $two), $eleven, true];
@@ -99,6 +104,7 @@ final class LibraryErrorsTest extends TestCase
      */
     public static function providerNativeSnapshots(): iterable
     {
+        yield '8.3.0' => ['8.3.0', 'library-errno-8.3.json'];
         yield '9.0.1' => ['9.0.1', 'library-errno-9.0.json'];
         yield '9.1.0' => ['9.1.0', 'library-errno-9.1.json'];
     }

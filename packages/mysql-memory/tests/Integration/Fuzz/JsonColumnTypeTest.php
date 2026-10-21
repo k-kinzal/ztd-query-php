@@ -22,7 +22,7 @@ final class JsonColumnTypeTest extends TestCase
         $json = "CAST('[1]' AS JSON)";
         $window = 'FIRST_VALUE(' . $json . ') OVER ()';
         $conditional = 'IF(1,' . $window . ',' . $json . ')';
-        $expressions = [$json, 'COALESCE(' . $json . ',JSON_ARRAY(1))', 'IFNULL(' . $json . ',JSON_ARRAY(1))', 'IF(1,' . $json . ',JSON_ARRAY(1))', 'CASE WHEN 1 THEN ' . $json . ' ELSE JSON_ARRAY(1) END', 'IFNULL(' . $window . ',' . $json . ')', $conditional, 'CASE WHEN 1 THEN ' . $window . ' ELSE ' . $json . ' END', 'LAG(' . $json . ',0) OVER ()', 'LEAD(' . $json . ',0) OVER ()', '+((' . $conditional . '))', '{fn ' . $conditional . '}'];
+        $expressions = ['JSON_ARRAY(1)', "JSON_OBJECT('a',1)", "JSON_EXTRACT('[1]', '$[0]')", 'COLLATION(JSON_ARRAY(1))', 'CHARSET(JSON_ARRAY(1))', 'COERCIBILITY(JSON_ARRAY(1))', $json, 'COALESCE(' . $json . ',JSON_ARRAY(1))', 'IFNULL(' . $json . ',JSON_ARRAY(1))', 'IF(1,' . $json . ',JSON_ARRAY(1))', 'CASE WHEN 1 THEN ' . $json . ' ELSE JSON_ARRAY(1) END', 'IFNULL(' . $window . ',' . $json . ')', $conditional, 'CASE WHEN 1 THEN ' . $window . ' ELSE ' . $json . ' END', 'LAG(' . $json . ',0) OVER ()', 'LEAD(' . $json . ',0) OVER ()', '+((' . $conditional . '))', '{fn ' . $conditional . '}'];
         foreach (['utf8mb4', 'latin1', 'NULL'] as $charset) {
             $setup = $charset === 'NULL' ? 'SET NAMES utf8mb4; SET character_set_results=NULL; ' : 'SET NAMES ' . $charset . '; ';
             foreach (['j', 'COALESCE(j,JSON_ARRAY(1))'] as $expression) {

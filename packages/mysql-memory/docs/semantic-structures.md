@@ -36,6 +36,14 @@ relations. Their null-key and geometry-conversion errors arise when rows are
 evaluated; the empty input succeeds again after truncation. Parameters remain
 bound through the binary protocol throughout these histories.
 
+The generated JSON extraction retains its column and path across missing, empty,
+populated, NULL and restored-NULL relations. An invalid path is evaluated only
+when a non-NULL JSON document is read; a populated integer column reports its
+argument-type condition. Native comparisons include result metadata under
+latin1, UTF-8, binary and disabled result conversion. MySQL 5.7 scalar JSON
+functions and arrow operators share a UTF-8 domain; JSON aggregates retain a
+binary domain, and unquoted JSON has its own bounded text domain.
+
 Local variable names bind as their declaration list is read, before the type,
 collation and default. A duplicate in one list or an earlier declaration in the
 same block precedes those later conditions; nested blocks may shadow outer

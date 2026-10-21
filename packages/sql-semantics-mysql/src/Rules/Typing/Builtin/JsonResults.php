@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * counts in bytes, which it reports four times over again (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-function-reference.html.
  *
- * @visibility SqlSemantics\Platform\MySql\Rules\Typing
+ * @visibility SqlSemantics\Platform\MySql
  */
 final class JsonResults
 {
@@ -56,7 +56,7 @@ final class JsonResults
         $rules = [
             'JSON_TYPE' => static fn (Invocation $call): Domain => self::text(17),
             'JSON_QUOTE' => static fn (Invocation $call): Domain => self::text($call->length($call->domain(0)) * 6 + 2),
-            'JSON_UNQUOTE' => static fn (Invocation $call): Domain => $call->domain(0)->kind === Kind::Json ? self::text($call->derivation->context->profile->grammar === GrammarRelease::MySql5744 ? 16777216 : 4294967295) : self::text($call->length($call->domain(0))),
+            'JSON_UNQUOTE' => static fn (Invocation $call): Domain => $call->domain(0)->kind === Kind::Json ? self::unquoted($call->derivation->context->profile->grammar) : self::text($call->length($call->domain(0))),
             'JSON_PRETTY' => static fn (Invocation $call): Domain => self::text(16777216),
             'JSON_OVERLAPS' => $truth,
             'JSON_SCHEMA_VALID' => static fn (Invocation $call): Domain => $call->domain(0)->kind === Kind::Null ? Domain::null() : $truth($call),
@@ -73,7 +73,9 @@ final class JsonResults
     }
 
     /**
-     * Answers the type of a JSON value: in MySQL 5.7 a binary JSON of 4194304 bytes, 16777216 for an aggregate (verified on a live 5.7.44 server).
+     * Answers the type of a JSON value. MySQL 5.7 scalar functions return utf8mb4_bin JSON
+     * of 16777216 bytes; JSON aggregates retain a binary JSON domain of that size.
+     * Verified through result metadata, COLLATION and CHARSET on Testcontainers 5.7.44.
      *
      * @param bool $aggregate Whether the value is that of an aggregate
      *
@@ -83,10 +85,18 @@ final class JsonResults
     public static function json(GrammarRelease $release = GrammarRelease::MySql847, bool $aggregate = false): Domain
     {
         if ($release === GrammarRelease::MySql5744) {
-            return new Domain(Kind::Json, Field::Json, $aggregate ? 16777216 : 4194304, 0, false, Collation::binary());
+            return new Domain(Kind::Json, Field::Json, 16777216, 0, false, $aggregate ? Collation::binary() : Collation::known('utf8mb4_bin'));
         }
 
         return new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'));
+    }
+
+    /**
+     * Answers the text domain of an unquoted JSON document, shared with the arrow operator.
+     */
+    public static function unquoted(GrammarRelease $release): Domain
+    {
+        return self::text($release === GrammarRelease::MySql5744 ? 16777216 : 4294967295);
     }
 
     /**

@@ -40,6 +40,17 @@ final class JsonExtractionTest extends TestCase
         self::assertSame(Nullability::Nullable, $text->nullability);
     }
 
+    public function testDeriveScalarKeepsLegacyJsonAndUnquotedTextBounds(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $json = $derivation->scalar(new JsonExtraction(new ColumnUse(new Name('a')), new Text('$.b')), $derivation->environment());
+        $text = $derivation->scalar(new JsonExtraction(new ColumnUse(new Name('a')), new Text('$.b'), true), $derivation->environment());
+
+        self::assertEquals(new Known(new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::known('utf8mb4_bin'))), $json->type);
+        self::assertEquals(new Known(Domain::string(67108864, Collation::known('utf8mb4_bin'), Field::LongBlob, Coercibility::Coercible)), $text->type);
+    }
+
     public function testRenderWritesTheOperator(): void
     {
         $platform = new Platform();

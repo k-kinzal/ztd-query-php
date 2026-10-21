@@ -56,11 +56,17 @@ final class JsonResultsTest extends TestCase
         self::assertEquals([Domain::null(), Domain::null()], [$rules['JSON_SCHEMA_VALID']($call), $rules['JSON_SCHEMA_VALIDATION_REPORT']($call)]);
     }
 
-    public function testJsonAnswersTheBinaryJsonOf57(): void
+    public function testJsonDistinguishesScalarAndAggregateCollationsOf57(): void
     {
-        self::assertEquals(new Domain(Kind::Json, Field::Json, 4194304, 0, false, Collation::binary()), JsonResults::json(GrammarRelease::MySql5744));
-        self::assertSame(16777216, JsonResults::json(GrammarRelease::MySql5744, true)->length);
+        self::assertEquals(new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::known('utf8mb4_bin')), JsonResults::json(GrammarRelease::MySql5744));
+        self::assertEquals(new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::binary()), JsonResults::json(GrammarRelease::MySql5744, true));
         self::assertSame(4294967295, JsonResults::json()->length);
+    }
+
+    public function testUnquotedRetainsTheReleaseSpecificDocumentTextBound(): void
+    {
+        self::assertSame(67108864, JsonResults::unquoted(GrammarRelease::MySql5744)->length);
+        self::assertSame(4294967295, JsonResults::unquoted(GrammarRelease::MySql847)->length);
     }
 
     public function testTextIsATextCountedInBytesBeyond16383Characters(): void
