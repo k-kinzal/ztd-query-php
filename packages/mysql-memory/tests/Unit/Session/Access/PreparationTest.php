@@ -14,6 +14,28 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testJsonNullsChecksTheCurrentLegacyDocumentWithoutItsRequestText(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET @document='broken'");
+        $operation = $session->analyze("SELECT JSON_EXTRACT(@document, '$') IS NULL");
+        $session->text = 'unrelated invalid input';
+        $this->expectExceptionCode(3141);
+
+        (new Preparation())->jsonNulls($operation, $session);
+    }
+
+    public function testCheckRefusesAConstructedPurgeBeforeEvaluatingItsCutoff(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated SELECT 1';
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral());
+        $operation = new \SqlSemantics\Statement\Operation($session->semantics()->context(session: $session->resolution()), $statement);
+        $this->expectExceptionCode(1295);
+
+        (new Preparation())->check($operation, $session);
+    }
+
     public function testResourcesRefusesDirectDefinitionsWithoutReadingRequestText(): void
     {
         $name = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(new \SqlSemantics\Statement\Identifier\Name('g'));

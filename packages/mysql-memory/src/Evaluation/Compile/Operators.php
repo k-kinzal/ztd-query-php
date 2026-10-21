@@ -279,6 +279,7 @@ final class Operators
      *
      * IS NULL of an operand known when the statement is resolved is evaluated then, once, as the
      * server evaluates it while it resolves the statement, even when no row is read.
+     * MySQL 5.7 also reads a statement-constant JSON operand at this stage.
      *
      * @throws \MySqlMemory\Error\SqlError When the operand cannot be compiled, or evaluating it is an error
      */
@@ -286,7 +287,9 @@ final class Operators
     {
         $operand = $this->compiler->compile($operandNode, $scope);
         $domain = $this->compiler->domain($node);
-        if (!$negated && $operand->domain()->nullable && $this->compiler->constancy($operandNode) === Constancy::Resolved) {
+        $constancy = $this->compiler->constancy($operandNode);
+        $legacyJson = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $operand->domain()->kind === Kind::Json && $constancy === Constancy::Statement && (new Walker())->find($operandNode, \SqlSemantics\Statement\Query::class) === [];
+        if (!$negated && $operand->domain()->nullable && ($constancy === Constancy::Resolved || $legacyJson)) {
             return new Constant($domain, IsTest::isNull($operand, new Frame($this->compiler->connection->context)) ? 1 : 0);
         }
 

@@ -91,10 +91,7 @@ final class BinaryLogCommand implements Command
             } catch (\MySqlMemory\Error\SqlError $error) {
                 throw (new PurgeErrors())->prepared($error, $statement);
             }
-            $value = $moment->evaluate(new Frame($context));
-            if ($value !== null && !(is_int($value) && $value === 0)) {
-                (new Moments())->convert($value, $moment->domain(), new Domain(Kind::DateTime, Field::DateTime, 19, 0, false), $context);
-            }
+            $this->moment($moment, $context);
             if ($logging) {
                 $session->diagnostics->warning(AdministrationError::ActiveLogNotPurged, AdministrationError::ActiveLogNotPurged->message('./' . $log->active()));
             }
@@ -103,6 +100,37 @@ final class BinaryLogCommand implements Command
         }
 
         return new Completion(0, 0, $session->diagnostics->raised());
+    }
+
+    /**
+     * Converts the cutoff after scalar control operations have finished, retaining
+     * their first error before any datetime conversion warning. Preparation errors
+     * never enter this scope. Verified against runtime ESCAPE failures on MySQL.
+     *
+     * @throws \MySqlMemory\Error\SqlError When evaluating the cutoff fails
+     */
+    public function moment(\MySqlMemory\Evaluation\Evaluable $moment, Context $context): void
+    {
+        $continuing = $context->continueAfterError;
+        $previous = $context->deferredError;
+        $context->continueAfterError = true;
+        $context->deferredError = null;
+        try {
+            try {
+                $value = $moment->evaluate(new Frame($context));
+                if ($value !== null && !(is_int($value) && $value === 0)) {
+                    (new Moments())->convert($value, $moment->domain(), new Domain(Kind::DateTime, Field::DateTime, 19, 0, false), $context);
+                }
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                $context->defer($error);
+            }
+            if ($context->deferredError !== null) {
+                throw $context->deferredError;
+            }
+        } finally {
+            $context->continueAfterError = $continuing;
+            $context->deferredError = $previous;
+        }
     }
 
     /**

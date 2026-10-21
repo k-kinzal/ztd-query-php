@@ -33,6 +33,9 @@ final class Preparation
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+        }
         if (($operation->statement instanceof \SqlSemantics\Statement\Script && $operation->statement->statements === []) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
@@ -48,6 +51,7 @@ final class Preparation
         try {
             $application->report($session);
             (new Problems())->raise($operation, $session, true);
+            $this->jsonNulls($operation, $session);
         } catch (SqlError $error) {
             $error = (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $session->settings()->release());
             if (!$error->recorded) {
@@ -63,6 +67,24 @@ final class Preparation
                 $session->diagnostics->warning($code, $message);
             }
         }
+    }
+
+    /**
+     * Compiles reached, statement-constant JSON null tests during MySQL 5.7 query
+     * preparation. Their result is rebound at EXECUTE, but a bad current document
+     * already prevents PREPARE. No row, subquery or stored function is evaluated.
+     *
+     * @throws SqlError When a retained null test fails during preparation
+     */
+    public function jsonNulls(Operation $operation, Session $session): void
+    {
+        if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+            return;
+        }
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id);
+        $compiler = (new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;
+        (new \MySqlMemory\Evaluation\Compile\Preparation\JsonNulls())->check($compiler, (new Problems())->reached($operation->statement));
     }
 
     /**

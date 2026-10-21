@@ -4164,3 +4164,63 @@ matches, no differences and no volatile classifications. It predates the final
 concatenation-bound correction and binary replay changes. Current supplied-seed,
 whole-model and duration campaigns remain separate acceptance gates; pending
 campaigns are not passing evidence.
+
+## Cutoff evaluation and condition ordering
+
+`PurgeLogsBefore` retains a scalar cutoff. Its consumer now distinguishes
+preparation failures from evaluation failures and from the final datetime
+conversion. When an evaluated truth test or conditional finishes after a scalar
+error, the error is recorded before the conversion warning. The first error
+still terminates the statement; the continuation scope is restored on every
+exit. Other statements continue to propagate evaluation errors immediately.
+The implementation uses compiled operands and their domains, without original
+SQL or parser nodes.
+
+Native comparisons distinguish several release behaviors. MySQL 5.6 and 5.7
+check statement-constant LIKE escapes during preparation. MySQL 5.7 reads a
+statement-constant JSON operand while preparing IS NULL and can continue to a
+COALESCE alternative after a JSON evaluation failure. Modern COALESCE ends that
+search. Null-safe equality completes its error result before MySQL 9, while
+9.0 and 9.1 propagate the operand error. PURGE TO and PURGE BEFORE refuse prepared
+execution before evaluating their arguments.
+
+`PurgeRuntimeConditionsTest` retains the complete unseeded counterexample and
+compares surrounding truth tests, arithmetic, conditional expressions, JSON
+operands and preparation histories. `PurgeCutoffHistoryTest` preserves one public
+semantic object through valid, invalid and valid escape-variable states. Both
+native and memory run the setup statements; every outcome and warning is compared.
+The direct consumer receives an unrelated request label throughout the history.
+The six-release matrix passes 12 cases and 30 assertions on MySQL 5.6, 5.7, 8.0,
+8.4, 9.0 and 9.1. The `query1552` snapshot also passes 20,465 unit/property/doctest
+tests with 98,070 assertions and all static checks: 29,573 allowed dependencies,
+no violations, skipped violations or uncovered dependencies.
+
+The `query1536` unseeded run failed at input 535 after 506.69 seconds, having
+matched 535 earlier inputs. That failure is retained in the regression fixture;
+it is not a passing duration run. The subsequent `query1540` construction
+campaign completes all 244 public roots, with 102 initial successes, 190
+successful-state witnesses, 54 matching rejections and 483 transitions. No root
+differs. The remaining rejection explanations and final-revision seed and duration
+runs remain acceptance obligations; matching errors alone do not close them.
+
+
+## Partition-definition diagnostic boundaries
+
+For a missing subpartition list, the semantic input refusal retains the completed
+definition's end offset. Modern MySQL quotes the following whitespace and comments
+in its error. MySQL 5.6 and 5.7 read the next delimiter first. Memory formats this
+difference at the SQL input boundary; no source text enters a semantic value or
+plan. The complete `query1547` unseeded counterexample and whitespace, newline,
+comment and tab variants are retained in `PartitionDefinitionDomainTest`.
+
+The `query1559` snapshot passes 20,469 unit/property/doctest tests with 98,074
+assertions and all static checks, including 29,597 allowed dependencies and zero
+violations. The partition matrix agrees on all five tested releases. Two of the
+17 combined native partition and cutoff cases initially failed during container
+startup, before SQL comparison; those infrastructure failures are retained and
+require separate retries. The preceding `query1558` duration run matched 360
+inputs before another container-startup failure. Neither is a duration pass.
+
+The subsequent `query1559` unseeded run exposes an ALTER TABLE transaction-option
+mismatch at zero-based input 55 after 55 matches. The complete input is retained;
+its correction and final-revision campaigns remain required.

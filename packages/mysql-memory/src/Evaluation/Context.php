@@ -56,6 +56,17 @@ final class Context
     public int $aggregateRow = 1;
 
     /**
+     * Whether scalar control operations may finish after recording an evaluation error.
+     * PURGE BEFORE still converts their result before returning the first error.
+     */
+    public bool $continueAfterError = false;
+
+    /**
+     * The first deferred evaluation error, already recorded in statement order.
+     */
+    public ?SqlError $deferredError = null;
+
+    /**
      * @param SqlModes $modes The sql_mode of the session
      * @param Diagnostics $diagnostics Where warnings of the statement are recorded
      * @param Variables $variables The user and system variables the statement reads and assigns
@@ -164,5 +175,25 @@ final class Context
     public function note(ErrorCode $code, string|int ...$arguments): void
     {
         $this->diagnostics->note($code, $code->message(...$arguments));
+    }
+
+    /**
+     * Records an evaluation failure for a caller that can finish its scalar result.
+     * Ordinary statement evaluation propagates the failure immediately.
+     *
+     * @throws SqlError When this statement does not defer evaluation failures
+     */
+    public function defer(SqlError $error): void
+    {
+        if (!$this->continueAfterError) {
+            throw $error;
+        }
+        if (!$error->recorded) {
+            $this->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
+        }
+        foreach ($error->following as [$number, $message]) {
+            $this->diagnostics->error($number, $message);
+        }
+        $this->deferredError ??= new SqlError($error->error, $error->getMessage(), $error, signalled: $error->signalled, number: $error->getCode(), recorded: true);
     }
 }

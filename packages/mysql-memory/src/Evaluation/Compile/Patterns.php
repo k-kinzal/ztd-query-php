@@ -41,6 +41,8 @@ final class Patterns
 
     /**
      * Compiles [NOT] LIKE, comparing in the collation the operand and the pattern aggregate to.
+     * MySQL 5.6 and 5.7 check statement-constant escape values during preparation,
+     * including user variables; modern releases check them when first evaluated.
      *
      * @throws \MySqlMemory\Error\SqlError When the escape varies by row, or is known to be more than one character
      */
@@ -49,6 +51,9 @@ final class Patterns
         $operand = $this->compiler->compile($node->operand, $scope);
         $pattern = $this->compiler->compile($node->pattern, $scope);
         $constancy = $node->escape === null ? Constancy::Resolved : $this->compiler->constancy($node->escape);
+        if ($this->compiler->settings->legacy() && $constancy === Constancy::Statement) {
+            $constancy = Constancy::Resolved;
+        }
         if ($constancy === Constancy::Row) {
             throw StatementError::WrongArguments->error('ESCAPE');
         }

@@ -58,11 +58,11 @@ final class Compare implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): ?int
     {
-        $left = $this->left->evaluate($frame);
+        $left = $this->operand($this->left, $frame);
         if ($left === null && $this->operator !== ComparisonOperator::NullSafeEqual) {
             return null;
         }
-        $right = $this->right->evaluate($frame);
+        $right = $this->operand($this->right, $frame);
         if ($this->operator === ComparisonOperator::NullSafeEqual) {
             if ($left === null || $right === null) {
                 return $left === null && $right === null ? 1 : 0;
@@ -80,6 +80,27 @@ final class Compare implements Evaluable
         }
 
         return self::holds($this->operator, $order) ? 1 : 0;
+    }
+
+    /**
+     * Reads a comparison operand. Null-safe equality can finish its truth value
+     * after a deferred scalar failure before MySQL 9. MySQL 9 and ordinary
+     * comparisons propagate it without completing that truth value.
+     *
+     * @throws \MySqlMemory\Error\SqlError When evaluation cannot continue
+     */
+    public function operand(Evaluable $operand, Frame $frame): int|float|string|null
+    {
+        try {
+            return $operand->evaluate($frame);
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            if ($this->operator !== ComparisonOperator::NullSafeEqual || in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
+                throw $error;
+            }
+            $frame->context->defer($error);
+
+            return null;
+        }
     }
 
     /**

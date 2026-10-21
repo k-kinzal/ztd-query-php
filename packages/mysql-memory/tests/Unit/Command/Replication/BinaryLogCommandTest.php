@@ -16,6 +16,27 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class BinaryLogCommandTest extends TestCase
 {
+    public function testMomentConvertsACompletedTruthTestAndRestoresItsErrorScope(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $operand = $this->createMock(\MySqlMemory\Evaluation\Evaluable::class);
+        $operand->method('domain')->willReturn(\MySqlMemory\Typing\Domain::null());
+        $operand->method('evaluate')->willThrowException(\MySqlMemory\Error\Family\StatementError::WrongArguments->error('ESCAPE'));
+        $moment = new \MySqlMemory\Evaluation\Operator\Comparison\IsTest($operand, null, false, \MySqlMemory\Typing\Domain::integer());
+
+        try {
+            (new BinaryLogCommand())->moment($moment, $context);
+            self::fail('The recorded evaluation error must still terminate PURGE.');
+        } catch (SqlError $error) {
+            self::assertSame(1210, $error->getCode());
+            self::assertTrue($error->recorded);
+        }
+        self::assertSame([['Error', 1210, 'Incorrect arguments to ESCAPE'], ['Warning', 1292, "Incorrect datetime value: '1'"]], $session->diagnostics->conditions);
+        self::assertFalse($context->continueAfterError);
+        self::assertNull($context->deferredError);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new BinaryLogCommand())->clearsDiagnostics());

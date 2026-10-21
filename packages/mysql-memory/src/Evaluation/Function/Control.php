@@ -45,20 +45,37 @@ final class Control
      */
     public function if(Frame $frame, array $arguments, Domain $result): int|float|string|null
     {
-        $chosen = Convert::toBool($arguments[0]->evaluate($frame), $arguments[0]->domain(), $frame->context) === true ? $arguments[1] : $arguments[2];
+        try {
+            $condition = Convert::toBool($arguments[0]->evaluate($frame), $arguments[0]->domain(), $frame->context) === true;
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            $frame->context->defer($error);
+            $condition = false;
+        }
+        $chosen = $condition ? $arguments[1] : $arguments[2];
 
         return Coerce::branch($chosen->evaluate($frame), $chosen->domain(), $result, $frame->context);
     }
 
     /**
      * IFNULL and COALESCE: the first argument that is not NULL.
+     * During a deferred failure, a MySQL 5.7 JSON getter supplies NULL and permits
+     * the next alternative. Other failed getters end the search, supplying an
+     * empty string for a string result. Observed with runtime LIKE and JSON_EXTRACT.
      *
      * @param list<Evaluable> $arguments
      */
     public function coalesce(Frame $frame, array $arguments, Domain $result): int|float|string|null
     {
         foreach ($arguments as $argument) {
-            $value = $argument->evaluate($frame);
+            try {
+                $value = $argument->evaluate($frame);
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                $frame->context->defer($error);
+                if ($frame->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || $argument->domain()->kind !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json) {
+                    return $result->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? '' : null;
+                }
+                $value = null;
+            }
             if ($value !== null) {
                 return $result->kind->temporal() ? Coerce::branch($value, $argument->domain(), $result, $frame->context) : Coerce::to($value, $argument->domain(), $result, $frame->context);
             }

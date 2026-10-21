@@ -45,6 +45,11 @@ final class PartitionDefinitionDomainTest extends TestCase
             }
         }
         $statements[] = (string) file_get_contents(__DIR__ . '/fixtures/subpartition-count.sql');
+        $statements[] = (string) file_get_contents(__DIR__ . '/fixtures/subpartition-count-whitespace.sql');
+        foreach ([' ', "\n", ' /*gap*/ ', "\t", ''] as $gap) {
+            $statements[] = 'ALTER TABLE d.t REORGANIZE PARTITION p INTO (PARTITION p0 VALUES LESS THAN (1) (SUBPARTITION s0), PARTITION p1 VALUES LESS THAN MAXVALUE' . $gap . ', PARTITION p2 VALUES LESS THAN MAXVALUE)';
+            $statements[] = 'ALTER TABLE d.t ADD PARTITION (PARTITION p0 (SUBPARTITION s0), PARTITION p1' . $gap . ')';
+        }
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

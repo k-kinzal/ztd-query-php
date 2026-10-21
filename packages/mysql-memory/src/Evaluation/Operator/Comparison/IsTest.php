@@ -56,11 +56,16 @@ final class IsTest implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): int
     {
-        $holds = match (true) {
-            $this->truth === null && $this->negated => self::absent($this->operand, $frame),
-            $this->truth === null => self::isNull($this->operand, $frame),
-            default => Convert::toBool($this->operand->evaluate($frame), $this->operand->domain(), $frame->context) === $this->truth,
-        };
+        try {
+            $holds = match (true) {
+                $this->truth === null && $this->negated => self::absent($this->operand, $frame),
+                $this->truth === null => self::isNull($this->operand, $frame),
+                default => Convert::toBool($this->operand->evaluate($frame), $this->operand->domain(), $frame->context) === $this->truth,
+            };
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            $frame->context->defer($error);
+            $holds = $this->truth === null;
+        }
 
         return $holds !== $this->negated ? 1 : 0;
     }
@@ -69,6 +74,8 @@ final class IsTest implements Evaluable
      * Tells whether an operand is NULL, as IS NULL and ISNULL() test it.
      *
      * An operand that cannot be NULL is not evaluated at all.
+     *
+     * @throws \MySqlMemory\Error\SqlError When checking an evaluated operand fails
      */
     public static function isNull(Evaluable $operand, Frame $frame): bool
     {
@@ -83,6 +90,8 @@ final class IsTest implements Evaluable
      * temporal value with an operand that varies by row is evaluated whole. Anything else is evaluated.
      * NOT LIKE, or the negation of a LIKE, reads and checks the escape of the LIKE first, as the
      * server evaluates the LIKE it negates.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a deferred escape or operand fails
      */
     public static function absent(Evaluable $value, Frame $frame): bool
     {

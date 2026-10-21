@@ -19,6 +19,30 @@ use stdClass;
 #[Small]
 final class ContextTest extends TestCase
 {
+    public function testDeferPropagatesErrorsOutsideAContinuationScope(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1365);
+
+        $context->defer(DataError::DivisionByZero->error());
+    }
+
+    public function testDeferPreservesTheFirstErrorAndOrderedConditions(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $context->continueAfterError = true;
+        $context->defer(DataError::DivisionByZero->error());
+        $context->warn(DataError::TruncatedWrongValue, 'INTEGER', 'x');
+        $context->defer(\MySqlMemory\Error\Family\StatementError::WrongArguments->error('ESCAPE'));
+
+        self::assertSame(1365, $context->deferredError?->getCode());
+        self::assertTrue($context->deferredError->recorded);
+        self::assertSame([['Error', 1365, 'Division by 0'], ['Warning', 1292, "Truncated incorrect INTEGER value: 'x'"], ['Error', 1210, 'Incorrect arguments to ESCAPE']], $session->diagnostics->conditions);
+    }
+
     public function testTimeZoneWithAnEmptyNamedCatalogPreservesOffsetsAndSystemTime(): void
     {
         $session = (new Instance(namedTimeZones: false))->connect();

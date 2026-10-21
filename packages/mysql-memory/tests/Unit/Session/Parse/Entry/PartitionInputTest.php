@@ -16,6 +16,26 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
 #[Small]
 final class PartitionInputTest extends TestCase
 {
+    public function testDefinitionKeepsTriviaAfterAnOmittedSubpartitionList(): void
+    {
+        $session = (new Instance())->connect();
+        $prefix = 'ALTER TABLE d.t ADD PARTITION (PARTITION p0 (SUBPARTITION s0), PARTITION p1';
+        $failure = new RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount, strlen($prefix));
+        $error = (new PartitionInput())->definition($failure, $prefix . "\n/*gap*/ )", $session);
+
+        self::assertSame("Wrong number of subpartitions defined, mismatch with previous setting near '\n/*gap*/ )' at line 1", $error->getMessage());
+    }
+
+    public function testDefinitionReadsTheFollowingCommaOnLegacyReleases(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $prefix = 'ALTER TABLE d.t REORGANIZE PARTITION p INTO (PARTITION p0 (SUBPARTITION s0), PARTITION p1';
+        $failure = new RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount, strlen($prefix));
+        $error = (new PartitionInput())->definition($failure, $prefix . "\n/*gap*/ , PARTITION p2)", $session);
+
+        self::assertSame("Wrong number of subpartitions defined, mismatch with previous setting near ' PARTITION p2)' at line 2", $error->getMessage());
+    }
+
     public function testRefusedKeepsEarlierCompletedConditionsBeforeAMalformedBody(): void
     {
         $session = (new Instance('5.7.44'))->connect();

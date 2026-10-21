@@ -47,6 +47,9 @@ final class PartitionInput
     }
     /**
      * Formats an intrinsic definition refusal after its completed table-name prefix.
+     * An omitted subpartition list is refused at the preceding definition's end,
+     * preserving subsequent whitespace and comments in the quoted suffix on modern
+     * releases. Legacy releases read the following delimiter before refusal.
      */
     public function definition(RejectedInput $failure, string $statement, Session $session): SqlError
     {
@@ -69,10 +72,15 @@ final class PartitionInput
             return new SqlError(\MySqlMemory\Error\Family\PartitionError::MissingValues, $problem->message(), $failure);
         }
         $offset = $failure->end;
-        foreach ((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($session->semantics()->parser(), $statement) as $token) {
-            if ($token->offset >= $offset) {
-                $offset = $token->offset;
-                break;
+        if ($problem !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount || $session->settings()->legacy()) {
+            foreach ((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($session->semantics()->parser(), $statement) as $token) {
+                if ($token->offset >= $offset) {
+                    $offset = $token->offset;
+                    if ($session->settings()->legacy() && substr($statement, $offset, 1) === ',') {
+                        ++$offset;
+                    }
+                    break;
+                }
             }
         }
         $line = (new DiagnosticLine())->at($statement, $offset, true, $session->semantics()->parser());

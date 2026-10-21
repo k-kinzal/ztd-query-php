@@ -24,6 +24,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class CompareTest extends TestCase
 {
+    public function testOperandKeepsNullSafeEqualityDefinedAfterADeferredError(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $context->continueAfterError = true;
+        $operand = $this->createMock(\MySqlMemory\Evaluation\Evaluable::class);
+        $operand->method('evaluate')->willThrowException(\MySqlMemory\Error\Family\StatementError::WrongArguments->error('ESCAPE'));
+        $domain = Domain::integer();
+        $comparison = new Compare(ComparisonOperator::NullSafeEqual, $operand, $operand, Comparator::of($domain, $domain, '<=>', Collation::binary()), $domain);
+
+        self::assertNull($comparison->operand($operand, new Frame($context)));
+        self::assertSame(1210, $context->deferredError?->getCode());
+    }
+
     public function testHoldsTellsEachOperatorForAnOrder(): void
     {
         self::assertSame(
