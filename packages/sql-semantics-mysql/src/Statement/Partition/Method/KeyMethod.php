@@ -26,6 +26,8 @@ use SqlSemantics\Statement\Snapshot;
  * @example Holding a linear key partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(true, null, [new \SqlSemantics\Statement\Identifier\Name('id')]);
  *     [$method->linear, $method->columns[0]->value] // => [true, 'id']
+ * @example Refusing an algorithm without a hash interpretation
+ *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('', true), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class KeyMethod implements PartitionMethod
 {
@@ -43,6 +45,7 @@ final class KeyMethod implements PartitionMethod
      */
     public function __construct(public readonly bool $linear, public readonly ?Numeral $algorithm, array $columns)
     {
+        Check::input($algorithm === null || (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->accepts($algorithm), 'A KEY partition algorithm is one or two.');
         $this->columns = Check::listOf($columns, Name::class, 'Key partitioning columns are a list of names.');
     }
 

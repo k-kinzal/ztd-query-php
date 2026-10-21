@@ -50,11 +50,14 @@ final class PartitionInput
      */
     public function definition(RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        $problem = $failure->problem;
+        if (!$session->settings()->legacy() && in_array($problem, [\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions], true)) {
+            return new SqlError(\MySqlMemory\Error\Family\PartitionError::NoPartitions, $problem->message(), $failure);
+        }
         $database = (new \MySqlMemory\Session\Parse\Definition\DefinitionPrefix())->database($statement, $failure->end, $session, 'TABLE_SYM');
         if ($database !== null) {
             return $database;
         }
-        $problem = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue, 'A partition-definition refusal has a typed reason.');
         if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions || $problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions) {
             return new SqlError(\MySqlMemory\Error\Family\PartitionError::NoPartitions, $problem->message(), $failure);

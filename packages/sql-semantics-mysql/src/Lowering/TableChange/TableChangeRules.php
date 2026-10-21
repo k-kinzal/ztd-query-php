@@ -46,7 +46,7 @@ final class TableChangeRules
      */
     public function completed(Node $node, bool $partitionNames = true): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
-        $notice = ($partitionNames ? (new Partition\DefinitionRule($this->lowering))->completed($node) : null) ?? (new ModifierRule($this->lowering))->completed($node);
+        $notice = (new PartitionRule($this->lowering))->completed($node) ?? ($partitionNames ? (new Partition\DefinitionRule($this->lowering))->completed($node) : null) ?? (new ModifierRule($this->lowering))->completed($node);
         if ($notice !== null || $node->name !== 'alter_list_item' || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
             return $notice;
         }

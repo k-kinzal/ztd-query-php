@@ -62,6 +62,22 @@ final class PartitionRuleTest extends TestCase
         self::assertSame('ALTER TABLE t PARTITION BY KEY ALGORITHM = 1 (a)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY KEY ALGORITHM = 1 (a)')->toString());
     }
 
+    public function testKeyAlgorithmKeepsHexadecimalSpellingOfAValidHash(): void
+    {
+        self::assertSame("ALTER TABLE t PARTITION BY KEY ALGORITHM = x'01' (a)", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t PARTITION BY KEY ALGORITHM = x'01' (a)")->toString());
+    }
+
+    public function testCompletedRetainsTheAlgorithmRefusalBeforeLaterSyntax(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $node = $semantics->parser()->parse("CREATE TABLE t(a INT) PARTITION BY KEY ALGORITHM = x'' (a)")->find('opt_key_algo')[0];
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 5) . '/resources/productions/mysql-5.7.44.php'), new \SqlSemantics\Lowering\Leaves(), $semantics->profile());
+        $notice = (new PartitionRule($lowering))->completed($node);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm::class, $notice?->problem);
+        self::assertTrue($notice->aborts);
+        self::assertSame(51, $notice->problem->offset);
+    }
+
     public function testCountLowersThePartitionCount(): void
     {
         self::assertSame('ALTER TABLE t PARTITION BY KEY () PARTITIONS 4', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY KEY () PARTITIONS 4')->toString());

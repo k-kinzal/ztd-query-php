@@ -69,8 +69,8 @@ final class PartitionText
     public function key(?KeyMethod $method, string $columns): string
     {
         $linear = $method !== null && $method->linear ? 'LINEAR ' : '';
-        if ($method?->algorithm !== null) {
-            return '/*!50100 PARTITION BY ' . $linear . 'KEY */ /*!50611 ALGORITHM = ' . $method->algorithm->text . ' */ /*!50100 (' . $columns . ')';
+        if ($method?->algorithm !== null && ltrim($method->algorithm->text, '0') === '1') {
+            return '/*!50100 PARTITION BY ' . $linear . 'KEY */ /*!50611 ALGORITHM = 1 */ /*!50100 (' . $columns . ')';
         }
 
         return '/*!50100 PARTITION BY ' . $linear . 'KEY (' . $columns . ')';

@@ -3730,6 +3730,12 @@ Constraint additions accept only index, foreign-key, and check-constraint values
 column additions have their own command type. Generated-column collations must
 name a collation, replacement passwords use quoted text, expression subqueries
 exclude `INTO`, and partition predicates require an explicit grouping node.
+KEY partition algorithms admit only the values one and two, including their
+decimal and hexadecimal spellings. The constructor excludes every other value;
+input lowering retains a typed refusal at the algorithm operand. Native histories
+check preparation, skipped stored instructions, malformed suffixes and table
+metadata. SHOW CREATE TABLE omits the default algorithm and canonicalizes the
+alternative's numeric spelling.
 Cross-release invariants also account for persistent variable scopes, modern cast
 targets, backup locks, invisible columns, and default roles. Entering a stored
 routine preserves its decoded optimizer hints during lowering.

@@ -7,6 +7,7 @@ namespace Tests\Unit\Command\Definition\Partition;
 use MySqlMemory\Command\Definition\Partition\PartitionText;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -43,6 +44,21 @@ final class PartitionTextTest extends TestCase
         $result3 = $session->query('SHOW CREATE TABLE e')[0];
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result3);
         self::assertStringEndsWith("/*!50500 PARTITION BY LIST  COLUMNS(a,b)\n(PARTITION p0 VALUES IN ((1,'x'),(NULL,'y')) ENGINE = InnoDB) */", (string) $result3->rows[0][1]);
+    }
+
+    /**
+     * @return list<array{string, bool, string}>
+     */
+    public static function providerAlgorithms(): array
+    {
+        return [['01', false, '/*!50100 PARTITION BY KEY */ /*!50611 ALGORITHM = 1 */ /*!50100 (a)'], ['01', true, '/*!50100 PARTITION BY KEY */ /*!50611 ALGORITHM = 1 */ /*!50100 (a)'], ['2', false, '/*!50100 PARTITION BY KEY (a)'], ['02', true, '/*!50100 PARTITION BY KEY (a)']];
+    }
+
+    #[DataProvider('providerAlgorithms')]
+    public function testKeyNormalizesEquivalentSpellingsAndOmitsTheDefaultAlgorithm(string $text, bool $hexadecimal, string $expected): void
+    {
+        $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($text, $hexadecimal), []);
+        self::assertSame($expected, (new PartitionText())->key($method, 'a'));
     }
 
     public function testValueQuotesTextAndTemporalValues(): void

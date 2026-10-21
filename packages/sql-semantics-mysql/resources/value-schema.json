@@ -1694,6 +1694,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\OperandCondition": {
         "name": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\RefusedKeyAlgorithm": {
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\RefusedScalar": {
         "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Problem\\OperandCondition",
         "offset": "int",
