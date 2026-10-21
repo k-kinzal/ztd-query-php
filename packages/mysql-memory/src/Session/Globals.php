@@ -39,6 +39,11 @@ final class Globals
     public array $caches = [];
 
     /**
+     * @var array<string, true> Named caches that have received a positive buffer allocation; zeroing the buffer retains their identity
+     */
+    public array $initializedCaches = [];
+
+    /**
      * Answers a parameter of a named key cache: the value set, its default when the cache exists, or 0.
      */
     public function cached(string $cache, Definition $definition): string|int|null
@@ -64,6 +69,9 @@ final class Globals
             return;
         }
         $this->caches[$cache][$definition->name] = (int) $value;
+        if ($definition->name === 'key_buffer_size' && (int) $value > 0) {
+            $this->initializedCaches[$cache] = true;
+        }
     }
 
     /**

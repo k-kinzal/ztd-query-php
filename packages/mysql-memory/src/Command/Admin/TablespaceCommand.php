@@ -48,8 +48,10 @@ use SqlSemantics\Statement\Operation;
  * keyring the server lacks, and ALTER TABLESPACE checks the keyring before the value; AUTOEXTEND_SIZE
  * is 0 or a multiple of 4M from 4M to 4096M. A refused option is followed by the failure of the
  * statement and an error of the engine. ALTER and
- * DROP TABLESPACE refuse an ENGINE option on an existing tablespace with a syntax error, and an
- * active undo tablespace is not empty (verified on a live 8.4 server). The emulator does not
+ * DROP TABLESPACE compare an ENGINE option with the stored engine in 8.0 through 8.3,
+ * retaining the matching option's deprecation warning. Later releases refuse that
+ * option on an existing tablespace with a syntax error. An active undo tablespace
+ * is not empty (verified on native 8.0 through 9.1 servers). The emulator does not
  * track which tables use a tablespace, so DROP TABLESPACE never finds one in use.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-tablespace.html,
@@ -91,16 +93,16 @@ final class TablespaceCommand implements Command
             $statement instanceof CreateTablespace => $this->create($statement, $registry, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client'))),
             $statement instanceof CreateUndoTablespace => $this->createUndo($statement, $registry),
             $statement instanceof RenameTablespace => $this->rename($statement, $registry),
-            $statement instanceof AlterTablespace => $this->alter($statement->name->value, $statement->options, $registry),
+            $statement instanceof AlterTablespace => $this->alter($statement->name->value, $statement->options, $registry, $context),
             $statement instanceof AlterTablespaceDatafile => $this->datafile($statement, $registry),
             $statement instanceof AlterTablespaceAccess => throw StatementError::SyntaxError->error(),
             $statement instanceof AlterUndoTablespace => $this->activate($statement, $registry),
-            $statement instanceof DropTablespace => $this->drop($statement, $registry),
+            $statement instanceof DropTablespace => $this->drop($statement, $registry, $context),
             $statement instanceof DropUndoTablespace => $this->dropUndo($statement, $registry),
             default => throw StatementError::NotSupportedYet->error('this tablespace statement'),
         };
 
-        return new Completion();
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**
@@ -177,15 +179,11 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the name is reserved, the tablespace is missing or an option is refused
      */
-    public function alter(string $name, array $options, Registry $registry): void
+    public function alter(string $name, array $options, Registry $registry, ?Context $context = null): void
     {
         $this->reserved($name);
         $this->find($name, $registry);
-        foreach ($options as $option) {
-            if ($option instanceof EngineOption) {
-                throw StatementError::SyntaxError->error();
-            }
-        }
+        $this->storedEngine($name, $options, $context);
         $this->options($options, [SchemaError::AlterFilegroupFailed->value, SchemaError::AlterFilegroupFailed->message('TABLESPACE ' . $name)], $name, false);
     }
 
@@ -235,16 +233,12 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the name is reserved, the tablespace is missing or an undo one, or an ENGINE option is written
      */
-    public function drop(DropTablespace $statement, Registry $registry): void
+    public function drop(DropTablespace $statement, Registry $registry, ?Context $context = null): void
     {
         $name = $statement->name->value;
         $this->reserved($name);
         $tablespace = $this->find($name, $registry);
-        foreach ($statement->options as $option) {
-            if ($option instanceof EngineOption) {
-                throw StatementError::SyntaxError->error();
-            }
-        }
+        $this->storedEngine($name, $statement->options, $context);
         if ($tablespace->undo) {
             throw new SqlError(SchemaError::WrongTablespaceName, 'Cannot DROP TABLESPACE `' . $name . '` because it is an undo tablespace.  Please use DROP UNDO TABLESPACE.', null, [[SchemaError::DropFilegroupFailed->value, SchemaError::DropFilegroupFailed->message('TABLESPACE ' . $name)], [AdministrationError::OperationDisallowed->value, AdministrationError::OperationDisallowed->message('DROP TABLEPSPACE', $name)]]);
         }
@@ -292,6 +286,31 @@ final class TablespaceCommand implements Command
         $engine = ServerCatalog::shared()->engine($named) ?? throw SchemaError::UnknownStorageEngine->error($named);
         if ($engine !== 'InnoDB') {
             throw SchemaError::IllegalCreateOption->error($engine, $operation);
+        }
+    }
+
+    /**
+     * Checks an explicit engine against an existing general tablespace. MySQL
+     * 8.0 through 8.3 accept a matching engine with a deprecation warning;
+     * later releases refuse the option. Existence is checked by the caller first.
+     * Observed on all seven supported modern Testcontainers releases.
+     *
+     * @param list<StorageOption> $options The retained options
+     * @throws SqlError When the engine mismatches or the release refuses the option
+     */
+    public function storedEngine(string $name, array $options, ?Context $context): void
+    {
+        foreach ($options as $option) {
+            if (!$option instanceof EngineOption) {
+                continue;
+            }
+            if ($context === null || !in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true)) {
+                throw StatementError::SyntaxError->error();
+            }
+            if (strcasecmp($option->engine->value, 'InnoDB') !== 0) {
+                throw SchemaError::TablespaceEngineMismatch->error($option->engine->value, 'InnoDB', $name);
+            }
+            $context->warning(StatementError::DeprecatedSyntaxNoReplacement, 'ENGINE tablespace option');
         }
     }
 

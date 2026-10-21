@@ -102,6 +102,7 @@ final class Preparation
     public function definitions(Operation $operation, Session $session): void
     {
         $statement = $operation->statement;
+        $this->storage($statement, $session);
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) {
             $storage = new \MySqlMemory\Command\Definition\StorageOptions();
             $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
@@ -119,6 +120,25 @@ final class Preparation
         if ($event && \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation) !== []) {
             $error = \MySqlMemory\Error\Family\StatementError::DynamicParametersRequireDml;
             throw new SqlError($error, $error->message(), recorded: true);
+        }
+    }
+
+    /**
+     * General tablespace creation, alteration and deletion have no prepared
+     * protocol form. Reading conditions precede this check, while catalog
+     * existence follows it. Legacy ENGINE name resolution precedes the protocol
+     * restriction; modern engine selection follows it. Observed on MySQL 5.6–9.1.
+     *
+     * @throws SqlError When the storage command is unavailable through preparation
+     */
+    public function storage(\SqlSemantics\Statement\Statement $statement, Session $session): void
+    {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace) {
+            if ($session->settings()->legacy()) {
+                $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+                (new \MySqlMemory\Command\Admin\Storage\LegacySupport())->engine($statement->options, $session, $context);
+            }
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
     }
 

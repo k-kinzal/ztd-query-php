@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Maintenance;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\QueryError;
@@ -19,6 +20,7 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions;
 use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
+use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
@@ -30,6 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Operation;
 
@@ -39,11 +42,13 @@ use SqlSemantics\Statement\Operation;
  * Each statement answers rows of Table, Op, Msg_type and Msg_text for each table in written
  * order, after it commits the open transaction. A table that does not exist is an Error row and a
  * failed status; a database that does not exist is an Error row and a "Corrupt" error (in MySQL 5.6
- * and 5.7 a missing table, verified on live 5.6.51 and 5.7.44 servers). The tables
- * are InnoDB tables: CHECK and ANALYZE report OK, OPTIMIZE recreates the table, and REPAIR, CACHE
- * INDEX and LOAD INDEX are notes that the engine does not support them. A view is checked, and
- * the other operations refuse it as no base table. CACHE INDEX names DEFAULT,
- * the only key cache, and a table is never partitioned. ANALYZE TABLE with a histogram clause
+ * and 5.7 a missing table, verified on live 5.6.51 and 5.7.44 servers). For
+ * InnoDB, CHECK and ANALYZE report OK, OPTIMIZE recreates the table, and REPAIR, CACHE
+ * INDEX and LOAD INDEX are notes that the engine does not support them. MyISAM
+ * accepts cache assignment and preloading. A view is checked, and
+ * the other operations refuse it as no base table. CACHE INDEX names DEFAULT or
+ * a case-sensitive cache initialized by a positive buffer allocation. Reducing
+ * its buffer to zero retains that identity. Partition checks use the held table definition. ANALYZE TABLE with a histogram clause
  * changes the histograms (Histograms). Every rule was verified on a live 8.4 server.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/check-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/optimize-table.html,
@@ -86,8 +91,10 @@ final class AdministrationCommand implements Command
         if ($histogram !== null && count($names) > 1) {
             return new ResultSet(self::columns($session), [...$rows, ['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.']]);
         }
-        foreach ($names as [$name, $partitioned]) {
-            array_push($rows, ...$this->report($operation, $histogram, $name, $partitioned, $session));
+        foreach ($names as $position => [$name, $partitioned]) {
+            $item = $statement->tables[$position];
+            $cached = $item instanceof CachedTable || $item instanceof PreloadedTable;
+            array_push($rows, ...$this->report($operation, $histogram, $name, $cached ? ($item->partitions ?? false) : $partitioned, $session, $cached ? $item->indexes : null));
         }
 
         return new ResultSet(self::columns($session), $rows);
@@ -135,7 +142,7 @@ final class AdministrationCommand implements Command
                 throw QueryError::NoDatabase->error();
             }
         }
-        if ($statement instanceof CacheIndex && $statement->cache !== null && strcasecmp($statement->cache->value, 'default') !== 0) {
+        if ($statement instanceof CacheIndex && $statement->cache !== null && $statement->cache->value !== 'default' && !isset($session->variables->globals->initializedCaches[$statement->cache->value])) {
             throw AdministrationError::UnknownKeyCache->error($statement->cache->value);
         }
         if ($statement instanceof AnalyzeTable && $statement->histogram !== null) {
@@ -146,9 +153,10 @@ final class AdministrationCommand implements Command
     /**
      * Runs the operation, or the histogram request, on one table and answers its rows.
      *
+     * @param list<Name|PrimaryIndex>|null $indexes The selected keys of a cache request
      * @return list<array{string, string, string, string}>
      */
-    public function report(string $operation, ?Histogram $histogram, QualifiedName $name, bool|PartitionSelection $partitioned, Session $session): array
+    public function report(string $operation, ?Histogram $histogram, QualifiedName $name, bool|PartitionSelection $partitioned, Session $session, ?array $indexes = null): array
     {
         $schema = $name->schema->value ?? $session->variables->database;
         $label = $schema . '.' . $name->name->value;
@@ -171,9 +179,30 @@ final class AdministrationCommand implements Command
             }
         }
 
+        $failure ??= $this->keyFailure($table, $indexes);
         \MySqlMemory\Storage\IndexStatistics::refresh($table, $operation, $failure === null);
 
-        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation, $partitioned instanceof PartitionSelection) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
+        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation, $partitioned instanceof PartitionSelection, $table?->definition->engine ?? 'InnoDB') : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
+    }
+
+    /**
+     * MyISAM resolves selected cache keys after table and partition checks.
+     * InnoDB reports its unsupported-operation note without looking up keys.
+     *
+     * @param list<Name|PrimaryIndex>|null $indexes The selected keys, or all keys
+     */
+    public function keyFailure(?StoredTable $table, ?array $indexes): ?string
+    {
+        if ($table === null || strcasecmp($table->definition->engine, 'MyISAM') !== 0) {
+            return null;
+        }
+        foreach ($indexes ?? [] as $index) {
+            $name = $index instanceof PrimaryIndex ? 'PRIMARY' : $index->value;
+            if (array_filter($table->definition->keys, static fn (Key $key): bool => strcasecmp($key->name, $name) === 0) === []) {
+                return SchemaError::KeyMissing->message($name, $table->definition->name);
+            }
+        }
+        return null;
     }
 
     /**
@@ -252,12 +281,17 @@ final class AdministrationCommand implements Command
     }
 
     /**
-     * Answers the messages an operation reports for an InnoDB table, as Msg_type and Msg_text.
+     * Answers engine-specific maintenance messages, as Msg_type and Msg_text.
+     * MyISAM accepts cache assignment and index preloading; InnoDB reports its
+     * unsupported-operation note. Verified on native 5.6 and 8.4 servers.
      *
      * @return list<array{string, string}>
      */
-    public function outcome(string $operation, bool $partitioned = false): array
+    public function outcome(string $operation, bool $partitioned = false, string $engine = 'InnoDB'): array
     {
+        if (strcasecmp($engine, 'MyISAM') === 0 && in_array($operation, ['assign_to_keycache', 'preload_keys'], true)) {
+            return [['status', 'OK']];
+        }
         if ($partitioned && $operation === 'repair') {
             return [['status', 'OK']];
         }

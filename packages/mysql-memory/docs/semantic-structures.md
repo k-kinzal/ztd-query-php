@@ -3936,6 +3936,26 @@ mixed key parts, reordered competing errors, populated targets and preparation.
 
 ### Catalog transitions and populated full-text evaluation
 
+A missing named key cache, spatial reference system, general tablespace or undo
+tablespace can also be supplied under the identity retained by the generated
+request. The original object is retried after every compared setup. A later
+ENGINE or encryption condition remains visible rather than being counted as a
+successful execution witness. The generated cache request has a separate
+populated-table history: an unrelated setting leaves it unknown, a positive
+buffer allocation initializes it, and reducing the buffer to zero preserves its
+identity. Allocation uses the value after rounding to 4096-byte blocks. Cache
+names remain case-sensitive; MyISAM resolves selected index names and InnoDB
+reports its engine capability. Text and prepared histories retain complete
+result metadata and diagnostic order.
+
+The generated undo deletion has missing, active, empty and removed witnesses.
+After the compared INACTIVE fixture command, the native catalog must report
+that asynchronous truncation has finished before the unchanged DROP is issued.
+The fixture wait has a bounded deadline and fails if the tablespace disappears
+or remains nonempty. It does not retry or discard a target failure. Memory's
+undo tablespace is already empty after deactivation because it has no physical
+undo pages; both engines then execute the same deletion.
+
 A direct construction comparison follows distinct catalog and session conditions
 while retaining the original statement or scalar object. A missing event can be
 created under its original identity; a SHOW CREATE VIEW target can be replaced

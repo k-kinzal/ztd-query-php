@@ -148,6 +148,29 @@ final class AdministrationCommandTest extends TestCase
         $session->query('CACHE INDEX t IN hot');
     }
 
+    public function testExecuteUsesTheSharedNamedCacheAfterItsBufferWasRemoved(): void
+    {
+        $instance = new Instance();
+        $instance->connect()->query('CREATE DATABASE d; CREATE TABLE d.t(a INT, KEY(a)) ENGINE=MyISAM; INSERT INTO d.t VALUES(1),(2); SET GLOBAL hot.key_buffer_size=1048576; SET GLOBAL hot.key_buffer_size=0');
+        $session = $instance->connect();
+        $cached = $session->query('CACHE INDEX d.t IN hot')[0];
+        $loaded = $session->query('LOAD INDEX INTO CACHE d.t')[0];
+        self::assertInstanceOf(ResultSet::class, $cached);
+        self::assertInstanceOf(ResultSet::class, $loaded);
+        self::assertSame([['d.t', 'assign_to_keycache', 'status', 'OK']], $cached->rows);
+        self::assertSame([['d.t', 'preload_keys', 'status', 'OK']], $loaded->rows);
+    }
+
+    public function testKeyFailureResolvesMyIsamKeysBeforeReportingSuccess(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT PRIMARY KEY, KEY selected(a)) ENGINE=MyISAM');
+        $table = $session->instance->dictionary->table('d', 't');
+        $command = new AdministrationCommand();
+        self::assertNull($command->keyFailure($table, [new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex(), new \SqlSemantics\Statement\Identifier\Name('SELECTED')]));
+        self::assertSame("Key 'missing' doesn't exist in table 't'", $command->keyFailure($table, [new \SqlSemantics\Statement\Identifier\Name('missing')]));
+    }
+
     public function testExecuteNeedsADatabaseForAnUnqualifiedTable(): void
     {
         $session = (new Instance())->connect();

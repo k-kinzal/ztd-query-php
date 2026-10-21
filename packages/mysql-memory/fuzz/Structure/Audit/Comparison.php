@@ -218,6 +218,7 @@ final class Comparison
             if (isset($observation['native']['error'])) {
                 throw new RuntimeException('The session fixture could not be established: ' . serialize($history));
             }
+            (new Storage\UndoState())->after($step, $native);
         }
         $history[] = $this->observe($node, $profile, $native, $session, $endpoint);
         return $history;

@@ -27,6 +27,26 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\RenameTablespace;
 #[Small]
 final class TablespaceCommandTest extends TestCase
 {
+    public function testStoredEngineRetainsTheMatchingEngineWarningOnEarlierReleases(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query("CREATE TABLESPACE t ADD DATAFILE 't.ibd'");
+        $reply = $session->query('ALTER TABLESPACE t ENGINE innodb')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(1, $reply->warnings);
+        self::assertSame([['Warning', 1681, "'ENGINE tablespace option' is deprecated and will be removed in a future release."]], $session->diagnostics->conditions);
+    }
+
+    public function testStoredEngineRefusesAnExistingTablespacesDifferentEngine(): void
+    {
+        $session = (new Instance('8.3.0'))->connect();
+        $session->query("CREATE TABLESPACE t ADD DATAFILE 't.ibd'");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3642);
+        $this->expectExceptionMessage("Engine 'missing' does not match stored engine 'InnoDB' for tablespace 't'");
+        $session->query('DROP TABLESPACE t ENGINE missing');
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new TablespaceCommand())->clearsDiagnostics());

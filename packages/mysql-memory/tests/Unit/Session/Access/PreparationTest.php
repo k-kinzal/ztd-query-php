@@ -14,6 +14,20 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testStorageRefusesTheConstructedCommandWithoutReadingInput(): void
+    {
+        $node = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace(new \SqlSemantics\Statement\Identifier\Name('missing'));
+        $this->expectExceptionCode(1295);
+        (new Preparation())->storage($node, (new Instance())->connect());
+    }
+
+    public function testStorageResolvesTheLegacyEngineBeforeTheProtocolRestriction(): void
+    {
+        $node = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace(new \SqlSemantics\Statement\Identifier\Name('missing'), [new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('absent_engine'))]);
+        $this->expectExceptionCode(1286);
+        (new Preparation())->storage($node, (new Instance('5.7.44'))->connect());
+    }
+
     public function testAlterParametersUsesTheRetainedMarkerWithoutReadingTheLabel(): void
     {
         $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);

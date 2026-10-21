@@ -21,6 +21,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class AssignerTest extends TestCase
 {
+    public function testIntegerRoundsKeyBufferBytesBeforeInitializingACache(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query('SET GLOBAL tiny.key_buffer_size=1');
+        self::assertSame(0, $instance->globals->caches['tiny']['key_buffer_size']);
+        self::assertSame([], $instance->globals->initializedCaches);
+        self::assertSame(['Warning', 1292, "Truncated incorrect key_buffer_size value: '1'"], $session->diagnostics->conditions[0]);
+        $session->query('SET GLOBAL tiny.key_buffer_size=4097');
+        self::assertSame(4096, $instance->globals->caches['tiny']['key_buffer_size']);
+        self::assertSame(['tiny' => true], $instance->globals->initializedCaches);
+    }
+
     public function testAssignSetsTheSessionValue(): void
     {
         $session = (new Instance())->connect();

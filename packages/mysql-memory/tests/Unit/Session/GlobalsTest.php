@@ -22,6 +22,18 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 #[Small]
 final class GlobalsTest extends TestCase
 {
+    public function testCacheRetainsAllocationHistoryAfterItsBufferIsRemoved(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query('SET GLOBAL hot.key_cache_block_size=2048, cold.key_buffer_size=0');
+        self::assertSame([], $instance->globals->initializedCaches);
+        $session->query('SET GLOBAL hot.key_buffer_size=1048576, Hot.key_buffer_size=4096');
+        $session->query('SET GLOBAL hot.key_buffer_size=0');
+        self::assertSame(['hot' => true, 'Hot' => true], $instance->globals->initializedCaches);
+        self::assertSame(0, $instance->globals->caches['hot']['key_buffer_size']);
+    }
+
     public function testValueAnswersTheDefaultOfAVariableNeverSet(): void
     {
         $definition = new Definition('max_allowed_packet', Reach::Both, ValueShape::Unsigned, 67108864, Writability::GlobalOnly, 1024, 1073741824, Domain::integer());

@@ -265,6 +265,9 @@ final class Assigner
     /**
      * Checks an integer value, clipping it to the bounds of the variable; the value and the bounds of an unsigned variable compare as unsigned 64-bit integers, and an unsigned variable without known bounds (the catalogs of MySQL 5.6 and 5.7 have none) takes any unsigned 64-bit integer.
      *
+     * Key buffers are rounded down to 4096-byte blocks before allocation, with
+     * one truncation warning when clipping or rounding changes the value.
+     *
      * @throws \MySqlMemory\Error\SqlError When the value is NULL or not an integer
      */
     public function integer(Definition $definition, int|float|string|null $value, Domain $domain, string $text): int
@@ -283,12 +286,13 @@ final class Assigner
             $below = $number < $minimum && !($domain->unsigned && $number < 0);
             $above = $number > $maximum || ($domain->unsigned && $number < 0);
         }
-        if ($below || $above) {
+        $checked = $below ? $minimum : ($above ? $maximum : $number);
+        $checked = $definition->name === 'key_buffer_size' ? $checked & ~4095 : $checked;
+        if ($checked !== $number) {
             $this->context->warning(DataError::TruncatedWrongValue, $definition->name, $text);
-            $number = $below ? $minimum : $maximum;
         }
 
-        return $number;
+        return $checked;
     }
 
     /**

@@ -120,6 +120,7 @@ enum SchemaError: int implements ErrorCode
     case DuplicateTablespaceFile = 3606;
     case NoSdiFiles = 3608;
     case TablespaceFileMissing = 3629;
+    case TablespaceEngineMismatch = 3642;
     case SrsMissingAttribute = 3708;
     case SrsRepeatedAttribute = 3709;
     case SrsBlankName = 3710;
