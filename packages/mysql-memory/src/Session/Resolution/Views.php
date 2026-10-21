@@ -54,7 +54,7 @@ final class Views
         $semantics = new Semantics(Dialect::MySql, 'mysql-' . $settings->version, $mode, ParameterStyle::Native);
         $query = $view->definition;
         $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($view->name), new \SqlSemantics\Statement\Identifier\Name($view->schema));
-        $statement = new \SqlSemantics\Platform\MySql\Statement\View\CreateView(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query));
+        $statement = new \SqlSemantics\Platform\MySql\Statement\View\CreateView(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query, algorithm: \SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::from($view->algorithm)));
         $operation = new Operation($semantics->context($dictionary->declarations(), true, new SearchPath($view->database), $settings->resolution()), $statement);
         $view->operation = $operation;
         if ($operation->facts->diagnostics !== []) {
@@ -76,7 +76,7 @@ final class Views
         $columns = [];
         foreach ($view->declaration->columns as $index => $column) {
             $field = $declarations[$positions[$index]] ?? null;
-            $columns[] = $field !== null ? new \SqlSemantics\Statement\Declaration\Column($column->name, $field->type, $field->nullability) : $column;
+            $columns[] = $field !== null ? new \SqlSemantics\Statement\Declaration\Column($column->name, $field->type, $field->nullability, $field->generated, $field->expression) : $column;
         }
         $old = $view->declaration;
         $view->declaration = new Table($old->name, $old->profile, $columns, $old->implicit, $old->complete, $old->kind, $old->keys, $old->partitions);

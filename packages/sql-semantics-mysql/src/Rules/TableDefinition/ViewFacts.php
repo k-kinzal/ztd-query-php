@@ -60,12 +60,13 @@ final class ViewFacts
     {
         $release = $derivation->context->profile->grammar;
         $types = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
-        $merging = $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? \SqlSemantics\Contract\GrammarRelease::MySql5744 : $release;
-        if ($definition->algorithm !== \SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::TempTable && $types->mergeable($definition->query, $merging, $derivation->facts())) {
-            return $table;
-        }
+        $merged = $definition->algorithm !== \SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::TempTable && $types->view($definition->query, $release, $derivation->facts());
         $columns = [];
         foreach ($table->columns as $position => $column) {
+            if ($merged) {
+                $columns[] = new \SqlSemantics\Statement\Declaration\Column($column->name, $column->type, $column->nullability, $column->generated, expression: true);
+                continue;
+            }
             $domain = $column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? $types->projected($column->type, $definition->query, $position, $derivation, $types->narrows($definition->query)) : $column->type;
             if ($column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $column->type->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null && in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044], true)) {
                 $domain = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::String, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), [], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable);

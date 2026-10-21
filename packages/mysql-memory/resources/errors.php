@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    1450 => ['HY000', "Changing schema from '%s' to '%s' is not allowed."],
     3682 => ['22S00', 'Function %s is only defined for SRID 0 and SRID 4326.'],
     1753 => ['HY000', 'UNTIL condtion is not supported in multi-threaded replica mode. Replica is started in the sequential execution mode.'],
     3726 => ['22S00', 'Function %s is only defined for geographic spatial reference systems, but one of its arguments is in SRID %s, which is not geographic.'],

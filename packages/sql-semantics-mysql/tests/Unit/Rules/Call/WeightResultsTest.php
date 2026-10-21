@@ -18,6 +18,62 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class WeightResultsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, list<int>}>
+     */
+    public static function providerDomainLengths(): iterable
+    {
+        yield 'legacy' => ['mysql-5.7.44', [3, 8, 7, 6, 67108864]];
+        yield 'modern' => ['mysql-8.4.7', [8, 8, 8, 8, 3221225469]];
+    }
+
+    /**
+     * @param list<int> $lengths
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDomainLengths')]
+    public function testFactDistinguishesStoredTemporalWidthsAndJsonCapacity(string $release, array $lengths): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t(d DATE, dt DATETIME(6), ts TIMESTAMP(6), tm TIME(6))');
+        $query = $semantics->analyze("SELECT WEIGHT_STRING(d AS CHAR(32)), WEIGHT_STRING(dt,16,1,0), WEIGHT_STRING(ts), WEIGHT_STRING(tm), WEIGHT_STRING(JSON_OBJECT('a',1)) FROM t", [$table]);
+        $actual = array_map(static fn (int $index): ?int => (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($query->field($index)->type)?->length, range(0, 4));
+        self::assertSame($lengths, $actual);
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerStoredInputs(): iterable
+    {
+        yield 'field' => ['SELECT d FROM t', true];
+        yield 'merged view' => ['SELECT d FROM m', false];
+        yield 'materialized view' => ['SELECT d FROM s', true];
+        yield 'materialized derived view' => ['SELECT d FROM (SELECT d FROM m LIMIT 1) q', true];
+        yield 'merged derived field' => ['SELECT d FROM (SELECT d FROM t) q', false];
+        yield 'literal' => ["SELECT DATE '2024-01-01'", false];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerStoredInputs')]
+    public function testStoredDistinguishesFieldAndExpressionReferences(string $sql, bool $stored): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(d DATE)');
+        $merged = $semantics->analyze('CREATE ALGORITHM=MERGE VIEW m AS SELECT d FROM t', [$table]);
+        $materialized = $semantics->analyze('CREATE ALGORITHM=TEMPTABLE VIEW s AS SELECT d FROM t', [$table]);
+        $operation = $semantics->analyze($sql, [$table, $merged, $materialized]);
+        $expression = $operation->field(0)->expression;
+        self::assertNotNull($expression);
+        self::assertSame($stored, (new WeightResults())->stored($operation->facts->scalar($expression), $operation->facts, $semantics->profile()->grammar, true));
+    }
+
+    public function testTemporalLengthPreservesStoredFractionalPrecision(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $columns = $semantics->analyze('CREATE TABLE t(d DATE, dt DATETIME(6), ts TIMESTAMP(6), tm TIME(6))')->declarations()[0]->columns;
+        $lengths = array_map(static fn ($column): ?int => $column->type instanceof Domain ? (new WeightResults())->temporalLength($column->type) : null, $columns);
+        self::assertSame([3, 8, 7, 6], $lengths);
+    }
+
     public function testCharacterBytesNarrowsBeforeChoosingTheResultField(): void
     {
         $modern = (new Semantics(Dialect::MySql))->analyze("SELECT WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(1073741824)), WEIGHT_STRING(_utf8mb4'abc' COLLATE utf8mb4_bin AS CHAR(65536))");

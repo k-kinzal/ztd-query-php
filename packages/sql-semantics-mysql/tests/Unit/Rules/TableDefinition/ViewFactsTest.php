@@ -32,6 +32,32 @@ final class ViewFactsTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerReferenceReleases(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.4.7'] as $release) {
+            yield $release => [$release];
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReferenceReleases')]
+    public function testDeriveRetainsExpressionReferencesSeparatelyFromColumnDomains(string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $base = $semantics->analyze('CREATE TABLE t(d DATE)')->declarations()[0];
+        $merged = $semantics->analyze('CREATE ALGORITHM=MERGE VIEW m AS SELECT d FROM t', [$base])->declarations()[0];
+        $stored = $semantics->analyze('CREATE ALGORITHM=TEMPTABLE VIEW s AS SELECT d FROM t', [$base])->declarations()[0];
+        self::assertFalse($base->columns[0]->expression);
+        self::assertTrue($merged->columns[0]->expression);
+        self::assertFalse($stored->columns[0]->expression);
+        self::assertEquals($base->columns[0]->type, $merged->columns[0]->type);
+        self::assertEquals($base->columns[0]->type, $stored->columns[0]->type);
+        $query = $semantics->analyze('SELECT d FROM m', [$merged]);
+        self::assertSame($merged->columns[0], $query->field(0)->column());
+    }
+
+    /**
      * @return iterable<string, array{string, string, int}>
      */
     public static function providerViewDomains(): iterable

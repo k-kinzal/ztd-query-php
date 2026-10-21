@@ -82,6 +82,7 @@ enum SchemaError: int implements ErrorCode
     case ViewWrongList = 1353;
     case ViewMergeUnavailable = 1354;
     case ViewInvalid = 1356;
+    case ViewRenameSchema = 1450;
     case DuplicatedValueInType = 1291;
     case TooBigScale = 1425;
     case TooBigPrecision = 1426;

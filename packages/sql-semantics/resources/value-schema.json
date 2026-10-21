@@ -46,6 +46,7 @@
         "shape": "SqlSemantics\\Statement\\Shape\\RowShape"
     },
     "SqlSemantics\\Statement\\Declaration\\Column": {
+        "expression": "bool",
         "generated": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "nullability": "SqlSemantics\\Statement\\Type\\Nullability",

@@ -17,7 +17,11 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * WEIGHT_STRING(value [AS CHAR(N) | AS BINARY(N)]): the bytes the server sorts a value by.
  *
  * An integer weighs eight bytes, most significant first, with the sign bit of a signed one
- * flipped, whatever AS CHAR says; AS BINARY(N) reads it as its text instead. A double or a
+ * flipped, whatever AS CHAR says; AS BINARY(N) reads it as its text instead. Modern temporal
+ * values have signed sortable components; legacy temporal fields use their storage width,
+ * while legacy expressions use textual weights. Resolved column provenance distinguishes
+ * these forms, including merged and materialized views. JSON uses its canonical text
+ * under utf8mb4_bin. A double or a
  * decimal weighs NULL. A binary string, and any string AS BINARY(N), weighs its bytes, padded
  * with 0x00 or cut to N; a string of a _bin collation of utf8mb4 or utf8mb3 weighs three bytes
  * per utf8mb4 character, and two per utf8mb3 character, its code point. General Unicode and
@@ -43,8 +47,9 @@ final class Weight implements Evaluable
      * @param int $flags The internal formatting flags
      * @param bool $descending Whether the selected level's bytes are inverted
      * @param bool $reverse Whether the selected level's weight string is reversed
+     * @param bool $stored Whether the subject reads a resolved stored field
      */
-    public function __construct(public readonly Evaluable $operand, public readonly ?WeightCast $cast, public readonly ?int $length, public readonly Domain $domain, public readonly int $weights = 0, public readonly int $resultLength = 0, public readonly int $flags = 0, public readonly bool $descending = false, public readonly bool $reverse = false)
+    public function __construct(public readonly Evaluable $operand, public readonly ?WeightCast $cast, public readonly ?int $length, public readonly Domain $domain, public readonly int $weights = 0, public readonly int $resultLength = 0, public readonly int $flags = 0, public readonly bool $descending = false, public readonly bool $reverse = false, public readonly bool $stored = false)
     {
     }
 
@@ -76,11 +81,25 @@ final class Weight implements Evaluable
         if ($domain->kind === Kind::Double || $domain->kind === Kind::Decimal) {
             return null;
         }
-        if ($domain->kind === Kind::Integer) {
+        if (in_array($domain->kind, [Kind::Integer, Kind::Year, Kind::Bit], true)) {
             if (in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
                 return null;
             }
-            return pack('J', $domain->unsigned ? (int) $value : (int) $value ^ PHP_INT_MIN);
+            $integer = $domain->kind === Kind::Bit ? Convert::bits((string) $value) : (int) $value;
+            return pack('J', $domain->unsigned ? $integer : $integer ^ PHP_INT_MIN);
+        }
+        if ($domain->kind->temporal()) {
+            if (!in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                return (new \MySqlMemory\Typing\TemporalWeight())->bytes((string) $value, $domain->kind, $this->stored && $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Timestamp ? $frame->context->zone() : null);
+            }
+            if ($this->stored) {
+                return (new \MySqlMemory\Typing\TemporalWeight())->stored((string) $value, $domain, $frame->context->zone());
+            }
+            $domain = Domain::string($domain->length, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'));
+        }
+        if ($domain->kind === Kind::Json) {
+            $value = Convert::toText($value, $domain);
+            $domain = Domain::string($domain->length, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'));
         }
         if ($domain->kind !== Kind::String) {
             throw StatementError::NotSupportedYet->error('WEIGHT_STRING of this value');

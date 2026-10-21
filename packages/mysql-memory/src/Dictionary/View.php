@@ -78,6 +78,22 @@ final class View
     }
 
     /**
+     * Retains the stored definition and binding state under a new name in the same database.
+     */
+    public function renamed(string $name): self
+    {
+        $old = $this->declaration;
+        $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($name), new \SqlSemantics\Statement\Identifier\Name($this->schema)), $old->profile, $old->columns, $old->implicit, $old->complete, $old->kind, $old->keys, $old->partitions);
+        $view = new self($this->schema, $name, $this->definer, $this->algorithm, $this->security, $this->check, $this->database, $this->created, $this->definition, $declaration, $this->tables, $this->charsets);
+        $view->operation = $this->operation;
+        $view->query = $this->query;
+        $view->positions = $this->positions;
+        $view->valid = $this->valid;
+        $view->hints = $this->hints;
+        return $view;
+    }
+
+    /**
      * Renders the retained query structure for metadata that needs SQL text.
      */
     public function querySql(): string

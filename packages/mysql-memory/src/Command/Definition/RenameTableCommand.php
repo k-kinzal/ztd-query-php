@@ -8,6 +8,7 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
+use MySqlMemory\Dictionary\View;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -59,12 +60,48 @@ final class RenameTableCommand implements Command
         $this->written($statement, $database);
         $session->transaction->commit();
         $dictionary = $session->instance->dictionary;
+        [$names, $moves] = $this->prepare($statement, $dictionary, $database, $session->settings()->legacy());
+        foreach ($moves as [$table]) {
+            if ($table instanceof View) {
+                unset($dictionary->schemas[$table->schema]->views[$table->name]);
+                continue;
+            }
+            unset($dictionary->schemas[$table->definition->schema]->tables[$table->definition->name]);
+            $dictionary->cache->close($table->definition->schema, $table->definition->name);
+        }
+        foreach ($moves as [$table, $to]) {
+            if ($table instanceof View) {
+                continue;
+            }
+            $from = [$table->definition->schema, $table->definition->name];
+            $table->definition = $this->renamed($session, $context, $connection, $table, $to[0], $to[1]);
+            $dictionary->retarget($from[0], $from[1], $to[0], $to[1]);
+        }
+        foreach ($names as $table) {
+            if ($table instanceof View) {
+                $dictionary->schemas[$table->schema]->views[$table->name] = $table;
+                continue;
+            }
+            $dictionary->schemas[$table->definition->schema]->tables[$table->definition->name] = $table;
+        }
+
+        return new Completion();
+    }
+
+    /**
+     * Validates the whole ordered rename list before publishing any catalog change.
+     *
+     * @return array{array<string, StoredTable|View>, list<array{StoredTable|View, array{string, string}}>}
+     * @throws \MySqlMemory\Error\SqlError When any source or destination cannot be renamed
+     */
+    public function prepare(RenameTable $statement, Dictionary $dictionary, string $database, bool $legacy): array
+    {
         $names = $this->names($dictionary);
         $moves = [];
         foreach ($statement->renamings as $renaming) {
             $from = [$renaming->from->schema->value ?? $database, $renaming->from->name->value];
             $to = [$renaming->to->schema->value ?? $database, $renaming->to->name->value];
-            if ($session->settings()->legacy() && !isset($names[$from[0] . "\0" . $from[1]])) {
+            if ($legacy && !isset($names[$from[0] . "\0" . $from[1]])) {
                 $files = new Database\FileName();
                 throw SchemaError::FileNotFound->error('./' . $files->encoded($from[0]) . '/' . $files->encoded($from[1]) . '.frm', 2, 'No such file or directory');
             }
@@ -80,36 +117,29 @@ final class RenameTableCommand implements Command
             if ($table === null) {
                 throw QueryError::NoSuchTable->error($from[0], $from[1]);
             }
+            if ($table instanceof View && $from[0] !== $to[0]) {
+                throw SchemaError::ViewRenameSchema->error($from[0], $to[0]);
+            }
             unset($names[$from[0] . "\0" . $from[1]]);
-            $names[$to[0] . "\0" . $to[1]] = $table;
+            $names[$to[0] . "\0" . $to[1]] = $table instanceof View ? $table->renamed($to[1]) : $table;
             $moves[] = [$table, $to];
         }
-        foreach ($moves as [$table]) {
-            unset($dictionary->schemas[$table->definition->schema]->tables[$table->definition->name]);
-            $dictionary->cache->close($table->definition->schema, $table->definition->name);
-        }
-        foreach ($moves as [$table, $to]) {
-            $from = [$table->definition->schema, $table->definition->name];
-            $table->definition = $this->renamed($session, $context, $connection, $table, $to[0], $to[1]);
-            $dictionary->retarget($from[0], $from[1], $to[0], $to[1]);
-        }
-        foreach ($names as $table) {
-            $dictionary->schemas[$table->definition->schema]->tables[$table->definition->name] = $table;
-        }
-
-        return new Completion();
+        return [$names, $moves];
     }
 
     /**
      * Answers the tables a rename can see, keyed by their database and name joined by a NUL
      * character; temporary tables are left out.
      *
-     * @return array<string, StoredTable>
+     * @return array<string, StoredTable|View>
      */
     public function names(Dictionary $dictionary): array
     {
         $names = [];
         foreach ($dictionary->schemas as $schema) {
+            foreach ($schema->views as $name => $view) {
+                $names[$schema->name . "\0" . $name] = $view;
+            }
             foreach ($schema->tables as $name => $table) {
                 if (!$table->definition->temporary) {
                     $names[$schema->name . "\0" . $name] = $table;
@@ -165,7 +195,7 @@ final class RenameTableCommand implements Command
         if ($session->instance->dictionary->schema($schema) === null) {
             throw QueryError::BadDatabase->error($schema);
         }
-        if ($session->instance->dictionary->table($schema, $name) !== null) {
+        if ($session->instance->dictionary->table($schema, $name) !== null || isset($session->instance->dictionary->schema($schema)?->views[$name])) {
             throw SchemaError::TableExists->error($name);
         }
     }

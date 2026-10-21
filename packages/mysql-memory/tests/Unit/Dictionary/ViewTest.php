@@ -24,6 +24,22 @@ final class ViewTest extends TestCase
         self::assertSame('SELECT 1 AS x', $schema->views['v']->querySql());
     }
 
+    public function testRenamedRetainsTheDefinitionAndBindingState(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a DATE); CREATE ALGORITHM=MERGE VIEW v AS SELECT a FROM t');
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+        $original = $schema->views['v'];
+        $renamed = $original->renamed('w');
+        self::assertSame('w', $renamed->name);
+        self::assertSame('w', $renamed->declaration->name->name->value);
+        self::assertSame($original->declaration->columns, $renamed->declaration->columns);
+        self::assertSame($original->created, $renamed->created);
+        self::assertSame($original->definition, $renamed->definition);
+        self::assertSame($original->tables, $renamed->tables);
+    }
+
     public function testCreateWritesTheAttributesAroundTheQuery(): void
     {
         $session = (new Instance())->connect();

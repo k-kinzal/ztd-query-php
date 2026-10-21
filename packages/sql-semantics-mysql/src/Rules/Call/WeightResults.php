@@ -25,7 +25,9 @@ use SqlSemantics\Statement\Type\Known;
  * AS BINARY and a nonzero internal result length specify the capacity directly. Modern
  * releases retain a minimum of eight bytes. Legacy sizing uses the charset byte width;
  * modern collation expansion is sampled from public
- * result metadata in resources/weight-lengths.php.
+ * result metadata in resources/weight-lengths.php. Temporal stored fields retain their
+ * fixed sort-key widths; expression references retain expression capacities. JSON
+ * uses its text bound, including the legacy unsigned 32-bit length narrowing.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_weight-string.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -45,8 +47,10 @@ final class WeightResults
         $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $count = $cast === WeightCast::Char ? $castLength ?? 0 : $weights;
         $length = match (true) {
+            $cast !== WeightCast::Binary && $this->stored($fact, $derivation->facts(), $derivation->context->profile->grammar, Settings::of($derivation->context)->derivedMerge) && ($operand->kind->temporal() || (!$legacy && $operand->kind === Kind::Year)) => $legacy ? $this->temporalLength($operand) : 8,
             $resultLength > 0 => $resultLength,
             $cast === WeightCast::Binary => $castLength ?? 0,
+            $operand->kind === Kind::Json => $legacy ? max($operand->length * 4, $count) % 4294967296 : max(intdiv($operand->length, 4), $count) * 3,
             $operand->kind === Kind::String => $legacy ? $this->characterBytes($operand, $count) : $this->length($operand, $count),
             default => max($count, (new Texts(Settings::of($derivation->context)))->length($operand)),
         };
@@ -56,6 +60,31 @@ final class WeightResults
         $field = $length <= 65535 ? Field::VarString : ($length <= 16777215 ? Field::MediumBlob : Field::LongBlob);
 
         return new ScalarFact(new Known(Domain::string($length, Collation::binary(), $field)), $base->nullability);
+    }
+
+    /**
+     * Tells whether the operand reads a stored field instead of a merged expression.
+     */
+    public function stored(ScalarFact $fact, \SqlSemantics\Statement\Fact\Facts $facts, GrammarRelease $release, bool $derivedMerge): bool
+    {
+        $reference = $fact->resolution;
+        $domain = (new Precision())->domain($fact->type);
+        if (!$reference instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn || $domain === null || !$domain->collation->bytes()) {
+            return false;
+        }
+        $relation = $reference->relation;
+        $input = $facts->relation($relation)->table;
+        $query = $relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable ? $relation->query : ($input instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $input->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression ? $input->definition->query : null);
+
+        return $query === null ? !($reference->declaration()->expression ?? false) : !(new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $release, $facts, $derivedMerge);
+    }
+
+    /**
+     * Answers the legacy field's sort-key width, including stored fractional bytes.
+     */
+    public function temporalLength(Domain $domain): int
+    {
+        return $domain->kind === Kind::Date ? 3 : ($domain->kind === Kind::Time ? 3 : ($domain->field === Field::Timestamp ? 4 : 5)) + intdiv($domain->decimals + 1, 2);
     }
 
     /**

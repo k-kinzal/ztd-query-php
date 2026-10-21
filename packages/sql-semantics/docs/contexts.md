@@ -127,6 +127,13 @@ $semantics->analyze('SELECT total FROM orders', [$orders])->field('total')->colu
 $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))')->declarations()[0]->columns[1]->generated; // => true
 ```
 
+A `Column` also distinguishes expression references from stored fields with `expression`
+(false by default). MySQL marks columns of merged views as expression references,
+while materialized views retain field semantics. The distinction affects operations
+such as temporal sort weights even when the declared type is identical. Catalog
+refreshes and renamings must preserve this property. It is independent of
+`generated`: a generated table column still reads as a field.
+
 A declaration keeps neither the query of a view nor the expression of a generated column. Checks that need them are not made; the database packages list them among their limitations.
 
 ## Identity and conflicts

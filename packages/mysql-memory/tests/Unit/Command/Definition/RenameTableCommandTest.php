@@ -39,6 +39,47 @@ final class RenameTableCommandTest extends TestCase
         self::assertSame([['t'], ['u']], $tables->rows);
     }
 
+    public function testExecutePreservesViewDeclarationAndRefreshStateAcrossRenamings(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t(a DATE); INSERT INTO t VALUES('2024-01-01'); CREATE ALGORITHM=MERGE VIEW v AS SELECT a FROM t; ALTER TABLE t ADD b INT");
+        $session->query('SELECT * FROM v');
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+        $original = $schema->views['v'];
+        $session->query('RENAME TABLE v TO x, x TO u');
+        $renamed = $schema->views['u'];
+        self::assertSame($original->created, $renamed->created);
+        self::assertSame($original->definition, $renamed->definition);
+        self::assertSame($original->declaration->columns, $renamed->declaration->columns);
+        self::assertSame('u', $renamed->declaration->name->name->value);
+        self::assertTrue($renamed->declaration->columns[0]->expression);
+        self::assertArrayNotHasKey('v', $schema->views);
+        self::assertArrayNotHasKey('x', $schema->views);
+        $result = $session->query('SELECT * FROM u')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024-01-01']], $result->rows);
+        $failure = $session->run('RENAME TABLE u TO x, missing TO z')[0];
+        self::assertInstanceOf(SqlError::class, $failure);
+        self::assertSame($renamed, $schema->views['u']);
+        self::assertArrayNotHasKey('x', $schema->views);
+    }
+
+    public function testPrepareResolvesChainedViewNamesWithoutPublishingThem(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); CREATE VIEW v AS SELECT a FROM t');
+        $statement = $session->analyze('RENAME TABLE v TO x, x TO u')->statement;
+        self::assertInstanceOf(RenameTable::class, $statement);
+        [$names, $moves] = (new RenameTableCommand())->prepare($statement, $session->instance->dictionary, 'd', false);
+        self::assertCount(2, $moves);
+        self::assertInstanceOf(\MySqlMemory\Dictionary\View::class, $names["d\0u"]);
+        self::assertSame('u', $names["d\0u"]->name);
+        self::assertArrayNotHasKey("d\0v", $names);
+        self::assertArrayHasKey('v', $session->instance->dictionary->schemas['d']->views);
+        self::assertArrayNotHasKey('u', $session->instance->dictionary->schemas['d']->views);
+    }
+
     public function testExecuteRenamesNothingWhenARenameFails(): void
     {
         $session = (new Instance())->connect();
