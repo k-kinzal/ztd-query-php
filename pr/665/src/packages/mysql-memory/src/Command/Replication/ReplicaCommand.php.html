@@ -206,7 +206,7 @@
 <span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$replication</span>-&gt;<span class="tok-id">initialized</span>) {</span>
 <span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a>            <span class="tok-kw">throw</span> <span class="tok-id">AdministrationError</span>::<span class="tok-id">ReplicaConnectionMetadata</span>-&gt;<span class="tok-id">error</span>();</span>
 <span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a>        }</span>
-<span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>        <span class="tok-var">$replication</span>-&gt;<span class="tok-id">applying</span> = !<span class="tok-var">$replication</span>-&gt;<span class="tok-id">missing</span>;</span>
+<span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>        <span class="tok-var">$replication</span>-&gt;<span class="tok-id">applying</span> = !<span class="tok-var">$replication</span>-&gt;<span class="tok-id">missing</span> &amp;&amp; !(<span class="tok-kw">new</span> <span class="tok-id">UntilExecution</span>())-&gt;<span class="tok-id">complete</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">until</span>, <span class="tok-var">$session</span>);</span>
 <span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a>    }</span>
 <span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a></span>
 <span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>    <span class="tok-com">/**</span></span>
