@@ -341,7 +341,8 @@ final class Session
             \MySqlMemory\Session\Resolution\Views::refreshAll($this->instance->dictionary, $this->settings());
             $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
             try {
-                $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($reader->bound($tree, $parameters, $prepared, $this))));
+                $bindings = $reader->bound($tree, $parameters, $prepared, $this);
+                $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($bindings, unboundParameters: $prepared && $parameters === [] ? array_keys($bindings) : [])));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 throw $reader->operand($failure, $tree, $statement, $this);
             } catch (ImplementationGap $gap) {
@@ -370,9 +371,11 @@ final class Session
     /**
      * Answers the session variables SQL Semantics resolves types with.
      *
+     * @param list<int> $unboundParameters Positions with initial domains awaiting actual values
+     *
      * @param array<int, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain> $parameters The type of the value bound to each parameter marker, by the position of the marker
      */
-    public function resolution(array $parameters = [], ?Resolution $literals = null): Resolution
+    public function resolution(array $parameters = [], ?Resolution $literals = null, array $unboundParameters = []): Resolution
     {
         $schemas = [];
         foreach ($this->instance->dictionary->schemas as $schema) {
@@ -381,12 +384,12 @@ final class Session
         $connection = Collation::named((string) $this->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         $server = Collation::named((string) $this->variables->read('collation_server'));
 
-        $users = array_map(static fn (\MySqlMemory\Variable\UserEntry $variable) => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry($variable->domain->resolved(), $variable->collation), $this->variables->user);
+        $users = array_map(static fn (\MySqlMemory\Variable\UserEntry $variable) => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry($variable->domain->resolved(), $variable->collation, $variable->binaryString), $this->variables->user);
 
         $client = $this->variables->read('character_set_client');
         $timestamps = $this->variables->read('explicit_defaults_for_timestamp');
 
-        return new Resolution($literals->connection ?? $connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), $literals->client ?? (is_string($client) ? Charset::named($client) : null), program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: version_compare($this->instance->version, '8.0.0', '<') ? $this->modes()->strict() : ($literals->strict ?? $this->modes()->strict()), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true), noZeroDate: $this->modes()->has('NO_ZERO_DATE'), noZeroInDate: $this->modes()->has('NO_ZERO_IN_DATE'), allowInvalidDates: $this->modes()->has('ALLOW_INVALID_DATES'), handlers: array_map(static fn (\MySqlMemory\Command\Access\Handler $handler): \SqlSemantics\Statement\Identifier\QualifiedName => new \SqlSemantics\Statement\Identifier\QualifiedName(new Name($handler->table), new Name($handler->schema)), $this->handlers), databaseCollation: Collation::named((string) $this->variables->read('collation_database')), replicaNetTimeout: (int) $this->variables->read(version_compare($this->instance->version, '8.0.0', '<') ? 'slave_net_timeout' : 'replica_net_timeout'), fullTextParsers: (new \MySqlMemory\System\Server\Plugins())->fullTextParsers(\SqlSemantics\Contract\GrammarRelease::tryFrom('mysql-' . $this->instance->version) ?? \SqlSemantics\Contract\GrammarRelease::MySql847));
+        return new Resolution($literals->connection ?? $connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), $literals->client ?? (is_string($client) ? Charset::named($client) : null), program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: version_compare($this->instance->version, '8.0.0', '<') ? $this->modes()->strict() : ($literals->strict ?? $this->modes()->strict()), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true), noZeroDate: $this->modes()->has('NO_ZERO_DATE'), noZeroInDate: $this->modes()->has('NO_ZERO_IN_DATE'), allowInvalidDates: $this->modes()->has('ALLOW_INVALID_DATES'), handlers: array_map(static fn (\MySqlMemory\Command\Access\Handler $handler): \SqlSemantics\Statement\Identifier\QualifiedName => new \SqlSemantics\Statement\Identifier\QualifiedName(new Name($handler->table), new Name($handler->schema)), $this->handlers), databaseCollation: Collation::named((string) $this->variables->read('collation_database')), replicaNetTimeout: (int) $this->variables->read(version_compare($this->instance->version, '8.0.0', '<') ? 'slave_net_timeout' : 'replica_net_timeout'), fullTextParsers: (new \MySqlMemory\System\Server\Plugins())->fullTextParsers(\SqlSemantics\Contract\GrammarRelease::tryFrom('mysql-' . $this->instance->version) ?? \SqlSemantics\Contract\GrammarRelease::MySql847), unboundParameters: $unboundParameters);
     }
 
     /**

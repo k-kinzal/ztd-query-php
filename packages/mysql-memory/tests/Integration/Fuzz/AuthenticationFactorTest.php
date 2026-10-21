@@ -7,6 +7,7 @@ namespace Tests\Integration\Fuzz;
 use Container\Endpoint;
 use Fuzz\Target\DisposableMySql;
 use Fuzz\Target\Observer;
+use JsonException;
 use MySqlMemory\Server\Server;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -21,6 +22,7 @@ final class AuthenticationFactorTest extends TestCase
 {
     /**
      * @return iterable<string, array{string, list<string>}>
+     * @throws JsonException When the saved authentication-policy input is malformed
      */
     public static function providerReleases(): iterable
     {
@@ -123,6 +125,9 @@ final class AuthenticationFactorTest extends TestCase
             "CREATE USER CURRENT_USER IDENTIFIED BY 'pw' AND IDENTIFIED BY 'pw'",
             "SELECT COUNT(*) FROM mysql.user WHERE User='root' AND Host='%'",
         ];
+        /** @var list<string> $policy */
+        $policy = json_decode((string) file_get_contents(__DIR__ . '/fixtures/account-factor-policy.json'), true, 512, JSON_THROW_ON_ERROR);
+        $statements = [...$policy, ...$statements];
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             yield $release => [$release, $statements];
         }

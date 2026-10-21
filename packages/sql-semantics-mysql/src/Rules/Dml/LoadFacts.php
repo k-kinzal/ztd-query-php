@@ -44,7 +44,9 @@ final class LoadFacts
         $base = $derivation->environment();
         if ($load->charset?->name !== null) {
             if (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($load->charset->name->value) === null) {
-                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($load->charset->name->value));
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($load->charset->name->value);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
             }
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charset($load->charset->name->value, $derivation);
         }

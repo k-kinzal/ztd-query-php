@@ -74,6 +74,7 @@ final class Arithmetic implements Scalar
         $operands = new Operands();
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\SpatialOperands())->check($derivation, $this->operator, [$left->type, $right->type]);
         $type = (new NumericResult())->binary($this->operator, $this->left, $left, $this->right, $right, $derivation->context->profile->grammar);
         if ($this->operator->bitwise() && (new NumericResult())->binaryOperation($this->operator, $this->left, $left, $this->right, $right)) {
             Deprecation::raise(Deprecated::BinaryBitwise, $derivation);

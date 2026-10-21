@@ -215,6 +215,10 @@ final class Compiler
      */
     public function compile(Operand $node, Scope $scope): Evaluable
     {
+        $prepared = $this->connection->session()?->preparation->conditions;
+        if ($prepared !== null && isset($prepared[$node])) {
+            return $prepared[$node];
+        }
         $bound = $scope->bound($node);
         if ($bound !== null) {
             return $bound[0] === 0 ? $bound[1] : $this->names->outer($bound[1], $bound[0]);

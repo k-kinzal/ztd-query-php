@@ -23,38 +23,51 @@ use SqlSemantics\Statement\Node;
 final class ReadDependencies
 {
     /**
+     * @param bool $childrenFirst Whether completed operand dependencies precede their owners
      * @return list<Node> Nodes used by the read, including transitively referenced definitions
      */
-    public function nodes(Node $root, Comparison $names = Comparison::Sensitive): array
+    public function nodes(Node $root, Comparison $names = Comparison::Sensitive, bool $childrenFirst = false): array
     {
-        return $this->inputs([$root], null, $names);
+        return $this->inputs([$root], null, $names, $childrenFirst);
     }
 
     /**
      * Resolves a list of owned inputs in an optional enclosing WITH scope.
      *
      * @param list<Node> $roots Input occurrences, not replacement query nodes
+     * @param bool $childrenFirst Whether each owner follows its completed operands
      * @return list<Node> Reached nodes and their common-table dependencies
      */
-    public function inputs(array $roots, ?With $with = null, Comparison $names = Comparison::Sensitive): array
+    public function inputs(array $roots, ?With $with = null, Comparison $names = Comparison::Sensitive, bool $childrenFirst = false): array
     {
         /** @var list<array<string, int>> $scopes */
         $scopes = [[]];
         /** @var list<array{CommonTableExpression, int}> $definitions */
         $definitions = [];
         $initial = $with === null ? 0 : $this->define($with, $names, $scopes, $definitions, 0);
-        /** @var list<array{Node, int}> $pending */
-        $pending = array_map(static fn (Node $root): array => [$root, $initial], array_reverse($roots));
+        /** @var list<array{Node, int, bool}> $pending */
+        $pending = [];
+        foreach (array_reverse($roots) as $root) {
+            $pending[] = [$root, $initial, false];
+        }
         $seen = [];
         $found = [];
         while ($pending !== []) {
-            [$node, $scope] = array_pop($pending);
+            [$node, $scope, $completed] = array_pop($pending);
+            if ($completed) {
+                $found[] = $node;
+                continue;
+            }
             $key = spl_object_id($node) . ':' . $scope;
             if (isset($seen[$key])) {
                 continue;
             }
             $seen[$key] = true;
-            $found[] = $node;
+            if ($childrenFirst) {
+                $pending[] = [$node, $scope, true];
+            } else {
+                $found[] = $node;
+            }
             $with = $this->with($node);
             if ($with !== null) {
                 $scope = $this->define($with, $names, $scopes, $definitions, $scope);
@@ -62,11 +75,11 @@ final class ReadDependencies
             if (($node instanceof TableReference || $node instanceof ExplicitTable) && $node->name()->schema === null) {
                 $definition = $scopes[$scope][$names->fold($node->name()->name->value)] ?? null;
                 if ($definition !== null) {
-                    $pending[] = $definitions[$definition];
+                    $pending[] = [...$definitions[$definition], false];
                 }
             }
             foreach (array_reverse($this->children($node)) as $child) {
-                $pending[] = [$child, $scope];
+                $pending[] = [$child, $scope, false];
             }
         }
         return $found;

@@ -37,6 +37,11 @@ final class Settings implements Session
     use Snapshot;
 
     /**
+     * @var list<int> Positions whose initial domains do not yet describe bound values
+     */
+    public readonly array $unboundParameters;
+
+    /**
      * @var array<array-key, Collation> The default collation of each schema, by lower-case name
      */
     public readonly array $schemas;
@@ -90,6 +95,7 @@ final class Settings implements Session
      * @param Collation|null $databaseCollation The session collation_database, which SET may override independently of schema defaults
      * @param int|null $replicaNetTimeout The global replication network timeout in seconds; null selects the release default
      * @param list<Name>|null $fullTextParsers The available full-text parser plugins; null leaves plugin availability unresolved
+     * @param array<array-key, int> $unboundParameters Positions whose domains describe preparation placeholders, with no value bound yet
      */
     public function __construct(
         public readonly Collation $connection,
@@ -115,15 +121,17 @@ final class Settings implements Session
         public readonly ?Collation $databaseCollation = null,
         public readonly ?int $replicaNetTimeout = null,
         ?array $fullTextParsers = null,
+        array $unboundParameters = [],
     ) {
+        Check::input(array_is_list($unboundParameters), 'Unbound parameter positions form a list.');
+        foreach ($unboundParameters as $position) {
+            Check::input($position >= 0 && isset($parameters[$position]), 'An unbound parameter has an initial domain at its position.');
+        }
+        $this->unboundParameters = $unboundParameters;
         $this->fullTextParsers = $fullTextParsers === null ? null : Check::listOf($fullTextParsers, Name::class, 'The full-text parser catalog is an ordered list of plugin names.');
         Check::input($replicaNetTimeout === null || $replicaNetTimeout > 0, 'The replication network timeout is positive.');
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
-        $routines = [];
-        foreach ($functions as $name => $domain) {
-            $routines[strtolower((string) $name)] = $domain;
-        }
-        $this->functions = $routines;
+        $this->functions = array_change_key_case($functions, CASE_LOWER);
         Check::listOf(array_values($handlers), QualifiedName::class, 'An open handler identifies a table.');
         $opened = [];
         foreach ($handlers as $name => $table) {
@@ -135,25 +143,22 @@ final class Settings implements Session
             $lower[strtolower((string) $name)] = $collation;
         }
         $this->schemas = $lower;
-        $variables = null;
-        foreach ($userVariables ?? [] as $name => $domain) {
-            $variables[strtolower((string) $name)] = $domain;
-        }
-        $this->userVariables = $userVariables === null ? null : ($variables ?? []);
+        $this->userVariables = $userVariables === null ? null : array_change_key_case($userVariables, CASE_LOWER);
     }
 
     /**
      * Answers the same semantic session with a new parameter-domain snapshot.
      *
      * @param array<int, Domain> $parameters Parameter domains by written position
+     * @param list<int> $unboundParameters Positions still awaiting a bound value
      * @example Rebinding parameters without changing the original settings
      *     $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults(\SqlSemantics\Contract\GrammarRelease::MySql847);
      *     $bound = $settings->withParameters([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
      *     [$settings->parameters, $bound->parameters[0]->kind] // => [[], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer]
      */
-    public function withParameters(array $parameters): self
+    public function withParameters(array $parameters, array $unboundParameters = []): self
     {
-        return new self($this->connection, $this->divPrecisionIncrement, $this->server, $this->schemas, $this->groupConcatMaxLen, $this->userVariables, $parameters, $this->unsignedSubtraction, $this->client, $this->program, $this->functions, $this->timeNames, $this->blockEncryptionMode, $this->derivedMerge, $this->strict, $this->explicitDefaultsForTimestamp, $this->noZeroDate, $this->noZeroInDate, $this->allowInvalidDates, $this->handlers, $this->databaseCollation, $this->replicaNetTimeout, $this->fullTextParsers);
+        return new self($this->connection, $this->divPrecisionIncrement, $this->server, $this->schemas, $this->groupConcatMaxLen, $this->userVariables, $parameters, $this->unsignedSubtraction, $this->client, $this->program, $this->functions, $this->timeNames, $this->blockEncryptionMode, $this->derivedMerge, $this->strict, $this->explicitDefaultsForTimestamp, $this->noZeroDate, $this->noZeroInDate, $this->allowInvalidDates, $this->handlers, $this->databaseCollation, $this->replicaNetTimeout, $this->fullTextParsers, $unboundParameters);
     }
 
     /**

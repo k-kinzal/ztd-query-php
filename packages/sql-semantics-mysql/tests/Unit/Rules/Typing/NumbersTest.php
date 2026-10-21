@@ -322,6 +322,16 @@ final class NumbersTest extends TestCase
         self::assertEquals(Domain::string(3, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::ShiftRight, Domain::string(3, Collation::binary()), Domain::string(5, Collation::binary())));
     }
 
+    public function testBinaryBitsRetainsBlobWidthsWithoutAllocatingOperandValues(): void
+    {
+        $numbers = new Numbers();
+        self::assertSame(Field::VarString, $numbers->binaryBits(null, Domain::string(65535, Collation::binary()))->field);
+        self::assertSame(Field::MediumBlob, $numbers->binaryBits(null, Domain::string(65536, Collation::binary()))->field);
+        self::assertSame(Field::MediumBlob, $numbers->binaryBits(null, Domain::string(16777215, Collation::binary()))->field);
+        self::assertSame(Field::LongBlob, $numbers->binaryBits(null, Domain::string(16777216, Collation::binary()))->field);
+        self::assertSame(4294967295, $numbers->binaryBits(null, Domain::string(4294967295, Collation::binary()))->length);
+    }
+
     public function testLegacyNegatedCountsTheSignOfAnExactResult(): void
     {
         $numbers = new Numbers();

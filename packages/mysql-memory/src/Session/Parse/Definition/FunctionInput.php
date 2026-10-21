@@ -36,7 +36,11 @@ final class FunctionInput
         $parser = $semantics->parser();
         Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $end = $this->completed($parser, $statement, $end);
+            $completed = $this->completed($parser, $statement, $end);
+            if ($completed === 0 && (new SyntaxCalls())->dependencies($parser, $statement, $end, $semantics->profile(), enclosing: true) !== []) {
+                return QueryError::NoDatabase->error();
+            }
+            $end = $completed;
         }
         foreach ((new SyntaxCalls())->dependencies($parser, $statement, $end, $semantics->profile()) as [$offset, $name]) {
             return $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? ProgramError::RoutineMissing->error('FUNCTION', $name->value) : QueryError::NoDatabase->error();

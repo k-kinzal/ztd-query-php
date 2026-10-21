@@ -145,7 +145,7 @@ final class DefaultDatabase
         if ($session->variables->database !== '' || ($statement instanceof Statement && \MySqlMemory\Command\Dispatcher::program($statement))) {
             return;
         }
-        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($statement) as $node) {
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($statement, childrenFirst: $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) as $node) {
             if (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall) && $node->schema === null && !$node->native($session->settings()->release())) {
                 throw (new \MySqlMemory\Session\Problem\Errors())->routine($node, $session);
             }

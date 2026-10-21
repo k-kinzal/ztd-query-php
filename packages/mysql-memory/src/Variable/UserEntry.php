@@ -21,8 +21,10 @@ final class UserEntry
      * @param int|float|string|null $value The stored value
      * @param Domain $domain The value's domain
      * @param Collation $collation The collation retained at assignment
+     * @param bool|null $binaryString The binary-string interpretation retained across a NULL assignment, independently of the current value domain
+     * @param bool $assigned Whether an assignment has executed, rather than only allocating its name
      */
-    public function __construct(public readonly int|float|string|null $value, public readonly Domain $domain, public readonly Collation $collation)
+    public function __construct(public readonly int|float|string|null $value, public readonly Domain $domain, public readonly Collation $collation, public readonly ?bool $binaryString = null, public readonly bool $assigned = true)
     {
     }
 }

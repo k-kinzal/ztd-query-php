@@ -46,4 +46,15 @@ final class SyntaxLoadInputTest extends TestCase
         self::assertInstanceOf(LoadTable::class, $statement);
         self::assertSame('000', $statement->input->count?->text);
     }
+    public function testCompletedStopsAtAnUnknownLoadCharset(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tree = $semantics->parser()->parse("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=(@v:=1)");
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering(\SqlSemantics\Contract\Platforms::of('mysql')->productions($semantics->profile()), new \SqlSemantics\Lowering\Leaves(), $semantics->profile());
+        $notice = (new SyntaxLoadInput())->completed($tree->find('opt_load_data_charset')[0], $lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $notice->problem);
+        self::assertTrue($notice->aborts);
+    }
+
 }

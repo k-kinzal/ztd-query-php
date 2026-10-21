@@ -11,6 +11,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
@@ -57,6 +58,28 @@ final class BitsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[null, null, null]], $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNullOperandHistories(): iterable
+    {
+        yield '5.6' => ['5.6.51', '111'];
+        yield '5.7' => ['5.7.44', '111'];
+        yield '8.4' => ['8.4.7', '000'];
+        yield '9.1' => ['9.1.0', '000'];
+    }
+
+    #[DataProvider('providerNullOperandHistories')]
+    public function testEvaluatePreservesReleaseSpecificAssignmentEffectsAfterNull(string $release, string $expected): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('SET @a=0,@b=0,@c=0');
+        $session->query('SELECT NULL ^ (@a:=1), NULL << (@b:=1), NULL >> (@c:=1)');
+        $result = $session->query('SELECT CONCAT(@a,@b,@c)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[$expected]], $result->rows);
     }
 
     public function testEvaluateReadsOtherOperandsAsIntegers(): void

@@ -29,6 +29,15 @@ final class SyntaxCallsTest extends TestCase
         self::assertSame([], (new SyntaxCalls())->dependencies($parser, $sql, 10, $profile));
     }
 
+    public function testDependenciesRetainEnclosingRoutineOwnersBeforeAnInnerRefusal(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5744);
+        $sql = 'SELECT outer_fn(inner_fn(ST_SRID(1,2)))';
+        $dependencies = (new SyntaxCalls())->dependencies($parser, $sql, 35, $profile, enclosing: true);
+        self::assertSame(['outer_fn', 'inner_fn'], array_map(static fn (array $dependency): string => $dependency[1]->value, $dependencies));
+    }
+
     #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', 'SELECT OLD_PASSWORD((1,2))', 'function_call_conflict', 'PASSWORD'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', "SET PASSWORD = OLD_PASSWORD('text')", 'text_or_password', 'PASSWORD'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44', 'SELECT CONTAINS((1,2),NULL)', 'geometry_function', 'MBRCONTAINS'])]

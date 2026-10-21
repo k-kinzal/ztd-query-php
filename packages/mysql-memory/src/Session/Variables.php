@@ -152,7 +152,7 @@ final class Variables
                 $domain = $domain->withCollation($collation, Coercibility::Implicit);
             }
         }
-        $this->user[strtolower($name)] = new UserEntry($value, $domain, $collation);
+        $this->user[strtolower($name)] = new UserEntry($value, $domain, $collation, $value === null && $previous?->assigned === true ? $previous->binaryString ?? ($previous->domain->kind === Kind::String && $previous->domain->collation->charset->name === 'binary') : null);
     }
 
     /**
@@ -162,7 +162,7 @@ final class Variables
     public function allocate(string $name, Collation $collation): void
     {
         $this->checkUserName($name);
-        $this->user[strtolower($name)] ??= new UserEntry(null, Domain::string(0, $collation, Field::MediumBlob)->withCollation($collation, Coercibility::Implicit), $collation);
+        $this->user[strtolower($name)] ??= new UserEntry(null, Domain::string(0, $collation, Field::MediumBlob)->withCollation($collation, Coercibility::Implicit), $collation, assigned: false);
     }
 
     /**

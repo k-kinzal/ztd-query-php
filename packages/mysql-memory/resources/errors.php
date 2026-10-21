@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    3682 => ['22S00', 'Function %s is only defined for SRID 0 and SRID 4326.'],
     1753 => ['HY000', 'UNTIL condtion is not supported in multi-threaded replica mode. Replica is started in the sequential execution mode.'],
     3726 => ['22S00', 'Function %s is only defined for geographic spatial reference systems, but one of its arguments is in SRID %s, which is not geographic.'],
     3731 => ['22S02', 'A parameter of function %s contains a geometry with longitude %s, which is out of range. It must be within (%s, %s].'],

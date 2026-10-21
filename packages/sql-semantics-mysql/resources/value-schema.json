@@ -690,6 +690,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\ReservedFunction": {
         "function": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\Type\\ArgumentDomainMismatch": {
+        "argument": "string",
+        "function": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\UnsupportedWindowing": {
         "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowFunction|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowAggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowSpec|null",
         "limit": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\WindowingLimit"
@@ -1329,6 +1333,7 @@
         "operand": "SqlSemantics\\Statement\\Scalar",
         "pattern": "SqlSemantics\\Statement\\Scalar"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\CharacterCastRange": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\CollationMismatch": {
         "charset": "string",
         "collation": "string",
@@ -1362,6 +1367,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\RefusedTemporalLiteral": {
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm",
         "text": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\SpatialArithmetic": {
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\UnaryOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Problem\\TimeZoneConversion": {
         "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\AtTimeZone|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredTimeZone",
@@ -3942,6 +3950,7 @@
         "server": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
         "strict": "bool",
         "timeNames": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Locale",
+        "unboundParameters": "array",
         "unsignedSubtraction": "bool",
         "userVariables": "?array"
     },
@@ -4310,6 +4319,7 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariableEntry": {
+        "binaryString": "?bool",
         "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
         "domain": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Domain"
     },

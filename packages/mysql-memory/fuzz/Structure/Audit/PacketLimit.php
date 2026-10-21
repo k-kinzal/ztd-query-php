@@ -25,6 +25,7 @@ final class PacketLimit
         try {
             $native->query('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
             $session = (new Instance($release, globals: ['max_allowed_packet' => $limit, 'character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'character_set_results' => 'utf8mb4', 'collation_connection' => 'utf8mb4_bin']))->connect();
+            (new \Fuzz\Structure\Execution())->runIn($session, new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames(new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4')), new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_bin')))]));
             $session->text = 'unrelated invalid input';
             $sql = (new Reference())->sql($node, $session->semantics()->profile());
             $expected = (new Native())->observe($native, $sql);

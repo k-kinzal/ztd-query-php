@@ -149,6 +149,11 @@ final class Execution
         if ($read && !$session->replayed) {
             $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
         }
+        foreach ($session->replayed ? $operation->facts->warnings : [] as $warning) {
+            if ($warning instanceof Deprecation && $warning->construct === \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryBitwise) {
+                $session->diagnostics->warning($warning->code(), $warning->message());
+            }
+        }
         if (!$read) {
             (new \MySqlMemory\Program\Routine\InspectionNotices())->start($operation, $session);
         }

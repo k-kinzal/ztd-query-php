@@ -30,6 +30,19 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class MathResultsTest extends TestCase
 {
+    public function testRoundingOperandReadsTheDecimalBoundBeforeLegacySignDisplayExpansion(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, new NumberLiteral('1.123'));
+        $fact = $derivation->scalar($operand, $derivation->environment());
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        $call = new Invocation([$fact->type->descriptor, Domain::integer()], [$operand, new NumberLiteral('2')], new Settings(Collation::binary()), $derivation);
+        $rules = new MathResults();
+        self::assertSame(6, $rules->roundingOperand($call)->length);
+        self::assertSame([6, 5], [$rules->rounded($call)->length, $rules->legacyTruncated($call)->length]);
+    }
+
     public function testRulesTypePiAndTheRealFunctions(): void
     {
         $rules = (new MathResults())->rules();

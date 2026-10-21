@@ -42,7 +42,7 @@ final class Srid
      */
     public function value(Frame $frame, array $arguments): int|string|null
     {
-        $raw = $arguments[0]->evaluate($frame);
+        $raw = FailedGeometry::read($arguments[0], $frame, 'st_srid');
         $target = null;
         if (isset($arguments[1])) {
             $value = $arguments[1]->evaluate($frame);

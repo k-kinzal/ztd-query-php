@@ -50,7 +50,7 @@ final class Properties
      */
     public function value(Frame $frame, Evaluable $argument, string $property): int|string|null
     {
-        $raw = $argument->evaluate($frame);
+        $raw = FailedGeometry::read($argument, $frame, 'st_' . strtolower($property));
         if ($raw === null) {
             return null;
         }

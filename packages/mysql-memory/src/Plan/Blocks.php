@@ -286,7 +286,7 @@ final class Blocks
         $varying = null;
         $recheck = null;
         foreach ($this->conjuncts($where) as $conjunct) {
-            $compiled = $compiler->compile($conjunct, $scope);
+            $compiled = (new \MySqlMemory\Evaluation\Compile\Preparation\Predicates())->compile($conjunct, $scope, $compiler);
             if ((new \MySqlMemory\Evaluation\Compile\Family\UnsignedBounds($compiler))->impossible($conjunct)) {
                 $constant = new Constant($compiler->operators->truth(false), 0);
             } elseif ($compiler->constancy($conjunct)->constant()) {
@@ -309,6 +309,9 @@ final class Blocks
      */
     public function conjuncts(Scalar $condition): array
     {
+        if (isset($this->planner->compiler->connection->session()?->preparation->conditions[$condition])) {
+            return [$condition];
+        }
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
         }

@@ -50,6 +50,8 @@ final class Bits implements Evaluable
 
     /**
      * Computes the result for a row.
+     * Legacy XOR and shifts read the right operand even when the left is NULL;
+     * AND, OR and modern bit operations stop at a NULL left operand.
      */
     #[Override]
     public function evaluate(Frame $frame): int|string|null
@@ -59,6 +61,9 @@ final class Bits implements Evaluable
         }
         $left = $this->operand($this->left, $this->left->evaluate($frame), $frame);
         if ($left === null) {
+            if (in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && in_array($this->operator, [ArithmeticOperator::BitXor, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight], true)) {
+                $this->operand($this->right, $this->right->evaluate($frame), $frame);
+            }
             return null;
         }
         if ($this->operator === null) {

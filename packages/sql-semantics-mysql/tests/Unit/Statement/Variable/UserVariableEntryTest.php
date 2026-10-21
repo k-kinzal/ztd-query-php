@@ -31,4 +31,12 @@ final class UserVariableEntryTest extends TestCase
         self::assertSame('latin1', $entry->collation->charset->name);
         self::assertSame('binary', $entry->domain->collation->charset->name);
     }
+    public function testRetainsBinaryStringInterpretationIndependentlyOfTheReadDomain(): void
+    {
+        $entry = new UserVariableEntry(Domain::integer(), Collation::binary(), true);
+        self::assertSame(Domain::integer()->kind, $entry->domain->kind);
+        self::assertTrue($entry->binaryString);
+        self::assertNull((new UserVariableEntry(Domain::integer(), Collation::binary()))->binaryString);
+    }
+
 }

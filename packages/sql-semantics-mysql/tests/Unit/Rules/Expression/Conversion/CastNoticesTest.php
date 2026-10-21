@@ -20,6 +20,15 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Medium]
 final class CastNoticesTest extends TestCase
 {
+    public function testCapacityUsesTheResolvedCharacterSetBeforeRuntimeValues(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $target = new CastTarget(CastKind::Char, '2147483648');
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(2147483648, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'));
+        (new CastNotices())->capacity($target, $domain, $derivation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\CharacterCastRange::class, $derivation->facts()->diagnostics[0]);
+    }
+
     public function testDeriveRetainsTheTargetNoticeWithoutRequiringAnOperand(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));

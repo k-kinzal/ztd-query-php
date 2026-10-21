@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * digits beyond 18 of them (in MySQL 5.6 and 5.7 the BIGINT of
  * CEILING and FLOOR is as long as the argument, verified on live 5.6.51 and 5.7.44 servers); ROUND and TRUNCATE make an integer a
  * BIGINT and keep a decimal with at most the decimals a constant second argument asks for, and MySQL 5.6 and 5.7 keep the class of
- * their argument with the decimals a literal second argument asks for, a double keeping no fixed decimals; PI is a double of six decimals; the other
+ * their argument with the decimals a literal second argument asks for, modern doubles keeping no fixed decimals and legacy doubles retaining a constant requested scale; PI is a double of six decimals; the other
  * functions return doubles.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/mathematical-functions.html.
  *
@@ -132,11 +132,12 @@ final class MathResults
     public function rounded(Invocation $call): Domain
     {
         $numbers = new Numbers();
-        $domain = $call->domain(0);
+        $domain = $this->roundingOperand($call);
         $places = $call->constant(1);
         $decimals = $places ?? (count($call->domains) === 1 ? 0 : null);
         if ($numbers->operand($domain) === Kind::Double) {
-            return Domain::double(23);
+            $scale = max(0, min(30, $decimals ?? 0));
+            return $decimals === null || !$this->legacy($call) ? Domain::double(23) : Domain::double(17 + $scale, $scale);
         }
         [$precision, $scale] = $numbers->digits($domain);
         if ($decimals === null) {
@@ -148,6 +149,24 @@ final class MathResults
         }
 
         return Domain::decimal(min(65, $precision - $scale + $newScale + 1), $newScale);
+    }
+
+    /**
+     * Legacy decimal rounding ignores unary sign display expansion. The operand
+     * keeps its own metadata; only this call reads the underlying decimal bound.
+     * Verified for literals and explicit DECIMAL conversions on MySQL 5.7.
+     */
+    public function roundingOperand(Invocation $call): Domain
+    {
+        $domain = $call->domain(0);
+        $node = $call->nodes[0] ?? null;
+        if (!$this->legacy($call) || $domain->kind !== Kind::Decimal || $node === null) {
+            return $domain;
+        }
+        while ($node instanceof Grouped || ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && in_array($node->operator, [\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus], true))) {
+            $node = $node->operand;
+        }
+        return $node === $call->nodes[0] ? $domain : ((new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($call->derivation->facts()->scalar($node)->type) ?? $domain);
     }
 
     /**
@@ -209,7 +228,7 @@ final class MathResults
     public function legacyTruncated(Invocation $call): Domain
     {
         $numbers = new Numbers();
-        $domain = $call->domain(0);
+        $domain = $this->roundingOperand($call);
         $kind = $numbers->operand($domain);
         if ($kind === Kind::Integer && !$domain->kind->temporal()) {
             return Domain::integer(Field::LongLong, $domain->length, $domain->unsigned);

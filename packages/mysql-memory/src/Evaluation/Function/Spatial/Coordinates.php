@@ -43,7 +43,7 @@ final class Coordinates
      */
     public function value(Frame $frame, array $arguments, string $property): float|string|null
     {
-        $raw = $arguments[0]->evaluate($frame);
+        $raw = FailedGeometry::read($arguments[0], $frame, $frame->context->modes->release === GrammarRelease::MySql5744 ? 'st_' . strtolower($property) : null);
         $coordinate = isset($arguments[1]) ? Convert::toDouble($arguments[1]->evaluate($frame), $arguments[1]->domain(), $frame->context) : null;
         if ($raw === null || (isset($arguments[1]) && $coordinate === null)) {
             return null;

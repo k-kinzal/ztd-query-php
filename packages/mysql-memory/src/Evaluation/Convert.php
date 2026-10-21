@@ -312,14 +312,15 @@ final class Convert
      *
      * @param Charset|null $charset The character set of the string, which the warning quotes it from
      * @param bool $quiet Whether the string reads without warning, as a string function result of MySQL 5.6 and 5.7 does
+     * @param string|null $display The already converted diagnostic spelling, when a caller preserves a distinct byte boundary
      */
-    public static function stringInteger(string $text, Context $context, bool $unsigned, ?Charset $charset = null, bool $quiet = false): int
+    public static function stringInteger(string $text, Context $context, bool $unsigned, ?Charset $charset = null, bool $quiet = false, ?string $display = null): int
     {
         $read = NumericText::integer($text);
         $number = Decimal::numeric($read->number);
         $inRange = $unsigned ? Integer::unsignedRange($number) || Integer::signedRange($number) : Integer::signedRange($number);
         if (!$quiet && (!$read->complete || !$inRange || trim($text, " \t\n\r\v\f") === '')) {
-            $context->warning(DataError::TruncatedWrongValue, 'INTEGER', self::shown($text, $charset));
+            $context->warning(DataError::TruncatedWrongValue, 'INTEGER', $display ?? self::shown($text, $charset));
         }
         if (!$inRange) {
             return str_starts_with($number, '-') ? PHP_INT_MIN : ($unsigned || bccomp($number, Integer::UNSIGNED_MAX, 0) >= 0 ? -1 : PHP_INT_MAX);

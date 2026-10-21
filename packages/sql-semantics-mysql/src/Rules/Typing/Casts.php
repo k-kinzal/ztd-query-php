@@ -159,7 +159,7 @@ final class Casts
      */
     public function decimal(CastTarget $target): Domain
     {
-        return Domain::decimal($target->length === null ? 10 : (int) $target->length, $target->scale === null ? 0 : (int) $target->scale);
+        return Domain::decimal((int) $target->length === 0 ? 10 : (int) $target->length, $target->scale === null ? 0 : (int) $target->scale);
     }
 
     /**
@@ -177,15 +177,16 @@ final class Casts
      */
     public function string(Domain $operand, CastTarget $target, Collation $collation): Domain
     {
-        if ($target->length === null && $operand->kind === Kind::Json && $this->release !== GrammarRelease::MySql5651 && $this->release !== GrammarRelease::MySql5744) {
+        $limit = self::stringLimit($target, $this->release);
+        if ($limit === null && $operand->kind === Kind::Json && $this->release !== GrammarRelease::MySql5651 && $this->release !== GrammarRelease::MySql5744) {
             return Domain::string(4294967295, $collation, Field::LongBlob);
         }
 
-        $length = $target->length === null ? $this->length($operand) : (int) $target->length;
+        $length = $limit ?? $this->length($operand);
         if ($operand->kind === Kind::Json) {
             return Domain::string($length, $collation);
         }
-        if ($collation->bytes() && $target->length === null && $operand->kind === Kind::String) {
+        if ($collation->bytes() && $limit === null && $operand->kind === Kind::String) {
             $length *= $operand->collation->charset->maxLength;
         }
 
@@ -195,13 +196,31 @@ final class Casts
     }
 
     /**
+     * Resolves an explicit string width. Legacy releases interpret the upper half
+     * of the unsigned 32-bit range as an unspecified bound; modern releases use
+     * the upper half of the unsigned 64-bit range. The same rule controls
+     * result metadata and runtime padding. Verified through native CHAR/BINARY casts.
+     */
+    public static function stringLimit(CastTarget $target, GrammarRelease $release): ?int
+    {
+        if ($target->length === null || !in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true)) {
+            return null;
+        }
+        $length = (int) $target->length;
+        if ($length > 4294967295 && (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\JsonWidths())->of($target->length) !== null) {
+            return null;
+        }
+        return $length >= 2147483648 && $length <= 4294967295 && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? null : $length;
+    }
+
+    /**
      * Retains a numeric operand's versioned CAST metadata independently of the text value bound.
      */
     public function reportedString(Domain $operand, CastTarget $target, Domain $domain): Domain
     {
         $legacy = $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
         $display = null;
-        if ($target->length === null) {
+        if (self::stringLimit($target, $this->release) === null) {
             $display = match (true) {
                 $operand->kind === Kind::Double && ($legacy || $target->kind === CastKind::Binary) => $operand->metadataLength(),
                 $operand->kind === Kind::Integer && $legacy => $operand->display,

@@ -81,4 +81,14 @@ final class CastsTest extends TestCase
         self::assertSame([[null]], $null->rows);
     }
 
+    public function testLabelDistinguishesProjectedAndNestedConversions(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT CAST('123' AS DECIMAL(1)) AS value, CAST('123' AS DECIMAL(1))+1 AS nested");
+        self::assertSame([
+            ['Warning', 1264, "Out of range value for column 'value' at row 1"],
+            ['Warning', 1264, "Out of range value for column '(null)' at row 1"],
+        ], $session->diagnostics->conditions);
+    }
+
 }

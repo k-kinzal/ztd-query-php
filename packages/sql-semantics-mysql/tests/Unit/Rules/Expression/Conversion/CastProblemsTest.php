@@ -16,6 +16,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Small]
 final class CastProblemsTest extends TestCase
 {
+    public function testSizeSeparatesOrdinaryBoundsFromJsonReturnWidths(): void
+    {
+        $rules = new CastProblems();
+        self::assertNull($rules->size(new CastTarget(CastKind::Char, '9223372036854775808')));
+        self::assertNotNull($rules->size(new CastTarget(CastKind::Char, '9223372036854775808'), \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertNotNull($rules->size(new CastTarget(CastKind::Binary, '4294967296')));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision, $rules->size(new CastTarget(CastKind::Decimal, '66', '67'))?->rule);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision, $rules->size(new CastTarget(CastKind::Decimal, '66', '31'))?->rule);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Scale, $rules->size(new CastTarget(CastKind::Decimal, '65', '31'))?->rule);
+        self::assertNull($rules->size(new CastTarget(CastKind::Decimal, '0')));
+    }
+
     /**
      * @return iterable<string, array{CastKind, ?string, ?int, int}>
      */

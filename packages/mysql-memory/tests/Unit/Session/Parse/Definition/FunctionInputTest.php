@@ -32,6 +32,12 @@ final class FunctionInputTest extends TestCase
         $session->query('CREATE DATABASE d; USE d');
         self::assertNull($input->before('SELECT missing_fn() OVER w', 99, $session));
     }
+    public function testBeforeResolvesAnEnclosingStoredFunctionBeforeItsNestedSignature(): void
+    {
+        $this->expectExceptionCode(1046);
+        (new Instance('5.7.44'))->connect()->query('SELECT ST_SWAPXY(ST_SRID(POINT(1,2),-1))');
+    }
+
     public function testCompletedRequiresACompleteStatementBeforeTheRefusedTail(): void
     {
         $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');

@@ -38,8 +38,9 @@ final class Conversion implements Evaluable
      * @param Domain $domain The domain of the target
      * @param int|null $limit The length of a CHAR(N) or BINARY(N) target
      * @param string $target The keyword of the target, for warnings
+     * @param string $label The resolved expression name used by numeric range warnings
      */
-    public function __construct(public readonly Evaluable $operand, public readonly Domain $domain, public readonly ?int $limit, public readonly string $target)
+    public function __construct(public readonly Evaluable $operand, public readonly Domain $domain, public readonly ?int $limit, public readonly string $target, public readonly string $label = '(null)')
     {
     }
 
@@ -58,6 +59,9 @@ final class Conversion implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
+        if (in_array($this->target, ['BINARY', 'CHAR', 'NCHAR'], true) && $this->limit !== null && !(new \MySqlMemory\Evaluation\Function\Strings())->fits($frame, $this->limit, $this->target === 'BINARY' ? 'cast_as_binary' : 'cast_as_char')) {
+            return null;
+        }
         $value = $this->operand->evaluate($frame);
         if ($value === null) {
             return null;
@@ -168,7 +172,7 @@ final class Conversion implements Evaluable
         $rounded = Decimal::round($value, $this->domain->decimals);
         $digits = $this->domain->precision() - $this->domain->decimals;
         if (Decimal::integerDigits($rounded) > $digits && trim(explode('.', ltrim($rounded, '-'))[0], '0') !== '') {
-            $context->warning(DataError::DataOutOfRange, 'DECIMAL', '');
+            $context->warning(DataError::OutOfRange, $this->label, 1);
             $largest = str_repeat('9', max(1, $digits)) . ($this->domain->decimals > 0 ? '.' . str_repeat('9', $this->domain->decimals) : '');
 
             return str_starts_with($rounded, '-') ? '-' . $largest : $largest;

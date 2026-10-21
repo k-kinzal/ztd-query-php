@@ -35,6 +35,9 @@ final class SyntaxLoadInput
             return null;
         }
         $name = (new FormatRule($lowering))->charset($node)?->name?->value;
+        if ($name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name) === null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name), true);
+        }
         $notice = match (strtolower($name ?? '')) {
             'utf8' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias,
             'utf8mb3' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3,

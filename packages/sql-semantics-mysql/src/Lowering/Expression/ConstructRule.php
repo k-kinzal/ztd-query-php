@@ -92,7 +92,7 @@ final class ConstructRule
         $operand = $this->lowering->expressions->operand($form->node(2));
         $target = $this->lowering->types->castTarget($form->node(4));
         $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && $this->flag($form->node(5));
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->target($target, $array);
+        $problem = (new SyntaxCasts())->problem($form, $this->lowering, $array, $target);
         if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }

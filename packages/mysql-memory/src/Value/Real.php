@@ -44,6 +44,9 @@ final class Real
     public static function fixed(float $value, int $decimals): string
     {
         $text = number_format(round($value, $decimals), $decimals, '.', '');
+        if ($value === 0.0 && fdiv(1.0, $value) === -INF) {
+            return '-' . $text;
+        }
 
         return $text === '-' . str_repeat('0', 1) . ($decimals > 0 ? '.' . str_repeat('0', $decimals) : '') ? substr($text, 1) : $text;
     }

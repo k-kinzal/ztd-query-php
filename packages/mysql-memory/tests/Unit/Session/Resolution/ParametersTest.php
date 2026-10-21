@@ -40,6 +40,7 @@ final class ParametersTest extends TestCase
         self::assertSame(Kind::String, $facts->scalar($first)->type->descriptor->kind);
         self::assertSame(16383, $facts->scalar($first)->type->descriptor->length);
         self::assertSame(Kind::Integer, $facts->scalar($second)->type->descriptor->kind);
+        self::assertSame([0], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->unboundParameters);
         self::assertSame('unrelated invalid input', $session->text);
     }
 }

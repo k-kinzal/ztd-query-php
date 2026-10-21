@@ -33,6 +33,19 @@ final class CastNotices
         }
     }
 
+    /**
+     * Reports a character bound that overflows its resolved character set.
+     * Packet limits remain execution state; this is the target's byte capacity.
+     */
+    public function capacity(CastTarget $target, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain $domain, Derivation $derivation): void
+    {
+        $release = $derivation->context->profile->grammar;
+        $limit = \SqlSemantics\Platform\MySql\Rules\Typing\Casts::stringLimit($target, $release);
+        if (!in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && in_array($target->kind, [CastKind::Char, CastKind::NationalChar], true) && $limit !== null && $limit > intdiv(4294967295, $domain->collation->charset->maxLength)) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CharacterCastRange());
+        }
+    }
+
 
     /**
      * Derives a character-set spelling and its lookup condition.

@@ -208,4 +208,12 @@ final class PreparationTest extends TestCase
         $this->expectExceptionCode(1046);
         (new Preparation())->check($operation, $session);
     }
+    public function testCheckResolvesLegacyLoadDatabaseBeforeCharset(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $operation = $session->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=1", true);
+        $this->expectExceptionCode(1046);
+        (new Preparation())->check($operation, $session);
+    }
+
 }

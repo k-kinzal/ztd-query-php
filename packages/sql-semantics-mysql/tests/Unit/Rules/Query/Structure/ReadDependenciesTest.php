@@ -44,6 +44,14 @@ final class ReadDependenciesTest extends TestCase
 
         self::assertSame($variables, array_map(static fn (UserVariable $node): string => $node->name->value, $inputs));
     }
+    public function testNodesCanVisitCompletedOperandsBeforeOwnersWithoutReversingSiblings(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT outer_call(first_call(), second_call())')->statement;
+        $nodes = (new ReadDependencies())->nodes($statement, childrenFirst: true);
+        $calls = array_values(array_filter($nodes, static fn ($node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall));
+        self::assertSame(['first_call', 'second_call', 'outer_call'], array_map(static fn ($call): string => $call->name->value, $calls));
+    }
+
     public function testChildrenKeepsWrittenRowsButExcludesInactiveWriteClauses(): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES ROW(@written) ORDER BY @ignored')->statement;

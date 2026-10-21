@@ -40,6 +40,7 @@ final class DeferredCast implements DeferredOperand
     public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CastTarget $target)
     {
         Check::input((new CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
+        Check::input((new CastProblems())->size($target) === null, 'A CAST width, precision and scale must fit its target type.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -48,6 +49,7 @@ final class DeferredCast implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        Check::input((new CastProblems())->size($this->target, $derivation->context->profile->grammar) === null, 'A CAST width must fit its language profile.');
         $fact = $derivation->scalar($this->operand, $environment);
         (new CastNotices())->derive($this->target, $derivation);
 

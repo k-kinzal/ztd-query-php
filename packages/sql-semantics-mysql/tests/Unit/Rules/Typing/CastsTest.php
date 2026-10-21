@@ -26,6 +26,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CastsTest extends TestCase
 {
+    public function testStringLimitRetainsTheLegacySignedWidthInterpretation(): void
+    {
+        $target = new CastTarget(CastKind::Binary, '4294967295');
+        $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql5744);
+        self::assertNull(Casts::stringLimit($target, GrammarRelease::MySql5744));
+        self::assertSame(4294967295, Casts::stringLimit($target, GrammarRelease::MySql847));
+        self::assertSame([12, Field::VarString], [$casts->cast(Domain::string(3, Collation::known('utf8mb4_bin')), $target)->length, $casts->cast(Domain::null(), $target)->field]);
+    }
+
     public function testReturningTextSeparatesTheValueWidthFromBlobMetadata(): void
     {
         $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql847);

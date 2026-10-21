@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit;
 
 /**
  * Diagnoses cast target restrictions independently of the operand and execution.
@@ -30,12 +31,12 @@ final class CastProblems
         }
         if ($target->kind === CastKind::Decimal) {
             if (($target->length === null ? 10 : (int) $target->length) < (int) $target->scale) {
-                return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision, '');
+                return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, '');
             }
             return (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal($target->length, $target->scale), '');
         }
         if (in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) && $target->length !== null && (new JsonWidths())->of($target->length) === null) {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width, 'cast as char', (int) $target->length, 4294967295);
+            return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::Width, 'cast as char', (int) $target->length, 4294967295);
         }
         return in_array($target->kind, [CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection], true)
             ? new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast($target->kind) : $this->precision($target);
@@ -44,11 +45,38 @@ final class CastProblems
     /**
      * Checks an array's element kind before its precision, as the completed cast does.
      */
-    public function target(CastTarget $target, bool $array): NotSupportedYet|TooBigPrecision|null
+    public function target(CastTarget $target, bool $array, ?\SqlSemantics\Contract\GrammarRelease $release = null): NotSupportedYet|TooBigPrecision|\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize|null
     {
         $refusal = $array ? $this->array($target) : null;
 
-        return $refusal === null ? $this->precision($target) : new NotSupportedYet($refusal);
+        return $refusal === null ? ($this->precision($target) ?? $this->size($target, $release)) : new NotSupportedYet($refusal);
+    }
+
+    /**
+     * Checks ordinary cast bounds, independently of operand values or execution.
+     * Decimal scale relationships precede precision and scale maxima. Modern
+     * character casts accept the unsigned 64-bit upper half as an omitted bound;
+     * legacy releases reject it. A missing release checks the union of profiles.
+     */
+    public function size(CastTarget $target, ?\SqlSemantics\Contract\GrammarRelease $release = null): ?\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize
+    {
+        if ($target->kind === CastKind::Decimal) {
+            $precision = $target->length === null ? 10 : (int) $target->length;
+            $scale = (int) $target->scale;
+            if ($precision < $scale) {
+                return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, '');
+            }
+            if ($precision > 65) {
+                return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::Precision, '', $precision >= 2147483648 ? $precision - 4294967296 : $precision, 65);
+            }
+            return $scale > 30 ? new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::Scale, '', $scale, 30) : null;
+        }
+        if ($target->length === null || !in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true)) {
+            return null;
+        }
+        $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        return (new JsonWidths())->of($target->length) === null || ($legacy && (int) $target->length > 4294967295)
+            ? new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::Width, 'cast as char', (int) $target->length, 4294967295) : null;
     }
 
     /**

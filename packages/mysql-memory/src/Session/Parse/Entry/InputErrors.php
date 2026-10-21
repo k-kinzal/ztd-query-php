@@ -186,7 +186,7 @@ final class InputErrors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong => (new \MySqlMemory\Error\IdentifierErrors())->length($diagnostic, $session->settings()->legacy()),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput => $this->castSize($diagnostic, $session->text),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput => $this->castSize($diagnostic, $session->text, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName => (new Definition\DefinitionNameInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand => (new Event\Alteration())->operand($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration => (new Event\Alteration())->error($diagnostic, $session),
@@ -243,11 +243,42 @@ final class InputErrors
     /**
      * Formats a refused return type's operand label entirely at the input boundary.
      */
-    public function castSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput $diagnostic, string $statement): SqlError
+    public function castSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput $diagnostic, string $statement, ?Session $session = null): SqlError
     {
         $bound = $diagnostic->problem;
         $label = substr($statement, $diagnostic->start, $diagnostic->end - $diagnostic->start);
-        return (new \MySqlMemory\Error\TypeErrors())->size(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($bound->rule, $label, $bound->actual, $bound->maximum));
+        $legacy = $session?->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        if ($legacy) {
+            $label = $this->legacyCastLabel($label, $session);
+        }
+        return (new \MySqlMemory\Error\TypeErrors())->size(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($bound->rule, $label, $bound->actual, $bound->maximum), $legacy);
+    }
+
+    /**
+     * Reads the legacy operand name at the input boundary, without retaining its source.
+     */
+    public function legacyCastLabel(string $label, Session $session): string
+    {
+        try {
+            $tokens = array_values(array_filter($session->semantics()->parser()->tokenize($label), static fn ($token): bool => $token->text !== ''));
+        } catch (\SqlParser\Lexer\LexicalException) {
+            return $label;
+        }
+        while (count($tokens) > 2 && $tokens[0]->text === '(' && $tokens[count($tokens) - 1]->text === ')') {
+            $tokens = array_slice($tokens, 1, -1);
+        }
+        $first = $tokens[0] ?? null;
+        if ($first === null) {
+            return '(null)';
+        }
+        if (array_filter($tokens, static fn ($token): bool => !in_array($token->name, ['TEXT_STRING', 'NCHAR_STRING', 'UNDERSCORE_CHARSET'], true)) === []) {
+            $first = $first->name === 'UNDERSCORE_CHARSET' ? ($tokens[1] ?? $first) : $first;
+            return (new \SqlSemantics\Platform\MySql\Rules\Strings())->decode($first->text, !$session->modes()->has('NO_BACKSLASH_ESCAPES'));
+        }
+        if (count($tokens) === 1 && in_array($first->name, ['NUM', 'LONG_NUM', 'ULONGLONG_NUM', 'DECIMAL_NUM', 'FLOAT_NUM', 'NULL_SYM', 'TRUE_SYM', 'FALSE_SYM', 'IDENT', 'IDENT_QUOTED'], true)) {
+            return (new \SqlSemantics\Platform\MySql\Rules\Identifiers())->decode($first->text);
+        }
+        return '(null)';
     }
 
     /**

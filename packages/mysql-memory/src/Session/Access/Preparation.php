@@ -11,6 +11,7 @@ use MySqlMemory\Session\Problem\Reading;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Statement\Operation;
+use WeakReference;
 
 /**
  * Prepares an operation independently of its input transport. Resource-group
@@ -29,7 +30,7 @@ final class Preparation
      */
     public function check(Operation $operation, Session $session): void
     {
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
@@ -72,19 +73,22 @@ final class Preparation
     /**
      * Compiles reached, statement-constant JSON null tests during MySQL 5.7 query
      * preparation. Their result is rebound at EXECUTE, but a bad current document
-     * already prevents PREPARE. No row, subquery or stored function is evaluated.
+     * already prevents PREPARE. Modern constant WHERE predicates retain their
+     * preparation result. No row or subquery is evaluated.
      *
      * @throws SqlError When a retained null test fails during preparation
      */
     public function jsonNulls(Operation $operation, Session $session): void
     {
-        if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+        if (!$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
             return;
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id);
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, session: WeakReference::create($session));
         $compiler = (new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;
-        (new \MySqlMemory\Evaluation\Compile\Preparation\JsonNulls())->check($compiler, (new Problems())->reached($operation->statement));
+        $nodes = (new Problems())->reached($operation->statement);
+        (new \MySqlMemory\Evaluation\Compile\Preparation\JsonNulls())->check($compiler, $nodes);
+        (new \MySqlMemory\Evaluation\Compile\Preparation\Conditions())->check($compiler, $nodes);
     }
 
     /**

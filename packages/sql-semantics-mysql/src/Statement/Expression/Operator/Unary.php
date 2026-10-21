@@ -70,6 +70,7 @@ final class Unary implements Scalar
             Deprecation::raise(Deprecated::BangNot, $derivation, $this, false);
         }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\SpatialOperands())->check($derivation, $this->operator, [$fact->type]);
         $numbers = new NumericResult();
         $operand = (new Precision())->domain($fact->type);
         $precise = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);

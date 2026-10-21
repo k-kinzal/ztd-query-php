@@ -52,11 +52,25 @@ final class SyntaxCasts
         if (!in_array($form->signature, ['simple_expr: CAST_SYM ( expr AS cast_type )', 'simple_expr: CONVERT_SYM ( expr , cast_type )', 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )'], true)) {
             return null;
         }
-        $target = $lowering->types->castTarget($form->node(4));
         $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && (new ConstructRule($lowering))->flag($form->node(5));
-        $problem = (new CastProblems())->target($target, $array);
+        $problem = $this->problem($form, $lowering, $array);
 
         return $problem === null ? null : new ParseFailure($problem, $aborts);
+    }
+
+    /**
+     * Shares target bounds with construction while leaving operand spelling at
+     * the input boundary. Decimal conditions carry only label byte offsets.
+     */
+    public function problem(\SqlSemantics\Lowering\Form $form, Lowering $lowering, bool $array, ?\SqlSemantics\Platform\MySql\Statement\Type\CastTarget $target = null): ?\SqlSemantics\Statement\Fact\Diagnostic
+    {
+        $target ??= $lowering->types->castTarget($form->node(4));
+        $problem = (new CastProblems())->target($target, $array, $lowering->profile->grammar);
+        if (!$problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $target->kind !== CastKind::Decimal || $problem->rule === \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision) {
+            return $problem;
+        }
+        [$start, $end] = (new \SqlSemantics\Construction\SourceRanges())->span($form->node(2)) ?? [0, 0];
+        return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput($problem, $start, $end);
     }
 
     /**

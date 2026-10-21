@@ -22,6 +22,17 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class SyntaxCastsTest extends TestCase
 {
+    public function testProblemRetainsOnlyOffsetsForAnInvalidDecimalTarget(): void
+    {
+        $platform = new \SqlSemantics\Platform\MySql\Platform();
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering($platform->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $node = (new MySqlParser('mysql-8.4.7'))->parse('SELECT CAST(123 AS DECIMAL(66,2))')->find('simple_expr')[0];
+        $problem = (new SyntaxCasts())->problem($lowering->form($node), $lowering, false);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput::class, $problem);
+        self::assertSame([12, 15, '', 66], [$problem->start, $problem->end, $problem->problem->name, $problem->problem->actual]);
+    }
+
     /**
      * @return iterable<string, array{string, list<Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure>}>
      */

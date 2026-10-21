@@ -51,6 +51,11 @@ final class Preparation
     public array $domains = [];
 
     /**
+     * @var WeakMap<\SqlSemantics\Statement\Scalar, \MySqlMemory\Evaluation\Leaf\Constant>|null Conditions evaluated once at modern statement preparation
+     */
+    public ?WeakMap $conditions = null;
+
+    /**
      * The current operation's resolved typing context, scoped to command execution.
      */
     public ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings $resolution = null;

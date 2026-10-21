@@ -36,9 +36,13 @@ final class Parameters
         $settings = Settings::of($context);
         $default = Domain::string(16383, $settings->connection, coercibility: Coercibility::Coercible);
         $bindings = [];
+        $unbound = [];
         foreach ($occurrences as $position => $occurrence) {
             $bindings[$position] = $settings->parameters[$position] ?? $bound[$position] ?? $default;
+            if ((!isset($settings->parameters[$position]) && !isset($bound[$position])) || in_array($position, $settings->unboundParameters, true)) {
+                $unbound[] = $position;
+            }
         }
-        return new Derivation($context->withSession($settings->withParameters($bindings)), parameters: $occurrences);
+        return new Derivation($context->withSession($settings->withParameters($bindings, $unbound)), parameters: $occurrences);
     }
 }

@@ -45,7 +45,9 @@ final class Formats
      */
     public function value(Frame $frame, array $arguments, string $format): ?string
     {
-        $raw = $arguments[0]->evaluate($frame);
+        $raw = FailedGeometry::read($arguments[0], $frame, match ($format) {
+            'text' => 'st_astext', 'binary' => 'st_aswkb', default => 'st_swapxy',
+        });
         if ($raw === null) {
             return null;
         }

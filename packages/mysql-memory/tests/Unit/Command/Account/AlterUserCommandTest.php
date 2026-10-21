@@ -122,6 +122,16 @@ final class AlterUserCommandTest extends TestCase
         $session->query('ALTER USER CURRENT_USER ADD 3 FACTOR IDENTIFIED WITH missing');
     }
 
+    public function testFactorsChecksTheThirdPolicyBeforeLoadingTheSecondPlugin(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("ALTER USER CURRENT_USER ADD 2 FACTOR IDENTIFIED WITH missing ADD 3 FACTOR IDENTIFIED BY 'x'");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame([4058, 1524], array_column($session->diagnostics->conditions, 1));
+        self::assertStringStartsWith('3 factor authentication', $session->diagnostics->conditions[0][2]);
+    }
+
     public function testExecuteRefusesADayOutOfRange(): void
     {
         $session = (new Instance())->connect();

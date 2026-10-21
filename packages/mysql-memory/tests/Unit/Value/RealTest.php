@@ -52,4 +52,9 @@ final class RealTest extends TestCase
     {
         self::assertSame('-0', Real::format(-0.0));
     }
+
+    public function testFixedPreservesTheSignOfAnExactNegativeZero(): void
+    {
+        self::assertSame(['-0', '-0.00', '0.00'], [Real::fixed(-0.0, 0), Real::fixed(-0.0, 2), Real::fixed(0.0, 2)]);
+    }
 }

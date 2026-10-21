@@ -44,7 +44,35 @@ final class Casts
             return new \MySqlMemory\Evaluation\Function\Spatial\SpatialCast($operand, $this->compiler->domain($node), $target->kind->value);
         }
 
-        return new Conversion($operand, $this->compiler->domain($node)->withSource($target->kind === CastKind::Json ? 'cast_as_json' : ''), $target->length !== null && in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) ? (int) $target->length : null, $target->kind->value);
+        return new Conversion($operand, $this->compiler->domain($node)->withSource($target->kind === CastKind::Json ? 'cast_as_json' : ''), \SqlSemantics\Platform\MySql\Rules\Typing\Casts::stringLimit($target, $this->compiler->connection->context->modes->release), $target->kind->value, $this->label($node));
+    }
+
+    /**
+     * Reads the name of a projected conversion from its resolved query field.
+     * Nested conversions have no item name unless a call argument supplies one.
+     */
+    public function label(Scalar $node): string
+    {
+        $walker = new \MySqlMemory\Evaluation\Compile\Walker();
+        $bare = new \MySqlMemory\Typing\Quietness();
+        foreach ($walker->find($this->compiler->planner->statement, \SqlSemantics\Statement\Query::class) as $query) {
+            if (!$this->compiler->facts->covers($query)) {
+                continue;
+            }
+            foreach ($this->compiler->facts->query($query)->fields() ?? [] as $field) {
+                if ($field->expression !== null && $bare->bare($field->expression) === $node) {
+                    return $field->name->value ?? '(null)';
+                }
+            }
+        }
+        foreach ($walker->find($this->compiler->planner->statement, \SqlSemantics\Platform\MySql\Statement\Call\CallArgument::class) as $argument) {
+            if ($bare->bare($argument->expression) === $node) {
+                $profile = new \SqlSemantics\Contract\LanguageProfile($this->compiler->settings->release());
+                $name = (new \SqlSemantics\Platform\MySql\Rules\Query\ItemNaming($profile))->name(new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($argument->expression, $argument->alias));
+                return $name instanceof \SqlSemantics\Statement\Identifier\Name ? $name->value : '(null)';
+            }
+        }
+        return '(null)';
     }
 
     /**

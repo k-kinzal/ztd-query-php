@@ -64,6 +64,7 @@ final class Results
             (new DateResults())->rules(),
             (new SpecialResults())->rules(),
             (new Spatial\SpatialResults())->rules(),
+            (new Spatial\GeohashResults())->rules(),
             (new DigestResults())->rules(),
             (new JsonResults())->rules(),
             (new Pattern\PatternResults())->rules(),
@@ -99,6 +100,7 @@ final class Results
             $nullability = (new ResultTyping())->nullability('P', $facts);
         }
         $nullability = (new Pattern\PatternResults())->nullability($name, $type, $nullability);
+        $nullability = (new Spatial\GeohashResults())->nullability($name, $facts, $derivation, $nullability);
 
         return $type === null ? $fact : new ScalarFact(new Known($type), $nullability, $fact->resolution);
     }

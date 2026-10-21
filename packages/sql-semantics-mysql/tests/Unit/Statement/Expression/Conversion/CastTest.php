@@ -33,6 +33,26 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class CastTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{CastTarget}>
+     */
+    public static function providerInvalidBounds(): iterable
+    {
+        yield 'precision' => [new CastTarget(CastKind::Decimal, '66', '2')];
+        yield 'scale' => [new CastTarget(CastKind::Decimal, '65', '31')];
+        yield 'scale relationship' => [new CastTarget(CastKind::Decimal, '2', '3')];
+        yield 'zero precision with scale' => [new CastTarget(CastKind::Decimal, '0', '1')];
+        yield 'character width' => [new CastTarget(CastKind::Char, '4294967296')];
+        yield 'binary width' => [new CastTarget(CastKind::Binary, '18446744073709551616')];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidBounds')]
+    public function testBoundsExcludeContradictoryTargetsBeforeAnOperationExists(CastTarget $target): void
+    {
+        $this->expectExceptionMessage('A CAST width, precision and scale must fit its target type.');
+        new Cast(new NumberLiteral('1'), $target);
+    }
+
     public function testDeriveScalarHasTheTargetTypeAndADateCanBeNull(): void
     {
         $platform = new Platform();

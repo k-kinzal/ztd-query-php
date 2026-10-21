@@ -119,8 +119,11 @@ final class AlterUserCommand implements Command
         $step = $change->steps[0];
         $factor = $step->factor->value;
         $plugin = $step->identification?->plugin?->value;
-        if ($change->action !== FactorAction::Drop && $plugin === null) {
-            $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message($factor));
+        foreach ($change->steps as $candidate) {
+            if ($change->action !== FactorAction::Drop && $candidate->identification?->plugin === null) {
+                $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message($candidate->factor->value));
+                break;
+            }
         }
         if ($account !== null && ($change->action !== FactorAction::Add || $factor === '3')) {
             $missing = $change->action === FactorAction::Add ? '2' : $factor;

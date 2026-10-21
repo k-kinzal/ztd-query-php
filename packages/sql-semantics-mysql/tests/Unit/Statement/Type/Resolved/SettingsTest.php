@@ -124,4 +124,20 @@ final class SettingsTest extends TestCase
         self::assertSame(array_diff_key(get_object_vars($settings), ['parameters' => true]), array_diff_key(get_object_vars($bound), ['parameters' => true]));
     }
 
+    public function testWithParametersDistinguishesInitialDomainsFromBoundValues(): void
+    {
+        $settings = Settings::defaults(GrammarRelease::MySql5744);
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $initial = $settings->withParameters([3 => $domain], [3]);
+        self::assertSame([3], $initial->unboundParameters);
+        self::assertSame([], $initial->withParameters([3 => $domain])->unboundParameters);
+        self::assertSame([3 => $domain], $initial->parameters);
+    }
+
+    public function testUnboundParametersMustRetainTheirInitialDomains(): void
+    {
+        $this->expectExceptionMessage('An unbound parameter has an initial domain at its position.');
+        Settings::defaults(GrammarRelease::MySql5744)->withParameters([], [0]);
+    }
+
 }

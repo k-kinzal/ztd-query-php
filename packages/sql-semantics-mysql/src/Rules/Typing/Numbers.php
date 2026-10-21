@@ -151,7 +151,7 @@ final class Numbers
      */
     public function floating(ArithmeticOperator $operator, Domain $left, Domain $right): Domain
     {
-        $fraction = static fn (Domain $domain): int => $domain->displayDecimals ?? ($domain->kind === Kind::Json || ($domain->kind === Kind::String && ($domain->coercibility !== Coercibility::Ignorable || $domain->length !== 0)) ? Domain::NOT_FIXED : $domain->decimals);
+        $fraction = static fn (Domain $domain): int => $domain->displayDecimals ?? ($domain->kind === Kind::Json || ($domain->kind === Kind::String && $domain->field !== Field::Geometry && ($domain->coercibility !== Coercibility::Ignorable || $domain->length !== 0)) ? Domain::NOT_FIXED : $domain->decimals);
         $leftScale = $fraction($left);
         $rightScale = $fraction($right);
         $scale = max($leftScale, $rightScale);
@@ -162,7 +162,8 @@ final class Numbers
         if ($operator === ArithmeticOperator::Divide) {
             $scale = min(Domain::NOT_FIXED, $scale + $this->divPrecisionIncrement);
 
-            return Domain::double(($left->kind === Kind::Null ? 0 : $integral) + $scale, $scale);
+            $length = ($left->kind === Kind::Null ? 0 : $integral) + $scale;
+            return Domain::double($this->legacyRemainders && ($left->field === Field::Geometry || $right->field === Field::Geometry) ? $length % 4294967296 : $length, $scale);
         }
 
         return Domain::double(($this->legacyRemainders || $this->legacyFloating ? 17 : $integral) + $scale, $scale);
@@ -244,7 +245,13 @@ final class Numbers
      */
     public function negated(Domain $domain, bool $negative = false): Domain
     {
+        if ($domain->field === Field::Geometry) {
+            return Domain::double(17, 0);
+        }
         if ($domain->kind->temporal()) {
+            return Domain::double(17 + $domain->decimals, $domain->decimals);
+        }
+        if ($domain->kind === Kind::Double && $domain->decimals < Domain::NOT_FIXED) {
             return Domain::double(17 + $domain->decimals, $domain->decimals);
         }
 
@@ -341,8 +348,9 @@ final class Numbers
     {
         $shift = $operator === ArithmeticOperator::ShiftLeft || $operator === ArithmeticOperator::ShiftRight;
         $length = $shift || $right === null ? $left->length : max($left->length, $right->length);
+        $field = $length <= 65535 ? Field::VarString : ($length <= 16777215 ? Field::MediumBlob : Field::LongBlob);
 
-        return Domain::string($length, Collation::binary());
+        return Domain::string($length, Collation::binary(), $field);
     }
 
     /**

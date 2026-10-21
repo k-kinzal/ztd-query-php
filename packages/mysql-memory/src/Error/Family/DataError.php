@@ -56,6 +56,7 @@ enum DataError: int implements ErrorCode
     case LongitudeOutOfRange = 3616;
     case LatitudeOutOfRange = 3617;
     case SrsNotGeographic = 3726;
+    case GeohashUnsupportedSrid = 3682;
     case GeometryLongitudeOutOfRange = 3731;
     case GeometryLatitudeOutOfRange = 3732;
     case InvalidOptionKey = 3558;

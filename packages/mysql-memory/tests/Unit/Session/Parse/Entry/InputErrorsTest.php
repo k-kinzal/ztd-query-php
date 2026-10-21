@@ -47,6 +47,14 @@ final class InputErrorsTest extends TestCase
         self::assertSame("Too-big precision 66 specified for 'ROW(1,  2)'. Maximum is 65.", $error->getMessage());
     }
 
+    public function testCastSizeUsesTheDecodedLiteralLabelOnlyForMySql56(): void
+    {
+        $bound = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision, '', 66, 65);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput($bound, 12, 17);
+        $error = (new InputErrors())->castSize($problem, "SELECT CAST('123' AS DECIMAL(66,2))", (new Instance('5.6.51'))->connect());
+        self::assertSame("Too big precision 66 specified for column '123'. Maximum is 65.", $error->getMessage());
+    }
+
     public function testViewUsesItsRetainedTargetBeforePreparingTheBody(): void
     {
         $session = (new Instance())->connect();
@@ -272,6 +280,16 @@ final class InputErrorsTest extends TestCase
         self::assertSame(1066, (new InputErrors())->write($problem, $session)?->getCode());
         self::assertNull((new InputErrors())->write(new NotSupportedYet('feature'), $session));
         self::assertSame('unrelated request', $session->text);
+    }
+
+    public function testLegacyCastLabelDistinguishesLeavesFromComputedOperands(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $errors = new InputErrors();
+        self::assertSame('123', $errors->legacyCastLabel("('123')", $session));
+        self::assertSame('a', $errors->legacyCastLabel("'a' 'b'", $session));
+        self::assertSame('(null)', $errors->legacyCastLabel('(1+2)', $session));
+        self::assertSame('(null)', $errors->legacyCastLabel('-123', $session));
     }
 
 }

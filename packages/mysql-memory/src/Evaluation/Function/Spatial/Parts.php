@@ -76,8 +76,10 @@ final class Parts
     /**
      * Reads an implicit integer index. User variables and assignments truncate
      * text silently here; explicit casts keep their separate warning policy.
+     * Legacy geohash arguments truncate their diagnostic bytes at NUL before
+     * character conversion, independently of the full numeric input.
      */
-    public function index(Frame $frame, Evaluable $argument): ?int
+    public function index(Frame $frame, Evaluable $argument, bool $unsigned = false, bool $legacyDisplay = false): ?int
     {
         $value = $argument->evaluate($frame);
         $domain = $argument->domain();
@@ -87,7 +89,14 @@ final class Parts
         if ($argument instanceof \MySqlMemory\Evaluation\Leaf\Assignment || $argument instanceof \MySqlMemory\Evaluation\Leaf\UserVariableRead) {
             $domain = $domain->withQuiet();
         }
-        return Convert::toInteger($value, $domain, $frame->context);
+        if ($legacyDisplay && $frame->context->modes->release === GrammarRelease::MySql5744 && $value !== null && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && !$domain->numericBytes && $domain->members === []) {
+            $text = (string) $value;
+            $prefix = explode("\0", $text, 2)[0];
+            $prefix = substr($prefix, 0, \MySqlMemory\Value\Encoding::prefix($prefix, $domain->collation->charset));
+            $display = Convert::shown($prefix, $domain->collation->charset);
+            return Convert::stringInteger(Convert::readable($text, $domain), $frame->context, $unsigned, Convert::readableCharset($domain), $domain->quiet, $display);
+        }
+        return Convert::toInteger($value, $domain, $frame->context, $unsigned);
     }
 
     /**

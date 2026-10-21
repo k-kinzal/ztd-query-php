@@ -13,7 +13,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Numeric values retain the connection collation at assignment separately from their
  * binary value collation. MySQL 5.6 and 5.7 use its character width in integer result
- * metadata, even after SET NAMES changes the connection. Verified through PDO on
+ * metadata, even after SET NAMES changes the connection. A typed NULL can change
+ * the read domain while preserving a preceding binary-string interpretation;
+ * native argument checks distinguish these facts. Verified through PDO on
  * Testcontainers MySQL 5.6.51 and 5.7.44.
  *
  * @visibility public
@@ -28,8 +30,9 @@ final class UserVariableEntry
     /**
      * @param Domain $domain The type of the stored value
      * @param Collation $collation The collation retained when the variable was assigned
+     * @param bool|null $binaryString The binary-string interpretation retained across a NULL assignment; null when determined by the current domain
      */
-    public function __construct(public readonly Domain $domain, public readonly Collation $collation)
+    public function __construct(public readonly Domain $domain, public readonly Collation $collation, public readonly ?bool $binaryString = null)
     {
     }
 }

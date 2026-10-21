@@ -27,6 +27,9 @@ final class CallErrors
     public function error(Diagnostic $diagnostic, bool $originalCase = false): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CharacterCastRange => \MySqlMemory\Error\Family\DataError::DataOutOfRange->error('char(n)', 'cast_as_char'),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\SpatialArithmetic => StatementError::WrongArguments->error($diagnostic->operator->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Type\ArgumentDomainMismatch => \MySqlMemory\Error\Family\DataError::IncorrectType->error($diagnostic->argument, $diagnostic->function->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => StatementError::WrongArguments->error(strtolower($diagnostic->function->value)),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast => \MySqlMemory\Error\Family\DataError::InvalidSpatialCast->error('JSON', $diagnostic->target->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint => QueryError::WindowFunctionInSpecification->error('<unnamed window>'),

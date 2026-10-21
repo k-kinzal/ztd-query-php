@@ -4446,3 +4446,107 @@ refusal boundary do not contribute dependencies. `WriteHeadOperandsTest`
 compares these input conditions before and after database and table creation
 through both text and prepared protocols. Plans consume semantic identities;
 this source inspection remains confined to the input boundary.
+
+
+## Geohash operand domains and variable history
+
+SQL Semantics resolves the four geohash functions' result domains and argument
+constraints. Hash text, geometry bytes, maximum lengths and spatial reference
+identifiers have distinct accepted domains. The model distinguishes scalar
+binary strings from BLOB values and retains native result widths and nullability.
+`ArgumentDomainMismatch` identifies the function and argument role without
+retaining input SQL or parser nodes.
+
+Parameter markers retain their semantic role independently of their bound type.
+MySQL 5.7 refuses numeric parameters in coordinate roles while accepting numeric
+literals, and distinguishes string parameters from geometry payload parameters.
+The rules use the target release, the resolved domain and the semantic operand
+through grouping. The native binding comparison covers these differences; no
+source text is needed to recover them.
+
+`Settings::unboundParameters` distinguishes an initial placeholder domain from
+the same type supplied by an actual binding. Every listed position must retain
+its initial domain. Rebinding supplies both the new domains and any positions
+still unbound. The input boundary and direct structure preparation both provide
+this information; a geometry argument can accept an unbound placeholder and
+later refuse a character value without guessing from the domain's width.
+
+A user variable's current read domain does not completely describe every native
+argument check. Assigning a typed NULL can change that domain while preserving
+the preceding binary-string interpretation. `UserVariableEntry::binaryString`
+retains this independent fact in the semantic context. Its default, `null`,
+derives the interpretation from the current domain. SQL Semantics never reads
+or evaluates the variable's value. Memory distinguishes an allocated name from
+an executed assignment and supplies the retained fact when building the context.
+
+Geohash execution consumes the resolved domains and current values. Encoding
+uses interleaved coordinate intervals; decoding validates the first 433
+characters and rounds a cell center within its bounds. The reference catalog is
+consulted at execution. A failed non-NULL geometry construction propagates its
+condition through enclosing expressions and retains the additional diagnostic
+when a geometry reader consumes it. This differs from a constructor that fails
+with a NULL result.
+
+The direct history test preserves the same semantic queries across coordinate,
+hash, length, reference and variable-type changes. Memory receives an opaque
+request label; SQL rendering is used only for the native reference. Text and
+prepared comparisons also exercise typed NULL assignments, malformed encodings,
+reference errors, nested conditions and non-finite binary bindings. These tests
+are domain-specific evidence and do not replace the complete acceptance gates.
+
+Spatial arithmetic constraints are also resolved before operand evaluation.
+MySQL 5.6 accepts geometry in numeric contexts; 5.7 rejects ordinary arithmetic
+while retaining legacy bit conversion; modern releases also refuse bit operators.
+Explicit binary casts provide ordinary byte-string domains, whose bit results
+retain VARCHAR, MEDIUMBLOB or LONGBLOB widths. Legacy XOR and shifts still read
+their right operands after a NULL left operand. Prepared 5.7 executions retain
+their binary-bit deprecation before later operand failures. The comparisons
+include both protocols, NULL geometry, malformed constructors, large declared
+widths and observable assignment histories.
+
+The semantic string-cast rule also retains legacy signed-width interpretation:
+in MySQL 5.6 and 5.7, widths from 2^31 through 2^32−1 behave as unspecified
+bounds. Metadata and padding use the same rule. Actual oversized binary results
+are checked against the session packet limit before allocation. Fixed-decimal
+floating results preserve an exact negative zero, including legacy geometry
+conversion and negated rounded values.
+
+## Authentication-factor policy ordering
+
+An ALTER USER occurrence checks the first omitted plugin among all requested
+factor steps before validating its first plugin or looking up an existing
+factor. A third-factor policy warning can therefore precede a second-factor
+plugin error. The command consumes the ordered `FactorChange::steps`; it does
+not recover this relationship from SQL. Native comparisons retain both missing
+and current accounts, ADD and MODIFY, loaded and missing plugins, and the
+unchanged unseeded counterexample with multiple account occurrences.
+
+
+## CAST bounds, names and preparation state
+
+Ordinary and deferred cast values exclude contradictory decimal precision/scale
+pairs, impossible temporal precision and character widths outside all supported
+profiles at construction. Resolution retains release-specific integer-width
+interpretation and the capacity of the selected character set. Packet limits
+remain session state. The packet comparison reuses the same direct structures
+under two limits and applies the same typed SET NAMES operation to both sessions;
+it compares values, metadata and warnings without parsing the memory request.
+
+Numeric casts report their range warning using the resolved projection name,
+an enclosing call argument's name, or the unnamed-expression marker. Legacy
+input-size refusals use decoded leaf names, while computed operands are unnamed.
+That input-label adaptation stays at the parsing boundary. Planning reads only
+semantic fields and expressions.
+
+Modern preparation evaluates constant WHERE predicates and retains their values
+by semantic occurrence identity. Executions consume those values without
+repeating preparation warnings. Constant short-circuiting is preserved as one
+predicate; varying predicates and runtime parameter values remain unevaluated at
+preparation. Legacy releases retain execution-time warning behavior. Native
+histories compare preparation and repeated execution separately.
+
+An unknown LOAD character set produces an ordered, aborting semantic notice
+before later assignment warnings. Legacy prepared LOAD resolves an implicit
+database first. The regression fixture includes the original unseeded input,
+valid and unknown charsets, both spellings, and subsequent conversion failures.
+These focused comparisons do not replace the final-revision acceptance gates.
