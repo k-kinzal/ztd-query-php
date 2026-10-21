@@ -15,6 +15,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TrailingTest extends TestCase
 {
+    public function testInputTrimsSeparatorsBeforeLexingWithoutRemovingComments(): void
+    {
+        $trailing = new Trailing();
+        self::assertSame('SELECT 1', $trailing->input("SELECT 1; ; \n"));
+        self::assertSame("SELECT 'unfinished", $trailing->input("SELECT 'unfinished; "));
+        self::assertSame('SELECT ; /* tail */', $trailing->input('SELECT ; /* tail */'));
+        self::assertSame('', $trailing->input('; ;'));
+    }
+
     /**
      * @return iterable<string, array{list<string>, list<string>}>
      */

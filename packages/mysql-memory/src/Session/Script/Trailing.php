@@ -19,6 +19,16 @@ use SqlParser\Parser\SqlParser;
 final class Trailing
 {
     /**
+     * Removes terminal statement separators and whitespace from a client request.
+     * This happens before tokenization, even for an unfinished quoted operand.
+     * Observed through text and binary preparation on MySQL 5.7 and 8.4.
+     */
+    public function input(string $sql): string
+    {
+        return rtrim($sql, "; \t\n\r\f\v");
+    }
+
+    /**
      * Preserves the parser's boundaries and separates only non-whitespace trailing trivia.
      *
      * @param list<string> $statements The texts returned by the semantic splitter

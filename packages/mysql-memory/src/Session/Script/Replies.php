@@ -41,6 +41,7 @@ final class Replies
      */
     public function run(string $sql, array $parameters = [], bool $prepared = false): Generator
     {
+        $sql = (new Trailing())->input($sql);
         $session = $this->session;
         $gone = $session->gone();
         if ($gone !== null) {

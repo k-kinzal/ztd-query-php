@@ -262,6 +262,7 @@ final class Session
      */
     public function split(string $sql): array
     {
+        $sql = (new Script\Trailing())->input($sql);
         if (trim($sql) === '') {
             throw StatementError::EmptyQuery->error();
         }
@@ -313,6 +314,8 @@ final class Session
 
     /**
      * Parses and resolves one statement against the tables of the server.
+     * A separator before the following statement still belongs to the request.
+     * Prepared input is independent of an enclosing text script.
      *
      * @throws SqlError When the statement does not parse or does not resolve
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
@@ -320,6 +323,9 @@ final class Session
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
     {
+        if ($prepared || $this->following === '') {
+            $statement = (new Script\Trailing())->input($statement);
+        }
         $previousText = $this->text;
         $previousPrepared = $this->preparation->inputPrepared;
         $this->preparation->inputPrepared = $prepared;
