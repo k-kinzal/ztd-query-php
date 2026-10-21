@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Structure\Audit\Table;
 
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
@@ -63,6 +64,8 @@ final class Inputs
         foreach ($this->values($node) as $value) {
             if ($value instanceof ColumnUse) {
                 $columns[mb_strtolower($value->name->value, 'UTF-8')] ??= $value->name;
+            } elseif ($value instanceof ColumnPart) {
+                $columns[mb_strtolower($value->column->value, 'UTF-8')] ??= $value->column;
             }
         }
         return $columns === [] ? [new Name('fixture_value')] : array_values($columns);

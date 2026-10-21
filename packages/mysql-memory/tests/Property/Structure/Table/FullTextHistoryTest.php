@@ -62,4 +62,17 @@ final class FullTextHistoryTest extends TestCase
         self::assertSame('unrelated invalid input', $session->text);
         self::assertSame([], (new FullTextHistory())->steps($node, 1064));
     }
+
+    /**
+     * Finds a nested MATCH without assigning the same scope to an inner query.
+     */
+    public function testSearchesKeepsNestedOperandsInTheirOwnNamespace(): void
+    {
+        $match = new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new Name('a'))], new M\Literal\NullLiteral());
+        $inner = new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new Name('b'))], new M\Literal\NullLiteral());
+        $query = new M\Query\Select([], [new M\Query\SelectExpression($inner)]);
+        $outer = new M\Expression\Subquery\InQuery($match, $query);
+        self::assertSame([$match], (new FullTextHistory())->searches($outer));
+        self::assertSame([], (new FullTextHistory())->searches(new M\Expression\Subquery\ScalarSubquery($query)));
+    }
 }

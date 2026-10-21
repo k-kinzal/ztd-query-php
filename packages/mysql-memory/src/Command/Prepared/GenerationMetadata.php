@@ -14,12 +14,14 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
 
 /**
- * Tracks native 5.7 generation-template behavior across destination changes.
+ * Tracks generation-template preparation across destination changes.
  *
  * Black-box SQL histories distinguish an original preparation from one refreshed
  * against a newly created destination. Dropping that refreshed destination can
  * disconnect the entire native instance. The emulator closes its sessions through
- * its lifecycle API; PHP continues normally. No server implementation is consulted.
+ * its lifecycle API; PHP continues normally. Grouped expressions remain live in
+ * the binary protocol. MySQL 5.7 and 9.0 count an extra execution on refresh;
+ * 8.0, 8.4 and 9.1 also refresh a removed destination without that extra count. No server implementation is consulted.
  *
  * @visibility MySqlMemory
  */
@@ -31,6 +33,11 @@ final class GenerationMetadata
     public bool $refreshed = false;
 
     /**
+     * Whether this cache belongs to SQL PREPARE rather than the binary protocol.
+     */
+    public bool $sqlPrepared = false;
+
+    /**
      * @param TableDefinition|View|null $destination The destination identity at preparation
      */
     public function __construct(public readonly DeferredCreateTable $definition, public readonly string $database, public TableDefinition|View|null $destination)
@@ -38,11 +45,11 @@ final class GenerationMetadata
     }
 
     /**
-     * Captures only the release and declaration family with this observed behavior.
+     * Captures complete deferred generation declarations for destination revalidation.
      */
     public static function capture(DeferredCreateTable $definition, string $database, Session $session): ?self
     {
-        if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
+        if (!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
             return null;
         }
         $cache = new self($definition, $definition->name->schema->value ?? $database, null);
@@ -70,7 +77,9 @@ final class GenerationMetadata
      */
     public function refresh(Session $session): void
     {
-        if ($session->instance->dictionary->schema($this->database) === null) {
+        $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744;
+        $repeatedExecution = $legacy || $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql901;
+        if ($legacy && $session->instance->dictionary->schema($this->database) === null) {
             $unknown = \MySqlMemory\Error\Family\QueryError::BadDatabase;
             $session->diagnostics->note($unknown, $unknown->message($this->database));
             if ($this->refreshed) {
@@ -81,13 +90,13 @@ final class GenerationMetadata
         if ($current === $this->destination) {
             return;
         }
-        if ($current !== null) {
-            foreach (['Com_stmt_reprepare', 'Com_stmt_prepare', 'Com_stmt_execute'] as $counter) {
+        if ($current !== null || !$repeatedExecution) {
+            foreach ($repeatedExecution ? ['Com_stmt_reprepare', 'Com_stmt_prepare', 'Com_stmt_execute'] : ['Com_stmt_reprepare', 'Com_stmt_prepare'] as $counter) {
                 StatementCounters::command($session, $counter);
             }
             $this->destination = $current;
             $this->refreshed = true;
-        } elseif ($this->refreshed && $this->disconnects() && $session->instance->dictionary->schema($this->database) !== null) {
+        } elseif ($legacy && $this->refreshed && $this->disconnects() && $session->instance->dictionary->schema($this->database) !== null) {
             $session->instance->shutdown();
             throw TransactionError::ServerGone->error();
         }
@@ -95,7 +104,9 @@ final class GenerationMetadata
 
     /**
      * A bare system variable alone retains its file diagnostic after invalidation.
-     * Other retained generation operands reproduce the independently observed disconnect.
+     * Binary-protocol grouped operands remain live after destination invalidation;
+     * SQL PREPARE retains the observed legacy disconnect.
+     * Other retained legacy operands reproduce the independently observed disconnect.
      */
     public function disconnects(): bool
     {
@@ -107,7 +118,7 @@ final class GenerationMetadata
             while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
                 $expression = $expression->operand;
             }
-            if (!$expression instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
+            if (!$expression instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable && ($this->sqlPrepared || !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($expression))) {
                 return true;
             }
         }

@@ -1,0 +1,2041 @@
+{
+  "release": "5.7.44",
+  "protocol": "binary prepared statement",
+  "setup": [
+    "DROP DATABASE IF EXISTS d",
+    "CREATE DATABASE d",
+    "USE d"
+  ],
+  "template": "CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (SUM(a)))",
+  "steps": [
+    "execute",
+    "CREATE TABLE t(a INT)",
+    "execute",
+    "DROP TABLE t",
+    "execute"
+  ],
+  "afterEachExecution": [
+    "SHOW WARNINGS",
+    "SHOW SESSION STATUS LIKE 'Com_stmt_%'"
+  ],
+  "independentObservations": [
+    {
+      "instance": 0,
+      "repeat": 0,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              34,
+              "HY000",
+              "Memory capacity exceeded (capacity 1 bytes)"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "34",
+                "Memory capacity exceeded (capacity 1 bytes)"
+              ],
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 0,
+      "repeat": 1,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 0,
+      "repeat": 2,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 0,
+      "repeat": 3,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 1,
+      "repeat": 0,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              34,
+              "HY000",
+              "Memory capacity exceeded (capacity 1 bytes)"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "34",
+                "Memory capacity exceeded (capacity 1 bytes)"
+              ],
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 1,
+      "repeat": 1,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 1,
+      "repeat": 2,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    },
+    {
+      "instance": 1,
+      "repeat": 3,
+      "observations": [
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "1"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "0"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "affected": 0
+          },
+          {
+            "warnings": [
+              [
+                "Note",
+                "1050",
+                "Table 't' already exists"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "3"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ],
+        [
+          {
+            "error": [
+              1111,
+              "HY000",
+              "Invalid use of group function"
+            ]
+          },
+          {
+            "warnings": [
+              [
+                "Error",
+                "1111",
+                "Invalid use of group function"
+              ]
+            ],
+            "disconnected": false
+          },
+          {
+            "results": [
+              {
+                "columns": [
+                  {
+                    "name": "Variable_name",
+                    "orgname": "Variable_name",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 64,
+                    "type": 253,
+                    "flags": 4097,
+                    "decimals": 0
+                  },
+                  {
+                    "name": "Value",
+                    "orgname": "Value",
+                    "table": "session_status",
+                    "orgtable": "session_status",
+                    "db": "",
+                    "charsetnr": 8,
+                    "length": 1024,
+                    "type": 253,
+                    "flags": 0,
+                    "decimals": 0
+                  }
+                ],
+                "rows": [
+                  [
+                    "Com_stmt_execute",
+                    "4"
+                  ],
+                  [
+                    "Com_stmt_close",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_fetch",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_prepare",
+                    "2"
+                  ],
+                  [
+                    "Com_stmt_reset",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_send_long_data",
+                    "0"
+                  ],
+                  [
+                    "Com_stmt_reprepare",
+                    "1"
+                  ]
+                ]
+              }
+            ],
+            "warnings": [],
+            "disconnected": false
+          }
+        ]
+      ]
+    }
+  ]
+}

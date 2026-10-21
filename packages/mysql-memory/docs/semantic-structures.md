@@ -33,7 +33,11 @@ A missing-table observation can establish a populated table from a qualified
 identity already present in the semantic operands. Names containing dots remain
 whole identities, and numeric names remain strings even where PHP converts
 array keys to integers. Every setup statement and the unchanged retry are
-compared. The fixture supplies requested column names and one integer row;
+compared. The fixture supplies requested column names and one integer row.
+Ambient scalar relations are matched by their qualified names rather than PHP
+object identity. A `TABLE` subquery gets the column count required by its scalar,
+membership or quantified-comparison position, without borrowing column names
+from the enclosing query. The same expression object is then retried;
 it does not manufacture indexes, partitions or other prerequisites. Subsequent
 errors remain separate observations, rather than being counted as a completed
 state witness.
@@ -3790,6 +3794,27 @@ row-valued subqueries: the former report their index role before looking up name
 inside the row, while the latter retain the functional-index subquery condition.
 These histories test the retained instruction's interpretation, not a claim that
 matching errors establish the validity of every ordinary semantic value.
+
+Ordinary generated-column expressions exclude aggregate and window roles as well.
+A complete deferred generation declaration keeps these operands until invocation,
+including on modern MySQL releases. The same conditional declaration can report
+its expression-role error with no destination and complete against an existing
+populated table. Direct histories preserve the operand and procedure identities
+through table creation and removal. Native histories also compare prepared
+reuse and counters. For grouped expressions on MySQL 5.7, SQL PREPARE can disconnect after
+destination removal while the binary protocol remains live. The protocol choice
+belongs to the runtime preparation cache, outside the semantic value.
+
+The binary lifecycle comparison has a bounded physical-allocation exception for
+MySQL 5.7.44. Two independent instances each repeated the same absent/existing/removed
+destination history on four fresh connections. The first trial added error 34,
+`Memory capacity exceeded (capacity 1 bytes)`, before the generation error 1111;
+later trials retained error 1111 alone. Memory reports its own generation error
+without a native allocator diagnostic. Only that exact additional diagnostic pair
+is interchangeable in this lifecycle test. Other capacities, errors, connection
+state, counters and warnings stay exact. Raw observations are retained in
+`tests/Integration/Fuzz/fixtures/generation-allocation-5.7.json`; this exception
+does not normalize arbitrary SQL errors in the fuzz runner.
 
 An ordinary functional expression key also excludes subqueries, session variables,
 parameter markers, stored and nondeterministic calls, DEFAULT references,

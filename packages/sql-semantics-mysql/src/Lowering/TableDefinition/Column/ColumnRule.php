@@ -98,7 +98,7 @@ final class ColumnRule
             $this->refuse($attributes, $type);
             $this->compatible($type, $attributes, $name, $definition);
             $value = $this->expression($form->node($expression), $name);
-            if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) {
+            if (($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value)) {
                 return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references);
             }
             \SqlSemantics\Diagnostic\Check::invariant($value instanceof Scalar, 'An ordinary generation expression has a scalar role.');

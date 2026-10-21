@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
 
 /**
- * Reports an invoked MySQL 5.7 generation declaration from its semantic operands.
+ * Reports an invoked generation declaration from its semantic operands.
  *
  * @visibility MySqlMemory
  */
@@ -27,6 +27,13 @@ final class GenerationCondition
         $expression = $specification->expression;
         while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped) {
             $expression = $expression->operand;
+        }
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($expression)) {
+            try {
+                (new ExpressionRules())->grouped($expression);
+            } catch (SqlError $error) {
+                return $error;
+            }
         }
         $path = $temporaryFile ? '' : './' . $database . '/' . $table . '.frm';
         $systemTail = (new GenerationText())->systemTail($expression);

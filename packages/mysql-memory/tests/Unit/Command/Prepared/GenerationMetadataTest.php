@@ -60,6 +60,42 @@ final class GenerationMetadataTest extends TestCase
         self::assertSame($header, $pending->header);
     }
 
+    public function testRefreshRevalidatesBothCreatedAndRemovedModernDestinations(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $pending = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (SUM(a)))', $session);
+        self::assertInstanceOf(PendingTable::class, $pending);
+        self::assertNotNull($pending->metadata);
+        $session->query('CREATE TABLE t(a INT)');
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $pending->run($session, 'opaque request', [])[0]);
+        self::assertNotNull($pending->metadata->destination);
+        $session->query('DROP TABLE t');
+        $reply = $pending->run($session, 'opaque request', [])[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame(1111, $reply->getCode());
+        self::assertNull($pending->metadata->destination);
+        self::assertFalse($session->released);
+    }
+
+    public function testDisconnectsKeepsGroupedGenerationErrorsLiveAfterDestinationInvalidation(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $pending = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (SUM(a)))', $session);
+        self::assertInstanceOf(PendingTable::class, $pending);
+        self::assertNotNull($pending->metadata);
+        self::assertFalse($pending->metadata->disconnects());
+        $pending->metadata->sqlPrepared = true;
+        self::assertTrue($pending->metadata->disconnects());
+        $pending->metadata->sqlPrepared = false;
+        $session->query('CREATE TABLE t(a INT)');
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $pending->run($session, 'opaque request', [])[0]);
+        $session->query('DROP TABLE t');
+        $reply = $pending->run($session, 'opaque request', [])[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame(1111, $reply->getCode());
+        self::assertFalse($session->released);
+    }
+
     public function testDisconnectsLeavesBareSystemVariablesAsFileConditions(): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
