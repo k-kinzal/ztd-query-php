@@ -63,7 +63,7 @@
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * A complete LOAD request whose SET list contains a non-scalar operand.</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * A complete LOAD request with an intrinsic input or SET assignment constraint.</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * This diagnostic retains input and assignment roles without publishing an</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * ordinary statement. Database and file-entry conditions can precede the</span></span>
@@ -147,7 +147,7 @@
 <span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$item</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Assignment</span> || <span class="tok-var">$item</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredColumnAssignment</span>, <span class="tok-str">&#039;LOAD assignments retain scalar, default and non-scalar roles.&#039;</span>);</span>
 <span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>            <span class="tok-var">$deferred</span> = <span class="tok-var">$deferred</span> || <span class="tok-var">$item</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredColumnAssignment</span>;</span>
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>        }</span>
-<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$deferred</span>, <span class="tok-str">&#039;A retained LOAD requires a non-scalar assignment.&#039;</span>);</span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$deferred</span> || (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions</span>())-&gt;<span class="tok-id">fixedVariables</span>(<span class="tok-var">$format</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">fields</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">columns</span>), <span class="tok-str">&#039;A retained LOAD requires a non-scalar SET assignment or a fixed-row input variable.&#039;</span>);</span>
 <span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">assignments</span> = <span class="tok-var">$items</span>;</span>
 <span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
 <span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a>    }</span>
@@ -164,18 +164,21 @@
 <span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>                <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments</span>())-&gt;<span class="tok-id">problem</span>([<span class="tok-var">$assignment</span>-&gt;<span class="tok-id">value</span>])-&gt;<span class="tok-id">message</span>();</span>
 <span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>            }</span>
 <span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a>        }</span>
-<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained LOAD has a non-scalar assignment.&#039;</span>);</span>
-<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>    }</span>
-<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a></span>
-<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a><span class="tok-com">     * Writes the statement.</span></span>
-<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>    {</span>
-<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rendering\LoadRendering</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$this</span>, <span class="tok-var">$out</span>);</span>
-<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a>    }</span>
-<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>}</span>
-<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a></span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>        <span class="tok-kw">if</span> ((<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions</span>())-&gt;<span class="tok-id">fixedVariables</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">format</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">fields</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">columns</span>)) {</span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>            <span class="tok-kw">return</span> <span class="tok-str">&#039;Fixed-row LOAD DATA requires column destinations with defined widths.&#039;</span>;</span>
+<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>        }</span>
+<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A retained LOAD has an intrinsic assignment condition.&#039;</span>);</span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>    }</span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a></span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a><span class="tok-com">     * Writes the statement.</span></span>
+<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>    {</span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rendering\LoadRendering</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$this</span>, <span class="tok-var">$out</span>);</span>
+<span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a>    }</span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a>}</span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
