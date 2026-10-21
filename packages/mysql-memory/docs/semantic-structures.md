@@ -70,6 +70,16 @@ has a deterministic integer return or an empty procedure body. Loadable routines
 with named arguments and unavailable debug-only reports remain unresolved;
 creating an unrelated stored routine is not evidence for those dependencies.
 
+Legacy replication reports distinguish startup initialization from the current
+`server_id` value. The generated filter, source-change and relay-log requests are
+reused unchanged with startup identifiers 0, 1 and 0. Their error/success/error
+sequence compares with native 5.6 and 5.7, including all warnings and result
+metadata. A successful relay-log report retains the legacy numeric column
+lengths even when it has no rows. Spatial declarations likewise retain their
+generated identifier, attributes and definition text across absent, existing
+and removed catalog entries; `IF NOT EXISTS` can skip interpretation of that
+same definition text when the named reference system already exists.
+
 Profiling instructions distinguish SQL restrictions from response notifications.
 MySQL accepts `SHOW PROFILE` and `SHOW PROFILES` in function and trigger bodies,
 even though their result packets interrupt the calling statement. A procedure

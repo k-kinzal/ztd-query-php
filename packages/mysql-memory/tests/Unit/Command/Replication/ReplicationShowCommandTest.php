@@ -267,6 +267,16 @@ final class ReplicationShowCommandTest extends TestCase
         $session->query('SHOW RELAYLOG EVENTS');
     }
 
+    public function testRelaylogEventsKeepsLegacyNumericMetadataWhenStartupAllowsTheReport(): void
+    {
+        $session = (new Instance('5.6.51', ['server_id' => 1]))->connect();
+        $result = $session->query('SHOW RELAYLOG EVENTS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertSame([11, 10, 11], [$result->columns[1]->length, $result->columns[3]->length, $result->columns[4]->length]);
+    }
+
     public function testExecuteRefusesTheLogsWithoutBinaryLogging(): void
     {
         $session = (new Instance('5.6.51'))->connect();

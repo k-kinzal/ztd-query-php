@@ -228,13 +228,14 @@ final class ReplicationShowCommand implements Command
     public function relaylogEvents(ShowRelaylogEvents $statement, Session $session, Context $context, ?\MySqlMemory\Plan\Blocks $bounds = null): Reply
     {
         $this->limit($statement->limit, $session);
+        $columns = $session->settings()->legacy() ? self::LEGACY_EVENTS : self::EVENTS;
         if ($statement->channel === null && $session->instance->registry->channels !== []) {
             throw AdministrationError::ReplicaMultipleChannels->error();
         }
         $channel = (new ReplicaCommand())->channel($statement->channel, $session->settings()->legacy(), $session->instance->registry);
         $replication = $channel === '' ? $session->instance->registry->replication : $session->instance->registry->channels[$channel];
         if (!$replication->initialized) {
-            return $this->listing(self::EVENTS, [], $context);
+            return $this->listing($columns, [], $context);
         }
         $name = basename((string) $session->variables->read('relay_log')) . '.000001';
         if ($statement->file !== null && basename((new Literals())->bytes($statement->file)) !== $name) {
@@ -246,7 +247,7 @@ final class ReplicationShowCommand implements Command
             $events[] = [$name, $end, 'Stop', 1, $end + 23, ''];
         }
 
-        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS', $bounds), $context);
+        return $this->listing($columns, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS', $bounds), $context);
     }
 
     /**
