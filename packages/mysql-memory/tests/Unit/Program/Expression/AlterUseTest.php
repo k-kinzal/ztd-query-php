@@ -18,6 +18,15 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class AlterUseTest extends TestCase
 {
+    public function testRaiseRejectsACreationTransactionBeforeOpeningTheAlterTarget(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $definition = new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\SetTableOptions([new M\Table\Option\StartTransaction()])]);
+        $session->text = 'unrelated invalid input';
+        $this->expectExceptionMessage('START TRANSACTION clause cannot be used with ALTER TABLE command.');
+        (new AlterUse())->raise($definition, $session);
+    }
+
     /**
      * @return iterable<array{M\Routine\Program\Write\DeferredAlterTable}>
      */

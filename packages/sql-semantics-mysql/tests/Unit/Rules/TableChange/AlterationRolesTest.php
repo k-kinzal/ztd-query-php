@@ -24,6 +24,16 @@ final class AlterationRolesTest extends TestCase
         new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Modifier\ValidationOption(true)]);
     }
 
+    public function testTransactionKeepsCreationOptionsOutOfOrdinaryAlterations(): void
+    {
+        $commands = [new M\Alter\Command\SetTableOptions([new M\Table\Option\StartTransaction()])];
+        self::assertTrue((new AlterationRoles())->transaction($commands));
+        self::assertFalse((new AlterationRoles())->transaction([new M\Alter\Command\Force()]));
+        self::assertSame($commands, (new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('t')), $commands))->commands);
+        $this->expectExceptionMessage('An ordinary ALTER statement excludes actions with an intrinsic invocation-time condition.');
+        new M\Alter\AlterTable(new QualifiedName(new Name('t')), $commands);
+    }
+
     public function testInvalidValidationRequiresAnEligibleAction(): void
     {
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));

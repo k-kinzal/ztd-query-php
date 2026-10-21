@@ -4224,3 +4224,36 @@ inputs before another container-startup failure. Neither is a duration pass.
 The subsequent `query1559` unseeded run exposes an ALTER TABLE transaction-option
 mismatch at zero-based input 55 after 55 matches. The complete input is retained;
 its correction and final-revision campaigns remain required.
+
+
+## Creation-only options in ALTER instructions
+
+`START TRANSACTION` is a table-creation option, not an ordinary ALTER action.
+`AlterTable` now rejects command lists containing it through the shared
+`AlterationRoles` invariant. A `DeferredAlterTable` keeps the same target and
+complete option list in a stored or prepared instruction. No execution decision
+or database mutation occurs in Semantics.
+
+The native server accepts that instruction in an unvisited procedure branch and
+at PREPARE. Its consumer reports error 3979 on invocation, after database and
+option resolution but before the validation modifier or table lookup. The error
+also preserves ALTER's implicit commit. Direct histories retain the same
+procedure and command objects across branch changes and missing, populated and
+removed tables, with unrelated session text. Text and prepared comparisons
+retain the full `query1559` counterexample and exercise conflicting engine,
+algorithm, generation, validation and transaction conditions on 8.0, 8.4 and 9.1.
+
+The `query1562` snapshot passes 9,647 Semantics unit/doctest tests (20,243
+assertions), 20,470 Memory unit/property/doctest tests (98,075 assertions), and
+both packages' complete static checks. Semantics checks 1,030 retained value
+definitions and 36,986 allowed dependencies; Memory checks 29,599 dependencies.
+There are no dependency violations or uncovered dependencies. The native ALTER
+suites complete 19 cases and 92 assertions, including a separately retained
+successful retry after one fixture-startup failure. The two earlier cutoff
+startup failures likewise pass on retry (2 cases, 5 assertions).
+
+Concurrent obsolete campaigns exhausted the validation host's native AIO quota
+(`io_setup()` returned `EAGAIN`), preventing some MySQL fixtures from starting.
+Their partial runs were stopped and retained as incomplete. This is not a SQL
+comparison exception. The current whole-model and duration runs, missing fixture
+retries, and all nine final-revision supplied corpora remain acceptance gates.

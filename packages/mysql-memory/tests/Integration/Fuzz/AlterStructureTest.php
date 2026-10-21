@@ -34,6 +34,7 @@ final class AlterStructureTest extends TestCase
             'row' => [new M\Routine\Program\Write\DeferredDefaultSetting(new M\Name\ColumnName(new Name('a')), $row()), 3771],
             'arithmetic' => [new M\Routine\Program\Write\DeferredDefaultSetting(new M\Name\ColumnName(new Name('a')), new M\Routine\Program\Expression\DeferredArithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('1'), $row())), 1241],
             'validation' => [new M\Alter\Modifier\ValidationOption(true), 1221],
+            'creation-transaction' => [new M\Alter\Command\SetTableOptions([new M\Table\Option\StartTransaction()]), 3979],
         ];
         foreach ($cases as $case => [$command, $code]) {
             $write = new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('t')), [$command]);
@@ -70,7 +71,7 @@ final class AlterStructureTest extends TestCase
                     $session->text = 'unrelated invalid input';
                     return [serialize($expected), serialize((new Memory())->observe($session, $call)), $expected['error'][0] ?? null];
                 }, ['SET @active=0', 'SET @active=1', 'CREATE TABLE t(a INT)', 'INSERT INTO t VALUES(1)', 'SET @active=0', 'DROP TABLE t', 'SET @active=1']);
-                self::assertSame([null, $code === 1221 ? 1221 : 1146, $code, $code, null, null, $code === 1221 ? 1221 : 1146], array_column($history, 2));
+                self::assertSame([null, in_array($code, [1221, 3979], true) ? $code : 1146, $code, $code, null, null, in_array($code, [1221, 3979], true) ? $code : 1146], array_column($history, 2));
                 self::assertSame(array_column($history, 0), array_column($history, 1));
                 self::assertSame('unrelated invalid input', $session->text);
             } finally {

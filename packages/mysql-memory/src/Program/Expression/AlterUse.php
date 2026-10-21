@@ -62,6 +62,9 @@ final class AlterUse
         }
         $database = $this->header($definition, $session, $database);
         $session->transaction->commit();
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->transaction($definition->commands)) {
+            throw \MySqlMemory\Error\Family\TransactionError::CreateTransactionInvalid->error('with ALTER TABLE command.');
+        }
         (new AlterTableCommand())->validation($definition->commands);
         $name = $definition->table->name->value;
         $table = (new AlterTableCommand())->table($session, $database, $name);

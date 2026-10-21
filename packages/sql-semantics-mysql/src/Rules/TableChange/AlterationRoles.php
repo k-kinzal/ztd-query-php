@@ -10,7 +10,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultS
 /**
  * Separates ordinary alterations from complete instructions checked on invocation.
  *
- * Validation without an eligible action and non-scalar defaults can occur in
+ * Validation without an eligible action, a creation-only transaction option,
+ * and non-scalar defaults can occur in
  * unexecuted stored programs. Neither belongs to an ordinary ALTER value.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -25,8 +26,25 @@ final class AlterationRoles
         return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($commands)
             || (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($commands) !== null
             || $this->invalidValidation($commands)
+            || $this->transaction($commands)
             || array_filter($commands, static fn (A\AlterCommand $command): bool => $command instanceof DeferredDefaultSetting) !== []
             || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->commands($commands);
+    }
+
+    /**
+     * Identifies the creation-only transaction option inside ALTER table-option runs.
+     * The complete instruction may be stored, but an ordinary ALTER cannot use it.
+     *
+     * @param list<A\AlterCommand> $commands Ordered alteration actions
+     */
+    public function transaction(array $commands): bool
+    {
+        foreach ($commands as $command) {
+            if ($command instanceof A\Command\SetTableOptions && array_filter($command->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction) !== []) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
