@@ -45,9 +45,16 @@ final class SpatialResults
             'MULTIPOLYGON' => $geometry,
             'GEOMETRYCOLLECTION' => $geometry,
             'GEOMCOLLECTION' => $geometry,
+            'ST_SWAPXY' => $geometry,
             'CONTAINS' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 21),
         ];
         foreach (['', 'ST_'] as $prefix) {
+            foreach (['ASTEXT', 'ASWKT'] as $name) {
+                $rules[$prefix . $name] = static fn (Invocation $call): Domain => Domain::string(16777216 * ($legacy($call) ? 1 : $call->settings->connection->charset->maxLength), $call->settings->connection, Field::LongBlob, Coercibility::Coercible);
+            }
+            foreach (['ASBINARY', 'ASWKB'] as $name) {
+                $rules[$prefix . $name] = static fn (Invocation $call): Domain => new Domain(Kind::String, $legacy($call) ? Field::Blob : Field::LongBlob, 4294967295, $legacy($call) ? 0 : Domain::NOT_FIXED, false, Collation::binary(), [], Coercibility::Coercible);
+            }
             $rules[$prefix . 'DIMENSION'] = $integer;
             $rules[$prefix . 'NUMGEOMETRIES'] = $integer;
             $rules[$prefix . 'ISEMPTY'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, $legacy($call) ? 21 : 1);

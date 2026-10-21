@@ -117,6 +117,7 @@ enum SchemaError: int implements ErrorCode
     case SrsNotFoundWarning = 3519;
     case PrimaryKeyInvisible = 3522;
     case SrsNotFound = 3548;
+    case SrsAxisOrderUnknown = 3565;
     case DuplicateTablespaceFile = 3606;
     case NoSdiFiles = 3608;
     case TablespaceFileMissing = 3629;

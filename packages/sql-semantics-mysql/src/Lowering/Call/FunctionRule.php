@@ -202,13 +202,19 @@ final class FunctionRule
     }
 
     /**
-     * Lowers arguments before checking the current release's native signature.
+     * Checks the native signature before its arguments from 5.7 onward, after them in 5.6.
      *
      * @throws \SqlSemantics\Construction\RejectedInput When a completed native call is outside its operand domain
      */
     public function generic(Form $form): FunctionCall|DeferredCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall
     {
         $name = $this->lowering->names->identifier($form->node(0));
+        if ($this->lowering->contextualized && $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $problem = (new SyntaxCalls())->signature($form, $this->lowering, $name);
+            if ($problem !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+            }
+        }
         $arguments = $this->argumentRules($name)->arguments($form->node(2));
         $named = array_filter($arguments, static fn (CallArgument|DeferredCallArgument $argument): bool => $argument->alias !== null) !== [];
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->problem($this->lowering->profile->grammar, $name, count($arguments), $named);

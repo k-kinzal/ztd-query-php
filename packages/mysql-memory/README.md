@@ -240,7 +240,7 @@ The full list, with the rules each statement follows, is in [docs/compatibility.
 - **Inspection**: `SHOW` statements for tables, columns, indexes, table status, variables, collations, character sets, engines, plugins, privileges, triggers, routines and events; `DESCRIBE`; `EXPLAIN`; `CHECK`, `ANALYZE`, `OPTIMIZE`, `REPAIR` and `CHECKSUM TABLE`.
 - **Administration**: tablespaces, resource groups, foreign servers, spatial reference systems, plugins and components, `FLUSH`, the binary log and replication statements are accepted or refused as a server without files, plugins or replicas accepts or refuses them.
 
-A statement or a function the emulator does not run fails with error 1235 (`ER_NOT_SUPPORTED_YET`) naming it, for example `This version of MySQL doesn't yet support 'function ST_ASTEXT'`, rather than giving a wrong answer.
+A statement or a function the emulator does not run fails with error 1235 (`ER_NOT_SUPPORTED_YET`) naming it, for example `This version of MySQL doesn't yet support 'function ST_GEOMFROMTEXT'`, rather than giving a wrong answer.
 
 ## Limits
 

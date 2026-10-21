@@ -61,4 +61,16 @@ final class SyntaxCallsTest extends TestCase
         self::assertNull($rule->completed($parser->parse('SELECT d.ABS()')->find('function_call_generic')[0], $lowering));
         self::assertNull($rule->completed($parser->parse('SELECT 1'), $lowering));
     }
+
+    public function testSignatureReadsTheEnclosingArityBeforeInterpretingNestedCalls(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT ST_ASTEXT(ST_SRID(1,4326),'')")->find('function_call_generic')[0];
+        $problem = (new SyntaxCalls())->signature($lowering->form($node), $lowering);
+        self::assertInstanceOf(WrongArgumentCount::class, $problem);
+        self::assertSame('ST_ASTEXT', $problem->function->value);
+        self::assertSame(2, $problem->arguments);
+    }
 }

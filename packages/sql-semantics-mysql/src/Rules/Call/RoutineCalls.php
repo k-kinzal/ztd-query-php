@@ -54,14 +54,29 @@ final class RoutineCalls
                 : new ScalarFact(new Known($returns), Nullability::Nullable);
         }
         $row = $natives->row($release, $call->name->value, count($arguments));
-        $problem = $natives->problem($release, $call->name, count($arguments), $call->named());
-        if ($problem !== null) {
-            $derivation->report($problem);
-
-            return new ScalarFact(new Invalid($problem), Nullability::Dependent);
+        $invalid = $this->signature($call, $derivation);
+        if ($invalid !== null) {
+            return $invalid;
         }
         \SqlSemantics\Diagnostic\Check::invariant($row !== null, 'An accepted native signature has a result row.');
 
         return (new ResultTyping())->fact($row[2], $arguments);
+    }
+
+    /**
+     * Records a native signature constraint independently of argument dependencies.
+     * MySQL 5.6 checks nested calls first; later releases check the enclosing signature first.
+     * Verified through nested calls on native 5.6 and 5.7 servers.
+     */
+    public function signature(FunctionCall $call, Derivation $derivation): ?ScalarFact
+    {
+        $release = $derivation->context->profile->grammar;
+        $problem = $call->native($release) ? (new NativeFunctions())->problem($release, $call->name, count($call->arguments), $call->named()) : null;
+        if ($problem === null) {
+            return null;
+        }
+        $derivation->report($problem);
+
+        return new ScalarFact(new Invalid($problem), Nullability::Dependent);
     }
 }

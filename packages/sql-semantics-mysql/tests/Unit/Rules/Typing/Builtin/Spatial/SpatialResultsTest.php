@@ -58,4 +58,15 @@ final class SpatialResultsTest extends TestCase
         self::assertEquals($geometry, $rules['POINT']($call));
         self::assertEquals($geometry, $rules['GEOMETRYCOLLECTION']($call));
     }
+
+    public function testRulesResolveGeometryOutputFormatsWithoutExecutionState(): void
+    {
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $rules = (new SpatialResults())->rules();
+        $text = $rules['ST_ASTEXT']($call);
+        $binary = $rules['ST_ASWKB']($call);
+        self::assertSame([Field::LongBlob, 67108864, 'utf8mb4_0900_ai_ci'], [$text?->field, $text?->length, $text?->collation->name]);
+        self::assertSame([Field::LongBlob, 4294967295, 'binary'], [$binary?->field, $binary?->length, $binary?->collation->name]);
+        self::assertSame(Field::Geometry, $rules['ST_SWAPXY']($call)?->field);
+    }
 }

@@ -4257,3 +4257,31 @@ Concurrent obsolete campaigns exhausted the validation host's native AIO quota
 Their partial runs were stopped and retained as incomplete. This is not a SQL
 comparison exception. The current whole-model and duration runs, missing fixture
 retries, and all nine final-revision supplied corpora remain acceptance gates.
+
+
+The recorded `query1562` unseeded campaign completes 901.435 seconds:
+824 matches, zero differences, zero volatile classifications and exit status 0.
+Its 2,768 production files match commit `7527d119add` by SHA-256. The complete
+report, summary and production hashes are retained under
+`build/fuzz/acceptance/7527d119add/`. This satisfies the duration gate for that
+production revision; it does not replace the supplied-seed or structure gates.
+
+
+The `query1562` whole-model campaign completes all 244 roots with 483 state
+transitions and no differences: 102 initial successes, 190 roots with a successful
+state witness and 54 matching rejections. Three native fixture startup failures
+were retried with identical input and production files; the original failure
+reports remain retained separately. Rejection classification and known consumer
+implementation gaps remain open. The scalar, JSON extraction, named-zone and
+condition-scope histories additionally pass 48 native cases / 603 assertions.
+
+Spatial output consumes directly constructed function-call values and variable
+bindings. Generated coordinate histories reuse the identical query while changing
+geometry values and creating, replacing and dropping its spatial reference.
+Results, metadata and conditions are compared through the native observer, while
+memory receives the semantic query and an opaque non-SQL request label. Format
+conversion is an execution responsibility; its result domain, signature and
+release-specific deprecations are supplied by SQL Semantics. This adds positive
+consumer evidence without an execution-eligibility classification in Semantics.
+The spatial changes postdate the recorded duration run and require fresh final
+acceptance campaigns once outstanding implementation gaps are repaired.

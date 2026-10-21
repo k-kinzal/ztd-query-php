@@ -11,6 +11,14 @@
 declare(strict_types=1);
 
 return [
+    3558 => ['22023', "Invalid option key '%s' in function %s."],
+    3559 => ['22023', "Invalid value '%s' for option '%s' in function '%s'."],
+    3560 => ['22023', "The string '%s' is not a valid key = value pair in function %s."],
+    3561 => ['22023', "The options argument in function %s starts with the invalid character '%s'."],
+    3562 => ['22023', "The options argument in function %s ends with the invalid character '%s'."],
+    3563 => ['22023', "The options argument in function %s contains the invalid character sequence '%s'."],
+    3564 => ['22023', "Duplicate option key '%s' in funtion '%s'."],
+    3565 => ['01000', "There's no spatial reference system with SRID %d. The axis order is unknown."],
     1032 => ['HY000', "Can't find record in '%s'"],
     1148 => ['42000', 'The used command is not allowed with this MySQL version'],
     1409 => ['HY000', "Can't load value from file with fixed size rows to variable"],

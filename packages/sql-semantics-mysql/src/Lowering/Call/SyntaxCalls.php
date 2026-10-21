@@ -85,7 +85,18 @@ final class SyntaxCalls
         if ($form->signature !== 'function_call_generic: IDENT_sys ( opt_udf_expr_list )') {
             return null;
         }
-        $name = $lowering->names->identifier($form->node(0));
+        $problem = $this->signature($form, $lowering);
+
+        return $problem === null ? null : new ParseFailure($problem, true);
+    }
+
+    /**
+     * Reads a generic signature without lowering its argument expressions.
+     * Later releases refuse an enclosing signature before contextualizing its arguments.
+     */
+    public function signature(\SqlSemantics\Lowering\Form $form, Lowering $lowering, ?\SqlSemantics\Statement\Identifier\Name $name = null): ?\SqlSemantics\Statement\Fact\Diagnostic
+    {
+        $name ??= $lowering->names->identifier($form->node(0));
         $list = $lowering->form($form->node(2));
         $arguments = $list->signature === 'opt_udf_expr_list:' ? [] : (new Lists())->items($list->node(0));
         $named = false;
@@ -93,8 +104,6 @@ final class SyntaxCalls
             $alias = $argument->children[count($argument->children) - 1] ?? null;
             $named = $named || ($alias instanceof Node && $alias->children !== []);
         }
-        $problem = (new NativeFunctions())->problem($lowering->profile->grammar, $name, count($arguments), $named);
-
-        return $problem === null ? null : new ParseFailure($problem, true);
+        return (new NativeFunctions())->problem($lowering->profile->grammar, $name, count($arguments), $named);
     }
 }

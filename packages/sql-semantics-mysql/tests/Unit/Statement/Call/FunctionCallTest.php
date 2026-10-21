@@ -127,4 +127,23 @@ final class FunctionCallTest extends TestCase
 
         self::assertEquals([new Deprecation(Deprecated::JsonMerge)], $derivation->facts()->warnings);
     }
+
+    public function testDeriveScalarOrdersLegacyNestedArityBeforeTheEnclosingCall(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], false));
+        $inner = new FunctionCall(new Name('ST_SRID'), [new CallArgument(new NumberLiteral('1')), new CallArgument(new NumberLiteral('4326'))]);
+        $derivation->scalar(new FunctionCall(new Name('ST_ASTEXT'), [new CallArgument($inner), new CallArgument(new StringLiteral(['']))]), $derivation->environment());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(new Name('ST_SRID'), 2), $derivation->facts()->diagnostics[0]);
+    }
+
+    public function testDeriveScalarOrdersModernEnclosingArityBeforeNestedCalls(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $inner = new FunctionCall(new Name('ST_SRID'), [new CallArgument(new NumberLiteral('1')), new CallArgument(new NumberLiteral('4326'))]);
+        $derivation->scalar(new FunctionCall(new Name('ST_ASTEXT'), [new CallArgument($inner), new CallArgument(new StringLiteral(['']))]), $derivation->environment());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(new Name('ST_ASTEXT'), 2), $derivation->facts()->diagnostics[0]);
+        self::assertCount(2, $derivation->facts()->diagnostics);
+    }
 }

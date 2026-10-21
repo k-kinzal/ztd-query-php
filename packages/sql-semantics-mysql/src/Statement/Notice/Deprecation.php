@@ -68,7 +68,7 @@ final class Deprecation implements CodedWarning
 
         $replacement = match ($name) {
             'CONTAINS' => 'MBRCONTAINS',
-            'SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES' => 'ST_' . $name,
+            'SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES', 'ASTEXT', 'ASWKT', 'ASBINARY', 'ASWKB' => 'ST_' . $name,
             default => null,
         };
 

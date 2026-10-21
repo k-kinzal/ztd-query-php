@@ -101,4 +101,15 @@ final class RoutineCallsTest extends TestCase
 
         self::assertSame([Known::class, Dependent::class], [$operation->facts->scalar($first->expression)->type::class, $operation->facts->scalar($second->expression)->type::class]);
     }
+
+    public function testSignatureReportsNativeConstraintsWithoutDerivingOperands(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $call = new FunctionCall(new Name('ST_SRID'), [new CallArgument(new NumberLiteral('1')), new CallArgument(new NumberLiteral('4326'))]);
+        $fact = (new RoutineCalls())->signature($call, $derivation);
+        self::assertInstanceOf(Invalid::class, $fact?->type);
+        self::assertInstanceOf(WrongArgumentCount::class, $fact->type->cause);
+        self::assertSame([$fact->type->cause], $derivation->facts()->diagnostics);
+    }
 }
