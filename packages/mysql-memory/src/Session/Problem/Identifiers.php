@@ -66,7 +66,8 @@ final class Identifiers
             foreach ($this->names($node, $release) as $name) {
                 if ($name !== null && mb_strlen($name->value) > self::LONGEST) {
                     $this->engines($engines, $session);
-                    throw SchemaError::TooLongIdentifier->error($name->value);
+                    $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+                    throw (new \MySqlMemory\Error\IdentifierErrors())->length(new \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong($name, $this->kind($node, $name)), $legacy);
                 }
             }
         }
@@ -115,6 +116,28 @@ final class Identifiers
             $node instanceof FunctionCall => [$node->schema, $node->name],
             default => $this->definitions($node, $legacy) ?? $this->properties($node),
         };
+    }
+
+    /**
+     * Identifies the namespace of an oversized name already selected in input order.
+     */
+    public function kind(Node $node, Name $name): ?\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind
+    {
+        $kind = \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database;
+        if ($node instanceof CreateDatabase || $node instanceof DropDatabase || $node instanceof AlterDatabase || $node instanceof ShowCreateDatabase || $node instanceof DatabaseLevel) {
+            return $kind;
+        }
+        foreach (get_object_vars($node) as $property => $value) {
+            foreach (is_array($value) ? $value : [$value] as $member) {
+                if (($member instanceof QualifiedName && $member->schema === $name) || ($member === $name && $property === 'database')) {
+                    return $kind;
+                }
+                if ($member instanceof QualifiedName && $member->name === $name) {
+                    return \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table;
+                }
+            }
+        }
+        return null;
     }
 
     /**

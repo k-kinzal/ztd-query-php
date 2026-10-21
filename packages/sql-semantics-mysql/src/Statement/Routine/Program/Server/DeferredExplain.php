@@ -51,6 +51,7 @@ final class DeferredExplain implements ProgramStatement
         Check::input(!$emptyInto || ($into === null && !$analyze && $modifier === null), 'An empty EXPLAIN destination has no assignment, ANALYZE or legacy modifier.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
         Check::input(!$statement instanceof Explainable || !(new ExplainFacts())->target($into) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0), 'A deferred explanation retains an invocation-time operand constraint.');
+        Check::input($database === null || mb_strlen($database->value, 'UTF-8') <= 64, 'An EXPLAIN database name has at most 64 characters.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

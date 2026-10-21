@@ -19,6 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 #[Small]
 final class IdentifiersTest extends TestCase
 {
+    public function testKindDistinguishesTheDatabaseAndTableOfAnOperand(): void
+    {
+        $database = new \SqlSemantics\Statement\Identifier\Name('d');
+        $table = new \SqlSemantics\Statement\Identifier\Name('t');
+        $node = new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable(new \SqlSemantics\Statement\Identifier\QualifiedName($table, $database));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database, (new Identifiers())->kind($node, $database));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table, (new Identifiers())->kind($node, $table));
+    }
+
     public function testCheckRefusesADatabaseNameLongerThan64CharactersOfAMaintenanceStatement(): void
     {
         $session = (new Instance())->connect();

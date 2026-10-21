@@ -4361,3 +4361,27 @@ references, and the semantic schema checks all 1,030 value definitions. The
 acceptance contract remains open: whole-model native rejection classification,
 remaining consumer implementations and final-revision seed/duration campaigns
 are separate requirements.
+
+## Explanation database operands and diagnostic bounds
+
+An `Explain` or `DeferredExplain` database operand has at most 64 characters.
+This is a construction invariant: a longer name is rejected even in an inactive
+stored branch. Input lowering returns a typed `NameTooLong` diagnostic retaining
+the complete decoded name and its object namespace. MySQL 9.x diagnoses this
+operand before a later syntax failure; 8.2–8.4 wait for the complete explanation.
+Neither representation retains the input SQL or parser nodes.
+
+Diagnostic display is separate from operand storage. Database and table names
+exceeding 192 bytes have their namespace-specific invalid-name error; other
+oversized names use the identifier-length error. Display stops at NUL and at
+100 bytes, with the native release's treatment of incomplete UTF-8 characters.
+The retained name is unchanged.
+
+`IdentifierDiagnosticDomainTest` replays the unseeded counterexample and boundary
+cases through text and prepared protocols. `IdentifierDiagnosticHistoryTest`
+reuses 36 directly constructed explanations across database creation, deletion
+and restoration on MySQL 8.2.0, 8.4.7 and 9.1.0. All names contain 64 characters,
+including multibyte characters. The 324 assertions compare both errors and
+successful reports while Memory receives only semantic values and an opaque
+request label. These domain witnesses do not close the remaining whole-model
+rejection explanations or replace the final-revision fuzz campaigns.

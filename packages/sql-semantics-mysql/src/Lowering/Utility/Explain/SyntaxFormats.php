@@ -25,6 +25,13 @@ final class SyntaxFormats
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
+        if ($node->name === 'opt_explain_for_schema' && in_array($lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
+            try {
+                (new OptionRule($lowering))->database($node);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, true);
+            }
+        }
         $into = $this->into($node, $lowering);
         if ($into !== null) {
             return new ParseFailure($into, true);

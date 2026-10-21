@@ -67,6 +67,7 @@ final class Explain implements Statement
     ) {
         Check::input(!$emptyInto || ($into === null && !$analyze && $modifier === null), 'An empty EXPLAIN destination has no assignment, ANALYZE or legacy modifier.');
         Check::input((new ExplainFacts())->target($into), 'An EXPLAIN INTO target has between 1 and 64 characters.');
+        Check::input($database === null || mb_strlen($database->value, 'UTF-8') <= 64, 'An EXPLAIN database name has at most 64 characters.');
         Check::input(!$analyze || strcasecmp($format->value ?? '', 'TRADITIONAL') !== 0, 'EXPLAIN ANALYZE cannot use the TRADITIONAL format.');
         Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');

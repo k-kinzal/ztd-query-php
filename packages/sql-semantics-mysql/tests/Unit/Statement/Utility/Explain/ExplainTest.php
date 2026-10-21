@@ -104,4 +104,29 @@ final class ExplainTest extends TestCase
         $this->expectExceptionMessage('The retained operands must share a supported MySQL release.');
         new Explain($query, emptyInto: true);
     }
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerOversizedDatabases(): iterable
+    {
+        yield 'ASCII' => [str_repeat('a', 65)];
+        yield 'multibyte' => [str_repeat('猫', 65)];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerOversizedDatabases')]
+    public function testRefusesAnOversizedDatabaseEvenBeforeAnExplainedOperandRuns(string $name): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
+        $this->expectExceptionMessage('An EXPLAIN database name has at most 64 characters.');
+        new Explain($query, database: new \SqlSemantics\Statement\Identifier\Name($name));
+    }
+
+    public function testDeriveStatementKeepsAFullMultibyteDatabaseAtTheCharacterLimit(): void
+    {
+        $database = str_repeat('猫', 64);
+        $explain = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR SCHEMA `' . $database . '` SELECT 1')->statement;
+        self::assertInstanceOf(Explain::class, $explain);
+        self::assertSame($database, $explain->database?->value);
+    }
+
 }

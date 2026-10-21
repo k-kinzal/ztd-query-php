@@ -93,6 +93,7 @@ final class OptionRule
      * Lowers a node of `opt_explain_for_schema`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the database name exceeds its operand domain
      */
     public function database(Node $database): ?Name
     {
@@ -100,9 +101,22 @@ final class OptionRule
 
         return match ($form->signature) {
             'opt_explain_for_schema:' => null,
-            'opt_explain_for_schema: FOR_SYM DATABASE ident_or_text' => $this->lowering->names->identifier($form->node(2)),
+            'opt_explain_for_schema: FOR_SYM DATABASE ident_or_text' => $this->databaseName($form->node(2)),
             default => throw ImplementationGap::production($form),
         };
+    }
+    /**
+     * Refuses an intrinsically oversized schema operand before publishing an explanation.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the decoded name exceeds the database domain
+     */
+    public function databaseName(Node $node): Name
+    {
+        $name = $this->lowering->names->identifier($node);
+        if (mb_strlen($name->value, 'UTF-8') > 64) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong($name, \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true));
+        }
+        return $name;
     }
     /**
      * Retains the ignored empty-destination spelling separately from variable assignment.

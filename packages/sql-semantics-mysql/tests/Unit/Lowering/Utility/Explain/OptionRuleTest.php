@@ -40,4 +40,11 @@ final class OptionRuleTest extends TestCase
         self::assertSame("EXPLAIN FORMAT = `JSON` INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("EXPLAIN FORMAT=JSON INTO @'' SELECT 1")->toString());
     }
 
+    public function testDatabaseNameRefusesAnOversizedOperandAsANameDiagnostic(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Identifier name');
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR SCHEMA `' . str_repeat('a', 65) . '` SELECT 1');
+    }
+
 }

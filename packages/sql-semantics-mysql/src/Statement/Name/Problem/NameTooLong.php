@@ -21,8 +21,9 @@ final class NameTooLong implements Diagnostic
 
     /**
      * @param Name $name The decoded identifier without SQL quoting
+     * @param \SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind|null $kind The object namespace, when it has a distinct invalid-name diagnostic
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly ?\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind $kind = null)
     {
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) > 64, 'An oversized identifier exceeds 64 characters.');
     }

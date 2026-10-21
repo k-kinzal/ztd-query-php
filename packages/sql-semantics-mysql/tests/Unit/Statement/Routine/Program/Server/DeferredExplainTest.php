@@ -50,4 +50,11 @@ final class DeferredExplainTest extends TestCase
         self::assertSame($table->declarations()[0], $resolved->table);
         self::assertSame([], $operation->facts->diagnostics);
     }
+    public function testRefusesAnOversizedDatabaseBeforeADeferredAnalysisRuns(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
+        $this->expectExceptionMessage('An EXPLAIN database name has at most 64 characters.');
+        new DeferredExplain($query, new \SqlSemantics\Statement\Identifier\Name('TRADITIONAL'), database: new \SqlSemantics\Statement\Identifier\Name(str_repeat('a', 65)), analyze: true);
+    }
+
 }

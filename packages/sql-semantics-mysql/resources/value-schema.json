@@ -1585,6 +1585,7 @@
         "target": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Problem\\NameTooLong": {
+        "kind": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ObjectNameKind",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\TableWildcard": {
