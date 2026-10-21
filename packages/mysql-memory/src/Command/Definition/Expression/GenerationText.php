@@ -25,8 +25,9 @@ final class GenerationText
 {
     /**
      * @param ItemText|null $items The column-name and character-set context of a stored definition
+     * @param array<int, Scalar> $parameters Bound values by marker occurrence identity
      */
-    public function __construct(public readonly ?ItemText $items = null)
+    public function __construct(public readonly ?ItemText $items = null, public readonly array $parameters = [])
     {
     }
 
@@ -125,6 +126,9 @@ final class GenerationText
      */
     public function parts(Node $node): array
     {
+        if ($node instanceof M\Literal\Parameter && isset($this->parameters[spl_object_id($node)])) {
+            return [[$this->parameter($this->parameters[spl_object_id($node)]), false]];
+        }
         if ($node instanceof M\Variable\SystemVariable) {
             return [['', false]];
         }
@@ -148,6 +152,21 @@ final class GenerationText
         }
         \SqlSemantics\Diagnostic\Check::invariant($node instanceof Scalar || $node instanceof M\Expression\RowOperand, 'A legacy generation leaf retains its expression role.');
         return [[($this->items ?? new ItemText([], 'utf8mb4', \SqlSemantics\Contract\GrammarRelease::MySql5744))->text($node), false]];
+    }
+
+    /**
+     * Displays a captured value without the spelling of a written literal expression.
+     * Bound negative values and strings retain no unary parentheses or introducer.
+     */
+    public function parameter(Scalar $value): string
+    {
+        if ($value instanceof M\Literal\StringLiteral) {
+            return (new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql5744))->quote($value->value());
+        }
+        if ($value instanceof M\Expression\Operator\Unary && $value->operator === M\Expression\Operator\UnaryOperator::Minus && $value->operand instanceof M\Literal\NumberLiteral) {
+            return '-' . $value->operand->text;
+        }
+        return implode('', array_column($this->parts($value), 0));
     }
 
     /**

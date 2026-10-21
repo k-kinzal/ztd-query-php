@@ -52,6 +52,14 @@ final class GenerationTextTest extends TestCase
         self::assertNull((new GenerationText())->wrapped(new M\Literal\NumberLiteral('1')));
     }
 
+    public function testParameterPreservesBoundValueDisplayWithoutLiteralSyntax(): void
+    {
+        $writer = new GenerationText();
+        self::assertSame("'7'", $writer->parameter(new M\Literal\StringLiteral(['7'], new \SqlSemantics\Statement\Identifier\Name('latin1'))));
+        self::assertSame('-7', $writer->parameter(new M\Expression\Operator\Unary(M\Expression\Operator\UnaryOperator::Minus, new M\Literal\NumberLiteral('7'))));
+        self::assertSame('7', $writer->parameter(new M\Literal\NumberLiteral('7')));
+    }
+
 
     public function testSystemTailUsesTheRemainingSemanticOperandsAfterAnOmittedVariable(): void
     {

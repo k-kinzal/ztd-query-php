@@ -55,8 +55,9 @@ final class PendingTable implements PendingInstruction
         $session->diagnostics->clear();
         $session->text = $label;
         $this->metadata?->refresh($session);
+        $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite($this->header instanceof RefusedCreateTail ? [] : (new GenerationParameters())->values($this->header, $session->settings()->release(), $parameters));
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
-            return (new \MySqlMemory\Program\Expression\AlterUse())->raise($this->header, $session, false, $this->database);
+            return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($this->header, $session, false, $this->database);
         }
         $database = $this->header->name->schema->value ?? $this->database;
         if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
@@ -64,7 +65,7 @@ final class PendingTable implements PendingInstruction
                 return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($this->header, $session, $database);
             }
             if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->header->elements)) {
-                return (new \MySqlMemory\Program\Expression\GenerationUse())->execute($this->header, $session, $database);
+                return (new \MySqlMemory\Program\Expression\GenerationUse($rewrite))->execute($this->header, $session, $database);
             }
             if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->header->elements) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->header->elements, $this->header->query) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->header->elements, $this->header->partitioning, $this->header->query)) {
                 return (new \MySqlMemory\Program\Expression\TableUse())->partition($this->header, $session, $this->database);

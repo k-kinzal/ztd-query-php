@@ -3169,12 +3169,22 @@ construction reuses 36 stored definitions across seven invocation states.
 Generated-column declarations now distinguish ordinary generation expressions
 from the compound scalar-subquery declarations MySQL 5.7 can retain in a stored
 program or prepared statement. Ordinary generated-column values exclude forbidden
-functions, variables and subqueries before scalar-width preparation. The legacy
+functions, variables, parameter markers and subqueries before scalar-width preparation. The legacy
 instruction retains the complete column, expression and CREATE header; it does
 not retain SQL or an AST. A direct construction property varies twelve complete
 definitions across skipped invocation, missing destination, existing destination,
 dropped destination and skipped invocation again. `IF NOT EXISTS` can complete
 against the existing destination. The same definitions are reused throughout.
+
+MySQL 5.7 also retains compound generation expressions containing parameter
+markers. A bare or parenthesized marker is refused during preparation, while
+`? + 1` can create a generation expression from the value bound at execution.
+The retained column template keeps the marker identity and its complete
+expression. Execution reconstructs an ordinary column from those typed operands
+and captures the value for subsequent inserts, independently of later parameter
+bindings. Modern releases refuse these markers during preparation. This role
+distinction comes from native PREPARE/EXECUTE histories, including SHOW CREATE
+TABLE and populated results; it does not give Semantics execution responsibility.
 
 Native observation also exposed an unresolved MySQL 5.7.44 failure: preparing
 `CREATE TABLE IF NOT EXISTS t(g INT AS (1+(SELECT 1)))`, executing it, creating

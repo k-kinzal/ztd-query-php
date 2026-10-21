@@ -29,6 +29,8 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a generated column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED)');
  *     $create->statement->elements[1]->specification->storage // => \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored
+ * @example Refusing a marker as an ordinary generation expression
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GeneratedColumn implements ColumnSpecification
 {
@@ -60,7 +62,7 @@ final class GeneratedColumn implements ColumnSpecification
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($this->attributes) === null, 'Column enforcement follows a CHECK constraint or its enforcement chain.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $this->attributes) === null, 'A generated column cannot have a DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT, STORAGE or SERIAL type.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $this->attributes) === [], 'Column attributes must fit the declared type and temporal precision.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($expression, new \SqlSemantics\Statement\Identifier\Name('')) === null, 'A generation expression excludes subqueries, session variables and forbidden functions.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($expression, new \SqlSemantics\Statement\Identifier\Name('')) === null, 'A generation expression excludes subqueries, session variables, parameter markers and forbidden functions.');
     }
 
     /**

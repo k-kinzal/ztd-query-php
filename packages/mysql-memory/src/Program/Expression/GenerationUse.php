@@ -22,6 +22,13 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 final class GenerationUse
 {
     /**
+     * @param \MySqlMemory\Command\Definition\Expression\GenerationRewrite $rewrite The current execution's structural substitutions
+     */
+    public function __construct(public readonly \MySqlMemory\Command\Definition\Expression\GenerationRewrite $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite())
+    {
+    }
+
+    /**
      * Checks the destination before reporting the declaration's invocation condition.
      *
      * @throws SqlError When a destination or generation declaration is rejected
@@ -55,7 +62,7 @@ final class GenerationUse
      */
     public function create(DeferredCreateTable $source, Session $session, string $database): \MySqlMemory\Result\Reply
     {
-        $definition = (new \MySqlMemory\Command\Definition\Expression\GenerationRewrite())->create($source);
+        $definition = $this->rewrite->create($source);
         $name = $definition->name->name->value;
         $columns = array_values(array_filter($definition->elements, static fn ($element): bool => $element instanceof ColumnDefinition));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
@@ -65,7 +72,7 @@ final class GenerationUse
         $reply = $execution->run($definition, $session, $database);
         $table = $definition->temporary() ? $session->temporaries->table($database, $name) : $session->instance->dictionary->schema($database)?->table($name);
         if ($table !== null) {
-            $execution->display($table, $source, $session);
+            $execution->display($table, $source, $session, $this->rewrite->parameters);
         }
         return $reply;
     }

@@ -18,10 +18,12 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete MySQL 5.7 generation declaration with an invocation-time operand condition.
+ * A complete MySQL 5.7 generation declaration with operands retained until invocation.
  *
  * Stored definitions retain this column template until their table instruction
  * is invoked. Ordinary CREATE TABLE and ALTER TABLE values exclude this role.
+ * Prepared compound expressions can retain markers whose bound values become
+ * constants in the created table. A bare marker has no such declaration role.
  *
  * @visibility public
  * @example Retaining a scalar-position subquery for a stored definition

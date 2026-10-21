@@ -50,6 +50,9 @@ final class Operands
         if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand) {
             return new RefusedOperand($column, OperandKind::Row);
         }
+        if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter) {
+            return new RefusedOperand($column, OperandKind::Parameter);
+        }
         if ($expression instanceof FunctionCall && !$this->native($expression, $release)) {
             $name = ($expression->schema === null ? '' : '`' . str_replace('`', '``', $expression->schema->value) . '`.') . '`' . str_replace('`', '``', $expression->name->value) . '`';
             return new RefusedOperand($column, OperandKind::StoredFunction, $name);

@@ -24,11 +24,21 @@ use SqlSemantics\Statement\Scalar;
 final class GenerationRewrite
 {
     /**
+     * @param array<int, Scalar> $parameters Bound values by marker occurrence identity
+     */
+    public function __construct(public readonly array $parameters = [])
+    {
+    }
+
+    /**
      * Reconstructs an expression with the observed unary arithmetic interpretation.
      */
     public function expression(Scalar $expression): Scalar
     {
         $copy = new Reconstruction(function (Node $node): ?Node {
+            if ($node instanceof M\Literal\Parameter) {
+                return $this->parameters[spl_object_id($node)] ?? null;
+            }
             if (!$node instanceof M\Expression\Operator\Arithmetic) {
                 return null;
             }

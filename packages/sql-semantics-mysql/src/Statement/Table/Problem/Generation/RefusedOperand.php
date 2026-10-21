@@ -42,6 +42,7 @@ final class RefusedOperand implements Diagnostic
             OperandKind::Subquery => 'a subquery',
             OperandKind::Variable => 'a session variable',
             OperandKind::Row => 'a row value',
+            OperandKind::Parameter => 'a parameter marker',
         } . '.';
     }
 }

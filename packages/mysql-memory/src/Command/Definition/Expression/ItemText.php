@@ -66,8 +66,9 @@ final class ItemText
      * @param array<string, string> $names The declared name of each column, by lowercase name; a column not in it is written as written
      * @param string $charset The character set a string literal without an introducer is in
      * @param GrammarRelease $release The release whose rendering is the fallback
+     * @param array<int, string> $parameters Captured marker values by semantic occurrence identity
      */
-    public function __construct(public readonly array $names, public readonly string $charset, public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    public function __construct(public readonly array $names, public readonly string $charset, public readonly GrammarRelease $release = GrammarRelease::MySql847, public readonly array $parameters = [])
     {
         $this->calls = new CallText($this);
     }
@@ -100,6 +101,7 @@ final class ItemText
             return $this->rendered($scalar);
         }
         return match (true) {
+            $scalar instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter => $this->parameters[spl_object_id($scalar)] ?? null,
             $scalar instanceof Grouped => $this->scalar($scalar->operand),
             $scalar instanceof ColumnUse => '`' . str_replace('`', '``', $this->names[mb_strtolower($scalar->name->value)] ?? $scalar->name->value) . '`',
             $scalar instanceof NumberLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral, $scalar instanceof RadixLiteral, $scalar instanceof TemporalLiteral => $this->literal($scalar),

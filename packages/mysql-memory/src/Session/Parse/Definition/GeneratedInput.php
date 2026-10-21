@@ -34,7 +34,7 @@ final class GeneratedInput
         }
         return match ($problem->kind) {
             OperandKind::Row => ConstraintError::GeneratedRow->error($problem->column->value),
-            OperandKind::Subquery => ConstraintError::GeneratedSubquery->error($problem->column->value),
+            OperandKind::Subquery, OperandKind::Parameter => ConstraintError::GeneratedSubquery->error($problem->column->value),
             OperandKind::Variable => ConstraintError::DefaultVariable->error($problem->column->value),
         };
     }

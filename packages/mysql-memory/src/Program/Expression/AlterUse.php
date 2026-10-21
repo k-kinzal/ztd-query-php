@@ -21,6 +21,13 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTab
 final class AlterUse
 {
     /**
+     * @param \MySqlMemory\Command\Definition\Expression\GenerationRewrite $rewrite The current execution's structural substitutions
+     */
+    public function __construct(public readonly \MySqlMemory\Command\Definition\Expression\GenerationRewrite $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite())
+    {
+    }
+
+    /**
      * Resolves the target database without opening the table during preparation.
      */
     public function header(DeferredAlterTable $definition, Session $session, ?string $database = null): string
@@ -70,7 +77,7 @@ final class AlterUse
             (new \MySqlMemory\Session\Problem\Definition\IndexNames())->alter($layout, $prepared->facts, $session->settings()->release(), $table->definition->engine, $table->definition->collation);
         }
         (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->check($definition, $table, $session, $database);
-        $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite();
+        $rewrite = $this->rewrite;
         $columns = array_map($rewrite->column(...), array_column($layout->columns, 0));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
             throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, true);
@@ -78,7 +85,7 @@ final class AlterUse
         $statement = new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($definition->table, $rewrite->commands($definition), $definition->ignore);
         $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();
         $reply = $execution->run($statement, $session, $database);
-        $execution->display($table, $definition, $session);
+        $execution->display($table, $definition, $session, $rewrite->parameters);
         return $reply;
     }
 }

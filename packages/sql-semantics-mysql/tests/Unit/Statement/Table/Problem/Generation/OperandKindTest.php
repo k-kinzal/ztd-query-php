@@ -15,6 +15,6 @@ final class OperandKindTest extends TestCase
 {
     public function testSeparatesFunctionQueryAndVariableConditions(): void
     {
-        self::assertSame(['FunctionCall', 'Subquery', 'Variable', 'Row', 'StoredFunction'], array_map(static fn (OperandKind $kind): string => $kind->name, OperandKind::cases()));
+        self::assertSame(['FunctionCall', 'Subquery', 'Variable', 'Row', 'StoredFunction', 'Parameter'], array_map(static fn (OperandKind $kind): string => $kind->name, OperandKind::cases()));
     }
 }

@@ -109,7 +109,7 @@ final class TableInput
                 $alter = new \MySqlMemory\Program\Expression\AlterUse();
                 if ($session->preparation->inputPrepared) {
                     $alter->header($problem->definition, $session);
-                    throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database));
+                    throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($problem->definition, $session->settings()->release())));
                 }
                 \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_alter_table');
                 throw new CompletedTemplate($alter->raise($problem->definition, $session, false));
@@ -117,7 +117,7 @@ final class TableInput
             $use = new \MySqlMemory\Program\Expression\TableUse();
             if ($session->preparation->inputPrepared) {
                 $query = $use->prepare($problem->definition, $session);
-                $bindings = $query === null ? null : \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
+                $bindings = $query === null ? (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($problem->definition, $session->settings()->release()) : \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
                 throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings, \MySqlMemory\Command\Prepared\GenerationMetadata::capture($problem->definition, $session->variables->database, $session)));
             }
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');

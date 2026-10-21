@@ -71,4 +71,17 @@ final class GenerationRewriteTest extends TestCase
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Variable\SystemVariable(new Name('version'))));
         self::assertSame($column, (new GenerationRewrite())->column($column));
     }
+
+    public function testColumnCapturesTheCurrentBindingWithoutChangingTheTemplate(): void
+    {
+        $parameter = new M\Literal\Parameter();
+        $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $parameter, new M\Literal\NumberLiteral('1'));
+        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression));
+        $result = (new GenerationRewrite([spl_object_id($parameter) => new M\Literal\NumberLiteral('7')]))->column($column);
+        self::assertInstanceOf(M\Table\Column\GeneratedColumn::class, $result->specification);
+        self::assertInstanceOf(M\Expression\Operator\Arithmetic::class, $result->specification->expression);
+        self::assertInstanceOf(M\Literal\NumberLiteral::class, $result->specification->expression->left);
+        self::assertSame('7', $result->specification->expression->left->text);
+        self::assertSame($parameter, $expression->left);
+    }
 }

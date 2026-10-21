@@ -13,6 +13,8 @@ use SqlSemantics\Statement\Query;
  * Scalar subqueries inside compound expressions are retained. Bare subqueries
  * and query predicates are refused while the definition is read. Forbidden
  * functions, variables and row values without queries remain complete templates.
+ * Compound expressions can retain parameter markers for EXECUTE to bind; a bare
+ * marker is refused during PREPARE. Observed through MySQL 5.7.44 SQL histories.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -23,6 +25,13 @@ final class LegacyExpressions
      */
     public function contains(Node $expression): bool
     {
+        $root = $expression;
+        while ($root instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
+            $root = $root->operand;
+        }
+        if ($root instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter) {
+            return false;
+        }
         if ((new LegacySubqueries())->contains($expression)) {
             return true;
         }

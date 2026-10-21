@@ -31,6 +31,13 @@ final class LegacyExpressionsTest extends TestCase
         self::assertFalse((new LegacyExpressions())->eager(new M\Variable\UserVariable(new Name('a'))));
     }
 
+    public function testContainsRetainsCompoundParametersButExcludesABareMarker(): void
+    {
+        $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\Parameter(), new M\Literal\NumberLiteral('1'));
+        self::assertTrue((new LegacyExpressions())->contains($expression));
+        self::assertFalse((new LegacyExpressions())->contains(new M\Expression\Grouped(new M\Literal\Parameter())));
+    }
+
     public function testCommandsKeepsTheDeclaredColumnRole(): void
     {
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Call\KeywordCall(M\Call\KeywordFunction::User, [])));

@@ -46,15 +46,18 @@ final class GenerationExecution
 
     /**
      * Stores canonical expression display independently of the compiled row computation.
+     *
+     * @param array<int, \SqlSemantics\Statement\Scalar> $parameters Bound values by marker occurrence identity
      */
-    public function display(\MySqlMemory\Dictionary\StoredTable $table, Node $source, Session $session): void
+    public function display(\MySqlMemory\Dictionary\StoredTable $table, Node $source, Session $session, array $parameters = []): void
     {
         $columns = $table->definition->columns;
         $names = [];
         foreach ($columns as $column) {
             $names[mb_strtolower($column->name)] = $column->name;
         }
-        $writer = new GenerationText(new ItemText($names, $session->settings()->connectionCollation->charset->name, $session->settings()->release()));
+        $written = array_map((new GenerationText())->parameter(...), $parameters);
+        $writer = new GenerationText(new ItemText($names, $session->settings()->connectionCollation->charset->name, $session->settings()->release(), $written), $parameters);
         foreach ((new Walker())->find($source, M\Table\Column\ColumnDefinition::class) as $element) {
             if (!$element->specification instanceof M\Table\Column\Generation\DeferredGeneratedColumn) {
                 continue;

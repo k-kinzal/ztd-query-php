@@ -18,4 +18,5 @@ enum OperandKind
     case Variable;
     case Row;
     case StoredFunction;
+    case Parameter;
 }

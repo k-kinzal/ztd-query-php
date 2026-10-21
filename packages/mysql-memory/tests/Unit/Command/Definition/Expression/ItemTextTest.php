@@ -18,6 +18,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ItemTextTest extends TestCase
 {
+    public function testScalarKeepsCapturedMarkerDisplayThroughGrouping(): void
+    {
+        $marker = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $writer = new ItemText([], 'latin1', parameters: [spl_object_id($marker) => '-7']);
+        self::assertSame('-7', $writer->text(new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($marker)));
+        self::assertSame('?', (new ItemText([], 'latin1'))->text($marker));
+    }
+
     public function testTextWritesOperationsInParenthesesAndColumnsByTheirDeclaredName(): void
     {
         $session = (new Instance())->connect();

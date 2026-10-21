@@ -30,6 +30,13 @@ final class OperandsTest extends TestCase
         self::assertNull((new Operands())->problem(new M\Name\ColumnUse(new Name('a')), new Name('g')));
         self::assertSame(M\Table\Problem\Generation\OperandKind::Variable, (new Operands())->problem(new M\Variable\UserVariable(new Name('a')), new Name('g'))?->kind);
     }
+
+    public function testRoleKeepsAParameterDistinctFromASessionVariable(): void
+    {
+        $problem = (new Operands())->role(new M\Literal\Parameter(), new Name('g'));
+        self::assertSame(M\Table\Problem\Generation\OperandKind::Parameter, $problem?->kind);
+        self::assertSame("Generated column 'g' excludes a parameter marker.", $problem->message());
+    }
     public function testNativeKeepsAKeywordSpellingInItsGenericStoredRole(): void
     {
         self::assertFalse((new Operands())->native(new M\Call\FunctionCall(new Name('USER')), null));
