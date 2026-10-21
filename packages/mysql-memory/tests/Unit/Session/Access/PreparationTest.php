@@ -14,6 +14,13 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testResourcesRefusesDirectDefinitionsWithoutReadingRequestText(): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(new \SqlSemantics\Statement\Identifier\Name('g'));
+        $this->expectExceptionCode(1295);
+        (new Preparation())->resources(new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\DropResourceGroup($name));
+    }
+
     public function testStorageRefusesTheConstructedCommandWithoutReadingInput(): void
     {
         $node = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace(new \SqlSemantics\Statement\Identifier\Name('missing'));

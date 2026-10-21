@@ -21,6 +21,7 @@ use MySqlMemory\Storage\Writer;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -39,7 +40,7 @@ use SqlSemantics\Statement\Operation;
 final class ClientRows
 {
     /**
-     * Writes a nonempty delimited client file without creating or parsing SQL.
+     * Writes a nonempty DATA or XML client file without creating or parsing SQL.
      */
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection, string $contents): Completion
     {
@@ -58,9 +59,12 @@ final class ClientRows
         $session->transaction->touch($table);
         $rows = new Rows($table, $context, $planner, $into, [], $session);
         $separators = (new LoadDataCommand())->separatorBytes($statement);
-        $fixed = ($separators['field:TERMINATED'] ?? "\t") === '' && ($separators['field:ENCLOSED'] ?? '') === '';
+        $fixed = $statement->format === LoadFormat::Data && ($separators['field:TERMINATED'] ?? "\t") === '' && ($separators['field:ENCLOSED'] ?? '') === '';
         $ignored = (int) ($statement->ignored->text ?? '0');
-        $records = $fixed ? (new FixedRecords())->read($contents, $separators, $this->widths($targets, $table), $ignored) : (new SeparatedRecords())->read($contents, $separators, $ignored);
+        $records = match ($statement->format) {
+            LoadFormat::Data => $fixed ? (new FixedRecords())->read($contents, $separators, $this->widths($targets, $table), $ignored) : (new SeparatedRecords())->read($contents, $separators, $ignored),
+            LoadFormat::Xml => $this->xml((new XmlRecords())->read($contents, $separators['xml:ROW'] ?? '<row>', $session->settings()->legacy(), $ignored), $targets, $table),
+        };
         $deleted = $skipped = 0;
         foreach ($records as $index => $record) {
             [$positions, $values] = $this->values($record, $targets, $rows, $domain, $index + 1, $fixed);
@@ -87,6 +91,20 @@ final class ClientRows
             return array_values(array_filter(array_keys($table->definition->columns), static fn (int $index): bool => !$table->definition->columns[$index]->invisible));
         }
         return array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|UserVariable $target): int|UserVariable => $target instanceof UserVariable ? $target : (new Assignments($planner, $table))->position($target), $statement->columns);
+    }
+
+    /**
+     * Maps XML field names to resolved destinations; an absent selected field is NULL.
+     * Unselected columns retain their ordinary defaults through the shared writer.
+     *
+     * @param list<array<string, string|null>> $records Named XML input records
+     * @param list<int|UserVariable> $targets Resolved column positions and variable identities
+     * @return list<list<string|null>> Values in semantic destination order
+     */
+    public function xml(array $records, array $targets, StoredTable $table): array
+    {
+        $names = array_map(static fn (int|UserVariable $target): string => $target instanceof UserVariable ? $target->name->value : $table->definition->columns[$target]->name, $targets);
+        return array_map(static fn (array $record): array => array_map(static fn (string $name): ?string => $record[$name] ?? null, $names), $records);
     }
 
     /**

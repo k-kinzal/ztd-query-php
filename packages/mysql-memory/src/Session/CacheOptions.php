@@ -113,13 +113,10 @@ final class CacheOptions
         $end ??= $cause?->token->offset ?? strlen($statement);
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
+        $inspection = (new \SqlSemantics\Platform\MySql\Lowering\Utility\SyntaxInspection())->completed($parser, $statement, $end);
+        $end = $inspection[1] ?? $end;
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
-        $boundary = $end;
-        foreach ($notices as [$offset, $notice]) {
-            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
-                $boundary = min($boundary, $offset);
-            }
-        }
+        $boundary = $this->boundary($notices, $end);
         $database = (new Parse\Entry\EvaluationInput())->before($statement, $boundary, $session) ?? (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\DefinitionPrefix())->before($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session) ?? (new Parse\CommandPrefix())->before((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement), $statement, $boundary, $session);
         if ($database !== null) {
             return $database;
@@ -137,7 +134,27 @@ final class CacheOptions
                 return (new Parse\Reader())->rejection(new \SqlSemantics\Construction\RejectedInput($notice->problem, $offset), $statement, $session);
             }
         }
+        if ($inspection !== null) {
+            $syntax = (new Syntax($session->resolution()->client))->near($inspection[0], $statement, $session->following, $error);
+            return (new Parse\ModernWarnings())->recorded(array_column($notices, 1), $syntax, $session);
+        }
         return $temporal === null ? null : ($temporal[1]->recorded ? $temporal[1] : $this->literal($temporal[1], $temporal[0], $statement, $session));
+    }
+
+    /**
+     * Stops prefix checks at the earliest aborting semantic notice.
+     *
+     * @param list<array{int, \SqlSemantics\Statement\Fact\Warning|Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\ParseStop}> $notices Ordered completed-production notices
+     */
+    public function boundary(array $notices, int $end): int
+    {
+        foreach ($notices as [$offset, $notice]) {
+            if ($notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice->aborts) {
+                $end = min($end, $offset);
+            }
+        }
+
+        return $end;
     }
 
     /**

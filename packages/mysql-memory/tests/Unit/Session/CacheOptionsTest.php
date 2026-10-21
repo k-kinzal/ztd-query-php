@@ -20,6 +20,16 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class CacheOptionsTest extends TestCase
 {
+    public function testBoundaryKeepsOnlyTheEarliestAbortingNoticeBeforeTheInputEnd(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused();
+        $continuing = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem);
+        $aborting = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
+
+        self::assertSame(12, (new CacheOptions())->boundary([[4, $continuing], [12, $aborting], [16, $aborting]], 20));
+        self::assertSame(10, (new CacheOptions())->boundary([[12, $aborting]], 10));
+    }
+
     public function testLegacyRetainsACompletedHeartbeatBeforeInvalidInput(): void
     {
         $session = (new Instance('5.6.51'))->connect();

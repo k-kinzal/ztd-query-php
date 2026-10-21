@@ -164,4 +164,16 @@ final class FormatResultsTest extends TestCase
         self::assertSame([0, 0], [$latin->decimals, $utf8->decimals]);
     }
 
+    public function testHexInputBytesRetainsTheVariableByteBoundThroughGrouping(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $domain = Domain::string(67108860, $collation, Field::LongBlob);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v')));
+        $call = new Invocation([$domain], [$variable], new Settings($collation), $derivation);
+        $rules = new FormatResults();
+        self::assertSame(67108860, $rules->hexInputBytes($call));
+        self::assertSame([134217720, 536870880], [$rules->hex($call)->length, $rules->hex($call)->metadataLength()]);
+    }
+
 }

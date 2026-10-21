@@ -66,4 +66,14 @@ final class ClientRowsTest extends TestCase
         self::assertNotNull($table);
         self::assertSame([1, $operation->statement->columns[1], 0], (new ClientRows())->targets($operation->statement, $planner, $table));
     }
+    public function testXmlBindsNamedFieldsInDestinationOrderAndSuppliesMissingNulls(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT,b VARCHAR(30))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v'));
+        self::assertSame([['x', '1', null], [null, '2', 'y']], (new ClientRows())->xml([['a' => '1', 'b' => 'x'], ['a' => '2', 'v' => 'y']], [1, 0, $variable], $table));
+    }
+
 }

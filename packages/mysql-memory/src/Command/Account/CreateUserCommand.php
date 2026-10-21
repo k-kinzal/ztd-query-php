@@ -98,6 +98,8 @@ final class CreateUserCommand implements Command
      * a plugin named alone is skipped under IF NOT EXISTS.
      * Other occurrences validate their credentials before checking existence. All occurrences
      * contribute diagnostics in order; credential failures precede the final existence error.
+     * A new recipient's grant-table conversions are observed even if another recipient
+     * later rolls back the batch. Verified on MySQL 8.0, 8.4 and 9.1.
      * Default roles are resolved only for new recipients. After a role refusal,
      * later new recipients cannot receive roles in that failed account batch.
      *
@@ -130,7 +132,7 @@ final class CreateUserCommand implements Command
                 $names->ascii($identity, $user->identification !== null && $user->identification->credential !== Credential::None ? 1 : 0, $context->diagnostics);
                 $exists = $exists || $session->instance->accounts->stored($identity->stored()) !== null || array_filter($created, static fn (array $previous): bool => $previous[0]->stored()->key() === $identity->stored()->key()) !== [];
                 if (!$exists) {
-                    $this->recipient($statement, $identity, $rolesRefused, $session);
+                    $this->recipient($statement, $identity, $rolesRefused, $session, $user->initial !== null);
                 }
             } catch (SqlError $error) {
                 $rolesRefused = $rolesRefused || $error->error === AccountError::UserDoesNotExist;
@@ -180,7 +182,7 @@ final class CreateUserCommand implements Command
      *
      * @throws SqlError When roles or the JSON attributes are invalid
      */
-    public function recipient(CreateUser $statement, Identity $identity, bool $rolesRefused, Session $session): void
+    public function recipient(CreateUser $statement, Identity $identity, bool $rolesRefused, Session $session, bool $initial = false): void
     {
         if ($rolesRefused) {
             throw AccountError::UserDoesNotExist->error($identity->backquoted());
@@ -188,6 +190,9 @@ final class CreateUserCommand implements Command
         $this->defaults($statement, $session);
         if ($statement->comment?->kind === \SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Attribute) {
             (new \MySqlMemory\Account\Attributes())->merge(null, $statement->comment->text->value);
+        }
+        if (!$initial) {
+            (new Names($session->settings()->release()))->ascii($identity, 8, $session->diagnostics);
         }
     }
 
@@ -302,7 +307,6 @@ final class CreateUserCommand implements Command
             $password = $user->identification === null ? null : $options->identify($account, $user->identification, false, (int) $session->variables->read('generated_random_password_length'));
             $options->apply($account, $statement->tls, $statement->resources, $statement->options, $statement->comment);
             $accounts->add($account);
-            (new Names($session->settings()->release()))->ascii($identity, 8, $context->diagnostics);
             foreach ($defaults as $role) {
                 $accounts->grant($role, $identity, false);
                 $accounts->defaults[$identity->key()][$role->key()] = $role;

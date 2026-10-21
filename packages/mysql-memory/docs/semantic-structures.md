@@ -4086,3 +4086,38 @@ rejections and 483 transitions. Its unseeded run failed at input 369; that
 failure is retained and is not a passing duration campaign. The new whole-model
 and duration campaigns remain separate acceptance gates. These view repairs do
 not close the other unresolved domains listed above.
+
+
+## Client XML streams and diagnostic ordering
+
+`LOAD XML LOCAL` now consumes nonempty client files through resolved semantic
+load targets. Attribute, child-element and named-field records preserve the
+observed ancestor scopes, empty records, ignored rows and release-specific CDATA
+behavior. A directly constructed `LoadTable` is reused across disabled local
+input, missing tables, populated replacements, dropping and recreating the table.
+The XML matrix passes 2,710 assertions on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1;
+the PDO client-file regression covers DATA and XML on four releases.
+
+Semantics resolves HEX user-variable byte bounds and CONCAT character bounds
+before result-character-set conversion. Concatenation rounds its byte cap down
+to complete characters before choosing the field type. Native text and prepared
+comparisons cover four variable charsets, three result encodings and nested calls
+on the same five releases. These rules use semantic variable operands and domains.
+
+Completed debug inspections precede contextual resource-group name checks;
+grammar refusals still retain their earlier position. Resource-group creation,
+alteration and dropping refuse binary preparation while SET remains preparable.
+Native comparisons cover MySQL 8.0, 8.1, 8.4 and 9.1 with the fixture's observed
+priority capability. Account creation retains each recipient's grant conversion
+warnings in order even when another recipient makes the batch roll back. The
+complete unseeded counterexample and compared rollback histories remain tests.
+
+The `query1519` snapshot passes 9,646 Semantics tests / 20,239 assertions and
+20,416 Memory tests / 97,975 assertions. The later annotation and account-warning
+refactor (`query1524`) passes all Memory static checks (29,408 dependencies, no
+violations) and 59 focused tests / 133 assertions. Semantics static checks pass
+with 1,030 reviewed value definitions. These results do not replace the final-revision
+supplied-seed and 900-second campaigns or close the construction obligations.
+A further native audit found that valid BINLOG format and row events succeed;
+the current replay command still refuses them. A matching malformed-base64 error
+therefore cannot establish support for that statement root.

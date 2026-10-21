@@ -103,6 +103,7 @@ final class Preparation
     {
         $statement = $operation->statement;
         $this->storage($statement, $session);
+        $this->resources($statement);
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) {
             $storage = new \MySqlMemory\Command\Definition\StorageOptions();
             $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
@@ -120,6 +121,20 @@ final class Preparation
         if ($event && \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation) !== []) {
             $error = \MySqlMemory\Error\Family\StatementError::DynamicParametersRequireDml;
             throw new SqlError($error, $error->message(), recorded: true);
+        }
+    }
+
+    /**
+     * Resource-group definitions have no binary preparation form. SET RESOURCE
+     * GROUP remains preparable. Name-domain errors precede this protocol check.
+     * Observed on MySQL 8.0.44, 8.4.7 and 9.1.0.
+     *
+     * @throws SqlError When a resource-group definition is prepared
+     */
+    public function resources(\SqlSemantics\Statement\Statement $statement): void
+    {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\DropResourceGroup) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
     }
 

@@ -58,6 +58,17 @@ final class CreateUserCommandTest extends TestCase
         self::assertNull($session->instance->accounts->find(new Identity('a', '%')));
     }
 
+    public function testAbsentKeepsGrantConversionsInRecipientOrderWhenTheBatchRollsBack(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->run("CREATE USER before_user@'h猫' IDENTIFIED BY 'p', refused IDENTIFIED WITH missing, after_user@'h猫'")[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame([...[1366, 1366, 1366, 1366, 1366, 1366, 1366, 1366, 1366], 1524, ...[1366, 1366, 1366, 1366, 1366, 1366, 1366, 1366]], array_column($session->diagnostics->conditions, 1));
+        self::assertNull($session->instance->accounts->find(Identity::of('before_user', 'h猫')));
+        self::assertNull($session->instance->accounts->find(Identity::of('after_user', 'h猫')));
+    }
+
     public function testFailuresReloadsPersistedHostNamesAfterAnAccountBatchFails(): void
     {
         $session = (new Instance())->connect();

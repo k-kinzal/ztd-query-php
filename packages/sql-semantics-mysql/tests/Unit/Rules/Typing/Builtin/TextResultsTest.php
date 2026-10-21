@@ -54,6 +54,15 @@ final class TextResultsTest extends TestCase
         self::assertSame(1024, $results->bounded($call, 1024, 'concat')?->length);
     }
 
+    public function testBoundedRoundsTheByteCapToWholeCharactersBeforeSelectingTheField(): void
+    {
+        $collation = Collation::known('utf8mb3_general_ci');
+        $call = new Invocation([Domain::string(50331645, $collation, Field::LongBlob)], [], new Settings($collation), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $domain = (new TextResults())->bounded($call, 16777215, 'concat');
+
+        self::assertSame([Field::MediumBlob, 5592405, 16777215], [$domain?->field, $domain?->length, $domain?->metadataLength()]);
+    }
+
     public function testBoundedRetainsTheCharacterBoundThroughNestedConcatenation(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');
@@ -86,6 +95,18 @@ final class TextResultsTest extends TestCase
         self::assertSame(5, $rules['CONCAT'](new Invocation([Domain::string(2, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible), Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))?->length);
         self::assertSame(6, $rules['CONCAT_WS'](new Invocation([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible), Domain::string(2, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible), Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))?->length);
         self::assertSame(3, $rules['REPEAT'](new Invocation([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible), Domain::integer()], [new StringLiteral(['a']), new NumberLiteral('3')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))?->length);
+    }
+
+    public function testConcatenatedLengthUsesTheVariableCharsetBeforeCappingBytes(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('b'));
+        $call = new Invocation([Domain::string(16777215, $collation, Field::MediumBlob)], [new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($variable)], new Settings($collation), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])));
+        $results = new TextResults();
+        $domain = $results->rules()['CONCAT']($call);
+
+        self::assertSame(4194303, $results->concatenatedLength($call, 0));
+        self::assertSame([Field::MediumBlob, 16777212], [$domain?->field, $domain?->metadataLength()]);
     }
 
     public function testLeadingTakesTheLiteralCountAtMostTheString(): void

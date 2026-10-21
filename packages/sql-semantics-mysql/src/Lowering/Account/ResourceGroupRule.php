@@ -94,6 +94,7 @@ final class ResourceGroupRule
 
     /**
      * Lowers a group identifier, refusing a name outside its byte domain.
+     * This contextual check follows grammar completion and the debug-entry check.
      *
      * @throws RejectedInput When the converted name exceeds 64 bytes
      */
@@ -102,7 +103,7 @@ final class ResourceGroupRule
         $source = $form->node(3);
         $name = $this->lowering->names->identifier($source);
         if (!ResourceGroupName::accepts($name)) {
-            throw new RejectedInput(new ResourceGroupNameTooLong($name), (new SourceRanges())->span($form->node)[1] ?? 0);
+            throw new RejectedInput(new ResourceGroupNameTooLong($name), (new SourceRanges())->span($form->node)[1] ?? 0, false);
         }
 
         return $this->lowering->origins->record(new ResourceGroupName($name), $source);

@@ -157,18 +157,34 @@ final class FormatResults
     public function hex(Invocation $call): Domain
     {
         $legacy = $this->legacy($call);
-        $length = $legacy && $call->domain(0)->kind->numeric() ? 2 * $call->length($call->domain(0)) : $this->digitsOf($call->domain(0));
+        $length = $legacy && $call->domain(0)->kind->numeric() ? 2 * $call->length($call->domain(0)) : ($call->domain(0)->kind === Kind::String ? $this->hexInputBytes($call) * 2 : $this->digitsOf($call->domain(0)));
 
         if ($legacy) {
             return (new \SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds())->computed($this->undecimal($call, $this->sized($length & 4294967295, $call->settings->connection, Coercibility::Coercible)));
         }
-        $length = $call->domain(0)->kind === Kind::String ? min(4294967295, $call->domain(0)->byteLength()) * 2 : $length;
+        $length = $call->domain(0)->kind === Kind::String ? min(4294967295, $this->hexInputBytes($call)) * 2 : $length;
         $domain = $this->sized($length, $call->settings->connection, Coercibility::Coercible);
         if ($domain->field->blob()) {
             $domain = Domain::string(($length * $domain->collation->charset->maxLength) & 4294967295, $domain->collation, $domain->field, $domain->coercibility);
         }
 
         return (new \SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds())->computed($domain);
+    }
+
+    /**
+     * User-variable reads expose their retained byte bound to HEX. Ordinary
+     * string expressions retain their collation-expanded expression bound.
+     * Grouping and unary plus preserve the variable read. Observed with four
+     * variable charsets and disabled, Latin-1 and UTF-8 result conversion on
+     * MySQL 5.7.44 and 9.1.0, including nested HEX calls.
+     */
+    public function hexInputBytes(Invocation $call): int
+    {
+        $node = $call->nodes[0] ?? null;
+        while ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && $node->operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus)) {
+            $node = $node->operand;
+        }
+        return $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable ? $call->domain(0)->metadataLength() : $call->domain(0)->byteLength();
     }
 
     /**

@@ -39,7 +39,7 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
  * 5.7 refuse it while they read the statement, before anything else. They check a local load's
  * table and columns before requesting the client file. A wire client can refuse the request
  * itself, sending an empty upload; this exchange preserves its own driver error and leaves
- * the next command usable. Empty uploads complete; nonempty uploads remain unsupported.
+ * the next command usable. Enabled uploads decode DATA or XML records before row writes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html,
  * https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_secure_file_priv.
  *
@@ -81,9 +81,6 @@ final class LoadDataCommand implements Command
             }
             $contents = ($session->running->readFile)($input->file->value);
             if ($contents !== '') {
-                if ($statement->format === \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Xml) {
-                    throw StatementError::NotSupportedYet->error('nonempty client XML loading');
-                }
                 return (new Load\ClientRows())->execute($operation, $session, $context, $connection, $contents);
             }
             return new \MySqlMemory\Result\Completion(0, 0, $context->diagnostics->raised(), 'Records: 0  Deleted: 0  Skipped: 0  Warnings: ' . $context->diagnostics->raised());

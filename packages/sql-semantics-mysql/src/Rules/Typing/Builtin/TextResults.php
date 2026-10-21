@@ -26,11 +26,11 @@ final class TextResults
     public function rules(): array
     {
         $same = static fn (Invocation $call): ?Domain => $call->text($call->domains, $call->length($call->domain(0)), 'string');
-        $sum = static fn (Invocation $call): int => array_sum(array_map($call->length(...), $call->domains));
+        $sum = fn (Invocation $call): int => array_sum(array_map(fn (int $index): int => $this->concatenatedLength($call, $index), array_keys($call->domains)));
 
         return [
             'CONCAT' => fn (Invocation $call): ?Domain => $this->bounded($call, $sum($call), 'concat'),
-            'CONCAT_WS' => fn (Invocation $call): ?Domain => $this->bounded($call, $sum($call) - $call->length($call->domain(0)) + $call->length($call->domain(0)) * max(0, count($call->domains) - 2), 'concat_ws'),
+            'CONCAT_WS' => fn (Invocation $call): ?Domain => $this->bounded($call, $sum($call) - $this->concatenatedLength($call, 0) + $this->concatenatedLength($call, 0) * max(0, count($call->domains) - 2), 'concat_ws'),
             'UPPER' => $same,
             'UCASE' => $same,
             'LOWER' => $same,
@@ -71,7 +71,7 @@ final class TextResults
 
     /**
      * Resolves CONCAT, CONCAT_WS and REPLACE with their maximum reported blob width.
-     * Their long-blob metadata is capped at 16777216 bytes before result character
+     * Their metadata is capped at the whole characters fitting in 16777216 bytes before result character
      * set conversion. This bound is distinct from max_allowed_packet, which limits
      * execution. Verified through SQL on MySQL 5.6 and 8.4 with different packet limits.
      */
@@ -82,9 +82,28 @@ final class TextResults
             $domain = (new FormatResults())->sized($this->concatenatedBytes($call, $operation === 'concat_ws'), $domain->collation, $domain->coercibility);
         }
 
-        $domain = $domain !== null && $domain->field === Field::LongBlob && $domain->length > 16777216 ? Domain::string(16777216, $domain->collation, $domain->field, $domain->coercibility) : $domain;
+        $domain = $domain !== null && $domain->field === Field::LongBlob && $domain->length > 16777216 ? (new FormatResults())->sized(intdiv(16777216, $domain->collation->charset->maxLength), $domain->collation, $domain->coercibility) : $domain;
 
         return $domain === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds())->computed($domain);
+    }
+
+    /**
+     * Counts a concatenation operand's characters. A user-variable read carries
+     * a byte bound, so its character bound rounds down in its retained charset.
+     * Grouping and unary plus preserve that read. Verified through CONCAT and
+     * nested HEX on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1.
+     */
+    public function concatenatedLength(Invocation $call, int $index): int
+    {
+        $node = $call->nodes[$index] ?? null;
+        while ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && $node->operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus)) {
+            $node = $node->operand;
+        }
+        $domain = $call->domain($index);
+
+        return $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String
+            ? intdiv($domain->metadataLength(), $domain->collation->charset->maxLength)
+            : $call->length($domain);
     }
 
     /**

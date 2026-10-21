@@ -21,22 +21,23 @@ use Testcontainers\Testcontainers;
 final class LoadClientPdoTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{string, string, string, string}>
      */
     public static function providerReleases(): iterable
     {
         foreach (['5.6.51', '5.7.44', '8.4.7', '9.1.0'] as $release) {
-            yield $release => [$release];
+            yield $release . '-data' => [$release, 'DATA', "1,alpha\n2,beta\n", "FIELDS TERMINATED BY ','"];
+            yield $release . '-xml' => [$release, 'XML', '<row a="1" b="alpha"/><row a="2"><b>beta</b></row>', ''];
         }
     }
 
     #[DataProvider('providerReleases')]
-    public function testPdoUploadsRowsAndKeepsTheConnectionUsable(string $release): void
+    public function testPdoUploadsRowsAndKeepsTheConnectionUsable(string $release, string $format, string $contents, string $layout): void
     {
         $directory = sys_get_temp_dir() . '/load-pdo-' . bin2hex(random_bytes(8));
         mkdir($directory);
         $file = $directory . '/input';
-        file_put_contents($file, "1,alpha\n2,beta\n");
+        file_put_contents($file, $contents);
         $container = Testcontainers::run(new DisposableMySql($release));
         try {
             $endpoint = $container->getData(Endpoint::class);
@@ -46,7 +47,7 @@ final class LoadClientPdoTest extends TestCase
             try {
                 $memory = new PDO($server->dsn(), 'root', '', $options);
                 $observer = new Observer();
-                $statements = ['SET GLOBAL local_infile=1', 'CREATE DATABASE d', 'USE d', 'CREATE TABLE t(a INT PRIMARY KEY,b VARCHAR(40))', "LOAD DATA LOCAL INFILE '$file' INTO TABLE t FIELDS TERMINATED BY ',' (a,@b) SET b=@b", 'SELECT * FROM t ORDER BY a', 'SELECT 42'];
+                $statements = ['SET GLOBAL local_infile=1', 'CREATE DATABASE d', 'USE d', 'CREATE TABLE t(a INT PRIMARY KEY,b VARCHAR(40))', "LOAD $format LOCAL INFILE '$file' INTO TABLE t $layout (a,@b) SET b=@b", 'SELECT * FROM t ORDER BY a', 'SELECT 42'];
                 $expected = array_map(static fn (string $sql): string => serialize($observer->observe($native, $sql, true)), $statements);
                 $actual = array_map(static fn (string $sql): string => serialize($observer->observe($memory, $sql, true)), $statements);
 
