@@ -75,7 +75,7 @@ final class ChannelLengthTest extends TestCase
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, port: $endpoint->port);
             try {
                 $native->set_charset('utf8mb4');
-                $session = (new Instance($release))->connect();
+                $session = (new Instance($release, ['server_id' => 1]))->connect();
                 array_map(static fn (string $sql): bool|mysqli_result => $native->query($sql), $fixture);
                 array_map($session->run(...), $fixture);
                 $session->text = 'unrelated invalid input';

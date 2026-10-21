@@ -297,7 +297,7 @@ final class Execution
             \MySqlMemory\Command\Program\RoutineCommand::class, \MySqlMemory\Command\Program\EventCommand::class, \MySqlMemory\Command\Program\ShowCreateProgramCommand::class,
             \MySqlMemory\Command\Show\ShowCreateDatabaseCommand::class, \MySqlMemory\Command\Show\Server\ShowPrivilegesCommand::class,
             \MySqlMemory\Command\Show\Server\ShowProcesslistCommand::class, \MySqlMemory\Command\Replication\ReplicationShowCommand::class,
-            \MySqlMemory\Command\Replication\BinaryLogCommand::class, \MySqlMemory\Command\Admin\ForeignServerCommand::class,
+            \MySqlMemory\Command\Replication\BinaryLogCommand::class, \MySqlMemory\Command\Replication\ReplicaCommand::class, \MySqlMemory\Command\Admin\ForeignServerCommand::class,
         ];
         foreach ($kept as $class) {
             if ($command instanceof $class) {

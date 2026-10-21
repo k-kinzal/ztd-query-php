@@ -79,8 +79,9 @@ final class Registry
      *
      * @param bool $resourcePriorities Whether the emulated platform applies thread priorities
      * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
+     * @param bool $replicationAvailableAtStartup Whether a nonzero startup server id initialized legacy replication; later SET GLOBAL does not change this state
      */
-    public function __construct(bool $resourcePriorities = true, int $resourceProcessors = 8, string $version = '8.4.7')
+    public function __construct(bool $resourcePriorities = true, int $resourceProcessors = 8, string $version = '8.4.7', public readonly bool $replicationAvailableAtStartup = true)
     {
         $this->resourceGroups = new ResourceGroups($resourceProcessors, $resourcePriorities);
         $this->spatialCatalog = new SpatialCatalog($version);

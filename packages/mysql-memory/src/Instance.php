@@ -112,7 +112,8 @@ final class Instance
         $this->globals = new Globals($globals);
         $this->dictionary = new Dictionary();
         $this->accounts = Accounts::installed($release);
-        $this->registry = new Registry($resourcePriorities, $resourceProcessors, $version);
+        $serverId = $this->catalog->find('server_id');
+        $this->registry = new Registry($resourcePriorities, $resourceProcessors, $version, $serverId !== null && (int) $this->globals->value($serverId) !== 0);
         $this->transactions = new Concurrency\Transactions();
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
         $system = $legacy ? ['information_schema' => 'utf8mb3_general_ci', 'mysql' => 'latin1_swedish_ci', 'performance_schema' => 'utf8mb3_general_ci', 'sys' => 'utf8mb3_general_ci'] : ['information_schema' => 'utf8mb3_general_ci', 'mysql' => 'utf8mb4_0900_ai_ci', 'performance_schema' => 'utf8mb4_0900_ai_ci', 'sys' => 'utf8mb4_0900_ai_ci'];

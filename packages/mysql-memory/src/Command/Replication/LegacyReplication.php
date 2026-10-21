@@ -22,7 +22,9 @@ use SqlSemantics\Statement\Node;
 /**
  * Refuses the replica statements of MySQL 5.6 and 5.7 on a server without a server id, and warns that RESET QUERY CACHE is deprecated in 5.7.
  *
- * Those releases start with server_id 0, which leaves the replica uninitialized: START SLAVE,
+ * Those releases start with server_id 0, which leaves the replica uninitialized until restart.
+ * Changing the variable afterwards does not initialize it; starting with a nonzero value
+ * preserves availability even after SET GLOBAL server_id=0. In the uninitialized state, START SLAVE,
  * STOP SLAVE, RESET SLAVE, CHANGE MASTER, CHANGE REPLICATION FILTER and SHOW RELAYLOG EVENTS fail
  * with ER_SLAVE_CONFIGURATION in the terminology of the release (verified on live 5.6.51 and
  * 5.7.44 servers). MySQL 5.6 goes on to the other targets of RESET after the failure of RESET
@@ -38,6 +40,11 @@ final class LegacyReplication
      * The message of ER_SLAVE_CONFIGURATION in 5.6 and 5.7.
      */
     public const UNCONFIGURED = 'Slave is not configured or failed to initialize properly. You must at least set --server-id to enable either a master or a slave. Additional error messages can be found in the MySQL error log.';
+
+    /**
+     * The message for a configured legacy server whose current id or source prevents START.
+     */
+    public const CANNOT_START = 'The server is not configured as slave; fix in config file or with CHANGE MASTER TO';
 
     /**
      * Raises the error of a replica statement on a 5.6 or 5.7 server without a server id, and records the warning of RESET QUERY CACHE in 5.7.
@@ -62,7 +69,7 @@ final class LegacyReplication
         if ($statement instanceof ShowRelaylogEvents) {
             (new ReplicaCommand())->channel($statement->channel, true, $session->instance->registry);
         }
-        if ($replica && (int) $session->variables->read('server_id') === 0) {
+        if ($replica && !$session->instance->registry->replicationAvailableAtStartup) {
             if ($master && $release === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 throw new SqlError(AdministrationError::BinlogClosed, AdministrationError::BinlogClosed->message('RESET MASTER'), null, [[AdministrationError::ReplicaNotInitialized->number(), self::UNCONFIGURED]]);
             }

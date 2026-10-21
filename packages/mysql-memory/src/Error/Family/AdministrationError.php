@@ -42,6 +42,7 @@ enum AdministrationError: int implements ErrorCode
     case WrongTypeForVariable = 1232;
     case VariableCantBeRead = 1233;
     case IncorrectGlobalLocalVariable = 1238;
+    case LegacyReplicaStopped = 1255;
     case VariableIsNotStruct = 1272;
     case BadReplicaUntil = 1277;
     case ReplicaUntilRestart = 1278;

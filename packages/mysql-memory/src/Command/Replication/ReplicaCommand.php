@@ -143,12 +143,15 @@ final class ReplicaCommand implements Command
         if ($statement->user !== null || $statement->password !== null) {
             $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
         }
+        if (($session->settings()->legacy() && (int) $session->variables->read('server_id') === 0) || ($session->settings()->release() === GrammarRelease::MySql5651 && $replication->host === '')) {
+            throw AdministrationError::ReplicaNotConfigured->error(LegacyReplication::CANNOT_START);
+        }
         $receiver = $statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true);
         $applier = $statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true);
         if ($receiver) {
             $replication->initialized = true;
             if ($replication->host === '') {
-                throw AdministrationError::ReplicaNotConfigured->error();
+                throw AdministrationError::ReplicaNotConfigured->error($session->settings()->legacy() ? LegacyReplication::CANNOT_START : AdministrationError::ReplicaNotConfigured->message());
             }
         }
         if (!$applier || $replication->applying) {
@@ -250,7 +253,8 @@ final class ReplicaCommand implements Command
             if ($state->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
                 $state->applying = false;
             } elseif ($statement->channel !== null || $session->instance->registry->channels === []) {
-                $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message((string) $name));
+                $notice = $session->settings()->release() === GrammarRelease::MySql5651 ? AdministrationError::LegacyReplicaStopped : AdministrationError::ReplicaThreadsStopped;
+                $session->diagnostics->note($notice, $notice === AdministrationError::LegacyReplicaStopped ? $notice->message() : $notice->message((string) $name));
             }
         }
     }

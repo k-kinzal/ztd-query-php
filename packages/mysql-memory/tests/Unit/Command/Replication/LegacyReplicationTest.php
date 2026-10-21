@@ -34,6 +34,30 @@ final class LegacyReplicationTest extends TestCase
         self::assertSame([['Warning', 1681, "'RESET QUERY CACHE' is deprecated and will be removed in a future release."]], $session->diagnostics->conditions);
     }
 
+    public function testChangingTheServerIdDoesNotInitializeALegacyReplica(): void
+    {
+        $session = (new Instance('5.7.44', ['server_id' => 0]))->connect();
+        $statement = $session->analyze('STOP SLAVE')->statement;
+        $session->query('SET GLOBAL server_id=1');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1794);
+        (new LegacyReplication())->check($statement, $session);
+    }
+
+    public function testZeroingTheCurrentIdPreservesTheStartupRepositoryButPreventsStarting(): void
+    {
+        $session = (new Instance('5.7.44', ['server_id' => 1]))->connect();
+        $session->query('CHANGE MASTER TO MASTER_CONNECT_RETRY=0');
+        $session->query('SET GLOBAL server_id=0');
+        $session->query('STOP SLAVE');
+        self::assertSame(3084, $session->diagnostics->conditions[0][1]);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1200);
+        $session->query('START SLAVE SQL_THREAD');
+    }
+
     public function testCheckFailsAsResetMasterAfterResetSlaveWithoutABinaryLogInMySql56(): void
     {
         $session = (new Instance('5.6.51'))->connect();

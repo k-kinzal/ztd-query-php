@@ -129,6 +129,7 @@ return [
     1248 => ['42000', 'Every derived table must have its own alias'],
     1250 => ['42000', "Table '%s' from one of the SELECTs cannot be used in %s"],
     1253 => ['42000', "COLLATION '%s' is not valid for CHARACTER SET '%s'"],
+    1255 => ['HY000', 'Slave already has been stopped'],
     1256 => ['HY000', 'Uncompressed data size too large; the maximum size is %d (probably, length of uncompressed data was corrupted)'],
     1258 => ['HY000', 'ZLIB: Not enough room in the output buffer (probably, length of uncompressed data was corrupted)'],
     1259 => ['HY000', 'ZLIB: Input data corrupted'],
