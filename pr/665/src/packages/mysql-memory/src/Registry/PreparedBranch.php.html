@@ -48,39 +48,42 @@
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Storage\Heap</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * An XA transaction branch that XA PREPARE prepared, which XA COMMIT or XA ROLLBACK ends from any session.</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * An XA transaction branch published by XA PREPARE, with its retained owner if any.</span></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * The server detaches a prepared branch from its session (xa_detach_on_prepare is ON), so the</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * session may start other work, and the changes of the branch stay invisible until XA COMMIT.</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * The emulator restores the rows the branch changed when it is prepared, releasing their locks,</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * and puts the changed rows back when it is committed; a change another session makes to the same</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * rows meanwhile is lost then.</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-states.html,</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_xa_detach_on_prepare.</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PreparedBranch</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param int $format The format id of the XID</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param string $transaction The bytes of the global transaction id</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param string $branch The bytes of the branch qualifier</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param list&lt;array{StoredTable, Heap, int, list&lt;int|float|string|null&gt;|null}&gt; $changes Each row the branch changed: its table, the rows of the table, its number and its version after the changes, null when deleted</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$format</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$transaction</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$branch</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$changes</span> = [])</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    {</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    }</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * Answers the key the server identifies an XID by: its format id, global transaction id and branch qualifier.</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">key</span>(<span class="tok-id">int</span> <span class="tok-var">$format</span>, <span class="tok-id">string</span> <span class="tok-var">$transaction</span>, <span class="tok-id">string</span> <span class="tok-var">$branch</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    {</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-kw">return</span> <span class="tok-var">$format</span> . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-id">strlen</span>(<span class="tok-var">$transaction</span>) . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-var">$transaction</span> . <span class="tok-var">$branch</span>;</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>}</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * With xa_detach_on_prepare ON the session may start other work, and any session can finish</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * the branch. Otherwise only its owner can finish it until disconnection. MySQL 5.6 discards</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * the branch on disconnection; later releases retain it for recovery. Its row changes stay</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * invisible until XA COMMIT.</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * The emulator restores the rows the branch changed when it is prepared, releasing their locks,</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * and puts the changed rows back when it is committed; a change another session makes to the same</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * rows meanwhile is lost then.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-states.html,</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_xa_detach_on_prepare.</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PreparedBranch</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>{</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param int $format The format id of the XID</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param string $transaction The bytes of the global transaction id</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param string $branch The bytes of the branch qualifier</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param int|null $owner The connected session retaining the branch, or null when detached</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param list&lt;array{StoredTable, Heap, int, list&lt;int|float|string|null&gt;|null}&gt; $changes Each row the branch changed: its table, the rows of the table, its number and its version after the changes, null when deleted</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$format</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$transaction</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$branch</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$changes</span> = [], <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">int</span> <span class="tok-var">$owner</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    {</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    }</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * Answers the key the server identifies an XID by: its format id, global transaction id and branch qualifier.</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">key</span>(<span class="tok-id">int</span> <span class="tok-var">$format</span>, <span class="tok-id">string</span> <span class="tok-var">$transaction</span>, <span class="tok-id">string</span> <span class="tok-var">$branch</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    {</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">return</span> <span class="tok-var">$format</span> . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-id">strlen</span>(<span class="tok-var">$transaction</span>) . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-var">$transaction</span> . <span class="tok-var">$branch</span>;</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>}</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
