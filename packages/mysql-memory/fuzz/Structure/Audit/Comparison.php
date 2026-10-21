@@ -26,10 +26,10 @@ use Testcontainers\Testcontainers;
 final class Comparison
 {
     /**
-     * @param bool $namedTimeZones Whether to load the native zone catalog before creating the compared sessions
+     * @param bool|null $namedTimeZones Whether to install or empty the native zone catalog, or retain the image's catalog when null
      * @return array{sql: string, profile: string, mode: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>, transitions: list<array{sql: string, native: array<string, mixed>, memory: array<string, mixed>, matches: bool, contracts: list<string>}>} Original observations and any database-selection history, without replacing the original structure
      */
-    public function compare(Statement|Scalar $node, LanguageProfile $profile, ?string $mode = null, ?int $port = null, bool $namedTimeZones = false): array
+    public function compare(Statement|Scalar $node, LanguageProfile $profile, ?string $mode = null, ?int $port = null, ?bool $namedTimeZones = null): array
     {
         $release = substr($profile->grammar->value, 6);
         $mode ??= (new Profiles())->mode($profile);
@@ -40,8 +40,8 @@ final class Comparison
         $container = Testcontainers::run($definition);
         try {
             $endpoint = $container->getData(Endpoint::class);
-            if ($namedTimeZones) {
-                (new Table\TimeZoneCatalog())->install((string) $container->getContainerId(), $endpoint);
+            if ($namedTimeZones !== null) {
+                (new Table\TimeZoneCatalog())->configure($namedTimeZones, (string) $container->getContainerId(), $endpoint);
             }
             $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, port: $endpoint->port);
             try {

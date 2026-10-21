@@ -18,6 +18,37 @@ use Symfony\Component\Process\Process;
 final class TimeZoneCatalog
 {
     /**
+     * Establishes the requested catalog state before the observed connection exists.
+     */
+    public function configure(bool $installed, string $container, Endpoint $endpoint): void
+    {
+        if ($installed) {
+            $this->install($container, $endpoint);
+        } else {
+            $this->clear($endpoint);
+        }
+    }
+
+    /**
+     * Removes named-zone mappings and confirms that UTC cannot be resolved.
+     *
+     * @throws RuntimeException When a cached zone prevents the requested empty fixture
+     */
+    public function clear(Endpoint $endpoint): void
+    {
+        $connection = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, port: $endpoint->port);
+        try {
+            $connection->query('DELETE FROM mysql.time_zone_name');
+            $result = $connection->query("SELECT CONVERT_TZ('2024-01-01 00:00:00','UTC','+00:00')");
+            if (!$result instanceof mysqli_result || $result->fetch_row() !== [null]) {
+                throw new RuntimeException('The native time-zone catalog fixture still resolves UTC.');
+            }
+        } finally {
+            $connection->close();
+        }
+    }
+
+    /**
      * Loads the native catalog before the observed client session is created.
      *
      * @throws RuntimeException When the public loader fails or UTC remains unavailable
