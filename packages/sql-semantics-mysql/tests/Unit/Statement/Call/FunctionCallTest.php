@@ -69,6 +69,18 @@ final class FunctionCallTest extends TestCase
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
+    public function testDeriveScalarRetainsTheDeprecationOfAMultipleArgumentSpatialCall(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $derivation = new Derivation($platform->context($profile, null, [], false));
+        $call = new FunctionCall(new Name('GEOMETRYN'), [new CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()), new CallArgument(new NumberLiteral('1'))]);
+        $derivation->scalar($call, $derivation->environment());
+
+        self::assertCount(1, $derivation->facts()->warnings);
+        self::assertSame("'GEOMETRYN' is deprecated and will be removed in a future release. Please use ST_GEOMETRYN instead", $derivation->facts()->warnings[0]->message());
+    }
+
     public function testDeriveScalarDependsOnAStoredFunction(): void
     {
         $platform = new Platform();

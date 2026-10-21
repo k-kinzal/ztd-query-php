@@ -47,6 +47,7 @@ final class SpatialResults
             'GEOMCOLLECTION' => $geometry,
             'ST_SWAPXY' => $geometry,
             'ST_GEOMCOLLFROMTXT' => $geometry,
+            'ST_NUMINTERIORRING' => $integer,
             'CONTAINS' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 21),
         ];
         foreach (['', 'ST_'] as $prefix) {
@@ -60,6 +61,12 @@ final class SpatialResults
             foreach (['ASBINARY', 'ASWKB'] as $name) {
                 $rules[$prefix . $name] = static fn (Invocation $call): Domain => new Domain(Kind::String, $legacy($call) ? Field::Blob : Field::LongBlob, 4294967295, $legacy($call) ? 0 : Domain::NOT_FIXED, false, Collation::binary(), [], Coercibility::Coercible);
             }
+            foreach (['GEOMETRYN', 'POINTN', 'STARTPOINT', 'ENDPOINT', 'EXTERIORRING', 'INTERIORRINGN'] as $name) {
+                $rules[$prefix . $name] = $geometry;
+            }
+            $rules[$prefix . 'NUMPOINTS'] = $integer;
+            $rules[$prefix . 'NUMINTERIORRINGS'] = $integer;
+            $rules[$prefix . 'ISCLOSED'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, $legacy($call) ? 21 : 1);
             $rules[$prefix . 'DIMENSION'] = $integer;
             $rules[$prefix . 'NUMGEOMETRIES'] = $integer;
             $rules[$prefix . 'ISEMPTY'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, $legacy($call) ? 21 : 1);

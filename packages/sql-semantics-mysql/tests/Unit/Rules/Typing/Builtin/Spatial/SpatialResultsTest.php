@@ -46,6 +46,9 @@ final class SpatialResultsTest extends TestCase
         self::assertSame('utf8mb4_0900_ai_ci', $type->collation->name);
         self::assertSame(1, $rules['ST_ISEMPTY']($call)?->length);
         self::assertSame(10, $rules['ST_NUMGEOMETRIES']($call)?->length);
+        self::assertSame(10, $rules['ST_NUMPOINTS']($call)?->length);
+        self::assertSame(10, $rules['ST_NUMINTERIORRING']($call)?->length);
+        self::assertSame(1, $rules['ST_ISCLOSED']($call)?->length);
         self::assertSame(Field::Long, $rules['ST_DIMENSION']($call)?->storageField);
         self::assertSame(21, $rules['CONTAINS']($call)?->length);
         self::assertSame(Field::LongLong, $rules['CONTAINS']($call)->field);
@@ -59,6 +62,7 @@ final class SpatialResultsTest extends TestCase
         self::assertEquals($geometry, $rules['ST_GEOMFROMTEXT']($call));
         self::assertEquals($geometry, $rules['ST_MULTIPOINTFROMTEXT']($call));
         self::assertEquals($geometry, $rules['GEOMETRYCOLLECTION']($call));
+        self::assertEquals($geometry, $rules['ST_POINTN']($call));
     }
 
     public function testRulesResolveGeometryOutputFormatsWithoutExecutionState(): void

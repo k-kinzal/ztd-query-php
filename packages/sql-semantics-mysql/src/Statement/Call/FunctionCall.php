@@ -110,7 +110,7 @@ final class FunctionCall implements Scalar
         }
         $invalid = (new \SqlSemantics\Platform\MySql\Rules\Call\NamedConstant())->check($this, $derivation);
         $invalid ??= $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : (new RoutineCalls())->signature($this, $derivation);
-        if ($this->schema === null && count($this->arguments) === 1) {
+        if ($this->schema === null && $invalid === null) {
             Deprecation::spatial($this->name->value, $derivation);
         }
         $facts = [];

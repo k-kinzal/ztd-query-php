@@ -16,6 +16,7 @@ return [
     3516 => ['22S01', '%s value is a geometry of unexpected type %s in %s.'],
     3616 => ['22S02', 'Longitude %s is out of range in function %s. It must be within (%s, %s].'],
     3617 => ['22S03', 'Latitude %s is out of range in function %s. It must be within [%s, %s].'],
+    3618 => ['22S00', '%s(%s) has not been implemented for geographic spatial reference systems.'],
     3558 => ['22023', "Invalid option key '%s' in function %s."],
     3559 => ['22023', "Invalid value '%s' for option '%s' in function '%s'."],
     3560 => ['22023', "The string '%s' is not a valid key = value pair in function %s."],

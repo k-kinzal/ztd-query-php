@@ -44,6 +44,7 @@ final class SpatialWarningsTest extends TestCase
         $reader = new SpatialWarnings();
 
         self::assertTrue($reader->complete('SRID(Point(1,2))', $session));
+        self::assertFalse($reader->complete('GEOMETRYN(NULL,1)', $session));
         self::assertFalse($reader->complete('SRID(', $session));
         self::assertFalse($reader->complete('SRID(1,2)', $session));
         self::assertFalse($reader->complete('db.SRID(NULL)', $session));

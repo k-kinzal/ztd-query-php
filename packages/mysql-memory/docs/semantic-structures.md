@@ -4311,3 +4311,18 @@ Semantics tests / 20,257 assertions. Both static-check suites pass, including
 29,668 Memory dependencies, 37,009 Semantics dependencies and 1,030 reviewed
 semantic value definitions. These observations do not close the remaining
 consumer gaps or replace the final-revision acceptance campaigns.
+
+Component readers consume the geometry and index operand domains of their
+semantic calls. They preserve the parent's SRID, nested collections, one-based
+member selection, NULL short-circuiting and explicit-versus-implicit conversion
+warnings. SQL Semantics supplies geometry/count/closure result domains and
+release-specific deprecations, including valid calls with multiple arguments.
+The input boundary distinguishes deprecations requiring completed
+contextualization from those already raised before a trailing syntax failure.
+
+The component matrix compares 402 complete inputs through text and prepared
+protocols on 5.6, 5.7, 8.0, 8.4 and 9.1. All ten cases pass. Five direct histories
+pass 545 assertions: each preserves the same query across 35 generated geometry,
+index, invalid-payload and NULL states, with an opaque non-SQL request label.
+These checks do not replace the whole-model construction and final-revision
+campaign gates in the acceptance contract.

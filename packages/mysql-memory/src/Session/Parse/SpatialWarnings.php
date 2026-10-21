@@ -75,6 +75,8 @@ final class SpatialWarnings
 
     /**
      * Tells whether the candidate resolves as a native one-argument call.
+     * Multi-argument spatial deprecations require completed contextualization,
+     * so they do not precede a later syntax failure in the same statement.
      */
     public function complete(string $expression, Session $session): bool
     {
