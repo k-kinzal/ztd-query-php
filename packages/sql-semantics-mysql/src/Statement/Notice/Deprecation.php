@@ -10,10 +10,10 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * The warning the server raises for a deprecated or converted construct while it reads a statement.
  *
- * Rule: MYSQL-DEPRECATION-001. The server raises the warning of a construct
- * when it parses the construct, so the warnings come before any problem of
- * the statement and in the order the constructs are written; a statement
- * that fails keeps them. Each construct warns once per occurrence, in the
+ * Rule: MYSQL-DEPRECATION-001. Syntax warnings precede name resolution, while
+ * contextualization and resolution notices are reported only when their stage
+ * reaches the construct. A statement that fails keeps the preceding notices.
+ * Each construct warns once per occurrence and preparation, in the
  * releases that deprecate it (Deprecated::warnedIn()). Terminates: no
  * recursion. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.
@@ -117,10 +117,16 @@ final class Deprecation implements CodedWarning
      * Answers when the construct raises its warning.
      * FOUND_ROWS() and system variables warn during contextualization, after grammar operands
      * have been read. Observed with unknown COLLATE operands on MySQL 8.0–9.1.
+     * VALUES() warns only when its column resolves, after tables open and before
+     * later operands resolve. Its semantic subject is retained in Facts.
      */
     public function phase(): NoticePhase
     {
-        return in_array($this->construct, [Deprecated::FoundRows, Deprecated::SystemVariable], true) ? NoticePhase::Contextualization : NoticePhase::Syntax;
+        return match ($this->construct) {
+            Deprecated::ValuesFunction, Deprecated::ValuesElsewhere => NoticePhase::Resolution,
+            Deprecated::FoundRows, Deprecated::SystemVariable => NoticePhase::Contextualization,
+            default => NoticePhase::Syntax,
+        };
     }
 
     /**

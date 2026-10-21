@@ -27,6 +27,21 @@ final class UpdateUseTest extends TestCase
         self::assertSame(1060, (new UpdateUse())->error($write, $session)->getCode());
     }
 
+    public function testNamesUsesNestedCollisionIdentitiesBeforeOpeningOuterTables(): void
+    {
+        $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $definition = $session->analyze('CREATE PROCEDURE p() UPDATE t,(SELECT 1 FROM u,u) q SET t.a=(1,2)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition);
+        $write = $definition->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate::class, $write);
+        $session->text = 'opaque non-SQL label';
+        self::assertSame("Not unique table/alias: 'u'", (new UpdateUse())->error($write, $session)->getMessage());
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT); INSERT INTO t VALUES(1); INSERT INTO u VALUES(2)');
+        $session->text = 'opaque non-SQL label';
+        self::assertSame("Not unique table/alias: 'u'", (new UpdateUse())->error($write, $session)->getMessage());
+        self::assertSame('opaque non-SQL label', $session->text);
+    }
+
     public function testRaiseKeepsAnUnreachedInstructionDormant(): void
     {
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');

@@ -50,6 +50,15 @@ final class CreationOptionsTest extends TestCase
         self::assertSame([['Error', 1478, 'InnoDB does not support FILE_BLOCK_SIZE=1'], ['Error', 3121, "Incorrect File Name 'text'."], ['Error', 1528, 'Failed to create TABLESPACE s'], ['Error', 1031, "Table storage engine for 's' doesn't have this option"]], $session->diagnostics->conditions);
     }
 
+    public function testCheckDoesNotApplyTheModernExtensionRangeToLegacyCreation(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run("CREATE TABLESPACE s ADD DATAFILE 'text' AUTOEXTEND_SIZE 1");
+        self::assertSame([3121, 1528, 1031], array_column($session->diagnostics->conditions, 1));
+        $session->query("CREATE TABLESPACE s ADD DATAFILE 's.ibd' AUTOEXTEND_SIZE 1");
+        self::assertArrayHasKey('s', $session->instance->registry->tablespaces);
+    }
+
     public function testLegacyKeepsTheAdditionalExtensionCondition(): void
     {
         $error = SchemaError::WrongFileName->error('longname');

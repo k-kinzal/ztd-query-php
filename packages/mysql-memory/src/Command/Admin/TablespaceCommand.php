@@ -31,7 +31,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EncryptionOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption;
-use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\RenameTablespace;
 use SqlSemantics\Statement\Operation;
@@ -130,7 +129,7 @@ final class TablespaceCommand implements Command
             $file = \MySqlMemory\Value\Encoding::convert($file, $client, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'));
         }
         (new Storage\CreationOptions())->check($statement, $registry, $legacy, $file);
-        $this->options($statement->options, [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)], $name, true);
+        $this->options($statement->options, [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)], $name, true, $legacy);
         $registry->tablespaces[$name] = new Tablespace($name, false, $file);
     }
 
@@ -184,7 +183,7 @@ final class TablespaceCommand implements Command
         $this->reserved($name);
         $this->find($name, $registry);
         $this->storedEngine($name, $options, $context);
-        $this->options($options, [SchemaError::AlterFilegroupFailed->value, SchemaError::AlterFilegroupFailed->message('TABLESPACE ' . $name)], $name, false);
+        $this->options($options, [SchemaError::AlterFilegroupFailed->value, SchemaError::AlterFilegroupFailed->message('TABLESPACE ' . $name)], $name, false, in_array($context?->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
     }
 
     /**
@@ -383,33 +382,32 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When an option is refused
      */
-    public function options(array $options, array $failed, string $name, bool $creating): void
+    public function options(array $options, array $failed, string $name, bool $creating, bool $legacy = false): void
     {
+        if (!$creating && array_filter($options, static fn ($option): bool => $option instanceof EncryptionOption) !== []) {
+            throw new SqlError(AdministrationError::KeyringMissing, AdministrationError::KeyringMissing->message(), null, [$failed, [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('168', 'Unknown (generic) error from engine')]]);
+        }
+        $extension = $legacy ? null : (new Storage\Autoextend())->problem($options);
+        if ($extension !== null) {
+            $engine = $creating ? [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)] : [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message((string) $extension->value, 'Unknown error ' . $extension->value)];
+            throw new SqlError($extension, $extension === SchemaError::AutoextendMultiple ? $extension->message('4M') : $extension->message(), null, [$failed, $engine]);
+        }
+        $encryption = null;
         foreach ($options as $option) {
             if ($option instanceof EncryptionOption) {
-                $value = strtoupper((new Literals())->bytes($option->encryption));
-                $engine = $creating ? [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('138', 'Unsupported extension used for table')] : [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('168', 'Unknown (generic) error from engine')];
-                if ($creating && !in_array($value, ['Y', 'N'], true)) {
-                    throw new SqlError(SchemaError::InvalidEncryption, SchemaError::InvalidEncryption->message(), null, [$failed, $engine]);
-                }
-                if ($value === 'Y' || !$creating) {
-                    throw new SqlError(AdministrationError::KeyringMissing, AdministrationError::KeyringMissing->message(), null, [$failed, $engine]);
-                }
+                $encryption = $option;
             }
-            if ($option instanceof SizeOption && $option->kind === SizeOptionKind::Autoextend) {
-                $size = $this->size($option);
-                $mega = '4194304';
-                $code = match (true) {
-                    $size !== '0' && (bccomp($size, $mega) < 0 || bccomp($size, bcmul($mega, '1024')) > 0) => SchemaError::AutoextendSize,
-                    bcmod($size, $mega) !== '0' => SchemaError::AutoextendMultiple,
-                    default => null,
-                };
-                if ($code !== null) {
-                    $engine = $creating ? [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)] : [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message((string) $code->value, 'Unknown error ' . $code->value)];
-
-                    throw new SqlError($code, $code === SchemaError::AutoextendMultiple ? $code->message('4M') : $code->message(), null, [$failed, $engine]);
-                }
-            }
+        }
+        if ($encryption === null) {
+            return;
+        }
+        $value = strtoupper((new Literals())->bytes($encryption->encryption));
+        $engine = $creating ? [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('138', 'Unsupported extension used for table')] : [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('168', 'Unknown (generic) error from engine')];
+        if ($creating && !in_array($value, ['Y', 'N'], true)) {
+            throw new SqlError(SchemaError::InvalidEncryption, SchemaError::InvalidEncryption->message(), null, [$failed, $engine]);
+        }
+        if ($value === 'Y' || !$creating) {
+            throw new SqlError(AdministrationError::KeyringMissing, AdministrationError::KeyringMissing->message(), null, [$failed, $engine]);
         }
     }
 

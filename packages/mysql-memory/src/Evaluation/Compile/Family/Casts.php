@@ -68,7 +68,8 @@ final class Casts
         foreach ($walker->find($this->compiler->planner->statement, \SqlSemantics\Platform\MySql\Statement\Call\CallArgument::class) as $argument) {
             if ($bare->bare($argument->expression) === $node) {
                 $profile = new \SqlSemantics\Contract\LanguageProfile($this->compiler->settings->release());
-                $name = (new \SqlSemantics\Platform\MySql\Rules\Query\ItemNaming($profile))->name(new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($argument->expression, $argument->alias));
+                $settings = $this->compiler->settings->resolution();
+                $name = (new \SqlSemantics\Platform\MySql\Rules\Query\ItemNaming($profile, $settings->client, $settings))->name($argument);
                 return $name instanceof \SqlSemantics\Statement\Identifier\Name ? $name->value : '(null)';
             }
         }

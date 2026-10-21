@@ -39,21 +39,31 @@ final class Walker
      * Definitions are reached through their semantic reference identity. Unused
      * WITH bodies remain inert, and recursive bindings are visited once.
      *
+     * @param bool $childrenFirst Whether an occurrence follows its completed operands
      * @return list<Node>
      */
-    public function resolved(Node $root, \SqlSemantics\Statement\Fact\Facts $facts): array
+    public function resolved(Node $root, \SqlSemantics\Statement\Fact\Facts $facts, bool $childrenFirst = false): array
     {
-        $pending = [$root];
+        /** @var list<array{Node, bool}> $pending */
+        $pending = [[$root, false]];
         $seen = [];
         $found = [];
         while ($pending !== []) {
-            $node = array_pop($pending);
+            [$node, $completed] = array_pop($pending);
+            if ($completed) {
+                $found[] = $node;
+                continue;
+            }
             $id = spl_object_id($node);
             if (isset($seen[$id])) {
                 continue;
             }
             $seen[$id] = true;
-            $found[] = $node;
+            if ($childrenFirst) {
+                $pending[] = [$node, true];
+            } else {
+                $found[] = $node;
+            }
             $properties = get_object_vars($node);
             unset($properties['with']);
             $children = [];
@@ -68,7 +78,9 @@ final class Walker
                     $children[] = $resolution->definition;
                 }
             }
-            array_push($pending, ...array_reverse($children));
+            foreach (array_reverse($children) as $child) {
+                $pending[] = [$child, false];
+            }
         }
         return $found;
     }

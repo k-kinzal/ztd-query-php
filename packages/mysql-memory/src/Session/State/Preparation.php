@@ -56,6 +56,11 @@ final class Preparation
     public ?WeakMap $conditions = null;
 
     /**
+     * @var WeakMap<\SqlSemantics\Statement\Node, list<\SqlSemantics\Statement\Declaration\Table|null>>|null Successfully prepared stored instructions and their resolved relation identities
+     */
+    public ?WeakMap $resolutionNotices = null;
+
+    /**
      * The current operation's resolved typing context, scoped to command execution.
      */
     public ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings $resolution = null;

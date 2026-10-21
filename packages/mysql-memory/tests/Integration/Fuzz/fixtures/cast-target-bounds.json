@@ -153,5 +153,12 @@
     "SELECT CAST(@x AS DECIMAL(66,2)) AS v FROM t",
     "SELECT CAST(@@max_allowed_packet AS DECIMAL(66,2)) AS v FROM t",
     "SELECT CAST(a AS DECIMAL(66,2)) AS v FROM t",
-    "SELECT CAST('a' 'b' AS DECIMAL(66,2)) AS v FROM t"
+    "SELECT CAST('a' 'b' AS DECIMAL(66,2)) AS v FROM t",
+    "SELECT ABS(cast('123' as decimal(1))) AS a",
+    "SELECT ABS( CAST( '123' AS DECIMAL(1) ) ) AS a",
+    "SELECT ABS((CAST('123' AS DECIMAL(1)))) AS a",
+    "SELECT ABS(CONVERT('123',DECIMAL(1))) AS a",
+    "SELECT COALESCE(CAST('123' AS DECIMAL(1)),NULL) AS a",
+    "SELECT ABS(cast('123' /*あ*/ as decimal(1))) AS a",
+    "SELECT ABS(cast('123' /*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/ as decimal(1))) AS a"
 ]

@@ -18,6 +18,19 @@ use SqlSemantics\Statement\Source\SourceNotice;
 #[Small]
 final class WarningsTest extends TestCase
 {
+    public function testSubjectsRetainIdentityWithoutAnyInputLocations(): void
+    {
+        $subject = new IntegerLiteral('1');
+        $notice = self::createStub(Warning::class);
+        $other = self::createStub(Warning::class);
+        $warnings = new Warnings(new SourceMap());
+        $warnings->append($notice, $subject);
+        $warnings->append($other, null);
+
+        self::assertSame([[$notice, $subject]], $warnings->subjects());
+        self::assertSame([$notice, $other], $warnings->all());
+    }
+
     public function testAppendPreservesUnlocatedDerivationOrder(): void
     {
         $first = self::createStub(Warning::class);

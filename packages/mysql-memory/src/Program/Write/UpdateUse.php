@@ -100,29 +100,32 @@ final class UpdateUse
 
     }
     /**
-     * Resolves implicit input databases before reaching an exact alias collision.
-     * Later inputs cannot replace a collision already reached in the list.
+     * Orders implicit input databases and collisions by their semantic occurrences.
+     * A derived input completes before its alias is registered. Bound CTE identities
+     * activate their bodies; unused definitions do not contribute a collision.
      *
      * @throws SqlError When a reached input has no database or repeats a fixed name
      */
     public function names(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
     {
-        $prefix = [];
-        foreach ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($write->tables) as $source) {
-            if ($session->variables->database === '') {
-                foreach ((new \MySqlMemory\Session\Access\RelationEntry())->nodes($source, $facts) as $node) {
-                    if (($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $facts->covers($node)) {
-                        $table = $facts->relation($node)->table;
-                        if ($table instanceof MissingTable && $table->name->schema === null) {
-                            throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
-                        }
+        $collisions = [];
+        foreach ($facts->diagnostics as $problem) {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable && $problem->relation !== null) {
+                $collisions[spl_object_id($problem->relation)] = $problem;
+            }
+        }
+        $inputs = [...$write->tables, ...$write->assignments, ...($write->where === null ? [] : [$write->where]), ...$write->orderBy];
+        foreach ($inputs as $input) {
+            foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->resolved($input, $facts, true) as $node) {
+                if ($session->variables->database === '' && ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $facts->covers($node)) {
+                    $table = $facts->relation($node)->table;
+                    if ($table instanceof MissingTable && $table->name->schema === null) {
+                        throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
                     }
                 }
-            }
-            $prefix[] = $source;
-            $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($prefix);
-            if ($problem !== null) {
-                throw (new Errors())->error($problem, $session);
+                if (isset($collisions[spl_object_id($node)])) {
+                    throw (new Errors())->error($collisions[spl_object_id($node)], $session);
+                }
             }
         }
     }

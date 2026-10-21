@@ -36,6 +36,8 @@ final class InsertedColumnTest extends TestCase
 
         self::assertCount(0, $semantics->analyze('SELECT VALUES(nosuch) FROM t', [$t])->facts->warnings);
         self::assertCount(1, $semantics->analyze('SELECT VALUES(a) FROM t', [$t])->facts->warnings);
+        $query = $semantics->analyze('SELECT VALUES(a) FROM t', [$t]);
+        self::assertSame($query->field(0)->expression, $query->facts->warningSubject($query->facts->warnings[0]));
     }
 
     public function testRenderGluesTheParenthesis(): void

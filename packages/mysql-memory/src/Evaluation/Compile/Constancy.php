@@ -94,6 +94,9 @@ enum Constancy: int
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
         }
+        if ($node instanceof InsertedColumn) {
+            return self::inserted($node, $facts);
+        }
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable && !$node->lateral && $level > 0) {
             $level--;
         }
@@ -140,11 +143,12 @@ enum Constancy: int
     {
         return match (true) {
             $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
-            $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof WindowFunction, $node instanceof JsonObjectAggregate, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,
+            $node instanceof InsertedColumn => self::inserted($node, $facts),
+            $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof WindowFunction, $node instanceof JsonObjectAggregate, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn => self::Row,
             $node instanceof UserVariable => in_array(strtolower($node->name->value), $assigned, true) ? self::Row : self::Statement,
             $node instanceof SystemVariable, $node instanceof Parameter => self::Statement,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate ? self::Row : self::Statement,
-            $node instanceof FunctionCall => (!$node->native($release ?? ($legacy ? GrammarRelease::MySql5744 : GrammarRelease::MySql847)) ? self::Row : ($legacy && in_array(strtoupper($node->name->value), self::ACCOUNT_FUNCTIONS, true) ? self::Resolved : self::function(strtoupper($node->name->value), count($node->arguments))))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
+            $node instanceof FunctionCall => Preparation\CallLifetime::of($node, $legacy, $release)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
             $node instanceof KeywordCall => (!$legacy && ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser) ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
             default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release),
         };
@@ -161,6 +165,16 @@ enum Constancy: int
         $resolution = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
 
         return ($resolution instanceof ResolvedColumn || $resolution instanceof AliasTarget) && $resolution->depth >= $level ? self::Row : self::Resolved;
+    }
+
+    /**
+     * Uses the NULL result Semantics assigns to VALUES outside an inserted-row scope.
+     * The column still resolves before this value becomes constant.
+     */
+    public static function inserted(InsertedColumn $node, Facts $facts): self
+    {
+        $type = $facts->covers($node) ? $facts->scalar($node)->type : null;
+        return $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $type->descriptor->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null ? self::Resolved : self::Row;
     }
 
     /**

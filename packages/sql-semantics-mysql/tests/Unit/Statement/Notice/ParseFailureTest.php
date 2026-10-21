@@ -17,6 +17,13 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class ParseFailureTest extends TestCase
 {
+    public function testAParseFailureCannotClaimToBeAResolutionNotice(): void
+    {
+        $this->expectExceptionMessage('A parse failure belongs to grammar interpretation or contextualization, not name resolution.');
+
+        new ParseFailure(new UnknownCollation('nope'), phase: \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Resolution);
+    }
+
     public function testMessageIsTheTextOfTheProblem(): void
     {
         self::assertSame("Unknown collation: 'nope'", (new ParseFailure(new UnknownCollation('nope')))->message());

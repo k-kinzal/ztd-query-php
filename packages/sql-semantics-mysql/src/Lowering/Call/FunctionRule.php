@@ -354,21 +354,25 @@ final class FunctionRule
             $this->lowering->options->skip($form->node(0));
             $this->lowering->options->skip($form->node(2));
 
-            return $this->argumentValue($this->lowering->expressions->operand($form->node(1)), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)));
+            return $this->argumentValue($this->lowering->expressions->operand($form->node(1)), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)), $form->node(1), $form->node(3));
         }
         if ($form->signature !== 'udf_expr: expr select_alias') {
             throw ImplementationGap::production($form);
         }
 
-        return $this->argumentValue($this->lowering->expressions->operand($form->node(0)), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)));
+        return $this->argumentValue($this->lowering->expressions->operand($form->node(0)), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)), $form->node(0), $form->node(1));
     }
 
     /**
      * Retains a call argument's scalar, row or deferred-computation role.
      */
-    public function argumentValue(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, ?\SqlSemantics\Statement\Identifier\Name $alias = null, \SqlSemantics\Platform\MySql\Statement\Name\AliasMark $mark = \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As): CallArgument|DeferredCallArgument
+    public function argumentValue(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, ?\SqlSemantics\Statement\Identifier\Name $alias = null, \SqlSemantics\Platform\MySql\Statement\Name\AliasMark $mark = \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As, ?Node $syntax = null, ?Node $aliasSyntax = null): CallArgument|DeferredCallArgument
     {
-        return $operand instanceof Scalar ? new CallArgument($operand, $alias, $mark) : new DeferredCallArgument($operand, $alias, $mark);
+        if (!$operand instanceof Scalar) {
+            return new DeferredCallArgument($operand, $alias, $mark);
+        }
+        $item = $alias !== null || $syntax === null || $aliasSyntax === null ? null : $this->lowering->queries->named($operand, $syntax, $aliasSyntax);
+        return new CallArgument($operand, $alias, $mark, $item?->layout, $item?->spellingProfile);
     }
 
     /**

@@ -14,6 +14,25 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Statement}>
+     */
+    public static function providerPreparedCommands(): iterable
+    {
+        $name = new \SqlSemantics\Statement\Identifier\Name('p');
+        yield 'prepare' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare($name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid dynamic SQL'))];
+        yield 'execute' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute($name)];
+        yield 'deallocate' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate($name)];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPreparedCommands')]
+    public function testProtocolRefusesNestedPreparationWithoutLookingUpRuntimeState(\SqlSemantics\Platform\MySql\Statement\Statement $statement): void
+    {
+        $this->expectExceptionCode(1295);
+        $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
+        (new Preparation())->protocol($statement);
+    }
+
     public function testJsonNullsChecksTheCurrentLegacyDocumentWithoutItsRequestText(): void
     {
         $session = (new Instance('5.7.44'))->connect();

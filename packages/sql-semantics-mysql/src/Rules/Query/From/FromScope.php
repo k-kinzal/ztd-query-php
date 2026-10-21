@@ -67,7 +67,7 @@ final class FromScope
             }
             $key = ($relation->name === null ? '' : $names->fold($relation->name->schema->value ?? $current)) . "\0" . $names->fold($name->value);
             if (isset($seen[$key])) {
-                $derivation->report(new NonUniqueTable($name));
+                $derivation->report(new NonUniqueTable($name, $relation->relation));
 
                 return;
             }

@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Source\SourceMap;
 final class Warnings
 {
     /**
-     * @var list<array{Warning, int|null, Node|null}> Warnings, input boundaries and enclosing stored instructions
+     * @var list<array{Warning, int|null, Node|null, Node|null}> Warnings, input boundaries, enclosing stored instructions and semantic subjects
      */
     private array $entries = [];
 
@@ -47,7 +47,7 @@ final class Warnings
             }
         }
         $origin = $at === null ? null : $this->sources->of($at);
-        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction];
+        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction, $at];
     }
 
     /**
@@ -84,6 +84,22 @@ final class Warnings
         }
 
         return $instructions;
+    }
+
+    /**
+     * Retains semantic subjects independently of source locations.
+     *
+     * @return list<array{Warning, Node}>
+     */
+    public function subjects(): array
+    {
+        $subjects = [];
+        foreach ($this->entries as [$warning, , , $subject]) {
+            if ($subject !== null) {
+                $subjects[] = [$warning, $subject];
+            }
+        }
+        return $subjects;
     }
 
     /**

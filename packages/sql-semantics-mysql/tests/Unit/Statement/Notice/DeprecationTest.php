@@ -30,6 +30,8 @@ final class DeprecationTest extends TestCase
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, (new Deprecation(Deprecated::SystemVariable))->phase());
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, (new Deprecation(Deprecated::FoundRows))->phase());
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, (new Deprecation(Deprecated::BangNot))->phase());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Resolution, (new Deprecation(Deprecated::ValuesElsewhere))->phase());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Resolution, (new Deprecation(Deprecated::ValuesFunction))->phase());
     }
 
     public function testRaiseRecordsTheWarningOnlyInReleasesThatWarn(): void

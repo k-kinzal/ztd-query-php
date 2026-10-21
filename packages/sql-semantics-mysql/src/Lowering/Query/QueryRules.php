@@ -307,6 +307,14 @@ final class QueryRules
     }
 
     /**
+     * Retains the observable name of an already lowered argument or projection.
+     */
+    public function named(Scalar $value, Node $expression, Node $alias): SelectExpression
+    {
+        return (new ItemRule($this->lowering))->resolved($value, $expression, $alias);
+    }
+
+    /**
      * Lowers the index names of an index hint or of CACHE INDEX: a node of `opt_key_usage_list`; an absent
      * list is empty. A list that names the primary key with PRIMARY is lowered by indexKeys().
      *

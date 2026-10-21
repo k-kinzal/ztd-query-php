@@ -81,7 +81,7 @@ final class Structure
             $name = $table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference ? $table->alias ?? $table->name->name : $table->alias;
             $key = serialize([$physical, $physical ? $table->name->schema?->value : null, $name->value]);
             if (isset($seen[$key])) {
-                return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($name);
+                return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($name, $table);
             }
             $seen[$key] = true;
         }

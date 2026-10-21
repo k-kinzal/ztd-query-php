@@ -69,6 +69,11 @@ final class Facts
     private readonly array $warningInstructions;
 
     /**
+     * @var list<array{Warning, Node}> Semantic subjects, without source text or parser nodes
+     */
+    private readonly array $warningSubjects;
+
+    /**
      * @param list<array{Operand, ScalarFact}> $scalars The fact of each scalar expression
      * @param list<array{Node, RelationFact}> $relations The fact of each relation occurrence and table use
      * @param list<array{Query, QueryFact}> $queries The fact of each query
@@ -78,8 +83,9 @@ final class Facts
      * @param list<Warning> $warnings The conditions the statement raises without failing
      * @param list<array{Warning, Node}> $warningInstructions Explicit instruction ownership, independent of source locations
      * @param list<array{QualifiedName, Relation}> $references Names bound to particular input occurrences
+     * @param list<array{Warning, Node}> $warningSubjects Semantic occurrences that raised warnings
      */
-    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [], array $warningInstructions = [], array $references = [])
+    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [], array $warningInstructions = [], array $references = [], array $warningSubjects = [])
     {
         $this->scalars = $this->index($scalars);
         $this->relations = $this->index($relations);
@@ -92,6 +98,12 @@ final class Facts
         $seen = [];
         foreach ($this->warningInstructions as [$warning]) {
             Check::input(in_array($warning, $this->warnings, true) && !isset($seen[spl_object_id($warning)]), 'Each notice instruction identifies a distinct recorded warning.');
+            $seen[spl_object_id($warning)] = true;
+        }
+        $this->warningSubjects = Check::pairs($warningSubjects, Warning::class, Node::class, 'Notice subjects are ordered pairs of warnings and semantic nodes.');
+        $seen = [];
+        foreach ($this->warningSubjects as [$warning]) {
+            Check::input(in_array($warning, $this->warnings, true) && !isset($seen[spl_object_id($warning)]), 'Each notice subject identifies a distinct recorded warning.');
             $seen[spl_object_id($warning)] = true;
         }
     }
@@ -107,6 +119,19 @@ final class Facts
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Answers the semantic occurrence that raised a warning, independent of input text.
+     */
+    public function warningSubject(Warning $warning): ?Node
+    {
+        foreach ($this->warningSubjects as [$candidate, $subject]) {
+            if ($candidate === $warning) {
+                return $subject;
+            }
+        }
         return null;
     }
 
@@ -181,7 +206,7 @@ final class Facts
     public function forQuery(Query $query): self
     {
         $output = $this->query($query);
-        return new self(array_values($this->scalars), array_values($this->relations), array_values($this->queries), $this->declarations, $output, $output->diagnostics, $this->warnings, $this->warningInstructions, array_values($this->references));
+        return new self(array_values($this->scalars), array_values($this->relations), array_values($this->queries), $this->declarations, $output, $output->diagnostics, $this->warnings, $this->warningInstructions, array_values($this->references), $this->warningSubjects);
     }
 
     /**

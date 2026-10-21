@@ -108,7 +108,7 @@ final class ItemNaming
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an item that names itself has a layout, or a layout spells the canonical rendering
      */
-    public function name(SelectExpression $item, ?\SqlSemantics\Resolution\Environment $environment = null): Name|MissingInput
+    public function name(SelectExpression|\SqlSemantics\Platform\MySql\Statement\Call\CallArgument $item, ?\SqlSemantics\Resolution\Environment $environment = null): Name|MissingInput
     {
         if ($item->alias !== null) {
             $text = ltrim($item->alias->value, "\x00..\x20\x7F");
@@ -241,7 +241,7 @@ final class ItemNaming
     /**
      * Answers the text an item is named after: its layout, or the canonical rendering of its expression.
      */
-    public function text(SelectExpression $item): string
+    public function text(SelectExpression|\SqlSemantics\Platform\MySql\Statement\Call\CallArgument $item): string
     {
         $out = new Output(new Codec($this->profile->grammar, $this->profile->lexical));
         $out->layout($item->layout, $item->expression, $item->spellingProfile?->grammar === GrammarRelease::MySql5651);

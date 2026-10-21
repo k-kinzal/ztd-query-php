@@ -60,6 +60,15 @@ $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly
 
 `$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
 
+`$facts->warningSubject($warning)` identifies the semantic occurrence that raised
+a warning, when one was recorded. `$facts->warningInstruction($warning)` identifies
+its enclosing stored instruction. Both references use semantic object identity;
+they retain no source text, byte positions or parser objects. Subjects remain
+available when a statement is constructed directly without a `SourceMap`.
+MySQL distinguishes syntax, contextualization and resolution notices: a consumer
+can report a resolution notice only after reaching its subject, without parsing
+the input again or reconstructing which expression produced the notice.
+
 A scalar fact can also publish a `replacement`: a bound expression evaluated in place of that occurrence. It is a strict descendant in the same operation, with its own facts and original name bindings. Consumers may compile it directly; the original statement and its rendered SQL stay intact. For example, MySQL resolves `(SELECT 1 LIMIT 0)` to its selected expression and returns `1`. A scalar subquery that reads table rows still needs query execution and can return NULL or raise a multiple-row error. Which forms are reduced depends on the dialect and release.
 
 An expression's `type` describes its logical result for use by parent expressions. MySQL window expressions keep that type through scalar subqueries. Storing a result in a temporary column can change its reported field type, width and flags; an executor applies those storage rules when planning materialization. A derived table exposes its stored column types to the query that reads it. These boundaries keep expression inference independent of a temporary column's representation.
@@ -298,3 +307,11 @@ $parameters->field(1)->type->missing[0]->describe(); // => 'the value bound to p
 ```
 
 A version 1 context declares relations only. Routines, data types and session variables cannot be declared yet; a fact that needs them names them as missing inputs instead of guessing.
+
+For MySQL input-name collisions, `NonUniqueTable::relation` identifies the later
+relation occurrence when the diagnostic comes from a bound query namespace.
+The decoded alias alone cannot identify an occurrence: callers may share the
+same immutable `Name` value between different tables. Consumers can order the
+condition with nested input preparation using that relation identity, without
+resolving aliases again or consulting source text. Administration diagnostics
+that do not belong to a query relation can leave this optional reference empty.

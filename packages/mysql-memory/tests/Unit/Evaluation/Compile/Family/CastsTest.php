@@ -91,4 +91,14 @@ final class CastsTest extends TestCase
         ], $session->diagnostics->conditions);
     }
 
+    public function testLabelReadsAnArgumentsSpellingUnderTheResolvedClientCharset(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES utf8mb4');
+        $session->query("SELECT ABS(cast('123' /*あ*/ as decimal(1))) AS result");
+        self::assertSame([
+            ['Warning', 1264, "Out of range value for column 'cast('123' /*あ*/ as decimal(1))' at row 1"],
+        ], $session->diagnostics->conditions);
+    }
+
 }

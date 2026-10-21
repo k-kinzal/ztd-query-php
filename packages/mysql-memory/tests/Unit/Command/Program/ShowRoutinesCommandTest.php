@@ -16,6 +16,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ShowRoutinesCommandTest extends TestCase
 {
+    public function testEmptyHeadingsRetainTheDirectDictionaryAliasesAndFlags(): void
+    {
+        $headings = (new ShowRoutinesCommand())->emptyHeadings(true, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        self::assertSame(['information_schema', 'sch', 20609], [$headings[0]->schema, $headings[0]->originalTable, $headings[0]->flags]);
+        self::assertSame(['rtn', 20481], [$headings[1]->originalTable, $headings[1]->flags]);
+        self::assertSame(['cs_client', 20485], [$headings[9]->originalTable, $headings[9]->flags]);
+        self::assertTrue($headings[5]->text);
+    }
+
     public function testExecuteKeepsDirectTemporalMetadataForAConstantFalseCondition(): void
     {
         $session = (new Instance())->connect();

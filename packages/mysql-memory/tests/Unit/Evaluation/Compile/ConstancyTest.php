@@ -21,6 +21,18 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ConstancyTest extends TestCase
 {
+    public function testInsertedUsesTheResolvedNullRoleOutsideAWrittenRow(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $operation = $session->analyze('SELECT VALUES(a) FROM t');
+        $expression = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn::class, $expression);
+        self::assertSame(Constancy::Resolved, Constancy::inserted($expression, $operation->facts));
+        self::assertSame(Constancy::Resolved, Constancy::of($expression, $operation->facts));
+        self::assertSame(Constancy::Row, Constancy::inserted($expression, new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [])));
+    }
+
     public function testOfUsesSemanticNativeClassificationForKeywordNamedStoredFunctions(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT `COLLATION`(3), ABS(3), d.ABS(3)');

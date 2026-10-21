@@ -428,6 +428,6 @@ final class Derivation
      */
     public function facts(): Facts
     {
-        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->conditions->all(), $this->readingWarnings(), $this->warnings->instructions(), array_values($this->references));
+        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->conditions->all(), $this->readingWarnings(), $this->warnings->instructions(), array_values($this->references), $this->warnings->subjects());
     }
 }

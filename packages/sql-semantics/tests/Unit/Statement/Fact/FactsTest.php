@@ -24,6 +24,26 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FactsTest extends TestCase
 {
+    public function testWarningSubjectRetainsTheExactOccurrenceWithoutSourcePositions(): void
+    {
+        $subject = new IntegerLiteral('1');
+        $warning = self::createStub(\SqlSemantics\Statement\Fact\Warning::class);
+        $other = self::createStub(\SqlSemantics\Statement\Fact\Warning::class);
+        $facts = new Facts([], [], [], [], null, [], [$warning, $other], warningSubjects: [[$warning, $subject]]);
+
+        self::assertSame($subject, $facts->warningSubject($warning));
+        self::assertNull($facts->warningSubject($other));
+    }
+
+    public function testAWarningCannotHaveTwoSemanticSubjects(): void
+    {
+        $subject = new IntegerLiteral('1');
+        $warning = self::createStub(\SqlSemantics\Statement\Fact\Warning::class);
+        $this->expectExceptionMessage('Each notice subject identifies a distinct recorded warning.');
+
+        new Facts([], [], [], [], null, [], [$warning], warningSubjects: [[$warning, $subject], [$warning, $subject]]);
+    }
+
     public function testForQueryKeepsItsConditionsAndResolvedDependenciesWithoutSiblingConditions(): void
     {
         $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (SELECT missing_a), missing_b');

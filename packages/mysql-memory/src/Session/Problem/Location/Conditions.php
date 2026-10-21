@@ -36,6 +36,7 @@ final class Conditions
         $writes = new WritePreparation();
         $deferred = $writes->deferred($operation->statement, $session, $prepared, $located);
         $first = Locations::first(array_diff_key($located, $deferred));
+        (new ResolutionNotices())->report($operation, $session, $prepared, $first[1][1] ?? null);
         if ($first !== null) {
             $error = (new Errors())->located($first[0], $first[1][0], isset($matched[spl_object_id($first[0])]), $session, $operation->statement);
             throw $writes->reported($error, $operation->statement, $session, $prepared, $first[1][1]);

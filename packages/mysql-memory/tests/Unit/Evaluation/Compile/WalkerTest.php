@@ -56,6 +56,16 @@ final class WalkerTest extends TestCase
         self::assertSame(['1'], array_values(array_map(static fn (NumberLiteral $literal): string => $literal->text, array_filter($nodes, static fn ($node): bool => $node instanceof NumberLiteral))));
     }
 
+    public function testResolvedCanVisitCompletedOperandsBeforeTheirOwners(): void
+    {
+        $leaf = new NumberLiteral('1');
+        $inner = new Grouped($leaf);
+        $outer = new Grouped($inner);
+        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, []);
+        self::assertSame([$leaf, $inner, $outer], (new Walker())->resolved($outer, $facts, true));
+        self::assertSame([$outer, $inner, $leaf], (new Walker())->resolved($outer, $facts));
+    }
+
     public function testResolvedTerminatesAtRecursiveBindings(): void
     {
         $session = (new Instance())->connect();

@@ -43,6 +43,7 @@ final class ParseFailure implements Warning
      */
     public function __construct(public readonly Diagnostic $problem, public readonly bool $aborts = false, public readonly NoticePhase $phase = NoticePhase::Syntax, public readonly bool $endsProgramStatement = true)
     {
+        \SqlSemantics\Diagnostic\Check::input($phase !== NoticePhase::Resolution, 'A parse failure belongs to grammar interpretation or contextualization, not name resolution.');
     }
 
     /**

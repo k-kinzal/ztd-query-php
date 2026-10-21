@@ -28,6 +28,20 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 #[Medium]
 final class QueryRulesTest extends TestCase
 {
+    public function testNamedRetainsTheSpellingOfAnAlreadyLoweredCallArgument(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT ABS(cast('123' as decimal(1))) AS result");
+
+        self::assertSame("SELECT ABS(cast('123' as decimal(1))) AS result", $operation->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class, $operation->statement->query->items[0]->expression);
+        $arguments = $operation->statement->query->items[0]->expression->arguments;
+        self::assertCount(1, $arguments);
+        self::assertSame("cast('123' as decimal(1))", $arguments[0]->layout?->text());
+    }
+
     public function testLegacyParenthesizedQueryRetainsItsCompleteWriteSource(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1,2) FROM missing)');

@@ -34,12 +34,7 @@ final class Preparation
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
-            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
-        }
-        if (($operation->statement instanceof \SqlSemantics\Statement\Script && $operation->statement->statements === []) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
-            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
-        }
+        $this->protocol($operation->statement);
         $this->program($operation, $session);
         (new Reading())->read($operation, $session, true);
         (new DefaultDatabase())->check($operation->statement, $session);
@@ -67,6 +62,23 @@ final class Preparation
             foreach ($application->resourceWarnings as [$code, $message]) {
                 $session->diagnostics->warning($code, $message);
             }
+        }
+    }
+
+    /**
+     * Refuses statements without a prepared-protocol form before runtime lookup.
+     * This includes SQL PREPARE, EXECUTE and DEALLOCATE themselves, independently
+     * of the connection's database, named statements and dynamic input values.
+     *
+     * @throws SqlError When the command cannot be prepared
+     */
+    public function protocol(\SqlSemantics\Statement\Statement $statement): void
+    {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+        }
+        if (($statement instanceof \SqlSemantics\Statement\Script && $statement->statements === []) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
     }
 

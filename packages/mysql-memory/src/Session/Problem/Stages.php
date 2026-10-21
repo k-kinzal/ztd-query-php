@@ -65,6 +65,7 @@ final class Stages
      */
     public static function grammar(array $warnings, bool $legacy, ?\SqlSemantics\Statement\Fact\Facts $facts = null): array
     {
+        $warnings = array_filter($warnings, static fn (Warning $warning): bool => !$warning instanceof Deprecation || $warning->phase() !== \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Resolution);
         if ($legacy) {
             return $warnings;
         }

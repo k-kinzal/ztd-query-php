@@ -31,6 +31,7 @@ final class CreationOptions
     public function check(CreateTablespace $statement, Registry $registry, bool $legacy, string $file): void
     {
         $problem = $this->block($statement->options);
+        $extension = $legacy ? null : (new Autoextend())->problem($statement->options);
         $name = $statement->name->value;
         $failure = null;
         try {
@@ -45,9 +46,14 @@ final class CreationOptions
                 $failure = $legacy ? $this->legacy($error, $file, $name) : $error;
             }
         }
-        if ($problem !== null) {
+        if ($problem !== null || $extension !== null) {
+            $conditions = $problem === null ? [] : [[SchemaError::IllegalCreateOption->value, $problem]];
+            if ($extension !== null) {
+                $conditions[] = [$extension->value, $extension === SchemaError::AutoextendMultiple ? $extension->message('4M') : $extension->message()];
+            }
+            $first = array_shift($conditions);
             $following = $failure === null ? [[SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message('TABLESPACE ' . $name)], [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)]] : [[$failure->getCode(), $failure->getMessage()], ...$failure->following];
-            throw new SqlError(SchemaError::IllegalCreateOption, $problem, $failure, $following);
+            throw new SqlError(SchemaError::from($first[0]), $first[1], $failure, [...$conditions, ...$following]);
         }
         if ($failure !== null) {
             throw $failure;

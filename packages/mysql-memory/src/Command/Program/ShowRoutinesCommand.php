@@ -60,7 +60,7 @@ final class ShowRoutinesCommand implements Command
         $listing = new Listing($this->headings($language, $session->settings()->release(), RoutineLookup::single($statement->filter, $operation->facts)));
         $result = $listing->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
 
-        return $listing->constantEmpty ? (new Listing($this->headings($language, $session->settings()->release(), true)))->sent([], $context) : $result;
+        return $listing->constantEmpty ? (new Listing($this->emptyHeadings($language, $session->settings()->release())))->sent([], $context) : $result;
     }
 
     /**
@@ -99,5 +99,22 @@ final class ShowRoutinesCommand implements Command
         $origins = ['Db' => 'ROUTINE_SCHEMA', 'Name' => 'ROUTINE_NAME', 'Type' => 'ROUTINE_TYPE', 'Definer' => 'DEFINER', 'Modified' => 'LAST_ALTERED', 'Created' => 'CREATED', 'Security_type' => 'SECURITY_TYPE', 'Comment' => 'ROUTINE_COMMENT', 'character_set_client' => 'CHARACTER_SET_CLIENT', 'collation_connection' => 'COLLATION_CONNECTION', 'Database Collation' => 'DATABASE_COLLATION'];
 
         return array_map(static fn (Heading $heading): Heading => new Heading($heading->name, $heading->field, $heading->length, $heading->flags & (ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ($heading->text ? 0 : ColumnFlag::Binary->value)), $heading->decimals, $heading->text, $origins[$heading->name] ?? $heading->name, $table, $table, 'information_schema', $heading->collation), $headings);
+    }
+
+    /**
+     * Retains base-catalog aliases and flags when a constant predicate eliminates the scan.
+     * Observed with FALSE and the resolved NULL result of VALUES on native servers.
+     *
+     * @return list<Heading>
+     */
+    public function emptyHeadings(bool $language, GrammarRelease $release): array
+    {
+        $headings = $this->headings($language, $release, true);
+        if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+            return $headings;
+        }
+        $keys = ['Db', 'Name', 'Type', 'Definer', 'character_set_client', 'collation_connection', 'Database Collation'];
+        $origins = ['Db' => 'sch', 'character_set_client' => 'cs_client', 'collation_connection' => 'coll_conn', 'Database Collation' => 'coll_db'];
+        return array_map(static fn (Heading $heading): Heading => new Heading($heading->name, $heading->field, $heading->length, $heading->flags | (in_array($heading->name, $keys, true) ? 16384 : 0), $heading->decimals, $heading->text, $heading->originalName, $heading->table, $origins[$heading->name] ?? 'rtn', 'information_schema', $heading->collation), $headings);
     }
 }

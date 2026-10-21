@@ -25,6 +25,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
+    public function testGrammarLeavesResolutionNoticesForTheirSemanticSubjects(): void
+    {
+        $resolution = new Deprecation(Deprecated::ValuesElsewhere);
+        $syntax = new Deprecation(Deprecated::BinaryOperator);
+        self::assertSame([1 => $syntax], Stages::grammar([$resolution, $syntax], false));
+        self::assertSame([1 => $syntax], Stages::grammar([$resolution, $syntax], true));
+    }
+
     public function testGrammarRetainsOnlyConditionsFromReachedStages(): void
     {
         $call = new Deprecation(Deprecated::FoundRows);
