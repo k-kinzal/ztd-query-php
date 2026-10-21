@@ -1642,6 +1642,26 @@ that condition without converting it into a row-width error. Names and other
 compound expression types still depend on resolution. This operand-domain constraint does
 not close the outstanding whole-model invariant gate.
 
+The ordinary conversion's `TimeZone` enum exposes only `Utc` (`UTC`) and
+`ZeroOffset` (`+00:00`). Type-driven generation chooses those cases without a
+special string pool or execution-based filtering. Installing another UTC alias in the native time-zone catalog makes
+that alias usable by `CONVERT_TZ`, but does not make it valid for this cast.
+`DeferredTimeZone` retains such a zone inside a stored instruction. Preparation
+still resolves its input first: a missing column or incompatible resolved field
+precedes the zone condition. Direct properties exercise skipped and reached
+instructions; native histories check missing, empty and populated tables,
+PREPARE, and installed aliases on MySQL 8.0, 8.4 and 9.1.
+
+Fixed predicate and function results are checked through the existing semantic
+type facts under open contexts for every release supporting this cast. Unknown
+catalog inputs stay unresolved; diagnostics are not used as an execution
+eligibility test. A direct parameter and TIMESTAMPADD cannot supply this input
+role: native PREPARE refuses them before binding, including when the arithmetic
+reads a TIMESTAMP column. Their stored forms retain the conversion condition.
+When Memory prepares retained expressions, parameter positions and initial
+domains come from their semantic structure. This preserves dependency ordering
+without recovering the original SQL or parser tree.
+
 Named time-zone availability is initial instance state, independent of the SQL
 structure. An empty named catalog retains numeric offsets and SYSTEM, while
 named conversions and mysql.time_zone queries observe the empty state. Native

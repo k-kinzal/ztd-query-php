@@ -124,15 +124,15 @@ final class ConstructRule
     public function zone(Form $form): AtTimeZone|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone
     {
         $operand = $this->lowering->expressions->operand($form->node(2));
-        $zone = $this->lowering->literals->text($form->node(7));
+        $zone = new \SqlSemantics\Platform\MySql\Statement\Literal\Text($this->lowering->literals->bytes($form->node(7)));
         $precision = $this->lowering->types->precision($form->node(10));
         if ((int) ($precision ?? '0') > 6) {
             throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST'), (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
         }
 
-        return !$operand instanceof Scalar || (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) === false
-            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, $zone, $this->flag($form->node(6)), $precision)
-            : new AtTimeZone($operand, $zone, $this->flag($form->node(6)), $precision);
+        return !$operand instanceof Scalar || (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) === false || !(new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->zone($zone)
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, $this->lowering->leaves->record($zone), $this->flag($form->node(6)), $precision)
+            : new AtTimeZone($operand, $this->lowering->leaves->record(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::from($zone->value)), $this->flag($form->node(6)), $precision);
     }
 
     /**

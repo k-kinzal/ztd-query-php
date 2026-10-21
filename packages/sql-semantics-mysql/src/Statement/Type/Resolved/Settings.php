@@ -143,6 +143,20 @@ final class Settings implements Session
     }
 
     /**
+     * Answers the same semantic session with a new parameter-domain snapshot.
+     *
+     * @param array<int, Domain> $parameters Parameter domains by written position
+     * @example Rebinding parameters without changing the original settings
+     *     $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults(\SqlSemantics\Contract\GrammarRelease::MySql847);
+     *     $bound = $settings->withParameters([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+     *     [$settings->parameters, $bound->parameters[0]->kind] // => [[], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer]
+     */
+    public function withParameters(array $parameters): self
+    {
+        return new self($this->connection, $this->divPrecisionIncrement, $this->server, $this->schemas, $this->groupConcatMaxLen, $this->userVariables, $parameters, $this->unsignedSubtraction, $this->client, $this->program, $this->functions, $this->timeNames, $this->blockEncryptionMode, $this->derivedMerge, $this->strict, $this->explicitDefaultsForTimestamp, $this->noZeroDate, $this->noZeroInDate, $this->allowInvalidDates, $this->handlers, $this->databaseCollation, $this->replicaNetTimeout, $this->fullTextParsers);
+    }
+
+    /**
      * Answers the settings of a new session of a release with the server defaults.
      */
     public static function defaults(GrammarRelease $release): self

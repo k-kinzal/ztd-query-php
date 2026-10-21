@@ -19,12 +19,22 @@ use SqlSemantics\Statement\Scalar;
  * that role. MIN/MAX preserve an argument's field family, not the special
  * TIMESTAMP literal role. Unresolved names still require their resolved facts.
  * Numeric and JSON aggregates, EXTRACT and GET_FORMAT cannot produce TIMESTAMP.
+ * TIMESTAMPADD produces date/time fields, not TIMESTAMP. A direct parameter is
+ * refused during native PREPARE, before any bound value can change its role.
  * Verified through standalone and stored SQL on MySQL 8.0, 8.4 and 9.1.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class TimeZoneOperands
 {
+    /**
+     * The conversion grammar's supported zone values, independently of the zone catalog.
+     */
+    public function zone(\SqlSemantics\Platform\MySql\Statement\Literal\Text $zone): bool
+    {
+        return \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::tryFrom($zone->value) !== null;
+    }
+
     /**
      * Answers an operand's intrinsic TIMESTAMP input role, independently of name resolution.
      * Casts, arithmetic, interval arithmetic and clocks have a fixed result
@@ -40,6 +50,8 @@ final class TimeZoneOperands
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall
+            || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Extract
             || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat) {
@@ -65,7 +77,7 @@ final class TimeZoneOperands
             };
         }
 
-        return $this->literal($operand);
+        return $this->literal($operand) ?? (new TimeZoneFacts())->input($operand);
     }
 
     /**

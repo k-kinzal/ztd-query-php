@@ -9,11 +9,9 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
-use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use WeakReference;
 
@@ -44,8 +42,8 @@ final class RowUse
         }
         $database = $session->variables->database;
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
-        $derivation = new Derivation($context);
-        $derivation->scalar($operand, new Environment($context));
+        $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($operand, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
+        $derivation->scalar($operand, $derivation->environment());
         $problems = $derivation->facts()->diagnostics;
         foreach ($problems as $problem) {
             if (Stages::parsed($problem)) {
@@ -129,7 +127,11 @@ final class RowUse
         try {
             foreach ($operand->operands() as $part) {
                 if ($part instanceof \SqlSemantics\Statement\Scalar || $part instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {
-                    $compiler->compile($part, $scope);
+                    if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone && $part instanceof \SqlSemantics\Statement\Scalar) {
+                        $compiler->timestamp($part, $scope);
+                    } else {
+                        $compiler->compile($part, $scope);
+                    }
                 } else {
                     $this->prepare($part, $compiler, $scope);
                     if (!$this->pending($part, $scope)) {

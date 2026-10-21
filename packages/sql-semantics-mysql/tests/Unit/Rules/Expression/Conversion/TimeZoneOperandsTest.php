@@ -19,6 +19,13 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class TimeZoneOperandsTest extends TestCase
 {
+    public function testZoneKeepsTheSupportedSpellingsDistinctFromOtherUtcAliases(): void
+    {
+        $rule = new TimeZoneOperands();
+        $accepted = array_map(static fn (string $zone): bool => $rule->zone(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($zone)), ['UTC', '+00:00', 'utc', 'Etc/UTC', '-00:00', '+00:01', '10']);
+        self::assertSame([true, true, false, false, false, false, false], $accepted);
+    }
+
     public function testLiteralLeavesAColumnDependentWhileGroupingRetainsLiteralRoles(): void
     {
         $rule = new TimeZoneOperands();
@@ -57,4 +64,11 @@ final class TimeZoneOperandsTest extends TestCase
         self::assertTrue($rule->field(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()));
         self::assertNull($rule->field(new ColumnUse(new Name('t'))));
     }
+    public function testInputExcludesParametersAndDateArithmeticBeforeValueBinding(): void
+    {
+        $rule = new TimeZoneOperands();
+        self::assertFalse($rule->input(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()));
+        self::assertFalse($rule->input(new \SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall(\SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation::Add, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day, new NumberLiteral('0'), new ColumnUse(new Name('a')))));
+    }
+
 }

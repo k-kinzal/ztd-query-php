@@ -16,8 +16,6 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
-use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
@@ -25,13 +23,11 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
-use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
@@ -53,26 +49,35 @@ final class OwnedDiagnosticTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, \SqlSemantics\Statement\Scalar, int}>
+     * @return iterable<string, array{string, \SqlSemantics\Statement\Scalar, int|null, list<int>}>
      */
     public static function providerStructures(): iterable
     {
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             $window = new WindowFunction(WindowFunctionKind::FirstValue, [new QuantifiedComparison(new BooleanLiteral(false), ComparisonOperator::Less, Quantifier::All, new ValuesQuery([new ValueRow([new NumberLiteral('1')])]))], new Name('\\'), NullTreatment::Respect);
-            $cast = new Comparison(ComparisonOperator::GreaterOrEqual, new AtTimeZone(new TimestampCall(TimestampOperation::Add, IntervalUnit::Minute, new NumberLiteral('1.5'), new Parameter('?')), new Text('1')), new DefaultOfColumn(new ColumnUse(new Name('utf8mb4'))));
-            yield $release . ':window' => [$release, $window, 3579];
-            yield $release . ':conversion' => [$release, $cast, 3998];
+            $cast = new Comparison(ComparisonOperator::GreaterOrEqual, new AtTimeZone(new ColumnUse(new Name('operand_value')), TimeZone::ZeroOffset), new DefaultOfColumn(new ColumnUse(new Name('utf8mb4'))));
+            yield $release . ':window' => [$release, $window, null, []];
+            yield $release . ':conversion' => [$release, $cast, 1049, [3998]];
         }
     }
 
+    /**
+     * @param list<int> $conditions
+     */
     #[DataProvider('providerStructures')]
-    public function testDirectStructuresRetainTheFirstCondition(string $release, \SqlSemantics\Statement\Scalar $node, int $code): void
+    public function testDirectStructuresRetainTheirContextualConditions(string $release, \SqlSemantics\Statement\Scalar $node, ?int $initial, array $conditions): void
     {
         $observation = (new Audit())->compare($node, new LanguageProfile(GrammarRelease::from('mysql-' . $release)));
         self::assertTrue($observation['matches'], serialize($observation));
-        $error = $observation['native']['error'];
-        self::assertIsArray($error);
-        self::assertSame($code, $error[0]);
+        $initialError = $observation['native']['error'] ?? [];
+        self::assertIsArray($initialError);
+        self::assertSame($initial, $initialError[0] ?? null);
+        $history = [$observation, ...$observation['transitions']];
+        $lastError = $history[count($history) - 1]['native']['error'] ?? [];
+        self::assertIsArray($lastError);
+        self::assertNull($lastError[0] ?? null);
+        $codes = array_column(array_column(array_column($history, 'native'), 'error'), 0);
+        self::assertSame([], array_filter($conditions, static fn (int $code): bool => !in_array($code, $codes, true)));
     }
 
     #[DataProvider('providerReleases')]
@@ -82,11 +87,13 @@ final class OwnedDiagnosticTest extends TestCase
             'SELECT FIRST_VALUE(FALSE < ALL (VALUES ROW())) IGNORE NULLS OVER absent',
             'SELECT FIRST_VALUE(FALSE < ALL (VALUES ROW(1), ROW())) OVER absent',
             'SELECT FIRST_VALUE(FALSE < ALL (VALUES ROW())) OVER ()',
+            'SELECT FIRST_VALUE(FALSE < ALL (VALUES ROW(1))) RESPECT NULLS OVER absent',
             'SELECT missing, EXISTS(VALUES ROW())',
             'SELECT EXISTS(VALUES ROW()), missing',
             'VALUES ROW(missing), ROW(1,2)',
             'VALUES ROW(1), ROW(missing,2)',
             "SELECT CAST(NULL AT TIME ZONE '1' AS DATETIME), missing",
+            "SELECT CAST(TIMESTAMPADD(MINUTE, 1.5, ?) AT TIME ZONE '1' AS DATETIME) >= DEFAULT(utf8mb4)",
             "SELECT CAST(missing AT TIME ZONE '1' AS DATETIME)",
             "SELECT missing, CAST(1 AT TIME ZONE '+00:00' AS DATETIME)",
             "SELECT CAST(1 AT TIME ZONE '+00:00' AS DATETIME), missing",
@@ -125,7 +132,7 @@ final class OwnedDiagnosticTest extends TestCase
     #[DataProvider('providerReleases')]
     public function testSameConversionRespondsToColumnTypeChanges(string $release): void
     {
-        $conversion = new AtTimeZone(new ColumnUse(new Name('a')), new Text('+00:00'));
+        $conversion = new AtTimeZone(new ColumnUse(new Name('a')), TimeZone::ZeroOffset);
         $node = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($conversion)], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')))));
         $container = Testcontainers::run(new DisposableMySql($release));
         try {

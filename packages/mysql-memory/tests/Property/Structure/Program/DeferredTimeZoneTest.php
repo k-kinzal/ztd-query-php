@@ -38,7 +38,7 @@ final class DeferredTimeZoneTest extends TestCase
     {
         foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
             for ($seed = 0; $seed < 20; $seed++) {
-                foreach (['plain', 'not', 'minus', 'null', 'not-null', 'cast', 'charset', 'if', 'case'] as $form) {
+                foreach (['plain', 'not', 'minus', 'null', 'not-null', 'cast', 'charset', 'if', 'case', 'zone'] as $form) {
                     yield $release . ':' . $seed . ':' . $form => [$release, $seed, $form];
                 }
             }
@@ -61,7 +61,8 @@ final class DeferredTimeZoneTest extends TestCase
             3 => new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now),
             0 => $operand,
         };
-        $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('+00:00'), $choices->integer(0, 1) === 1, (string) $choices->integer(0, 6));
+        $zone = $form === 'zone' ? ['10', 'Etc/UTC', '-00:00', 'utc'][$choices->integer(0, 3)] : '+00:00';
+        $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($form === 'zone' ? new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral() : $operand, new \SqlSemantics\Platform\MySql\Statement\Literal\Text($zone), $choices->integer(0, 1) === 1, (string) $choices->integer(0, 6));
         $value = match ($form) {
             'charset' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCharsetConversion($value, new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new Name('utf8mb4'))),
             'if' => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::If, [new NumberLiteral('0'), $value, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]),
@@ -80,7 +81,9 @@ final class DeferredTimeZoneTest extends TestCase
         $session->text = 'unrelated invalid input';
         $memory = new Memory();
         self::assertArrayNotHasKey('error', $memory->observe($session, $create));
-        $conditions = [['Error', '3998', 'Cannot cast value to TIMESTAMP WITH TIME ZONE.']];
+        $code = $form === 'zone' ? 1298 : 3998;
+        $message = $form === 'zone' ? "Unknown or incorrect time zone: '" . $zone . "'" : 'Cannot cast value to TIMESTAMP WITH TIME ZONE.';
+        $conditions = [['Error', (string) $code, $message]];
         foreach ([0, 1, 0] as $run) {
             self::assertArrayNotHasKey('error', $memory->observe($session, new SetVariables([new UserAssignment(new UserVariable(new Name('run')), new NumberLiteral((string) $run))])));
             $outcome = $memory->observe($session, $call);
@@ -88,7 +91,7 @@ final class DeferredTimeZoneTest extends TestCase
                 self::assertArrayNotHasKey('error', $outcome);
                 self::assertSame([], $outcome['warnings']);
             } else {
-                self::assertSame([3998, 'HY000', 'Cannot cast value to TIMESTAMP WITH TIME ZONE.'], $outcome['error'] ?? null);
+                self::assertSame([$code, 'HY000', $message], $outcome['error'] ?? null);
                 self::assertSame($conditions, $outcome['warnings']);
             }
         }

@@ -38,7 +38,9 @@ final class OwnedTest extends TestCase
 
     public function testLocatedConversionFollowsItsOperandButPrecedesTheNextExpression(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT CAST(NULL AT TIME ZONE 'bad' AS DATETIME), missing");
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(a INT)');
+        $operation = $semantics->analyze("SELECT CAST(a AT TIME ZONE '+00:00' AS DATETIME), missing FROM t", [$table]);
         $locator = (new Locator())->statement($operation->statement);
         [$names] = (new Locations())->names($operation, $locator, [], $operation->facts->diagnostics);
         $located = (new Owned())->located($locator, $operation->facts->diagnostics, $names);
@@ -46,7 +48,7 @@ final class OwnedTest extends TestCase
 
         self::assertNotNull($first);
         self::assertInstanceOf(TimeZoneConversion::class, $first[0]);
-        self::assertFalse($first[0]->operand);
+        self::assertTrue($first[0]->operand);
         self::assertCount(2, $located);
     }
 }

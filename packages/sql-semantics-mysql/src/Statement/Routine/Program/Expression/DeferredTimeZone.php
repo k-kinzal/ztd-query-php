@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
- * A stored time-zone conversion with an incompatible or deferred operand role.
+ * A stored time-zone conversion with an incompatible operand or zone role.
  *
  * The original typed operand is retained for preparation when its instruction
  * is reached. This value is not a Scalar and cannot be embedded in an ordinary
@@ -44,7 +44,7 @@ final class DeferredTimeZone implements DeferredOperand
      */
     public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null)
     {
-        Check::input(!$operand instanceof Scalar || (new TimeZoneOperands())->input($operand) === false, 'A deferred time-zone conversion retains an intrinsically incompatible operand.');
+        Check::input(!$operand instanceof Scalar || (new TimeZoneOperands())->input($operand) === false || !(new TimeZoneOperands())->zone($zone), 'A deferred time-zone conversion retains an incompatible operand or zone.');
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
         Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
@@ -69,11 +69,11 @@ final class DeferredTimeZone implements DeferredOperand
     }
 
     /**
-     * Answers the conversion's intrinsic operand constraint.
+     * Answers the intrinsic constraint; dependent operand types still require binding.
      */
     public function problem(): Diagnostic
     {
-        return $this->operand instanceof Scalar ? new TimeZoneConversion($this, true) : (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$this->operand]);
+        return $this->operand instanceof Scalar ? new TimeZoneConversion($this, (new TimeZoneOperands())->input($this->operand) === false) : (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$this->operand]);
     }
 
     /**

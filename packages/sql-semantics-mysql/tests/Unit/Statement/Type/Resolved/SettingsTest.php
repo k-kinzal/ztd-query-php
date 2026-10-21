@@ -114,4 +114,14 @@ final class SettingsTest extends TestCase
 
         self::assertSame([$domain, null], [$settings->function('d', 'f'), $settings->function('d', 'g')]);
     }
+    public function testWithParametersPreservesEveryOtherSessionInput(): void
+    {
+        $settings = Settings::defaults(GrammarRelease::MySql847);
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $bound = $settings->withParameters([3 => $domain]);
+        self::assertSame([], $settings->parameters);
+        self::assertSame([3 => $domain], $bound->parameters);
+        self::assertSame(array_diff_key(get_object_vars($settings), ['parameters' => true]), array_diff_key(get_object_vars($bound), ['parameters' => true]));
+    }
+
 }

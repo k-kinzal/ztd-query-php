@@ -42,6 +42,6 @@ final class CatalogHistory
         if ($code === 3651 && ($node instanceof Resource\AlterResourceGroup || $node instanceof Resource\DropResourceGroup || $node instanceof Resource\SetResourceGroup)) {
             return [new Resource\CreateResourceGroup($node->name, Resource\ResourceGroupKind::User)];
         }
-        return [...(new RoleHistory())->steps($node, $code), ...(new HandlerHistory())->steps($node, $code)];
+        return [...(new RoleHistory())->steps($node, $code), ...(new HandlerHistory())->steps($node, $code), ...(new Table\Changes())->steps($node, $code)];
     }
 }

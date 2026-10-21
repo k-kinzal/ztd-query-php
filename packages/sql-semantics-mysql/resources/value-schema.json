@@ -1207,7 +1207,7 @@
         "interval": "bool",
         "operand": "SqlSemantics\\Statement\\Scalar",
         "precision": "?string",
-        "zone": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+        "zone": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\TimeZone"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\Cast": {
         "array": "bool",
@@ -1217,6 +1217,10 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CharsetConversion": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
         "operand": "SqlSemantics\\Statement\\Scalar"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\TimeZone": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped": {
         "operand": "SqlSemantics\\Statement\\Scalar"

@@ -51,9 +51,10 @@ final class FunctionalQueriesTest extends TestCase
     public function testDeferredKeepsIndexedConversionsWithTheirIndexOwner(): void
     {
         $session = (new Instance())->connect();
-        $indexed = $session->analyze("CREATE PROCEDURE p() CREATE TABLE t(a INT,PRIMARY KEY ((CAST(a AT TIME ZONE 'text' AS DATETIME))))");
+        $indexed = $session->analyze("CREATE PROCEDURE p() CREATE TABLE t(a INT,PRIMARY KEY ((CAST(a AT TIME ZONE '+00:00' AS DATETIME))))");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $indexed->statement);
-        $selected = $session->analyze("SELECT CAST(NULL AT TIME ZONE 'text' AS DATETIME)");
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+        $selected = $session->analyze("SELECT CAST(a AT TIME ZONE '+00:00' AS DATETIME) FROM t");
         $owned = array_values(array_filter($indexed->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion));
         self::assertCount(1, $owned);
         self::assertTrue((new FunctionalQueries())->deferred($owned[0], $indexed->statement->body));

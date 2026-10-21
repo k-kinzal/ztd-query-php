@@ -7,7 +7,6 @@ namespace MySqlMemory\Program\Expression;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection;
@@ -42,7 +41,7 @@ final class SelectionUse
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
-        $derivation = new Derivation($context);
+        $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($selection, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
         $selection->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         if ($instruction) {
             (new \MySqlMemory\Program\Routine\SelectionNotices())->start($selection, $derivation->facts(), $session);

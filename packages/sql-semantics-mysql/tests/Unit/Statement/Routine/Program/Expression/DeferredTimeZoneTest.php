@@ -26,6 +26,17 @@ use SqlSemantics\Statement\Scalar;
 #[Medium]
 final class DeferredTimeZoneTest extends TestCase
 {
+    public function testProblemRetainsTheZoneConstraintWithItsUnresolvedOperand(): void
+    {
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $value = new DeferredTimeZone($operand, new Text('10'));
+        self::assertSame([$operand], $value->operands());
+        $problem = $value->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $problem);
+        self::assertFalse($problem->operand);
+        self::assertSame($value, $problem->expression);
+    }
+
     /**
      * @return iterable<string, array{Scalar}>
      */
@@ -56,7 +67,7 @@ final class DeferredTimeZoneTest extends TestCase
     public function testOrdinaryScalarConstructionRejectsIntrinsicTypeContradictions(Scalar $operand): void
     {
         $this->expectExceptionMessage('An AT TIME ZONE operand must admit a TIMESTAMP or NULL input role.');
-        new AtTimeZone($operand, new Text('+00:00'));
+        new AtTimeZone($operand, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::ZeroOffset);
     }
 
     public function testProblemRetainsTheOwningConversion(): void

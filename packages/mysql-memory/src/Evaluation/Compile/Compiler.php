@@ -188,6 +188,16 @@ final class Compiler
     }
 
     /**
+     * Prepares an input with the TIMESTAMP role required by a deferred conversion.
+     *
+     * @throws \MySqlMemory\Error\SqlError When binding or the resolved input type is unsuitable
+     */
+    public function timestamp(Scalar $node, Scope $scope): Evaluable
+    {
+        return (new Casts($this))->timestamp($node, $scope);
+    }
+
+    /**
      * Reads the input slot resolved for a parameter occurrence by SQL Semantics.
      */
     public function parameterIndex(Parameter $parameter): int

@@ -155,4 +155,13 @@ final class RowUseTest extends TestCase
         }
     }
 
+    public function testRaiseRetainsParameterSlotsWhilePreparingDeferredOperands(): void
+    {
+        $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('10'));
+        $session = (new Instance())->connect();
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3998);
+        (new RowUse())->raise($value, $session);
+    }
+
 }

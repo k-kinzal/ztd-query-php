@@ -16,6 +16,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CastsTest extends TestCase
 {
+    public function testTimestampResolvesTheInputTypeBeforeTheDeferredZoneCondition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (a DATETIME)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3998);
+        $session->query("SELECT CAST(a AT TIME ZONE 'Etc/UTC' AS DATETIME) FROM t");
+    }
+
     public function testCastCutsAStringToTheLengthOfTheTargetAndWarns(): void
     {
         $session = (new Instance())->connect();

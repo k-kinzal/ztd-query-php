@@ -59,15 +59,26 @@ final class Casts
      */
     public function atTimeZone(AtTimeZone $node, Scope $scope): Evaluable
     {
-        $operand = $this->compiler->compile($node->operand, $scope);
-        $domain = $operand->domain();
-        if ($domain->field !== Field::Timestamp && $domain->kind !== Kind::Null && (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($node->operand) !== true) {
-            throw DataError::TimeZoneCast->error();
-        }
-        if (($node->zone->value !== 'UTC' && $node->zone->value !== '+00:00') || $this->compiler->connection->context->timeZone($node->zone->value) === null) {
+        $operand = $this->timestamp($node->operand, $scope);
+        if ($this->compiler->connection->context->timeZone($node->zone->value) === null) {
             throw DataError::UnknownTimeZone->error($node->zone->value);
         }
 
         return new Zoned($operand, $this->compiler->domain($node));
+    }
+
+    /**
+     * Resolves a conversion input before checking its following time-zone operand.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the resolved input cannot supply a TIMESTAMP
+     */
+    public function timestamp(Scalar $node, Scope $scope): Evaluable
+    {
+        $operand = $this->compiler->compile($node, $scope);
+        $domain = $operand->domain();
+        if ($domain->field !== Field::Timestamp && $domain->kind !== Kind::Null && (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($node) !== true) {
+            throw DataError::TimeZoneCast->error();
+        }
+        return $operand;
     }
 }

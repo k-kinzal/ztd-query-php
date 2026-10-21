@@ -10,7 +10,6 @@ use MySqlMemory\Session\Resolution\QueryPreparation;
 use MySqlMemory\Session\Resolution\Views;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\State\StatementCounters;
-use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery;
@@ -48,7 +47,7 @@ final class QueryUse
         Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
-        $derivation = new Derivation($context);
+        $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($query, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
         $query->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $preparation = new QueryPreparation($query->query, $derivation->facts(), $context->profile);
         (new Problems())->raise($preparation, $session);

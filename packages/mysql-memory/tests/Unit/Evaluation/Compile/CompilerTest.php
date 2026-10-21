@@ -19,6 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class CompilerTest extends TestCase
 {
+    public function testTimestampPreservesInputBindingBeforeAnUnsupportedZone(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (a TIMESTAMP NULL)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1298);
+        $session->query("SELECT CAST(a AT TIME ZONE 'Etc/UTC' AS DATETIME) FROM t");
+    }
+
     /**
      * @return iterable<string, array{string, string, string, list<array{string, int, string}>}>
      */
