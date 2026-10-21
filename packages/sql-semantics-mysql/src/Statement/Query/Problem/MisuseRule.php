@@ -20,6 +20,7 @@ enum MisuseRule: string
     case StarWithoutTables = 'No tables used';
     case DuplicateAlias = 'Not unique table/alias';
     case DerivedWithoutAlias = 'Every derived table must have its own alias';
+    case JsonTableSubquery = 'Incorrect arguments to JSON_TABLE';
     case TableFunctionWithoutAlias = 'Every table function must have an alias';
     case DuplicateCommonTable = 'Not unique table/alias in WITH';
     case RecursiveWithoutUnion = 'Recursive Common Table Expression should contain a UNION';

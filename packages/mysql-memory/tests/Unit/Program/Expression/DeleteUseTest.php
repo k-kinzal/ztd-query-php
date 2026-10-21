@@ -46,4 +46,21 @@ final class DeleteUseTest extends TestCase
         (new DeleteUse())->raise($write, $session);
     }
 
+    public function testInputsPreparesTheRetainedDocumentWithoutReadingRequestText(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $target = new QualifiedName(new Name('t'));
+        $document = new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]);
+        $table = new M\Relation\JsonTable($document, new M\Literal\StringLiteral(['$']), [new M\Call\Json\OrdinalityColumn(new Name('n'))], new Name('j'));
+        $input = new M\Dml\Target\DeletionInput([new M\Relation\TableReference($target), $table], [$target]);
+        $write = new M\Routine\Program\Write\DeferredMultipleDelete(null, [], $input, M\Dml\MultipleDeleteForm::BeforeFrom);
+        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, new \SqlSemantics\Contract\SearchPath('d'), $session->resolution());
+        $derivation = new \SqlSemantics\Construction\Derivation($context);
+        $write->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
+        $session->text = 'opaque request label';
+        $this->expectExceptionCode(1241);
+        (new DeleteUse())->inputs($write, $derivation->facts(), $session);
+    }
+
 }

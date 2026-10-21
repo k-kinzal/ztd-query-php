@@ -33,6 +33,10 @@ final class FromClause
      */
     public function derived(?Node $relation, array $order): void
     {
+        if ($relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable) {
+            $this->locator->visit($relation->document, 'a table function argument', [...$order, 0, count($this->locator->places)]);
+            return;
+        }
         if ($relation instanceof DerivedTable) {
             $this->locator->visit($relation->query, 'field list', [...$order, 0, count($this->locator->places)]);
 

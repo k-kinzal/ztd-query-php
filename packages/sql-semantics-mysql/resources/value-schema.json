@@ -2017,7 +2017,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\JsonTable": {
         "alias": "SqlSemantics\\Statement\\Identifier\\Name",
         "columns": "array",
-        "document": "SqlSemantics\\Statement\\Scalar",
+        "document": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark",
         "path": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral"
     },

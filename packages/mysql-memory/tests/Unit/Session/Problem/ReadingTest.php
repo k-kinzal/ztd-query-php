@@ -415,6 +415,20 @@ final class ReadingTest extends TestCase
         $session->query('SELECT * FROM t, t LIMIT a');
     }
 
+    public function testAliasedKeepsAnEarlierUnqualifiedDatabaseDependency(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionMessage('No database selected');
+        $session->query("SELECT * FROM JSON_TABLE((1,2), '$' COLUMNS (n FOR ORDINALITY)) j JOIN t JOIN t");
+    }
+
+    public function testAliasedDoesNotOpenALaterDatabaseDependency(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionMessage("Not unique table/alias: 'x'");
+        $session->query('SELECT * FROM d.t x, d.t x, absent');
+    }
+
     public function testVariablesIgnoresTheLimitOfAStoredProgramBody(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

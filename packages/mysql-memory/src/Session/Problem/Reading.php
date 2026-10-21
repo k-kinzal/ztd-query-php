@@ -221,7 +221,8 @@ final class Reading
     public function aliased(Select $select, Operation|QueryPreparation $operation, Session $session): void
     {
         $aliases = [];
-        foreach ($select->from === null ? [] : (new Walker())->find($select->from, Node::class, false) as $node) {
+        $nodes = $select->from === null ? [] : (new Walker())->find($select->from, Node::class, false);
+        foreach ($nodes as $node) {
             $alias = match (true) {
                 $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference => $node->alias ?? $node->name->name,
                 $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable => $node->alias,
@@ -231,6 +232,14 @@ final class Reading
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof NonUniqueTable && count(array_keys($aliases, strtolower($diagnostic->alias->value), true)) > 1) {
+                foreach ($session->settings()->legacy() || $session->variables->database !== '' ? [] : $nodes as $node) {
+                    if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $operation->facts->covers($node) && $operation->facts->relation($node)->table instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $node->name->schema === null) {
+                        throw QueryError::NoDatabase->error();
+                    }
+                    if ($node === $diagnostic->relation) {
+                        break;
+                    }
+                }
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }

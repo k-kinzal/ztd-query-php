@@ -397,6 +397,7 @@ final class Errors
         return match ($misuse->rule) {
             MisuseRule::StarWithoutTables => QueryError::NoTablesUsed->error(),
             MisuseRule::DerivedWithoutAlias => QueryError::DerivedMustHaveAlias->error(),
+            MisuseRule::JsonTableSubquery => StatementError::WrongArguments->error('JSON_TABLE'),
             MisuseRule::TableFunctionWithoutAlias => QueryError::TableFunctionWithoutAlias->error(),
             MisuseRule::DuplicateAlias, MisuseRule::DuplicateCommonTable => QueryError::NonUniqueTable->error($name),
             MisuseRule::RecursiveWithoutUnion => QueryError::RecursiveRequiresUnion->error($name),

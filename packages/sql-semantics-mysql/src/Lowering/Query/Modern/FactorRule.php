@@ -127,7 +127,7 @@ final class FactorRule
         }
 
         return new JsonTable(
-            $this->lowering->expressions->expression($form->node(2)),
+            $this->lowering->expressions->operand($form->node(2)),
             $this->lowering->literals->string($form->node(4)),
             $this->lowering->calls->jsonTableColumns($form->node(5)),
             $alias,

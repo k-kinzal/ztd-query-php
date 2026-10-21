@@ -8,9 +8,11 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -25,7 +27,8 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-JSON-TABLE-001. The document expression sees the enclosing
  * queries and the tables to its left in the same FROM clause
  * (MYSQL-FROM-SCOPE-001). The columns are the slots the column definitions
- * contribute, nested paths flattened in order. A table function requires
+ * contribute, nested paths flattened in order. A non-scalar document is retained
+ * as an instruction dependency; a consuming read excludes its fixed contradiction. A table function requires
  * a nonempty correlation name. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  * Status: Implemented.
@@ -45,13 +48,13 @@ final class JsonTable implements Relation
     public readonly array $columns;
 
     /**
-     * @param Scalar $document The JSON document
+     * @param Scalar|RowOperand|DeferredOperand $document The document or its retained preparation condition
      * @param StringLiteral $path The path of the rows
      * @param list<JsonTableColumn> $columns The column definitions; at least one
      * @param Name $alias The nonempty correlation name
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly Scalar $document, public readonly StringLiteral $path, array $columns, public readonly Name $alias, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $document, public readonly StringLiteral $path, array $columns, public readonly Name $alias, public readonly AliasMark $mark = AliasMark::As)
     {
         Check::input($mark !== AliasMark::Equals, 'A JSON table alias is written with or without AS.');
         Check::input($alias->value !== '', 'A JSON table requires a nonempty alias.');

@@ -85,6 +85,14 @@ both servers. The same object and binding then change from success to a missing
 thread error. MySQL 5.6 retains preceding diagnostics after a successful KILL
 until a new condition replaces them; later releases clear the prior conditions.
 
+JSON_TABLE retains its complete document operand and surrounding relation namespace.
+A row-valued document or a document containing a subquery cannot become an ordinary
+read statement. It may remain in an unused CTE or a stored instruction, where the
+same semantic object is checked only when reached. Native comparisons reuse the
+stored definition across skipped, reached and skipped calls. Paths, input names,
+missing tables and document dependencies keep their observed preparation order;
+no replacement scalar or source-text inspection is used to recover the outer query.
+
 The generated JSON extraction retains its column and path across missing, empty,
 populated, NULL and restored-NULL relations. An invalid path is evaluated only
 when a non-NULL JSON document is read; a populated integer column reports its
@@ -92,6 +100,13 @@ argument-type condition. Native comparisons include result metadata under
 latin1, UTF-8, binary and disabled result conversion. MySQL 5.7 scalar JSON
 functions and arrow operators share a UTF-8 domain; JSON aggregates retain a
 binary domain, and unquoted JSON has its own bounded text domain.
+
+SIGNAL and RESIGNAL preserve completed condition names and information items
+before a later refused literal. Prefix resolution follows stored condition scopes.
+A preceding unknown system variable or duplicate item retains its own diagnostic;
+an earlier numeric grammar failure prevents later contextualization notices.
+Text and prepared comparisons cover the original generated input and reordered
+prefixes on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1.
 
 Local variable names bind as their declaration list is read, before the type,
 collation and default. A duplicate in one list or an earlier declaration in the

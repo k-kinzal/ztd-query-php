@@ -63,4 +63,23 @@ final class SyntaxConditionsTest extends TestCase
 
         self::assertSame([], $notices);
     }
+
+    public function testCompletedKeepsAnEarlierSystemVariableBeforeNumericRefusal(): void
+    {
+        $sql = 'RESIGNAL SET SCHEMA_NAME=@@missing, TABLE_NAME=1e999';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class, $notices[0][1]->problem);
+        self::assertSame('missing', $notices[0][1]->problem->name);
+    }
+
+    public function testCompletedDoesNotContextualizeALaterVariableAfterNumericFailure(): void
+    {
+        $sql = 'RESIGNAL SET SCHEMA_NAME=1e999, TABLE_NAME=@@missing';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral::class, $notices[0][1]->problem);
+    }
 }

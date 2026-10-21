@@ -67,6 +67,15 @@ final class WriteOrder
 
             return true;
         }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete) {
+            $relations = new \MySqlMemory\Session\FromClause($this->locator);
+            foreach ($statement->tables as $index => $table) {
+                $relations->derived($table, [0, $index]);
+                $relations->conditions($table, [2, $index]);
+            }
+            $this->locator->visit($statement->where, 'where clause', [3]);
+            return true;
+        }
         if ($statement instanceof Delete) {
             $this->delete($statement);
 

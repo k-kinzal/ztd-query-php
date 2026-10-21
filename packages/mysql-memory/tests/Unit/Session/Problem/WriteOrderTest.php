@@ -30,6 +30,16 @@ final class WriteOrderTest extends TestCase
         self::assertSame([['where clause', [2, 1]]], array_values($locator->places));
     }
 
+    public function testLocateKeepsTheJsonDocumentClauseOfAMultipleDelete(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $statement = $session->analyze("DELETE t FROM t JOIN JSON_TABLE(missing, '$' COLUMNS (n FOR ORDINALITY)) j")->statement;
+        $locator = new Locator();
+        self::assertTrue((new WriteOrder($locator))->locate($statement));
+        self::assertSame(['a table function argument'], array_column(array_values($locator->places), 0));
+    }
+
     public function testUpdateLocatesWhereThenTheAssignmentsThenOrderBy(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

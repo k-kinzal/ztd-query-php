@@ -118,11 +118,11 @@ final class SignalRule
         if ($form->signature === 'opt_set_signal_information:') {
             return [];
         }
-        if ($form->signature !== 'opt_set_signal_information: SET signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET_SYM signal_information_item_list') {
+        if ($clause->name !== 'signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET_SYM signal_information_item_list') {
             throw ImplementationGap::production($form);
         }
         $pending = [];
-        $list = $this->lowering->form($form->node(1));
+        $list = $clause->name === 'signal_information_item_list' ? $form : $this->lowering->form($form->node(1));
         while (true) {
             $first = match ($list->signature) {
                 'signal_information_item_list: signal_condition_information_item_name EQ signal_allowed_expr' => 0,

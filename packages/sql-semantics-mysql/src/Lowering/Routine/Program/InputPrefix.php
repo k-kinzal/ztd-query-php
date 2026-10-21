@@ -67,7 +67,7 @@ final class InputPrefix
                 continue;
             }
             $completed = $range[1] < $end;
-            if ($completed && in_array($node->name, ['sp_decl_idents', 'sp_decl', 'sp_proc_stmt', 'ev_sql_stmt_inner', 'sp_pdparam_list', 'sp_fdparam_list'], true)) {
+            if ($completed && in_array($node->name, ['sp_decl_idents', 'sp_decl', 'sp_proc_stmt', 'ev_sql_stmt_inner', 'sp_pdparam_list', 'sp_fdparam_list', 'signal_value', 'signal_information_item_list'], true)) {
                 $parameters = $this->completed($node, $frame, $parameters);
                 if ($parameters instanceof RejectedInput) {
                     return $parameters;
@@ -116,6 +116,11 @@ final class InputPrefix
             return $name;
         }
         try {
+            if (in_array($node->name, ['signal_value', 'signal_information_item_list'], true)) {
+                $signal = new \SqlSemantics\Platform\MySql\Lowering\Routine\Condition\SignalRule($this->lowering);
+                $frame->statements[] = $node->name === 'signal_value' ? new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal($signal->condition($node)) : new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(null, $signal->items($node));
+                return $parameters;
+            }
             if ($node->name === 'sp_decl_idents') {
                 return $this->variables($node, $frame) ?? $parameters;
             }

@@ -88,7 +88,7 @@ final class ReadColumns
                 return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->on]);
             }
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable) {
-                $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($node->columns);
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonDocument())->problem($node) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($node->columns);
                 if ($problem !== null) {
                     return $problem;
                 }

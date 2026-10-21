@@ -177,7 +177,7 @@ final class Relations
      */
     public function jsonTable(JsonTable $table, Scope $scope): AccessPath
     {
-        $document = $this->planner->compiler->compile($table->document, $scope);
+        $document = (new \MySqlMemory\Evaluation\Compile\Preparation\JsonDocument())->compile($table, $this->planner->compiler, $scope);
         $slots = $this->planner->compiler->facts->relation($table)->shape->slots;
         $columns = [];
         foreach ($table->columns as $column) {

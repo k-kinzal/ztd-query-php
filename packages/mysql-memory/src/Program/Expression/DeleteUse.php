@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
+use WeakReference;
 
 /**
  * Resolves a retained deletion before checking its target's writable role.
@@ -60,7 +61,7 @@ final class DeleteUse
         $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $facts = $derivation->facts();
         foreach ($facts->diagnostics as $problem) {
-            if (\MySqlMemory\Session\Problem\Stages::parsed($problem)) {
+            if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
                 throw (new Errors())->error($problem, $session);
             }
         }
@@ -74,9 +75,28 @@ final class DeleteUse
             throw $input;
         }
         (new \MySqlMemory\Session\Problem\Sampling())->write($facts);
+        $this->inputs($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }
         throw new LogicException('A retained deletion has a read-only target condition.');
+    }
+    /**
+     * Prepares retained relation operands before the destination role is reported.
+     *
+     * @throws SqlError When a reached JSON document or join cannot bind
+     */
+    public function inputs(DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    {
+        if (!$write instanceof DeferredMultipleDelete) {
+            return;
+        }
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
+        $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $scope = new \MySqlMemory\Evaluation\Scope();
+        foreach ($write->tables as $table) {
+            $planner->relations->plan($table, $scope);
+        }
     }
 }
