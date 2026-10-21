@@ -25,6 +25,19 @@ final class ViewCommandTest extends TestCase
         self::assertTrue((new ViewCommand())->clearsDiagnostics());
     }
 
+    public function testExecuteKeepsAnExistingConditionalViewAndItsRows(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE VIEW v AS SELECT 2 AS x');
+        $reply = $session->query('CREATE VIEW IF NOT EXISTS v AS SELECT 7 AS x')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame([0, 1], [$reply->affectedRows, $reply->warnings]);
+        self::assertSame([['Note', 1050, "Table 'v' already exists"]], $session->diagnostics->conditions);
+        $result = $session->query('SELECT * FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
     public function testExecuteCreatesAViewThatQueriesRead(): void
     {
         $session = (new Instance())->connect();

@@ -74,6 +74,11 @@ final class ViewCommand implements Command
         }
         $name = $definition->name->name->value;
         self::refreshReadViews($operation, $definition->query, $session);
+        if ($statement instanceof CreateView && $definition->ifNotExists && ($schema->table($name) !== null || isset($schema->views[$name]))) {
+            self::refuseTemporaryTables($operation, $definition->query, $session);
+            $context->diagnostics->note(SchemaError::TableExists, SchemaError::TableExists->message($name));
+            return new Completion(0, 0, $context->diagnostics->raised());
+        }
         self::checkName($statement, $schema, $database, $name);
         self::refuseTemporaryTables($operation, $definition->query, $session);
         $resolved = $statement instanceof CreateView ? $operation : self::reanalyze($session, $database, $name, $definition->columns, $definition->query);

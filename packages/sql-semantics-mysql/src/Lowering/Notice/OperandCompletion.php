@@ -33,7 +33,23 @@ final class OperandCompletion
         private readonly SyntaxArrays $arrays = new SyntaxArrays(),
         private readonly DeclarationPrefix $types = new DeclarationPrefix(),
         private readonly \SqlSemantics\Platform\MySql\Lowering\Routine\Program\VariablePrefix $variables = new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\VariablePrefix(),
+        private readonly \SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\SyntaxViews $views = new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\SyntaxViews(),
+        private readonly \SqlSemantics\Platform\MySql\Lowering\Account\Authentication\SyntaxPasswords $passwords = new \SqlSemantics\Platform\MySql\Lowering\Account\Authentication\SyntaxPasswords(),
     ) {
+    }
+
+    /**
+     * Interprets header operands whose completion can stop later body parsing.
+     *
+     * @param list<Token> $tokens Temporary tokens of the input
+     */
+    public function starting(Node $node, Token $lookahead, Lowering $lowering, array $tokens, \SqlParser\Parser\ReductionParser $parser, string $statement): ?\SqlSemantics\Construction\RejectedInput
+    {
+        $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
+        return $this->views->starting($node, $lowering, $tokens)
+            ?? $this->passwords->starting($node, $lookahead, $lowering, $tokens)
+            ?? $derived
+            ?? (new \SqlSemantics\Platform\MySql\Lowering\Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
     }
 
     /**

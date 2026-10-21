@@ -4053,3 +4053,36 @@ text/prepared cases across 5.7, 8.0, 8.4 and 9.1; the direct constructed-definit
 history adds one native case and 24 assertions. The combined native regression
 therefore passes nine cases and 32 assertions, retaining complete observations
 rather than comparing error numbers alone.
+
+### Conditional view definitions
+
+`AlterView` excludes the CREATE-only existence clause. `CreateView` also rejects
+the contradictory combination of `OR REPLACE` and `IF NOT EXISTS`. The ordinary
+conditional creation remains constructible. Its consumer resolves the body and
+preserves an existing table or view, returning the native Note without replacing
+the object's rows or definition.
+
+SQL input uses the same command-role constraints. The shared MySQL 9.1 view
+production completes its name and column list before refusing an incompatible
+existence clause. An unfinished clause, qualified name or column list retains
+its own parser failure. Later markers, invalid temporal literals and warnings
+cannot replace a completed header refusal. The diagnostic retains an integer
+input location, with no source SQL or parser node. A valid conditional CREATE
+still checks the default database at its completed target name.
+
+`ViewExistenceInputTest` retains the complete 6,338-byte Query1478 unseeded
+counterexample and reduced header/body cases. Its ten text/prepared cases pass
+on 5.6, 5.7, 8.4, 9.0 and 9.1. The direct-construction history reuses one
+`CreateView` before creation, after replacing the view, against a populated base
+table and after removing the destination, comparing complete observations and
+subsequent reads. No execution input is removed to accommodate the new invariant.
+
+Query1491 passes 9,641 semantic tests with 20,228 assertions and 20,402 memory
+tests with 97,947 assertions. Static checks pass for 1,030 retained-field
+definitions, 36,966 semantic dependencies and 29,387 memory dependencies, with
+zero violations or uncovered dependencies. Query1478's preceding whole-model
+run completed all 244 roots with 190 successful-state witnesses, 54 matching
+rejections and 483 transitions. Its unseeded run failed at input 369; that
+failure is retained and is not a passing duration campaign. The new whole-model
+and duration campaigns remain separate acceptance gates. These view repairs do
+not close the other unresolved domains listed above.

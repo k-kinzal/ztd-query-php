@@ -17,6 +17,17 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Medium]
 final class OperandCompletionTest extends TestCase
 {
+    public function testStartingKeepsACompletedViewClauseBeforeItsBody(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql910);
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-9.1.0');
+        $notices = (new SyntaxWarnings())->completed($parser, 'ALTER VIEW IF NOT EXISTS v AS SELECT (', 100, $profile);
+        self::assertSame(26, $notices[0][0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedExistenceClause::class, $notices[0][1]->problem);
+        self::assertSame([], (new SyntaxWarnings())->completed($parser, 'ALTER VIEW IF NOT EXISTS', 100, $profile));
+    }
+
     public function testCompletedKeepsTheCharsetNoticeBeforeAnIncompleteCollation(): void
     {
         $semantics = new Semantics(Dialect::MySql);

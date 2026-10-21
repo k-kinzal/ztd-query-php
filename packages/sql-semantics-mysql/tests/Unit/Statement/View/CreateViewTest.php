@@ -18,6 +18,14 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 #[Medium]
 final class CreateViewTest extends TestCase
 {
+    public function testValueRejectsContradictoryExistencePolicies(): void
+    {
+        $definition = new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), ifNotExists: true);
+        self::assertSame($definition, (new CreateView($definition))->definition);
+        $this->expectExceptionMessage('CREATE VIEW cannot combine OR REPLACE with IF NOT EXISTS.');
+        new CreateView($definition, true);
+    }
+
     public function testDeriveStatementDeclaresTheView(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a, NULL AS b');

@@ -83,6 +83,10 @@ final class ViewRule
     public function create(Node $tail, ?Node $prefix, ?Account $definer): CreateView
     {
         [$replace, $algorithm] = $prefix === null ? [false, null] : $this->prefix($prefix);
+        $failure = $replace ? (new SyntaxViews())->tail($tail, $this->lowering) : null;
+        if ($failure !== null) {
+            throw $failure;
+        }
 
         return new CreateView($this->definition($tail, $algorithm, $definer), $replace);
     }
@@ -138,6 +142,10 @@ final class ViewRule
      */
     public function definition(Node $tail, ?ViewAlgorithm $algorithm, ?Account $definer, bool $alter = false): ViewDefinition
     {
+        $failure = $alter ? (new SyntaxViews())->tail($tail, $this->lowering) : null;
+        if ($failure !== null) {
+            throw $failure;
+        }
         $form = $this->lowering->productions->form($tail);
         $suid = $this->lowering->productions->form($form->node(0));
         if (!array_key_exists($suid->signature, self::SECURITY)) {

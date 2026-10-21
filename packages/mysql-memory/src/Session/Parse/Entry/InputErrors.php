@@ -69,6 +69,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedExistenceClause,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedLogSubquery => (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($diagnostic->offset, $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser()),
             default => $this->query($diagnostic, $session) ?? $this->source($diagnostic, $session),
         };

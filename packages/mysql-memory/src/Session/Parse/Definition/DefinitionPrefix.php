@@ -41,7 +41,11 @@ final class DefinitionPrefix
         $start = null;
         foreach ($tokens as $index => $token) {
             if ($token->name === $keyword) {
-                $start = $tokens[$index + 1]->offset ?? null;
+                $next = $index + 1;
+                if ($keyword === 'VIEW_SYM' && array_column(array_slice($tokens, $next, 3), 'name') === ['IF', 'NOT_SYM', 'EXISTS']) {
+                    $next += 3;
+                }
+                $start = $tokens[$next]->offset ?? null;
                 break;
             }
             if (in_array($token->name, ['SELECT_SYM', 'PROCEDURE_SYM', 'FUNCTION_SYM', 'TRIGGER_SYM', 'EVENT_SYM'], true)) {
@@ -54,14 +58,17 @@ final class DefinitionPrefix
         $missing = false;
         $seen = false;
         try {
-            $parser->parse($statement, static function (Node $node) use (&$missing, &$seen, $end, $start): void {
+            $parser->parse($statement, static function (Node $node) use (&$missing, &$seen, $end, $start, $tokens, $keyword): void {
                 if ($seen || $node->name !== 'table_ident' || ($node->tokens()[0]->offset ?? null) !== $start) {
                     return;
                 }
                 $seen = true;
-                $tokens = $node->tokens();
-                $last = $tokens[count($tokens) - 1] ?? null;
-                $missing = $missing || ($last !== null && $last->end() < $end && count($tokens) < 3);
+                if ($keyword === 'VIEW_SYM' && (new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\SyntaxViews())->named($node, $tokens) !== null) {
+                    return;
+                }
+                $named = $node->tokens();
+                $last = $named[count($named) - 1] ?? null;
+                $missing = $missing || ($last !== null && $last->end() < $end && count($named) < 3);
             });
         } catch (SourceException) {
             // Only definition names completed before the original refusal are relevant.

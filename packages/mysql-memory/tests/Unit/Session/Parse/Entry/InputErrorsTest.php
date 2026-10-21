@@ -19,6 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 #[Small]
 final class InputErrorsTest extends TestCase
 {
+    public function testErrorFormatsARefusedViewHeaderAtItsRetainedOffset(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->text = 'ALTER VIEW IF NOT EXISTS v AS SELECT ?';
+        $error = (new InputErrors())->error(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedExistenceClause(11), $session);
+        self::assertSame(1064, $error?->getCode());
+        self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS v AS SELECT ?' at line 1", $error->getMessage());
+    }
+
     public function testErrorFormatsARefusedFloatingOperandWithoutSourceText(): void
     {
         $session = (new Instance())->connect();

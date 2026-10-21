@@ -45,12 +45,11 @@ final class SyntaxWarnings
         $state = new Notice\Completion((new Account\SyntaxResourceNames())->completed($parser, $statement, $end));
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile, client: $client);
         $operands = new Notice\OperandCompletion();
-        $passwords = new Account\Authentication\SyntaxPasswords();
         $header = new Routine\Program\NoticeHeader();
         $handlers = new Routine\Condition\HandlerPrefix();
         $labels = new Routine\Program\LabelPrefix();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $passwords, $replicaNetTimeout, $labels): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $replicaNetTimeout, $labels): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -64,8 +63,7 @@ final class SyntaxWarnings
                     $state->record($failure->end, new ParseFailure($failure->problem, $failure->aborts));
                     return;
                 }
-                $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
-                $log = $passwords->starting($node, $lookahead, $lowering, $tokens) ?? $derived ?? (new Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
+                $log = $operands->starting($node, $lookahead, $lowering, $tokens, $parser, $statement);
                 if ($log !== null && $log->end <= $end) {
                     $state->record($log->end, new ParseFailure($log->problem, true));
                     return;
@@ -140,12 +138,13 @@ final class SyntaxWarnings
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
         $inactive = (new Query\Shared\ValueQueries($lowering))->inactive($tree) + (new Call\UncontextualizedCalls())->inactive($tree, $lowering);
         $unprepared = $lowering->unprepared();
+        $tokens = $tree->tokens();
         $pending = [$tree];
         $scopes = [false];
         while ($pending !== []) {
             $condition = array_pop($pending);
             $body = array_pop($scopes) === true || in_array($condition->name, ['sp_proc_stmt', 'stored_routine_body', 'ev_sql_stmt'], true);
-            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition, in_array($profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new RejectedOperand())->of($condition, isset($inactive[spl_object_id($condition)]) ? $unprepared : $lowering);
+            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition, in_array($profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new TableDefinition\View\SyntaxViews())->rejected($condition, $lowering, $tokens) ?? (new RejectedOperand())->of($condition, isset($inactive[spl_object_id($condition)]) ? $unprepared : $lowering);
             if ($failure !== null) {
                 $failure = (new Account\Privilege\LegacyColumns())->scoped($tree, $failure, $lowering);
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {

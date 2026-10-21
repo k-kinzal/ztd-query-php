@@ -19,6 +19,20 @@ use SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption;
 #[Medium]
 final class ViewRuleTest extends TestCase
 {
+    public function testCreateRejectsIncompatibleExistenceClausesBeforeTheBody(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('IF NOT EXISTS requires CREATE VIEW without OR REPLACE.');
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze("CREATE OR REPLACE VIEW IF NOT EXISTS v AS SELECT DATE 'bad'");
+    }
+
+    public function testAlterRejectsTheCreateOnlyClauseBeforeTheBody(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('IF NOT EXISTS requires CREATE VIEW without OR REPLACE.');
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze('ALTER VIEW IF NOT EXISTS v AS SELECT ?');
+    }
+
     public function testCreateLowersAViewTail(): void
     {
         $platform = new Platform();
