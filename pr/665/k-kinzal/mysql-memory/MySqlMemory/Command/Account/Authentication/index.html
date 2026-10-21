@@ -44,6 +44,8 @@ Modern releases roll back account data on failure. A session that successfully a
 its own account in that failed batch must reset its password, independently of rollback.
 MySQL 5.7 retains successful changes and appends its aggregate account error.
 Verified through ALTER USER, SHOW WARNINGS and subsequent queries on isolated servers.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Account/Authentication/class.CreateFactors.html">CreateFactors</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Checks additional authentication methods after the first method has been accepted.
+An accepted initial or primary credential converts the host before additional plugin
+lookup and authentication-policy notices. Invalid primary credentials stop earlier.
 The first omitted plugin reports the authentication-policy warning. Existing accounts
 reach their existence error without loading additional plugins; new accounts validate
 the second factor before the third. CURRENT_USER retains only its primary authentication
