@@ -24,9 +24,10 @@ final class RefusedOperand implements Diagnostic
      * @param Name $column The owning column
      * @param OperandKind $kind The forbidden operand role
      * @param \SqlSemantics\Statement\Identifier\QualifiedName|null $scope The declaration identity resolved before its expression
+     * @param \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $expression Complete semantic operands whose contextual dependencies precede the role refusal
      * @param string|null $function The canonical function name, present exactly for a function refusal
      */
-    public function __construct(public readonly Name $column, public readonly OperandKind $kind, public readonly ?string $function = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $scope = null)
+    public function __construct(public readonly Name $column, public readonly OperandKind $kind, public readonly ?string $function = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $scope = null, public readonly \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $expression = null)
     {
         Check::input(in_array($kind, [OperandKind::FunctionCall, OperandKind::StoredFunction], true) === ($function !== null && $function !== ''), 'Only a function refusal names a nonempty function.');
         Check::input(in_array($kind, [OperandKind::FunctionCall, OperandKind::StoredFunction], true) || $function === null, 'A non-function refusal has no function name.');

@@ -20,7 +20,7 @@ final class GenerationCondition
     /**
      * Produces the retained condition after destination and column checks.
      */
-    public function error(ColumnDefinition $column, string $database, string $table, bool $temporaryFile = false): SqlError
+    public function error(ColumnDefinition $column, string $database, string $table, bool $temporaryFile = false, ?\SqlSemantics\Statement\Fact\Facts $facts = null, ?\MySqlMemory\Session\Session $session = null): SqlError
     {
         $specification = $column->specification;
         \SqlSemantics\Diagnostic\Check::invariant($specification instanceof DeferredGeneratedColumn, 'An invoked generation condition has a deferred declaration.');
@@ -42,6 +42,9 @@ final class GenerationCondition
             $text = $systemTail ?? (new GenerationText())->tail($expression);
             return new SqlError($error, $error->message($text, 1), following: [[1033, "Incorrect information in file: '" . $path . "'"]]);
         }
+        if ($facts !== null && $session !== null && ($search = (new GenerationSearch())->error($expression, $facts, $session)) !== null) {
+            return $search;
+        }
         if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
             return new SqlError(StatementError::UnknownError, "Incorrect information in file: '" . $path . "'", number: 1033);
         }
@@ -56,14 +59,14 @@ final class GenerationCondition
      *
      * @param list<ColumnDefinition> $columns Complete declarations in written order
      */
-    public function columns(array $columns, string $database, string $table, bool $temporaryFile = false): SqlError
+    public function columns(array $columns, string $database, string $table, bool $temporaryFile = false, ?\SqlSemantics\Statement\Fact\Facts $facts = null, ?\MySqlMemory\Session\Session $session = null): SqlError
     {
         $first = null;
         foreach ($columns as $column) {
             if (!$column->specification instanceof DeferredGeneratedColumn) {
                 continue;
             }
-            $error = $this->error($column, $database, $table, $temporaryFile);
+            $error = $this->error($column, $database, $table, $temporaryFile, $facts, $session);
             if ($error->getCode() === 1033) {
                 return $error;
             }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation;
 
+use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
@@ -19,7 +20,8 @@ use SqlSemantics\Statement\Query;
 /**
  * Checks generated-expression roles before ordinary scalar preparation.
  *
- * Child expressions complete before their enclosing function or query. A
+ * Full-text search has a forbidden generation role before its search operand.
+ * Other child expressions complete before their enclosing function or query. A
  * forbidden call inside a subquery therefore precedes that subquery's role
  * refusal. This visits semantic operands only, independently of catalog state.
  *
@@ -32,14 +34,36 @@ final class Operands
      */
     public function problem(Node $expression, Name $column, ?\SqlSemantics\Contract\GrammarRelease $release = null): ?RefusedOperand
     {
-        foreach (get_object_vars($expression) as $value) {
-            foreach (is_array($value) ? $value : [$value] as $child) {
-                if ($child instanceof Node && ($problem = $this->problem($child, $column, $release)) !== null) {
-                    return $problem;
-                }
+        if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch) {
+            return new RefusedOperand($column, OperandKind::FunctionCall, 'match');
+        }
+        foreach ($this->children($expression) as $child) {
+            if (($problem = $this->problem($child, $column, $release)) !== null) {
+                return $problem;
             }
         }
         return $this->role($expression, $column, $release);
+    }
+
+    /**
+     * Reads semantic constructor operands in their declared order. PHP property
+     * order puts explicit list properties before promoted scalar properties.
+     *
+     * @return list<Node>
+     */
+    public function children(Node $expression): array
+    {
+        $children = [];
+        $values = get_object_vars($expression);
+        foreach ((new ReflectionClass($expression))->getConstructor()?->getParameters() ?? [] as $parameter) {
+            $value = $values[$parameter->getName()] ?? null;
+            foreach (is_array($value) ? $value : [$value] as $child) {
+                if ($child instanceof Node) {
+                    $children[] = $child;
+                }
+            }
+        }
+        return $children;
     }
 
     /**

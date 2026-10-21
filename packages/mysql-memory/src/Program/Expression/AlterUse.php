@@ -80,7 +80,7 @@ final class AlterUse
         $rewrite = $this->rewrite;
         $columns = array_map($rewrite->column(...), array_column($layout->columns, 0));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
-            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, true);
+            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, true, (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database), $session);
         }
         $statement = new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($definition->table, $rewrite->commands($definition), $definition->ignore);
         $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();

@@ -248,7 +248,7 @@ final class ColumnRule
         }
         $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($operand, $column ?? new \SqlSemantics\Statement\Identifier\Name(''), $this->lowering->profile->grammar);
         if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($problem->column, $problem->kind, $problem->function, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($problem->column, $problem->kind, $problem->function, $this->lowering->programName ?? $this->lowering->columnTable, $operand), (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
         }
         return (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $expression);
     }

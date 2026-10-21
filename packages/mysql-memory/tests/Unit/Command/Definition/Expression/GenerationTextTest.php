@@ -30,6 +30,13 @@ final class GenerationTextTest extends TestCase
         self::assertSame('select 1)))', (new GenerationText())->tail($call));
     }
 
+    public function testTailRetainsAQueryInsideTheFullTextSearchOperand(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Call\KeywordCall(M\Call\KeywordFunction::User, []))]);
+        $expression = new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))], new M\Expression\Subquery\ScalarSubquery($query));
+        self::assertSame('select user()))))', (new GenerationText())->tail($expression));
+    }
+
     public function testPartsRetainsGroupingAroundAQuery(): void
     {
         $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);

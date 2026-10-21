@@ -25,6 +25,30 @@ final class OperandsTest extends TestCase
         self::assertSame(M\Table\Problem\Generation\OperandKind::FunctionCall, $problem->kind);
     }
 
+    public function testProblemRefusesFullTextBeforeItsSearchOperand(): void
+    {
+        $call = new M\Call\KeywordCall(M\Call\KeywordFunction::User, []);
+        $match = new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new Name('a'))], $call);
+        self::assertSame('match', (new Operands())->problem($match, new Name('g'))?->function);
+        self::assertSame('user', (new Operands())->problem(new M\Call\FunctionCall(new Name('CONCAT'), [new M\Call\CallArgument(new M\Call\KeywordCall(M\Call\KeywordFunction::User, [])), new M\Call\CallArgument($match)]), new Name('g'))?->function);
+        $row = new M\Expression\Row([new M\Literal\NumberLiteral('1'), $call]);
+        $deferred = new M\Routine\Program\Expression\Access\DeferredFullTextSearch([new M\Name\ColumnUse(new Name('a'))], $row);
+        self::assertSame('match', (new Operands())->problem($deferred, new Name('g'))?->function);
+    }
+
+    public function testChildrenKeepsTheTestedOperandBeforeMembershipElements(): void
+    {
+        $match = new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new Name('a'))], new M\Literal\StringLiteral(['x']));
+        $call = new M\Call\KeywordCall(M\Call\KeywordFunction::User, []);
+        $ordinary = new M\Expression\Predicate\InList($match, [$call]);
+        self::assertSame([$match, $call], (new Operands())->children($ordinary));
+        self::assertSame('match', (new Operands())->problem($ordinary, new Name('g'))?->function);
+        $row = new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]);
+        $deferred = new M\Routine\Program\Expression\DeferredMembership($match, [$row]);
+        self::assertSame([$match, $row], (new Operands())->children($deferred));
+        self::assertSame('match', (new Operands())->problem($deferred, new Name('g'))?->function);
+    }
+
     public function testProblemKeepsColumnReferencesOpenForResolution(): void
     {
         self::assertNull((new Operands())->problem(new M\Name\ColumnUse(new Name('a')), new Name('g')));

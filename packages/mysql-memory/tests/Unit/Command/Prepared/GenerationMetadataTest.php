@@ -27,6 +27,17 @@ final class GenerationMetadataTest extends TestCase
         self::assertSame($session->instance->dictionary->table('d', 't')?->definition, $pending->metadata->destination);
     }
 
+    public function testRefreshDoesNotAddADatabaseNoteBeforeAnyRepreparation(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $pending = (new Preparation())->read('CREATE TABLE missing.t(g INT AS (ROW(1,2)))', $session);
+        self::assertInstanceOf(PendingTable::class, $pending);
+        $reply = $pending->run($session, 'opaque request', [])[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame(1049, $reply->getCode());
+        self::assertSame([], array_values(array_filter($session->diagnostics->conditions, static fn (array $condition): bool => $condition[0] === 'Note')));
+    }
+
     public function testCurrentFollowsTemporaryDestinationsInTheirPreparationDatabase(): void
     {
         $session = (new Instance('5.7.44', [], ['d', 'other']))->connect(database: 'd');

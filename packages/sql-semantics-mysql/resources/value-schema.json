@@ -3706,6 +3706,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\RefusedOperand": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "function": "?string",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\OperandKind",
         "scope": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"

@@ -79,7 +79,7 @@ final class GenerationMetadata
     {
         $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744;
         $repeatedExecution = $legacy || $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql901;
-        if ($legacy && $session->instance->dictionary->schema($this->database) === null) {
+        if ($legacy && ($this->refreshed || $this->destination !== null) && $session->instance->dictionary->schema($this->database) === null) {
             $unknown = \MySqlMemory\Error\Family\QueryError::BadDatabase;
             $session->diagnostics->note($unknown, $unknown->message($this->database));
             if ($this->refreshed) {

@@ -176,6 +176,15 @@ final class GenerationText
      */
     public function wrapped(Node $node): ?array
     {
+        if ($node instanceof M\Expression\Access\FullTextSearch || $node instanceof M\Routine\Program\Expression\Access\DeferredFullTextSearch) {
+            $mode = match ($node->mode) {
+                M\Expression\Access\FullTextMode::NaturalLanguage => '',
+                M\Expression\Access\FullTextMode::QueryExpansion => ' with query expansion',
+                M\Expression\Access\FullTextMode::Boolean => ' in boolean mode',
+            };
+            $columns = implode(',', array_map(fn ($column): string => implode('', array_column($this->parts($column), 0)), $node->columns));
+            return $this->joined([$this->parts($node->against)], '(match ' . $columns . ' against (', '', $mode . '))');
+        }
         if ($node instanceof M\Expression\Operator\Unary) {
             return $this->joined([$this->parts($node->operand)], $node->operator->value . '(', '', ')');
         }

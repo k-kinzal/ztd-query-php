@@ -59,6 +59,18 @@ final class GeneratedColumnTest extends TestCase
         new GeneratedColumn(new Integral(Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []));
     }
 
+    public function testRejectsFullTextSearchBeforeOperationConstruction(): void
+    {
+        $this->expectExceptionMessage('A generation expression excludes subqueries, session variables, parameter markers and forbidden functions.');
+        new GeneratedColumn(
+            new Integral(Type\Kind\IntegralKind::Int),
+            new \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch(
+                [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))],
+                new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['x']),
+            ),
+        );
+    }
+
     public function testDeriveSpecificationResolvesItsLeadingCollation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a INT COLLATE unknown AS (1)');

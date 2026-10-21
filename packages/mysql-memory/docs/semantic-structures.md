@@ -4006,3 +4006,50 @@ observed DECIMAL results include process-dependent bytes. That observation is
 retained as an unresolved comparison-contract question, not silently normalized
 or counted as a pass. The implementation does not inspect MySQL source or copy
 its in-process representation.
+
+### Full-text search in generated expressions
+
+Ordinary `GeneratedColumn` construction excludes `MATCH ... AGAINST`, including
+when its search operand contains another forbidden function. A MySQL 5.7
+instruction can retain the complete declaration as `DeferredGeneratedColumn`;
+its destination, search operands and invocation conditions remain explicit.
+Later releases report the forbidden MATCH role before the generation roles of
+its search operand. Earlier sibling expressions still retain their order.
+
+Generation-role traversal follows semantic constructor operands. It must not
+use PHP property declaration order: an explicitly declared membership list can
+appear before its promoted left operand in reflection output. Nested queries
+also remain dependencies even when a deferred expression's scalar-only operand
+list omits its query field. The constructor-operand traversal retains both.
+
+A generation input refusal retains its complete typed semantic expression for
+contextual system-variable resolution. The reviewed retained-field schema adds
+only the `Scalar | RowOperand | DeferredOperand | null` field; neither source SQL
+nor parser nodes are retained. This resolution visits the relevant dependencies
+without deriving every rejected arithmetic expression. Planning and execution
+continue to consume semantic structures only.
+
+Legacy generation preparation uses resolved column facts and search constancy
+before reporting the forbidden generation role. A missing column, invalid
+collation or row-valued search operand retains the following AGAINST condition.
+A nested-query diagnostic is rendered from semantic query boundaries. A
+prepared declaration in a database that was absent from its first preparation
+does not invent a reprepare note.
+
+`GeneratedSearchStructureTest` constructs complete stored definitions directly
+and reuses them across absent, populated and removed destinations.
+`GeneratedExpressionDomainTest` retains both the reduced search cases and the
+complete 21 KB Query1466 unseeded counterexample. Query1466 failed at its 81st
+input after 118.301 seconds; it is not a passing duration campaign. These local
+repairs do not close the final-revision acceptance gates or the remaining
+whole-model rejection classification.
+
+On the Query1478 snapshot, the MySQL Semantics suite passes 9,630 tests and
+20,206 assertions; Memory passes 20,399 tests and 97,935 assertions. Static
+checks pass with 1,029 reviewed semantic value definitions, 36,930 semantic
+dependencies and 29,381 memory dependencies, with no violations or uncovered
+dependencies. The expanded generated-expression corpus passes eight native
+text/prepared cases across 5.7, 8.0, 8.4 and 9.1; the direct constructed-definition
+history adds one native case and 24 assertions. The combined native regression
+therefore passes nine cases and 32 assertions, retaining complete observations
+rather than comparing error numbers alone.
