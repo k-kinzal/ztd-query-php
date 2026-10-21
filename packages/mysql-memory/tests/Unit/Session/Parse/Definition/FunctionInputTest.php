@@ -32,4 +32,23 @@ final class FunctionInputTest extends TestCase
         $session->query('CREATE DATABASE d; USE d');
         self::assertNull($input->before('SELECT missing_fn() OVER w', 99, $session));
     }
+    public function testCompletedRequiresACompleteStatementBeforeTheRefusedTail(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
+        $input = new FunctionInput();
+        self::assertSame(0, $input->completed($parser, 'SELECT missing_fn() +', 99));
+        self::assertSame(0, $input->completed($parser, 'SELECT ABS(missing_fn(),1)', 99));
+        self::assertGreaterThan(0, $input->completed($parser, 'SHOW TABLE STATUS WHERE missing_fn() OVER w', 99));
+    }
+
+    #[TestWith(['SELECT ASCII(missing_fn(),1)', 1064])]
+    #[TestWith(['SELECT ABS(missing_fn(),1)', 1582])]
+    #[TestWith(['SELECT missing_fn(),', 1064])]
+    public function testBeforeKeepsUnfinishedAndEnclosingRefusalsAheadOfRoutineResolution(string $sql, int $code): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectExceptionCode($code);
+        $session->query($sql);
+    }
+
 }

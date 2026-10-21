@@ -223,5 +223,21 @@
   "SELECT ASCII(ST_SRID(Point(1,2),4326),1)",
   "SELECT ASCII(ABS(1,2),1)",
   "SELECT ASCII(SIN(1,2),1)",
-  "SELECT ASCII(ST_ASTEXT(Point(1,2),1),1)"
+  "SELECT ASCII(ST_ASTEXT(Point(1,2),1),1)",
+  "SELECT ,1",
+  "SELECT 1,,2",
+  "SELECT 1 FROM ,t",
+  "SELECT 1 ORDER BY ,",
+  "SELECT 1 LIMIT ,",
+  "SELECT (,1)",
+  "SELECT ASCII(1, /* c */ 2)",
+  "SELECT ASCII(1,)",
+  "SELECT ASCII(1,\n2)",
+  "SELECT TRIM(1,1)",
+  "SELECT ASCII(missing_fn(),1)",
+  "SELECT ABS(missing_fn(),1)",
+  "SELECT missing_fn(),",
+  "SELECT missing_fn() FROM",
+  "SELECT @x := missing_fn() +",
+  "SHOW TABLE STATUS WHERE missing_fn() OVER w"
 ]

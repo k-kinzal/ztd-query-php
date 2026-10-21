@@ -273,6 +273,7 @@ final class Syntax
 
     /**
      * Earlier refused tokens take precedence over later lexical failures when a parser is supplied.
+     * Legacy releases quote a refused comma from the immediately following byte, retaining whitespace and comments.
      * Answers the parse error of a failure to read a statement; an attribute a generated column cannot have is ER_WRONG_USAGE, as the parser of the server refuses it (verified on a live 8.4 server). MySQL 5.6 and 5.7, whose lexer reads the word after WITH to tell WITH ROLLUP and WITH CUBE apart, report an error at WITH from the text after it (verified on live 5.6.51 and 5.7.44 servers).
      */
     public function error(Throwable $failure, string $statement, ?\SqlSemantics\Contract\GrammarRelease $release = null, string $following = '', ?\SqlParser\Parser\SqlParser $parser = null): SqlError
@@ -299,6 +300,9 @@ final class Syntax
             return $this->near($lexical instanceof LexicalException ? $lexical->offset : strlen($statement), $statement, $following, $failure, in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true), $parser);
         }
         $offset = $cause->token->offset;
+        if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && $cause->token->text === ',') {
+            ++$offset;
+        }
         if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && in_array($cause->token->name, ['WITH', 'WITH_CUBE_SYM', 'WITH_ROLLUP_SYM'], true)) {
             $offset += 4 + strspn($statement, " \t\n\r\f\v", $offset + 4);
         }

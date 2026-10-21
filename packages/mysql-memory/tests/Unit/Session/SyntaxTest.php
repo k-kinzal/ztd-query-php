@@ -309,4 +309,16 @@ final class SyntaxTest extends TestCase
 
         $session->query('SELECT ? FROM');
     }
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', ' /* c */ 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44', ' /* c */ 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['8.4.7', ', /* c */ 2)'])]
+    public function testErrorQuotesARefusedCommaAtTheReleaseSpecificBoundary(string $release, string $excerpt): void
+    {
+        $session = (new Instance($release))->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near '" . $excerpt . "' at line 1");
+        $session->query('SELECT ASCII(1, /* c */ 2)');
+    }
+
 }
