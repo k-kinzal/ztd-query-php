@@ -26,6 +26,11 @@ use SqlSemantics\Statement\Relation;
 final class Activation
 {
     /**
+     * Whether this invocation announces following results, including the caller's notification.
+     */
+    public bool $announcesResults = true;
+
+    /**
      * SQL instructions reached by this invocation, excluding flow expressions.
      */
     public int $sqlStatements = 0;

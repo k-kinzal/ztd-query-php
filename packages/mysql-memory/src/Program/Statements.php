@@ -82,7 +82,9 @@ final class Statements
         $command = (new Dispatcher())->command($operation->statement);
         $reply = (new \MySqlMemory\Session\Execution($this->session))->perform($operation, $command, [], false, $this->activation->contained);
         $results = array_values(array_filter($reply instanceof Batch ? $reply->replies : [$reply], static fn (Reply $reply): bool => $reply instanceof ResultSet));
-        if ($results !== [] && $this->activation->contained) {
+        if ($results !== [] && $this->activation->contained
+            && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile
+            && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles) {
             throw ProgramError::ResultSetFromProgram->error($this->activation->kind === 'TRIGGER' ? 'trigger' : 'function');
         }
         foreach ($results as $result) {
@@ -98,6 +100,14 @@ final class Statements
      */
     public function publish(ResultSet $result): void
     {
+        if ($result->moreResults === null) {
+            $result = new ResultSet($result->columns, $result->rows, $result->warnings, $result->complete, $this->activation->announcesResults, $result->interruptions);
+        }
+        if ($this->activation->contained) {
+            $this->session->running->embeddedResults[] = $result;
+
+            return;
+        }
         if ($this->session->running->respond !== null) {
             ($this->session->running->respond)($result);
         } else {

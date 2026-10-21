@@ -41,10 +41,11 @@ final class Output
      *
      * @param bool $calculate Whether the query asks for SQL_CALC_FOUND_ROWS
      * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing query
+     * @param Closure(): list<ResultSet>|null $interrupted Takes results emitted inside a caller row
      *
      * @throws SqlError When computing a row fails
      */
-    public function result(QueryPlan $plan, Context $context, bool $calculate = false, ?Closure $failed = null): ResultSet
+    public function result(QueryPlan $plan, Context $context, bool $calculate = false, ?Closure $failed = null, ?Closure $interrupted = null): ResultSet
     {
         $limit = $calculate && $plan->root instanceof Limit && $plan->root->countFound && !$plan->root->exhaust ? $plan->root : null;
         $iterator = (new Builder())->build($limit === null ? $plan->root : $limit->input);
@@ -55,11 +56,13 @@ final class Output
         $release = GrammarRelease::from('mysql-' . $context->variables->instance->version);
         $resultCollation = $context->variables->resultCollation();
         $rows = [];
+        $interruptions = new \MySqlMemory\Result\Interleaving($interrupted);
         $found = 0;
         $frame = new Frame($context);
         try {
             $iterator->init($frame);
             while (($row = $iterator->read()) !== null) {
+                $interruptions->collect(count($rows));
                 $found++;
                 $context->row = $found + 1;
                 if ($limit !== null && ($found <= $limit->offset || ($limit->count !== null && $found > $limit->offset + $limit->count))) {
@@ -72,14 +75,16 @@ final class Output
                 $rows[] = $values;
             }
         } catch (SqlError $error) {
+            $interruptions->collect(count($rows));
             if ($failed !== null) {
-                $failed(new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), false));
+                $failed(new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), false, interruptions: $interruptions->results));
             }
             throw $error;
         }
         $context->variables->foundRows = $frame->foundBeforeProjection ?? $found;
+        $interruptions->collect(count($rows));
 
-        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised());
+        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), interruptions: $interruptions->results);
     }
 
     /**

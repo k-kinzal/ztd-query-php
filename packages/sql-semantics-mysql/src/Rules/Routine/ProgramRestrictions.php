@@ -60,12 +60,14 @@ use SqlSemantics\Statement\Query;
  * of a procedure or function (ER_SP_NO_DROP_SP), or a CREATE EVENT or an
  * ALTER EVENT with a body (ER_EVENT_RECURSION_FORBIDDEN). A stored function
  * or trigger in addition returns no result set: no query without INTO, no
- * SHOW, EXPLAIN, DESCRIBE, HELP and no CHECK, ANALYZE, OPTIMIZE, REPAIR or
+ * ordinary SHOW, EXPLAIN, DESCRIBE, HELP and no CHECK, ANALYZE, OPTIMIZE, REPAIR or
  * CHECKSUM TABLE (ER_SP_NO_RETSET); performs no explicit commit or rollback
  * (ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG); and uses no PREPARE, EXECUTE or
  * DEALLOCATE PREPARE, no FLUSH and no RESET, RESET PERSIST included, which
  * the grammar reads as the same RESET command (rule `reset` of
- * sql_yacc.yy) (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). TransactionStatements identifies
+ * sql_yacc.yy) (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). SHOW PROFILE and SHOW PROFILES
+ * are accepted despite emitting unannounced results (observed on 5.6, 5.7, 8.4
+ * and 9.1). TransactionStatements identifies
  * the permanent DDL instructions excluded from function and trigger bodies.
  * Terminates: the INTO search descends into strict parts of a query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html,
@@ -134,10 +136,16 @@ final class ProgramRestrictions
     }
 
     /**
-     * Tells whether a statement returns a result set to the client.
+     * Tells whether a statement declares a result set to the stored-program machinery.
+     * SHOW PROFILE and SHOW PROFILES do not declare their results and are accepted
+     * in function and trigger definitions, despite emitting result packets at runtime.
      */
     public function results(Statement $statement): bool
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile
+            || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles) {
+            return false;
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
             return !$this->into($statement->query);
         }

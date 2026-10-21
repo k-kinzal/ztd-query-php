@@ -58,7 +58,7 @@ final class ShowProfilesCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
-        if ($statement instanceof ShowProfile && !$session->replayed && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+        if ($statement instanceof ShowProfile && (!$session->replayed || $session->program !== null) && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $limit = $statement->limit;
             $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary));
             if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $bounds->bound($limit->count, null) !== 0 || ($limit->offset !== null && $bounds->bound($limit->offset, null) !== 0)) {

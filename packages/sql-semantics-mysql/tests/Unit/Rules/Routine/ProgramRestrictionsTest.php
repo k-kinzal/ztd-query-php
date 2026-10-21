@@ -289,6 +289,8 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'a SELECT of a trigger' => ['SELECT 1', ProgramKind::Trigger, 'Not allowed to return a result set from a trigger'];
         yield 'a SELECT INTO' => ['SELECT 1 INTO @a', ProgramKind::Function, null];
         yield 'SHOW' => ['SHOW TABLES', ProgramKind::Trigger, 'Not allowed to return a result set from a trigger'];
+        yield 'unannounced profiling in a function' => ['SHOW PROFILE', ProgramKind::Function, null];
+        yield 'unannounced profile list in a trigger' => ['SHOW PROFILES', ProgramKind::Trigger, null];
         yield 'COMMIT' => ['COMMIT', ProgramKind::Function, 'Explicit or implicit commit is not allowed in stored function or trigger.'];
         yield 'ROLLBACK' => ['ROLLBACK', ProgramKind::Trigger, 'Explicit or implicit commit is not allowed in stored function or trigger.'];
         yield 'START TRANSACTION' => ['START TRANSACTION', ProgramKind::Function, 'Explicit or implicit commit is not allowed in stored function or trigger.'];

@@ -81,7 +81,7 @@ final class Preparation
         }
         $programs = new \MySqlMemory\Command\Program\ProgramProblems();
         $programs->definer($statement, $session->settings()->release());
-        \MySqlMemory\Command\Program\ProgramSource::database($statement->name->schema, $session);
+        (new DefaultDatabase())->check($statement, $session);
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger) {
             (new \MySqlMemory\Command\Program\RoutineCommand())->types($statement, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, microtime(true)));
         }

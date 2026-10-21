@@ -58,6 +58,8 @@ final class Invocation
             throw (new \MySqlMemory\Error\ProgramErrors())->language($this->session->settings()->release());
         }
         $session = $this->session;
+        $activation->announcesResults = ($activation->caller->announcesResults ?? false)
+            || ($activation->kind === 'PROCEDURE' && (new \MySqlMemory\Program\Routine\Results())->announced($body));
         $variables = $session->variables;
         $saved = [$session->program, $variables->database, $variables->session];
         $session->program = $activation;

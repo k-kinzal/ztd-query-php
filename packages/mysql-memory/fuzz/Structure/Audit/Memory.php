@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Structure\Audit;
 
+use Closure;
 use Fuzz\Structure\Bindings;
 use Fuzz\Structure\Execution;
 use LogicException;
@@ -33,12 +34,17 @@ final class Memory
      */
     public function observe(Session $session, Statement|Scalar $node, ?array $parameters = null, bool $prepared = false): array
     {
+        $parameters ??= (new Bindings())->nulls($node);
         try {
-            $replies = [(new Execution())->runIn($session, $node, $parameters ?? (new Bindings())->nulls($node), $prepared)];
+            $replies = [(new Execution())->runIn($session, $node, $parameters, $prepared)];
         } catch (SqlError $error) {
             $replies = (new \MySqlMemory\Session\Execution($session))->failed($error);
         }
-        $observation = $this->replies($replies);
+        $replies = $this->flatten($replies);
+        $observation = $this->replies($replies, fn (ResultSet $result): array => (new ResponseReplay())->result($session->instance->version, $result, $prepared || $parameters !== []));
+        if ($this->disrupted($replies)) {
+            $session->close();
+        }
         $observation['warnings'] = $session->released ? null : array_map(static fn (array $condition): array => [$condition[0], (string) $condition[1], $condition[2]], $session->diagnostics->conditions);
         $observation['disconnected'] = $session->released;
         if (!$session->released) {
@@ -56,23 +62,31 @@ final class Memory
 
     /**
      * @param list<Reply|SqlError> $replies The replies, including results before an error
+     * @param Closure(ResultSet): array{columns: list<array<string, int|string>>, rows: list<list<string|null>>}|null $interrupted Observes bytes that interrupt an outer result
      * @return array{results: list<array<string, mixed>>, error?: array{int, string, string}}
      * @throws LogicException When a reply has no observation rule
      */
-    public function replies(array $replies): array
+    public function replies(array $replies, ?Closure $interrupted = null): array
     {
         $observation = ['results' => []];
-        foreach ($replies as $reply) {
-            if ($reply instanceof Batch) {
-                $batch = $this->replies($reply->replies);
-                $observation['results'] = [...$observation['results'], ...$batch['results']];
-            } elseif ($reply instanceof SqlError) {
+        foreach ($this->flatten($replies) as $reply) {
+            if ($reply instanceof SqlError) {
                 $observation['error'] = [$reply->getCode(), $reply->sqlState(), $reply->getMessage()];
             } elseif ($reply instanceof Completion) {
                 $observation['results'][] = ['affected' => $reply->affectedRows, 'lastInsertId' => (string) $reply->lastInsertId];
             } elseif ($reply instanceof ResultSet) {
+                if ($reply->interruptions !== []) {
+                    if ($interrupted === null) {
+                        throw new LogicException('Nested emissions require transport observation.');
+                    }
+                    $observation['results'][] = $interrupted($reply);
+                    break;
+                }
                 if ($reply->complete) {
                     $observation['results'][] = ['columns' => array_map($this->column(...), $reply->columns), 'rows' => array_map(fn (array $row): array => array_map($this->value(...), $row, $reply->columns), $reply->rows)];
+                }
+                if ($reply->moreResults === false) {
+                    break;
                 }
             } else {
                 throw new LogicException('No direct observation for ' . $reply::class);
@@ -80,6 +94,40 @@ final class Memory
         }
 
         return $observation;
+    }
+
+    /**
+     * Flattens logical batches without discarding an unannounced completion.
+     *
+     * @param list<Reply|SqlError> $replies
+     * @return list<Reply|SqlError>
+     */
+    public function flatten(array $replies): array
+    {
+        $flat = [];
+        foreach ($replies as $reply) {
+            array_push($flat, ...($reply instanceof Batch ? $this->flatten($reply->replies) : [$reply]));
+        }
+
+        return $flat;
+    }
+
+    /**
+     * Mirrors the driver closing a response whose remaining packets were not announced.
+     * An embedded result interrupts its caller's row stream; a procedure result can
+     * instead finish normally but leave an unannounced final completion unread.
+     *
+     * @param list<Reply|SqlError> $replies Flattened replies
+     */
+    public function disrupted(array $replies): bool
+    {
+        foreach ($replies as $index => $reply) {
+            if ($reply instanceof ResultSet && ($reply->interruptions !== [] || ($reply->moreResults === false && isset($replies[$index + 1])))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

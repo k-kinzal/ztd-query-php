@@ -53,6 +53,10 @@ final class Execution
      */
     public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = [], bool $prepared = false): Reply
     {
+        $failure = $session->gone();
+        if ($failure !== null) {
+            throw $failure;
+        }
         $prepared = $prepared || $parameters !== [];
         if ($session->running->using === []) {
             $session->activity->begin();

@@ -70,6 +70,31 @@ has a deterministic integer return or an empty procedure body. Loadable routines
 with named arguments and unavailable debug-only reports remain unresolved;
 creating an unrelated stored routine is not evidence for those dependencies.
 
+Profiling instructions distinguish SQL restrictions from response notifications.
+MySQL accepts `SHOW PROFILE` and `SHOW PROFILES` in function and trigger bodies,
+even though their result packets interrupt the calling statement. A procedure
+containing only profiling instructions omits the notification for its final
+completion. Including an ordinary SELECT in an unexecuted branch changes that
+notification. Memory retains logical results, nested emissions and notification
+state separately; its wire adapter reproduces the observed PDO and mysqli
+boundaries. A driver may close the affected connection while the server remains
+available. Direct-construction comparisons model that driver boundary without
+parsing SQL or erasing the retained logical results. Scope witnesses keep the
+same profiling node and local-variable operand, and use an unexecuted SELECT
+when they need the connection to remain open for a subsequent scope check.
+
+The direct function witness has one bounded comparison exception on 5.6.51
+binary connections. With the same `SHOW PROFILE MEMORY, ALL, MEMORY LIMIT n`
+body and `n = 0`, two independent native instances produced either no decoded
+caller rows or seventeen single-NULL rows. Both retained the same integer column
+metadata and closed the connection when reading conditions. The raw sixteen
+observations are retained in `tests/Integration/Fuzz/fixtures/profile-response-5.6.json`.
+`LegacyProfileResponse` equates only those row variants in that function history;
+other releases, text connections, row shapes, diagnostics and connection states
+remain exact. Memory retains its own logical result and actual driver-decoded
+response. The evidence establishes a comparison exception, not a specific cause
+inside the native server or driver.
+
 Temporal input interpretation consumes decoded literal and variable operands
 from SQL Semantics in their contextual order. The input adapter retains view
 context and input ranges only while reading the statement. A refused temporal

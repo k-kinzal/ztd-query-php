@@ -25,8 +25,10 @@ final class ResultSet implements Reply
      * @param list<list<string|null>> $rows The rows in the order they are sent
      * @param int $warnings The number of warnings the statement raised
      * @param bool $complete Whether the row stream ends successfully; false precedes an execution error
+     * @param bool|null $moreResults A stored program's continuation notification; null uses the surrounding response sequence
+     * @param array<int, list<ResultSet>> $interruptions Results emitted while computing the row at each offset, before that row's bytes
      */
-    public function __construct(public readonly array $columns, public readonly array $rows, public readonly int $warnings = 0, public readonly bool $complete = true)
+    public function __construct(public readonly array $columns, public readonly array $rows, public readonly int $warnings = 0, public readonly bool $complete = true, public readonly ?bool $moreResults = null, public readonly array $interruptions = [])
     {
     }
 

@@ -121,6 +121,9 @@ final class Execution
         $session->transaction->statements->end($contained);
         $last = $reply instanceof \MySqlMemory\Result\Batch ? ($reply->replies[count($reply->replies) - 1] ?? null) : $reply;
         $session->variables->rowCount = $last instanceof Completion ? $last->affectedRows : -1;
+        if ($session->program === null && $session->running->embeddedResults !== []) {
+            return new \MySqlMemory\Result\Batch([...$session->running->takeEmbedded(), $reply]);
+        }
         return $reply;
     }
 
@@ -357,7 +360,7 @@ final class Execution
         $session = $this->session;
         $session->transaction->statements->abort();
         $session->variables->rowCount = -1;
-        $answers = $session->running->replies;
+        $answers = [...$session->running->replies, ...$session->running->takeEmbedded()];
         $session->running->replies = [];
         if ($session->running->partial !== null) {
             $answers[] = $session->running->partial;

@@ -18,6 +18,18 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class RunningTest extends TestCase
 {
+    public function testTakeEmbeddedRetainsTheEmittedResultsAndDrainsOnlyThatBuffer(): void
+    {
+        $running = new Running();
+        $result = new \MySqlMemory\Result\ResultSet([], [], moreResults: false);
+        $running->embeddedResults = [$result];
+        $running->replies = [$result];
+
+        self::assertSame([$result], $running->takeEmbedded());
+        self::assertSame([], $running->takeEmbedded());
+        self::assertSame([$result], $running->replies);
+    }
+
     public function testIncompleteRetainsTheUnfinishedResult(): void
     {
         $running = new Running();

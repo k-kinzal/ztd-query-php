@@ -80,7 +80,7 @@ final class Native
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{columns: list<array<string, int|string>>, rows: list<list<string|null>>}
      */
     public function result(mysqli_result $result): array
     {
@@ -88,7 +88,7 @@ final class Native
         foreach ($result->fetch_fields() as $field) {
             $columns[] = ['name' => $field->name, 'orgname' => $field->orgname, 'table' => $field->table, 'orgtable' => $field->orgtable, 'db' => $field->db, 'charsetnr' => $field->charsetnr, 'length' => $field->length, 'type' => $field->type, 'flags' => $field->flags, 'decimals' => $field->decimals];
         }
-        $rows = array_map(fn (array $row): array => array_map($this->value(...), $row), $result->fetch_all(MYSQLI_NUM));
+        $rows = array_map(fn (array $row): array => array_values(array_map($this->value(...), $row)), $result->fetch_all(MYSQLI_NUM));
         $result->free();
 
         return ['columns' => $columns, 'rows' => $rows];

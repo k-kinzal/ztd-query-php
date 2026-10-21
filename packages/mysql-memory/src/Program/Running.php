@@ -46,6 +46,24 @@ final class Running
     public ?Closure $respond = null;
 
     /**
+     * @var list<\MySqlMemory\Result\ResultSet> Results emitted by a function or trigger inside its caller's response
+     */
+    public array $embeddedResults = [];
+
+    /**
+     * Takes the results emitted since the last caller row was computed.
+     *
+     * @return list<\MySqlMemory\Result\ResultSet>
+     */
+    public function takeEmbedded(): array
+    {
+        $results = $this->embeddedResults;
+        $this->embeddedResults = [];
+
+        return $results;
+    }
+
+    /**
      * @var Closure(string): string|null Requests a named client file on a wire connection; null when client file access is unavailable
      */
     public ?Closure $readFile = null;

@@ -82,7 +82,7 @@ final class QueryCommand implements Command
             $context->strict = $context->modes->strict();
         }
         $failed = $into === null && $session->program?->contained !== true ? $session->running->incomplete(...) : null;
-        $result = (new Output())->result($plan, $context, $this->calculates($statement), $failed);
+        $result = (new Output())->result($plan, $context, $this->calculates($statement), $failed, $failed === null ? null : $session->running->takeEmbedded(...));
         if ($into === null) {
             return $result;
         }

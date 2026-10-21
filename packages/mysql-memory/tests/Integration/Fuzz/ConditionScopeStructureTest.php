@@ -45,7 +45,8 @@ final class ConditionScopeStructureTest extends TestCase
         }
         $show = new M\Utility\Show\Session\ShowProfile([M\Utility\Show\Session\ProfileSection::Memory, M\Utility\Show\Session\ProfileSection::All, M\Utility\Show\Session\ProfileSection::Memory], limit: new M\Query\Clause\RowLimit(new M\Query\Clause\ProgramVariable(new Name('12345'))));
         $variable = new M\Routine\Program\VariableDeclaration([new Name('12345')], new M\Type\Integral(M\Type\Kind\IntegralKind::Int), default: new M\Literal\NumberLiteral('0'));
-        $profile = new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Block([$variable], [$show]));
+        $declaredResult = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\BooleanLiteral(false), [new M\QueryRoot(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]))])]);
+        $profile = new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Block([$variable], [$declaredResult, $show]));
         $get = new M\Routine\Condition\Diagnostics\GetDiagnostics(new M\Routine\Condition\Diagnostics\ConditionDiagnostics(new M\Name\ColumnUse(new Name('A')), [new M\Routine\Condition\Diagnostics\InformationItem(new M\Variable\UserVariable(new Name('A1B2C')), M\Routine\Condition\ConditionItemName::ReturnedSqlstate)]), M\Routine\Condition\Diagnostics\DiagnosticsArea::Stacked);
         $number = new M\Routine\Program\VariableDeclaration([new Name('A')], new M\Type\Integral(M\Type\Kind\IntegralKind::Int), default: new M\Literal\NumberLiteral('1'));
         $handler = new M\Routine\Program\HandlerDeclaration(M\Routine\Program\HandlerAction::Continue, [new M\Routine\Condition\SqlState(new M\Literal\Text('45000'))], $get);

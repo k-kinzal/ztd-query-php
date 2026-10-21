@@ -27,6 +27,31 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 final class MemoryTest extends TestCase
 {
     /**
+     * Direct execution observes a closed connection before resolving another structure.
+     */
+    public function testObserveRejectsFurtherDirectStructuresAfterTheConnectionHasClosed(): void
+    {
+        $session = (new Instance())->connect();
+        $session->close();
+
+        self::assertSame(['results' => [], 'error' => [2006, 'HY000', 'MySQL server has gone away'], 'warnings' => null, 'disconnected' => true], (new Memory())->observe($session, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+    }
+
+    /**
+     * The driver-visible prefix does not erase the logical completion held by the reply.
+     */
+    public function testRepliesStopsAtTheUnannouncedCompletionWithoutChangingLogicalResults(): void
+    {
+        $result = new ResultSet([], [], moreResults: false);
+        $replies = [new Batch([$result, new Completion()])];
+        $observer = new Memory();
+
+        self::assertSame(['results' => [['columns' => [], 'rows' => []]]], $observer->replies($replies));
+        self::assertTrue($observer->disrupted($observer->flatten($replies)));
+        self::assertFalse($observer->disrupted([$result]));
+    }
+
+    /**
      * Stored markers select preparation without creating outer bound arguments.
      */
     public function testObservePreparesAnEventWithoutTreatingItsStoredMarkersAsOuterBindings(): void

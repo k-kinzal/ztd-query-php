@@ -298,6 +298,9 @@ final class Client
      */
     public function reply(Reply $reply, int $more, bool $binary): void
     {
+        if ($reply instanceof ResultSet && $reply->moreResults !== null) {
+            $more = $reply->moreResults ? 8 : 0;
+        }
         $status = $this->status() | $more;
         if ($reply instanceof Completion) {
             $affected = $reply->affectedRows;
@@ -311,8 +314,14 @@ final class Client
             $this->packet($this->messages->column($column));
         }
         $this->packet($this->messages->eof(0, $status));
-        foreach ($reply->rows as $row) {
+        foreach ($reply->rows as $index => $row) {
+            foreach ($reply->interruptions[$index] ?? [] as $interruption) {
+                $this->reply($interruption, 0, $binary);
+            }
             $this->packet($binary ? (new \MySqlMemory\Protocol\Binary())->row($reply->columns, $row) : $this->messages->textRow($row));
+        }
+        foreach ($reply->interruptions[count($reply->rows)] ?? [] as $interruption) {
+            $this->reply($interruption, 0, $binary);
         }
         if ($reply->complete) {
             $this->packet($this->messages->eof($reply->warnings, $status));
