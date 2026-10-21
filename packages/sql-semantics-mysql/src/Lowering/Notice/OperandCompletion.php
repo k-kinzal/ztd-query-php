@@ -32,6 +32,7 @@ final class OperandCompletion
         private readonly LegacyColumns $privileges = new LegacyColumns(),
         private readonly SyntaxArrays $arrays = new SyntaxArrays(),
         private readonly DeclarationPrefix $types = new DeclarationPrefix(),
+        private readonly \SqlSemantics\Platform\MySql\Lowering\Routine\Program\VariablePrefix $variables = new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\VariablePrefix(),
     ) {
     }
 
@@ -45,6 +46,7 @@ final class OperandCompletion
         return (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxCharsets())->completed($node, $lowering, $tokens)
             ?? $this->privileges->completed($node, $lowering)
             ?? $this->arrays->completed($node, $lookahead, $lowering, $state->failedAt)
+            ?? $this->variables->observe($node, $lowering)
             ?? $this->types->following($node, $lowering, $tokens)
             ?? ($state->failed ? null : $this->names->completed($node, $lowering));
     }

@@ -48,6 +48,8 @@ final class InputPrefixTest extends TestCase
         yield 'closed cursor scope' => ['BEGIN DECLARE c CURSOR FOR SELECT 1; END; OPEN c;', 'Undefined CURSOR: c'];
         yield 'cursor in loop' => ['LOOP OPEN c; END LOOP;', 'Undefined CURSOR: c'];
         yield 'outer cursor in loop' => ['DECLARE c CURSOR FOR SELECT 1; LOOP OPEN c; END LOOP;', null];
+        yield 'duplicate before type' => ['DECLARE x,X INT COLLATE binary;', 'Duplicate variable: X'];
+        yield 'duplicate before later type' => ['DECLARE x INT; DECLARE X INT COLLATE binary;', 'Duplicate variable: X'];
         yield 'duplicate variable' => ['DECLARE x INT; DECLARE x INT;', 'Duplicate variable: x'];
         yield 'call identity before argument' => ['SELECT ``(@@missing_variable);', "Incorrect routine name ''"];
         yield 'earlier statement before call' => ['SELECT @@missing_variable; SELECT ``();', "Unknown system variable 'missing_variable'"];
@@ -70,6 +72,16 @@ final class InputPrefixTest extends TestCase
 
         self::assertSame($message, $failure?->problem->message());
         self::assertTrue($failure === null || $failure->end < $end);
+    }
+
+    public function testVariablesChecksOnlyTheCurrentLexicalBlock(): void
+    {
+        $sql = 'CREATE PROCEDURE p() BEGIN DECLARE x,X INT COLLATE binary; END';
+        $tree = (new MySqlParser('mysql-8.4.7'))->parse($sql);
+        $rule = new InputPrefix(new Lowering(Productions::load(__DIR__ . '/../../../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847)));
+        $list = $tree->find('sp_decl_idents')[0];
+
+        self::assertSame('Duplicate variable: X', $rule->variables($list, new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\PrefixFrame())?->problem->message());
     }
 
     public function testDiagnosticResolvesAConditionNameWithoutSourceText(): void

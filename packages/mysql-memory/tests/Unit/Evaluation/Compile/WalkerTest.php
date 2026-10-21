@@ -47,6 +47,24 @@ final class WalkerTest extends TestCase
         self::assertSame([], (new Walker())->find(new Instance(), NumberLiteral::class));
     }
 
+    public function testResolvedFollowsBindingsInsteadOfUnusedDefinitions(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('WITH unused AS (SELECT 99), q AS (SELECT 1), r AS (SELECT * FROM q) SELECT * FROM r');
+        $nodes = (new Walker())->resolved($operation->statement, $operation->facts);
+
+        self::assertSame(['1'], array_values(array_map(static fn (NumberLiteral $literal): string => $literal->text, array_filter($nodes, static fn ($node): bool => $node instanceof NumberLiteral))));
+    }
+
+    public function testResolvedTerminatesAtRecursiveBindings(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('WITH RECURSIVE q(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM q WHERE n<3) SELECT * FROM q');
+        $nodes = (new Walker())->resolved($operation->statement, $operation->facts);
+
+        self::assertSame(['1', '1', '3'], array_values(array_map(static fn (NumberLiteral $literal): string => $literal->text, array_filter($nodes, static fn ($node): bool => $node instanceof NumberLiteral))));
+    }
+
     public function testVisitCollectsTheMatchingNodesOfListProperties(): void
     {
         $row = new Row([new NumberLiteral('1'), new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('2'), new NumberLiteral('3'))]);

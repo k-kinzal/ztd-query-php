@@ -47,6 +47,17 @@ final class DeclarationNames
             return null;
         }
         $declared = $declaration instanceof P\VariableDeclaration ? $declaration->names : [$declaration->name];
+        return $this->names($declared, $names, $rule);
+    }
+
+    /**
+     * Publishes completed names before their declaration type or default is read.
+     *
+     * @param list<\SqlSemantics\Statement\Identifier\Name> $declared Names in input order
+     * @param array<string, array<string, true>> $names Existing names in this lexical block
+     */
+    public function names(array $declared, array &$names, ProgramRule $rule): ?ProgramProblem
+    {
         foreach ($declared as $name) {
             $key = (new GeneralWeights())->key($name->value);
             if (isset($names[$rule->name][$key])) {

@@ -20,6 +20,31 @@ the witness. A later error remains visible for separate classification. These
 histories do not label unrelated matching errors as state-dependent or certify
 that all constructible values have been exercised.
 
+Sampling in an UPDATE or DELETE is a write-role constraint owned by Semantics.
+Ordinary write constructors exclude reached `TABLESAMPLE` operands; stored
+instructions retain their complete relations, assignments, predicates and CTEs
+until invocation. Direct-construction comparisons preserve those objects while
+changing control flow and table availability: an unvisited branch succeeds,
+missing dependencies report their own errors, and an invoked instruction with
+all dependencies reports the sampling condition. Unreferenced CTE definitions
+remain inert. Memory follows the common-table identities resolved by Semantics
+instead of resolving their names again.
+
+The generated JSON object aggregate and geometry-cast scalar counterexamples
+also retain the same expression across empty, populated and truncated input
+relations. Their null-key and geometry-conversion errors arise when rows are
+evaluated; the empty input succeeds again after truncation. Parameters remain
+bound through the binary protocol throughout these histories.
+
+Local variable names bind as their declaration list is read, before the type,
+collation and default. A duplicate in one list or an earlier declaration in the
+same block precedes those later conditions; nested blocks may shadow outer
+names. The input-prefix reader uses the same semantic name-identity rule and
+publishes only typed diagnostics. Syntax excerpts from the initial statement
+split also use the negotiated client character set, including legacy sessions.
+The complete unseeded counterexample is retained alongside scoped and malformed
+prefix regressions, and compared through both text and prepared protocols.
+
 Catalog histories also establish missing foreign-server entries, user resource
 groups, role accounts and open handler cursors under the original referenced names.
 Role histories create the referenced roles and recipients, establish grants needed

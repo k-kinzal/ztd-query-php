@@ -138,6 +138,15 @@ final class SessionTest extends TestCase
         self::assertSame(['SELECT 1'], $session->split('SELECT 1'));
     }
 
+    public function testSplitUsesTheClientEncodingInItsSyntaxExcerpt(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near 'SELEC çŒ«' at line 1");
+
+        $session->split('SELEC 猫');
+    }
+
     public function testSplitRefusesAnEmptyText(): void
     {
         $session = (new Instance())->connect();

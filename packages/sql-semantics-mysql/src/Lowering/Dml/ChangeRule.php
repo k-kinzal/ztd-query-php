@@ -177,7 +177,7 @@ final class ChangeRule
      */
     public function single(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, WriteTarget $target, ?\SqlSemantics\Statement\Scalar $where, array $orderBy, ?Limit $limit, array $hints): Delete
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $target->name)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $target->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([$target, ...$orderBy, ...($where === null ? [] : [$where])], $with) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete($with, $options, $target, $where, $orderBy, $limit, $hints);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
         }
@@ -200,7 +200,7 @@ final class ChangeRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
         }
         $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets);
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->inputs($tables, $with) !== null) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->inputs($tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([...$tables, ...($where === null ? [] : [$where])], $with) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($with, $options, $input, $form, $where, $hints);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
         }

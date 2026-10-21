@@ -11,9 +11,8 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
-use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
-use SqlSemantics\Platform\MySql\Statement\Dml\Update;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
@@ -22,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -30,11 +28,11 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 /**
  * Refuses the TABLESAMPLE clause of a table reference, which only a secondary engine runs.
  *
- * Once the server has opened the tables of a statement, an UPDATE or DELETE that samples a table
- * anywhere fails as not supported (ER_NOT_SUPPORTED_YET style 6033). Any other statement fails
+ * Once the server has opened the tables of a statement, a resolved sampling condition of an UPDATE or DELETE
+ * fails as not supported (ER_NOT_SUPPORTED_YET style 6033). Any other statement fails
  * first when it samples a table that is not a base table (a common table expression, a view or a
  * table of INFORMATION_SCHEMA), then when a literal percentage lies outside 0 to 100; both come
- * before any name is resolved. A statement that passes every check fails when it is optimized,
+ * before column conditions are reported. A statement that passes every check fails when it is optimized,
  * because no secondary engine is defined (ER_SECONDARY_ENGINE). MySQL 9.1 names the first table of
  * the statement in that message when it is a base table (verified on live 8.4.7 and 9.1.0 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
@@ -50,13 +48,10 @@ final class Sampling
      */
     public function opened(Node $statement, Facts $facts, Settings $settings, Dictionary $dictionary): void
     {
-        $sampled = array_values(array_filter((new Walker())->find($statement, TableReference::class), static fn (TableReference $reference): bool => $reference->sample !== null));
+        $this->write($facts);
+        $sampled = array_values(array_filter((new Walker())->resolved($statement, $facts), static fn (Node $reference): bool => $reference instanceof TableReference && $reference->sample !== null));
         if ($sampled === []) {
             return;
-        }
-        $explained = $statement instanceof Explain ? $statement->statement : $statement;
-        if ($explained instanceof Update || $explained instanceof Delete || $explained instanceof MultipleDelete) {
-            throw StatementError::FeatureNotSupported->error('TABLESAMPLE');
         }
         foreach ($sampled as $reference) {
             if (!$this->base($reference, $facts, $settings, $dictionary)) {
@@ -72,14 +67,28 @@ final class Sampling
     }
 
     /**
+     * Consumes the sampling role resolved by Semantics after dependencies open.
+     *
+     * @throws SqlError When the retained write has a reached sampling condition
+     */
+    public function write(Facts $facts): void
+    {
+        foreach ($facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof WriteMisuse && $diagnostic->rule === WriteRule::SampledWrite) {
+                throw (new Errors())->write($diagnostic, null);
+            }
+        }
+    }
+
+    /**
      * Raises the error the server reports when it optimizes a statement that samples a table: no secondary engine runs it.
      *
      * @throws SqlError When the statement samples a table
      */
     public function optimized(Node $statement, Facts $facts, Settings $settings, Dictionary $dictionary): void
     {
-        foreach ((new Walker())->find($statement, TableReference::class) as $reference) {
-            if ($reference->sample !== null) {
+        foreach ((new Walker())->resolved($statement, $facts) as $reference) {
+            if ($reference instanceof TableReference && $reference->sample !== null) {
                 throw $this->unengined($statement, $facts, $settings, $dictionary);
             }
         }

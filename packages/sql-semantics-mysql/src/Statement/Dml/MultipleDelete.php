@@ -82,6 +82,7 @@ final class MultipleDelete implements Explainable
         $this->tables = $input->tables;
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) === null, 'An ordinary DELETE target cannot be a derived, JSON or common-table relation.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) === null, 'An ordinary DELETE has a coherent input-column namespace.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) === null, 'An ordinary DELETE cannot sample its read dependencies.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

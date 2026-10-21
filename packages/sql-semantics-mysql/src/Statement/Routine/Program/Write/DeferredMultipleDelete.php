@@ -23,10 +23,10 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored deletion retaining an intrinsically read-only target and all its dependencies.
+ * A stored deletion retaining a target, input-column or sampling condition and all its dependencies.
  *
  * An unvisited instruction opens no tables. Reaching it resolves its input before
- * reporting the target role; the ordinary MultipleDelete type excludes this role.
+ * reporting the condition; ordinary MultipleDelete values exclude these contradictions.
  *
  * @visibility public
  * @example Keeping a deferred target in a stored definition
@@ -78,7 +78,7 @@ final class DeferredMultipleDelete implements ProgramStatement
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = $input->targets;
         $this->tables = $input->tables;
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null, 'A deferred DELETE retains a read-only target or input-column contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null, 'A deferred DELETE retains a target, input-column or sampling contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

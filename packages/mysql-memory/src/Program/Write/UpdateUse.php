@@ -79,7 +79,7 @@ final class UpdateUse
         $this->names($write, $facts, $session);
         (new \MySqlMemory\Session\Problem\Reading())->legacyWrites($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof MissingTable) {
+            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition) {
                 throw (new Errors())->error($problem, $session);
             }
         }
@@ -87,6 +87,7 @@ final class UpdateUse
         if ($input !== null) {
             throw $input;
         }
+        (new \MySqlMemory\Session\Problem\Sampling())->write($facts);
         if ($write instanceof DeferredUpdate) {
             if ((new UpdateOperands())->prepare($write, $facts, $session, $prepared, $parameters)) {
                 return;

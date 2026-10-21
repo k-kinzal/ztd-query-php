@@ -19,10 +19,10 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A stored single-table DELETE whose target resolves to its own common table.
+ * A stored single-table DELETE retaining a common-table target or sampling condition.
  *
  * The complete instruction is retained until invocation; ordinary Delete values
- * exclude this intrinsically read-only target role.
+ * exclude these intrinsic write-role contradictions.
  *
  * @visibility public
  * @example Retaining a common-table deletion in a stored program
@@ -73,7 +73,7 @@ final class DeferredDelete implements \SqlSemantics\Platform\MySql\Statement\Rou
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'DELETE ordering uses expressions, not output-column positions.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $table->name), 'A deferred single-table DELETE retains a common-table target.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $table->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null, 'A deferred single-table DELETE retains a target or sampling contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

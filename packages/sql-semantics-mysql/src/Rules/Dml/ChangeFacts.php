@@ -63,6 +63,9 @@ final class ChangeFacts
      */
     public function update(Update|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $update, Derivation $derivation, Environment $outer): void
     {
+        if (($sampling = (new Read\Sampling())->of($update)) !== null) {
+            $derivation->report($sampling);
+        }
         $base = $this->base($update->with, $derivation, $outer);
         $visible = $this->references($update->tables, $derivation, $base);
         $environment = new Environment($derivation->context, $base, $visible);
@@ -93,6 +96,9 @@ final class ChangeFacts
      */
     public function delete(Delete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $delete, Derivation $derivation, Environment $outer): void
     {
+        if (($sampling = (new Read\Sampling())->of($delete)) !== null) {
+            $derivation->report($sampling);
+        }
         $base = $this->base($delete->with, $derivation, $outer);
         $fact = $derivation->relation($delete->table, $base);
         $environment = new Environment($derivation->context, $base, [new VisibleRelation($delete->table, $fact->shape, $delete->table->alias, $delete->table->name, [], (new TableShapes())->implicit($fact))]);
@@ -104,6 +110,9 @@ final class ChangeFacts
      */
     public function deleteMultiple(MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete $delete, Derivation $derivation, Environment $outer): void
     {
+        if (($sampling = (new Read\Sampling())->of($delete)) !== null) {
+            $derivation->report($sampling);
+        }
         $base = $this->base($delete->with, $derivation, $outer);
         $visible = $this->references($delete->tables, $derivation, $base);
         $this->targets($delete->targets, $visible, $derivation, $delete);

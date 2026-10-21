@@ -40,6 +40,10 @@ final class Structure
      */
     public function problem(?WithClause $with, array $tables, array $assignments, array $orderBy = [], ?Limit $limit = null, Scalar|RowOperand|DeferredOperand|null $where = null): ?Diagnostic
     {
+        $sampling = (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([...$tables, ...$assignments, ...$orderBy, ...($where === null ? [] : [$where])], $with);
+        if ($sampling !== null) {
+            return $sampling;
+        }
         $columns = $this->names($tables) ?? (new InputColumns())->inputs($tables, $with);
         if ($columns !== null) {
             return $columns;

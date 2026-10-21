@@ -34,6 +34,46 @@ final class Walker
     }
 
     /**
+     * Visits operands and resolved common-table dependencies, without rebinding names.
+     *
+     * Definitions are reached through their semantic reference identity. Unused
+     * WITH bodies remain inert, and recursive bindings are visited once.
+     *
+     * @return list<Node>
+     */
+    public function resolved(Node $root, \SqlSemantics\Statement\Fact\Facts $facts): array
+    {
+        $pending = [$root];
+        $seen = [];
+        $found = [];
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            $id = spl_object_id($node);
+            if (isset($seen[$id])) {
+                continue;
+            }
+            $seen[$id] = true;
+            $found[] = $node;
+            $properties = get_object_vars($node);
+            unset($properties['with']);
+            $children = [];
+            array_walk_recursive($properties, static function ($value) use (&$children): void {
+                if ($value instanceof Node) {
+                    $children[] = $value;
+                }
+            });
+            if ($node instanceof \SqlSemantics\Statement\NamedRelation && $facts->covers($node)) {
+                $resolution = $facts->relation($node)->table;
+                if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable) {
+                    $children[] = $resolution->definition;
+                }
+            }
+            array_push($pending, ...array_reverse($children));
+        }
+        return $found;
+    }
+
+    /**
      * Collects the matching nodes under a node, the node included.
      *
      * @template T of object

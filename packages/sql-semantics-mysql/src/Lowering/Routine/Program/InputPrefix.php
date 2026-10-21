@@ -67,7 +67,7 @@ final class InputPrefix
                 continue;
             }
             $completed = $range[1] < $end;
-            if ($completed && in_array($node->name, ['sp_decl', 'sp_proc_stmt', 'ev_sql_stmt_inner', 'sp_pdparam_list', 'sp_fdparam_list'], true)) {
+            if ($completed && in_array($node->name, ['sp_decl_idents', 'sp_decl', 'sp_proc_stmt', 'ev_sql_stmt_inner', 'sp_pdparam_list', 'sp_fdparam_list'], true)) {
                 $parameters = $this->completed($node, $frame, $parameters);
                 if ($parameters instanceof RejectedInput) {
                     return $parameters;
@@ -115,10 +115,18 @@ final class InputPrefix
             return $name;
         }
         try {
+            if ($node->name === 'sp_decl_idents') {
+                return $this->variables($node, $frame) ?? $parameters;
+            }
             if (in_array($node->name, ['sp_pdparam_list', 'sp_fdparam_list'], true)) {
                 return (new ParameterRule($this->lowering))->parameters($node);
             }
             if ($node->name === 'sp_decl') {
+                $list = $this->lowering->form($node)->node(1);
+                $conflict = $list->name === 'sp_decl_idents' ? $this->variables($list, $frame) : null;
+                if ($conflict !== null) {
+                    return $conflict;
+                }
                 $frame->declarations[] = (new BlockRule($this->lowering))->declaration($node);
             } else {
                 $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
@@ -135,6 +143,22 @@ final class InputPrefix
         }
 
         return $parameters;
+    }
+
+    /**
+     * Checks completed names against this block before reading the remaining declaration.
+     */
+    public function variables(Node $list, PrefixFrame $frame): ?RejectedInput
+    {
+        $names = [];
+        $rules = new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclarationNames();
+        foreach ($frame->declarations as $declaration) {
+            if ($declaration instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration) {
+                $rules->names($declaration->names, $names, ProgramRule::DuplicateVariable);
+            }
+        }
+        $problem = $rules->names((new BlockRule($this->lowering))->names($list, 'sp_decl_idents'), $names, ProgramRule::DuplicateVariable);
+        return $problem === null ? null : new RejectedInput($problem, (new SourceRanges())->span($list)[1] ?? 0);
     }
 
     /**

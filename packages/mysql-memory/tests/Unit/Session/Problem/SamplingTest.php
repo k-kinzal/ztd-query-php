@@ -17,6 +17,15 @@ use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 #[Small]
 final class SamplingTest extends TestCase
 {
+    public function testWriteConsumesTheResolvedConditionWithoutInspectingAStatement(): void
+    {
+        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::SampledWrite)]);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(6033);
+
+        (new Sampling())->write($facts);
+    }
     public function testOpenedRefusesSamplingInAnUpdateBeforeItsColumns(): void
     {
         $session = (new Instance())->connect();

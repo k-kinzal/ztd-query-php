@@ -65,7 +65,7 @@ final class DeleteUse
             }
         }
         foreach ($facts->diagnostics as $problem) {
-            if ($problem instanceof MissingTable) {
+            if ($problem instanceof MissingTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition) {
                 throw (new Errors())->error($problem, $session);
             }
         }
@@ -73,6 +73,7 @@ final class DeleteUse
         if ($input !== null) {
             throw $input;
         }
+        (new \MySqlMemory\Session\Problem\Sampling())->write($facts);
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }

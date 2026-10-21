@@ -268,7 +268,7 @@ final class Session
         try {
             $statements = (new Script\Trailing())->statements($this->semantics()->split($sql), $this->semantics()->parser());
         } catch (AnalysisException $error) {
-            throw (new Syntax())->error($error, $sql, $this->settings()->release(), parser: $this->semantics()->parser());
+            throw (new Syntax(Charset::named((string) $this->variables->read('character_set_client'))))->error($error, $sql, $this->settings()->release(), parser: $this->semantics()->parser());
         }
 
         return $statements === [] ? [$sql] : $statements;

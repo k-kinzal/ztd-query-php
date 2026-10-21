@@ -103,7 +103,7 @@ final class Update implements Explainable
             Check::input($item->expression instanceof Scalar, 'UPDATE ordering uses expressions, not output-column positions.');
         }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) === null, 'An ordinary UPDATE has a coherent input-column namespace.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit) === null, 'An ordinary UPDATE has writable targets and compatible clauses.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($this->with, $this->tables, $this->assignments, $this->orderBy, $this->limit, $this->where) === null, 'An ordinary UPDATE has writable targets and compatible clauses.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

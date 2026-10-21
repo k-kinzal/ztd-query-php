@@ -16,6 +16,15 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class DeclarationNamesTest extends TestCase
 {
+    public function testNamesChecksIdentityBeforeATypeExists(): void
+    {
+        $names = [];
+        $rules = new DeclarationNames();
+
+        self::assertNull($rules->names([new Name('x')], $names, M\Routine\Problem\ProgramRule::DuplicateVariable));
+        self::assertSame('Duplicate variable: X', $rules->names([new Name('X')], $names, M\Routine\Problem\ProgramRule::DuplicateVariable)?->message());
+    }
+
     public function testAddKeepsVariableAndConditionNamespacesIndependent(): void
     {
         $rule = new DeclarationNames();

@@ -44,7 +44,7 @@ final class DeferredDeleteTest extends TestCase
     public function testPhysicalTableCannotBeUsedAsTheDeferredCommonTarget(): void
     {
         $target = new M\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
-        $this->expectExceptionMessage('A deferred single-table DELETE retains a common-table target.');
+        $this->expectExceptionMessage('A deferred single-table DELETE retains a target or sampling contradiction.');
         new DeferredDelete(null, [], $target);
     }
 
