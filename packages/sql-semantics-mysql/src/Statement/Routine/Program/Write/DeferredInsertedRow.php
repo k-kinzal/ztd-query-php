@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A VALUES row template retaining at least one non-scalar value position.
+ * A VALUES row template retaining at least one non-scalar, aggregate or window value condition.
  *
  * Ordinary InsertedRow keeps its scalar/default domain. This template belongs to
  * a stored INSERT or REPLACE, which retains all of its dependencies until invoked.
@@ -43,7 +43,7 @@ final class DeferredInsertedRow implements Node
         foreach (Check::listOf($values, Operand::class, 'A deferred VALUES row has operands.', 1) as $value) {
             Check::input($value instanceof Scalar || $value instanceof DefaultRequest || $value instanceof RowOperand || $value instanceof DeferredOperand, 'A VALUES position retains its value or deferred role.');
             $items[] = $value;
-            $deferred = $deferred || $value instanceof RowOperand || $value instanceof DeferredOperand;
+            $deferred = $deferred || $value instanceof RowOperand || $value instanceof DeferredOperand || (new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($value) !== null;
         }
         Check::input($deferred, 'A deferred VALUES row retains a preparation condition.');
         $this->values = $items;

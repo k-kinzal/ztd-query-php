@@ -41,6 +41,7 @@ final class InsertedRow implements Node
         $accepted = [];
         foreach (Check::listOf($values, Operand::class, 'A row holds values.') as $value) {
             Check::input($value instanceof Scalar || $value instanceof DefaultRequest, 'A row value is an expression or DEFAULT.');
+            Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($value) === null, 'A VALUES element has no ambient grouping or window role.');
             $accepted[] = $value;
         }
         $this->values = $accepted;

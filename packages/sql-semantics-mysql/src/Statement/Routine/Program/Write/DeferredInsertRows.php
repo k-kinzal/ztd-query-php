@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * A stored INSERT or REPLACE retaining every value, target and duplicate-key clause.
  *
- * Written widths conflict or at least one value has a non-scalar preparation condition. The ordinary write
+ * Written widths conflict or at least one value has a non-scalar or grouped preparation condition. The ordinary write
  * domain remains InsertRows; a skipped stored instruction never prepares this
  * template. Its target and every operand bind together when it is reached.
  *
@@ -63,7 +63,7 @@ final class DeferredInsertRows implements ProgramStatement
             Check::input($assignment instanceof Assignment || $assignment instanceof DeferredColumnAssignment, 'An assignment retains its column and value role.');
             $assignments[] = $assignment;
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $items) !== null || array_filter($items, static fn ($row): bool => $row instanceof DeferredInsertedRow) !== [] || array_filter($assignments, static fn ($item): bool => $item instanceof DeferredColumnAssignment) !== [], 'A deferred write retains a width or non-scalar value condition.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $items) !== null || array_filter($items, static fn ($row): bool => $row instanceof DeferredInsertedRow) !== [] || array_filter($assignments, static fn ($item): bool => $item instanceof DeferredColumnAssignment) !== [], 'A deferred write retains a width or non-scalar or grouped value condition.');
         $this->rows = $items;
         $this->onDuplicate = $assignments;
         Check::input(!$into->replace || ($alias === null && $this->onDuplicate === []), 'REPLACE has neither a row alias nor ON DUPLICATE KEY UPDATE.');
@@ -91,6 +91,10 @@ final class DeferredInsertRows implements ProgramStatement
         }
         foreach ($this->rows as $row) {
             foreach ($row->values as $value) {
+                $grouped = (new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($value);
+                if ($grouped !== null) {
+                    return $grouped;
+                }
                 if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
                     return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$value]);
                 }
@@ -101,7 +105,7 @@ final class DeferredInsertRows implements ProgramStatement
                 return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$assignment->value]);
             }
         }
-        throw new LogicException('The deferred-write constructor requires a width or non-scalar value condition.');
+        throw new LogicException('The deferred-write constructor requires a width or non-scalar or grouped value condition.');
     }
 
     /**

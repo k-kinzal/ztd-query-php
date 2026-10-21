@@ -163,7 +163,7 @@ final class InsertSourceRule
             $value = $this->lowering->form($item);
             $operand = $value->signature === 'expr_or_default: expr' ? $this->lowering->expressions->operand($value->node(0)) : (new \SqlSemantics\Platform\MySql\Lowering\Dml\ValueRule($this->lowering))->value($item);
             $items[] = $operand;
-            $deferred = $deferred || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
+            $deferred = $deferred || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($operand) !== null;
         }
         return $deferred ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow($items) : new InsertedRow(array_values(array_filter($items, static fn ($item): bool => $item instanceof \SqlSemantics\Statement\Scalar || $item instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest)));
     }

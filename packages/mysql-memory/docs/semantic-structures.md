@@ -3470,8 +3470,11 @@ checks MySQL 8.1, 8.2, 8.3, 8.4 and 9.1.
 Ordinary `InsertRows` requires all written rows to agree in width, including
 empty default rows, and to match a nonempty explicit destination column list.
 Without an explicit list, the destination width remains a catalog dependency.
-`DeferredInsertRows` retains contradictory written widths, nonscalar row values
-and nonscalar duplicate-key assignments in their original positions. A skipped
+An ordinary `InsertedRow` also excludes ambient aggregate and window invocations.
+A scalar subquery owns its own grouping scope and can supply a row value.
+`DeferredInsertRows` retains contradictory written widths, nonscalar row values,
+ambient grouping conditions and nonscalar duplicate-key assignments in their
+original positions. A skipped
 stored instruction does not prepare them. A reached instruction binds its target,
 rows and update assignments in the release's observed order. A direct state test
 holds one ordinary INSERT object fixed while its target changes from absent, to

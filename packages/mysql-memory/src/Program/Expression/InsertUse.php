@@ -165,7 +165,7 @@ final class InsertUse
         try {
             foreach (array_slice($write->rows, 1) as $index => $row) {
                 $this->width($write, $index + 1, $table);
-                $this->values($row, $planner, $scope);
+                $this->values($row, $planner, $scope, $session);
             }
         } catch (SqlError $error) {
             throw (new \MySqlMemory\Session\Problem\ValueRows())->extended($error, $write, $session->settings()->release());
@@ -183,7 +183,7 @@ final class InsertUse
     {
         $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
         if ($oldest) {
-            $this->values($write->rows[0], $planner, $scope);
+            $this->values($write->rows[0], $planner, $scope, $session);
         }
         if ($session->settings()->legacy()) {
             $this->width($write, 0, $table);
@@ -200,7 +200,7 @@ final class InsertUse
         }
         $this->width($write, 0, $table);
         if (!$oldest) {
-            $this->values($write->rows[0], $planner, $scope);
+            $this->values($write->rows[0], $planner, $scope, $session);
         }
     }
 
@@ -244,13 +244,17 @@ final class InsertUse
     /**
      * Binds one row's operands in its destination scope, without evaluating or writing them.
      */
-    public function values(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow $row, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope): void
+    public function values(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow $row, \MySqlMemory\Plan\Planner $planner, \MySqlMemory\Evaluation\Scope $scope, Session $session): void
     {
         foreach ($row->values as $value) {
             if ($value instanceof DefaultRequest) {
                 continue;
             }
             if ($value instanceof Scalar) {
+                $grouped = (new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($value);
+                if ($grouped !== null) {
+                    throw (new Errors())->error($grouped, $session);
+                }
                 $planner->compiler->compile($value, $scope);
             } else {
                 (new RowUse())->prepare($value, $planner->compiler, $scope);

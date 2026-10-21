@@ -1047,6 +1047,9 @@
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\InsertGrouping": {
+        "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\JsonObjectAggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\RefusedInsertQuery": {
         "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery"
     },

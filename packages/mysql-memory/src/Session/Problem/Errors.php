@@ -274,6 +274,7 @@ final class Errors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict => new SqlError(StatementError::WrongUsage, $diagnostic->message()),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\InsertGrouping => $diagnostic->windowName() === null ? QueryError::InvalidGroupFunctionUse->error() : \MySqlMemory\Error\Family\ConstraintError::WindowFunctionContext->error($diagnostic->windowName()),
             $diagnostic instanceof ValueCountMismatch => $diagnostic->row === null ? QueryError::WrongValueCount->error() : QueryError::WrongValueCountOnRow->error($diagnostic->row),
             $diagnostic instanceof DuplicateWrittenColumn => QueryError::FieldSpecifiedTwice->error($diagnostic->column->value),
             $diagnostic instanceof GeneratedColumnWrite => DataError::GeneratedColumnValue->error($diagnostic->column->value, $diagnostic->table->value),
