@@ -48,21 +48,23 @@
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com"> * The stage of interpreting an input at which an ordered condition is raised.</span></span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * A debug parse-tree inspection reads grammar operands but does not contextualize</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * the inspected statement. Ordinary statements reach both stages before execution.</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * This records the origin of a diagnostic, not whether a statement can execute.</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Observed with SHOW PARSE_TREE on MySQL 8.4.7 and 9.1.0.</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example The phase of an ordinary syntax condition</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(&#039;missing&#039;));</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $notice-&gt;phase // =&gt; \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">enum</span> <span class="tok-id">NoticePhase</span>: <span class="tok-id">string</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">case</span> <span class="tok-id">Syntax</span> = <span class="tok-str">&#039;syntax&#039;</span>;</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">case</span> <span class="tok-id">Contextualization</span> = <span class="tok-str">&#039;contextualization&#039;</span>;</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>}</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * the inspected statement. Resolution notices belong to their semantic operands;</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * earlier relation or column failures can prevent those operands from resolving.</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * This records the origin of a diagnostic, not whether a statement can execute.</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Observed with SHOW PARSE_TREE on MySQL 8.4.7 and 9.1.0.</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example The phase of an ordinary syntax condition</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(&#039;missing&#039;));</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $notice-&gt;phase // =&gt; \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">enum</span> <span class="tok-id">NoticePhase</span>: <span class="tok-id">string</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>{</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">case</span> <span class="tok-id">Syntax</span> = <span class="tok-str">&#039;syntax&#039;</span>;</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">case</span> <span class="tok-id">Contextualization</span> = <span class="tok-str">&#039;contextualization&#039;</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">case</span> <span class="tok-id">Resolution</span> = <span class="tok-str">&#039;resolution&#039;</span>;</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>}</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
