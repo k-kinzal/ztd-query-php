@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session\Access;
 
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Access\OpenedTables;
@@ -84,6 +85,19 @@ final class OpenedTablesTest extends TestCase
         self::assertSame([], $result->rows);
     }
 
+    public function testOpenReplacesTheLegacyXaIdentityOnlyOutsideXaForInnoDb(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE m(a INT) ENGINE=MyISAM');
+        $session->query("XA START 'x'; XA END 'x'; XA ROLLBACK 'x'");
+        $session->query('SELECT * FROM m');
+        self::assertSame('1:x', $session->transaction->legacyXid);
+        $session->query('EXPLAIN SELECT * FROM t WHERE 0');
+        self::assertNull($session->transaction->legacyXid);
+        $session->query("XA START 'x'; SELECT * FROM t; XA END 'x'; XA ROLLBACK 'x'");
+        self::assertSame('1:x', $session->transaction->legacyXid);
+    }
+
     public function testUsesCountsAHandlerOwnedByAnotherSession(): void
     {
         $instance = new Instance();
@@ -98,5 +112,14 @@ final class OpenedTablesTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $released);
         self::assertSame([['d', 'a', '1', '0']], $held->rows);
         self::assertSame([['d', 'a', '0', '0']], $released->rows);
+    }
+    public function testOpenRefusesAnIdleXaReadBeforeResolvingItsColumns(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query("CREATE TABLE t(a INT) ENGINE=MyISAM; XA START 'g'; XA END 'g'");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1399);
+        $this->expectExceptionMessage('IDLE state');
+        $session->query('SELECT missing FROM t WHERE 0');
     }
 }

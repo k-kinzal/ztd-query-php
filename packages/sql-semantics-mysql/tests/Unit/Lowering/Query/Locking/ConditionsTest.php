@@ -38,6 +38,7 @@ final class ConditionsTest extends TestCase
         yield 'outer common table' => ['WITH c AS (SELECT 1) SELECT (SELECT 1 FROM c FOR UPDATE FOR SHARE)', null];
         yield 'named common table' => ['WITH c AS (SELECT 1) SELECT 1 FROM c FOR UPDATE OF c FOR SHARE OF c', MisuseRule::RepeatedLockedTable];
         yield 'distinct targets' => ['SELECT 1 FROM a,b FOR UPDATE OF a FOR SHARE OF b', null];
+        yield 'fixed alias precedes locks' => ['SELECT 1 FROM a,a FOR UPDATE OF b', null];
         yield 'last set operand' => ['TABLE a UNION TABLE b FOR UPDATE OF a', MisuseRule::UnknownLockedTable];
         yield 'priority' => ['SELECT HIGH_PRIORITY 1 FROM a UNION SELECT 1 FROM b FOR UPDATE', MisuseRule::RepeatedLockedTable];
         yield 'unused definition' => ['WITH c AS (SELECT 1 FROM absent FOR UPDATE FOR SHARE) SELECT 1', null];

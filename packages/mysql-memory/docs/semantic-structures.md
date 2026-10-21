@@ -20,6 +20,40 @@ the witness. A later error remains visible for separate classification. These
 histories do not label unrelated matching errors as state-dependent or certify
 that all constructible values have been exercised.
 
+XA histories retain the transaction identifier across absence, activation, preparation,
+completion and connection loss. The semantic operand holds its global identifier,
+branch qualifier and format; ownership belongs to the runtime session. Legacy
+servers retain PREPARED ownership, while modern servers follow
+`xa_detach_on_prepare`. Two-connection comparisons check when another session may
+complete the same branch. MySQL 5.6 also retains its identifier comparison history
+after completion and discards its prepared branches on disconnect. Table access
+and savepoints check IDLE and PREPARED states before row evaluation, including
+empty tables and false predicates.
+
+Fixed duplicate input aliases are a constructor constraint of ordinary query
+roots and stored-program declarations. The check follows reached common-table
+dependencies and retains the later conflicting relation occurrence. Unused CTEs
+remain inert; database selection and identifier case comparison remain context
+inputs. Program conditions retain the boundary of the completed assignment,
+so diagnostic order and legacy syntax excerpts do not require source text in
+the semantic value.
+
+A scalar may refer to an empty or otherwise nonphysical column alias. Its
+ambient fixture uses legal physical names and a derived projection exposing the
+original aliases. The generated scalar is reused by identity. Resolved column
+slots retain the source declaration needed by DEFAULT, including merged and
+materialized projections; computed temporary columns use their temporary
+column's default. Direct comparisons retain the original generated structures
+through setup, populated execution and removal.
+
+LIKE's NULL fact distinguishes the subject and pattern from the escape.
+MySQL 5.6 and 5.7 omit escape nullability from the result metadata; later
+releases retain it. Prepared legacy escape subqueries preserve their outer
+column dependency even when DEFAULT supplies a constant value. The consumer
+uses semantic reference depths for this check. Expanded EXPLAIN projections
+likewise use resolved field and relation identities, including star expansion
+and aliases, instead of recovering column names from the request text.
+
 Sampling in an UPDATE or DELETE is a write-role constraint owned by Semantics.
 Ordinary write constructors exclude reached `TABLESAMPLE` operands; stored
 instructions retain their complete relations, assignments, predicates and CTEs

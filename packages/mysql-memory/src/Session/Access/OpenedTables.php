@@ -59,6 +59,12 @@ final class OpenedTables
             throw $syntax;
         }
         $table = $dictionary->table($schema, $name);
+        if ($table !== null && in_array($session->transaction->xa, [\MySqlMemory\Session\XaState::Idle, \MySqlMemory\Session\XaState::Prepared], true)) {
+            throw \MySqlMemory\Error\Family\StatementError::XaWrongState->error($session->transaction->xa->value);
+        }
+        if ($table !== null && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && \MySqlMemory\Session\Transaction::transactional($table) && $session->transaction->xa === \MySqlMemory\Session\XaState::NonExisting) {
+            $session->transaction->legacyXid = null;
+        }
         if ($table !== null && !$table->definition->temporary) {
             ($session->preparation->triggerNotices ?? new \MySqlMemory\Hint\TriggerNotices())->load($schema, $name, $session, $write);
             $dictionary->cache->open($schema, $name);

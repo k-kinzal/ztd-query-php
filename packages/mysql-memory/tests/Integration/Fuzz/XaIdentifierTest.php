@@ -9,6 +9,7 @@ use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Audit\Native;
 use Fuzz\Structure\Reference;
 use Fuzz\Target\DisposableMySql;
+use JsonException;
 use mysqli;
 use mysqli_result;
 use MySqlMemory\Instance;
@@ -123,6 +124,52 @@ final class XaIdentifierTest extends TestCase
                 $native->close();
             }
         } finally {
+            $container->stop();
+        }
+    }
+    /**
+     * @return iterable<string, array{string, list<array{int, string|null}>}>
+     * @throws JsonException When the recorded ownership history cannot be read
+     */
+    public static function providerOwnership(): iterable
+    {
+        /** @var list<array{int, string|null}> $steps */
+        $steps = json_decode((string) file_get_contents(__DIR__ . '/fixtures/xa-ownership.json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach (self::providerReleases() as $name => [$release]) {
+            yield $name => [$release, $steps];
+            if (!str_starts_with($release, '5.')) {
+                $retained = $steps;
+                array_splice($retained, 3, 0, [[0, 'SET xa_detach_on_prepare=OFF']]);
+                yield $name . ':retained' => [$release, $retained];
+            }
+        }
+    }
+
+    /**
+     * @param list<array{int, string|null}> $steps The connection and SQL, or a disconnect
+     */
+    #[DataProvider('providerOwnership')]
+    public function testPreparedOwnershipAndDisconnectionRetainNativeState(string $release, array $steps): void
+    {
+        $container = Testcontainers::run(new DisposableMySql($release));
+        $server = Server::start($release);
+        try {
+            $endpoint = $container->getData(Endpoint::class);
+            $native = array_map(static fn (): mysqli => new mysqli($endpoint->host, $endpoint->username, $endpoint->password, port: $endpoint->port), [0, 1]);
+            $memory = array_map(static fn (): mysqli => new mysqli($server->host, 'root', '', port: $server->port), [0, 1]);
+            array_map(static fn (mysqli $connection): bool => $connection->set_charset('utf8mb4'), [...$native, ...$memory]);
+            $observations = array_map(static function (array $step) use ($native, $memory): array {
+                [$who, $sql] = $step;
+                if ($sql === null) {
+                    $native[$who]->close();
+                    $memory[$who]->close();
+                    return [null, null];
+                }
+                return [(new Native())->observe($native[$who], $sql), (new Native())->observe($memory[$who], $sql)];
+            }, $steps);
+            self::assertSame(array_column($observations, 0), array_column($observations, 1), $release);
+        } finally {
+            $server->stop();
             $container->stop();
         }
     }

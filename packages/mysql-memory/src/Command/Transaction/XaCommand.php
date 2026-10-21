@@ -34,7 +34,7 @@ use SqlSemantics\Statement\Operation;
  * JOIN, RESUME and SUSPEND are refused first (XAER_INVAL). XA START opens the XA transaction of
  * the session, unless another is active or idle (XAER_RMFAIL), a plain transaction is open
  * (XAER_OUTSIDE) or the XID is prepared already (XAER_DUPID). XA END makes it idle and XA PREPARE
- * detaches it from the session. XA COMMIT ends a prepared branch, or the idle one of the session
+ * retains ownership on legacy releases or when xa_detach_on_prepare is OFF. XA COMMIT ends a prepared branch, or the idle one of the session
  * with ONE PHASE; XA ROLLBACK ends either. While the session's transaction is active or idle,
  * another XID is XAER_RMFAIL for XA COMMIT and XA ROLLBACK, and XAER_NOTA for XA END and
  * XA PREPARE; an XID the statement does not find otherwise is XAER_NOTA. XA RECOVER lists the
@@ -101,6 +101,8 @@ final class XaCommand implements Command
         $transaction->begin();
         $transaction->xa = XaState::Active;
         $transaction->xid = $key;
+        [$transaction->xidFormat, $global, $branch] = $this->parts($statement->xid);
+        $transaction->legacyXid = strlen($global) . ':' . $global . $branch;
     }
 
     /**
@@ -117,14 +119,14 @@ final class XaCommand implements Command
         if ($transaction->xa !== XaState::Active) {
             throw StatementError::XaWrongState->error($transaction->xa->value);
         }
-        if ($transaction->xid !== $this->key($statement->xid)) {
+        if (!$this->same($statement->xid, $session)) {
             throw StatementError::XaUnknownXid->error();
         }
         $transaction->xa = XaState::Idle;
     }
 
     /**
-     * Prepares the idle XA transaction of the session and detaches it.
+     * Prepares the idle XA transaction, retaining ownership when detachment is disabled.
      *
      * @throws \MySqlMemory\Error\SqlError When the session has no idle XA transaction of the XID
      */
@@ -134,12 +136,21 @@ final class XaCommand implements Command
         if ($transaction->xa !== XaState::Idle) {
             throw StatementError::XaWrongState->error($transaction->xa->value);
         }
-        $key = $this->key($xid);
-        if ($transaction->xid !== $key) {
+        $key = $transaction->xid;
+        assert($key !== null);
+        if (!$this->same($xid, $session)) {
             throw StatementError::XaUnknownXid->error();
         }
-        [$format, $global, $branch] = $this->parts($xid);
-        $session->instance->registry->prepared[$key] = new PreparedBranch($format, $global, $branch, $transaction->detach());
+        [, $global, $branch] = $this->parts($xid);
+        $format = $transaction->xidFormat;
+        $detached = !$session->settings()->legacy() && in_array(strtoupper((string) $session->variables->read('xa_detach_on_prepare')), ['ON', '1'], true);
+        $session->instance->registry->prepared[$key] = new PreparedBranch($format, $global, $branch, $transaction->detach(), $detached ? null : $session->id);
+        if (!$detached) {
+            $transaction->xa = XaState::Prepared;
+            $transaction->xid = $key;
+            $transaction->xidFormat = $format;
+            $transaction->open = $transaction->explicit = true;
+        }
     }
 
     /**
@@ -151,11 +162,23 @@ final class XaCommand implements Command
     {
         $transaction = $session->transaction;
         $key = $this->key($xid);
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !isset($session->instance->registry->prepared[$key])) {
+            if (!$this->same($xid, $session)) {
+                throw StatementError::XaUnknownXid->error();
+            }
+            if ($transaction->xa === XaState::NonExisting) {
+                throw StatementError::XaWrongState->error($transaction->xa->value);
+            }
+        }
+        if ($transaction->xa === XaState::Prepared) {
+            $this->finishOwned($xid, $session, $commit, $onePhase);
+            return;
+        }
         if ($transaction->xa === XaState::Active) {
             throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         if ($transaction->xa === XaState::Idle) {
-            if ($transaction->xid !== $key || ($commit && !$onePhase)) {
+            if (!$this->same($xid, $session) || ($commit && !$onePhase)) {
                 throw StatementError::XaWrongState->error($transaction->xa->value);
             }
             if (!$commit) {
@@ -168,12 +191,67 @@ final class XaCommand implements Command
         if ($transaction->active()) {
             throw StatementError::XaWrongState->error(XaState::NonExisting->value);
         }
-        $registry = $session->instance->registry;
-        $prepared = $registry->prepared[$key] ?? throw StatementError::XaUnknownXid->error();
+        $this->finishDetached($xid, $session, $commit);
+    }
+
+    /**
+     * Completes the prepared branch still owned by this session.
+     */
+    public function finishOwned(Xid $xid, Session $session, bool $commit, bool $onePhase): void
+    {
+        $transaction = $session->transaction;
+        if (!$this->same($xid, $session) || ($commit && $onePhase)) {
+            throw StatementError::XaWrongState->error(XaState::Prepared->value);
+        }
+        $key = $transaction->xid;
+        assert($key !== null);
+        $branch = $session->instance->registry->prepared[$key];
+        $transaction->end();
         if ($commit) {
-            $session->instance->transactions->apply($prepared->changes, (int) floor($session->variables->clock()));
+            $session->instance->transactions->apply($branch->changes, (int) floor($session->variables->clock()));
+        }
+        unset($session->instance->registry->prepared[$key]);
+    }
+
+    /**
+     * Completes a detached branch, leaving a branch owned by another live session untouched.
+     * MySQL 5.7 matches disconnected branch data without the format id; a different format
+     * removes its recovery entry without committing rows. Verified through two connections.
+     */
+    public function finishDetached(Xid $xid, Session $session, bool $commit): void
+    {
+        [$format, $global, $part] = $this->parts($xid);
+        $registry = $session->instance->registry;
+        $key = $this->key($xid);
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            foreach ($registry->prepared as $candidate => $branch) {
+                if ($branch->transaction === $global && $branch->branch === $part) {
+                    $key = $candidate;
+                    break;
+                }
+            }
+        }
+        $branch = $registry->prepared[$key] ?? throw StatementError::XaUnknownXid->error();
+        $owner = $branch->owner === null ? null : ($session->instance->sessions[$branch->owner] ?? null)?->get();
+        if ($owner !== null && !$owner->released) {
+            throw StatementError::XaUnknownXid->error();
+        }
+        if ($commit && $branch->format === $format) {
+            $session->instance->transactions->apply($branch->changes, (int) floor($session->variables->clock()));
         }
         unset($registry->prepared[$key]);
+    }
+
+    /**
+     * MySQL 5.6 compares branch data without its format id and retains the last identity.
+     */
+    public function same(Xid $xid, Session $session): bool
+    {
+        if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return $session->transaction->xid === $this->key($xid);
+        }
+        [, $global, $branch] = $this->parts($xid);
+        return $session->transaction->legacyXid === strlen($global) . ':' . $global . $branch;
     }
 
     /**

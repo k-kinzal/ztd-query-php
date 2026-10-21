@@ -68,6 +68,7 @@ final class StatementRule
      * Lowers one statement of a program: a node of `sp_proc_stmt` or `ev_sql_stmt_inner`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function statement(Node $statement): ProgramStatement|Statement
     {
@@ -99,6 +100,7 @@ final class StatementRule
      * Lowers an SQL program member, refusing client-only connection explanations.
      *
      * @throws \SqlSemantics\Construction\RejectedInput When the statement has no stored-program form
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function sql(Node $node): ProgramStatement|Statement
     {

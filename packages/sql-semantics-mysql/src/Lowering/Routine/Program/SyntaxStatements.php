@@ -24,6 +24,9 @@ final class SyntaxStatements
 {
     /**
      * Answers a completed statement's global variable-name refusal.
+     *
+     * @throws \SqlParser\Lexer\SourceException When a completed instruction reaches its syntax boundary
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a refusal has no token boundary
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
@@ -32,7 +35,11 @@ final class SyntaxStatements
         }
         $prefix = new InputPrefix($lowering);
         $frame = new PrefixFrame();
-        $parameters = $prefix->completed($node, $frame, new ParameterList([]), true);
+        try {
+            $parameters = $prefix->completed($node, $frame, new ParameterList([]), true);
+        } catch (\SqlSemantics\Diagnostic\AnalysisException $failure) {
+            throw $failure->getPrevious() instanceof \SqlParser\Lexer\SourceException ? $failure->getPrevious() : $failure;
+        }
         if ($parameters instanceof RejectedInput) {
             if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch || $parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
                 return null;

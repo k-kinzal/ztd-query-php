@@ -69,6 +69,28 @@ final class SetCommand implements Command
         foreach ($statement->items as $position => $item) {
             $actions[] = $this->action($item, $planner, $frame, $assigner, $session, $statement->scopeOf($position));
         }
+        if (array_filter($statement->items, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment) !== []) {
+            try {
+                (new Account\Authentication\PasswordAssignments())->apply($actions);
+            } finally {
+                $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
+            }
+            return new Completion(0, 0, $context->diagnostics->raised());
+        }
+        $this->apply($actions, $session);
+        $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
+
+        return new Completion(0, 0, $context->diagnostics->raised());
+    }
+
+    /**
+     * Applies ordinary variable updates, restoring their values on a refused update.
+     *
+     * @param list<Closure> $actions Prepared updates
+     * @throws \MySqlMemory\Error\SqlError When an update is refused
+     */
+    public function apply(array $actions, Session $session): void
+    {
         $user = $session->variables->user;
         $values = $session->variables->session;
         $globals = $session->variables->globals->values;
@@ -86,9 +108,6 @@ final class SetCommand implements Command
             $session->variables->globals->persisted = $persisted;
             throw $error;
         }
-        $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
-
-        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

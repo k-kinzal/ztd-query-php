@@ -23,6 +23,12 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class SyntaxWarningsTest extends TestCase
 {
+    public function testCompletedStopsAtALoweredSyntaxRefusalWithoutReplacingIt(): void
+    {
+        $sql = 'CREATE PROCEDURE p() ALTER INSTANCE ROTATE BINLOG MASTER KEY';
+        self::assertSame([], (new SyntaxWarnings())->completed(new MySqlParser('mysql-5.7.44'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql5744)));
+    }
+
     public function testOrderedDiscardsOnlyNoticesAfterTheFirstStoppingCondition(): void
     {
         $stop = \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop::ProgramStatement;

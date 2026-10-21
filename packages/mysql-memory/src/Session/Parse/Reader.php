@@ -145,7 +145,7 @@ final class Reader
      */
     public function operand(\SqlSemantics\Construction\RejectedInput $failure, Node $tree, string $statement, Session $session): SqlError
     {
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems || ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody && $failure->problem->problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable)) {
             $failure = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->before($tree, $failure->end + 1, $session->semantics()->profile()) ?? $failure;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {

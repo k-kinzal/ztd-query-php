@@ -115,9 +115,9 @@ final class FromRule
     {
         $form = $this->lowering->form($factor);
         if (isset(self::MODERN[$form->signature])) {
-            return (new FactorRule($this->lowering))->factor($form);
+            return $this->lowering->origins->record((new FactorRule($this->lowering))->factor($form), $factor);
         }
 
-        return (new LegacyFactorRule($this->lowering))->factor($form);
+        return $this->lowering->origins->record((new LegacyFactorRule($this->lowering))->factor($form), $factor);
     }
 }

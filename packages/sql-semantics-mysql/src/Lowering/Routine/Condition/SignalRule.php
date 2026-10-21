@@ -98,7 +98,7 @@ final class SignalRule
     {
         $form = $this->lowering->form($value);
         if ($form->signature === 'signal_value: ident') {
-            return new ConditionName($this->lowering->names->identifier($form->node(0)));
+            return $this->lowering->origins->record(new ConditionName($this->lowering->names->identifier($form->node(0))), $value);
         }
         $state = $form->signature === 'signal_value: sqlstate' ? (new ConditionRule($this->lowering))->value($form->node(0)) : null;
 

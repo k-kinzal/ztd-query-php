@@ -93,7 +93,8 @@ final class ProgramInput
                 return \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
             }
             if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch || $refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment) {
-                return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($refusal->problem->offset ?? strlen($session->text), $session->text, $session->following, new RuntimeException($refusal->problem->message()), true, $session->semantics()->parser());
+                $offset = $refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $refusal->problem->end : $refusal->problem->offset;
+                return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($offset ?? strlen($session->text), $session->text, $session->following, new RuntimeException($refusal->problem->message()), true, $session->semantics()->parser());
             }
             if (!$refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($refusal->problem, $session);

@@ -31,6 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -150,14 +151,9 @@ final class ExplainCommand implements Command
 
             return new Completion(0, 0, $context->diagnostics->raised());
         }
-        if (!$session->settings()->legacy() && $format !== 'TREE') {
-            $note = (new QueryNote())->projection($operation, $session, $connection);
-            if ($note !== null) {
-                $context->diagnostics->note(QueryError::RewrittenQuery, $note);
-            }
-        }
+        $impossible = $this->impossible($operation, $session, $context, $connection);
+        $this->note($operation, $session, $connection, $format, $impossible);
         if ($format === 'TRADITIONAL') {
-            $impossible = $this->impossible($operation, $session, $context, $connection);
             $rows = $this->rows($statement, $session, $database, $impossible);
             if ($impossible && !$session->settings()->legacy()) {
                 $note = $this->deleted($statement, $database);
@@ -176,6 +172,23 @@ final class ExplainCommand implements Command
         $text = (new MeasuredTable())->report($operation, $session, $context, $connection) ?? ($format === 'JSON' ? $this->document($tables) : $this->tree($tables));
 
         return (new Listing([Heading::text('EXPLAIN', Field::VarString, 78, ColumnFlag::NotNull->value, 31)]))->sent([[$text]], $context);
+    }
+
+    /**
+     * Publishes rewritten-query notes for the release and output format.
+     */
+    public function note(Operation $operation, Session $session, Connection $connection, string $format, bool $impossible): void
+    {
+        $statement = $operation->statement;
+        if (!$statement instanceof Explain) {
+            return;
+        }
+        if (($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $statement->modifier === \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Extended) && $format !== 'TREE') {
+            $note = (new QueryNote())->projection($operation, $session, $connection, $impossible) ?? ($session->settings()->legacy() ? null : (new InsertNote())->rows($operation, $session));
+            if ($note !== null) {
+                $connection->context->diagnostics->note(QueryError::RewrittenQuery, $note);
+            }
+        }
     }
 
     /**
@@ -272,7 +285,7 @@ final class ExplainCommand implements Command
     }
 
     /**
-     * Resolves a DELETE predicate that is known before reading any table rows.
+     * Resolves a selection or DELETE predicate known before reading any table rows.
      * Uses semantic facts and the expression compiler; EXPLAIN never deletes rows.
      */
     public function impossible(Operation $operation, Session $session, Context $context, Connection $connection): bool
@@ -281,8 +294,8 @@ final class ExplainCommand implements Command
         if (!$explain instanceof Explain) {
             return false;
         }
-        $statement = $explain->statement;
-        if ((!$statement instanceof Delete && !$statement instanceof MultipleDelete) || $statement->where === null) {
+        $statement = $explain->statement instanceof QueryRoot ? $explain->statement->query : $explain->statement;
+        if ((!$statement instanceof Delete && !$statement instanceof MultipleDelete && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) || $statement->where === null) {
             return false;
         }
         $compiler = (new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;

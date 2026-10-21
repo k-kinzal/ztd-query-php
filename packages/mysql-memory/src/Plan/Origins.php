@@ -230,6 +230,9 @@ final class Origins
         }
         if ($field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn) {
             $resolution = $this->planner->compiler->facts->scalar($field->expression->column)->resolution;
+            if ($resolution instanceof ResolvedColumn) {
+                return $this->default($resolution, $field, $scope);
+            }
         }
         if ((new ProgramColumns($this->planner))->called($field)) {
             return (new ProgramColumns($this->planner))->flagged($field, false);
@@ -242,6 +245,27 @@ final class Origins
         }
 
         return $this->resolved($resolution, $field, $scope);
+    }
+
+    /**
+     * DEFAULT reports the source column of a merged input and the buffered column otherwise.
+     */
+    public function default(ResolvedColumn $resolution, Field $field, Scope $scope): ?ColumnOrigin
+    {
+        $holder = $scope->locate($resolution->relation)[1] ?? $scope;
+        $position = $this->planner->compiler->names->position($holder, $resolution);
+        $inner = $holder->merged[spl_object_id($resolution->relation)][$position] ?? null;
+        if ($inner?->underlying !== null) {
+            return $inner->underlying;
+        }
+        if ($inner !== null && $inner->column !== '' && $inner->table !== '') {
+            return $inner;
+        }
+        $origin = $this->resolved($resolution, $field, $holder);
+        if ($origin !== null && !$this->planner->settings->legacy() && $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && isset($holder->derived[spl_object_id($resolution->relation)]) && $inner?->column !== '') {
+            return new ColumnOrigin($origin->schema, $origin->table, $resolution->relation->name->name->value, $origin->column, $origin->flags, $origin->exact);
+        }
+        return $origin;
     }
 
     /**

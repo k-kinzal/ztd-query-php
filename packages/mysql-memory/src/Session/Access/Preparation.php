@@ -74,6 +74,9 @@ final class Preparation
      */
     public function protocol(\SqlSemantics\Statement\Statement $statement): void
     {
+        if (in_array($statement::class, [\SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRecover::class], true)) {
+            throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
@@ -99,6 +102,7 @@ final class Preparation
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, session: WeakReference::create($session));
         $compiler = (new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;
         $nodes = (new Problems())->reached($operation->statement);
+        (new \MySqlMemory\Evaluation\Compile\Preparation\Escapes())->check($compiler, $nodes);
         (new \MySqlMemory\Evaluation\Compile\Preparation\JsonNulls())->check($compiler, $nodes);
         (new \MySqlMemory\Evaluation\Compile\Preparation\Conditions())->check($compiler, $nodes);
     }

@@ -203,7 +203,7 @@ final class InstanceRule
         $keyring = $this->lowering->names->identifier($name);
         $accepted = $this->lowering->profile->grammar === GrammarRelease::MySql5744 ? ['INNODB'] : ['INNODB', 'BINLOG'];
         if (!in_array(strtoupper($keyring->value), $accepted, true)) {
-            throw new AnalysisException('Syntax error: ALTER INSTANCE ROTATE names ' . implode(' or ', $accepted) . ', not ' . $keyring->value . '.');
+            throw new AnalysisException('Syntax error: ALTER INSTANCE ROTATE names ' . implode(' or ', $accepted) . ', not ' . $keyring->value . '.', 0, new \SqlParser\Parser\SyntaxException($name->tokens()[0], [], ''));
         }
 
         return new RotateMasterKey($keyring);

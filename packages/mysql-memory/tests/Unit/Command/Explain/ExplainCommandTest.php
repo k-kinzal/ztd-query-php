@@ -98,6 +98,15 @@ final class ExplainCommandTest extends TestCase
         self::assertSame([312, 31], [$tree->columns[0]->length, $tree->columns[0]->decimals]);
     }
 
+    public function testNoteRemainsAbsentForPlainMySql56Explanation(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('EXPLAIN SELECT 1');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
     public function testExecuteStoresAJsonPlanInAVariable(): void
     {
         $session = (new Instance())->connect();

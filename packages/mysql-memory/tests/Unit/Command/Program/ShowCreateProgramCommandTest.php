@@ -142,4 +142,14 @@ final class ShowCreateProgramCommandTest extends TestCase
 
         self::assertSame(['Function', 'Create Function', 'f'], [$result->columns[0]->name, $result->columns[2]->name, $result->rows[0][0]]);
     }
+    public function testEventMeasuresMultibyteDefinitionTextInBytes(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query("CREATE EVENT `あ` ON SCHEDULE AT '2030-01-01 00:00:00' ON COMPLETION PRESERVE DISABLE DO DO 7");
+        $result = $session->query('SHOW CREATE EVENT `あ`')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertIsString($result->rows[0][3]);
+        self::assertSame(strlen($result->rows[0][3]) * 4, $result->columns[3]->length);
+    }
+
 }

@@ -276,6 +276,7 @@ final class Lowering
      *
      * @throws ImplementationGap When the production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When an input operand is outside the semantic domain
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function statement(Node $statement): Statement
     {
@@ -295,6 +296,7 @@ final class Lowering
      * Lowers a node of create, alter or drop through the family its production is routed to.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function definition(Node $definition): Statement
     {

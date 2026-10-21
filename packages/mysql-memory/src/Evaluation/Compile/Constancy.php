@@ -91,6 +91,9 @@ enum Constancy: int
      */
     public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
+        if ($node instanceof DefaultOfColumn) {
+            return self::Resolved;
+        }
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
         }
@@ -144,7 +147,8 @@ enum Constancy: int
         return match (true) {
             $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
             $node instanceof InsertedColumn => self::inserted($node, $facts),
-            $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof WindowFunction, $node instanceof JsonObjectAggregate, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn => self::Row,
+            $node instanceof DefaultOfColumn => self::Resolved,
+            $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof WindowFunction, $node instanceof JsonObjectAggregate, $node instanceof VariableAssignment => self::Row,
             $node instanceof UserVariable => in_array(strtolower($node->name->value), $assigned, true) ? self::Row : self::Statement,
             $node instanceof SystemVariable, $node instanceof Parameter => self::Statement,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate ? self::Row : self::Statement,

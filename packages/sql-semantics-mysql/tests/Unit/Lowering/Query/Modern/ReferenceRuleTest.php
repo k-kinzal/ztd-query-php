@@ -20,7 +20,7 @@ final class ReferenceRuleTest extends TestCase
 {
     public function testReferenceLowersEveryReference(): void
     {
-        self::assertSame('SELECT 1 FROM { OJ t }, (t JOIN u), t', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select 1 from { oj t }, (t join u), t')->toString());
+        self::assertSame('SELECT 1 FROM { OJ t }, (u JOIN v), w', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select 1 from { oj t }, (u join v), w')->toString());
     }
 
     public function testJoinedWalksTheJoinsOnTheLeft(): void

@@ -21,6 +21,21 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ConstancyTest extends TestCase
 {
+    public function testOfResolvesDefaultValuesIndependentlyOfTheReferencedRows(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a VARCHAR(8) DEFAULT NULL, b VARCHAR(8) DEFAULT "!")');
+        $session->query('INSERT INTO t VALUES (NULL, "!")');
+        $operation = $session->analyze('SELECT DEFAULT(a), (SELECT DEFAULT(b)) FROM t');
+        self::assertNotNull($operation->field(0)->expression);
+        self::assertNotNull($operation->field(1)->expression);
+        self::assertSame(Constancy::Resolved, Constancy::of($operation->field(0)->expression, $operation->facts));
+        self::assertSame(Constancy::Resolved, Constancy::of($operation->field(1)->expression, $operation->facts));
+        $result = $session->query('SELECT NULL LIKE "a" ESCAPE DEFAULT(a), "a" LIKE "a" ESCAPE DEFAULT(b) FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, '1']], $result->rows);
+    }
+
     public function testInsertedUsesTheResolvedNullRoleOutsideAWrittenRow(): void
     {
         $session = (new Instance(databases: ['d']))->connect(database: 'd');

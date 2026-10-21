@@ -126,4 +126,13 @@ final class SavepointCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([1, [['Warning', '1196', "Some non-transactional changed tables couldn't be rolled back"]]], [$reply->warnings, $warnings->rows]);
     }
+    public function testExecuteRefusesAPreparedBranchWithDetachmentDisabled(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query("SET xa_detach_on_prepare=OFF; XA START 'g'; XA END 'g'; XA PREPARE 'g'");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1399);
+        $this->expectExceptionMessage('PREPARED state');
+        $session->query('SAVEPOINT s');
+    }
 }

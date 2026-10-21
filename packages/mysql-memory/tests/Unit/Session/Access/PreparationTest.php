@@ -20,6 +20,13 @@ final class PreparationTest extends TestCase
     public static function providerPreparedCommands(): iterable
     {
         $name = new \SqlSemantics\Statement\Identifier\Name('p');
+        $xid = new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('x'));
+        yield 'xastart' => [new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart($xid)];
+        yield 'xaend' => [new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd($xid)];
+        yield 'xaprepare' => [new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare($xid)];
+        yield 'xacommit' => [new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit($xid)];
+        yield 'xarollback' => [new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback($xid)];
+        yield 'xarecover' => [new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRecover()];
         yield 'prepare' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare($name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid dynamic SQL'))];
         yield 'execute' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute($name)];
         yield 'deallocate' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate($name)];

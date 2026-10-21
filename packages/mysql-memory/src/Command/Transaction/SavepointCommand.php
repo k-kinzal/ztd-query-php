@@ -49,7 +49,7 @@ final class SavepointCommand implements Command
     {
         $statement = $operation->statement;
         $transaction = $session->transaction;
-        if ($transaction->xa === XaState::Idle) {
+        if (in_array($transaction->xa, [XaState::Idle, XaState::Prepared], true)) {
             throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         if ($statement instanceof Savepoint) {

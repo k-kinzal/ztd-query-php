@@ -252,4 +252,20 @@ final class SetCommandTest extends TestCase
 
         $session->query('SET kc.key_cache_block_size = 1024');
     }
+    public function testApplyRetainsAtomicOrdinaryVariableUpdates(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @a=1');
+        try {
+            $session->query('SET @a=2, max_connections=0');
+            self::fail('A session-only request cannot set this global variable.');
+        } catch (SqlError $error) {
+            self::assertSame(1229, $error->getCode());
+            self::assertSame("Variable 'max_connections' is a GLOBAL variable and should be set with SET GLOBAL", $error->getMessage());
+        }
+        $result = $session->query('SELECT @a')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
 }

@@ -93,6 +93,22 @@ final class Registry
     }
 
     /**
+     * Releases connection registrations and, for MySQL 5.6, its prepared XA branches.
+     */
+    public function disconnect(int $connection, bool $discardPrepared): void
+    {
+        $this->status->clear($connection);
+        $this->threads->disconnect($connection);
+        if ($discardPrepared) {
+            foreach ($this->prepared as $key => $branch) {
+                if ($branch->owner === $connection) {
+                    unset($this->prepared[$key]);
+                }
+            }
+        }
+    }
+
+    /**
      * Answers the key of an object name that compares in utf8mb3_general_ci, without regard to letter case and accents.
      *
      * @example Names that compare equal

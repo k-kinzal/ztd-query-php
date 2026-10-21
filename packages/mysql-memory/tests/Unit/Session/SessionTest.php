@@ -583,4 +583,13 @@ final class SessionTest extends TestCase
         self::assertInstanceOf(SqlError::class, $answers[1]);
         self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?;SELECT 2' at line 2", $answers[1]->getMessage());
     }
+    public function testCloseRemovesPreparedBranchesIn56(): void
+    {
+        $instance = new Instance('5.6.51');
+        $session = $instance->connect();
+        $session->query("XA START 'g'; XA END 'g'; XA PREPARE 'g'");
+        self::assertCount(1, $instance->registry->prepared);
+        $session->close();
+        self::assertSame([], $instance->registry->prepared);
+    }
 }

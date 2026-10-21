@@ -467,6 +467,18 @@ result-producing statements, dynamic SQL, explicit transaction boundaries,
 privilege changes, RESET and FLUSH. Instructions prohibited in all stored
 programs are also refused before a declaration is published.
 
+Ordinary read roots and scalar subqueries exclude exact repeated input names
+within one fixed database namespace. A query body can retain such a template
+inside an unused CTE; only references reached from its owner activate that
+definition. Routine declarations apply the same constraint to all instructions,
+including unreachable branches. Names whose equality depends on the default
+database or case-comparison settings remain resolution dependencies.
+
+Collision diagnostics identify the later relation occurrence, even when two
+occurrences share an immutable name object. Consumers can order nested input
+preparation using those identities. Input lowering records occurrence ranges
+separately to retain earlier declaration conditions and stop later notices.
+
 Direct PHP construction raises `InvalidConstruction` for these contradictory
 combinations. SQL lowering raises `Construction\RejectedInput` with
 `Statement\Routine\Problem\RefusedProgramBody`. The diagnostic holds the typed

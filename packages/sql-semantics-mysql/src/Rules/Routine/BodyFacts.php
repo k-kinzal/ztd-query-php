@@ -67,7 +67,13 @@ final class BodyFacts
         }
         if ($statement instanceof SetVariables) {
             foreach ($statement->items as $item) {
-                if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment || $item->qualifier === null) {
+                if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment) {
+                    continue;
+                }
+                if ($item->qualifier === null) {
+                    if ($scope->complete && !$scope->variable($item->name)) {
+                        (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($item->name->value, $derivation, true);
+                    }
                     continue;
                 }
                 $row = $scope->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger && $item->scope === null && in_array(strtoupper($item->qualifier->value), ['NEW', 'OLD'], true);

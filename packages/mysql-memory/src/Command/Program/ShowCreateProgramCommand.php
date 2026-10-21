@@ -123,7 +123,7 @@ final class ShowCreateProgramCommand implements Command
             Heading::text('Event', Field::VarString, 64, $flag, 31),
             Heading::text('sql_mode', Field::VarString, strlen($event->mode), $flag, 31),
             Heading::text('time_zone', Field::VarString, strlen($event->zone), $flag, 31),
-            Heading::text('Create Event', Field::VarString, mb_strlen($text), $flag, 31),
+            Heading::text('Create Event', Field::VarString, strlen($text), $flag, 31),
             Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
             Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
             Heading::text('Database Collation', Field::VarString, 32, $flag, 31),

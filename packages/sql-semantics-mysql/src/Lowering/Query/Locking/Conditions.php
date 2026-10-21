@@ -62,6 +62,10 @@ final class Conditions
             // A relation whose own meaning is refused remains with its ordinary lowering rule.
             return null;
         }
+        $sources = array_values(array_filter($terms, static fn ($term): bool => $term instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource));
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($sources) !== null) {
+            return null;
+        }
         $derivation = new Derivation(new AnalysisContext($lowering->profile, [new Name(\SqlSemantics\Platform\MySql\Rules\SessionDatabase::UNNAMED)], complete: false));
         $rule = new LockedTables();
         $entries = $rule->inputs($derivation, $derivation->environment(), $terms, $names, $options);

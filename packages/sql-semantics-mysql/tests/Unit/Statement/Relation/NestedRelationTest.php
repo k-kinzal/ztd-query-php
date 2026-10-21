@@ -44,7 +44,7 @@ final class NestedRelationTest extends TestCase
 
     public function testRenderWritesTheParentheses(): void
     {
-        self::assertSame('SELECT 1 FROM ((t)), ((t JOIN u)), ((t, u), v)', (new Semantics(Dialect::MySql))->analyze('select 1 from ((t)), ((t join u)), ((t, u), v)')->toString());
+        self::assertSame('SELECT 1 FROM ((t)), ((u JOIN v)), ((w, x), y)', (new Semantics(Dialect::MySql))->analyze('select 1 from ((t)), ((u join v)), ((w, x), y)')->toString());
         self::assertSame('SELECT 1 FROM (t, u)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from (t, u)')->toString());
     }
     public function testModernOdbcEscapeIsRejectedAsASingleParenthesizedFactor(): void

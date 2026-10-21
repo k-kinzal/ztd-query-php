@@ -223,4 +223,81 @@ final class XaCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1'], ['2']], $result->rows);
     }
+    public function testSameKeepsTheLastLegacyBranchAfterItFinishes(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $empty = new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text(''));
+        $command = new XaCommand();
+        self::assertTrue($command->same($empty, $session));
+        $session->query("XA START 'x'; XA END 'x'; XA ROLLBACK 'x'");
+        self::assertFalse($command->same($empty, $session));
+        $this->expectExceptionMessage('XAER_RMFAIL: The command cannot be executed when global transaction is in the  NON-EXISTING state');
+        $session->query("XA ROLLBACK 'x','',2");
+    }
+
+    public function testPrepareRetainsTheStartFormatAndOwnershipIn56(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect(database: 'd');
+        $session->query("CREATE TABLE t(a INT); XA START 'g','b',1; INSERT INTO t VALUES(7); XA END 'g','b',2; XA PREPARE 'g','b',3");
+        $result = $session->query('XA RECOVER')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '1', 'gb']], $result->rows);
+        self::assertSame(\MySqlMemory\Session\XaState::Prepared, $session->transaction->xa);
+        self::assertSame($session->id, $session->instance->registry->prepared['1:1:gb']->owner);
+        $session->query("XA COMMIT 'g','b',4");
+        $rows = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['7']], $rows->rows);
+    }
+
+    public function testFinishOwnedRefusesOnePhaseWithoutConsumingTheBranch(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("XA START 'g'; XA END 'g'; XA PREPARE 'g'");
+        $reply = $session->run("XA COMMIT 'g' ONE PHASE")[0];
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1399, $reply->getCode());
+        self::assertStringContainsString('PREPARED', $reply->getMessage());
+        self::assertCount(1, $session->instance->registry->prepared);
+        $session->query("XA ROLLBACK 'g'");
+        self::assertSame([], $session->instance->registry->prepared);
+    }
+
+    public function testFinishDetachedWaitsForTheOwnerToDisconnectWhenDetachmentIsOff(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect(database: 'd');
+        $second = $instance->connect(database: 'd');
+        $first->query("CREATE TABLE t(a INT); SET xa_detach_on_prepare=OFF; XA START 'g'; INSERT INTO t VALUES(7); XA END 'g'; XA PREPARE 'g'");
+        $refused = $second->run("XA COMMIT 'g'")[0];
+        self::assertInstanceOf(SqlError::class, $refused);
+        self::assertSame(1397, $refused->getCode());
+        $first->close();
+        $second->query("XA COMMIT 'g'");
+        $rows = $second->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['7']], $rows->rows);
+    }
+
+    public function testFinishDetachedConsumesDifferentFormatIn57WithoutPublishingRows(): void
+    {
+        $instance = new Instance('5.7.44', [], ['d']);
+        $first = $instance->connect(database: 'd');
+        $first->query("CREATE TABLE t(a INT); XA START 'g','b',1; INSERT INTO t VALUES(7); XA END 'g','b',1; XA PREPARE 'g','b',1");
+        $first->close();
+        $second = $instance->connect(database: 'd');
+        $second->query("XA COMMIT 'g','b',2");
+        $rows = $second->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([[], []], [$rows->rows, $instance->registry->prepared]);
+    }
+    public function testFinishOwnedNamesAnUnknownBranchBeforeThePreparedStateIn56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("XA START 'x'; XA END 'x'; XA PREPARE 'x'");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1397);
+        $this->expectExceptionMessage('XAER_NOTA: Unknown XID');
+        $session->query("XA COMMIT 'y'");
+    }
 }

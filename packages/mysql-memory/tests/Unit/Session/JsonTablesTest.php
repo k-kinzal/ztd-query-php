@@ -39,7 +39,7 @@ final class JsonTablesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $select = $session->analyze("SELECT 1 FROM (JSON_TABLE('[]', '$' COLUMNS (p FOR ORDINALITY)) AS x JOIN t ON 1), { OJ t LEFT JOIN JSON_TABLE('[]', '$' COLUMNS (q FOR ORDINALITY)) AS y ON 1 }")->statement;
+        $select = $session->analyze("SELECT 1 FROM (JSON_TABLE('[]', '$' COLUMNS (p FOR ORDINALITY)) AS x JOIN t ON 1), { OJ t AS u LEFT JOIN JSON_TABLE('[]', '$' COLUMNS (q FOR ORDINALITY)) AS y ON 1 }")->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);

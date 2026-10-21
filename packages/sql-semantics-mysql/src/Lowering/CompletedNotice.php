@@ -25,14 +25,14 @@ final class CompletedNotice
     /**
      * Interprets one completed production before the caller orders its notices.
      */
-    public function of(Node $node, Lowering $lowering, ReductionParser $parser, string $statement, ?\SqlParser\Lexer\Token $lookahead = null): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
+    public function of(Node $node, Lowering $lowering, ReductionParser $parser, string $statement, ?\SqlParser\Lexer\Token $lookahead = null, bool $malformed = false): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
         $entry = (new ClientEntry())->generated($node) ?? (new Replication\SyntaxLogMoment())->rejected($node, $lowering->profile->grammar);
         if ($entry !== null) {
             return new ParseFailure($entry->problem, true);
         }
         $replication = new Replication\SyntaxDeprecations();
-        return $this->operands($node, $lowering, $node->name === 'table_ident' ? (new InputTokens())->prefix($parser, $statement) : []) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Server\Transaction\SyntaxXids())->completed($node, $lowering) ?? $this->account($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement, $lookahead)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Query\Locking\Conditions())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
+        return $this->operands($node, $lowering, $node->name === 'table_ident' ? (new InputTokens())->prefix($parser, $statement) : []) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Server\Transaction\SyntaxXids())->completed($node, $lowering) ?? $this->account($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement, $lookahead)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? ($malformed ? (new Query\Legacy\SyntaxInputNames())->completed($node, $lowering) : null) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Query\Locking\Conditions())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? $this->program($node, $lowering);
     }
 
     /**
@@ -61,4 +61,11 @@ final class CompletedNotice
         return (new Account\SyntaxRoles())->deprecation($node, $lowering->profile->grammar) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering) ?? (new Account\SyntaxFactors())->completed($node, $lowering) ?? (new Account\ClauseRule($lowering))->completed($node);
     }
 
+    /**
+     * Interprets completed stored-program conditions, parameters and instructions.
+     */
+    public function program(Node $node, Lowering $lowering): ?ParseFailure
+    {
+        return (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
+    }
 }

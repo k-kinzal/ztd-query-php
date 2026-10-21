@@ -44,6 +44,7 @@ final class TransactionStatements
             M\Account\CreateUser::class, M\Account\AlterUser::class, M\Account\DropUser::class, M\Account\RenameUser::class, M\Routine\Program\Write\DeferredRenameUser::class,
             M\Account\CreateRole::class, M\Routine\Program\Write\DeferredCreateRole::class, M\Account\DropRole::class,
             M\Server\ForeignServer\CreateServer::class, M\Server\ForeignServer\AlterServer::class, M\Server\ForeignServer\DropServer::class,
+            M\Server\Instance\AlterInstance::class,
             M\Server\Plugin\InstallPlugin::class, M\Server\Plugin\UninstallPlugin::class,
         ], true);
     }

@@ -54,6 +54,9 @@ final class InputPrefixTest extends TestCase
         yield 'call identity before argument' => ['SELECT ``(@@missing_variable);', "Incorrect routine name ''"];
         yield 'earlier statement before call' => ['SELECT @@missing_variable; SELECT ``();', "Unknown system variable 'missing_variable'"];
         yield 'unknown system variable'  => ['SELECT @@missing_variable;', "Unknown system variable 'missing_variable'"];
+        yield 'unknown assignment' => ['SET missing_variable=1;', "Unknown system variable 'missing_variable'"];
+        yield 'declared assignment' => ['DECLARE missing_variable INT; SET missing_variable=1;', null];
+        yield 'scoped local awaits declaration constraints' => ['DECLARE missing_variable INT; SET GLOBAL missing_variable=1;', null];
         yield 'declared condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c;", null];
         yield 'outer condition' => ["DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL c; END;", null];
         yield 'closed inner scope' => ["BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; END; SIGNAL c;", 'Undefined CONDITION: c'];

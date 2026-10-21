@@ -15,6 +15,6 @@ final class XaStateTest extends TestCase
 {
     public function testCasesNameTheStatesAsTheServerReportsThem(): void
     {
-        self::assertSame(['NON-EXISTING', 'ACTIVE', 'IDLE'], array_map(static fn (XaState $state): string => $state->value, XaState::cases()));
+        self::assertSame(['NON-EXISTING', 'ACTIVE', 'IDLE', 'PREPARED'], array_map(static fn (XaState $state): string => $state->value, XaState::cases()));
     }
 }

@@ -45,7 +45,7 @@ final class Columns
     }
 
     /**
-     * @return list<array{relation: TableReference, columns: non-empty-list<Name>}> Fixture identities and their columns
+     * @return list<array{relation: TableReference, columns: non-empty-list<Name>, names: non-empty-list<Name>}> Physical fixture identities and the names visible to the original scalar
      */
     public function bindings(Scalar $root): array
     {
@@ -67,7 +67,22 @@ final class Columns
                 $groups[$key] = $group;
             }
         }
-        return array_values(array_map(static fn (array $group): array => ['relation' => $group['relation'], 'columns' => array_values($group['columns'])], $groups));
+        return array_values(array_map(fn (array $group): array => ['relation' => $group['relation'], 'columns' => $this->physical(array_values($group['columns'])), 'names' => array_values($group['columns'])], $groups));
+    }
+
+    /**
+     * Supplies ordinary storage names when an output alias cannot name a stored column.
+     * Mapping the complete group avoids collisions with a generated alias of the same spelling.
+     *
+     * @param non-empty-list<Name> $names Original output names, which may be empty
+     * @return non-empty-list<Name>
+     */
+    public function physical(array $names): array
+    {
+        if (array_filter($names, static fn (Name $name): bool => $name->value === '' || str_ends_with($name->value, ' ') || mb_strlen($name->value, 'UTF-8') > 64) === []) {
+            return $names;
+        }
+        return array_map(static fn (int $index): Name => new Name('fixture_column_' . $index), array_keys($names));
     }
 
     /**
@@ -86,11 +101,25 @@ final class Columns
      */
     public function input(Scalar $root): ?TableSource
     {
-        $tables = array_column($this->bindings($root), 'relation');
+        $tables = array_map(fn (array $binding): TableSource => $this->expose($binding), $this->bindings($root));
         return match (count($tables)) {
             0 => null,
             1 => $tables[0],
             default => new TableList($tables),
         };
+    }
+
+    /**
+     * Preserves every free name through a projection, without changing the generated scalar.
+     *
+     * @param array{relation: TableReference, columns: non-empty-list<Name>, names: non-empty-list<Name>} $binding
+     */
+    public function expose(array $binding): TableSource
+    {
+        if ($binding['columns'] === $binding['names']) {
+            return $binding['relation'];
+        }
+        $items = array_map(static fn (Name $column, Name $alias): \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression => new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new ColumnUse($column), $alias), $binding['columns'], $binding['names']);
+        return new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $items, $binding['relation']), $binding['relation']->alias ?? $binding['relation']->name->name);
     }
 }

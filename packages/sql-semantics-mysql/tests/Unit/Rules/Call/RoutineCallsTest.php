@@ -112,4 +112,15 @@ final class RoutineCallsTest extends TestCase
         self::assertInstanceOf(WrongArgumentCount::class, $fact->type->cause);
         self::assertSame([$fact->type->cause], $derivation->facts()->diagnostics);
     }
+    public function testResultKeepsLegacyStoredFunctionWidthsThroughAnAssignment(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51');
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), functions: ['d.f' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11)]);
+        $operation = $semantics->analyze('SELECT @a := f()', $semantics->context(null, true, new \SqlSemantics\Contract\SearchPath('d'), $settings));
+        $type = $operation->field(0)->type;
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $type->descriptor);
+        self::assertSame(11, $type->descriptor->metadataLength());
+    }
+
 }

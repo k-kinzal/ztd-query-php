@@ -100,6 +100,18 @@ final class Transaction
     public ?string $xid = null;
 
     /**
+     * The format id supplied by XA START, retained when MySQL 5.6 accepts another format later.
+     */
+    public int $xidFormat = 1;
+
+    /**
+     * The last XA identity remembered by MySQL 5.6, excluding its format id.
+     * Completion keeps it for later state diagnostics; a new session remembers empty data.
+     * Opening an InnoDB table outside XA replaces it with an internal transaction identity.
+     */
+    public ?string $legacyXid = '0:';
+
+    /**
      * The isolation level of the transaction.
      */
     public Isolation $isolation = Isolation::RepeatableRead;
@@ -334,6 +346,7 @@ final class Transaction
         $this->engineMix->combined = false;
         $this->xa = XaState::NonExisting;
         $this->xid = null;
+        $this->xidFormat = 1;
     }
 
     /**

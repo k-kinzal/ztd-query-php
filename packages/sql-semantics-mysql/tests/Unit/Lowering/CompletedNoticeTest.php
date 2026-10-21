@@ -38,6 +38,21 @@ final class CompletedNoticeTest extends TestCase
         self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('PASSWORD_LOCK_TIME', '32768', 'ER_WRONG_VALUE'), true)], $notices);
     }
 
+    public function testProgramKeepsTheCompletedDuplicateParameter(): void
+    {
+        $parser = new MySqlParser('mysql-8.4.7');
+        $lowering = new Lowering(Productions::load(__DIR__ . '/../../../resources/productions/mysql-8.4.7.php'), new Leaves(), new LanguageProfile(GrammarRelease::MySql847));
+        $notices = [];
+        $parser->parse('CREATE PROCEDURE p(a INT, A INT) BEGIN END', static function (\SqlParser\Parser\Node $node) use ($lowering, &$notices): void {
+            $notice = (new CompletedNotice())->program($node, $lowering);
+            if ($notice !== null) {
+                $notices[] = $notice;
+            }
+        });
+
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateParameter, 'A'), true)], $notices);
+    }
+
     public function testOperandsReadsThePrimitiveNameRefusal(): void
     {
         $parser = new MySqlParser('mysql-5.7.44');

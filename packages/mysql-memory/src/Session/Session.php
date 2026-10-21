@@ -196,8 +196,7 @@ final class Session
             return;
         }
         $this->released = true;
-        $this->instance->registry->status->clear($this->id);
-        $this->instance->registry->threads->disconnect($this->id);
+        $this->instance->registry->disconnect($this->id, $this->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
         $this->transaction->disconnect();
     }
 

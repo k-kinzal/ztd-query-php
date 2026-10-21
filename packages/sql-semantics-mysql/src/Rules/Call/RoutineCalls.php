@@ -48,6 +48,9 @@ final class RoutineCalls
         $natives = new NativeFunctions();
         if (!$call->native($release)) {
             $returns = Settings::of($derivation->context)->function(($call->schema ?? $derivation->context->searchPath[0])->value, $call->name->value);
+            if ($returns !== null && $returns->kind->numeric() && in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                $returns = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain($returns->kind, $returns->field, $returns->length, $returns->decimals, $returns->unsigned, $returns->collation, $returns->members, $returns->coercibility, $returns->metadataLength(), $returns->capacity, $returns->displayDecimals, $returns->storageField);
+            }
 
             return $returns === null || $call->named()
                 ? new ScalarFact(new Dependent([new UndeclaredRoutine(new QualifiedName($call->name, $call->schema))]), Nullability::Dependent)

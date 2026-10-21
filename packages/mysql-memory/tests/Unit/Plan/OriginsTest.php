@@ -267,4 +267,16 @@ final class OriginsTest extends TestCase
         self::assertSame(['t', 3], [$missing->columns[0]->table, $missing->columns[0]->flags & 3]);
     }
 
+    public function testDefaultDistinguishesMergedSourcesFromBufferedAliases(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT DEFAULT 7)');
+        $merged = $session->query('SELECT DEFAULT(x) FROM (SELECT a AS x FROM t) q')[0];
+        $buffered = $session->query('SELECT DEFAULT(x) FROM (SELECT a AS x FROM t LIMIT 1) q')[0];
+        self::assertInstanceOf(ResultSet::class, $merged);
+        self::assertInstanceOf(ResultSet::class, $buffered);
+        self::assertSame(['a', 't', 't'], [$merged->columns[0]->originalName, $merged->columns[0]->table, $merged->columns[0]->originalTable]);
+        self::assertSame(['x', 'q', 't'], [$buffered->columns[0]->originalName, $buffered->columns[0]->table, $buffered->columns[0]->originalTable]);
+    }
+
 }

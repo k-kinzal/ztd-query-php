@@ -107,6 +107,7 @@ final class InputPrefix
      * Adds a completed declaration or statement, preserving an input-operand refusal.
      *
      * @param bool $isolated Whether enclosing declarations are unavailable to this prefix
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed instruction contains a syntax refusal
      */
     public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters, bool $isolated = false): ParameterList|RejectedInput
     {

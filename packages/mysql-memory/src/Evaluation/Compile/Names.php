@@ -354,22 +354,13 @@ final class Names
      */
     public function default(\SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn $node, Scope $scope): Evaluable
     {
-        $resolution = $this->compiler->facts->scalar($node->column)->resolution;
-        if (!$resolution instanceof ResolvedColumn) {
-            throw QueryError::BadField->error($node->column->name->value, 'field list');
-        }
-        $located = $scope->locate($resolution->relation);
-        $holder = $located[1] ?? (isset($scope->tables[spl_object_id($resolution->relation)]) ? $scope : null);
-        $definition = $holder === null ? null : ($holder->tables[spl_object_id($resolution->relation)] ?? null);
-        if ($holder === null || $definition === null) {
-            throw StatementError::NotSupportedYet->error('DEFAULT of a column of a derived table');
-        }
-        $column = $definition->columns[$this->position($holder, $resolution)];
+        $defaults = new Family\Defaults($this->compiler);
+        $column = $defaults->column($node, $scope);
         if (!$column->default->declared && $column->autoIncrement) {
             return new Constant($column->domain->withNullable(false), 0);
         }
         if (!$column->default->declared) {
-            throw DataError::NoDefaultForField->error($column->name);
+            throw DataError::NoDefaultForField->error($defaults->name($node, $column));
         }
         if ($column->default->now) {
             return new Constant($column->domain, $column->nullable() ? null : '0000-00-00 00:00:00' . ($column->domain->decimals > 0 ? '.' . str_repeat('0', $column->domain->decimals) : ''));

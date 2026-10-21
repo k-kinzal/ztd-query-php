@@ -29,6 +29,7 @@ final class TransactionStatementsTest extends TestCase
         yield 'temporary-columnless' => [new M\Routine\Program\Write\DeferredCreateTable($name, temporaryWords: 1), false];
         yield 'like' => [new M\Table\CreateTableLike($name, new QualifiedName(new Name('y'))), true];
         yield 'temporary-like' => [new M\Table\CreateTableLike($name, new QualifiedName(new Name('y')), temporaryWords: 1), false];
+        yield 'instance TLS' => [new M\Server\Instance\AlterInstance(new M\Server\Instance\ReloadTls()), true];
         yield 'block' => [new M\Routine\Program\Block(), false];
     }
 
@@ -44,4 +45,11 @@ final class TransactionStatementsTest extends TestCase
         $this->expectExceptionMessage('Explicit or implicit commit is not allowed in stored function or trigger.');
         new M\Routine\CreateTrigger(new QualifiedName(new Name('tr')), M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Update, new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('t'))), $body);
     }
+    public function testImplicitRejectsAnInstanceActionEvenInsideAnUnreachableTriggerBranch(): void
+    {
+        $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [new M\Server\Instance\AlterInstance(new M\Server\Instance\ReloadTls())])]);
+        $this->expectExceptionMessage('Explicit or implicit commit is not allowed in stored function or trigger.');
+        new M\Routine\CreateTrigger(new QualifiedName(new Name('tr')), M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Insert, new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('t'))), $body);
+    }
+
 }

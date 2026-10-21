@@ -11,7 +11,7 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * A system scope keyword applied to a lexically bound local assignment.
  *
- * The optional position only formats an input diagnostic. No SQL or AST is retained.
+ * Optional positions format the input diagnostic. No SQL or AST is retained.
  *
  * @visibility public
  * @example Describing the conflicting scopes
@@ -23,10 +23,12 @@ final class ScopedLocalAssignment implements Diagnostic
 
     /**
      * @param int|null $offset The original assigned-name position, absent for direct construction
+     * @param int|null $end The completed assignment boundary used by MySQL 5.6
      */
-    public function __construct(public readonly ?int $offset = null)
+    public function __construct(public readonly ?int $offset = null, public readonly ?int $end = null)
     {
         Check::input($offset === null || $offset >= 0, 'The assigned-name position is nonnegative.');
+        Check::input($end === null || ($offset !== null && $end >= $offset), 'An assignment completes after its assigned name.');
     }
 
     /**

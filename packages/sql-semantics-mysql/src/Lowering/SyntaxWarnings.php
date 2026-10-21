@@ -42,6 +42,7 @@ final class SyntaxWarnings
     {
         $tokens = (new InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
+        $malformed = (new Query\Legacy\SyntaxInputNames())->unparsed($parser, $statement, $profile);
         $state = new Notice\Completion((new Account\SyntaxResourceNames())->completed($parser, $statement, $end));
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile, client: $client);
         $operands = new Notice\OperandCompletion();
@@ -49,7 +50,7 @@ final class SyntaxWarnings
         $handlers = new Routine\Condition\HandlerPrefix();
         $labels = new Routine\Program\LabelPrefix();
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $replicaNetTimeout, $labels): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $replicaNetTimeout, $labels, $malformed): void {
                 if ($state->aborted) {
                     return;
                 }
@@ -72,7 +73,7 @@ final class SyntaxWarnings
                     $state->record((new SourceRanges())->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead) ?? $lowering->tableChanges->ignored($node, $tokens);
+                $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead, $malformed) ?? $lowering->tableChanges->ignored($node, $tokens);
                 $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = (new SourceRanges())->span($node, true) ?? [$lookahead->offset, $lookahead->offset];

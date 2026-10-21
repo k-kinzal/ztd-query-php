@@ -43,26 +43,21 @@ use SqlSemantics\Statement\Operation;
 final class SetPasswordCommand implements Command
 {
     /**
-     * Checks a legacy SET-list password operand before any assignment takes effect.
+     * Defers a legacy SET-list password update until the list applies its assignments.
      *
-     * @throws SqlError When the account is absent or the hash is invalid
      */
     public function assignment(\SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment $item, Session $session): Closure
     {
-        $names = new Names($session->settings()->release());
-        $names->check([$item->user]);
-        $identity = $item->user === null ? new Identity($session->user, '%') : $names->identity($item->user, $session);
-        $account = $session->instance->accounts->find($identity);
-        if ($account === null) {
-            throw AccountError::PasswordNoMatch->error();
-        }
-        $checked = clone $account;
-        $this->legacy($checked, new SetPassword($item->user, $item->password), $session);
-
-        return static function () use ($account, $checked, $session): void {
+        return function () use ($item, $session): void {
+            $names = new Names($session->settings()->release());
+            $names->check([$item->user]);
+            $identity = $item->user === null ? new Identity($session->user, '%') : $names->identity($item->user, $session);
+            $account = $session->instance->accounts->find($identity);
+            if ($account === null) {
+                throw AccountError::PasswordNoMatch->error();
+            }
             $session->transaction->commit();
-            $account->hash = $checked->hash;
-            $account->password = $checked->password;
+            $this->legacy($account, new SetPassword($item->user, $item->password), $session);
             $account->expired = false;
             (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
         };

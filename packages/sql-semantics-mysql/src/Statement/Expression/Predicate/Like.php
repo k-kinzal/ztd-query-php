@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Predicate;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
@@ -23,7 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * written.
  *
  * Rule: MYSQL-LIKE-001. Facts: 1, 0 or NULL, an integer; it can be NULL
- * when an operand can. Every operand takes a single value. Terminates: the
+ * when the subject or pattern can. A NULL escape selects the default escape
+ * character. MySQL 5.6 and 5.7 exclude the escape from the NULL fact; later
+ * releases retain its nullable metadata. Every operand takes a single value. Terminates: the
  * operands are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-comparison-functions.html#operator_like.
  * Status: Implemented.
@@ -63,7 +66,10 @@ final class Like implements Scalar
         $operands->collated([$operand, $pattern], 'like', $derivation);
         $nullability = $operand->nullability->propagate($pattern->nullability);
         if ($this->escape !== null) {
-            $nullability = $nullability->propagate($operands->single($derivation->scalar($this->escape, $environment), $derivation)->nullability);
+            $escape = $operands->single($derivation->scalar($this->escape, $environment), $derivation);
+            if (!in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                $nullability = $nullability->propagate($escape->nullability);
+            }
         }
 
         return $operands->truth($nullability);

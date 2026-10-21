@@ -65,6 +65,9 @@ final class LegacyPlan
                 $row = array_values($row);
                 continue;
             }
+            if ($explain->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $explain->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet) {
+                $row = [1, 'SIMPLE', null, null, null, null, null, null, null, null, null, 'No tables used'];
+            }
             $row[1] = 'SIMPLE';
             if ($explain->modifier !== ExplainModifier::Partitions) {
                 unset($row[3]);

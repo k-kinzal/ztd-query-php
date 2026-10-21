@@ -391,7 +391,7 @@ final class Locations
             foreach ($schema->tables as $table) {
                 foreach ($table->definition->columns as $column) {
                     if ($column->declaration === $declaration) {
-                        return $column->default->declared || $column->autoIncrement ? null : $column->name;
+                        return $column->default->declared || $column->autoIncrement ? null : ($session->settings()->release() === GrammarRelease::MySql5651 && $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable ? $default->column->name->value : $column->name);
                     }
                 }
             }

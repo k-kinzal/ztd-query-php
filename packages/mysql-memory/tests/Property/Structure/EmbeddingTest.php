@@ -94,4 +94,28 @@ final class EmbeddingTest extends TestCase
         self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql8044, (new \Fuzz\Structure\Profiles())->select($call)->grammar);
         self::assertSame('SELECT ROW_NUMBER() OVER w WINDOW w AS ()', (new Reference())->sql($call, $profile));
     }
+    /**
+     * An empty output alias remains valid without trying to create an empty stored-column name.
+     */
+    public function testStatementKeepsAnEmptyDefaultColumnAliasAndUsesOrdinaryStorageNames(): void
+    {
+        $column = new M\Name\ColumnUse(new Name(''));
+        $scalar = new M\Expression\Access\DefaultOfColumn($column);
+        $statement = (new Embedding())->statement($scalar);
+        self::assertInstanceOf(M\QueryRoot::class, $statement);
+        self::assertInstanceOf(M\Query\Select::class, $statement->query);
+        self::assertInstanceOf(M\Query\SelectExpression::class, $statement->query->items[0]);
+        self::assertSame($scalar, $statement->query->items[0]->expression);
+        $binding = (new \Fuzz\Structure\Context\Columns())->bindings($scalar)[0];
+        self::assertSame('', $binding['names'][0]->value);
+        self::assertSame('fixture_column_0', $binding['columns'][0]->value);
+        $session = (new \MySqlMemory\Instance())->connect();
+        $session->query('CREATE DATABASE structure_fixture; CREATE TABLE structure_fixture.input_0(fixture_column_0 INT DEFAULT 7); INSERT INTO structure_fixture.input_0 VALUES (3)');
+        $session->text = 'opaque input';
+        $result = (new Execution())->runIn($session, $scalar);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['7']], $result->rows);
+        self::assertSame('opaque input', $session->text);
+    }
+
 }
