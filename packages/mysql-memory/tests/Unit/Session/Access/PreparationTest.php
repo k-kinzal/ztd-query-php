@@ -14,6 +14,23 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testAlterParametersUsesTheRetainedMarkerWithoutReadingTheLabel(): void
+    {
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);
+        $session = (new Instance('9.1.0'))->connect();
+        $session->text = 'opaque request label';
+        $this->expectExceptionMessage('Dynamic parameters can only be used in DML statements.');
+        (new Preparation())->alterParameters($definition, $session);
+    }
+
+    public function testAlterParametersKeepsEarlierReleasesOpenForExecution(): void
+    {
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);
+        $session = (new Instance('8.4.7'))->connect();
+        (new Preparation())->alterParameters($definition, $session);
+        self::assertSame(0, $session->diagnostics->raised());
+    }
+
     public function testCheckRefusesAnEmptySemanticScriptWithoutReadingItsRequestLabel(): void
     {
         $session = (new Instance())->connect();

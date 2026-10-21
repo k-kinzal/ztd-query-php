@@ -109,6 +109,7 @@ final class TableInput
                 $alter = new \MySqlMemory\Program\Expression\AlterUse();
                 if ($session->preparation->inputPrepared) {
                     $alter->header($problem->definition, $session);
+                    (new \MySqlMemory\Session\Access\Preparation())->alterParameters($problem->definition, $session);
                     throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($problem->definition, $session->settings()->release())));
                 }
                 \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_alter_table');

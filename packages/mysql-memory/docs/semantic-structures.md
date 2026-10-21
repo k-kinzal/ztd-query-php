@@ -3791,6 +3791,18 @@ inside the row, while the latter retain the functional-index subquery condition.
 These histories test the retained instruction's interpretation, not a claim that
 matching errors establish the validity of every ordinary semantic value.
 
+An ordinary functional expression key also excludes subqueries, session variables,
+parameter markers, stored and nondeterministic calls, DEFAULT references,
+aggregates and window calls, including those nested inside another expression.
+Complete deferred definitions retain those operand roles, so IF NOT EXISTS and
+skipped stored branches preserve their meaning. Multi-valued keys with these
+operands likewise require the deferred enclosing declaration. Open column
+references in deterministic expressions still bind against the target catalog.
+These are expression-role constraints; column result domains and engine-specific
+index capabilities remain separate checks. Prepared marker slots come from the
+retained structure. MySQL 9.0 and 9.1 refuse markers in ALTER/CREATE INDEX after
+header reading without adding that protocol condition to SHOW WARNINGS.
+
 Secondary-index names cannot be empty, end in an ASCII space, or equal PRIMARY
 without regard to case. Semantics records the rejected name occurrence as
 `InvalidIndexName`; primary-key labels are ignored and an explicit index name

@@ -11,7 +11,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex;
 
 /**
- * A prepared index instruction retaining its complete target and non-scalar key.
+ * A prepared index instruction retaining its complete target and deferred key operands.
  *
  * @visibility MySqlMemory
  */
@@ -20,17 +20,18 @@ final class PendingIndex implements PendingInstruction
     /**
      * @param DeferredCreateIndex $definition The unchanged retained instruction
      * @param string $database The default database at preparation
+     * @param ParameterBindings|null $bindings Marker slots retained from the complete definition
      */
-    public function __construct(public readonly DeferredCreateIndex $definition, public readonly string $database)
+    public function __construct(public readonly DeferredCreateIndex $definition, public readonly string $database, public readonly ?ParameterBindings $bindings = null)
     {
     }
 
     /**
-     * Returns the index instruction's empty protocol parameter list.
+     * Returns the index instruction's protocol parameter slots.
      */
     public function parameters(): ParameterBindings
     {
-        return new ParameterBindings([]);
+        return $this->bindings ?? new ParameterBindings([]);
     }
 
     /**

@@ -107,6 +107,9 @@ final class Preparation
             $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
             $storage->resolve($statement, $session, $context);
         }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
+            $this->alterParameters($statement, $session);
+        }
         $dropEvent = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && $statement->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event;
         $event = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent || $dropEvent;
         $modern = in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true);
@@ -117,6 +120,22 @@ final class Preparation
             $error = \MySqlMemory\Error\Family\StatementError::DynamicParametersRequireDml;
             throw new SqlError($error, $error->message(), recorded: true);
         }
+    }
+
+    /**
+     * Enforces the MySQL 9 prepared ALTER/INDEX marker restriction after header reading.
+     * Marker occurrences belong to the semantic declaration, independently of input text.
+     * The protocol error does not enter SHOW WARNINGS. Observed on 9.0.1 and 9.1.0.
+     *
+     * @throws SqlError When the complete declaration contains a dynamic parameter
+     */
+    public function alterParameters(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex $definition, Session $session): void
+    {
+        if (!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true) || (new \MySqlMemory\Command\Prepared\GenerationParameters())->occurrences($definition, $session->settings()->release()) === []) {
+            return;
+        }
+        $error = \MySqlMemory\Error\Family\StatementError::DynamicParametersRequireDml;
+        throw new SqlError($error, $error->message(), recorded: true);
     }
 
     /**

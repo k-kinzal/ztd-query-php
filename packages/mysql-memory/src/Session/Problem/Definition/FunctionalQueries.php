@@ -125,6 +125,22 @@ final class FunctionalQueries
     }
 
     /**
+     * Selects calls whose routine lookup is independent of functional-key preparation.
+     * A key's forbidden-function condition precedes lookup of a stored function.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Call\FunctionCall>
+     */
+    public function ordinaryCalls(\SqlSemantics\Statement\Node $statement): array
+    {
+        $walker = new Walker();
+        $keyCalls = [];
+        foreach ($walker->find($statement, \SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart::class) as $part) {
+            array_push($keyCalls, ...$walker->find($part, \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class));
+        }
+        return array_values(array_filter($walker->find($statement, \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class), static fn ($call): bool => !in_array($call, $keyCalls, true)));
+    }
+
+    /**
      * Leaves indexed conversion conditions to the index's preparation order.
      */
     public function deferred(\SqlSemantics\Statement\Fact\Diagnostic $diagnostic, \SqlSemantics\Statement\Node $statement): bool

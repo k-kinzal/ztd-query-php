@@ -38,6 +38,15 @@ final class PendingIndexTest extends TestCase
         self::assertSame([], (new \MySqlMemory\Command\Prepared\PendingIndex($definition, 'd'))->parameters()->types);
     }
 
+    public function testParametersPreservesAMarkerInADeferredFunctionalOperand(): void
+    {
+        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Literal\Parameter())]);
+        $bindings = (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($definition, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        $prepared = new \MySqlMemory\Command\Prepared\PendingIndex($definition, 'd', $bindings);
+        self::assertCount(1, $prepared->parameters()->types);
+        self::assertSame($definition, $prepared->definition);
+    }
+
     public function testExecuteChecksTheRetainedPreparationDatabase(): void
     {
         $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);

@@ -19,8 +19,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Target lookup and index constraints precede operand preparation. In particular,
  * CREATE TABLE IF NOT EXISTS can leave this definition unused. The operand stays
- * distinct from an ordinary functional key. A scalar-only column reference also
- * needs this role: it belongs in a column key rather than a functional key.
+ * distinct from an ordinary functional key. Subqueries, variables, parameter
+ * markers, nondeterministic calls and grouped expressions need this role, as
+ * does a bare column reference, which belongs in a column key.
  * No source SQL or parser node is retained.
  *
  * @visibility public
@@ -38,11 +39,7 @@ final class ExpressionPart implements KeyPart
      */
     public function __construct(public readonly Scalar|RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null)
     {
-        $ungrouped = $expression;
-        while ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
-            $ungrouped = $ungrouped->operand;
-        }
-        \SqlSemantics\Diagnostic\Check::input(!$expression instanceof Scalar || $ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse, 'A deferred scalar key part retains a bare column reference.');
+        \SqlSemantics\Diagnostic\Check::input(!$expression instanceof Scalar || !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\Operands())->ordinary($expression), 'A deferred scalar key part retains an operand outside the ordinary index-expression role.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -34,7 +34,8 @@ final class IndexInput
             $use = new IndexUse();
             if ($session->preparation->inputPrepared) {
                 $use->header($problem->definition, $session);
-                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingIndex($problem->definition, $session->variables->database));
+                (new \MySqlMemory\Session\Access\Preparation())->alterParameters($problem->definition, $session);
+                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingIndex($problem->definition, $session->variables->database, (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($problem->definition, $session->settings()->release())));
             }
             $use->header($problem->definition, $session);
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_index');

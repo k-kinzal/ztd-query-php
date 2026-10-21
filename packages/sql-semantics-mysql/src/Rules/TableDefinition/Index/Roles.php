@@ -31,7 +31,7 @@ final class Roles
      */
     public function parts(array $parts): bool
     {
-        return array_filter($parts, static fn (KeyPart $part): bool => $part instanceof ExpressionPart) !== [];
+        return array_filter($parts, static fn (KeyPart $part): bool => $part instanceof ExpressionPart || ($part instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\Operands())->contains($part->expression))) !== [];
     }
 
     /**

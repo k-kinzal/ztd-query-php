@@ -37,6 +37,14 @@ final class FunctionalQueriesTest extends TestCase
         yield 'explicit row widths' => ['CREATE TABLE t(a INT,INDEX i(((1,2)=(3,4,5) AND EXISTS(TABLE absent))))', 1241, 'Operand should contain 2 column(s)'];
     }
 
+    public function testOrdinaryCallsKeepsStoredFunctionLookupOutsideFunctionalKeys(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('f'));
+        $key = new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart($call);
+        self::assertSame([], (new FunctionalQueries())->ordinaryCalls($key));
+        self::assertSame([$call], (new FunctionalQueries())->ordinaryCalls($call));
+    }
+
     #[DataProvider('providerPreparation')]
     public function testPrepareUsesResolvedReferencesBeforeIndexValidation(string $sql, int $code, string $message): void
     {

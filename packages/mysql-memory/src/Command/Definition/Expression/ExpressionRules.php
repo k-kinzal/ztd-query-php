@@ -66,6 +66,9 @@ final class ExpressionRules
             if ($node instanceof UserVariable || $node instanceof SystemVariable) {
                 throw $role->variable($owner);
             }
+            if ($role === ExpressionRole::Functional && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\Operands())->forbidden($node)) {
+                throw $role->function($owner, $this->called($node) ?? '');
+            }
             $name = $this->called($node);
             if ($name !== null && isset($refused[$name])) {
                 throw $role->function($owner, $refused[$name]);

@@ -34,7 +34,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
-use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
@@ -151,7 +150,8 @@ final class AlterTableCommand implements Command
      *
      * A missing table, an unknown or duplicate column, a column an expression reads that the
      * table lacks, an existing table, an unknown key column and an unknown ALGORITHM or LOCK are
-     * left to the change.
+     * left to the change. Calls inside functional keys are checked in their key
+     * role before generic stored-function lookup.
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
@@ -163,7 +163,7 @@ final class AlterTableCommand implements Command
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }
-        foreach ((new Walker())->find($operation->statement, FunctionCall::class) as $call) {
+        foreach ((new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->ordinaryCalls($operation->statement) as $call) {
             if (Locations::undeclared($call, $operation)) {
                 throw (new Errors())->routine($call, $session);
             }

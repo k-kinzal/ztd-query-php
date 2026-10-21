@@ -49,7 +49,7 @@ final class ExpressionPartTest extends TestCase
 
     public function testAnOrdinaryScalarCannotBeDeferredAsAColumnKey(): void
     {
-        $this->expectExceptionMessage('A deferred scalar key part retains a bare column reference.');
+        $this->expectExceptionMessage('A deferred scalar key part retains an operand outside the ordinary index-expression role.');
         new DeferredExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
     }
 

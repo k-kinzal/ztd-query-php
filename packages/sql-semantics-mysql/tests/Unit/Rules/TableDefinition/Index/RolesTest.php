@@ -36,6 +36,16 @@ final class RolesTest extends TestCase
         self::assertFalse($roles->commands([new M\Alter\Command\Force()]));
     }
 
+    public function testPartsRetainsAForbiddenOperandInsideAMultiValuedKey(): void
+    {
+        $part = new M\Table\Key\ArrayPart(new M\Variable\UserVariable(new Name('x')), new M\Type\CastTarget(M\Type\Kind\CastKind::Unsigned));
+        self::assertTrue((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->parts([$part]));
+        $template = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
+        self::assertSame($part, $template->parts[0]);
+        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
+        new M\Table\CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
+    }
+
     public function testOrdinaryIndexCannotHoldARetainedRowKey(): void
     {
         $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
