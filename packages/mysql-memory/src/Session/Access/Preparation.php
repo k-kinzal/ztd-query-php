@@ -33,7 +33,7 @@ final class Preparation
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo) {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         if (($operation->statement instanceof \SqlSemantics\Statement\Script && $operation->statement->statements === []) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose) {

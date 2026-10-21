@@ -46,9 +46,14 @@ final class SpatialResults
             'GEOMETRYCOLLECTION' => $geometry,
             'GEOMCOLLECTION' => $geometry,
             'ST_SWAPXY' => $geometry,
+            'ST_GEOMCOLLFROMTXT' => $geometry,
             'CONTAINS' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 21),
         ];
         foreach (['', 'ST_'] as $prefix) {
+            foreach (['GEOM', 'GEOMETRY', 'POINT', 'LINE', 'LINESTRING', 'POLY', 'POLYGON', 'MPOINT', 'MULTIPOINT', 'MLINE', 'MULTILINESTRING', 'MPOLY', 'MULTIPOLYGON', 'GEOMCOLL', 'GEOMETRYCOLLECTION'] as $type) {
+                $rules[$prefix . $type . 'FROMTEXT'] = $geometry;
+                $rules[$prefix . $type . 'FROMWKB'] = $geometry;
+            }
             foreach (['ASTEXT', 'ASWKT'] as $name) {
                 $rules[$prefix . $name] = static fn (Invocation $call): Domain => Domain::string(16777216 * ($legacy($call) ? 1 : $call->settings->connection->charset->maxLength), $call->settings->connection, Field::LongBlob, Coercibility::Coercible);
             }

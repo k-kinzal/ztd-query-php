@@ -49,6 +49,11 @@ enum DataError: int implements ErrorCode
     case IllegalNonGeometric = 1367;
     case GisInvalidData = 3037;
     case GeometryNotLittleEndian = 3055;
+    case GeometryWkbDeprecated = 3195;
+    case GeometryWkbWithSridDeprecated = 3196;
+    case UnexpectedGeometryType = 3516;
+    case LongitudeOutOfRange = 3616;
+    case LatitudeOutOfRange = 3617;
     case InvalidOptionKey = 3558;
     case InvalidOptionValue = 3559;
     case InvalidOptionPair = 3560;

@@ -56,6 +56,8 @@ final class SpatialResultsTest extends TestCase
         $rules = (new SpatialResults())->rules();
         $geometry = new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible);
         self::assertEquals($geometry, $rules['POINT']($call));
+        self::assertEquals($geometry, $rules['ST_GEOMFROMTEXT']($call));
+        self::assertEquals($geometry, $rules['ST_MULTIPOINTFROMTEXT']($call));
         self::assertEquals($geometry, $rules['GEOMETRYCOLLECTION']($call));
     }
 

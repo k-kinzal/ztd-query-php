@@ -36,6 +36,18 @@ final class PreparationTest extends TestCase
         (new Preparation())->check($operation, $session);
     }
 
+    public function testCheckRefusesConstructedDiagnosticsWithoutReadingTheRequestLabel(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'opaque non-SQL label';
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics(new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementDiagnostics([new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('n')), \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName::Number)]));
+        $operation = new \SqlSemantics\Statement\Operation($session->semantics()->context(session: $session->resolution()), $statement);
+        $this->expectExceptionCode(1295);
+        $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
+
+        (new Preparation())->check($operation, $session);
+    }
+
     public function testResourcesRefusesDirectDefinitionsWithoutReadingRequestText(): void
     {
         $name = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(new \SqlSemantics\Statement\Identifier\Name('g'));

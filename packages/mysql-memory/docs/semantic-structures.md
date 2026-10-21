@@ -4255,8 +4255,8 @@ startup failures likewise pass on retry (2 cases, 5 assertions).
 Concurrent obsolete campaigns exhausted the validation host's native AIO quota
 (`io_setup()` returned `EAGAIN`), preventing some MySQL fixtures from starting.
 Their partial runs were stopped and retained as incomplete. This is not a SQL
-comparison exception. The current whole-model and duration runs, missing fixture
-retries, and all nine final-revision supplied corpora remain acceptance gates.
+comparison exception. The completed retries are recorded below. Final-revision campaigns and
+rejection classification remain acceptance gates.
 
 
 The recorded `query1562` unseeded campaign completes 901.435 seconds:
@@ -4285,3 +4285,29 @@ release-specific deprecations are supplied by SQL Semantics. This adds positive
 consumer evidence without an execution-eligibility classification in Semantics.
 The spatial changes postdate the recorded duration run and require fresh final
 acceptance campaigns once outstanding implementation gaps are repaired.
+
+
+The supplied-seed replay on `7527d119add` also completes all nine corpora:
+18,622 inputs, zero differences and zero volatile classifications. Per-release
+counts are 1,678 / 1,773 / 2,167 / 2,173 / 2,183 / 2,185 / 2,191 / 2,136 /
+2,136 for 5.6 through 9.1 in the acceptance contract's order. Reports, summaries
+and worker exit statuses are archived in
+`build/fuzz/acceptance/7527d119add/seeds.tar.gz`. This is historical evidence;
+subsequent production changes still require the final-revision replay.
+
+Spatial input now reads WKT and WKB through the semantic operand domains. The
+consumer evaluates SRID and axis options in the observed order, retains legacy
+geometry-typed WKB behavior, and reports coordinate ranges in the reference's
+angular units. A constructed query observes generated runtime geometries and
+reference creation, replacement and deletion without changing the query object.
+The six direct histories pass 600 assertions on 8.0, 8.4 and 9.1. A separate
+389-input matrix compares values, metadata, conditions and assignment effects on
+5.6, 5.7, 8.0, 8.4 and 9.1 through text and prepared protocols. All ten cases
+agree. GET DIAGNOSTICS preparation is refused from its statement type before
+execution, without consulting its request label.
+
+The `query1603` snapshot passes 20,511 Memory tests / 98,179 assertions and 9,652
+Semantics tests / 20,257 assertions. Both static-check suites pass, including
+29,668 Memory dependencies, 37,009 Semantics dependencies and 1,030 reviewed
+semantic value definitions. These observations do not close the remaining
+consumer gaps or replace the final-revision acceptance campaigns.

@@ -11,6 +11,11 @@
 declare(strict_types=1);
 
 return [
+    3195 => ['01000', 'st_geometryfromwkb(geometry) is deprecated and will be replaced by st_srid(geometry, 0) in a future version. Use st_geometryfromwkb(st_aswkb(geometry), 0) instead.'],
+    3196 => ['01000', 'st_geometryfromwkb(geometry, srid) is deprecated and will be replaced by st_srid(geometry, srid) in a future version. Use st_geometryfromwkb(st_aswkb(geometry), srid) instead.'],
+    3516 => ['22S01', '%s value is a geometry of unexpected type %s in %s.'],
+    3616 => ['22S02', 'Longitude %s is out of range in function %s. It must be within (%s, %s].'],
+    3617 => ['22S03', 'Latitude %s is out of range in function %s. It must be within [%s, %s].'],
     3558 => ['22023', "Invalid option key '%s' in function %s."],
     3559 => ['22023', "Invalid value '%s' for option '%s' in function '%s'."],
     3560 => ['22023', "The string '%s' is not a valid key = value pair in function %s."],

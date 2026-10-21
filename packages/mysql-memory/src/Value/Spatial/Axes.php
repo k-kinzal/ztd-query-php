@@ -37,6 +37,22 @@ final class Axes
     }
 
     /**
+     * Reads the top-level geographic angular unit in radians per coordinate unit.
+     */
+    public static function angularUnit(string $definition): float
+    {
+        preg_match_all('/"[^"]*"|[a-z_]+|[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:e[+-]?[0-9]+)?|[\[\]()]/i', $definition, $matched);
+        $depth = 0;
+        foreach ($matched[0] as $index => $token) {
+            if ($depth === 1 && strcasecmp($token, 'UNIT') === 0) {
+                return (float) ($matched[0][$index + 3] ?? 0.017453292519943278);
+            }
+            $depth += in_array($token, ['[', '('], true) ? 1 : (in_array($token, [']', ')'], true) ? -1 : 0);
+        }
+        return 0.017453292519943278;
+    }
+
+    /**
      * Exchanges every coordinate pair, retaining component order and the reference identifier.
      */
     public static function swap(Geometry $geometry): Geometry

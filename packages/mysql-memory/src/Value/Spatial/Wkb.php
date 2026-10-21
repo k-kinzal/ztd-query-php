@@ -75,12 +75,16 @@ final class Wkb
     /**
      * Reads one WKB geometry at a byte offset and advances past its payload.
      */
-    public static function geometry(string $bytes, int &$offset, int $depth, bool $littleOnly = false): ?Geometry
+    public static function geometry(string $bytes, int &$offset, int $depth, bool $littleOnly = false, bool $legacyByteOrder = false): ?Geometry
     {
-        if ($depth >= 64 || strlen($bytes) - $offset < 5 || ord($bytes[$offset]) > 1 || ($littleOnly && $bytes[$offset] !== "\1")) {
+        if ($depth >= 64 || strlen($bytes) - $offset < 5) {
             return null;
         }
-        $little = $bytes[$offset++] === "\1";
+        $little = self::byteOrder(ord($bytes[$offset]), $littleOnly, $legacyByteOrder);
+        if ($little === null) {
+            return null;
+        }
+        ++$offset;
         $type = self::number($bytes, $offset, $little);
         if ($type === null || $type < 1 || $type > 7) {
             return null;
@@ -97,7 +101,7 @@ final class Wkb
         $children = [];
         for ($i = 0; $i < $count; ++$i) {
             $points = $type === 3 ? self::points($bytes, $offset, $little) : null;
-            $child = $type === 3 ? ($points === null ? null : new Geometry(2, $points)) : self::geometry($bytes, $offset, $depth + 1, $littleOnly);
+            $child = $type === 3 ? ($points === null ? null : new Geometry(2, $points)) : self::geometry($bytes, $offset, $depth + 1, $littleOnly, $legacyByteOrder);
             if ($child === null) {
                 return null;
             }
@@ -105,6 +109,17 @@ final class Wkb
         }
 
         return new Geometry($type, [], $children);
+    }
+
+    /**
+     * Applies the reader's accepted byte-order markers independently to each component.
+     */
+    public static function byteOrder(int $marker, bool $littleOnly, bool $legacy): ?bool
+    {
+        if ((!$legacy && $marker > 1) || ($littleOnly && $marker !== 1)) {
+            return null;
+        }
+        return $marker !== 0;
     }
 
     /**

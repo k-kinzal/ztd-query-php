@@ -32,4 +32,9 @@ final class AxesTest extends TestCase
         self::assertSame([[4.0, 3.0], [6.0, 5.0]], $swapped->children[1]->points);
         self::assertEquals($geometry, Axes::swap($swapped));
     }
+    public function testAngularUnitReadsOnlyTheTopLevelUnit(): void
+    {
+        self::assertSame(0.01570796326794895, Axes::angularUnit('GEOGCS["UNIT",DATUM["d",UNIT["nested",3]],UNIT["grad",0.01570796326794895]]'));
+    }
+
 }

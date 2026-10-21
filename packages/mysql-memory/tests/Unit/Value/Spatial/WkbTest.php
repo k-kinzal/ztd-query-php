@@ -82,4 +82,12 @@ final class WkbTest extends TestCase
         self::assertSame([[1.0, 2.0]], Wkb::points(pack('Vee', 1, 1.0, 2.0), $offset, true));
         self::assertSame(20, $offset);
     }
+    public function testByteOrderAppliesLegacyAndInternalReaderRestrictions(): void
+    {
+        self::assertNull(Wkb::byteOrder(2, false, false));
+        self::assertTrue(Wkb::byteOrder(2, false, true));
+        self::assertNull(Wkb::byteOrder(0, true, false));
+        self::assertFalse(Wkb::byteOrder(0, false, false));
+    }
+
 }
