@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Leaf;
 use SqlParser\Parser\Node;
 use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Lowering\Query\SyntaxReadNames;
 
 /**
  * Refuses table-identity operands while preserving aliases with empty names.
@@ -159,6 +160,42 @@ final class SyntaxTableNames
         }
 
         return [];
+    }
+
+    /**
+     * Reads outer INSERT, REPLACE and UPDATE dependencies before refused values.
+     * Nested reads keep their own scope and only referenced CTEs contribute names. Returned names retain neither input nor AST.
+     *
+     * @return list<\SqlSemantics\Statement\Identifier\QualifiedName> Base-table names preceding the refusal
+     */
+    public function written(Node $tree, \SqlSemantics\Contract\LanguageProfile $profile, \SqlSemantics\Statement\Identifier\Comparison $comparison, int $end): array
+    {
+        $node = null;
+        foreach (['insert_stmt', 'replace_stmt', 'update_stmt', 'insert', 'replace', 'update'] as $rule) {
+            foreach ($tree->find($rule) as $candidate) {
+                if (($tree->tokens()[0] ?? null) === ($candidate->tokens()[0] ?? null)) {
+                    $node = $candidate;
+                    break 2;
+                }
+            }
+        }
+        if ($node === null) {
+            return [];
+        }
+        $lowering = new Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $roots = [];
+        $with = null;
+        foreach ($node->children as $child) {
+            if (!$child instanceof Node) {
+                continue;
+            }
+            if ($child->name === 'opt_with_clause') {
+                $with = $child;
+            } elseif (in_array($child->name, ['table_ident', 'insert2', 'join_table_list', 'table_reference_list'], true)) {
+                $roots[] = $child;
+            }
+        }
+        return (new SyntaxReadNames())->names($roots, $lowering, $comparison, $end, $with);
     }
 
 }

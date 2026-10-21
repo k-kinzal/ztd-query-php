@@ -38,4 +38,36 @@ final class UntilExecutionTest extends TestCase
         $this->expectExceptionCode(1277);
         (new UntilExecution())->check($until, (new Instance())->connect());
     }
+
+    public function testCheckDoesNotAttachALogCoordinateNoteToAGapCondition(): void
+    {
+        $session = (new Instance())->connect();
+        (new UntilExecution())->check(new ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGaps), $session);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+    public function testGtidsRetainsBothMalformedSetAndUntilDiagnostics(): void
+    {
+        $until = new ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids, new Text('bad'));
+        $session = (new Instance('8.0.44'))->connect();
+        $error = null;
+        try {
+            (new UntilExecution())->gtids($until, $session);
+        } catch (SqlError $caught) {
+            $error = $caught;
+        }
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1772, $error->getCode());
+        self::assertSame([[1277, 'Incorrect parameter or combination of parameters for START REPLICA UNTIL']], $error->following);
+        self::assertSame(1753, $session->diagnostics->conditions[0][1]);
+    }
+
+    public function testCompleteDistinguishesEmptyAfterAndBeforeSets(): void
+    {
+        $session = (new Instance())->connect();
+        $execution = new UntilExecution();
+        self::assertTrue($execution->complete(new ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGaps), $session));
+        self::assertTrue($execution->complete(new ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids, new Text(' , ')), $session));
+        self::assertFalse($execution->complete(new ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::BeforeGtids, new Text('')), $session));
+    }
+
 }

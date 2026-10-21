@@ -71,6 +71,7 @@ final class UpdateUse
             $write->derive($derivation);
         }
         $facts = $derivation->facts();
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->write($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);

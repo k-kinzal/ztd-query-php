@@ -20,6 +20,33 @@ use SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind;
 #[Medium]
 final class SyntaxTableNamesTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, list<string>}> Independent write heads
+     */
+    public static function providerWriteHeads(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.4.7'] as $release) {
+            yield $release . ' insert' => [$release, 'INSERT INTO t SELECT ABS()', ['t']];
+            yield $release . ' replace' => [$release, 'REPLACE t SET a=ABS()', ['t']];
+            yield $release . ' joined update' => [$release, 'UPDATE d.t JOIN u SET t.a=ABS()', ['t', 'u']];
+            yield $release . ' derived source' => [$release, 'UPDATE d.t JOIN (SELECT 1 FROM u) c SET t.a=ABS()', ['t', 'u']];
+            yield $release . ' stored instruction' => [$release, 'CREATE PROCEDURE p() UPDATE t SET a=ABS()', []];
+        }
+        yield 'common table binding' => ['8.4.7', 'WITH c AS(SELECT 1 FROM u) UPDATE d.t JOIN c SET t.a=ABS()', ['t', 'u']];
+    }
+
+    /**
+     * @param list<string> $expected Independently resolved physical relation names
+     */
+    #[DataProvider('providerWriteHeads')]
+    public function testWrittenRetainsOnlyNamesOwnedByTheOuterWrite(string $release, string $sql, array $expected): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $names = (new SyntaxTableNames())->written($semantics->parser()->parse($sql), $semantics->profile(), \SqlSemantics\Statement\Identifier\Comparison::Sensitive, strlen($sql));
+
+        self::assertSame($expected, array_map(static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): string => $name->name->value, $names));
+    }
+
     public function testContextualDistinguishesDmlFromDefinitionTargetsInsideStoredBodies(): void
     {
         $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');

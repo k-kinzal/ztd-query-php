@@ -56,6 +56,7 @@ final class Reading
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
             $this->targets($operation->statement, $session);
         }
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->write($operation->statement, $operation->facts, $session);
         $this->parsed($operation, $session);
         if ($operation instanceof Operation) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement, $session, true);

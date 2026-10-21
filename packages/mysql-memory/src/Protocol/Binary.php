@@ -25,7 +25,7 @@ final class Binary
      * Builds a row of the binary protocol from the texts of its values.
      *
      * @param list<ResultColumn> $columns
-     * @param list<string|null> $values
+     * @param list<string|float|null> $values
      */
     public function row(array $columns, array $values): string
     {
@@ -46,20 +46,20 @@ final class Binary
     /**
      * Appends one value in the binary form of its column type.
      */
-    public function value(PayloadWriter $writer, ResultColumn $column, string $value): void
+    public function value(PayloadWriter $writer, ResultColumn $column, string|float $value): void
     {
         $unsigned = $column->unsigned();
         match ($column->type) {
             Field::Tiny => $writer->integer((int) $value, 1),
             Field::Short, Field::Year => $writer->integer((int) $value, 2),
             Field::Long, Field::Int24 => $writer->integer((int) $value, 4),
-            Field::LongLong => $writer->integer($unsigned ? Integer::fromUnsignedText($value) : (int) $value, 8),
+            Field::LongLong => $writer->integer($unsigned ? Integer::fromUnsignedText((string) $value) : (int) $value, 8),
             Field::Float => $writer->bytes(pack('g', (float) $value)),
             Field::Double => $writer->bytes(pack('e', (float) $value)),
-            Field::Date, Field::NewDate, Field::DateTime, Field::Timestamp => $writer->bytes($this->dateTime($value)),
-            Field::Time => $writer->bytes($this->time($value)),
+            Field::Date, Field::NewDate, Field::DateTime, Field::Timestamp => $writer->bytes($this->dateTime((string) $value)),
+            Field::Time => $writer->bytes($this->time((string) $value)),
             Field::Decimal, Field::Null, Field::VarChar, Field::Bit, Field::Vector, Field::Json, Field::NewDecimal, Field::Enum, Field::Set,
-            Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob, Field::VarString, Field::String, Field::Geometry => $writer->lengthEncodedString($value),
+            Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob, Field::VarString, Field::String, Field::Geometry => $writer->lengthEncodedString((string) $value),
         };
     }
 

@@ -52,6 +52,14 @@ final class ReaderTest extends TestCase
         self::assertSame($notices, (new Reader())->targetNotices($notices, false, true));
     }
 
+    public function testRejectionResolvesTheRoutineDatabaseBeforeStatementQuantifiers(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->run('CREATE PROCEDURE p() SELECT ALL DISTINCT 1');
+
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
     public function testRejectionFormatsAHashRefusalBeforeTheIncompleteSuffix(): void
     {
         $session = (new Instance('5.7.44'))->connect();

@@ -47,6 +47,7 @@ enum AdministrationError: int implements ErrorCode
     case BadReplicaUntil = 1277;
     case ReplicaUntilRestart = 1278;
     case ReplicaUntilIgnored = 1279;
+    case ReplicaUntilSequential = 1753;
     case UnknownKeyCache = 1284;
     case UnknownTargetBinlog = 1373;
     case RelayLogPosition = 1380;

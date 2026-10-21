@@ -16,6 +16,22 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class ContinuingRefusalTest extends TestCase
 {
+    public function testErrorKeepsTheWriteDatabaseBeforeLegacyContextualQuantifiers(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run('REPLACE t SET a=ROW(1,(SELECT ALL DISTINCT 1))');
+
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
+    public function testErrorKeepsLegacyParseConditionsBeforeContextualQuantifiers(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run('SELECT ALL DISTINCT 1, CAST(1 AS TIME(7))');
+
+        self::assertSame([['Error', 1426, "Too-big precision 7 specified for 'CAST'. Maximum is 6."]], $session->diagnostics->conditions);
+    }
+
     public function testErrorRespectsTheLegacyDatabaseDependencyBeforeAKeyPrefix(): void
     {
         $session = (new Instance('5.7.44'))->connect();

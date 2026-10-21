@@ -17,6 +17,20 @@ use SqlSemantics\Statement\Fact\Warning;
 #[Medium]
 final class SelectOptionsTest extends TestCase
 {
+    public function testRaiseRetainsQuantifierConflictsInModernDeferredSelections(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('CREATE PROCEDURE p() SELECT ALL DISTINCT ROW(1,2)');
+
+        self::assertContains('Incorrect usage of ALL and DISTINCT', array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
+    public function testRaiseLeavesLegacyExpressionQuantifiersToTheirQueryRole(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT ALL DISTINCT 1)');
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
     public function testNoticesStopsAtAConflictingCacheModifier(): void
     {
         $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]);

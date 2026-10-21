@@ -4385,3 +4385,64 @@ including multibyte characters. The 324 assertions compare both errors and
 successful reports while Memory receives only semantic values and an opaque
 request label. These domain witnesses do not close the remaining whole-model
 rejection explanations or replace the final-revision fuzz campaigns.
+
+
+## Coordinate domains and replica condition histories
+
+SQL Semantics distinguishes a coordinate getter's DOUBLE result from a setter's
+binary geometry result. The result retains its display width, nullability and
+release-specific signature before planning. MySQL 5.7's X/Y aliases accept one
+argument; invalid arity is diagnosed before a deprecation. Runtime coordinate
+operations consume these domains and the instance's reference catalog, including
+axis order, angular units, prime meridians and coordinate limits.
+
+`SpatialCoordinateTest` compares 284 inputs on MySQL 5.6.51, 5.7.44, 8.0.44,
+8.4.7 and 9.1.0 through both text and prepared protocols. The matrix includes
+malformed payloads, NULL evaluation order, conversion warnings, byte orders and
+non-finite legacy coordinates. Non-finite numeric results retain their IEEE
+values separately from their text-protocol zero representation. This prevents
+prepared output from losing information during text formatting.
+
+`SpatialCoordinateHistoryTest` constructs calls directly, then keeps them while
+generated point values, reference identifiers and replacement coordinates change.
+The Memory execution input is the same semantic object and an opaque request
+label. Native SQL is rendered only for the reference database. These histories
+also detect coordinate conversion rounding that integer-only examples can miss.
+
+`NativeUntilHistoryTest` preserves each replica UNTIL structure across an
+uninitialized repository, receiver initialization and reset. Reached gap and
+GTID conditions do not receive the file-position restart note. Already-complete
+conditions stop the local applier. The native test permits the asynchronous
+applier to publish that stop before the next request; it compares all conditions
+without suppressing differences. These witnesses explain repository-dependent
+outcomes; they do not close unrelated structural rejection explanations.
+
+## Quantifiers in retained query roles
+
+MySQL 5.7 and later diagnose ALL with DISTINCT during query contextualization.
+SQL Semantics retains that diagnostic for ordinary and deferred selections,
+so a write with a deferred operand does not lose its nested query conditions
+before resolving tables. MySQL 5.6 permits the combination on an expression
+subquery's query spine; derived tables inside that expression retain their own
+role. Unreferenced CTE definitions do not undergo this contextualization.
+
+`QuantifierOptionsTest` retains the complete unseeded counterexample alongside
+shorter statements, prepared requests, unfinished input and stored definitions.
+The comparison includes default-database dependencies and earlier grammar
+conditions. The `QueryRoot` constructor excludes ALL with DISTINCT on its statement-level
+query spine before an Operation can be built. Lowering returns a typed input
+refusal for that combination. Expression queries and unused definitions retain
+their distinct roles. This constraint does not complete the whole-model
+construction contract or its remaining role-dependent invariants.
+
+
+Input refusals preserve the completion boundary even when a query cannot become
+an ordinary statement. Routine database selection can therefore precede a
+refused query body without retaining the original SQL or AST in that body.
+Write-head dependencies are lowered independently of later values. Their nested
+reads follow lexical CTE bindings, including ordered definitions, recursive
+self-references and shadowing; unused definitions and references beyond the
+refusal boundary do not contribute dependencies. `WriteHeadOperandsTest`
+compares these input conditions before and after database and table creation
+through both text and prepared protocols. Plans consume semantic identities;
+this source inspection remains confined to the input boundary.

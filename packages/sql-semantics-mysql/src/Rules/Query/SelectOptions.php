@@ -42,6 +42,9 @@ final class SelectOptions
             }
             $derivation->warn($notice, $select, false);
         }
+        if ($derivation->context->profile->grammar !== GrammarRelease::MySql5651 && in_array(SelectOption::All, $select->options, true) && in_array(SelectOption::Distinct, $select->options, true)) {
+            $derivation->report(new SelectOptionConflict(SelectOption::All, SelectOption::Distinct));
+        }
     }
 
     /**

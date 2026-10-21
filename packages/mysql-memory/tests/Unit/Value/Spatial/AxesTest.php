@@ -36,5 +36,15 @@ final class AxesTest extends TestCase
     {
         self::assertSame(0.01570796326794895, Axes::angularUnit('GEOGCS["UNIT",DATUM["d",UNIT["nested",3]],UNIT["grad",0.01570796326794895]]'));
     }
+    public function testPrimeMeridianReadsTheOffsetWithoutUsingNestedDefinitions(): void
+    {
+        self::assertSame(2.5969213, Axes::primeMeridian('GEOGCS["PRIMEM",DATUM["d",PRIMEM["nested",3]],PRIMEM["Paris",2.5969213]]'));
+        self::assertSame(0.0, Axes::primeMeridian(''));
+    }
+
+    public function testAngleUsesTheFallbackForAnAbsentCoordinateAttribute(): void
+    {
+        self::assertSame(1.0, Axes::angle('GEOGCS["UNIT"]', 'UNIT', 1.0));
+    }
 
 }

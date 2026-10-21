@@ -50,6 +50,9 @@ final class SpatialResults
             'ST_NUMINTERIORRING' => $integer,
             'CONTAINS' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 21),
         ];
+        foreach (['X', 'Y', 'ST_X', 'ST_Y', 'ST_LONGITUDE', 'ST_LATITUDE'] as $name) {
+            $rules[$name] = static fn (Invocation $call): Domain => count($call->domains) === 1 ? Domain::double(23) : $geometry($call);
+        }
         foreach (['', 'ST_'] as $prefix) {
             foreach (['GEOM', 'GEOMETRY', 'POINT', 'LINE', 'LINESTRING', 'POLY', 'POLYGON', 'MPOINT', 'MULTIPOINT', 'MLINE', 'MULTILINESTRING', 'MPOLY', 'MULTIPOLYGON', 'GEOMCOLL', 'GEOMETRYCOLLECTION'] as $type) {
                 $rules[$prefix . $type . 'FROMTEXT'] = $geometry;

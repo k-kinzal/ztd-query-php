@@ -56,6 +56,7 @@ final class Output
         $release = GrammarRelease::from('mysql-' . $context->variables->instance->version);
         $resultCollation = $context->variables->resultCollation();
         $rows = [];
+        $binaryValues = [];
         $interruptions = new \MySqlMemory\Result\Interleaving($interrupted);
         $found = 0;
         $frame = new Frame($context);
@@ -72,19 +73,23 @@ final class Output
                 for ($i = 0; $i < $width; $i++) {
                     $values[] = $this->sent($this->text($row[$i] ?? null, $plan->domains[$i], (($plan->origins[$i]->flags ?? 0) & ColumnFlag::ZeroFill->value) !== 0), $plan->domains[$i], $charset);
                 }
+                $special = array_filter(array_slice($row, 0, $width), static fn ($value): bool => is_float($value) && !is_finite($value));
+                if ($special !== []) {
+                    $binaryValues[count($rows)] = $special;
+                }
                 $rows[] = $values;
             }
         } catch (SqlError $error) {
             $interruptions->collect(count($rows));
             if ($failed !== null) {
-                $failed(new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), false, interruptions: $interruptions->results));
+                $failed(new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), false, interruptions: $interruptions->results, binaryValues: $binaryValues));
             }
             throw $error;
         }
         $context->variables->foundRows = $frame->foundBeforeProjection ?? $found;
         $interruptions->collect(count($rows));
 
-        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), interruptions: $interruptions->results);
+        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), interruptions: $interruptions->results, binaryValues: $binaryValues);
     }
 
     /**
@@ -189,6 +194,9 @@ final class Output
     {
         if ($value === null) {
             return null;
+        }
+        if (is_float($value) && !is_finite($value) && $domain->kind === Kind::Double) {
+            return '0';
         }
         if ($zeroFill && $domain->kind === Kind::Year) {
             return sprintf('%04d', (int) $value);

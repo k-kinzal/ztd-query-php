@@ -27,6 +27,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 final class MemoryTest extends TestCase
 {
     /**
+     * Direct execution retains numeric information that text protocol cannot express.
+     */
+    public function testObservePreservesNonFiniteDirectCoordinatesInBothProtocols(): void
+    {
+        $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '000000000101000000000000000000f87f0000000000000000');
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ST_X'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument($literal)]);
+        $session = (new Instance('5.7.44'))->connect();
+        $session->text = 'opaque non-SQL request label';
+        self::assertSame([['0']], (new Memory())->observe($session, $call)['results'][0]['rows']);
+        self::assertSame([['NAN']], (new Memory())->observe($session, $call, prepared: true)['results'][0]['rows']);
+        self::assertSame('opaque non-SQL request label', $session->text);
+    }
+
+    /**
      * Direct execution observes a closed connection before resolving another structure.
      */
     public function testObserveRejectsFurtherDirectStructuresAfterTheConnectionHasClosed(): void

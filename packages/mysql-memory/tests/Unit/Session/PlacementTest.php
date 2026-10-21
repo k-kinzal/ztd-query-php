@@ -58,6 +58,15 @@ final class PlacementTest extends TestCase
         self::assertCount(1, $session->query('SELECT SQL_BUFFER_RESULT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1'));
     }
 
+    public function testCheckLeavesUnusedCommonTableQuantifiersUnprepared(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->query('WITH c AS (SELECT ALL DISTINCT 1) SELECT 2')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2']], $reply->rows);
+    }
+
     public function testCheckLeavesUnusedCommonTableModifiersUnprepared(): void
     {
         $session = (new Instance())->connect();
@@ -169,6 +178,24 @@ final class PlacementTest extends TestCase
         });
 
         self::assertSame([[$selects[0], false], [$selects[1], false], [$selects[1], true], [$selects[2], false], [$selects[2], true], [$selects[0], true], [$selects[3], false], [$selects[3], true]], $events->getArrayCopy());
+    }
+
+    public function testExpressionBlocksPreservesTheDerivedTableBoundaryWithinAnExpression(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $statement = $session->analyze('SELECT (SELECT v FROM (SELECT 1 AS v) d UNION SELECT 2)')->statement;
+        $blocks = (new Walker())->find($statement, Select::class);
+
+        self::assertSame([spl_object_id($blocks[1]) => true, spl_object_id($blocks[3]) => true], (new Placement())->expressionBlocks($statement));
+    }
+
+    public function testCheckAcceptsCombinedQuantifiersInLegacyExpressionQueries(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $reply = $session->query('SELECT (SELECT ALL DISTINCT 1), EXISTS(SELECT ALL DISTINCT 2), 1 IN(SELECT ALL DISTINCT 1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['1', '1', '1']], $reply->rows);
     }
 
     public function testClosedEndsTheOpenBlocksThatDoNotHoldTheNextOne(): void

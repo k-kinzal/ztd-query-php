@@ -38,6 +38,7 @@ final class UntilOperandsTest extends TestCase
             $applier = $verb . ' SQL_THREAD UNTIL ' . $file . "='binlog.000001', " . $position . '=4';
             $stop = $legacy ? 'STOP SLAVE' : 'STOP REPLICA';
             $statements = [...$statements, $bad, $applier, $legacy ? "CHANGE MASTER TO MASTER_HOST='a'" : "CHANGE REPLICATION SOURCE TO SOURCE_HOST='a'", $bad, $applier, $stop, $legacy ? 'RESET SLAVE ALL' : 'RESET REPLICA ALL', $bad];
+            $statements = [...$statements, $verb . ' SQL_THREAD UNTIL SQL_AFTER_MTS_GAPS', 'SELECT SLEEP(0.05)', $stop, $verb . " SQL_THREAD UNTIL SQL_AFTER_GTIDS=''", 'SELECT SLEEP(0.05)', $stop, $verb . " SQL_THREAD UNTIL SQL_BEFORE_GTIDS=''", $stop];
             yield $release => [$release, $statements];
         }
     }

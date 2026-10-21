@@ -47,6 +47,16 @@ final class OutputTest extends TestCase
         self::assertSame(2, $session->variables->user('x')[0]);
     }
 
+    public function testResultPreservesNonFiniteCoordinatesForBinaryTransport(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query("SELECT ST_X(X'000000000101000000000000000000f87f0000000000000000'), ST_X(X'000000000101000000000000000000f07f0000000000000000')")[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0']], $result->rows);
+        self::assertTrue(is_nan($result->binaryValues[0][0]));
+        self::assertSame(INF, $result->binaryValues[0][1]);
+    }
+
     public function testCharactersDistinguishesJsonBytesFromStringCharacters(): void
     {
         $output = new Output();

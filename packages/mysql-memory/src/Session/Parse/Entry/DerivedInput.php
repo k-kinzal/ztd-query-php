@@ -57,7 +57,7 @@ final class DerivedInput
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
             return $resolved ?? (new Dml\Targets())->unmatched($failure->problem, $session);
         }
-        return $this->targets($statement, $session, $failure->end);
+        return $this->targets($statement, $session, $failure->end) ?? $this->written($statement, $session, $failure->end);
     }
 
     /**
@@ -74,6 +74,31 @@ final class DerivedInput
             return null;
         }
 
+        return array_filter($names, static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): bool => $name->schema === null) === [] ? null : QueryError::NoDatabase->error();
+    }
+
+    /**
+     * Resolves the completed write head before interpreting its refused values.
+     */
+    public function written(string $statement, Session $session, int $end): ?SqlError
+    {
+        if ($session->variables->database !== '') {
+            return null;
+        }
+        $semantics = $session->semantics();
+        $parser = $semantics->parser();
+        Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, strlen($statement), $semantics->profile());
+            if (array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) !== []) {
+                return null;
+            }
+        }
+        try {
+            $names = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->written($semantics->parser()->parse($statement), $semantics->profile(), $semantics->context(session: $session->resolution())->relationNames, $end);
+        } catch (SourceException) {
+            return null;
+        }
         return array_filter($names, static fn (\SqlSemantics\Statement\Identifier\QualifiedName $name): bool => $name->schema === null) === [] ? null : QueryError::NoDatabase->error();
     }
 

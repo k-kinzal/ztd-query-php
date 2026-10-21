@@ -75,6 +75,39 @@ final class DefaultDatabase
     }
 
     /**
+     * Resolves write-head databases before contextualizing their value expressions.
+     * CTE references keep their lexical relation identity and need no default database.
+     *
+     * @throws SqlError When a write head contains an unqualified base-table reference
+     */
+    public function write(\SqlSemantics\Statement\Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    {
+        if ($session->variables->database !== '') {
+            return;
+        }
+        $tables = match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery => [$statement->into->table],
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($statement->tables),
+            default => [],
+        };
+        foreach ($tables as $table) {
+            if ($table instanceof \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget && $table->name->schema === null) {
+                throw QueryError::NoDatabase->error();
+            }
+            if ($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $table->name->schema === null && (!$facts->covers($table) || !$facts->relation($table)->table instanceof \SqlSemantics\Statement\Reference\Table\CommonTable)) {
+                throw QueryError::NoDatabase->error();
+            }
+        }
+    }
+
+    /**
      * Checks reached base-table references before statement-level hints are applied.
      * A CTE or an unused CTE body does not need a default database merely because
      * its spelling is unqualified; the resolved diagnostics distinguish them.

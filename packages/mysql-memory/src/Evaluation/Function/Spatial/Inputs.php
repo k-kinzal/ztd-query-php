@@ -175,10 +175,10 @@ final class Inputs
         $latitude = M_PI_2 / $unit;
         foreach ($geometry->points as [$x, $y]) {
             if ($x <= -$longitude || $x > $longitude) {
-                throw DataError::LongitudeOutOfRange->error(sprintf('%.6f', $x), $function, sprintf('%.6f', -$longitude), sprintf('%.6f', $longitude));
+                throw DataError::LongitudeOutOfRange->error(strtolower(sprintf('%.6f', $x)), $function, sprintf('%.6f', -$longitude), sprintf('%.6f', $longitude));
             }
             if ($y < -$latitude || $y > $latitude) {
-                throw DataError::LatitudeOutOfRange->error(sprintf('%.6f', $y), $function, sprintf('%.6f', -$latitude), sprintf('%.6f', $latitude));
+                throw DataError::LatitudeOutOfRange->error(strtolower(sprintf('%.6f', $y)), $function, sprintf('%.6f', -$latitude), sprintf('%.6f', $latitude));
             }
         }
         foreach ($geometry->children as $child) {

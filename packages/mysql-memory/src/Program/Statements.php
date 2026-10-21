@@ -101,7 +101,7 @@ final class Statements
     public function publish(ResultSet $result): void
     {
         if ($result->moreResults === null) {
-            $result = new ResultSet($result->columns, $result->rows, $result->warnings, $result->complete, $this->activation->announcesResults, $result->interruptions);
+            $result = new ResultSet($result->columns, $result->rows, $result->warnings, $result->complete, $this->activation->announcesResults, $result->interruptions, $result->binaryValues);
         }
         if ($this->activation->contained) {
             $this->session->running->embeddedResults[] = $result;

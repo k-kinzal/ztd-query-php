@@ -23,6 +23,23 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 #[Small]
 final class StatementQueryTest extends TestCase
 {
+    public function testProblemFindsContradictoryQuantifiersOnlyOnTheStatementSpine(): void
+    {
+        $query = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct], [new SelectExpression(new NumberLiteral('1'))]);
+        $outer = new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query))]);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict::class, (new StatementQuery())->problem(new ParenthesizedQuery($query)));
+        self::assertNull((new StatementQuery())->problem($outer));
+    }
+
+    public function testCheckRefusesContradictoryQuantifiersBeforeOperationConstruction(): void
+    {
+        $query = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct], [new SelectExpression(new NumberLiteral('1'))]);
+        $this->expectExceptionMessage('A statement query cannot combine ALL and DISTINCT in one query block.');
+
+        new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new ParenthesizedQuery($query));
+    }
+
     public function testCheckRefusesProcedureWithoutFromOnlyInStatementPosition(): void
     {
         $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: new ProcedureAnalyse());

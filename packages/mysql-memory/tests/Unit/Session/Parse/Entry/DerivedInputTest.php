@@ -15,6 +15,30 @@ use SqlParser\MySql\MySqlParser;
 #[Medium]
 final class DerivedInputTest extends TestCase
 {
+    public function testWrittenResolvesTheWriteHeadAndItsNestedReadDependencies(): void
+    {
+        $session = (new Instance())->connect();
+        $input = new DerivedInput();
+
+        self::assertSame(1046, $input->written('REPLACE t SET a=ABS()', $session, 21)?->getCode());
+        self::assertSame(1046, $input->written('UPDATE t SET a=ABS()', $session, 20)?->getCode());
+        self::assertSame(1046, $input->written('UPDATE d.t JOIN (SELECT 1 FROM u) c SET t.a=ABS()', $session, 50)?->getCode());
+        self::assertNull($input->written('WITH c AS(SELECT 1) UPDATE d.t JOIN c SET t.a=ABS()', $session, 50));
+        self::assertNull($input->written('UPDATE t SET a=ABS()', $session, 7));
+        self::assertNull($input->written('UPDATE t SET a=', $session, 50));
+        $session->variables->database = 'd';
+        self::assertNull($input->written('REPLACE t SET a=ABS()', $session, 21));
+    }
+
+    public function testWrittenKeepsLegacyGrammarConditionsBeforeContextualDependencies(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $input = new DerivedInput();
+
+        self::assertNull($input->written('UPDATE t SET a=CAST(1 AS TIME(7))', $session, 100));
+        self::assertSame(1046, $input->written('UPDATE t SET a=ABS()', $session, 100)?->getCode());
+    }
+
     public function testPrefixResolvesLegacyDependenciesBeforeAnUnfinishedCommand(): void
     {
         $session = (new Instance('5.6.51'))->connect();

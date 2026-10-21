@@ -69,7 +69,11 @@ final class ContinuingRefusal
         }
         $error = (new Errors())->error($failure->problem, $session);
         if ($session->settings()->legacy()) {
-            [$operators, $conflict] = (new Modifiers($tokens, $session->settings()->release()))->scan($end, $end);
+            $modifiers = new Modifiers($tokens, $session->settings()->release());
+            [$operators, $conflict] = $modifiers->scan($end, $end);
+            if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && ($error->error === \MySqlMemory\Error\Family\QueryError::NoDatabase || array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) !== [])) {
+                $conflict = $modifiers->conflict;
+            }
             if ($conflict !== null) {
                 return (new \MySqlMemory\Session\CacheOptions())->recorded($operators, $conflict, $error, $session);
             }

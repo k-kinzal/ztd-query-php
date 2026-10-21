@@ -30,6 +30,7 @@ final class StatementQuery
      */
     public function check(Query $query): void
     {
+        Check::input($this->problem($query) === null, 'A statement query cannot combine ALL and DISTINCT in one query block.');
         foreach ($this->blocks($query) as $block) {
             Check::input(!$block instanceof OrderedSetOperation, 'An ordered legacy set operation belongs to a subquery only.');
             if ($block instanceof Select) {
@@ -37,6 +38,20 @@ final class StatementQuery
                 Check::input($block->procedure === null || $block->from !== null, 'A standalone PROCEDURE ANALYSE query requires a FROM clause.');
             }
         }
+    }
+
+    /**
+     * Finds contradictory quantifiers on the statement query's own block spine.
+     * Expression subqueries and unreferenced definitions have separate roles.
+     */
+    public function problem(Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict
+    {
+        foreach ($this->blocks($query) as $block) {
+            if ($block instanceof Select && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, $block->options, true) && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $block->options, true)) {
+                return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct);
+            }
+        }
+        return null;
     }
 
     /**

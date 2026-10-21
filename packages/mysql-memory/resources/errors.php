@@ -11,6 +11,10 @@
 declare(strict_types=1);
 
 return [
+    1753 => ['HY000', 'UNTIL condtion is not supported in multi-threaded replica mode. Replica is started in the sequential execution mode.'],
+    3726 => ['22S00', 'Function %s is only defined for geographic spatial reference systems, but one of its arguments is in SRID %s, which is not geographic.'],
+    3731 => ['22S02', 'A parameter of function %s contains a geometry with longitude %s, which is out of range. It must be within (%s, %s].'],
+    3732 => ['22S03', 'A parameter of function %s contains a geometry with latitude %s, which is out of range. It must be within [%s, %s].'],
     3195 => ['01000', 'st_geometryfromwkb(geometry) is deprecated and will be replaced by st_srid(geometry, 0) in a future version. Use st_geometryfromwkb(st_aswkb(geometry), 0) instead.'],
     3196 => ['01000', 'st_geometryfromwkb(geometry, srid) is deprecated and will be replaced by st_srid(geometry, srid) in a future version. Use st_geometryfromwkb(st_aswkb(geometry), srid) instead.'],
     3516 => ['22S01', '%s value is a geometry of unexpected type %s in %s.'],

@@ -14,6 +14,14 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Small]
 final class QueryMeaningTest extends TestCase
 {
+    public function testOfReportsConflictingQuantifiersWithoutPublishingAStatement(): void
+    {
+        $query = new M\Query\Select([M\Query\SelectOption::All, M\Query\SelectOption::Distinct], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);
+        $this->expectExceptionMessage('Incorrect usage of ALL and DISTINCT');
+
+        (new QueryMeaning())->of($query);
+    }
+
     public function testOfUsesTheSingleBlockInstructionWithoutARedundantQueryWrapper(): void
     {
         $selection = new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);

@@ -66,7 +66,7 @@ final class QueryRules
      */
     public function statement(Node $statement): Statement
     {
-        $selection = (new Shared\StoredSelections($this->lowering))->read($statement) ?? $this->lowering->origins->record((new Shared\QueryMeaning())->of($this->query($statement)), $statement);
+        $selection = (new Shared\StoredSelections($this->lowering))->read($statement) ?? $this->lowering->origins->record((new Shared\QueryMeaning())->of($this->query($statement), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0), $statement);
         if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
         }
@@ -122,7 +122,8 @@ final class QueryRules
         if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), $end, false);
         }
-        $meaning = (new Shared\QueryMeaning())->of($selection);
+        $meaning = $selection instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody ? $selection->selection
+            : ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($selection) === null ? null : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery($selection));
         if ($meaning instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($meaning), $end, false);
         }

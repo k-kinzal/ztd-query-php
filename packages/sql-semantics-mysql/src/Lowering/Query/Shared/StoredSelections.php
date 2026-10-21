@@ -38,7 +38,7 @@ final class StoredSelections
     public function read(Node $node): DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|\SqlSemantics\Platform\MySql\Statement\QueryRoot|null
     {
         $selection = $this->body($node);
-        return $selection instanceof \SqlSemantics\Statement\Query ? $this->lowering->origins->record((new QueryMeaning())->of($selection), $node) : $selection;
+        return $selection instanceof \SqlSemantics\Statement\Query ? $this->lowering->origins->record((new QueryMeaning())->of($selection, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0), $node) : $selection;
     }
 
     /**

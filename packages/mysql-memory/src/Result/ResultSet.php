@@ -10,7 +10,8 @@ use Override;
  * The rows a statement returns, each value in the text the server sends for it.
  *
  * A value is the text of the text protocol, or null for SQL NULL; the binary protocol encodes
- * the same text by the column type.
+ * the same text by the column type. Non-finite floating values retain their IEEE value
+ * separately, since their text-protocol spelling is zero.
  *
  * @visibility public
  * @example Reading the rows of a query
@@ -27,8 +28,9 @@ final class ResultSet implements Reply
      * @param bool $complete Whether the row stream ends successfully; false precedes an execution error
      * @param bool|null $moreResults A stored program's continuation notification; null uses the surrounding response sequence
      * @param array<int, list<ResultSet>> $interruptions Results emitted while computing the row at each offset, before that row's bytes
+     * @param array<int, array<int, float>> $binaryValues Non-finite numbers by row and column, before text formatting
      */
-    public function __construct(public readonly array $columns, public readonly array $rows, public readonly int $warnings = 0, public readonly bool $complete = true, public readonly ?bool $moreResults = null, public readonly array $interruptions = [])
+    public function __construct(public readonly array $columns, public readonly array $rows, public readonly int $warnings = 0, public readonly bool $complete = true, public readonly ?bool $moreResults = null, public readonly array $interruptions = [], public readonly array $binaryValues = [])
     {
     }
 

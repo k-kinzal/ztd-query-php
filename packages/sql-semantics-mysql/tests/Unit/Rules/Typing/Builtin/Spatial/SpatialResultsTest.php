@@ -75,4 +75,15 @@ final class SpatialResultsTest extends TestCase
         self::assertSame([Field::LongBlob, 4294967295, 'binary'], [$binary?->field, $binary?->length, $binary?->collation->name]);
         self::assertSame(Field::Geometry, $rules['ST_SWAPXY']($call)?->field);
     }
+    public function testRulesDistinguishCoordinateNumbersFromReplacedGeometry(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $rules = (new SpatialResults())->rules();
+        $read = $rules['ST_X'](new Invocation([Domain::null()], [], $settings, $derivation));
+        $write = $rules['ST_X'](new Invocation([Domain::null(), Domain::double()], [], $settings, $derivation));
+        self::assertSame([Field::Double, 23, 31], [$read?->field, $read?->length, $read?->decimals]);
+        self::assertSame([Field::Geometry, 4294967295, 0], [$write?->field, $write?->length, $write?->decimals]);
+    }
+
 }

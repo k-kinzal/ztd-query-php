@@ -75,12 +75,15 @@ final class Memory
             } elseif ($reply instanceof Completion) {
                 $observation['results'][] = ['affected' => $reply->affectedRows, 'lastInsertId' => (string) $reply->lastInsertId];
             } elseif ($reply instanceof ResultSet) {
-                if ($reply->interruptions !== []) {
+                if ($reply->interruptions !== [] || $reply->binaryValues !== []) {
                     if ($interrupted === null) {
-                        throw new LogicException('Nested emissions require transport observation.');
+                        throw new LogicException('Binary floating values and nested emissions require transport observation.');
                     }
                     $observation['results'][] = $interrupted($reply);
-                    break;
+                    if ($reply->interruptions !== [] || $reply->moreResults === false) {
+                        break;
+                    }
+                    continue;
                 }
                 if ($reply->complete) {
                     $observation['results'][] = ['columns' => array_map($this->column(...), $reply->columns), 'rows' => array_map(fn (array $row): array => array_map($this->value(...), $row, $reply->columns), $reply->rows)];

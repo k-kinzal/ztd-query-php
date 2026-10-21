@@ -166,7 +166,7 @@ final class ReplicaCommand implements Command
         if (!$replication->initialized) {
             throw AdministrationError::ReplicaConnectionMetadata->error();
         }
-        $replication->applying = !$replication->missing;
+        $replication->applying = !$replication->missing && !(new UntilExecution())->complete($statement->until, $session);
     }
 
     /**

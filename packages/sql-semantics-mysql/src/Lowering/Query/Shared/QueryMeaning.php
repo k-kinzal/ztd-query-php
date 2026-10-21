@@ -18,9 +18,15 @@ final class QueryMeaning
 {
     /**
      * Retains contradictory fixed columns only as a deferred stored instruction.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When statement-level quantifiers conflict
      */
-    public function of(Query $query): QueryRoot|DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection
+    public function of(Query $query, int $end = 0): QueryRoot|DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection
     {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, $end, false);
+        }
         if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
             return $query->selection;
         }

@@ -15,6 +15,27 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testWriteResolvesItsDatabaseBeforeQueryQuantifierConditions(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('INSERT INTO t SELECT ALL DISTINCT 1');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+
+        (new DefaultDatabase())->write($operation->statement, $operation->facts, $session);
+    }
+
+    public function testWriteLeavesACommonTableReferenceInItsLexicalNamespace(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT)');
+        $operation = $session->analyze('WITH c AS (SELECT 1 AS a) UPDATE d.t JOIN c SET t.a=c.a');
+
+        (new DefaultDatabase())->write($operation->statement, $operation->facts, $session);
+
+        self::assertSame('', $session->variables->database);
+    }
+
     public function testReferencedResolvesAnImplicitTableBeforeLockClauseConditions(): void
     {
         $table = new \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));

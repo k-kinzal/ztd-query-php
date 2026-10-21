@@ -116,7 +116,7 @@ final class BlockRule
                 );
             case 'sp_decl: DECLARE_SYM ident CURSOR_SYM FOR_SYM select':
             case 'sp_decl: DECLARE_SYM ident CURSOR_SYM FOR_SYM select_stmt':
-                return new CursorDeclaration($this->lowering->names->identifier($form->node(1)), (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($this->lowering->queries->query($form->node(4))));
+                return new CursorDeclaration($this->lowering->names->identifier($form->node(1)), (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($this->lowering->queries->query($form->node(4)), (new \SqlSemantics\Construction\SourceRanges())->span($form->node(4))[1] ?? 0));
             default:
                 throw ImplementationGap::production($form);
         }

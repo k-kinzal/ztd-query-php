@@ -318,7 +318,7 @@ final class Client
             foreach ($reply->interruptions[$index] ?? [] as $interruption) {
                 $this->reply($interruption, 0, $binary);
             }
-            $this->packet($binary ? (new \MySqlMemory\Protocol\Binary())->row($reply->columns, $row) : $this->messages->textRow($row));
+            $this->packet($binary ? (new \MySqlMemory\Protocol\Binary())->row($reply->columns, array_values(array_replace($row, $reply->binaryValues[$index] ?? []))) : $this->messages->textRow($row));
         }
         foreach ($reply->interruptions[count($reply->rows)] ?? [] as $interruption) {
             $this->reply($interruption, 0, $binary);

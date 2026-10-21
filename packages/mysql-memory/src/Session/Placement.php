@@ -54,6 +54,7 @@ final class Placement
         $program = \MySqlMemory\Command\Dispatcher::program($statement);
         $boundaries = $this->boundaries($statement, $release);
         $open = [];
+        $expressionBlocks = $release === GrammarRelease::MySql5651 ? $this->expressionBlocks($statement) : [];
         foreach ((new Walker())->find($statement, Select::class) as $select) {
             $open = $this->closed($open, $select, $after);
             $open[] = $select;
@@ -64,11 +65,11 @@ final class Placement
             if ($release !== GrammarRelease::MySql5744 || $last === SelectOption::Cache || $last === SelectOption::NoCache) {
                 $this->misplaced($select, $first, $release);
             }
-            if (in_array(SelectOption::All, $select->options, true) && in_array(SelectOption::Distinct, $select->options, true)) {
+            $active = $reached === null || isset($reached[spl_object_id($select)]);
+            if ($active && !isset($expressionBlocks[spl_object_id($select)]) && in_array(SelectOption::All, $select->options, true) && in_array(SelectOption::Distinct, $select->options, true)) {
                 throw StatementError::WrongUsage->error('ALL', 'DISTINCT');
             }
             $this->misplaced($select, $first, $release);
-            $active = $reached === null || isset($reached[spl_object_id($select)]);
             foreach ($select === $first || $program || !$active ? [] : [SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows] as $option) {
                 if (in_array($option, $select->options, true)) {
                     throw StatementError::CantUseOptionHere->error($option->value);
@@ -79,6 +80,25 @@ final class Placement
             }
         }
         $this->closed($open, null, $after);
+    }
+
+    /**
+     * Identifies expression-subquery blocks whose combined quantifiers MySQL 5.6 accepts.
+     * Derived tables within those expressions retain their independent query role.
+     *
+     * @return array<int, true> Block identities on each expression query's spine
+     */
+    public function expressionBlocks(Node $statement): array
+    {
+        $blocks = [];
+        foreach ((new Walker())->find($statement, Node::class) as $node) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate) {
+                foreach ($this->blocks($node->query) as $block) {
+                    $blocks[spl_object_id($block)] = true;
+                }
+            }
+        }
+        return $blocks;
     }
 
     /**

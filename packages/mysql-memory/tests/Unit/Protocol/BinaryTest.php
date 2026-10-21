@@ -77,6 +77,20 @@ final class BinaryTest extends TestCase
         self::assertSame("\x00\x00\xC0\x3F" . "\x00\x00\x00\x00\x00\x00\x00\xC0", $writer->payload());
     }
 
+    public function testValuePreservesNonFiniteFloatingPointValues(): void
+    {
+        $writer = new PayloadWriter();
+        $column = new ResultColumn('v', Field::Double, 23, 31, 0, 63);
+        (new Binary())->value($writer, $column, NAN);
+        (new Binary())->value($writer, $column, INF);
+        (new Binary())->value($writer, $column, -INF);
+        $values = unpack('e3', $writer->payload());
+        self::assertIsArray($values);
+        self::assertIsFloat($values[1]);
+        self::assertTrue(is_nan($values[1]));
+        self::assertSame([INF, -INF], [$values[2], $values[3]]);
+    }
+
     public function testValueWritesTemporalValuesInTheirBinaryForm(): void
     {
         $writer = new PayloadWriter();
