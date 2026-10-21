@@ -59,53 +59,50 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * Target lookup and index constraints precede operand preparation. In particular,</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * CREATE TABLE IF NOT EXISTS can leave this definition unused. The operand stays</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * distinct from an ordinary functional key. A scalar-only column reference also</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * needs this role: it belongs in a column key rather than a functional key.</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * No source SQL or parser node is retained.</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @example Retaining a row without pretending it is a scalar expression key</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;2&#039;)]);</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart($row))-&gt;expression === $row // =&gt; true</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ExpressionPart</span> <span class="tok-kw">implements</span> <span class="tok-id">KeyPart</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>{</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @param Scalar|RowOperand|DeferredOperand $expression The complete operand awaiting index preparation</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param Direction|null $direction The written index order</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Scalar</span>|<span class="tok-id">RowOperand</span>|<span class="tok-id">DeferredOperand</span> <span class="tok-var">$expression</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Direction</span> <span class="tok-var">$direction</span> = <span class="tok-id">null</span>)</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    {</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$ungrouped</span> = <span class="tok-var">$expression</span>;</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">while</span> (<span class="tok-var">$ungrouped</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Expression\Grouped</span>) {</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-var">$ungrouped</span> = <span class="tok-var">$ungrouped</span>-&gt;<span class="tok-id">operand</span>;</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        }</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>(!<span class="tok-var">$expression</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span> || <span class="tok-var">$ungrouped</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse</span>, <span class="tok-str">&#039;A deferred scalar key part retains a bare column reference.&#039;</span>);</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * Binds dependencies in the table declaration without discarding the index role.</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveKeyPart</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    {</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">scalar</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">expression</span>, <span class="tok-var">$scope</span>);</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    }</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * Writes the complete parenthesized operand and its ordering.</span></span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    {</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">expression</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">direction</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">direction</span>-&gt;<span class="tok-id">value</span>);</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        }</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    }</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>}</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * distinct from an ordinary functional key. Subqueries, variables, parameter</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * markers, nondeterministic calls and grouped expressions need this role, as</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * does a bare column reference, which belongs in a column key.</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * No source SQL or parser node is retained.</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Retaining a row without pretending it is a scalar expression key</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;2&#039;)]);</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart($row))-&gt;expression === $row // =&gt; true</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ExpressionPart</span> <span class="tok-kw">implements</span> <span class="tok-id">KeyPart</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>{</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param Scalar|RowOperand|DeferredOperand $expression The complete operand awaiting index preparation</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param Direction|null $direction The written index order</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Scalar</span>|<span class="tok-id">RowOperand</span>|<span class="tok-id">DeferredOperand</span> <span class="tok-var">$expression</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Direction</span> <span class="tok-var">$direction</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>(!<span class="tok-var">$expression</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span> || !(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\Operands</span>())-&gt;<span class="tok-id">ordinary</span>(<span class="tok-var">$expression</span>), <span class="tok-str">&#039;A deferred scalar key part retains an operand outside the ordinary index-expression role.&#039;</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     * Binds dependencies in the table declaration without discarding the index role.</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveKeyPart</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    {</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">scalar</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">expression</span>, <span class="tok-var">$scope</span>);</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    }</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * Writes the complete parenthesized operand and its ordering.</span></span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    {</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">expression</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">direction</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">direction</span>-&gt;<span class="tok-id">value</span>);</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        }</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    }</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>}</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
