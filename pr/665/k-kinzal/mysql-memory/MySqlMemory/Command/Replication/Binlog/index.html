@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MySqlMemory\Command\Replication\Binlog — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/665/k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/">
+<meta name="description" content="The MySqlMemory\Command\Replication\Binlog namespace of the k-kinzal/mysql-memory package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="MySqlMemory\Command\Replication\Binlog — ZTD Query PHP">
+<meta property="og:description" content="The MySqlMemory\Command\Replication\Binlog namespace of the k-kinzal/mysql-memory package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/665/k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/665/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../../../k-kinzal/mysql-memory/index.html">k-kinzal/mysql-memory</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li data-diff="added"><a href="#classes">Classes</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../../../k-kinzal/mysql-memory/all-items.html">All items</a></li><li data-diff="added"><a href="../../../../../../k-kinzal/mysql-memory/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title"><a href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/index.html">In MySqlMemory\Command\Replication\Binlog</a></div><div class="sidebar-title" data-diff="added">Classes</div><ul class="sidebar-list"><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.DecimalStorage.html">DecimalStorage</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Events.html">Events</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Format.html">Format</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.JsonChanges.html">JsonChanges</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.JsonStorage.html">JsonStorage</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Reader.html">Reader</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.RowImage.html">RowImage</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Rows.html">Rows</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Stream.html">Stream</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.TableMap.html">TableMap</a></li><li data-diff="added"><a class="k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.TemporalStorage.html">TemporalStorage</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../../k-kinzal/mysql-memory/index.html">k-kinzal/mysql-memory</a><span class="breadcrumb-sep">::</span><a href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/index.html">MySqlMemory</a><span class="breadcrumb-sep">::</span><a href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/index.html">Command</a><span class="breadcrumb-sep">::</span><a href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/index.html">Replication</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">Binlog</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 049665fc106 to working tree">049665fc106 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 049665fc106 and working tree." data-off="This page documents what 049665fc106 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-namespace">namespace</span>MySqlMemory\Command\Replication\Binlog</h1></div>
+<section class="items" data-diff="added" id="classes"><h2>Classes <span class="count">11</span><a class="anchor" href="#classes">§</a></h2><div class="table-wrap"><table class="item-table"><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.DecimalStorage.html">DecimalStorage</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Reads exact packed decimal groups without a floating-point conversion.
+Group widths follow the public decimal storage specification; sign and byte
+order are checked against positive, negative and zero native row images.
+Source: https://dev.mysql.com/doc/refman/8.4/en/precision-math-decimal-characteristics.html.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Events.html">Events</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Decodes complete events from the BINLOG operand without interpreting SQL.
+Source: https://dev.mysql.com/doc/refman/8.4/en/binlog.html.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Format.html">Format</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">The event layout retained by a connection after a format description.
+This is runtime replication state, separate from the SQL semantic structure.
+Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_replication_binlog_event.html.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.JsonChanges.html">JsonChanges</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Applies the binary log&#039;s ordered JSON replace/insert/remove operations.
+This interprets runtime JSON paths, without producing or parsing SQL.
+Source: https://dev.mysql.com/blog-archive/efficient-json-replication-in-mysql-8-0/.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.JsonStorage.html">JsonStorage</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Reads binary JSON runtime data into the existing typed JSON value model.
+Offsets belong to their containing document; small inline integers retain
+their signedness. Bounds and depth checks reject corrupt or cyclic offsets.
+Source: https://dev.mysql.com/worklog/task/?id=8132 (public binary format).</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Reader.html">Reader</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Reads bounded fields from a binary log event supplied as runtime data.
+Integers are little-endian unless their field explicitly requests otherwise.
+Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_replication_binlog_event.html.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.RowImage.html">RowImage</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Decodes the storage values carried by row events, independently of SQL text.
+Source types determine byte consumption; destination domains determine integer
+signedness and member names. Rows use their own null bitmap over present columns.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Rows.html">Rows</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Applies decoded row images to the destination catalog and transaction journal.
+The event&#039;s table map supplies the source identity; no SQL is generated or parsed.
+Row application bypasses SQL triggers, as native row-based replay does.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.Stream.html">Stream</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Connection-local binary event layout and table identities between statements.
+This runtime state never belongs to a retained SQL semantic value.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.TableMap.html">TableMap</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">A source table&#039;s identity and storage types from a runtime table-map event.
+Optional metadata does not change the encoded row layout. The destination&#039;s
+catalog supplies signedness and ENUM/SET member names during application.
+Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_replication_binlog_event.html.</td></tr><tr data-diff="added"><td><a class="item-name k-class" href="../../../../../../k-kinzal/mysql-memory/MySqlMemory/Command/Replication/Binlog/class.TemporalStorage.html">TemporalStorage</a> <span class="chip chip-sm chip-visibility" title="@visibility MySqlMemory">@visibility MySqlMemory</span></td><td class="item-summary">Decodes packed temporal values, retaining zero dates and fractional precision.
+Timestamps are held in UTC, matching the storage layer&#039;s representation.
+Source: https://mariadb.com/docs/server/reference/clientserver-protocol/replication-protocol/rows_event_v1v2-rows_compressed_event_v1.</td></tr></table></div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../assets/app.js" defer></script>
+</body>
+</html>
