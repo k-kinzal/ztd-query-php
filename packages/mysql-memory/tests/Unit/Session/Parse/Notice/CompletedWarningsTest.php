@@ -14,6 +14,26 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CompletedWarningsTest extends TestCase
 {
+    public function testBeforeKeepsUnfinishedDotReferencesWithoutDuplicatingACompleteTree(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $warnings = new CompletedWarnings();
+        $sql = 'SELECT 1 FROM .t,';
+
+        self::assertSame([1287], array_values(array_map(static fn ($notice): int => $notice->code(), $warnings->before($sql, strlen($sql), $session))));
+        self::assertSame([], $warnings->before($sql, strlen($sql), $session, true));
+    }
+
+    public function testBeforeKeepsAlterIgnoreOnlyAfterTheTargetIsComplete(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $warnings = new CompletedWarnings();
+        $sql = 'ALTER IGNORE TABLE t ALTER a SET DEFAULT (1)';
+
+        self::assertSame([], $warnings->before('ALTER IGNORE TABLE', 18, $session));
+        self::assertSame([1681], array_values(array_map(static fn ($notice): int => $notice->code(), $warnings->before($sql, strlen($sql), $session))));
+    }
+
     public function testBeforeKeepsGroupingDirectionsAheadOfMalformedInput(): void
     {
         $session = (new Instance('5.7.44'))->connect();

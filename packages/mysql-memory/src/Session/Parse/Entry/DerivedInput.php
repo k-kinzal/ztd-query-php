@@ -24,6 +24,30 @@ use SqlSemantics\Diagnostic\Check;
 final class DerivedInput
 {
     /**
+     * Resolves MySQL 5.6 table dependencies before unfinished DML or query syntax.
+     * Validated names come from Semantics; the plan never receives parser nodes.
+     */
+    public function prefix(string $statement, int $end, Session $session): ?SqlError
+    {
+        if ($session->variables->database !== '' || $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
+        $semantics = $session->semantics();
+        $parser = $semantics->parser();
+        Check::invariant($parser instanceof ReductionParser, 'The MySQL parser reports completed productions.');
+        $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
+        if (!in_array(strtoupper($tokens[0]->text ?? ''), ['SELECT', 'INSERT', 'REPLACE', 'UPDATE', 'DELETE'], true)) {
+            return null;
+        }
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->dependencies($parser, $statement, $end, $semantics->profile()) as [$offset, $name]) {
+            if ($name->schema === null) {
+                return (new CacheOptions())->literal(QueryError::NoDatabase->error(), $offset, $statement, $session);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Resolves an outer DELETE target before a later input-operand refusal.
      * A complete target refusal already retains its typed dependencies; reuse
      * their resolved error instead of overriding it from the source prefix.

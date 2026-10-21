@@ -18,6 +18,32 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 final class SyntaxTableNames
 {
     /**
+     * Lowers completed, valid table identities before a later syntax refusal.
+     * Parser nodes and source text are transient; only names and boundaries escape.
+     *
+     * @return list<array{int, \SqlSemantics\Statement\Identifier\QualifiedName}> Table dependencies in input order
+     */
+    public function dependencies(\SqlParser\Parser\ReductionParser $parser, string $statement, int $end, \SqlSemantics\Contract\LanguageProfile $profile): array
+    {
+        $lowering = new Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $names = [];
+        try {
+            $parser->parse($statement, static function (Node $node, \SqlParser\Lexer\Token $lookahead) use ($lowering, $end, &$names): void {
+                if ($node->name !== 'table_ident' || $lookahead->offset > $end) {
+                    return;
+                }
+                $name = $lowering->names->qualified($node);
+                if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->problem($name) === null) {
+                    $names[] = [(new \SqlSemantics\Construction\SourceRanges())->span($node, true)[1] ?? 0, $name];
+                }
+            });
+        } catch (\SqlParser\Lexer\SourceException) {
+            // The caller owns the original refusal; only completed names precede it.
+        }
+        return $names;
+    }
+
+    /**
      * Answers the typed refusal of a completed table-identity operand.
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput
@@ -57,13 +83,43 @@ final class SyntaxTableNames
     }
 
     /**
-     * Legacy releases refuse table identifiers while reading their grammar operands.
+     * Legacy definition targets are checked while reading grammar operands.
+     * MySQL 5.7 query and DML table references wait for contextualization.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens The transient input prefix, when the command is not yet complete
      */
-    public function completed(Node $node, Lowering $lowering): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    public function completed(Node $node, Lowering $lowering, array $tokens = []): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
+        if ($lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $this->contextual($node, $tokens)) {
+            return null;
+        }
         $failure = $this->rejected($node, $lowering);
 
         return $failure?->aborts === true ? new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true) : null;
+    }
+
+    /**
+     * Identifies table references owned by query and DML clauses, including stored bodies.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens Transient lexical tokens whose keyword roles are already distinguished
+     */
+    public function contextual(Node $node, array $tokens): bool
+    {
+        if ($node->name !== 'table_ident') {
+            return false;
+        }
+        $start = $node->tokens()[0]->offset ?? -1;
+        $dml = ['SELECT_SYM', 'INSERT', 'INSERT_SYM', 'UPDATE_SYM', 'DELETE_SYM', 'REPLACE', 'REPLACE_SYM'];
+        $contextual = false;
+        foreach ($tokens as $token) {
+            if ($token->offset >= $start) {
+                break;
+            }
+            if (in_array($token->name, [...$dml, 'ALTER', 'CREATE', 'DROP', 'LOAD'], true)) {
+                $contextual = in_array($token->name, $dml, true);
+            }
+        }
+        return $contextual;
     }
 
     /**

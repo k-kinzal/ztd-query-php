@@ -32,13 +32,15 @@ final class CompletedNotice
             return new ParseFailure($entry->problem, true);
         }
         $replication = new Replication\SyntaxDeprecations();
-        return $this->operands($node, $lowering) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Server\Transaction\SyntaxXids())->completed($node, $lowering) ?? $this->account($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement, $lookahead)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Query\Locking\Conditions())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
+        return $this->operands($node, $lowering, $node->name === 'table_ident' ? (new InputTokens())->prefix($parser, $statement) : []) ?? $lowering->tableChanges->completed($node) ?? $lowering->numbers->completed($node) ?? (new Server\Transaction\SyntaxXids())->completed($node, $lowering) ?? $this->account($node, $lowering) ?? (new SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? (new Dml\Insert\SyntaxDeprecations())->completed($node, $lowering->profile->grammar) ?? $replication->completed($node, $lowering, $replication->preceding($node, $parser, $statement, $lookahead)) ?? (new Replication\SyntaxSettings())->completed($node, $lowering) ?? (new Utility\Explain\SyntaxFormats())->completed($node, $lowering) ?? (new Query\SyntaxCommonTables())->completed($node, $lowering) ?? (new Query\Locking\Conditions())->completed($node, $lowering) ?? (new Server\Instance\SyntaxOptions())->completed($node, $lowering) ?? (new Routine\Condition\SyntaxConditions())->completed($node, $lowering) ?? (new Routine\SyntaxParameters())->completed($node, $lowering) ?? (new Routine\Program\SyntaxDeclarations())->completed($node, $lowering) ?? (new Routine\Program\SyntaxStatements())->completed($node, $lowering);
     }
 
     /**
      * Interprets primitive name, modifier and cast operands before their enclosing constructs.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens The transient command context of table operands
      */
-    public function operands(Node $node, Lowering $lowering): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
+    public function operands(Node $node, Lowering $lowering, array $tokens = []): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
         $query = (new Query\Legacy\UnionEnclosures())->rejected($node, $lowering);
         if ($query !== null) {
@@ -48,7 +50,7 @@ final class CompletedNotice
         if ($load !== null) {
             return $load;
         }
-        return (new Utility\Explain\SyntaxFormats())->modifier($node, $lowering) ?? (new Server\Maintenance\SyntaxKeywords())->completed($node, $lowering) ?? (new Call\SyntaxCalls())->completed($node, $lowering) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
+        return (new Utility\Explain\SyntaxFormats())->modifier($node, $lowering) ?? (new Server\Maintenance\SyntaxKeywords())->completed($node, $lowering) ?? (new Call\SyntaxCalls())->completed($node, $lowering) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? (new Leaf\SyntaxTableNames())->completed($node, $lowering, $tokens) ?? (new SyntaxNames())->completed($node, $lowering) ?? (new SyntaxCasts())->completed($node, $lowering) ?? (new Routine\DeclarationPrefix())->completed($node, $lowering);
     }
 
     /**

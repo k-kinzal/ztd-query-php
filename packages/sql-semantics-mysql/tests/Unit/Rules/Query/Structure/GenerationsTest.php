@@ -53,6 +53,24 @@ use SqlSemantics\Statement\Node;
 #[Small]
 final class GenerationsTest extends TestCase
 {
+    public function testCheckRejectsAnExpressionDefaultWithLegacyAlterIgnore(): void
+    {
+        $default = new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression(new NumberLiteral('1'));
+        $command = new \SqlSemantics\Platform\MySql\Statement\Alter\Column\DefaultSetting(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new Name('a')), $default);
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+
+        new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new QualifiedName(new Name('t')), [$command], true);
+    }
+
+    public function testCheckRejectsPersistResetWithALegacyDefaultCollationParameter(): void
+    {
+        $parameter = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('x'), new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(), new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null));
+        $body = new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetPersist();
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+
+        new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([$parameter]), $body);
+    }
+
     public function testTransitionDistinguishesTheLegacyMinorReleaseBoundary(): void
     {
         $rules = new Generations();

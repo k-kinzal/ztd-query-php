@@ -90,7 +90,7 @@ final class CacheOptions
         [$end, $engines, $error] = (new Parse\EnginePrefix())->conditions($tokens, $statement, $end, $session, $error);
         [$warned, $conflict] = (new Parse\Modifiers($tokens, $release))->scan($end, $settled);
         $warned += $engines + (new Parse\SpatialWarnings())->before($tokens, $statement, $end, $session);
-        $warned += (new Parse\Notice\CompletedWarnings())->before($statement, $end, $session);
+        $warned += (new Parse\Notice\CompletedWarnings())->before($statement, $end, $session, $parsed);
         if ($parsed) {
             $warned += array_filter($session->dots, static fn (int $offset): bool => $offset < $end, ARRAY_FILTER_USE_KEY);
         }
@@ -117,7 +117,7 @@ final class CacheOptions
         $end = $inspection[1] ?? $end;
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         $boundary = $this->boundary($notices, $end);
-        $database = (new Parse\Entry\EvaluationInput())->before($statement, $boundary, $session) ?? (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\DefinitionPrefix())->before($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session) ?? (new Parse\CommandPrefix())->before((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement), $statement, $boundary, $session);
+        $database = (new Parse\Entry\DerivedInput())->prefix($statement, $boundary, $session) ?? (new Parse\Entry\EvaluationInput())->before($statement, $boundary, $session) ?? (new Parse\RoutinePrefix())->database($statement, $boundary, $session) ?? (new Parse\Definition\DefinitionPrefix())->before($statement, $boundary, $session) ?? (new Parse\Entry\PrivilegeInput())->database($statement, $boundary, $session) ?? (new Parse\CommandPrefix())->before((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement), $statement, $boundary, $session);
         if ($database !== null) {
             return $database;
         }

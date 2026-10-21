@@ -15,6 +15,22 @@ use SqlParser\MySql\MySqlParser;
 #[Medium]
 final class DerivedInputTest extends TestCase
 {
+    public function testPrefixResolvesLegacyDependenciesBeforeAnUnfinishedCommand(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $input = new DerivedInput();
+
+        self::assertSame(1046, $input->prefix('INSERT IGNORE INTO t VALUES (', 100, $session)?->getCode());
+        self::assertSame(1046, $input->prefix('UPDATE IGNORE t SET a=', 100, $session)?->getCode());
+        self::assertSame(1046, $input->prefix('SELECT 1 FROM t,', 100, $session)?->getCode());
+        self::assertNull($input->prefix('SELECT 1 FROM d.t,', 100, $session));
+        self::assertNull($input->prefix('SELECT 1 FROM `` ,', 100, $session));
+        self::assertNull($input->prefix('SELECT 1 FROM t,', 10, $session));
+        self::assertNull($input->prefix('SELECT 1 FROM t,', 100, (new Instance('5.7.44'))->connect()));
+        $session->variables->database = 'd';
+        self::assertNull($input->prefix('SELECT 1 FROM t,', 100, $session));
+    }
+
     public function testBeforePreservesTheFirstRegisteredRelationCondition(): void
     {
         $session = (new Instance('5.7.44'))->connect();

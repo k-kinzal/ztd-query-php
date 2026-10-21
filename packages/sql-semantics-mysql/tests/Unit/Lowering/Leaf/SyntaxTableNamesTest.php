@@ -20,6 +20,43 @@ use SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind;
 #[Medium]
 final class SyntaxTableNamesTest extends TestCase
 {
+    public function testContextualDistinguishesDmlFromDefinitionTargetsInsideStoredBodies(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
+        $input = new SyntaxTableNames();
+        $sql = 'CREATE PROCEDURE p() BEGIN ALTER TABLE t ADD a INT; UPDATE u SET a=1; SELECT 1 FROM v; END';
+        $nodes = $parser->parse($sql)->find('table_ident');
+        $tokens = $parser->tokenize($sql);
+
+        self::assertSame([false, true, true], array_map(static fn (\SqlParser\Parser\Node $node): bool => $input->contextual($node, $tokens), $nodes));
+        self::assertFalse($input->contextual($parser->parse('SELECT 1'), $tokens));
+    }
+
+    public function testCompletedDefersLegacyDmlNamesUntilContextualization(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5744);
+        $sql = 'SELECT 1 FROM `` ,';
+
+        self::assertSame([], (new SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile));
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new EmptyObjectName(ObjectNameKind::Table), true)], array_column((new SyntaxWarnings())->completed($parser, 'ALTER TABLE `` ADD', 100, $profile), 1));
+    }
+
+    public function testDependenciesRetainsValidatedNamesAndCompletionOffsetsWithoutSourceNodes(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.6.51');
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $reader = new SyntaxTableNames();
+        $sql = 'SELECT 1 FROM d.t, u,';
+        $names = $reader->dependencies($parser, $sql, strlen($sql), $profile);
+
+        self::assertSame([17, 20], array_column($names, 0));
+        self::assertSame(['t', 'u'], array_map(static fn (array $item): string => $item[1]->name->value, $names));
+        self::assertSame(['d', null], array_map(static fn (array $item): ?string => $item[1]->schema?->value, $names));
+        self::assertSame([], $reader->dependencies($parser, $sql, 14, $profile));
+        self::assertSame([], $reader->dependencies($parser, 'SELECT 1 FROM `` ,', 100, $profile));
+    }
+
     /**
      * @return iterable<string, array{string, ObjectNameKind}>
      */

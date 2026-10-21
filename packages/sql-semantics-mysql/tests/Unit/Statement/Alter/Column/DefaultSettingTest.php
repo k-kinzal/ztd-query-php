@@ -16,6 +16,30 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 #[Medium]
 final class DefaultSettingTest extends TestCase
 {
+    public function testRenderExcludesAColumnTimestampAttributeInAnAlterDefaultAction(): void
+    {
+        $this->expectExceptionMessage('ALTER COLUMN SET DEFAULT accepts a literal or a parenthesized expression');
+
+        new DefaultSetting(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral(new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp()));
+    }
+
+    public function testRenderExcludesABareClockCallInAnAlterDefaultAction(): void
+    {
+        $this->expectExceptionMessage('ALTER COLUMN SET DEFAULT accepts a literal or a parenthesized expression');
+
+        new DefaultSetting(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral(new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now)));
+    }
+
+    public function testRenderRetainsAParenthesizedClockDefault(): void
+    {
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now);
+        $default = new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression($clock);
+        $command = new DefaultSetting(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), $default);
+
+        self::assertSame($default, $command->default);
+        self::assertSame($clock, $default->expression);
+    }
+
     public function testDeriveCommandDerivesTheValueInTheChangedTable(): void
     {
         $semantics = new Semantics(Dialect::MySql);

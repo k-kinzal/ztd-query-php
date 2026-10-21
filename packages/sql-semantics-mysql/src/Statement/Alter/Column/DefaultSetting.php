@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Column;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
@@ -20,7 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  * default and a parenthesized expression default (8.0.13 and later) differ:
  * the server stores the first as a constant and evaluates the second for
  * each row, so the form is kept. The value is derived in the scope of the
- * changed table. The word COLUMN is optional and always written.
+ * changed table. The bare current-timestamp clause belongs to column
+ * definitions, not this action: a clock default here requires DefaultExpression.
+ * The word COLUMN is optional and always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
@@ -39,6 +43,7 @@ final class DefaultSetting implements AlterCommand
      */
     public function __construct(public readonly ColumnName $column, public readonly DefaultLiteral|DefaultExpression|null $default)
     {
+        Check::input(!$default instanceof DefaultLiteral || $default->value instanceof Literal, 'ALTER COLUMN SET DEFAULT accepts a literal or a parenthesized expression; a bare timestamp clause belongs to a column definition.');
     }
 
     /**

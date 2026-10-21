@@ -185,6 +185,7 @@ final class ModernFormsTest extends TestCase
     {
         $forms = new ModernForms();
         self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart()));
+        self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetPersist()));
         self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent([new \SqlSemantics\Platform\MySql\Statement\Literal\Text('component')])));
         self::assertTrue($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('b', true))));
         self::assertFalse($forms->administration(new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('11'))));

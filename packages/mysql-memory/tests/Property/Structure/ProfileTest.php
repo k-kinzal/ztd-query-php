@@ -32,6 +32,43 @@ use SqlSemantics\Statement\Identifier\Name;
 final class ProfileTest extends TestCase
 {
     /**
+     * Preserves the ALTER root and choices while its own invariant rejects a column-only timestamp clause.
+     *
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testSelectPreservesTheGeneratedAlterAfterRejectingAColumnTimestampClause(): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices('semantic-types-1611:23');
+        $choices->one($catalogue->roots());
+        $construction = new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata());
+        $node = $construction->object(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, 6);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $node);
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+        self::assertArrayHasKey(\SqlSemantics\Platform\MySql\Statement\Alter\Column\DefaultSetting::class . ': ALTER COLUMN SET DEFAULT accepts a literal or a parenthesized expression; a bare timestamp clause belongs to a column definition.', $construction->rejections);
+    }
+
+    /**
+     * Preserves the root and random stream of the incompatible RESET PERSIST counterexample.
+     *
+     * @throws JsonException When a semantic inventory is invalid
+     * @throws ReflectionException When a constructor cannot be invoked
+     */
+    public function testSelectPreservesTheGeneratedProcedureAfterRejectingIncompatibleReleaseOperands(): void
+    {
+        $catalogue = new \Fuzz\Structure\Catalogue();
+        $choices = new Choices('semantic-types-1607:1099');
+        $choices->one($catalogue->roots());
+        $construction = new \Fuzz\Structure\Construction($choices, $catalogue, new \Fuzz\Structure\Metadata());
+        $node = $construction->object(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, 6);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $node);
+        self::assertSame('mysql', (new Profiles())->select($node)->grammar->database());
+        self::assertArrayHasKey(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class . ': A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.', $construction->rejections);
+    }
+
+    /**
      * Language-dependent limits select a corresponding profile without discarding the object.
      */
     public function testSelectRetainsAccountNamesThatNeedLaterLanguageLimits(): void

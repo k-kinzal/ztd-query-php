@@ -40,6 +40,25 @@ final class TableChangeRules
     }
 
     /**
+     * Retains the legacy IGNORE notice after the alteration target is complete.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens Transient tokens used only to locate the target's command role
+     */
+    public function ignored(Node $node, array $tokens): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        if ($node->name !== 'table_ident' || $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
+        $start = $node->tokens()[0]->offset ?? -1;
+        foreach ($tokens as $index => $token) {
+            if ($token->offset === $start && $index >= 3 && array_column(array_slice($tokens, $index - 3, 3), 'name') === ['ALTER', 'IGNORE_SYM', 'TABLE_SYM']) {
+                return \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AlterIgnore;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns an aborting notice for a completed option before publishing a statement.
      *
      * @param bool $partitionNames Whether a partial parse needs partition-name notices; complete definitions check their own names

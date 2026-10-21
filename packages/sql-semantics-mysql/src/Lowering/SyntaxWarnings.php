@@ -72,7 +72,7 @@ final class SyntaxWarnings
                     $state->record((new SourceRanges())->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead);
+                $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead) ?? $lowering->tableChanges->ignored($node, $tokens);
                 $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
                 foreach ($conditions as $condition) {
                     $range = (new SourceRanges())->span($node, true) ?? [$lookahead->offset, $lookahead->offset];

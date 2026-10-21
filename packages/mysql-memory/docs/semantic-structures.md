@@ -4326,3 +4326,38 @@ pass 545 assertions: each preserves the same query across 35 generated geometry,
 index, invalid-payload and NULL states, with an opaque non-SQL request label.
 These checks do not replace the whole-model construction and final-revision
 campaign gates in the acceptance contract.
+
+Direct construction distinguishes column timestamp attributes from ALTER
+expression defaults. `DefaultSetting` refuses a bare current-timestamp clause;
+its clock operand must occur inside `DefaultExpression`. The shared release
+intersection also accounts for expression defaults and RESET PERSIST, excluding
+combinations with removed legacy syntax before an Operation is built. No
+execution-eligibility classification is introduced. Counterexample properties
+retain their original root selection and random stream, and record constructor
+refusals before resampling operands of that same root.
+
+After these repairs, 2,440 type-driven inputs with seed `semantic-types-1611`
+have zero generation, exhaustion, profile or internal-structure failures.
+There are 1,015 local completions and 1,425 SQL errors; the latter remain local
+observations, not accepted native outcomes. Five native histories preserve 60
+constructed ALTER structures across missing-table, populated-table,
+renamed-column, dropped-table and restored-table states, then verify the inserted
+defaults. They pass 660 assertions. A 119-input matrix also checks clock defaults
+and nearby malformed statements through text and prepared protocols on five
+releases; all ten cases pass. Nine routine-definition inputs comparing legacy
+parameter collations and RESET PERSIST pass another ten native cases.
+
+Incomplete input retains only typed names, notices and completion boundaries.
+MySQL 5.6 resolves completed query and DML table dependencies before later syntax;
+5.7 defers those name checks to contextualization while keeping definition-target
+checks early. ALTER IGNORE and leading-dot notices preserve their own completion
+order. These observations are handled by lowering and the input adapter, without
+making SQL or parser nodes available to plans or iterators.
+
+The `query1618` snapshot passes 20,525 Memory tests / 98,223 assertions and 9,662
+Semantics tests / 20,282 assertions. Both full static-check suites pass: 29,708
+Memory and 37,036 Semantics dependencies have no violations or uncovered
+references, and the semantic schema checks all 1,030 value definitions. The
+acceptance contract remains open: whole-model native rejection classification,
+remaining consumer implementations and final-revision seed/duration campaigns
+are separate requirements.
