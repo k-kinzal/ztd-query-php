@@ -68,4 +68,11 @@ final class DeleteTest extends TestCase
         new Delete($with, [], $target);
     }
 
+    public function testValueRejectsAnIntegerUnderParenthesesAndUnaryPlus(): void
+    {
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+        $this->expectExceptionMessage('DELETE ordering cannot refer to an output position.');
+        new Delete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem($operand)]);
+    }
+
 }

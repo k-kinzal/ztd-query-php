@@ -278,6 +278,16 @@ consumer must bind the row's names and report its scalar-use error if that
 instruction is reached. It must not replace the row with an ordinary scalar or
 require the original SQL to prepare it.
 
+Ordinary DELETE and UPDATE values exclude bare integer ORDER BY positions,
+including integers under parentheses or unary plus: these writes have no select
+list in which a position could resolve. `DeferredDelete` and `DeferredUpdate`
+retain the complete stored instruction so an unreached branch remains dormant.
+`OrderingPosition` retains the offending literal, including unsigned values
+beyond PHP's signed integer range and written leading zeros. The MySQL 5.6 and
+5.7 profiles also diagnose boolean ordering positions; modern profiles treat
+those booleans as constant ordering expressions. Dependency resolution and the
+consumer's preparation order determine which condition is reported first.
+
 Ordinary CREATE INDEX, CREATE TABLE and ALTER TABLE values exclude fixed invalid
 index names and non-scalar functional key operands. Their constructors reject
 these combinations before `Operation` construction. Stored instructions use

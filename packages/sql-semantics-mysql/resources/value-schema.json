@@ -1072,6 +1072,9 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Read\\OrderingPosition": {
+        "position": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\BooleanLiteral"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedDeleteTargets": {
         "missing": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",

@@ -20,7 +20,7 @@ final class PublicationTest extends TestCase
     {
         $table = new M\Relation\TableReference(new QualifiedName(new Name('t')));
         $assignment = new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), new M\Literal\NumberLiteral('1'));
-        $order = new M\Query\OrderItem(new M\Literal\NumberLiteral('1'));
+        $order = new M\Query\OrderItem(new M\Name\ColumnUse(new Name('a')));
         $write = (new Publication())->create(null, false, false, [$table], [$assignment], null, [$order], null, []);
         self::assertSame([$table], $write->tables);
         self::assertSame([$assignment], $write->assignments);

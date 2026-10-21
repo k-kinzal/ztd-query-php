@@ -105,4 +105,10 @@ final class UpdateTest extends TestCase
         self::assertSame([$first, $second, $third], $update->tables);
     }
 
+    public function testValueRejectsAnIntegerOrderingPosition(): void
+    {
+        $this->expectExceptionMessage('An ordinary UPDATE has writable targets and compatible clauses.');
+        new Update(null, false, false, [new TableReference(new QualifiedName(new Name('t')))], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+    }
+
 }

@@ -28,4 +28,15 @@ final class WindowsTest extends TestCase
         self::assertNotNull($first);
         self::assertSame($operation->facts->diagnostics[0], $first[0]);
     }
+    public function testInheritedKeepsTheOriginalNameAndBlockPosition(): void
+    {
+        $operation = (new Instance())->connect()->analyze('SELECT 1 WINDOW original AS (), w AS (original)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
+        $names = (new Windows())->inherited($operation->statement->query, [2]);
+        self::assertCount(1, $names);
+        self::assertSame('original', $names[0][0]->value);
+        self::assertSame([2, 6, PHP_INT_MAX, PHP_INT_MAX], $names[0][1]);
+    }
+
 }

@@ -8,9 +8,13 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Locator;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec;
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Query;
 
 /**
  * Places window diagnostics using their names and owning semantic expressions.
@@ -67,6 +71,31 @@ final class Windows
         }
 
         return $located;
+    }
+
+    /**
+     * Locates inherited names after the definitions of their own query block.
+     *
+     * @param list<int> $order The query block's resolution position
+     * @return list<array{\SqlSemantics\Statement\Identifier\Name, list<int>}>
+     */
+    public function inherited(\SqlSemantics\Platform\MySql\Statement\Query\Select $select, array $order): array
+    {
+        $names = [];
+        $pending = $select->windows;
+        while (($node = array_pop($pending)) !== null) {
+            if (($node instanceof WindowSpec || $node instanceof DeferredWindowSpec) && $node->base !== null) {
+                $names[] = [$node->base, [...$order, 6, PHP_INT_MAX, PHP_INT_MAX]];
+            }
+            foreach (get_object_vars($node) as $value) {
+                foreach (is_array($value) ? $value : [$value] as $member) {
+                    if ($member instanceof Node && !$member instanceof Query) {
+                        $pending[] = $member;
+                    }
+                }
+            }
+        }
+        return $names;
     }
 
 }

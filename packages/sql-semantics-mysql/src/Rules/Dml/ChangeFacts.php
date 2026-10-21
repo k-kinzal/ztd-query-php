@@ -293,6 +293,10 @@ final class ChangeFacts
         foreach ($orderBy as $item) {
             \SqlSemantics\Diagnostic\Check::invariant(!$item->expression instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal, 'DML ordering retains expressions rather than result positions.');
             (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\ClauseFacts())->derive($item->expression, $derivation, $environment);
+            $position = (new Read\Ordering())->position($item->expression, in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+            if ($position !== null) {
+                $derivation->report($position);
+            }
         }
         (new TailFacts())->limit($limit, $derivation, $base);
     }

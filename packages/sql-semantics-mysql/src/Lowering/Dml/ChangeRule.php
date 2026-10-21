@@ -153,13 +153,15 @@ final class ChangeRule
         $queries = $this->lowering->queries;
 
         return match ($body->signature) {
-            'single_multi: FROM table_ident opt_use_partition where_clause opt_order_clause delete_limit_clause' => new Delete(
+            'single_multi: FROM table_ident opt_use_partition where_clause opt_order_clause delete_limit_clause' => $this->single(
+                $body->node,
                 null,
                 $options,
                 new WriteTarget($this->lowering->names->qualified($body->node(1)), null, $queries->partitions($body->node(2))),
                 $queries->where($body->node(3)),
                 $queries->ordering($body->node(4)),
                 $this->limit($body->node(5)),
+                [],
             ),
             'single_multi: table_wild_list FROM join_table_list where_clause' => $this->multiple($body->node, null, $options, $this->targets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
             'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => $this->multiple($body->node, null, $options, $this->targets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
@@ -177,7 +179,7 @@ final class ChangeRule
      */
     public function single(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, WriteTarget $target, ?\SqlSemantics\Statement\Scalar $where, array $orderBy, ?Limit $limit, array $hints): Delete
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $target->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([$target, ...$orderBy, ...($where === null ? [] : [$where])], $with) !== null) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $target->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([$target, ...$orderBy, ...($where === null ? [] : [$where])], $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($orderBy) !== null) {
             $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete($with, $options, $target, $where, $orderBy, $limit, $hints);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
         }

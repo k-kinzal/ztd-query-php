@@ -3918,6 +3918,16 @@ The consumer prepares the retained expressions using the normal planner and
 compiler, including release-specific clause ordering and legacy multiple-table
 cleanup conditions. No source SQL or AST is needed for this preparation.
 
+Ordinary DELETE and UPDATE values also exclude integer ORDER BY positions,
+including a parenthesized integer or unary plus. Their deferred instructions
+retain these operands until invocation. `WriteOrderingStructureTest` reuses the
+same procedure and call values with a skipped branch, a missing table, a missing
+predicate column, populated rows and a removed table. The native history checks
+which dependency precedes the position error. `WriteOrderingPositionTest` also
+replays the original generated EXPLAIN DELETE counterexample, constant ordering
+expressions, and text/prepared requests on five releases. Boolean positions are
+a legacy-profile condition rather than an invariant shared by all releases.
+
 Ordinary CREATE INDEX, ALTER TABLE and CREATE TABLE values exclude non-scalar
 functional key operands and intrinsically invalid explicit index names. A stored CREATE INDEX uses `DeferredCreateIndex`, while
 the existing retained alteration and creation instructions preserve those keys

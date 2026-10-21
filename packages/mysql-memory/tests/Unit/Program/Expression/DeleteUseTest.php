@@ -63,4 +63,18 @@ final class DeleteUseTest extends TestCase
         (new DeleteUse())->inputs($write, $derivation->facts(), $session);
     }
 
+    public function testErrorBindsTheOriginalPredicateBeforeItsOrderingPosition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $write = new M\Routine\Program\Write\DeferredDelete(null, [], new M\Dml\WriteTarget(new QualifiedName(new Name('t'))), new M\Name\ColumnUse(new Name('a')), [new M\Query\OrderItem(new M\Literal\NumberLiteral('2'))]);
+        self::assertSame(1146, (new DeleteUse())->error($write, $session)->getCode());
+        $session->query('CREATE TABLE t(b INT)');
+        $session->text = 'opaque request label';
+        self::assertSame("Unknown column 'a' in 'where clause'", (new DeleteUse())->error($write, $session)->getMessage());
+        $session->query('ALTER TABLE t ADD COLUMN a INT');
+        $session->text = 'opaque request label';
+        self::assertSame("Unknown column '2' in 'order clause'", (new DeleteUse())->error($write, $session)->getMessage());
+        self::assertSame('opaque request label', $session->text);
+    }
+
 }

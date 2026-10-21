@@ -88,13 +88,21 @@ final class DeleteUse
      */
     public function inputs(DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
     {
-        if (!$write instanceof DeferredMultipleDelete) {
+        if ($write instanceof DeferredDelete && (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($write->orderBy) === null) {
             return;
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
         $scope = new \MySqlMemory\Evaluation\Scope();
+        if ($write instanceof DeferredDelete) {
+            $slots = $facts->relation($write->table)->shape->slots;
+            $scope->place($write->table, $planner->relations->shaped($write->table, []), array_map(static fn ($slot): string => $slot->name->value ?? '', $slots));
+            $operands = new \MySqlMemory\Program\Write\UpdateOperands();
+            $operands->operand($write->where, $planner, $scope, 'where clause');
+            $operands->ordering($write->orderBy, $planner, $scope);
+            return;
+        }
         foreach ($write->tables as $table) {
             $planner->relations->plan($table, $scope);
         }

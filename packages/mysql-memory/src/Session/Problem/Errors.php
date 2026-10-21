@@ -273,6 +273,7 @@ final class Errors
     public function manipulation(Diagnostic $diagnostic, ?Node $statement): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Read\OrderingPosition => new SqlError(QueryError::BadField, $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict => new SqlError(StatementError::WrongUsage, $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\InsertGrouping => $diagnostic->windowName() === null ? QueryError::InvalidGroupFunctionUse->error() : \MySqlMemory\Error\Family\ConstraintError::WindowFunctionContext->error($diagnostic->windowName()),
             $diagnostic instanceof ValueCountMismatch => $diagnostic->row === null ? QueryError::WrongValueCount->error() : QueryError::WrongValueCountOnRow->error($diagnostic->row),

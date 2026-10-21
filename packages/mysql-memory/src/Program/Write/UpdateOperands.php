@@ -97,11 +97,16 @@ final class UpdateOperands
      * Prepares retained ordering with the expression-only UPDATE invariant.
      *
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The complete ordering
+     * @throws SqlError When an ordering position or operand cannot bind
      */
     public function ordering(array $orderBy, Planner $planner, Scope $scope): void
     {
         foreach ($orderBy as $item) {
             \SqlSemantics\Diagnostic\Check::invariant(!$item->expression instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal, 'UPDATE ordering retains expressions rather than result positions.');
+            $position = (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->position($item->expression, $planner->settings->legacy());
+            if ($position !== null) {
+                throw new SqlError(\MySqlMemory\Error\Family\QueryError::BadField, $position->message());
+            }
             $this->operand($item->expression, $planner, $scope, 'order clause');
         }
     }

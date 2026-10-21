@@ -50,6 +50,11 @@ final class Locator
     public array $places = [];
 
     /**
+     * @var array<int, array{string, list<int>}> Positions of literal operands owning preparation conditions
+     */
+    private array $literalPlaces = [];
+
+    /**
      * @var list<ColumnUse|OutputOrdinal|FunctionCall> Keeps the located nodes alive
      */
     private array $nodes = [];
@@ -141,7 +146,7 @@ final class Locator
     public function statement(Node $statement): self
     {
         $this->process = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill;
-        if ((new Problem\WriteOrder($this))->locate($statement)) {
+        if ((new Problem\WriteOrder($this))->locate($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain ? $statement->statement : $statement)) {
             return $this;
         }
         $filters = (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere::class);
@@ -214,7 +219,7 @@ final class Locator
      */
     public function place(Node $node): ?array
     {
-        return $this->places[spl_object_id($node)] ?? null;
+        return $this->places[spl_object_id($node)] ?? $this->literalPlaces[spl_object_id($node)] ?? null;
     }
 
     /**
@@ -283,6 +288,9 @@ final class Locator
      */
     public function record(Node $node, string $clause, array $order): void
     {
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral || $node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {
+            $this->literalPlaces[spl_object_id($node)] = [$clause, $order];
+        }
         if ($node instanceof Cast && $node->array) {
             $this->arrays[] = [$node, $clause, $order];
         }
@@ -389,19 +397,7 @@ final class Locator
         $this->visit($select->limit, 'field list', [...$order, 7]);
         $this->specifications($select, $order);
         $this->specifications = $outerSpecifications;
-        $pending = $select->windows;
-        while (($node = array_pop($pending)) !== null) {
-            if (($node instanceof WindowSpec || $node instanceof DeferredWindowSpec) && $node->base !== null) {
-                $this->windows[] = [$node->base, [...$order, 6, PHP_INT_MAX, PHP_INT_MAX]];
-            }
-            foreach (get_object_vars($node) as $value) {
-                foreach (is_array($value) ? $value : [$value] as $member) {
-                    if ($member instanceof Node && !$member instanceof Query) {
-                        $pending[] = $member;
-                    }
-                }
-            }
-        }
+        array_push($this->windows, ...(new Problem\Location\Windows())->inherited($select, $order));
         $this->block = $outer;
     }
 

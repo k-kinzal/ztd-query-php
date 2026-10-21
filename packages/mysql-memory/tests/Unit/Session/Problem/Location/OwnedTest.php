@@ -51,4 +51,18 @@ final class OwnedTest extends TestCase
         self::assertTrue($first[0]->operand);
         self::assertCount(2, $located);
     }
+    public function testLocatedLegacyWritePositionPrecedesTheAssignmentInsideExplain(): void
+    {
+        $session = (new \MySqlMemory\Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $operation = $session->analyze('EXPLAIN UPDATE t SET missing=1 WHERE NULL ORDER BY TRUE');
+        $locator = (new Locator(release: \SqlSemantics\Contract\GrammarRelease::MySql5744))->statement($operation->statement);
+        [$names] = (new Locations())->names($operation, $locator, [], $operation->facts->diagnostics);
+        $first = Locations::first((new Owned())->located($locator, $operation->facts->diagnostics, $names));
+        self::assertNotNull($first);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Read\OrderingPosition::class, $first[0]);
+        self::assertSame('order clause', $first[1][0]);
+        self::assertCount(1, $locator->places);
+    }
+
 }

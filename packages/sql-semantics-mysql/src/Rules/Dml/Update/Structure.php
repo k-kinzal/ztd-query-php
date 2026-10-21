@@ -61,7 +61,7 @@ final class Structure
                 return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$operand]);
             }
         }
-        return null;
+        return (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($orderBy);
     }
 
     /**

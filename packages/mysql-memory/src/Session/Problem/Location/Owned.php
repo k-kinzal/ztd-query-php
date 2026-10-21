@@ -36,6 +36,7 @@ final class Owned
                 $diagnostic instanceof TimeZoneConversion, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath => $diagnostic->expression,
                 $diagnostic instanceof Misuse, $diagnostic instanceof CountMismatch => $diagnostic->valueRow,
                 $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation => $diagnostic->operand,
+                $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Read\OrderingPosition => $diagnostic->position,
                 default => null,
             };
             $place = $owner === null ? null : $locator->place($owner);
