@@ -29,7 +29,8 @@ final class EnumerationMembers
     public function members(Domain $domain, ?\SqlSemantics\Statement\Type\TypeDescriptor $type, \SqlSemantics\Contract\GrammarRelease $release): Domain
     {
         if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) {
-            return (new \MySqlMemory\Typing\Declared($domain->collation, $release))->enumeration($type, $domain->collation);
+            $encoded = (new \MySqlMemory\Typing\Declared($domain->collation, $release))->enumeration($type, $domain->collation);
+            return new Domain($domain->kind, $domain->field, $encoded->length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->nullable, $encoded->members, $domain->coercibility, $domain->numericBytes, $domain->display, $domain->quiet, $domain->source, $domain->capacity, $domain->displayDecimals, $domain->storageField);
         }
         $charset = $domain->collation->charset;
         if ($domain->members === [] || Encoding::utf8($charset)) {

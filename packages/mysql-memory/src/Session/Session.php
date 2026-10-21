@@ -148,10 +148,11 @@ final class Session
      * @param string $host The host connected from
      * @param string|null $database The database to use, or null for none
      * @param int|null $port The client's TCP source port, or null for a local session
+     * @param \MySqlMemory\Command\Replication\Binlog\Stream $binlog The connection's independent runtime event stream
      *
      * @throws SqlError When the database does not exist
      */
-    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null, public readonly ?int $port = null)
+    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null, public readonly ?int $port = null, public readonly \MySqlMemory\Command\Replication\Binlog\Stream $binlog = new \MySqlMemory\Command\Replication\Binlog\Stream())
     {
         $this->variables = new Variables($instance->catalog, $instance->globals, $instance);
         $this->preparation = new State\Preparation();

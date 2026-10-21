@@ -204,7 +204,7 @@ final class TableDefinition
         if ($column->onUpdateNow) {
             $flags |= 8192;
         }
-        if ($column->domain->field->blob()) {
+        if ($column->domain->field->blob() || $column->domain->field === Field::Geometry) {
             $flags |= ColumnFlag::Blob->value;
         }
         if ($column->domain->field === Field::Year || $this->zeroFill($position)) {

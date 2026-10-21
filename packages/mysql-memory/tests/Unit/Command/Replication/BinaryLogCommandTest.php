@@ -97,6 +97,15 @@ final class BinaryLogCommandTest extends TestCase
         (new BinaryLogCommand())->event(base64_encode("\0\0\0\0\x1d" . str_repeat("\0", 22)));
     }
 
+    public function testReplayAcceptsARowsQueryAnnotationWithAnEstablishedLayout(): void
+    {
+        $session = (new Instance())->connect();
+        $session->binlog->format = new \MySqlMemory\Command\Replication\Binlog\Format(19, '', 0);
+        $reply = $session->query("BINLOG '" . base64_encode(pack('VCVVVv', 0, 29, 1, 23, 0, 0) . "\x03abc") . "'")[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(0, $reply->affectedRows);
+    }
+
     public function testExecutePurgesNothingWithoutBinaryLogging(): void
     {
         $session = (new Instance('5.7.44'))->connect();

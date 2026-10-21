@@ -4118,6 +4118,49 @@ refactor (`query1524`) passes all Memory static checks (29,408 dependencies, no
 violations) and 59 focused tests / 133 assertions. Semantics static checks pass
 with 1,030 reviewed value definitions. These results do not replace the final-revision
 supplied-seed and 900-second campaigns or close the construction obligations.
-A further native audit found that valid BINLOG format and row events succeed;
-the current replay command still refuses them. A matching malformed-base64 error
-therefore cannot establish support for that statement root.
+A further native audit found that valid BINLOG format and row events succeeded
+while the replay command refused them. A matching malformed-base64 error did not
+establish support for that statement root; the replay implementation below repairs
+the observed gap.
+
+
+## Binary event replay and destination state
+
+`BinlogEvent` now executes format descriptions, table maps, row annotations and
+insert/update/delete images. The semantic operand remains the supplied literal;
+its bytes are runtime data. A connection owns its event format and table map in
+an independent stream. Event decoding never produces SQL or accesses a parser
+AST. Native event bytes were produced by disposable MySQL servers and inspected
+using the public binary-protocol specifications, without reading server code.
+
+The row reader handles packed decimals, temporal fields and fractional seconds,
+BIT, signed and unsigned integers, strings, binary fields, ENUM/SET members,
+JSON and geometry bytes. JSON retains its SQL decimal, temporal and opaque
+subtypes. Partial updates apply ordered replacement, insertion and removal to
+the existing document; minimal row images leave absent columns unchanged.
+Malformed lengths remain SQL errors. Full result metadata is compared as well
+as values: enumeration member encoding now preserves the domain already resolved
+by Semantics, and stored geometry columns retain their binary-large-object flag.
+
+The same event objects are exercised before and after format establishment,
+database/table creation, duplicate insertion, missing rows, table recreation,
+parent-row creation and removal of referencing children. Further histories vary
+primary and nullable unique keys, extra or omitted columns, generated columns
+and CHECK constraints. Row application uses the existing transaction journal,
+column generation and foreign-key checks. These tests preserve the original
+objects and compare every setup statement, outcome and subsequent read.
+
+Native format and ordinary replay histories pass on 5.6, 5.7, 8.0, 8.4 and 9.1.
+The storage matrix passes on the four JSON-capable releases, partial JSON images
+on 8.0, 8.4 and 9.1, destination variants on 8.4 and 9.1, and foreign-key
+histories on all five releases. Together these six suites pass 36 cases and 796
+assertions. The `query1541` snapshot passes 20,460 unit/property/doctest tests
+with 98,057 assertions. Its static checks pass with 29,547 allowed dependencies
+and no violations, skipped violations or uncovered dependencies. These bounded histories do not establish all replication
+configuration, storage conversion or arbitrary malformed-event behavior.
+
+The earlier `query1515` unseeded campaign completed 902.958 seconds with 1,046
+matches, no differences and no volatile classifications. It predates the final
+concatenation-bound correction and binary replay changes. Current supplied-seed,
+whole-model and duration campaigns remain separate acceptance gates; pending
+campaigns are not passing evidence.

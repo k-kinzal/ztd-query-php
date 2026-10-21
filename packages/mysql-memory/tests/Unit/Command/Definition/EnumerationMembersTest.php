@@ -20,6 +20,16 @@ final class EnumerationMembersTest extends TestCase
         self::assertSame($domain, (new EnumerationMembers())->members($domain, null, \SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
+    public function testMembersPreservesResolvedColumnMetadataWhileEncodingMembers(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; CREATE TABLE d.t(a ENUM('first','second'), b SET('a','b'))");
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        self::assertSame([0, 0], array_map(static fn ($column): int => $column->domain->decimals, $table->definition->columns));
+        self::assertSame([['first', 'second'], ['a', 'b']], array_map(static fn ($column): array => $column->domain->members, $table->definition->columns));
+    }
+
     public function testCheckUsesTheCollationAndTrimsTrailingSpaces(): void
     {
         $session = (new Instance())->connect();

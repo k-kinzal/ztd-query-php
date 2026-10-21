@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    1032 => ['HY000', "Can't find record in '%s'"],
     1148 => ['42000', 'The used command is not allowed with this MySQL version'],
     1409 => ['HY000', "Can't load value from file with fixed size rows to variable"],
     1261 => ['01000', "Row %d doesn't contain data for all columns"],

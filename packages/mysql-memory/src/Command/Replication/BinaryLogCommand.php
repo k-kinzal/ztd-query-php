@@ -7,7 +7,6 @@ namespace MySqlMemory\Command\Replication;
 use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AdministrationError;
-use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -35,12 +34,12 @@ use SqlSemantics\Statement\Operation;
  * must hold (ER_UNKNOWN_TARGET_BINLOG). PURGE BINARY LOGS BEFORE converts its moment to a
  * DATETIME, the integer 0 being the zero datetime, and warns that the active file is not purged;
  * the emulator keeps the other files. The
- * BINLOG statement decodes its base64 text (ER_BASE64_DECODE_ERROR) and reads the first event:
+ * BINLOG statement decodes its base64 text (ER_BASE64_DECODE_ERROR) and reads events in order:
  * fewer than 13 bytes, or an event longer than the text, is a syntax error, and only a format
  * description or row event is allowed (ER_ONLY_FD_AND_RBR_EVENTS_ALLOWED_IN_BINLOG_STATEMENT,
- * naming the type of the event). The emulator applies no event, so a format description or
- * row event, which the server would decode, is refused as one it cannot decode (verified on a
- * live 8.4 server). None of the statements commits the open transaction. A server whose
+ * naming the type of the event). Format descriptions and row-query annotations
+ * establish connection state; table and row application are handled separately.
+ * None of the statements commits the open transaction. A server whose
  * log_bin is off purges nothing and warns of no file (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/purge-binary-logs.html,
  * https://dev.mysql.com/doc/refman/8.4/en/binlog.html.
@@ -100,36 +99,71 @@ final class BinaryLogCommand implements Command
                 $session->diagnostics->warning(AdministrationError::ActiveLogNotPurged, AdministrationError::ActiveLogNotPurged->message('./' . $log->active()));
             }
         } elseif ($statement instanceof BinlogEvent) {
-            $this->event((new Literals())->bytes($statement->events));
+            $this->event((new Literals())->bytes($statement->events), $session, $context);
         }
 
         return new Completion(0, 0, $session->diagnostics->raised());
     }
 
     /**
-     * Decodes the events of a BINLOG statement and refuses the first.
-     *
-     * @throws \MySqlMemory\Error\SqlError Always: the text is not base64, the event is malformed, or it is not one the statement allows
+     * Reads events in order, retaining successfully visited format descriptions.
+     * A malformed format attempt allocates the connection's default layout before
+     * failing. Rows-query annotations require that layout and carry no row changes.
+     * Verified through original, corrupted and concatenated events on MySQL 9.1.0.
      */
-    public function event(string $text): void
+    public function event(string $text, ?Session $session = null, ?Context $context = null): void
     {
-        $compact = (string) preg_replace('/\s+/', '', $text);
-        $bytes = strlen($compact) % 4 === 0 ? base64_decode($compact, true) : false;
-        if ($bytes === false) {
-            throw DataError::Base64DecodeFailed->error();
+        $format = $session?->binlog->format;
+        foreach ((new Binlog\Events())->read($text) as $event) {
+            $type = ord($event[4]);
+            if ($type === 15) {
+                $format ??= new Binlog\Format(19, '', 0);
+                if ($session !== null) {
+                    $session->binlog->format = $format;
+                }
+                $format = Binlog\Format::read($event);
+                if ($session !== null) {
+                    $session->binlog->format = $format;
+                }
+                continue;
+            }
+            $row = [19 => 'Table_map', 29 => 'Rows_query', 30 => 'Write_rows', 31 => 'Update_rows', 32 => 'Delete_rows', 39 => 'Update_rows_partial'][$type] ?? null;
+            if ($row === null) {
+                throw AdministrationError::BinlogEventRefused->error(self::EVENTS[$type] ?? 'Unknown');
+            }
+            if ($format === null) {
+                throw AdministrationError::NoFormatDescriptionEvent->error($row);
+            }
+            $this->replay($event, $type, $format, $session, $context);
         }
-        if (strlen($bytes) < 13) {
-            throw StatementError::SyntaxError->error();
-        }
-        $length = unpack('V', substr($bytes, 9, 4));
-        $type = ord($bytes[4]);
-        if (!is_array($length) || $length[1] > strlen($bytes) || in_array($type, self::DECODED, true)) {
-            throw StatementError::SyntaxError->error();
-        }
-        if ($type === 29) {
-            throw AdministrationError::NoFormatDescriptionEvent->error('Rows_query');
-        }
-
-        throw AdministrationError::BinlogEventRefused->error(self::EVENTS[$type] ?? 'Unknown');
     }
+
+    /**
+     * Applies a row-family event after its format and type checks.
+     *
+     * @throws \MySqlMemory\Error\SqlError When native row application reports an SQL error
+     */
+    public function replay(string $event, int $type, Binlog\Format $format, ?Session $session, ?Context $context): void
+    {
+        if ($type === 29) {
+            $body = $format->body($event);
+            $body->integer(1);
+            return;
+        }
+        \SqlSemantics\Diagnostic\Check::invariant($session !== null && $context !== null, 'Row replay requires its session and statement context.');
+        if ($type === 19) {
+            $map = Binlog\TableMap::read($event, $format);
+            $session->binlog->tables[$map->id] = $map;
+            return;
+        }
+        try {
+            (new Binlog\Rows())->apply($event, $type, $format, $session, $context);
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            if ($error->error === StatementError::UnknownError) {
+                throw $error;
+            }
+            throw new \MySqlMemory\Error\SqlError($error->error, $error->getMessage(), $error, [...$error->following, [1105, 'Unknown error']]);
+        }
+    }
+
 }

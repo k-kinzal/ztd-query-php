@@ -23,6 +23,7 @@ enum QueryError: int implements ErrorCode
     use CatalogedError;
 
     case RewrittenQuery = 1003;
+    case RecordNotFound = 1032;
     case NoDatabase = 1046;
     case BadDatabase = 1049;
     case NonUniqueColumn = 1052;
