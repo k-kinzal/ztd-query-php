@@ -42,6 +42,13 @@ final class ProgramSourceTest extends TestCase
         self::assertSame('SELECT a FROM t', ProgramSource::of($session)->text('query_expression_with_opt_locking_clauses'));
     }
 
+    public function testTriggerPreservesTheHeaderButRemovesItsOrderingClause(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->text = 'create trigger d.z before insert on d.t for each row follows y begin end';
+        self::assertSame('trigger d.z before insert on d.t for each row begin end', ProgramSource::of($session)->trigger());
+    }
+
     public function testBetweenAnswersTheTextBetweenTheParentheses(): void
     {
         $session = (new Instance())->connect();

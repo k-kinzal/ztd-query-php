@@ -29,6 +29,11 @@ final class CatalogHistory
      */
     public function steps(Statement|Scalar $node, int $code): array
     {
+        if ($code === 1360 && $node instanceof M\Utility\Show\Program\ShowCreateTrigger) {
+            $schema = $node->name->schema ?? new Name('structure_fixture');
+            $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('fixture_trigger_table'), $schema);
+            return [...(new Table\Changes())->table($table, false), new M\Utility\Explain\UseDatabase($schema), new M\Routine\CreateTrigger($node->name, M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Insert, new M\Routine\Trigger\TriggerTable($table), new M\Routine\Program\Block())];
+        }
         if ($code === 1539 && ($node instanceof M\Routine\AlterEvent || $node instanceof M\Utility\Show\Program\ShowCreateEvent)) {
             return [new M\Routine\CreateEvent($node->name, new M\Routine\Event\OnceSchedule(new M\Literal\StringLiteral(['2030-01-01 00:00:00'])), new M\Dml\Evaluation([new M\Query\SelectExpression(new M\Literal\NumberLiteral('7'))]), M\Routine\Event\Completion::Preserve, M\Routine\Event\EventStatus::Disable)];
         }

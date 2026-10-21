@@ -70,4 +70,12 @@ final class ProgramTextTest extends TestCase
     {
         self::assertSame('42', (new ProgramText(new LanguageProfile(GrammarRelease::MySql847)))->render(new NumberLiteral('42')));
     }
+
+    public function testTriggerRendersItsOriginalQualifiedIdentityWithoutInputText(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('x'), new Name('d'));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t'), new Name('d')));
+        $trigger = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger($name, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, $table, new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block());
+        self::assertSame('TRIGGER d.x BEFORE INSERT ON d.t FOR EACH ROW BEGIN END', (new ProgramText(new LanguageProfile(GrammarRelease::MySql5744)))->trigger($trigger));
+    }
 }

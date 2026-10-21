@@ -3726,6 +3726,16 @@ composition check rejects that combination during construction; ordinary modern
 role privileges with GRANT OPTION remain valid. No execution outcome is used to
 select this language domain.
 
+SHOW GRANTS histories create a missing account under the inspected identity.
+REVOKE PROXY histories establish the referenced accounts and their proxy grant.
+Every setup operation and unchanged retry is compared, including CURRENT_USER
+on both sides of a grant. SHOW CREATE TRIGGER histories create the missing
+trigger on a populated table and repeat the same inspection. Its result columns
+follow the semantic report shape, including the absence of Created in MySQL 5.6.
+Legacy trigger-header spelling is display metadata outside the semantic value;
+directly constructed definitions render their existing names and body without
+consulting input SQL.
+
 Constraint additions accept only index, foreign-key, and check-constraint values;
 column additions have their own command type. Generated-column collations must
 name a collation, replacement passwords use quoted text, expression subqueries

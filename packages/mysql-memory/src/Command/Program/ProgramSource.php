@@ -69,6 +69,17 @@ final class ProgramSource
     }
 
     /**
+     * Keeps the legacy trigger header's spelling while omitting FOLLOWS or PRECEDES.
+     * The result supplies display metadata only; execution consumes the typed body.
+     */
+    public function trigger(): string
+    {
+        $start = ($this->tree->find('trigger_tail')[0] ?? null)?->span()[0] ?? 0;
+        $order = ($this->tree->find('trigger_follows_precedes_clause')[0] ?? null)?->span();
+        return $order === null ? rtrim(substr($this->text, $start)) : rtrim(substr($this->text, $start, $order[0] - $start)) . ' ' . trim(substr($this->text, $order[1]));
+    }
+
+    /**
      * Answers the text between the parentheses that are tokens of the first node of a name.
      */
     public function between(string $node): string

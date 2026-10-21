@@ -19,6 +19,22 @@ use SqlSemantics\Statement\Identifier\Name;
 final class CatalogHistoryTest extends TestCase
 {
     /**
+     * Establishes the trigger under the inspected identity on a populated table.
+     */
+    public function testSetupKeepsTheInspectedTriggerNameAndEstablishesItsTable(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('trigger.name'));
+        $node = new M\Utility\Show\Program\ShowCreateTrigger($name);
+        $steps = (new CatalogHistory())->steps($node, 1360);
+        self::assertCount(5, $steps);
+        self::assertInstanceOf(M\Table\CreateTable::class, $steps[1]);
+        self::assertInstanceOf(M\Routine\CreateTrigger::class, $steps[4]);
+        self::assertSame($name, $steps[4]->name);
+        self::assertSame($steps[1]->name, $steps[4]->table->name);
+        self::assertSame([], (new CatalogHistory())->steps($node, 1064));
+    }
+
+    /**
      * Creates a disabled event under the exact referenced name.
      */
     public function testStepsKeepTheEventIdentityAndDisableItsScheduler(): void

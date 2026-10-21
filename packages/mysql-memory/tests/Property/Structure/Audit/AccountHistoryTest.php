@@ -20,6 +20,34 @@ use SqlSemantics\Statement\Identifier\Name;
 final class AccountHistoryTest extends TestCase
 {
     /**
+     * Establishes the account inspected by the unchanged SHOW GRANTS request.
+     */
+    public function testSetupCreatesTheInspectedAccountUnderItsOriginalIdentity(): void
+    {
+        $user = new M\Name\AccountName(new Name('ABCDE'));
+        $node = new M\Utility\Show\Server\ShowGrants($user);
+        $session = (new Instance('5.6.51'))->connect();
+        $steps = (new AccountHistory())->steps($node, 1141, $session);
+        self::assertCount(1, $steps);
+        self::assertInstanceOf(M\Account\CreateUser::class, $steps[0]);
+        self::assertSame($user, $steps[0]->users[0]->user);
+        self::assertSame([], (new AccountHistory())->steps($node, 1064, $session));
+    }
+
+    /**
+     * Preserves the proxied account when supplying the missing grant.
+     */
+    public function testSetupGrantsTheMissingProxyWithoutReplacingEitherAccount(): void
+    {
+        $user = new M\Name\CurrentUser();
+        $node = new M\Account\Privilege\RevokeProxy(false, $user, [new M\Account\User\UserSpecification(new M\Name\CurrentUser())]);
+        $steps = (new AccountHistory())->steps($node, 1141, (new Instance())->connect());
+        self::assertCount(1, $steps);
+        self::assertInstanceOf(M\Account\Privilege\GrantProxy::class, $steps[0]);
+        self::assertSame($user, $steps[0]->proxied);
+    }
+
+    /**
      * Creates only missing identities without using a modern conditional clause.
      */
     public function testSetupRetainsTheOriginalDropUserAccounts(): void

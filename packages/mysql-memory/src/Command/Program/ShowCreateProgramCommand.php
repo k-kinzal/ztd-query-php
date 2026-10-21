@@ -60,7 +60,7 @@ final class ShowCreateProgramCommand implements Command
         $database = ProgramSource::database($statement->name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
         if ($statement instanceof ShowCreateTrigger) {
-            return $this->trigger($schema, $database, $name, $context);
+            return $this->trigger($schema, $database, $name, $context, $operation->lookupField('Created') instanceof \SqlSemantics\Statement\Shape\UniqueField);
         }
         if ($statement instanceof ShowCreateEvent) {
             return $this->event($schema, $name, $context);
@@ -75,10 +75,11 @@ final class ShowCreateProgramCommand implements Command
      * @param Schema|null $schema The database of the trigger, null when it does not exist
      * @param string $database The name of the database of the trigger
      * @param string $name The name of the trigger as written
+     * @param bool $created Whether the semantic report shape includes the creation timestamp
      *
      * @throws SqlError When the database or the trigger does not exist
      */
-    public function trigger(?Schema $schema, string $database, string $name, Context $context): Reply
+    public function trigger(?Schema $schema, string $database, string $name, Context $context, bool $created = true): Reply
     {
         if ($schema === null) {
             throw QueryError::BadDatabase->error($database);
@@ -93,8 +94,8 @@ final class ShowCreateProgramCommand implements Command
                     Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
                     Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
                     Heading::text('Database Collation', Field::VarString, 32, $flag, 31),
-                    new Heading('Created', Field::Timestamp, 0, $flag | ColumnFlag::Binary->value),
-                ]))->sent([[$trigger->name, $trigger->mode, $trigger->create(), ...$trigger->charsets, ...[$trigger->created]]], $context);
+                    ...($created ? [new Heading('Created', Field::Timestamp, 0, $flag | ColumnFlag::Binary->value)] : []),
+                ]))->sent([[$trigger->name, $trigger->mode, $trigger->create(), ...$trigger->charsets, ...($created ? [$trigger->created] : [])]], $context);
             }
         }
 

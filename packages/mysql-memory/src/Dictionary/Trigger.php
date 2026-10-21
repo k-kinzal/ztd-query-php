@@ -29,6 +29,7 @@ final class Trigger
      * @param string $created When the trigger was created, as `YYYY-MM-DD hh:mm:ss.ff`
      * @param array{string, string, string} $charsets The character_set_client, collation_connection and database collation the trigger was created with
      * @param CreateTrigger $statement The statement that created the trigger
+     * @param string|null $display The legacy trigger clause used only for SHOW metadata
      */
     public function __construct(
         public readonly string $schema,
@@ -42,6 +43,7 @@ final class Trigger
         public readonly string $created,
         public readonly array $charsets,
         public readonly CreateTrigger $statement,
+        public readonly ?string $display = null,
     ) {
     }
 
@@ -50,6 +52,6 @@ final class Trigger
      */
     public function create(): string
     {
-        return 'CREATE DEFINER=' . Routine::quoted($this->definer[0]) . '@' . Routine::quoted($this->definer[1]) . ' TRIGGER ' . Routine::quoted($this->name) . ' ' . $this->time . ' ' . $this->event . ' ON ' . Routine::quoted($this->table) . ' FOR EACH ROW ' . $this->body;
+        return 'CREATE DEFINER=' . Routine::quoted($this->definer[0]) . '@' . Routine::quoted($this->definer[1]) . ' ' . ($this->display ?? 'TRIGGER ' . Routine::quoted($this->name) . ' ' . $this->time . ' ' . $this->event . ' ON ' . Routine::quoted($this->table) . ' FOR EACH ROW ' . $this->body);
     }
 }

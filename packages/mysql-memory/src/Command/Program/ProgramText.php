@@ -72,6 +72,23 @@ final class ProgramText
     }
 
     /**
+     * Displays a legacy trigger clause without its definer or execution order.
+     * Direct construction renders the retained identity and body without input SQL.
+     */
+    public function trigger(\SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger $trigger): string
+    {
+        if ($this->source !== null) {
+            $tail = $this->source->trigger();
+            return $this->followed ? $tail : rtrim(rtrim($tail, ';'));
+        }
+        $output = new Output(Platforms::of($this->profile->grammar->database())->codec($this->profile));
+        $output->keyword('TRIGGER');
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames())->qualified($output, $trigger->name);
+        $output->keyword($trigger->time->value, $trigger->event->value, 'ON')->node($trigger->table)->keyword('FOR', 'EACH', 'ROW')->node($trigger->body);
+        return (new Lexical())->join($output->pieces()) . $output->trailing();
+    }
+
+    /**
      * Renders display metadata directly from a semantic operand.
      */
     public function render(Node $node): string
