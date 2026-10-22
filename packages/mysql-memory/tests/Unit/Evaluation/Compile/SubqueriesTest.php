@@ -102,6 +102,21 @@ final class SubqueriesTest extends TestCase
         self::assertSame([['0', '1', '0', '1', '0']], $result->rows);
     }
 
+    public function testLegacyRetainsTablelessExpressionsAcrossFalseAndDynamicFilters(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $result = $session->query('SELECT 7 IN (SELECT 7 FROM DUAL WHERE FALSE),7 <= ANY (SELECT 7 FROM DUAL WHERE @v),NULL <= ALL (SELECT 7 FROM DUAL WHERE FALSE),7 <= ANY (SELECT 7 FROM DUAL WHERE FALSE)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', null, '0']], $result->rows);
+    }
+
+    public function testFilteredSingleRetainsTheNativeModernNegationReduction(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT 10 NOT IN (SELECT 7 WHERE TRUE),7 NOT IN (SELECT 7 WHERE 1=1),10 NOT IN (SELECT 7),0x37 = ANY (SELECT 7 WHERE TRUE)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1', '0']], $result->rows);
+    }
+
     public function testMembershipCompilesRowConstructorElementsAgainstSubqueryColumns(): void
     {
         $result = (new Instance())->connect()->query('SELECT (1, 2) IN (SELECT 1, 2), (1, 2) <> ALL (SELECT 1, 2)')[0];

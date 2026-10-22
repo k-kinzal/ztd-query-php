@@ -121,12 +121,48 @@ final class Subqueries
             throw QueryError::OperandColumns->error(1);
         }
         $single = $operator === ComparisonOperator::Equal || $operator === ComparisonOperator::NotEqual ? $this->single($query) : null;
-        if ($single !== null) {
-            return $this->compiler->operators->compare($negated ? ComparisonOperator::NotEqual : $operator, $operand, $single, $scope, $node, $value);
+        $comparison = $negated ? ComparisonOperator::NotEqual : $operator;
+        if ($single === null && ($operator === ComparisonOperator::Equal || $operator === ComparisonOperator::NotEqual)) {
+            $single = $this->filteredSingle($query);
+            if ($single !== null && !$this->compiler->settings->legacy() && ($negated || ($operator === ComparisonOperator::NotEqual && $all))) {
+                $comparison = ComparisonOperator::Equal;
+            }
         }
-        $comparator = Comparator::of($value->domain(), $plan->domains[0], $operator->value, $this->compiler->settings->connectionCollation);
+        if ($single !== null) {
+            return $this->compiler->operators->compare($comparison, $operand, $single, $scope, $node, $value);
+        }
+        $comparator = (new Projection\ComparedOutput($this->compiler))->comparator($value->domain(), $plan->domains[0], $query, $operator);
 
-        return new Quantified($value, new Rows($plan), $operator, $all, $negated, $comparator, $this->compiler->operators->truth(true));
+        [$tableless, $filter] = $this->legacy($query, $scope);
+        $output = new Projection\ComparedOutput($this->compiler);
+        return new Quantified($value, new Rows($plan), $operator, $all, $negated, $comparator, $this->compiler->operators->truth(true), $output->constant($query, $scope), $tableless, $filter, $output->skipNull($query));
+    }
+
+    /**
+     * Retains MySQL 5.6's tableless comparison expression and only a constant WHERE.
+     * A NULL comparison remains NULL even when that WHERE excludes the single row.
+     *
+     * @return array{Evaluable|null, Evaluable|null} Inner expression and retained filter
+     */
+    public function legacy(\SqlSemantics\Statement\Query $query, Scope $scope): array
+    {
+        $body = $this->innermost($query);
+        if ($this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || !$body instanceof Select || $body->where === null) {
+            return [null, null];
+        }
+        $expression = (new \SqlSemantics\Platform\MySql\Rules\Expression\ScalarReduction())->predicate($body, $this->compiler->settings->release());
+        return $expression === null ? [null, null] : [$this->compiler->compile($expression, $scope), $this->compiler->constancy($body->where) === Constancy::Resolved ? $this->compiler->compile($body->where, $scope) : null];
+    }
+
+    /**
+     * Reduces a modern tableless predicate after a known true WHERE disappears.
+     * Native 8.0 and 8.4 lose the NOT IN / <> ALL wrapper in this case and expose
+     * equality; an absent WHERE and a HAVING clause retain their ordinary roles.
+     */
+    public function filteredSingle(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Statement\Scalar
+    {
+        $body = $this->innermost($query);
+        return $body instanceof Select && $body->where !== null ? (new \SqlSemantics\Platform\MySql\Rules\Expression\ScalarReduction())->predicate($body, $this->compiler->settings->release()) : null;
     }
 
     /**

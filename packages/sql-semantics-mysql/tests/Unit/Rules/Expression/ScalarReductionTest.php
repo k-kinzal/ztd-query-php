@@ -17,6 +17,15 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 #[Medium]
 final class ScalarReductionTest extends TestCase
 {
+    public function testRetainedFilterDistinguishesLegacyPresenceFromModernTruth(): void
+    {
+        $rule = new ScalarReduction();
+        $truth = new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true);
+        self::assertTrue($rule->retainedFilter($truth, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertFalse($rule->retainedFilter($truth, \SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($rule->retainedFilter(null, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+    }
+
     /**
      * @return iterable<string, array{string, bool}>
      */
@@ -36,6 +45,8 @@ final class ScalarReductionTest extends TestCase
         yield 'table' => ['SELECT a FROM t', false];
         yield 'where' => ['SELECT 1 WHERE FALSE', false];
         yield 'true filter' => ['SELECT 1 WHERE TRUE', true];
+        yield 'true comparison' => ['SELECT 1 WHERE 1=1', true];
+        yield 'false comparison' => ['SELECT 1 WHERE 1=2', false];
         yield 'having' => ['SELECT 1 HAVING TRUE', false];
         yield 'aggregate' => ['SELECT COUNT(*)', false];
         yield 'window' => ['SELECT ROW_NUMBER() OVER ()', false];
@@ -63,6 +74,15 @@ final class ScalarReductionTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery::class, $subquery);
         self::assertNull((new ScalarReduction())->expression($subquery->query));
         self::assertNull($operation->facts->scalar($subquery)->replacement);
+    }
+
+    public function testPredicateRetainsTheMySql56EqualityReductionAcrossWhere(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (SELECT 7 FROM DUAL WHERE FALSE)');
+        $subquery = $operation->field(0)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $subquery);
+        self::assertNotNull((new ScalarReduction())->predicate($subquery->query, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertNull((new ScalarReduction())->predicate($subquery->query, \SqlSemantics\Contract\GrammarRelease::MySql5744));
     }
 
     public function testFilteredKeepsFalseAndUnknownConditions(): void

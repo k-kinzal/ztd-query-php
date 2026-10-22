@@ -35,13 +35,13 @@ final class ScalarReduction
     /**
      * Answers the existing selected expression when the scalar wrapper can be eliminated.
      */
-    public function expression(Query $query, GrammarRelease $release = GrammarRelease::MySql847): ?Scalar
+    public function expression(Query $query, GrammarRelease $release = GrammarRelease::MySql847, bool $ignoreWhere = false): ?Scalar
     {
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || ($legacy ? $query->where !== null : $this->filtered($query->where)) || $query->having !== null || $query->qualify !== null || $query->into !== null || count($query->items) !== 1 || (new RollupItems())->windowed($query) || ($release !== GrammarRelease::MySql910 && (new RollupItems())->rolls($query))) {
+        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || (!$ignoreWhere && $this->retainedFilter($query->where, $release)) || $query->having !== null || $query->qualify !== null || $query->into !== null || count($query->items) !== 1 || (new RollupItems())->windowed($query) || ($release !== GrammarRelease::MySql910 && (new RollupItems())->rolls($query))) {
             return null;
         }
         $item = $query->items[0];
@@ -50,12 +50,29 @@ final class ScalarReduction
     }
 
     /**
+     * Tells whether this release retains a tableless WHERE during scalar reduction.
+     */
+    public function retainedFilter(?Scalar $condition, GrammarRelease $release): bool
+    {
+        return in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? $condition !== null : $this->filtered($condition);
+    }
+
+    /**
+     * Reduces equality quantification, whose MySQL 5.6 tableless form ignores WHERE.
+     * HAVING, aggregation and windows still retain the query boundary.
+     */
+    public function predicate(Query $query, GrammarRelease $release): ?Scalar
+    {
+        return $this->expression($query, $release, $release === GrammarRelease::MySql5651);
+    }
+
+    /**
      * Tells whether a WHERE condition remains after folding a known integer truth.
      * An absent filter or a known nonzero integer does not restrict the single row.
      */
     public function filtered(?Scalar $condition): bool
     {
-        return $condition !== null && ((new \SqlSemantics\Platform\MySql\Rules\Typing\Constants())->value($condition)[0] ?? 0) === 0;
+        return $condition !== null && (new Preparation\ConstantTruth())->of($condition) !== true;
     }
 
     /**

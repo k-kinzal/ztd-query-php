@@ -4677,3 +4677,21 @@ be empty from its predicates or limit keeps the original metadata. Prepared
 MySQL 5.7 star expansion retains the derived output's column name while exposing
 the underlying table. Text and prepared comparisons cover these differences
 with populated, renamed and nested inputs on five server releases.
+
+Quantified predicates retain the conversion role of each operand. A binary
+literal projected directly by a subquery can differ from the same bytes read
+from a stored column. `ProjectionSources` in SQL Semantics follows resolved
+slot identities through stars, derived tables, CTEs and set branches. Memory
+uses those dependencies for comparison compilation, without recovering SQL or
+resolving names again. Metadata derives from the same semantic output sources.
+
+The quantified-comparison corpus preserves constant and varying expressions,
+NULL operands, empty and populated tables, WHERE and HAVING, set branches and
+both text and prepared execution. Legacy tableless comparisons can retain an
+expression independently of WHERE. MySQL 5.7 applies a retained false filter
+before an otherwise constant NULL comparison; 5.6 retains that NULL. The
+published NULL attribute is a separate observation: MySQL 8.0 can report only
+the inner attribute for a nullable outer operand, whereas 8.1 and later retain
+the combined attribute. These differences are derived from native query
+observations and do not change the public statement constructors into an
+execution-eligibility interface.

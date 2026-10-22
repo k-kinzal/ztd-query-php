@@ -180,20 +180,35 @@ final class SubqueryRows
     public function predicate(ScalarFact $operand, QueryFact $query, Derivation $derivation, Scalar $expression, bool $negated): ScalarFact
     {
         $nullability = $this->test($operand, $query, $derivation, $expression);
-        if (($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison) && (new ScalarReduction())->expression($expression->query) === null) {
-            $nullability = Nullability::Nullable;
-        }
-        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        if ($legacy && $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && (new ScalarReduction())->expression($expression->query) === null) {
-            $membership = ($expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any)
-                || ($expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::All);
-            if (!$membership) {
-                $nullability = $operand->nullability;
-            }
+        $release = $derivation->context->profile->grammar;
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $equal = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && in_array($expression->operator, [\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual], true));
+        if (($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison) && ($equal ? (new ScalarReduction())->predicate($expression->query, $release) : (new ScalarReduction())->expression($expression->query, $release)) === null) {
+            $nullability = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison ? $this->unreduced($expression, $operand->nullability, $nullability, $release, $derivation->facts()) : Nullability::Nullable;
         }
         $wide = $legacy && !$negated && ((new Operands())->width($operand) > 1 || $this->stored($expression, $derivation->context->profile->grammar) !== null);
 
         return new ScalarFact(new Known(Domain::integer(ResolvedField::LongLong, $wide ? 21 : 1)), $nullability);
+    }
+
+    /**
+     * Retains native NULL attributes for unreduced quantified comparisons.
+     * Equality with ALL and inequality with ANY retain the bound output attribute.
+     * Ordered predicates over an unfiltered tableless set do so on modern servers;
+     * legacy and early-modern profiles retain their distinct projection attributes.
+     */
+    public function unreduced(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison $expression, Nullability $outer, Nullability $bound, GrammarRelease $release, Facts $facts): Nullability
+    {
+        $equal = $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal;
+        $unequal = $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual;
+        $all = $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::All;
+        if (($equal && !$all) || ($unequal && $all)) {
+            return Nullability::Nullable;
+        }
+        if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+            return (new Preparation\QuantifiedAttributes($facts))->legacy($expression->query, $outer, $bound, $release, !$equal && !$unequal);
+        }
+        return (new Preparation\QuantifiedAttributes($facts))->modern($expression->query, $outer, $bound, $release, $equal || $unequal);
     }
 
     /**
@@ -210,7 +225,7 @@ final class SubqueryRows
         $membership = ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery && !$expression->negated)
             || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any);
 
-        return $membership && (new ScalarReduction())->expression($expression->query, $release) === null ? Domain::integer() : null;
+        return $membership && (new ScalarReduction())->predicate($expression->query, $release) === null ? Domain::integer() : null;
     }
 
     /**

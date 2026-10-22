@@ -154,6 +154,13 @@ final class SubqueryRowsTest extends TestCase
         self::assertEquals($domain, (new SubqueryRows())->string($domain, null));
     }
 
+    public function testUnreducedKeepsTheAttributeOfAConstantSetForOrderedPredicates(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0x37 <= ANY (SELECT 7 UNION ALL SELECT 10),0x37 = ANY (SELECT 7 UNION ALL SELECT 10)');
+        self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
+    }
+
     public function testPredicateRetainsNullableMetadataUntilMembershipIsReduced(): void
     {
         $semantics = new Semantics(Dialect::MySql);

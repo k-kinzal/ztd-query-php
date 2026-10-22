@@ -25,6 +25,15 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class QuantifiedTest extends TestCase
 {
+    public function testEvaluateRetainsLegacyConstantNullComparisonsAcrossEmptyRows(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(i INT)');
+        $result = $session->query('SELECT 7 <= ANY (SELECT NULL FROM t),NULL <= ANY (SELECT NULL FROM t)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, '0']], $result->rows);
+    }
+
     public function testEvaluateAnswersAllTrueAndAnyFalseOverNoRow(): void
     {
         $session = (new Instance())->connect();

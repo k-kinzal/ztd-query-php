@@ -34,6 +34,10 @@ final class Quantified implements Evaluable
      * @param bool $negated Whether the result is negated (NOT IN)
      * @param Comparator $comparator How the value compares with the column of the subquery
      * @param Domain $domain The domain of the truth value
+     * @param Evaluable|null $constant A legacy row-independent inner value inspected before WHERE for a non-NULL operand
+     * @param Evaluable|null $tableless A legacy single expression retained independently of WHERE
+     * @param Evaluable|null $filter A preparation-constant WHERE retained for legacy ordered quantification
+     * @param bool $skipNull Whether HAVING discards an unknown computed comparison
      */
     public function __construct(
         public readonly Evaluable $operand,
@@ -43,6 +47,10 @@ final class Quantified implements Evaluable
         public readonly bool $negated,
         public readonly Comparator $comparator,
         public readonly Domain $domain,
+        public readonly ?Evaluable $constant = null,
+        public readonly ?Evaluable $tableless = null,
+        public readonly ?Evaluable $filter = null,
+        public readonly bool $skipNull = false,
     ) {
     }
 
@@ -67,6 +75,19 @@ final class Quantified implements Evaluable
         $value = $this->operand->evaluate($frame);
         $context = $frame->context;
         $quiet = new Context($context->modes, new Diagnostics(), $context->variables, $context->started);
+        if ($value !== null && $this->constant !== null && $this->constant->evaluate($frame) === null) {
+            return null;
+        }
+        if ($this->tableless !== null) {
+            $order = $this->comparator->compare($value, $this->tableless->evaluate($frame), $quiet);
+            if ($order === null) {
+                return null;
+            }
+            if ($this->filter !== null && \MySqlMemory\Evaluation\Convert::toBool($this->filter->evaluate($frame), $this->filter->domain(), $quiet) !== true) {
+                return $this->result($this->all);
+            }
+            return $this->result(Compare::holds($this->operator, $order));
+        }
         $iterator = $this->rows->start($frame);
         $unknown = false;
         $any = false;
@@ -74,6 +95,9 @@ final class Quantified implements Evaluable
             $any = true;
             $order = $this->comparator->compare($value, $row[0], $quiet);
             $holds = $order === null ? null : Compare::holds($this->operator, $order);
+            if ($holds === null && $this->skipNull && $value !== null) {
+                continue;
+            }
             if ($holds === null) {
                 $unknown = true;
             } elseif ($holds !== $this->all) {
