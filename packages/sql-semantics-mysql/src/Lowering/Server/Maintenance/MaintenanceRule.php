@@ -120,11 +120,17 @@ final class MaintenanceRule
      *
      * @return list<MaintainedTable>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the list repeats an identical table name
      */
     public function tables(Node $list): array
     {
+        $names = $this->lowering->names->qualifiedList($list);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated($names);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
         $tables = [];
-        foreach ($this->lowering->names->qualifiedList($list) as $name) {
+        foreach ($names as $name) {
             $tables[] = new MaintainedTable($name);
         }
 

@@ -19,6 +19,17 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class TableIdentityTest extends TestCase
 {
+    public function testRepeatedSeparatesIdenticalNamesFromContextDependentEquality(): void
+    {
+        $first = new QualifiedName(new Name('t'));
+        $qualified = new QualifiedName(new Name('t'), new Name('d'));
+        $repeated = new QualifiedName(new Name('t'));
+        $identity = new TableIdentity();
+
+        self::assertNull($identity->repeated([$first, $qualified]));
+        self::assertSame($repeated, $identity->repeated([$first, $qualified, $repeated])?->name);
+    }
+
     /**
      * @return iterable<string, array{QualifiedName, ObjectNameKind}>
      */

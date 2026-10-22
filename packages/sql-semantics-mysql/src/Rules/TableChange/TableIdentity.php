@@ -41,4 +41,22 @@ final class TableIdentity
 
         return $name->name->value === '' ? new EmptyObjectName(ObjectNameKind::Table) : null;
     }
+
+    /**
+     * Finds identities repeated without requiring a default database or name-comparison policy.
+     *
+     * @param list<QualifiedName> $names The table identities in source order
+     */
+    public function repeated(array $names): ?\SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable
+    {
+        $seen = [];
+        foreach ($names as $name) {
+            $key = serialize([$name->catalog?->value, $name->schema?->value, $name->name->value]);
+            if (isset($seen[$key])) {
+                return new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable($name);
+            }
+            $seen[$key] = true;
+        }
+        return null;
+    }
 }

@@ -19,10 +19,14 @@ final class DerivedAliases
 {
     /**
      * Retains the original boundary of a missing alias without publishing an invalid relation.
+     * Invalid table operands are left to the ordinary name check and its ordering rules.
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput
     {
         if ($node->name !== 'join_table_list') {
+            return null;
+        }
+        if ((new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->within($node, $lowering) !== null) {
             return null;
         }
         try {

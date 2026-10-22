@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
-use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
@@ -22,17 +21,25 @@ final class DropTableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $drop = $semantics->analyze('DROP TABLE t, u, t', [$table]);
+        $drop = $semantics->analyze('DROP TABLE t, u', [$table]);
 
         self::assertInstanceOf(DropTable::class, $drop->statement);
         self::assertInstanceOf(DeclaredTable::class, $drop->facts->relation($drop->statement->tables[0])->table);
         self::assertInstanceOf(MissingTable::class, $drop->facts->relation($drop->statement->tables[1])->table);
-        self::assertInstanceOf(RepeatedTable::class, $drop->facts->diagnostics[1]);
     }
 
     public function testRenderWritesEveryPart(): void
     {
         self::assertSame('DROP TEMPORARY TABLE IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
+    }
+
+    public function testRenderRequiresDistinctTableIdentities(): void
+    {
+        $this->expectExceptionMessage('DROP TABLE cannot repeat an identical table name.');
+        new DropTable(false, false, [
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
+        ]);
     }
 
     public function testDeriveStatementRefusesAViewWithoutIfExists(): void

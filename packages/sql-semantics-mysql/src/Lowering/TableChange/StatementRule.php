@@ -101,12 +101,18 @@ final class StatementRule
      * Lowers DROP TABLE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table identity is repeated
      */
     public function dropTable(Form $form): DropTable
     {
         $this->lowering->options->skip($form->node(2));
+        $names = $this->lowering->names->qualifiedList($form->node(4));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated($names);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
         $tables = [];
-        foreach ($this->lowering->names->qualifiedList($form->node(4)) as $name) {
+        foreach ($names as $name) {
             $tables[] = new TargetTable($name);
         }
 
