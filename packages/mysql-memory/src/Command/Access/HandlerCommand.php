@@ -15,7 +15,6 @@ use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\Source\SingleRow;
 use MySqlMemory\Plan\Path\Transform\Limit;
 use MySqlMemory\Plan\Planner;
@@ -116,7 +115,7 @@ final class HandlerCommand implements Command
         assert($table !== null);
         $query = $this->select($handler, null);
         $select = new Operation($operation->context, new QueryRoot($query));
-        foreach ([...$operation->facts->diagnostics, ...$select->facts->diagnostics] as $diagnostic) {
+        foreach ($select->facts->diagnostics as $diagnostic) {
             throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
         }
         assert($query->from !== null);
@@ -165,11 +164,7 @@ final class HandlerCommand implements Command
         if ($statement->where === null) {
             return null;
         }
-        $definition = $table->definition;
-        $scope = new Scope();
-        $scope->place($statement->handler, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
-
-        return $planner->compiler->compile($statement->where, $scope);
+        return $planner->compiler->compile($statement->where, (new HandlerKeys())->scope($statement->handler, $table));
     }
 
     /**
@@ -180,11 +175,20 @@ final class HandlerCommand implements Command
     public function values(HandlerIndexSeek $statement, Operation $operation, Session $session, Context $context, Connection $connection): array
     {
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $handler = $this->handler($session, $statement->handler->name->value);
+        $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        assert($table !== null);
+        $keys = new HandlerKeys();
+        $scope = $keys->scope($statement->handler, $table);
         $values = [];
         foreach ($statement->values as $position => $value) {
-            $values[] = $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest
-                ? $this->default($statement, $position, $session, $context)
-                : $planner->compiler->compile($value, new Scope())->evaluate(new Frame($context));
+            if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest) {
+                $values[] = $this->default($statement, $position, $session, $context);
+                continue;
+            }
+            $compiled = $planner->compiler->compile($value, $scope);
+            $keys->check($value, $session->settings()->legacy());
+            $values[] = $compiled->evaluate(new Frame($context));
         }
 
         return $values;

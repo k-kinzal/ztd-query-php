@@ -74,8 +74,7 @@ final class HandlerInput
         $handler = $command->handler($session, $read->handler->name->value);
         $table = $session->instance->dictionary->table($handler->schema, $handler->table);
         assert($table !== null);
-        $scope = new Scope();
-        $scope->place($read->handler, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
+        $scope = (new \MySqlMemory\Command\Access\HandlerKeys())->scope($read->handler, $table);
         if ($read->where !== null) {
             $this->prepare($read->where, $facts, $scope, $session);
         }
@@ -87,7 +86,7 @@ final class HandlerInput
         }
         foreach ($read->values as $value) {
             if (!$value instanceof DefaultRequest) {
-                $this->prepare($value, $facts, new Scope(), $session);
+                $this->prepare($value, $facts, $scope, $session);
             }
         }
         throw new LogicException('A refused handler read must retain a non-scalar operand.');

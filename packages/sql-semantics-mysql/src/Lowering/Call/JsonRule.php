@@ -51,7 +51,7 @@ final class JsonRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function value(Form $form): JsonValueCall
+    public function value(Form $form): JsonValueCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall
     {
         $this->lowering->names->claimed($form, ['function_call_keyword: JSON_VALUE_SYM ( simple_expr , text_literal opt_returning_type opt_on_empty_or_error )']);
         $target = $this->returning($form->node(5));
@@ -61,8 +61,12 @@ final class JsonRule
         }
         [$onEmpty, $onError] = $this->responses($form->node(6));
 
+        $document = (new \SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule($this->lowering))->simpleExpression($form->node(2));
+        if (!$document instanceof \SqlSemantics\Statement\Scalar) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall($document, $this->lowering->literals->string($form->node(4)), $target, $onEmpty, $onError);
+        }
         return new JsonValueCall(
-            $this->lowering->expressions->simpleExpression($form->node(2)),
+            $document,
             $this->lowering->literals->string($form->node(4)),
             $target,
             $onEmpty,

@@ -172,6 +172,14 @@ final class Names
      */
     public function inserted(InsertedColumn $node, Scope $scope): Evaluable
     {
+        $resolution = $this->compiler->facts->scalar($node->column)->resolution;
+        if ($resolution instanceof ResolvedColumn && $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler) {
+            foreach ($this->compiler->facts->warnings as $warning) {
+                if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation && $this->compiler->facts->warningSubject($warning) === $node) {
+                    $this->compiler->connection->context->diagnostics->warning($warning->code(), $warning->message());
+                }
+            }
+        }
         $definition = $scope->inserted;
         if ($definition === null) {
             if ($this->compiler->facts->scalar($node->column)->type instanceof \SqlSemantics\Statement\Type\Invalid) {

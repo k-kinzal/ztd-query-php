@@ -63,6 +63,20 @@ final class JsonRuleTest extends TestCase
         self::assertSame(JsonResponseKind::Error, $call->onError?->kind);
     }
 
+    public function testValueRetainsANonScalarDocumentWithItsOptions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT JSON_VALUE((a, 2), '$.b' RETURNING CHAR(3) DEFAULT 'x' ON EMPTY ERROR ON ERROR)")->find('function_call_keyword')[0];
+        $call = (new JsonRule($lowering))->value($lowering->form($node));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall::class, $call);
+        self::assertSame(CastKind::Char, $call->returning?->kind);
+        self::assertSame(JsonResponseKind::Default, $call->onEmpty?->kind);
+        self::assertSame(JsonResponseKind::Error, $call->onError?->kind);
+    }
+
     public function testReturningLowersNoType(): void
     {
         $platform = new Platform();

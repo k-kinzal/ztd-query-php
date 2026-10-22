@@ -42,6 +42,24 @@ final class HandlerFactsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Missing\SessionState::class, $fact->type->missing[0]);
     }
 
+    public function testReadResolvesKeyColumnsAgainstTheSameOpenHandlerAsItsPredicate(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE d.t(a INT)')->declarations()[0];
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), handlers: ['h' => $table->name]);
+        $operation = $semantics->analyze('HANDLER h READ k = (a) WHERE a', $semantics->context([$table], session: $settings));
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek::class, $statement);
+        $key = $operation->facts->scalar($statement->values[0])->resolution;
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $key);
+        self::assertSame($statement->handler, $key->relation);
+        self::assertNotNull($statement->where);
+        $predicate = $operation->facts->scalar($statement->where)->resolution;
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $predicate);
+        self::assertSame($key->relation, $predicate->relation);
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
     public function testReadRecordsTheRowsOfTheHandler(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (1) WHERE h.a = 2 LIMIT 1');

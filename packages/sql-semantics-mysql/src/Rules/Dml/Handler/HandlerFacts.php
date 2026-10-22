@@ -19,8 +19,10 @@ use SqlSemantics\Statement\Shape\OpenStar;
  * Derives the facts of HANDLER ... READ.
  *
  * Rule: MYSQL-HANDLER-READ-001. The handler is an open relation under its
- * name (MYSQL-HANDLER-TABLE-001); WHERE sees it, the key values and LIMIT
- * see no relation. DEFAULT takes the type and value of its index column, which depend on the open handler. The statement returns the rows read: every column of the
+ * name (MYSQL-HANDLER-TABLE-001); WHERE and key operands see its columns.
+ * LIMIT sees no relation. A key must be constant after its dependencies resolve.
+ * DEFAULT takes the type and value of its index column, which depend on the open
+ * handler. The statement returns the rows read: every column of the
  * handler's table, which is session state, so the output is an open star
  * that depends on that state. Terminates: one pass over the finite parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html. Status: Implemented.
@@ -39,16 +41,17 @@ final class HandlerFacts
         $this->functions([...$values, ...($where === null ? [] : [$where])], $derivation);
         $base = $derivation->environment();
         $fact = $derivation->relation($handler, $base);
+        $visible = new Environment($derivation->context, $base, [new VisibleRelation($handler, $fact->shape, $handler->name, implicit: (new \SqlSemantics\Platform\MySql\Rules\Query\TableShapes())->implicit($fact))]);
         foreach ($values as $position => $value) {
             $column = new \SqlSemantics\Statement\Shape\Field($position, new \SqlSemantics\Statement\Shape\OutputSlot(null, new \SqlSemantics\Statement\Type\Dependent([new \SqlSemantics\Statement\Reference\Missing\SessionState('handler index key')]), \SqlSemantics\Statement\Type\Nullability::Dependent));
             if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
-                $derivation->scalar($value, $base);
+                $derivation->scalar($value, $visible);
             } else {
-                (new WriteScope())->value($value, $column, $derivation, $base);
+                (new WriteScope())->value($value, $column, $derivation, $visible);
             }
         }
         if ($where !== null) {
-            $derivation->scalar($where, new Environment($derivation->context, $base, [new VisibleRelation($handler, $fact->shape, $handler->name, implicit: (new \SqlSemantics\Platform\MySql\Rules\Query\TableShapes())->implicit($fact))]));
+            $derivation->scalar($where, $visible);
         }
         (new TailFacts())->limit($limit, $derivation, $base);
         $fields = [];
