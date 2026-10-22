@@ -29,6 +29,8 @@ final class AlterUse
 
     /**
      * Resolves the target database without opening the table during preparation.
+     *
+     * @throws SqlError When the retained header or partition clause is invalid
      */
     public function header(DeferredAlterTable $definition, Session $session, ?string $database = null): string
     {
@@ -45,6 +47,14 @@ final class AlterUse
         }
         (new AlterTableCommand())->read($definition->commands, $facts, $session->settings()->legacy());
         (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($definition, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()));
+        foreach ($facts->warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
+                throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
+            }
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session);
+            }
+        }
         return $database;
     }
 

@@ -12,6 +12,19 @@ composer fuzz:structures -- 100 example-seed
 
 The campaign discovers concrete types from the reviewed semantic value inventories. Its generator interprets native constructor types and PHPDoc collection types, chooses enum cases, and builds fresh nested objects. A readonly field's declared `@var` type takes precedence over the corresponding constructor parameter: for example, a constructor may accept a broad list and check that every element is a select item before retaining it as a `non-empty-list<SelectExpression|Star|TableWildcard>`. Constructor invariant violations cause another construction attempt. The generator has finite depth and attempt budgets; exhaustion is reported as an incomplete trial and never as a successful execution. Primitive values and collection lengths are bounded, so passing a finite campaign is evidence about the sampled inputs.
 
+Deferred ALTER preparation consumes the partition diagnostics already retained
+by Semantics before checking whether a validation modifier applies. The input
+adapter receives numeric source ranges with a refused template, so it can format
+the native error location without retaining input SQL or an AST in the template.
+
+SHOW inspection headers and their filters have separate preparation dependencies.
+Modern column and key inspections require a database before contextualizing their
+filters; legacy filters contextualize first. Contextualization diagnostics precede
+opening an absent inspection target. The same retained refused filter is checked
+across database-selection states, and direct construction uses an unrelated
+request label. Native regressions compare text and prepared inspection across
+missing and populated tables without substituting a different expression.
+
 Native comparison preserves the initial outcome and any explicit state history.
 For missing prepared statements, savepoints and XA transactions, it creates the
 required session objects from the tested structure's own identifiers and repeats

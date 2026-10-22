@@ -62,7 +62,7 @@ final class DefaultDatabase
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && $statement->kind !== \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function,
             $statement instanceof ShowFunctionCode,
             $statement instanceof ShowProcedureCode => [$statement->name],
-            default => [],
+            default => $this->inspection($statement, $session),
         };
         foreach ($names as $name) {
             if ($name->schema === null) {
@@ -72,6 +72,23 @@ final class DefaultDatabase
                 throw QueryError::NoDatabase->error();
             }
         }
+    }
+
+    /**
+     * Selects inspection names whose database precedes filter contextualization.
+     * An explicit FROM database satisfies this header dependency without opening it.
+     *
+     * @return list<\SqlSemantics\Statement\Identifier\QualifiedName> Inspection targets requiring the current database
+     */
+    public function inspection(Statement $statement, Session $session): array
+    {
+        if ($session->settings()->legacy()) {
+            return [];
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys) {
+            return $statement->database === null ? [$statement->table->name] : [];
+        }
+        return [];
     }
 
     /**

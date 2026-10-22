@@ -18,6 +18,34 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class AlterUseTest extends TestCase
 {
+    public function testHeaderPreservesPartitionContextualizationBeforeValidationOrTableLookup(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $definition = new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('missing')), [
+            new M\Alter\Modifier\ValidationOption(true),
+            new M\Alter\Partition\PartitionBy(new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Call\KeywordCall(M\Call\KeywordFunction::User, [])), null, null, [])),
+        ]);
+        $session->text = 'unrelated invalid input';
+
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage('Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed');
+        (new AlterUse())->header($definition, $session);
+    }
+
+    public function testHeaderPreservesMissingRangeDefinitionsBeforeValidation(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $definition = new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('missing')), [
+            new M\Alter\Modifier\ValidationOption(true),
+            new M\Alter\Partition\PartitionBy(new M\Partition\PartitionClause(new M\Partition\Method\ExpressionMethod(M\Partition\Method\PartitionKind::Range, new M\Name\ColumnUse(new Name('a'))), null, null, [])),
+        ]);
+        $session->text = 'unrelated invalid input';
+
+        $this->expectExceptionCode(1492);
+        $this->expectExceptionMessage('For RANGE partitions each partition must be defined');
+        (new AlterUse())->header($definition, $session);
+    }
+
     public function testRaiseRejectsACreationTransactionBeforeOpeningTheAlterTarget(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

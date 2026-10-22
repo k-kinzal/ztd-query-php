@@ -21,9 +21,10 @@ use WeakReference;
 /**
  * Prepares a refused SHOW filter in its retained inspection scope.
  *
- * Modern schema inspections open the named database before resolving the
- * filter. A missing default database for an unqualified nested table is an
- * earlier condition. Legacy inspections prepare their filters first.
+ * Modern schema inspections require a default database before contextualizing
+ * their filters. Filter contextualization precedes opening the inspected target;
+ * opening that target precedes resolving nested tables in text execution.
+ * Legacy inspections contextualize their filters before selecting a database.
  *
  * @visibility MySqlMemory
  */
@@ -57,19 +58,30 @@ final class ShowInput
         $derivation->scalar($operand, new Environment($context, null, [new VisibleRelation($problem->header, $fact->shape)]));
         $diagnostics = $derivation->facts()->diagnostics;
         foreach ($diagnostics as $diagnostic) {
+            if ($session->settings()->legacy() && Stages::parsed($diagnostic)) {
+                return (new Errors())->error($diagnostic, $session, 'where clause');
+            }
+        }
+        foreach ($diagnostics as $diagnostic) {
             if ($database === '' && $diagnostic instanceof MissingTable && $diagnostic->name->schema === null) {
                 return QueryError::NoDatabase->error();
             }
         }
-        $selected = $this->selected($problem, $session);
+        $selected = $this->selected($problem, $session, false);
         if ($selected === '') {
             return QueryError::NoDatabase->error();
         }
+        foreach ($diagnostics as $diagnostic) {
+            if (Stages::parsed($diagnostic)) {
+                return (new Errors())->error($diagnostic, $session, 'where clause');
+            }
+        }
+        $this->selected($problem, $session);
         if (!$session->preparation->inputPrepared && !$session->settings()->legacy() && $session->instance->dictionary->schema($selected) === null) {
             return QueryError::BadDatabase->error($selected);
         }
         foreach ($diagnostics as $diagnostic) {
-            if (Stages::parsed($diagnostic) || $diagnostic instanceof MissingTable) {
+            if ($diagnostic instanceof MissingTable) {
                 return (new Errors())->error($diagnostic, $session, 'where clause');
             }
         }
@@ -105,10 +117,10 @@ final class ShowInput
      *
      * @throws SqlError When modern text execution cannot open its inspection target
      */
-    public function selected(RefusedFilter $problem, Session $session): string
+    public function selected(RefusedFilter $problem, Session $session, bool $open = true): string
     {
         $table = $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
-        if ($table && !$session->preparation->inputPrepared && !$session->settings()->legacy()) {
+        if ($open && $table && !$session->preparation->inputPrepared && !$session->settings()->legacy()) {
             (new \MySqlMemory\Command\Show\Inspection())->check($problem->header, $session, $session->preparation->inputPrepared);
         }
         return $problem->header->database->value ?? ($table ? $problem->header->table->name->schema->value ?? $session->variables->database : $session->variables->database);

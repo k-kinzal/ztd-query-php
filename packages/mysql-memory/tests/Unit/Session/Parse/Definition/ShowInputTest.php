@@ -76,4 +76,34 @@ final class ShowInputTest extends TestCase
         $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter($header, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row));
         self::assertSame('d', (new ShowInput())->selected($problem, $session));
     }
+
+    public function testResolveContextualizesTheSameOperandBeforeOpeningItsTarget(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->text = 'unrelated invalid input';
+        $header = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('no_such_variable'));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([$variable, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter($header, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row));
+        self::assertSame(1046, (new ShowInput())->resolve($problem, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1193, (new ShowInput())->resolve($problem, $session)->getCode());
+        self::assertSame('unrelated invalid input', $session->text);
+    }
+
+    public function testResolveContextualizesLegacyFiltersBeforeSelectingTheirDatabase(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectExceptionCode(1193);
+        $session->query('SHOW COLUMNS FROM t WHERE (@@no_such_variable, 1)');
+    }
+
+    public function testSelectedCanResolveTheIdentityWithoutOpeningTheTarget(): void
+    {
+        $session = (new Instance())->connect();
+        $header = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('missing'))));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter($header, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row));
+        self::assertSame('missing', (new ShowInput())->selected($problem, $session, false));
+    }
 }

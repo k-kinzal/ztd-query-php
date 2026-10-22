@@ -112,7 +112,7 @@ final class AlterRule
     {
         if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($commands)) {
             $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable($table, $commands, $ignore);
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate($definition), 0, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate($definition), 0, false, $this->lowering->origins->publish());
         }
         return new AlterTable($table, $commands, $ignore);
     }

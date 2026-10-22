@@ -15,6 +15,29 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testInspectionUsesTheRetainedTableIdentity(): void
+    {
+        $session = (new Instance())->connect();
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable($name));
+        self::assertSame([$name], (new DefaultDatabase())->inspection($statement, $session));
+        self::assertSame([], (new DefaultDatabase())->inspection($statement, (new Instance('5.7.44'))->connect()));
+    }
+
+    public function testCheckRequiresAnInspectionDatabaseBeforeItsFilter(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1046);
+        $session->query('SHOW COLUMNS FROM t WHERE @@no_such_variable');
+    }
+
+    public function testCheckUsesAnExplicitInspectionDatabaseWithoutOpeningIt(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1193);
+        $session->query('SHOW KEYS FROM t FROM missing WHERE @@no_such_variable');
+    }
+
     public function testWriteResolvesItsDatabaseBeforeQueryQuantifierConditions(): void
     {
         $session = (new Instance())->connect();
