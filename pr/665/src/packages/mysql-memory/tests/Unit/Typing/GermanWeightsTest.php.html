@@ -93,8 +93,38 @@
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        <span class="tok-id">self</span>::<span class="tok-id">assertFalse</span>(<span class="tok-var">$weights</span>-&gt;<span class="tok-id">supports</span>(<span class="tok-id">Collation</span>::<span class="tok-id">known</span>(<span class="tok-str">&#039;latin1_german2_ci&#039;</span>)));</span>
 <span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-id">self</span>::<span class="tok-id">assertFalse</span>(<span class="tok-var">$weights</span>-&gt;<span class="tok-id">supports</span>(<span class="tok-id">Collation</span>::<span class="tok-id">known</span>(<span class="tok-str">&#039;utf8mb4_unicode_ci&#039;</span>)));</span>
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    }</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>}</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a></span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * @return array&lt;string, array{int, string}&gt;</span></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerLatinWeights</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    {</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-kw">return</span> [</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;upper umlaut a&#039;</span> =&gt; [<span class="tok-num">0xC4</span>, <span class="tok-str">&#039;4145&#039;</span>],</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;lower umlaut a&#039;</span> =&gt; [<span class="tok-num">0xE4</span>, <span class="tok-str">&#039;4145&#039;</span>],</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;upper ring a&#039;</span> =&gt; [<span class="tok-num">0xC5</span>, <span class="tok-str">&#039;41&#039;</span>],</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>            <span class="tok-str">&#039;lower ring a&#039;</span> =&gt; [<span class="tok-num">0xE5</span>, <span class="tok-str">&#039;41&#039;</span>],</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            <span class="tok-str">&#039;upper umlaut o&#039;</span> =&gt; [<span class="tok-num">0xD6</span>, <span class="tok-str">&#039;4f45&#039;</span>],</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-str">&#039;lower umlaut o&#039;</span> =&gt; [<span class="tok-num">0xF6</span>, <span class="tok-str">&#039;4f45&#039;</span>],</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>            <span class="tok-str">&#039;upper umlaut u&#039;</span> =&gt; [<span class="tok-num">0xDC</span>, <span class="tok-str">&#039;5545&#039;</span>],</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>            <span class="tok-str">&#039;lower umlaut u&#039;</span> =&gt; [<span class="tok-num">0xFC</span>, <span class="tok-str">&#039;5545&#039;</span>],</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-str">&#039;sharp s&#039;</span> =&gt; [<span class="tok-num">0xDF</span>, <span class="tok-str">&#039;5353&#039;</span>],</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-str">&#039;umlaut y&#039;</span> =&gt; [<span class="tok-num">0xFF</span>, <span class="tok-str">&#039;59&#039;</span>],</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-str">&#039;upper ae&#039;</span> =&gt; [<span class="tok-num">0xC6</span>, <span class="tok-str">&#039;5c&#039;</span>],</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;lower ae&#039;</span> =&gt; [<span class="tok-num">0xE6</span>, <span class="tok-str">&#039;5c&#039;</span>],</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>            <span class="tok-str">&#039;ordinary a&#039;</span> =&gt; [<span class="tok-num">0x61</span>, <span class="tok-str">&#039;41&#039;</span>],</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            <span class="tok-str">&#039;nul&#039;</span> =&gt; [<span class="tok-num">0</span>, <span class="tok-str">&#039;00&#039;</span>],</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-str">&#039;space&#039;</span> =&gt; [<span class="tok-num">0x20</span>, <span class="tok-str">&#039;20&#039;</span>],</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        ];</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    }</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerLatinWeights&#039;</span>)]</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testLatin1PreservesSingleByteExpansionsAndLigatures</span>(<span class="tok-id">int</span> <span class="tok-var">$byte</span>, <span class="tok-id">string</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    {</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, <span class="tok-id">bin2hex</span>((<span class="tok-kw">new</span> <span class="tok-id">GermanWeights</span>())-&gt;<span class="tok-id">latin1</span>(<span class="tok-var">$byte</span>)));</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    }</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>}</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
