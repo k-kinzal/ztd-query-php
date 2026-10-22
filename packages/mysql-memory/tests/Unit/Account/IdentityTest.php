@@ -63,4 +63,13 @@ final class IdentityTest extends TestCase
         self::assertSame('`a`b`@`h`h`', Identity::of('a`b', 'H`H')->authorization());
     }
 
+    public function testMissingDefinerBoundsBothDisplayedComponentsByRelease(): void
+    {
+        $identity = Identity::of(str_repeat('猫', 22), str_repeat('H', 65));
+
+        self::assertSame("The user specified as a definer ('" . str_repeat('猫', 21) . "?'@'" . str_repeat('h', 64) . "') does not exist", $identity->missingDefiner(false));
+        self::assertSame("The user specified as a definer ('" . str_repeat('猫', 21) . "'@'" . str_repeat('h', 64) . "') does not exist", $identity->missingDefiner(true));
+        self::assertSame(str_repeat('猫', 22) . '@' . str_repeat('h', 65), $identity->text());
+    }
+
 }

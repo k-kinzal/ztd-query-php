@@ -573,6 +573,13 @@ CLONE INSTANCE passwords and directory names require quoted text, as their gramm
 
 Client packet splitting distinguishes whitespace after a terminator from a separate comment-only statement. Empty statements have their own completion and diagnostic behavior. Stored routine display text retains its terminating semicolon when another packet statement follows. Native histories check these packet and metadata observations on five releases.
 
+Missing-definer diagnostics display at most 64 bytes of each account component.
+MySQL 5.6 and 5.7 discard a partial UTF-8 character at that boundary; modern
+releases replace its retained bytes with question marks. The full identity
+remains available to account lookup and stored-definition ownership. GRANT AS
+and stored-object DEFINER diagnostics share this formatting rule, verified over
+text and prepared requests on five native releases.
+
 CREATE USER checks account occurrences in written order. Modern IF NOT EXISTS skips replacement credential validation for an account that already exists and retains its note among the other account diagnostics. Invalid occurrences do not reserve an account name. When another occurrence fails, modern releases restore account state while legacy releases retain successful creations. Native histories check competing plugin errors, repeated names and later account state; the first recorded error remains the statement error.
 
 View preparation opens referenced tables before checking the target database and view name, then resolves columns and stored functions. It uses the original operation's typed references and diagnostics throughout; it does not extract and parse the view's query text. Direct properties exercise missing relations, columns and routines with unrelated session text, and create and read generated literal views.

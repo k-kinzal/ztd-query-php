@@ -281,7 +281,7 @@ final class GrantCommand implements Command
         $identity = $names->identity($as->user, $session);
         $accounts = $session->instance->accounts;
         if ($accounts->find($identity) === null) {
-            $session->diagnostics->error(AccountError::NoSuchUser->value, AccountError::NoSuchUser->message($identity->user, $identity->host));
+            $session->diagnostics->error(AccountError::NoSuchUser->value, $identity->missingDefiner($session->settings()->legacy()));
 
             throw AccountError::InvalidGrantAs->error();
         }

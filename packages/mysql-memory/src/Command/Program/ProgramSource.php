@@ -114,7 +114,7 @@ final class ProgramSource
             $identity = \MySqlMemory\Account\Identity::of($definer->username(), $definer->hostname());
             $host = $identity->host;
             if ($diagnostics !== null && $session->instance->accounts->find($identity) === null) {
-                $diagnostics->note(AccountError::NoSuchUser, AccountError::NoSuchUser->message($identity->user, $host));
+                $diagnostics->note(AccountError::NoSuchUser, $identity->missingDefiner($session->settings()->legacy()));
             }
 
             return [$identity->user, $host];

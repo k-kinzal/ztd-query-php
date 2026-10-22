@@ -92,6 +92,19 @@ final class Identity
     }
 
     /**
+     * Describes a missing definer without truncating the stored account identity.
+     * Each component occupies at most 64 displayed bytes. Legacy releases discard
+     * a partial UTF-8 character; modern releases replace each partial byte with '?'.
+     * Observed through DEFINER and GRANT AS on MySQL 5.6, 5.7 and 8.4.
+     */
+    public function missingDefiner(bool $legacy): string
+    {
+        $display = new \MySqlMemory\Error\DiagnosticText();
+
+        return \MySqlMemory\Error\Family\AccountError::NoSuchUser->message($display->bytes($this->user, 64, $legacy), $display->bytes($this->host, 64, $legacy));
+    }
+
+    /**
      * Writes the name plain, as the column names of SHOW GRANTS and SHOW CREATE USER write it.
      */
     public function text(): string
