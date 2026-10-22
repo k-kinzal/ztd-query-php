@@ -40,7 +40,7 @@ final class Catalog
         return self::$locales;
     }
 
-    private static ?self $instance = null;
+    private static ?Catalog $instance = null;
 
     /**
      * @var array<string, Charset>

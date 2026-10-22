@@ -30,7 +30,7 @@ final class Utf32Radix
         $bytes = $literal->bytes();
         $bytes = str_repeat("\0", (4 - strlen($bytes) % 4) % 4) . $bytes;
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        foreach (str_split($bytes, 4) as $unit) {
+        foreach ($bytes === '' ? [] : str_split($bytes, 4) as $unit) {
             $point = ord($unit[0]) * 16777216 + ord($unit[1]) * 65536 + ord($unit[2]) * 256 + ord($unit[3]);
             if ($point > 0x10ffff || (!$legacy && $point >= 0xd800 && $point <= 0xdfff)) {
                 return new InvalidCharacterString('utf32', substr($unit, 0, 3));

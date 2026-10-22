@@ -32,7 +32,7 @@ final class GeneralWeights
     public function key(string $name): string
     {
         if (!mb_check_encoding($name, 'UTF-8')) {
-            return strtoupper($name);
+            return strtr($name, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
         }
         $key = '';
         foreach ($name === '' ? [] : mb_str_split($name, 1, 'UTF-8') as $character) {

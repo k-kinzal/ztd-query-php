@@ -84,6 +84,11 @@ final class DatabaseCommand implements Command
         unset($dictionary->schemas[$name]);
         $dictionary->routineGeneration++;
         $dictionary->cache->close($name);
+        foreach ($session->handlers as $alias => $handler) {
+            if ($handler->schema === $name) {
+                unset($session->handlers[$alias]);
+            }
+        }
         if ($session->variables->database === $name) {
             $session->variables->database = '';
             $session->variables->databaseCollation(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known((string) $session->variables->read('collation_server')));

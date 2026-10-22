@@ -88,6 +88,11 @@ final class DropTableCommand implements Command
         }
         foreach ($found as [$schema, $name, $table]) {
             $dictionary->release($table, $schema, $name);
+            foreach ($session->handlers as $alias => $handler) {
+                if ($handler->schema === $schema && $handler->table === $name) {
+                    unset($session->handlers[$alias]);
+                }
+            }
             if ($table->definition->temporary && $session->transaction->open) {
                 $session->transaction->temporaries['dropped'] = true;
             }

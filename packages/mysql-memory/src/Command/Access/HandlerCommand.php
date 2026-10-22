@@ -187,7 +187,7 @@ final class HandlerCommand implements Command
                 continue;
             }
             $compiled = $planner->compiler->compile($value, $scope);
-            $keys->check($value, $session->settings()->legacy());
+            $keys->check($value, $session->settings()->release());
             $values[] = $compiled->evaluate(new Frame($context));
         }
 

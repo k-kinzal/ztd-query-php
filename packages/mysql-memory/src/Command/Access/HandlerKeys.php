@@ -7,6 +7,7 @@ namespace MySqlMemory\Command\Access;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Scope;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
@@ -40,9 +41,9 @@ final class HandlerKeys
      *
      * @throws \MySqlMemory\Error\SqlError When the key depends on a cursor row or a modern execution-bound read
      */
-    public function check(Scalar $value, bool $legacy): void
+    public function check(Scalar $value, GrammarRelease $release): void
     {
-        if ($this->dependent($value, $legacy)) {
+        if ($this->dependent($value, $release)) {
             throw StatementError::WrongArguments->error('HANDLER ... READ');
         }
     }
@@ -50,20 +51,20 @@ final class HandlerKeys
     /**
      * Inspects typed dependencies without reading SQL or evaluating their values.
      */
-    public function dependent(Node $node, bool $legacy): bool
+    public function dependent(Node $node, GrammarRelease $release): bool
     {
         if ($node instanceof M\Expression\Access\DefaultOfColumn || $node instanceof M\Expression\Access\InsertedColumn) {
             return false;
         }
-        if ($node instanceof M\Name\ColumnUse || (!$legacy && $this->session($node))) {
+        if ($node instanceof M\Name\ColumnUse || (!in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && $this->session($node, $release))) {
             return true;
         }
         if ($node instanceof M\Variable\VariableAssignment) {
-            return $this->dependent($node->value, $legacy);
+            return $this->dependent($node->value, $release);
         }
         foreach (get_object_vars($node) as $value) {
             foreach (is_array($value) ? $value : [$value] as $child) {
-                if ($child instanceof Node && $this->dependent($child, $legacy)) {
+                if ($child instanceof Node && $this->dependent($child, $release)) {
                     return true;
                 }
             }
@@ -74,7 +75,7 @@ final class HandlerKeys
     /**
      * Recognizes reads deferred until execution on modern releases.
      */
-    public function session(Node $node): bool
+    public function session(Node $node, GrammarRelease $release = GrammarRelease::MySql847): bool
     {
         if ($node instanceof M\Variable\UserVariable || $node instanceof M\Variable\SystemVariable) {
             return true;
@@ -87,7 +88,7 @@ final class HandlerKeys
         }
         if ($node instanceof M\Call\FunctionCall) {
             $name = strtoupper($node->name->value);
-            return in_array($name, ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'CONNECTION_ID', 'LAST_INSERT_ID'], true) || ($name === 'UNIX_TIMESTAMP' && $node->arguments === []);
+            return in_array($name, ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'CONNECTION_ID', 'LAST_INSERT_ID'], true) || ($name === 'UNIX_TIMESTAMP' && $node->arguments === [] && $release !== GrammarRelease::MySql8044);
         }
         return false;
     }
