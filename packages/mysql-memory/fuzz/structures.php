@@ -3,7 +3,8 @@
 /**
  * Direct semantic-structure campaign: php fuzz/structures.php COUNT [SEED] [CLASS|-|@each] [RELEASE] [START] [native|compare].
  *
- * Local SQL errors remain unresolved. In compare mode every complete outcome must match
+ * Local runs distinguish explicit runtime state conditions from unresolved SQL errors.
+ * In compare mode every complete outcome must match
  * a fresh native server, including rows, metadata, errors and warnings. No SQL error is
  * accepted merely because it was caught. Generation and internal failures remain failures.
  */
@@ -21,6 +22,7 @@ use Fuzz\Structure\Exhausted;
 use Fuzz\Structure\Metadata;
 use Fuzz\Structure\Profiles;
 use Fuzz\Structure\Reference;
+use Fuzz\Structure\Rejections;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -49,7 +51,7 @@ if ($root !== null && !in_array($root, $roots, true)) {
     fwrite(STDERR, "CLASS must be an inventoried Statement or Scalar.\n");
     exit(2);
 }
-$counts = ['passed' => 0, 'exhausted' => 0, 'generation' => 0, 'profile' => 0, 'sql_error' => 0, 'structure' => 0];
+$counts = ['passed' => 0, 'runtime_condition' => 0, 'exhausted' => 0, 'generation' => 0, 'profile' => 0, 'sql_error' => 0, 'structure' => 0];
 echo json_encode(['seed' => $seed, 'release' => $release, 'start' => $start, 'trials' => $count, 'rootTypes' => count($roots), 'selection' => $selection, 'nativeAudit' => $audit, 'compare' => $compare], JSON_THROW_ON_ERROR) . "\n";
 for ($trial = 0; $trial < $count; $trial++) {
     $index = $start + $trial;
@@ -96,11 +98,15 @@ for ($trial = 0; $trial < $count; $trial++) {
         $counts['passed']++;
     } catch (Throwable $failure) {
         $kind = $failure instanceof Exhausted ? 'exhausted' : ($failure instanceof SqlError ? 'sql_error' : $stage);
+        $reason = $failure instanceof SqlError && $stage === 'structure' && ($node instanceof Statement || $node instanceof Scalar) ? (new Rejections())->reason($failure, $node) : null;
+        if (!$compare && $reason !== null) {
+            $kind = 'runtime_condition';
+        }
         $counts[$kind]++;
         if ($compare && $stage === 'structure') {
             $comparisons['failed']++;
         }
-        echo json_encode(['index' => $index, 'class' => $class, 'kind' => $kind, 'failure' => $failure::class, 'message' => $failure->getMessage(), 'code' => $failure->getCode(), 'constructorAttempts' => $construction->attempts, 'rejections' => $construction->rejections], JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n";
+        echo json_encode(['index' => $index, 'class' => $class, 'kind' => $kind, 'reason' => $reason, 'failure' => $failure::class, 'message' => $failure->getMessage(), 'code' => $failure->getCode(), 'constructorAttempts' => $construction->attempts, 'rejections' => $construction->rejections], JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n";
         if ($audit && $failure instanceof SqlError && ($node instanceof Statement || $node instanceof Scalar)) {
             try {
                 $profile ??= new LanguageProfile(GrammarRelease::from('mysql-' . $release), parameters: (new Execution())->parameters($node));
@@ -116,5 +122,5 @@ for ($trial = 0; $trial < $count; $trial++) {
     }
 }
 echo json_encode(['seed' => $seed, 'release' => $release, 'counts' => $counts, 'nativeAudit' => $auditCounts, 'comparisons' => $comparisons, 'databaseTransitions' => $transitions], JSON_THROW_ON_ERROR) . "\n";
-$success = $compare ? $comparisons['matchedSuccess'] + $comparisons['matchedError'] === $count : $counts['passed'] === $count;
+$success = $compare ? $comparisons['matchedSuccess'] + $comparisons['matchedError'] === $count : $counts['passed'] + $counts['runtime_condition'] === $count;
 exit($counts['generation'] + $counts['exhausted'] > 0 ? 2 : ($success ? 0 : 1));

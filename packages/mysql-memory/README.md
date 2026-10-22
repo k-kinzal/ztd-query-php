@@ -273,7 +273,7 @@ The real server runs each input twice. Inputs whose reference observations diffe
 `composer test:integration` includes differential regressions against Testcontainers, covering text and prepared execution with and without CLIENT_FOUND_ROWS, insert ids, multiple result sets and resolution errors. Set `MYSQL_VERSION` to repeat them on another release.
 The [direct semantic structure campaign](docs/semantic-structures.md) additionally constructs objects from SQL Semantics' types and constructor invariants and executes them in memory. It exposes defects hidden by generating every structure through the SQL parser. This campaign still reports counterexamples; its bounded regression suite does not establish the property for the whole model.
 
-The [acceptance contract](docs/acceptance.md) defines the combined gates for source independence, constructible structures, complete SQL outcomes, state transitions and SQL Faker differential runs. The structure runner's `compare` mode checks every generated outcome against an isolated native server; SQL errors are not accepted merely because they were caught.
+The [acceptance contract](docs/acceptance.md) requires public-type generation, direct execution of those values in the unit suite, SQL Faker differential fuzzing, and a green pull request. Database-history audits are optional diagnostics. The structure runner's `compare` mode can also compare generated objects with native MySQL; it is separate from the unit property.
 
 The fuzzer is part of the repository, not of the installed package. From `packages/mysql-memory` in a checkout:
 
@@ -281,7 +281,7 @@ The fuzzer is part of the repository, not of the installed package. From `packag
 composer fuzz                                  # each target for 100 inputs
 composer fuzz:expression                       # expressions over the fixture tables, until stopped
 composer fuzz:query                            # queries over the fixture tables
-composer fuzz:statement                        # statements using the campaign constraints
+composer fuzz:statement                        # complete statements, with no excluded forms
 composer fuzz:seeds                            # the complete canonical sql-faker seed corpus
 
 php fuzz/campaign.php select 500 7             # MODE COUNT [SEED]: differences grouped by kind
