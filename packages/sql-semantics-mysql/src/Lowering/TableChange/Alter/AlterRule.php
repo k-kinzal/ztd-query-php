@@ -173,7 +173,7 @@ final class AlterRule
             'partitioning: PARTITION_SYM partition' => $form->node,
             default => throw ImplementationGap::production($form),
         };
-        $clause = (new PartitionRule($this->lowering))->partitioning($partitioning);
+        $clause = (new PartitionRule($this->lowering, true))->partitioning($partitioning);
 
         return $clause === null ? [] : [new PartitionBy($clause)];
     }

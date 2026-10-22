@@ -98,6 +98,7 @@ final class CreateTable implements Statement, Relation
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         $this->elements = Check::listOf($elements, TableElement::class, 'Table elements are an ordered list of table elements.');
         $this->options = Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($partitioning), 'A non-scalar partition method belongs to a retained ALTER instruction.');
         Check::input(
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',

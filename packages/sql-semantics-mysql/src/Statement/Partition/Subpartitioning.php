@@ -39,7 +39,7 @@ final class Subpartitioning implements Node
     {
         Check::input($count === null || (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count), 'A subpartition count is an integer token.');
         Check::input($count === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0'), 'The explicit subpartition count is positive.');
-        Check::input($method instanceof HashMethod || $method instanceof KeyMethod, 'Only HASH and KEY subpartition a partition.');
+        Check::input($method instanceof HashMethod || $method instanceof KeyMethod || $method instanceof Method\DeferredMethod && $method->kind === null, 'Only HASH and KEY subpartition a partition.');
         Check::input(!$method instanceof KeyMethod || $method->columns !== [], 'KEY subpartitioning names at least one column.');
     }
 

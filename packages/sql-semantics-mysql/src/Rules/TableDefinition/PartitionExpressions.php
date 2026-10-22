@@ -45,7 +45,7 @@ final class PartitionExpressions
     /**
      * Derives the expression, preserving its warnings before an aborting partition diagnostic.
      */
-    public function derive(Scalar $expression, Derivation $derivation, Environment $scope): void
+    public function derive(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression, Derivation $derivation, Environment $scope): void
     {
         $before = count($derivation->facts()->diagnostics);
         $derivation->scalar($expression, $scope);
@@ -53,6 +53,12 @@ final class PartitionExpressions
             if ($problem instanceof WrongArgumentCount || $problem instanceof NamedArgument || $problem instanceof ReservedFunction || $problem instanceof UnknownSystemVariable || $problem instanceof UnstructuredVariable) {
                 return;
             }
+        }
+        if (!in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && $this->condition($expression, $derivation->context->profile->grammar) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($expression, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery);
+            $derivation->report($problem);
+            $derivation->warn(new ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
+            return;
         }
         if ($this->forbidden($expression, $derivation->context->profile->grammar)) {
             $problem = new InvalidPartitionExpression($expression);

@@ -25,9 +25,9 @@ final class InvalidPartitionExpression implements Diagnostic
     use Snapshot;
 
     /**
-     * @param Scalar $expression The forbidden partition expression
+     * @param Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression The complete forbidden partition operand
      */
-    public function __construct(public readonly Scalar $expression)
+    public function __construct(public readonly Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression)
     {
     }
 

@@ -26,13 +26,14 @@ final class RefusedScalar implements Diagnostic
     use Snapshot;
 
     /**
-     * @param RowOperand|DeferredOperand $operand The complete refused partition function
+     * @param \SqlSemantics\Statement\Scalar|RowOperand|DeferredOperand $operand The complete refused partition function; a scalar is retained only for the subquery restriction
      * @param OperandCondition $condition The partition restriction checked before scalar binding
      * @param int $offset The input boundary used only to format a contextual syntax refusal
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly OperandCondition $condition = OperandCondition::Function, public readonly int $offset = 0)
+    public function __construct(public readonly \SqlSemantics\Statement\Scalar|RowOperand|DeferredOperand $operand, public readonly OperandCondition $condition = OperandCondition::Function, public readonly int $offset = 0)
     {
         \SqlSemantics\Diagnostic\Check::input($offset >= 0, 'A partition input boundary is nonnegative.');
+        \SqlSemantics\Diagnostic\Check::input(!$operand instanceof \SqlSemantics\Statement\Scalar || $condition === OperandCondition::Subquery, 'A refused scalar partition operand retains a subquery restriction.');
     }
 
     /**

@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session\Access;
+
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Session\Access\EventSchedule;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+
+#[CoversClass(EventSchedule::class)]
+#[Small]
+final class EventScheduleTest extends TestCase
+{
+    public function testCheckRequiresADatabaseForAnUnqualifiedScheduleTable(): void
+    {
+        $read = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], new M\Relation\TableReference(new QualifiedName(new Name('t')))));
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        (new EventSchedule())->check([$read], $session);
+    }
+
+    public function testCheckLeavesQualifiedNamesAndSelectedDatabasesToOrdinaryResolution(): void
+    {
+        $read = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], new M\Relation\TableReference(new QualifiedName(new Name('t'), new Name('d')))));
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        (new EventSchedule())->check([$read], $session);
+        $session->use('d');
+        (new EventSchedule())->check([$read], $session);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+}

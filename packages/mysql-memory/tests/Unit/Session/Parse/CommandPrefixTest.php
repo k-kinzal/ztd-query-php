@@ -45,6 +45,8 @@ final class CommandPrefixTest extends TestCase
             foreach ([
                 'REVOKE SUPER ON TABLE t FROM u@host BROKEN' => null,
                 'CREATE TEMPORARY TEMPORARY TABLE t (a INT) SECONDARY_ENGINE NULL' => 1046,
+                "ALTER TABLE t PARTITION BY HASH(CAST(USER() AT TIME ZONE 'bad' AS DATETIME))" => 1046,
+                "ALTER TABLE d.t PARTITION BY HASH(CAST(USER() AT TIME ZONE 'bad' AS DATETIME))" => null,
                 'CREATE TEMPORARY TEMPORARY TABLE d.t (a INT) SECONDARY_ENGINE NULL' => null,
                 "LOAD DATA INFILE 'f' INTO TABLE t IGNORE 1.5 LINES" => 1046,
                 "LOAD DATA INFILE 'f' INTO TABLE t (" => 1046,

@@ -42,6 +42,9 @@ final class Alteration
         if ($problem->name->schema === null && $session->variables->database === '') {
             throw QueryError::NoDatabase->error();
         }
+        if (!$problem->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse) {
+            (new \MySqlMemory\Session\Access\EventSchedule())->check($problem->operands, $session);
+        }
         if (!$problem->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth) {
             return (new \MySqlMemory\Session\Problem\Errors())->error($problem->problem, $session);
         }

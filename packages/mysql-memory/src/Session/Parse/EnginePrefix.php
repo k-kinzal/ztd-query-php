@@ -71,6 +71,9 @@ final class EnginePrefix
     public function conditions(array $tokens, string $statement, int $end, Session $session, SqlError $fallback): array
     {
         $engines = $this->before($tokens, $statement, $end, $session);
+        if ($engines === [] && $session->settings()->legacy()) {
+            $engines = $this->completed($statement, $end, $session);
+        }
         $first = array_key_first($engines);
         if ($first === null || !$session->modes()->has('NO_ENGINE_SUBSTITUTION')) {
             return [$end, $engines, $fallback];

@@ -92,8 +92,9 @@ final class PartitionRule
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
+     * @param bool $retainAlterOperands Whether a completed ALTER instruction retains refused partition operands
      */
-    public function __construct(private readonly Lowering $lowering)
+    public function __construct(private readonly Lowering $lowering, private readonly bool $retainAlterOperands = false)
     {
     }
 
@@ -173,6 +174,8 @@ final class PartitionRule
     /**
      * Lowers a method production of `part_type_def` or `opt_sub_part`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a partition operand cannot occupy the requested role
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function method(Form $form): PartitionMethod
@@ -180,13 +183,20 @@ final class PartitionRule
         [$kind, $linear, $algorithm, $operand] = self::METHODS[$form->signature] ?? throw ImplementationGap::production($form);
         $isLinear = $linear !== null && $this->linear($form->node($linear));
 
-        return match ($kind) {
-            'key' => new KeyMethod($isLinear, $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->columns($form->node($operand))),
-            'hash' => new HashMethod($isLinear, $this->expression($form->node($operand))),
-            'RANGE', 'LIST' => new ExpressionMethod(PartitionKind::from($kind), $this->expression($form->node($operand))),
-            'RANGE COLUMNS' => new ColumnsMethod(PartitionKind::Range, $this->columns($form->node($operand))),
-            'LIST COLUMNS' => new ColumnsMethod(PartitionKind::List, $this->columns($form->node($operand))),
-        };
+        try {
+            return match ($kind) {
+                'key' => new KeyMethod($isLinear, $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->columns($form->node($operand))),
+                'hash' => new HashMethod($isLinear, $this->expression($form->node($operand))),
+                'RANGE', 'LIST' => new ExpressionMethod(PartitionKind::from($kind), $this->expression($form->node($operand))),
+                'RANGE COLUMNS' => new ColumnsMethod(PartitionKind::Range, $this->columns($form->node($operand))),
+                'LIST COLUMNS' => new ColumnsMethod(PartitionKind::List, $this->columns($form->node($operand))),
+            };
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$this->retainAlterOperands || !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
+                throw $failure;
+            }
+            return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($failure->problem->operand, $kind === 'hash' ? null : PartitionKind::from($kind), $isLinear);
+        }
     }
 
     /**
@@ -301,8 +311,15 @@ final class PartitionRule
     {
         if ($function->name === 'bit_expr') {
             try {
-                return $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
+                $expression = $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
+                if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($expression, $this->lowering->profile->grammar) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
+                    throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($expression, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0);
+                }
+                return $expression;
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar) {
+                    $this->lowering->origins->record($failure->problem->operand, $function);
+                }
                 throw $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar
                     ? new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($failure->problem->operand, (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($failure->problem->operand, $this->lowering->profile->grammar), (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), $failure->end, $failure->aborts)
                     : $failure;

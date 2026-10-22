@@ -34,6 +34,10 @@ final class LocatedErrors
      */
     public function located(Diagnostic $problem, \SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
     {
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
+            $origin = $sources->of($problem->operand);
+            return $origin === null ? new SqlError(StatementError::ParseError, $problem->message()) : (new \MySqlMemory\Session\Syntax($session->resolution()->client))->near($origin->offset, $session->text, $session->following, new \SqlSemantics\Construction\RejectedInput($problem, $origin->offset));
+        }
         if (!$problem instanceof InvalidPartitionExpression) {
             return null;
         }

@@ -45,7 +45,7 @@ final class DefinitionShape
      */
     public function problem(PartitionDefinition $definition, ?PartitionMethod $method, ?int $expected): ?DefinitionIssue
     {
-        $kind = $method instanceof ExpressionMethod || $method instanceof ColumnsMethod ? $method->kind : null;
+        $kind = $method instanceof ExpressionMethod || $method instanceof ColumnsMethod || $method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod ? $method->kind : null;
         if ($method !== null) {
             if ($definition->values === null && $kind !== null) {
                 return $kind === PartitionKind::Range ? DefinitionIssue::MissingRangeValues : DefinitionIssue::MissingListValues;

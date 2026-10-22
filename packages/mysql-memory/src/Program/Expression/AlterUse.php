@@ -34,11 +34,11 @@ final class AlterUse
      */
     public function header(DeferredAlterTable $definition, Session $session, ?string $database = null): string
     {
-        (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $database = $definition->table->schema->value ?? $database ?? $session->variables->database;
         if ($database === '') {
             throw QueryError::NoDatabase->error();
         }
+        (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $facts = (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database);
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || \MySqlMemory\Session\Problem\Stages::characters($problem, $session->settings()->legacy())) {
@@ -48,6 +48,9 @@ final class AlterUse
         (new AlterTableCommand())->read($definition->commands, $facts, $session->settings()->legacy());
         (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($definition, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()));
         foreach ($facts->warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $warning->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
+                throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
+            }
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
                 throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
             }
@@ -78,6 +81,9 @@ final class AlterUse
         (new AlterTableCommand())->validation($definition->commands);
         $name = $definition->table->name->value;
         $table = (new AlterTableCommand())->table($session, $database, $name);
+        if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->commands($definition->commands)) {
+            throw \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error();
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($definition->commands)) {
             $prepared = new \MySqlMemory\Session\Resolution\IndexPreparation($definition, (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database));
             (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($prepared, $session, new \MySqlMemory\Session\Problems());

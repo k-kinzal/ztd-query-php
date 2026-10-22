@@ -215,7 +215,7 @@ final class EventRule
                 default => throw ImplementationGap::production($form),
             };
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            throw $name === null ? $failure : (new Event\ScheduleInput())->wrap($failure, $schedule, $name, $definer, $this->lowering->profile->grammar);
+            throw $name === null ? $failure : (new Event\ScheduleInput())->wrap($failure, $schedule, $name, $definer, $this->lowering->profile->grammar, $this->lowering);
         }
     }
 
@@ -247,6 +247,10 @@ final class EventRule
         $row = false;
         try {
             $operand = $this->lowering->expressions->operand($node);
+            $position = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($operand);
+            if ($position !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput($position, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, false);
+            }
             $row = $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
             return (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $node);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {

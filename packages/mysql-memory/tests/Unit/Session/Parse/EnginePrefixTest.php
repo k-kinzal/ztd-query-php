@@ -70,6 +70,19 @@ final class EnginePrefixTest extends TestCase
         self::assertSame(1286, $error->getCode());
     }
 
+    public function testConditionsKeepsACompletedEngineBeforeAnIncompletePartitionOperand(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET sql_mode='NO_ENGINE_SUBSTITUTION'");
+        $sql = "ALTER TABLE d.t ENGINE=missing PARTITION BY HASH(CAST(USER() AT TIME ZONE 'bad' AS DATETIME))";
+        $fallback = \MySqlMemory\Error\Family\StatementError::ParseError->error('AT TIME ZONE', 1);
+        $tokens = $session->semantics()->parser()->tokenize($sql);
+        [$end, $warnings, $error] = (new EnginePrefix())->conditions($tokens, $sql, (int) strpos($sql, 'AT TIME ZONE'), $session, $fallback);
+        self::assertSame((int) strpos($sql, ' PARTITION'), $end);
+        self::assertSame([], $warnings);
+        self::assertSame(1286, $error->getCode());
+    }
+
     public function testConditionsKeepsEngineWarningsBeforeTheSyntaxError(): void
     {
         $session = (new Instance('5.7.44'))->connect();

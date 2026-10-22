@@ -17,6 +17,16 @@ by Semantics before checking whether a validation modifier applies. The input
 adapter receives numeric source ranges with a refused template, so it can format
 the native error location without retaining input SQL or an AST in the template.
 
+A retained ALTER partition method keeps a row-valued or deferred operand as such,
+with HASH/RANGE/LIST identity, LINEAR, counts, definitions and subpartitioning.
+It cannot become an ordinary ALTER or a CREATE declaration. The lowerer retains
+it inside a complete ALTER instruction, including preceding actions and engine
+options. Preparation can retain the instruction without opening its target; an
+invoked instruction resolves the target before reporting a remaining partition
+function restriction. Session-dependent calls and modern subqueries retain their
+earlier contextualization diagnostics. Numeric source ranges remain outside the
+retained values and supply locations only to the input adapter.
+
 SHOW inspection headers and their filters have separate preparation dependencies.
 Modern column and key inspections require a database before contextualizing their
 filters; legacy filters contextualize first. Contextualization diagnostics precede
@@ -4783,3 +4793,11 @@ type spelling cannot express. Modern computed fields use width 22, while literal
 column references and set outputs retain their resolved width. Grouping and unary
 plus preserve the operand's role. Their
 resolved declarations keep those widths available to subsequent queries and ALTER.
+
+Event schedule refusals also retain complete semantic operands. A scalar-width
+condition does not erase a reached recursive CTE's reference constraints or the
+schedule's table dependencies. The input adapter resolves default-database
+requirements from those operands, separately from the event body's invocation
+scope. Unused CTE definitions remain inactive. The regression corpus compares
+CREATE and ALTER EVENT before and after selecting a database, including the
+original generated input and scalar, row and conversion wrappers.

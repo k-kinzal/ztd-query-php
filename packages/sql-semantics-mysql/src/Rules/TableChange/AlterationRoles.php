@@ -24,6 +24,7 @@ final class AlterationRoles
     public function deferred(array $commands): bool
     {
         return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($commands)
+            || (new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->commands($commands)
             || (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($commands) !== null
             || $this->invalidValidation($commands)
             || $this->transaction($commands)

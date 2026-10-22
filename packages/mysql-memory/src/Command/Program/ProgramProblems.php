@@ -85,6 +85,9 @@ final class ProgramProblems
             return false;
         }
         if ($statement instanceof CreateEvent || $statement instanceof AlterEvent) {
+            $schedule = $statement->schedule;
+            $operands = $schedule instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule ? [$schedule->at] : ($schedule instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule ? array_values(array_filter([$schedule->quantity, $schedule->starts, $schedule->ends])) : []);
+            (new \MySqlMemory\Session\Access\EventSchedule())->check($operands, $session);
             $this->schedule($statement, $operation);
         }
         $this->body($statement, $operation, $session, $problems);

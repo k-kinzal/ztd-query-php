@@ -39,6 +39,29 @@ final class ScheduleInputTest extends TestCase
         self::assertSame($expected, (new ScheduleInput())->readsTable((new MySqlParser('mysql-8.4.7'))->parse($sql)));
     }
 
+    public function testOperandsRetainsTheIntervalAndBothBounds(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $tree = $semantics->parser()->parse('ALTER EVENT d.e ON SCHEDULE EVERY (1,2) DAY STARTS (SELECT 1 FROM t) ENDS 9');
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering((new \SqlSemantics\Platform\MySql\Platform())->productions($semantics->profile()), new \SqlSemantics\Lowering\Leaves(), $semantics->profile());
+        $operands = (new ScheduleInput())->operands($tree->find('ev_schedule_time')[0], $lowering);
+        self::assertCount(3, $operands);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand::class, $operands[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $operands[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral::class, $operands[2]);
+    }
+
+    public function testWrapPreservesRecursiveReferenceConstraintsAndTheEventHeader(): void
+    {
+        $tree = (new MySqlParser('mysql-8.4.7'))->parse('ALTER EVENT d.e ON SCHEDULE AT (WITH RECURSIVE c AS (SELECT 1 UNION ALL SELECT 1 FROM c a,c b) SELECT * FROM c)');
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RecursiveReferencePosition, new Name('c'));
+        $name = new QualifiedName(new Name('e'), new Name('d'));
+        $wrapped = (new ScheduleInput())->wrap(new RejectedInput($problem, 100, false), $tree, $name, null);
+        self::assertInstanceOf(RefusedOperand::class, $wrapped->problem);
+        self::assertSame($problem, $wrapped->problem->problem);
+        self::assertSame($name, $wrapped->problem->name);
+    }
+
     public function testWrapKeepsTheHeaderAndEarlierDependencyCondition(): void
     {
         $tree = (new MySqlParser('mysql-8.4.7'))->parse('ALTER EVENT e ON SCHEDULE AT ((1,2) + (SELECT 1 FROM absent))');

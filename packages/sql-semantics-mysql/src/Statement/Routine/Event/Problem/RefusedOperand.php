@@ -26,12 +26,20 @@ final class RefusedOperand implements Diagnostic
     use Snapshot;
 
     /**
-     * @param QualifiedName $name The event name and optional database
-     * @param OperandWidth|NotSupportedYet $problem The schedule's preceding dependency or scalar-width condition
-     * @param Account|null $definer The account preceding the event name
+     * @var list<\SqlSemantics\Statement\Operand> Completed schedule expressions needed for earlier name resolution
      */
-    public function __construct(public readonly QualifiedName $name, public readonly OperandWidth|NotSupportedYet $problem, public readonly ?Account $definer = null)
+    public readonly array $operands;
+
+    /**
+     * @param QualifiedName $name The event name and optional database
+     * @param OperandWidth|NotSupportedYet|\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse $problem The schedule's preceding dependency or scalar-width condition
+     * @param Account|null $definer The account preceding the event name
+     * @param list<\SqlSemantics\Statement\Operand> $operands The complete timestamp, interval and bounds
+     */
+    public function __construct(public readonly QualifiedName $name, public readonly OperandWidth|NotSupportedYet|\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse $problem, public readonly ?Account $definer = null, array $operands = [])
     {
+        $this->operands = Check::listOf($operands, \SqlSemantics\Statement\Operand::class, 'Schedule dependencies are complete semantic operands.');
+        Check::input(!$problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse || $problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RecursiveReferencePosition, 'Only lexical recursive-reference constraints precede schedule dependency restrictions.');
         Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
     }
 
