@@ -110,7 +110,7 @@ final class PluginCommand implements Command
     public function loadable(CreateLoadableFunction $statement, Session $session): never
     {
         if ($statement->nameCollision($session->settings()->release())) {
-            throw AdministrationError::NativeFunctionName->error($statement->name->value);
+            throw ($statement->ifNotExists ? AdministrationError::NativeFunctionIfNotExists : AdministrationError::NativeFunctionName)->error($statement->name->value);
         }
         $library = (new Literals())->bytes($statement->library);
         if (str_contains($library, '/')) {

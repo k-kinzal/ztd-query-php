@@ -24,7 +24,12 @@ final class PluginLibraryTest extends TestCase
      */
     public static function providerInputs(): iterable
     {
-        $statements = ['SET NAMES utf8mb4'];
+        $statements = [
+            'SET NAMES utf8mb4',
+            "CREATE AGGREGATE FUNCTION IF NOT EXISTS ROTATE RETURNS REAL SONAME 'a''b'",
+            "CREATE FUNCTION IF NOT EXISTS ABS RETURNS INT SONAME '/tmp/abs.so'",
+            "CREATE FUNCTION ABS RETURNS INT SONAME '/tmp/abs.so'",
+        ];
         foreach (['text', str_repeat('x', 63), str_repeat('x', 64), str_repeat('é', 40), str_repeat('猫', 60), 'x' . str_repeat('猫', 60)] as $library) {
             $statements[] = "INSTALL PLUGIN p SONAME '" . $library . "'";
         }

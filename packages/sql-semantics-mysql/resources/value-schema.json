@@ -665,6 +665,9 @@
         "string": "SqlSemantics\\Statement\\Scalar",
         "substring": "SqlSemantics\\Statement\\Scalar"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\Aggregate\\AggregateNestingConstraint": {
+        "call": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\JsonObjectAggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Problem\\FrameCondition": {
         "name": "string",
         "value": "string"
@@ -2097,6 +2100,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Log\\PurgeLogsTo": {
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedGroupStart": {
+        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredGroupStart"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedLogSubquery": {
         "offset": "int"
     },
@@ -2517,6 +2523,20 @@
         "condition": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "result": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\Aggregate\\DeferredGroupConcat": {
+        "arguments": "array",
+        "distinct": "bool",
+        "order": "array",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null",
+        "separator": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\Aggregate\\DeferredJsonObjectAggregate": {
+        "key": "SqlSemantics\\Statement\\Scalar",
+        "keyAll": "bool",
+        "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null",
+        "value": "SqlSemantics\\Statement\\Scalar",
+        "valueAll": "bool"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregate": {
         "all": "bool",
         "arguments": "array",
@@ -2829,6 +2849,9 @@
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
         "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredUpdate"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredGroupStart": {
+        "options": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredKill": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",

@@ -125,6 +125,13 @@ final class RowUse
      */
     public function deferred(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \MySqlMemory\Evaluation\Compile\Compiler $compiler, \MySqlMemory\Evaluation\Scope $scope): void
     {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredGroupConcat || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate) {
+            $scope = clone $scope;
+            if ($operand->over === null) {
+                $scope->grouping = null;
+            }
+            $scope->windowing = null;
+        }
         try {
             foreach ($operand->operands() as $part) {
                 if ($part instanceof \SqlSemantics\Statement\Scalar || $part instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable) {

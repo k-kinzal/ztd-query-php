@@ -88,6 +88,7 @@ final class GroupConcat implements SetFunction
             Check::input(!$item->expression instanceof OutputOrdinal, 'This ordering reads expressions rather than SELECT output positions.');
         }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Aggregation\AggregateNesting())->problem([...$this->arguments, ...$this->order]) === null, 'An ordinary concatenation excludes fixed group and window nesting contradictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -10,33 +10,22 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Statement\Operation;
 
 #[CoversClass(StartGroupReplication::class)]
 #[Medium]
 final class StartGroupReplicationTest extends TestCase
 {
-    public function testDeriveStatementReportsALongPassword(): void
+    public function testDeriveStatementAcceptsExplicitCredentials(): void
     {
-        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
-
-        self::assertEquals([new RefusedSetting(ReplicationError::GroupPasswordTooLong), new RefusedSetting(ReplicationError::GroupUserMissing)], $start->facts->diagnostics);
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'");
+        self::assertSame([], $start->facts->diagnostics);
     }
 
-    public function testDeriveStatementRequiresAUserWithPassword(): void
+    public function testRenderRequiresConsistentCredentials(): void
     {
-        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = ''");
-
-        self::assertEquals([new RefusedSetting(ReplicationError::GroupUserMissing)], $start->facts->diagnostics);
-    }
-
-    public function testDeriveStatementUsesTheLastUserOption(): void
-    {
-        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION USER = 'u', USER = '', PASSWORD = 'p'");
-
-        self::assertEquals([new RefusedSetting(ReplicationError::GroupUserEmpty)], $start->facts->diagnostics);
+        $this->expectExceptionMessage('Group recovery credentials require a nonempty user with a password of at most 32 bytes.');
+        new StartGroupReplication([new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('p'))]);
     }
 
     public function testDeriveStatementRejectsMySql56(): void

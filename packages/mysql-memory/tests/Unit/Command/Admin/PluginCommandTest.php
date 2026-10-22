@@ -52,6 +52,14 @@ final class PluginCommandTest extends TestCase
         $session->query("CREATE FUNCTION BEGIN RETURNS INT4 SONAME 'a''b'");
     }
 
+    public function testLoadableRefusesIfNotExistsForANativeName(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(4101);
+        $this->expectExceptionMessage("This function 'ROTATE' has the same name as a native function. The 'IF NOT EXISTS' clause is not supported while creating a loadable function with the same name as a native function.");
+        $session->query("CREATE AGGREGATE FUNCTION IF NOT EXISTS ROTATE RETURNS REAL SONAME 'a''b'");
+    }
+
     public function testLoadableRefusesPaths(): void
     {
         $session = (new Instance())->connect();

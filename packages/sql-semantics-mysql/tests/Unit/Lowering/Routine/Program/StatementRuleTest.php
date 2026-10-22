@@ -41,6 +41,13 @@ use SqlSemantics\Statement\Node as StatementNode;
 #[Medium]
 final class StatementRuleTest extends TestCase
 {
+    public function testAdministrativeRefusalKeepsCredentialsUntilInvocation(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() START GROUP_REPLICATION PASSWORD = 'p'");
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart::class, $operation->statement->body);
+    }
+
     public function testRejectedKeepsLoadOutsideTheStoredInstructionDomain(): void
     {
         try {

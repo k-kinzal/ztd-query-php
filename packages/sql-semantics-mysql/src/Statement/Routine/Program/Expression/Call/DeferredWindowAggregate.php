@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -78,17 +79,18 @@ final class DeferredWindowAggregate implements DeferredOperand
     public readonly ?Text $separator;
 
     /**
-     * @param Aggregate|GroupConcat|JsonObjectAggregate $aggregate The aggregate without an OVER clause
+     * @param Aggregate|GroupConcat|JsonObjectAggregate|DeferredJsonObjectAggregate $aggregate The aggregate without an OVER clause
      * @param Name|WindowSpecification $over The original window reference or specification
      */
-    public function __construct(Aggregate|GroupConcat|JsonObjectAggregate $aggregate, public readonly Name|WindowSpecification $over)
+    public function __construct(Aggregate|GroupConcat|JsonObjectAggregate|DeferredJsonObjectAggregate $aggregate, public readonly Name|WindowSpecification $over)
     {
         Check::input($aggregate->over === null, 'A retained aggregate has one OVER clause.');
+        $json = $aggregate instanceof JsonObjectAggregate || $aggregate instanceof DeferredJsonObjectAggregate;
         $this->function = $aggregate instanceof Aggregate ? $aggregate->function : ($aggregate instanceof GroupConcat ? DeferredAggregateKind::GroupConcat : DeferredAggregateKind::JsonObject);
-        $this->arguments = $aggregate instanceof JsonObjectAggregate ? [$aggregate->key, $aggregate->value] : $aggregate->arguments;
-        $this->distinct = $aggregate instanceof JsonObjectAggregate ? false : $aggregate->distinct;
-        $this->all = $aggregate instanceof Aggregate ? $aggregate->all : ($aggregate instanceof JsonObjectAggregate && $aggregate->keyAll);
-        $this->valueAll = $aggregate instanceof JsonObjectAggregate && $aggregate->valueAll;
+        $this->arguments =  $json ? [$aggregate->key, $aggregate->value] : $aggregate->arguments;
+        $this->distinct =  $json ? false : $aggregate->distinct;
+        $this->all = $aggregate instanceof Aggregate ? $aggregate->all : ($json && $aggregate->keyAll);
+        $this->valueAll = $json && $aggregate->valueAll;
         $this->order = $aggregate instanceof GroupConcat ? $aggregate->order : [];
         $this->separator = $aggregate instanceof GroupConcat ? $aggregate->separator : null;
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($this->function, $this->distinct) !== null || (new Constraints())->problem($over) !== null, 'A deferred aggregate retains a fixed invocation or window constraint.');

@@ -27,6 +27,12 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class GroupConcatTest extends TestCase
 {
+    public function testRenderRejectsAnIntrinsicNestedWindow(): void
+    {
+        $this->expectExceptionMessage('An ordinary concatenation excludes fixed group and window nesting contradictions.');
+        new GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Rank, [], new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec())]);
+    }
+
     public function testAggregatesTellsWhetherTheCallHasNoWindow(): void
     {
         self::assertTrue((new GroupConcat([new NumberLiteral('1')]))->aggregates());

@@ -28,6 +28,16 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class JsonObjectAggregateTest extends TestCase
 {
+    public function testRenderRejectsConstantNestedGroupingButAcceptsItUnderAWindow(): void
+    {
+        $count = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count, []);
+        $one = new NumberLiteral('1');
+        $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec();
+        self::assertSame($window, (new JsonObjectAggregate($count, $one, over: $window))->over);
+        $this->expectExceptionMessage('An ordinary JSON aggregate excludes fixed group and window nesting contradictions.');
+        new JsonObjectAggregate($count, $one);
+    }
+
     public function testAggregatesTellsWhetherTheCallHasNoWindow(): void
     {
         self::assertTrue((new JsonObjectAggregate(new StringLiteral(['x']), new NumberLiteral('1')))->aggregates());

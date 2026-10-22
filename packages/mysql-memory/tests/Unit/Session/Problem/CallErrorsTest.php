@@ -17,6 +17,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 #[Small]
 final class CallErrorsTest extends TestCase
 {
+    public function testDomainDistinguishesNestedGroupAndWindowCalls(): void
+    {
+        $count = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count, []);
+        $rank = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Rank, [], new WindowSpec());
+        $errors = new CallErrors();
+        self::assertSame(1111, $errors->domain(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint($count))?->getCode());
+        self::assertSame(3593, $errors->domain(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint($rank))?->getCode());
+    }
+
     public function testErrorRetainsTheImpossibleJsonTarget(): void
     {
         $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point);

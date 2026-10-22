@@ -62,6 +62,7 @@ final class JsonObjectAggregate implements SetFunction
         public readonly Name|WindowSpecification|null $over = null,
     ) {
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Aggregation\AggregateNesting())->problem([$key, $value], $over !== null) === null, 'An ordinary JSON aggregate excludes fixed group and window nesting contradictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

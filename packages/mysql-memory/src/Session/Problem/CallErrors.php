@@ -27,11 +27,7 @@ final class CallErrors
     public function error(Diagnostic $diagnostic, bool $originalCase = false): ?SqlError
     {
         return match (true) {
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CharacterCastRange => \MySqlMemory\Error\Family\DataError::DataOutOfRange->error('char(n)', 'cast_as_char'),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\SpatialArithmetic => StatementError::WrongArguments->error($diagnostic->operator->value),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Type\ArgumentDomainMismatch => \MySqlMemory\Error\Family\DataError::IncorrectType->error($diagnostic->argument, $diagnostic->function->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidWindowCount => StatementError::WrongArguments->error(strtolower($diagnostic->function->value)),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast => \MySqlMemory\Error\Family\DataError::InvalidSpatialCast->error('JSON', $diagnostic->target->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint => QueryError::WindowFunctionInSpecification->error('<unnamed window>'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement => $this->refinement($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint => $this->frame($diagnostic),
@@ -42,9 +38,24 @@ final class CallErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant => ($diagnostic->nullName ? StatementError::ReservedSyntax : StatementError::WrongArguments)->error('NAME_CONST'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint => ($diagnostic->positional ? QueryError::WindowPositionalOrdering : QueryError::WindowFrameIllegal)->error('<unnamed window>'),
             $diagnostic instanceof UnsupportedWindowing => StatementError::NotSupportedYet->error($diagnostic->limit->value),
+            default => $this->domain($diagnostic),
+        };
+    }
+    /**
+     * Maps argument domains and intrinsic aggregate nesting conditions.
+     */
+    public function domain(Diagnostic $diagnostic): ?SqlError
+    {
+        return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint => $diagnostic->windowName() === null ? QueryError::InvalidGroupFunctionUse->error() : \MySqlMemory\Error\Family\ConstraintError::WindowFunctionContext->error($diagnostic->windowName()),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CharacterCastRange => \MySqlMemory\Error\Family\DataError::DataOutOfRange->error('char(n)', 'cast_as_char'),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\SpatialArithmetic => StatementError::WrongArguments->error($diagnostic->operator->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Type\ArgumentDomainMismatch => \MySqlMemory\Error\Family\DataError::IncorrectType->error($diagnostic->argument, $diagnostic->function->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast => \MySqlMemory\Error\Family\DataError::InvalidSpatialCast->error('JSON', $diagnostic->target->value),
             default => null,
         };
     }
+
     /**
      * Maps a retained frame condition after the owning query prepares its inputs.
      */

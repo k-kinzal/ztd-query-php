@@ -145,6 +145,7 @@ final class LogRule
      * Lowers START GROUP_REPLICATION with its options.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When explicit credentials have an intrinsic contradiction
      */
     public function start(Form $form): StartGroupReplication
     {
@@ -165,6 +166,10 @@ final class LogRule
             $options[] = $this->option($item);
         }
 
+        if ((new \SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials())->problem($options) !== null) {
+            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart($options);
+            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
         return new StartGroupReplication($options);
     }
 

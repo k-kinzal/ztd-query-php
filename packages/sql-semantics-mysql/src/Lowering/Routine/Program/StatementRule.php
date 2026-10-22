@@ -142,6 +142,10 @@ final class StatementRule
      */
     public function rejected(\SqlSemantics\Construction\RejectedInput $failure): ProgramStatement|Statement
     {
+        $administrative = $this->administrativeRefusal($failure->problem);
+        if ($administrative !== null) {
+            return $administrative;
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole) {
             return $failure->problem->request;
         }
@@ -150,9 +154,6 @@ final class StatementRule
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
             return $failure->problem->explanation;
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand) {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($failure->problem->moment);
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
             return $failure->problem->definition;
@@ -235,4 +236,16 @@ final class StatementRule
 
         return $this->lowering->leaves->record(new DollarQuotedText(substr($token->text, $length, strlen($token->text) - 2 * $length), substr($token->text, 1, $length - 2)));
     }
+    /**
+     * Retains administrative requests whose conditions belong to invocation.
+     */
+    public function administrativeRefusal(\SqlSemantics\Statement\Fact\Diagnostic $problem): ?ProgramStatement
+    {
+        return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedGroupStart => $problem->request,
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($problem->moment),
+            default => null,
+        };
+    }
+
 }

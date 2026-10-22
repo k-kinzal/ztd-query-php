@@ -347,6 +347,7 @@ final class Errors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesShadow => ProgramError::VariableShadow->error('names'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesExpression => StatementError::ParseError->error('', 1),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedGroupStart => (new \MySqlMemory\Command\Admin\Refusals())->setting($diagnostic->condition(), $statement, $session->text, $session->settings()->legacy()),
             \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text, $session->settings()->legacy()),
             default => null,
         };
