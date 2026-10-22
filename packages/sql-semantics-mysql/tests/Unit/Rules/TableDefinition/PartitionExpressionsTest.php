@@ -71,25 +71,48 @@ final class PartitionExpressionsTest extends TestCase
     #[DataProvider('providerEarlierErrors')]
     public function testDerivePreservesEarlierFunctionAndVariableErrors(string $expression): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE missing PARTITION BY HASH (' . $expression . ')');
-        self::assertNotEmpty($operation->facts->diagnostics);
-        self::assertSame([], array_values(array_filter($operation->facts->warnings, static fn ($warning): bool => $warning instanceof ParseFailure)));
+        $semantics = new Semantics(Dialect::MySql);
+        $operand = $semantics->analyze('SELECT ' . $expression)->field(0)->expression;
+        self::assertInstanceOf(Scalar::class, $operand);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
+        (new PartitionExpressions())->derive($operand, $derivation, $derivation->environment());
+        self::assertNotEmpty($derivation->facts()->diagnostics);
+        self::assertSame([], array_values(array_filter($derivation->facts()->warnings, static fn ($warning): bool => $warning instanceof ParseFailure)));
     }
 
     public function testDerivePreservesWarningsAndTheOriginalOccurrenceLocation(): void
     {
         $sql = 'ALTER TABLE missing PARTITION BY HASH ((FOUND_ROWS()))';
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(Deprecation::class, $operation->facts->warnings[0]);
-        $failure = $operation->facts->warnings[1];
+        $semantics = new Semantics(Dialect::MySql);
+        try {
+            $semantics->analyze($sql);
+            self::fail('An intrinsic partition restriction is reported before statement construction.');
+        } catch (\SqlSemantics\Construction\RejectedInput $input) {
+            self::assertInstanceOf(InvalidPartitionExpression::class, $input->problem);
+        }
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
+        (new PartitionExpressions())->derive($input->problem->expression, $derivation, $derivation->environment());
+        self::assertInstanceOf(Deprecation::class, $derivation->facts()->warnings[0]);
+        $failure = $derivation->facts()->warnings[1];
         self::assertInstanceOf(ParseFailure::class, $failure);
         self::assertTrue($failure->aborts);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $failure->phase);
         self::assertInstanceOf(InvalidPartitionExpression::class, $failure->problem);
-        $origin = $operation->sources->of($failure->problem->expression);
+        $origin = $input->sources->of($failure->problem->expression);
         self::assertNotNull($origin);
         self::assertSame('(FOUND_ROWS())', substr($sql, $origin->offset, $origin->length));
     }
+    public function testPossibleSeparatesIntrinsicStateDependenceFromVersionedNativeFunctions(): void
+    {
+        $rules = new PartitionExpressions();
+        $name = new \SqlSemantics\Statement\Identifier\Name('JSON_VALID');
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall($name, [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        self::assertTrue($rules->forbidden($call, GrammarRelease::MySql5651));
+        self::assertFalse($rules->forbidden($call, GrammarRelease::MySql847));
+        self::assertTrue($rules->possible($call));
+        self::assertFalse($rules->possible(new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, [])));
+    }
+
     public function testDeriveCannotReceiveAnInvalidNativeSignature(): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);

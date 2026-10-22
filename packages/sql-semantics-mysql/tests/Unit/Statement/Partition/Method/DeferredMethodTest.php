@@ -19,14 +19,14 @@ final class DeferredMethodTest extends TestCase
 {
     public function testDeriveMethodRetainsItsWholeOperandForContextualization(): void
     {
-        $row = new M\Expression\Row([new M\Call\KeywordCall(M\Call\KeywordFunction::User, []), new M\Literal\NumberLiteral('1')]);
+        $row = new M\Expression\Row([new M\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('absent')), new M\Literal\NumberLiteral('1')]);
         $method = new DeferredMethod($row);
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context());
         $method->deriveMethod($derivation, $derivation->environment());
         $diagnostics = $derivation->facts()->diagnostics;
         $problem = $diagnostics[count($diagnostics) - 1];
-        self::assertInstanceOf(M\Partition\Problem\InvalidPartitionExpression::class, $problem);
-        self::assertSame($row, $problem->expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\MissingColumn::class, $problem);
+        self::assertSame($row, $method->expression);
     }
 
     public function testRenderRetainsTheMethodInsideAStoredAlteration(): void

@@ -43,6 +43,21 @@ final class PartitionExpressions
     public const EARLY = ['USER', 'CURRENT_USER', 'SESSION_USER', 'SYSTEM_USER', 'DATABASE', 'SCHEMA', 'CONNECTION_ID', 'FOUND_ROWS', 'LAST_INSERT_ID', 'ROW_COUNT', 'RAND', 'RANDOM_BYTES', 'UUID', 'UUID_SHORT', 'SLEEP', 'BENCHMARK', 'GET_LOCK', 'IS_FREE_LOCK', 'IS_USED_LOCK', 'RELEASE_LOCK', 'RELEASE_ALL_LOCKS', 'LOAD_FILE'];
 
     /**
+     * Tells whether a partition operand has an interpretation in a supported release.
+     * Release-specific native functions remain possible; session state and stored
+     * calls cannot become partition expressions by changing the execution state.
+     */
+    public function possible(\SqlSemantics\Statement\Operand $expression): bool
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql' && !$this->forbidden($expression, $release)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Derives the expression, preserving its warnings before an aborting partition diagnostic.
      */
     public function derive(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression, Derivation $derivation, Environment $scope): void

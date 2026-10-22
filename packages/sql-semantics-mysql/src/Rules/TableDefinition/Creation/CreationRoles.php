@@ -45,6 +45,7 @@ final class CreationRoles
     public function deferred(array $elements, array $options, ?TableQuery $query, ?\SqlSemantics\Platform\MySql\Statement\Partition\Partitioning $partitioning = null, bool $temporary = false): bool
     {
         return $this->temporaryStorage($temporary, $options)
+            || (new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($partitioning)
             || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($elements)
             || (new PartitionKeyRole())->missing($elements, $partitioning, $query)
             || (new DeclarationConstraints())->problem($elements, $query) !== null

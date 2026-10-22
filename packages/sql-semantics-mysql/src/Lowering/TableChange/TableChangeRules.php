@@ -115,7 +115,7 @@ final class TableChangeRules
      */
     public function partitioning(Node $clause): ?Partitioning
     {
-        return (new PartitionRule($this->lowering))->partitioning($clause);
+        return (new PartitionRule($this->lowering, true))->partitioning($clause);
     }
 
     /**

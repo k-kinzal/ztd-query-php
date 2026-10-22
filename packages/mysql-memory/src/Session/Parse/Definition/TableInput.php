@@ -24,6 +24,19 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTa
 final class TableInput
 {
     /**
+     * Preserves a completed stored CREATE header before its contextual operand notice.
+     */
+    public function diagnostic(RefusedCreateTail $header, Session $session): SqlError
+    {
+        try {
+            (new StorageOptions())->header($header, $session, new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()));
+            return (new \MySqlMemory\Session\Problem\Errors())->error($header->problem, $session);
+        } catch (SqlError $error) {
+            return $error;
+        }
+    }
+
+    /**
      * Resolves a complete header after grammar conditions and before tail dependencies.
      *
      * @throws DeferredPreparation When preparation retains a partition condition for execution
@@ -39,26 +52,19 @@ final class TableInput
         }
         $header = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($header instanceof RefusedCreateTail, 'Table input retains the completed CREATE header.');
+        $database = (new \MySqlMemory\Session\Parse\RoutinePrefix())->database($statement, $failure->end, $session);
+        if ($database !== null) {
+            return $database;
+        }
         if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong) {
             return (new \MySqlMemory\Session\Parse\Reader())->rejection(new RejectedInput($header->problem, $failure->end, $failure->aborts), $statement, $session);
         }
-        $syntax = $this->warnings($header->message(), $statement, $session);
+        $syntax = $this->warnings($header->message(), $statement, $session, $failure->aborts ? $failure->end : null);
         if ($syntax !== null) {
             return $syntax;
         }
         try {
-            $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-            $storage = new StorageOptions();
-            $storage->header($header, $session, $context);
-            $this->partition($header, $statement, $session);
-            $storage->engine($header, $session->variables, $context);
-            if ($session->preparation->inputPrepared && $header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
-                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($header, $session->variables->database));
-            }
-            if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $session->instance->dictionary->schema($header->name->schema->value ?? $session->variables->database) === null) {
-                throw \MySqlMemory\Error\Family\QueryError::BadDatabase->error($header->name->schema->value ?? $session->variables->database);
-            }
-            $error = (new \MySqlMemory\Session\Parse\Entry\InputErrors())->refused(new RejectedInput($header->problem, $failure->end, $failure->aborts), $statement, $session);
+            $error = $this->resolve($header, $failure, $statement, $session);
         } catch (SqlError $error) {
             // Header failures precede the retained tail; preserve warnings already recorded.
         }
@@ -69,6 +75,39 @@ final class TableInput
             $session->diagnostics->error($code, $message);
         }
         return new SqlError($error->error, $error->getMessage(), $failure, [], $error->signalled, $error->getCode(), true);
+    }
+
+    /**
+     * Resolves header options and operand conditions before retaining a prepared definition.
+     *
+     * @throws SqlError When the completed header or operand is refused
+     * @throws DeferredPreparation When invocation owns the remaining partition condition
+     */
+    public function resolve(RefusedCreateTail $header, RejectedInput $failure, string $statement, Session $session): SqlError
+    {
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $storage = new StorageOptions();
+        $storage->header($header, $session, $context);
+        if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
+            $operand = new \MySqlMemory\Session\Parse\Entry\Partition\Operand();
+            foreach ($operand->notices($header->problem, $session) as $notice) {
+                $session->diagnostics->warning($notice->code(), $notice->message());
+            }
+            throw $operand->error($header->problem, $failure->sources, $session);
+        }
+        $located = (new \MySqlMemory\Session\Parse\LocatedErrors())->located($header->problem, $failure->sources, $session);
+        if ($located !== null) {
+            throw $located;
+        }
+        $this->partition($header, $statement, $session);
+        $storage->engine($header, $session->variables, $context);
+        if ($session->preparation->inputPrepared && $header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
+            throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($header, $session->variables->database));
+        }
+        if ($header->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $session->instance->dictionary->schema($header->name->schema->value ?? $session->variables->database) === null) {
+            throw \MySqlMemory\Error\Family\QueryError::BadDatabase->error($header->name->schema->value ?? $session->variables->database);
+        }
+        return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->refused(new RejectedInput($header->problem, $failure->end, $failure->aborts), $statement, $session);
     }
 
     /**
@@ -144,12 +183,12 @@ final class TableInput
      * A legacy cache conflict stops at its second modifier; modern-only notices
      * never enter the legacy diagnostic sequence.
      */
-    public function warnings(string $message, string $statement, Session $session): ?SqlError
+    public function warnings(string $message, string $statement, Session $session, ?int $boundary = null): ?SqlError
     {
         $parser = $session->semantics()->parser();
         \SqlSemantics\Diagnostic\Check::invariant($parser instanceof \SqlParser\Parser\ReductionParser, 'The MySQL parser reports completed productions.');
         $tokens = $parser->tokenize($statement);
-        $end = strlen($statement);
+        $end = $boundary ?? strlen($statement);
         $fallback = new SqlError(StatementError::UnknownError, $message);
         $notices = (new SyntaxWarnings())->completed($parser, $statement, $end, $session->semantics()->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
         $conflict = null;

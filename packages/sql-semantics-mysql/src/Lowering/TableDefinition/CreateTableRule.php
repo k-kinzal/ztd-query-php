@@ -204,7 +204,7 @@ final class CreateTableRule
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
                 throw $failure;
             }
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts, $failure->sources);
         }
     }
 

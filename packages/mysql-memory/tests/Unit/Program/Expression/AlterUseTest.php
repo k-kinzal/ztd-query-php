@@ -20,10 +20,10 @@ final class AlterUseTest extends TestCase
 {
     public function testHeaderPreservesPartitionContextualizationBeforeValidationOrTableLookup(): void
     {
-        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $definition = new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('missing')), [
             new M\Alter\Modifier\ValidationOption(true),
-            new M\Alter\Partition\PartitionBy(new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Call\KeywordCall(M\Call\KeywordFunction::User, [])), null, null, [])),
+            new M\Alter\Partition\PartitionBy(new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Call\FunctionCall(new Name('ST_LATITUDE'), [new M\Call\CallArgument(new M\Literal\NumberLiteral('1'))])), null, null, [])),
         ]);
         $session->text = 'unrelated invalid input';
 

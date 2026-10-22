@@ -82,6 +82,11 @@ final class AlterUse
         $name = $definition->table->name->value;
         $table = (new AlterTableCommand())->table($session, $database, $name);
         if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->commands($definition->commands)) {
+            foreach ((new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database)->diagnostics as $problem) {
+                if ($problem instanceof \SqlSemantics\Statement\Reference\Table\MissingTable) {
+                    throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+                }
+            }
             throw \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error();
         }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($definition->commands)) {

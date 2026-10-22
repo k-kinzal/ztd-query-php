@@ -14,12 +14,12 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A non-scalar or subquery partition method retained by a deferred ALTER instruction.
+ * A non-scalar or subquery partition method retained by a deferred table instruction.
  *
  * The complete operand and method identity survive preparation and stored
- * invocation. Ordinary table statements exclude this role. Contextualization
- * still records variables and forbidden session-dependent calls before target
- * lookup; the remaining function restriction belongs to invocation.
+ * invocation. Ordinary table statements exclude this role. Intrinsic session-dependent operands are
+ * excluded at construction; release-specific contextual restrictions precede
+ * target lookup; the remaining function restriction belongs to invocation.
  * Observed through SQL on MySQL 8.4.7.
  *
  * @visibility public
@@ -34,6 +34,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     $clause = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($row), null, null, []);
  *     new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy($clause)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Excluding intrinsic restrictions from retained operands as well
+ *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($row) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class DeferredMethod implements PartitionMethod
 {
@@ -46,6 +49,7 @@ final class DeferredMethod implements PartitionMethod
      */
     public function __construct(public readonly \SqlSemantics\Statement\Scalar|RowOperand|DeferredOperand $expression, public readonly ?PartitionKind $kind = null, public readonly bool $linear = false)
     {
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->possible($expression), 'A retained partition method cannot depend on session state or stored functions.');
         Check::input(!$expression instanceof \SqlSemantics\Statement\Scalar || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A scalar retained partition method contains a subquery.');
         Check::input(!$linear || $kind === null, 'Only HASH partitioning accepts LINEAR.');
         Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');

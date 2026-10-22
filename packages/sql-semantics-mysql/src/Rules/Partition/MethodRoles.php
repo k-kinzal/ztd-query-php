@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
 
 /**
- * Identifies non-scalar partition methods retained only by ALTER instructions.
+ * Identifies non-scalar partition methods retained only by deferred table instructions.
  *
  * @visibility SqlSemantics\Platform\MySql
  */

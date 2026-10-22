@@ -4801,3 +4801,22 @@ requirements from those operands, separately from the event body's invocation
 scope. Unused CTE definitions remain inactive. The regression corpus compares
 CREATE and ALTER EVENT before and after selecting a database, including the
 original generated input and scalar, row and conversion wrappers.
+
+Partition method constructors exclude session-dependent and stored-function
+operands when no supported release admits them. A native function available in
+only some releases remains a value with a versioned interpretation. Refused SQL
+input preserves the complete operand and numeric occurrence ranges so catalog
+errors and deprecation warnings still precede its partition restriction.
+
+Both CREATE and ALTER instructions retain row and subquery partition methods.
+Stored branch histories distinguish their invocation conditions from intrinsic
+constructor contradictions: an unreachable row-valued method can be stored,
+while a method that reads the session cannot. The creation history reuses one
+semantic object while the destination schema is absent, created, populated and
+dropped, without reading a source SQL string.
+
+Prepared creation instructions also retain the database selected at preparation.
+Execution rechecks that destination against the current catalog without parsing
+the request label or replaying engine warnings emitted during preparation. The
+native regression keeps one prepared instruction across database creation and
+removal, and checks syntax-stage notices separately for SHOW PARSE_TREE input.

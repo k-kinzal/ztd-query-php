@@ -9,20 +9,35 @@ use MySqlMemory\Session\Parse\LocatedErrors;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(LocatedErrors::class)]
 #[Small]
 final class LocatedErrorsTest extends TestCase
 {
+    public function testSubqueryUsesTheNestedOccurrenceInsteadOfTheEnclosingCall(): void
+    {
+        $session = (new Instance())->connect();
+        $sql = 'SELECT ABS((SELECT 1))';
+        $operation = $session->semantics()->analyze($sql);
+        $expression = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Operand::class, $expression);
+        self::assertSame(strpos($sql, '(SELECT'), (new LocatedErrors())->subquery($expression, $operation->sources));
+        self::assertNull((new LocatedErrors())->subquery($expression, new \SqlSemantics\Statement\Source\SourceMap()));
+    }
+
     public function testErrorQuotesTheOriginalSpellingAndLine(): void
     {
         $session = (new Instance())->connect();
         $session->text = "ALTER TABLE missing\nPARTITION BY HASH ( /* marker */ (USER ( )))";
-        $operation = $session->analyze($session->text);
-        $problems = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $problem): bool => $problem instanceof InvalidPartitionExpression));
-        $error = (new LocatedErrors())->error($problems[0], $operation, $session);
+        try {
+            $session->semantics()->analyze($session->text);
+            self::fail('Session-dependent partition methods have no constructible interpretation.');
+        } catch (RejectedInput $failure) {
+            self::assertInstanceOf(InvalidPartitionExpression::class, $failure->problem);
+            $error = (new LocatedErrors())->located($failure->problem, $failure->sources, $session);
+        }
         self::assertNotNull($error);
         self::assertSame(1064, $error->getCode());
         self::assertStringEndsWith("near '(USER ( )))' at line 2", $error->getMessage());

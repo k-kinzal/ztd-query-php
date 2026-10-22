@@ -18,9 +18,13 @@ final class NoticePhaseTest extends TestCase
 {
     public function testCasesDistinguishTheInnerOperandFromItsPartitionContext(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SHOW PARSE_TREE CREATE TABLE t (a INT) PARTITION BY HASH(@v COLLATE missing)');
+        $semantics = new Semantics(Dialect::MySql);
+        $expression = $semantics->analyze('SELECT @v COLLATE missing')->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $expression);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->derive($expression, $derivation, $derivation->environment());
 
-        $notices = array_values(array_filter($operation->facts->warnings, static fn ($notice): bool => $notice instanceof ParseFailure));
+        $notices = array_values(array_filter($derivation->facts()->warnings, static fn ($notice): bool => $notice instanceof ParseFailure));
 
         self::assertCount(2, $notices);
         self::assertSame([NoticePhase::Syntax, NoticePhase::Contextualization], array_column($notices, 'phase'));

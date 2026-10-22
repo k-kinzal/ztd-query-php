@@ -42,7 +42,7 @@ final class AlterRuleTest extends TestCase
 
     public function testDefinitionRetainsPartitionOperandRangesWithoutRetainingInputText(): void
     {
-        $sql = 'ALTER TABLE t WITH VALIDATION PARTITION BY HASH(USER())';
+        $sql = 'ALTER TABLE t WITH VALIDATION PARTITION BY HASH(VERSION())';
         try {
             (new Semantics(Dialect::MySql))->analyze($sql);
             self::fail('An inapplicable validation modifier retains a deferred alteration.');
@@ -52,8 +52,8 @@ final class AlterRuleTest extends TestCase
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy::class, $partition);
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod::class, $partition->partitioning->method);
             $origin = $failure->sources->of($partition->partitioning->method->expression);
-            self::assertSame(strpos($sql, 'USER()'), $origin?->offset);
-            self::assertSame(6, $origin->length);
+            self::assertSame(strpos($sql, 'VERSION()'), $origin?->offset);
+            self::assertSame(9, $origin->length);
         }
     }
 }

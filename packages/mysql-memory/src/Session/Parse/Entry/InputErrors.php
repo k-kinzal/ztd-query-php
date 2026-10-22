@@ -34,6 +34,9 @@ final class InputErrors
      */
     public function refused(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
+            return (new Partition\Operand())->error($failure->problem, $failure->sources, $session);
+        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
             return (new PartitionInput())->definition($failure, $statement, $session);
         }
@@ -41,7 +44,7 @@ final class InputErrors
             return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($failure->end, $statement, $session->following, $failure, true, $session->semantics()->parser());
         }
 
-        return (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+        return (new \MySqlMemory\Session\Parse\LocatedErrors())->located($failure->problem, $failure->sources, $session) ?? (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
     }
 
     /**
@@ -184,6 +187,7 @@ final class InputErrors
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail => (new \MySqlMemory\Session\Parse\Definition\TableInput())->diagnostic($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong => (new \MySqlMemory\Error\IdentifierErrors())->length($diagnostic, $session->settings()->legacy()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput => $this->castSize($diagnostic, $session->text, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName => (new Definition\DefinitionNameInput())->error($diagnostic, $session),

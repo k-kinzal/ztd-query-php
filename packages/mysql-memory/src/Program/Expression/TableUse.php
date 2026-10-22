@@ -36,6 +36,9 @@ final class TableUse
             (new \MySqlMemory\Program\Definition\TemporaryStorage())->start($definition, $session);
         }
         $this->header($definition, $session);
+        if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($definition->partitioning)) {
+            return $this->partition($definition, $session);
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
             (new \MySqlMemory\Program\Definition\TemporaryStorage())->raise($definition, $session);
         }
@@ -62,6 +65,13 @@ final class TableUse
         $saved = $session->variables->database;
         $session->variables->database = $preparationDatabase ?? $saved;
         try {
+            if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($definition->partitioning)) {
+                $database = $definition->name->schema->value ?? $session->variables->database;
+                if (!$session->settings()->legacy() && $session->instance->dictionary->schema($database) === null) {
+                    throw \MySqlMemory\Error\Family\QueryError::BadDatabase->error($database);
+                }
+                throw \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error();
+            }
             if ($definition->query !== null) {
                 return (new \MySqlMemory\Program\Definition\CreationQueryUse())->execute($definition, $session);
             }
@@ -110,6 +120,9 @@ final class TableUse
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
         $definition->partitioning->derivePartitioning($derivation, $derivation->environment());
         foreach ($derivation->facts()->warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $warning->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
+                throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
+            }
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
                 throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
             }
@@ -133,6 +146,9 @@ final class TableUse
     {
         $this->header($definition, $session, true);
         $query = $definition->query;
+        if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($definition->partitioning)) {
+            return null;
+        }
         if ($query === null && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
             return null;
         }

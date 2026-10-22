@@ -51,9 +51,9 @@ final class TableUseTest extends TestCase
 
     public function testContextualizeUsesThePartitionStructureBeforeTheDeferredCreationRole(): void
     {
-        $partition = new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Variable\UserVariable(new Name('v'))), null, null, []);
+        $partition = new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Call\FunctionCall(new Name('ST_LATITUDE'), [new M\Call\CallArgument(new M\Literal\NumberLiteral('1'))])), null, null, []);
         $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t'), new Name('missing')), partitioning: $partition);
-        $session = (new Instance())->connect();
+        $session = (new Instance('5.7.44'))->connect();
         $session->text = 'unrelated input';
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1064);

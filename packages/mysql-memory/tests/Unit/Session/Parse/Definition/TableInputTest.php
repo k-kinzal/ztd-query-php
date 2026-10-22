@@ -14,6 +14,21 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class TableInputTest extends TestCase
 {
+    public function testDiagnosticKeepsAStoredHeaderBeforeItsOperandNotice(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $header = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], [], 0, false, new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(new \SqlSemantics\Statement\Identifier\Name('ABS'), 2));
+        self::assertSame(1582, (new TableInput())->diagnostic($header, $session)->getCode());
+        self::assertSame(1046, (new TableInput())->diagnostic($header, (new Instance())->connect())->getCode());
+    }
+
+    public function testResolvePreservesTheOriginalPartitionOccurrence(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->run('CREATE TABLE t(a INT) PARTITION BY HASH(USER())');
+        self::assertSame([['Error', 1064, "Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near 'USER())' at line 1"]], $session->diagnostics->conditions);
+    }
+
     public function testPartitionReportsContextualRestrictionsBeforeEngineFallback(): void
     {
         $session = (new Instance())->connect();

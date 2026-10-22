@@ -15,6 +15,20 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\PartitionRule;
 #[Medium]
 final class PartitionRuleTest extends TestCase
 {
+    public function testPossibleRefusesIntrinsicOperandsWithTheirOccurrenceRanges(): void
+    {
+        $sql = 'ALTER TABLE t PARTITION BY HASH(USER())';
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A session-dependent method cannot be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $failure->problem);
+            $origin = $failure->sources->of($failure->problem->expression);
+            self::assertSame(strpos($sql, 'USER()'), $origin?->offset);
+            self::assertSame(6, $origin->length);
+        }
+    }
+
     public function testPartitioningLowersTheClauseOfEveryGeneration(): void
     {
         self::assertSame('ALTER TABLE t PARTITION BY KEY (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY KEY (a)')->toString());

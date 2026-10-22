@@ -152,7 +152,7 @@ final class Reader
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($tree, $statement);
         }
 
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
             try {
                 (new Syntax($session->resolution()->client))->debugOnly($tree, $statement);
             } catch (SqlError $error) {
@@ -175,6 +175,10 @@ final class Reader
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
         $failure = (new Entry\ProgramInput())->stopped($failure, $session);
+        $database = (new Entry\Partition\Operand())->database($failure, $statement, $session);
+        if ($database !== null) {
+            return $database;
+        }
         $template = $this->template($failure, $statement, $session);
         if ($template !== null) {
             return $template;
@@ -212,9 +216,7 @@ final class Reader
             }
         }
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong) {
-            [$notices, $error] = (new EnginePrefix())->reached($notices, (new EnginePrefix())->completed($statement, $failure->end, $session), $error, $session->modes()->has('NO_ENGINE_SUBSTITUTION'));
-        }
+        [$notices, $error] = (new Entry\Partition\Operand())->ordered($failure, $notices, $error, $statement, $session);
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
 
         $append = $this->appendTarget($notices, $target !== null, $session->settings()->legacy());
