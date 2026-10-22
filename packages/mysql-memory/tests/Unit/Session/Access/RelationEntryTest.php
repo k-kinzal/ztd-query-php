@@ -16,6 +16,14 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class RelationEntryTest extends TestCase
 {
+    public function testDeclaredRequiresAProgramCountDeclaration(): void
+    {
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(new \SqlSemantics\Statement\Identifier\Name('n'));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1327);
+        (new RelationEntry())->declared($variable, (new Instance())->connect());
+    }
+
     /**
      * @return iterable<string, array{string, int}>
      */
@@ -25,6 +33,17 @@ final class RelationEntryTest extends TestCase
         yield 'input before predicate' => ['SELECT 1 FROM t QUALIFY @@missing', 1046];
         yield 'input before alias collision' => ['WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE d.t AS a,t AS a SET a.x=1', 1046];
         yield 'active common table' => ['WITH c AS (SELECT 1 FROM t QUALIFY 1) SELECT * FROM c', 1046];
+        yield 'count before relation' => ['SELECT NTILE(n) OVER () + (SELECT 1 FROM absent)', 1327];
+        yield 'relation before count' => ['SELECT (SELECT 1 FROM absent) + NTILE(n) OVER ()', 1046];
+        yield 'system variable before count' => ['SELECT @@missing + NTILE(n) OVER ()', 1193];
+    }
+
+    public function testCountsLeavesAnUnusedCommonTableDefinitionInactive(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $operation = $session->semantics()->analyze('WITH unused AS (SELECT NTILE(n) OVER ()) SELECT 1', []);
+        (new RelationEntry())->counts($operation->statement, $operation->facts, $session);
+        self::assertSame([], $session->diagnostics->conditions);
     }
 
     public function testNodesFollowsOnlyTheResolvedCommonTableDefinitions(): void
@@ -45,5 +64,47 @@ final class RelationEntryTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionCode($code);
         (new RelationEntry())->check($operation->statement, $operation->facts, $session);
+    }
+
+    public function testCountsResolvesAnExplicitTableLimitFromItsConstructedStructure(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->text = 'opaque request label';
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d'))), limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable(new \SqlSemantics\Statement\Identifier\Name('n'))));
+        $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context([], true));
+        $derivation->query($query, $derivation->environment());
+        $this->expectExceptionCode(1327);
+        $this->expectExceptionMessage('Undeclared variable: n');
+        (new RelationEntry())->counts($query, $derivation->facts(), $session);
+    }
+
+    public function testAliasesRetainsTheLaterRelationIdentity(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\Name('t');
+        $first = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName($name));
+        $later = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName($name));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($name, $later);
+        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [$problem]);
+        $aliases = (new RelationEntry())->aliases($facts);
+        self::assertArrayNotHasKey(spl_object_id($first), $aliases);
+        self::assertSame($problem, $aliases[spl_object_id($later)]);
+    }
+
+    public function testImplicitDistinguishesACteFromAnUnboundBaseTable(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $operation = $session->semantics()->analyze('WITH c AS (SELECT 1) SELECT * FROM c,t', []);
+        $tables = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class);
+        self::assertFalse((new RelationEntry())->implicit($tables[0], $operation->facts));
+        self::assertTrue((new RelationEntry())->implicit($tables[1], $operation->facts));
+    }
+
+    public function testVariablesKeepsReadDependenciesSeparateFromAssignmentTargets(): void
+    {
+        $read = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('missing');
+        $assigned = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('assigned', true);
+        $structured = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('structured', false, true);
+        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [$read, $assigned, $structured]);
+        self::assertSame(['missing' => $read], (new RelationEntry())->variables($facts));
     }
 }

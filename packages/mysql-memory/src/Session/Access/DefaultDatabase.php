@@ -114,6 +114,9 @@ final class DefaultDatabase
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($statement->tables),
             default => [],
         };
+        if (!$session->settings()->legacy() && $tables !== []) {
+            (new RelationEntry())->counts($statement, $facts, $session);
+        }
         foreach ($tables as $table) {
             if ($table instanceof \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget && $table->name->schema === null) {
                 throw QueryError::NoDatabase->error();

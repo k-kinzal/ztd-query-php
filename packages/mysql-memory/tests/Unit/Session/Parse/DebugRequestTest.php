@@ -96,7 +96,7 @@ final class DebugRequestTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
-        $partitioning = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new Collated(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('VECTOR_DIM'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new NumberLiteral('1'))]), new Name('missing'))), null, null, []);
+        $partitioning = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new Collated(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('ABS'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new NumberLiteral('1'))]), new Name('missing'))), null, null, []);
         $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)))], partitioning: $partitioning));
         $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
 

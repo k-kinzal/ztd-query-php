@@ -6,16 +6,25 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A refused scalar filter together with the schema inspection that owns it.
+ * A refused scalar filter together with the inspection that owns it.
  *
  * The header retains its database and output-column scope. It has no filter
  * of its own; the refused operand is not published as an ordinary ShowWhere.
@@ -31,10 +40,10 @@ final class RefusedFilter implements Diagnostic
     use Snapshot;
 
     /**
-     * @param ShowTables|ShowTableStatus|ShowTriggers|ShowColumns|ShowKeys $header The inspection without a filter
+     * @param ShowTables|ShowTableStatus|ShowTriggers|ShowColumns|ShowKeys|ShowEvents|ShowProcedureStatus|ShowFunctionStatus|ShowDatabases|ShowOpenTables|ShowStatus|ShowVariables|ShowCharacterSet|ShowCollation $header The inspection without a filter
      * @param RefusedScalar $condition The non-scalar operand in the WHERE position
      */
-    public function __construct(public readonly ShowTables|ShowTableStatus|ShowTriggers|ShowColumns|ShowKeys $header, public readonly RefusedScalar $condition)
+    public function __construct(public readonly ShowTables|ShowTableStatus|ShowTriggers|ShowColumns|ShowKeys|ShowEvents|ShowProcedureStatus|ShowFunctionStatus|ShowDatabases|ShowOpenTables|ShowStatus|ShowVariables|ShowCharacterSet|ShowCollation $header, public readonly RefusedScalar $condition)
     {
         Check::input($header->filter === null, 'A refused inspection header has no second filter.');
     }

@@ -20,6 +20,19 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class RowUseTest extends TestCase
 {
+    public function testRaiseResolvesARetainedWindowCountBeforeTheScalarWidth(): void
+    {
+        $row = new Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $count = new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(new Name('n'));
+        $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Tile, [$count], new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, $row, $window);
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated invalid input';
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1327);
+        (new RowUse())->raise($operand, $session, false);
+    }
+
     public function testAggregateChecksPlacementBeforeArgumentNames(): void
     {
         $session = (new Instance())->connect();

@@ -22,7 +22,7 @@ final class ShowVariablesCommandTest extends TestCase
         self::assertTrue((new ShowVariablesCommand())->clearsDiagnostics());
     }
 
-    public function testExecuteListsTheValuesOfAScope(): void
+    public function testHeadingsIdentifyTheSelectedVariableScope(): void
     {
         $session = (new Instance())->connect();
         $session->query("SET SESSION sql_mode = ''");

@@ -31,6 +31,31 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class WindowResultsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{WindowFunctionKind}>
+     */
+    public static function providerDependentCounts(): iterable
+    {
+        yield 'tile count' => [WindowFunctionKind::Tile];
+        yield 'lead offset' => [WindowFunctionKind::Lead];
+        yield 'lag offset' => [WindowFunctionKind::Lag];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDependentCounts')]
+    public function testDomainRetainsNumericMetadataWithADependentProgramCount(WindowFunctionKind $kind): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $count = new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(new Name('n'));
+        $arguments = $kind === WindowFunctionKind::Tile ? [$count] : [new NumberLiteral('1'), $count];
+        $call = new WindowFunction($kind, $arguments, new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+        $fact = $derivation->scalar($call, $derivation->environment());
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(Kind::Integer, $fact->type->descriptor->kind);
+        self::assertSame($kind === WindowFunctionKind::Tile ? Nullability::NotNull : Nullability::Nullable, $fact->nullability);
+    }
+
     public function testResolvedPreservesTheLogicalTemporalCharset(): void
     {
         $platform = new Platform();

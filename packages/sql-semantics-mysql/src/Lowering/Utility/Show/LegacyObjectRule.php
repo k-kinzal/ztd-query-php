@@ -121,12 +121,12 @@ final class LegacyObjectRule
         $names = $this->lowering->names;
 
         return match ($kind) {
-            'databases' => new ShowDatabases($clauses->filter($form->node(1))),
+            'databases' => $clauses->inspection(new ShowDatabases(), $form->node(1)),
             'tables' => $clauses->inspection(new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2))), $form->node(3)),
             'triggers' => $clauses->inspection(new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2))), $form->node(3)),
-            'events' => new ShowEvents($clauses->database($form->node(1)), $clauses->filter($form->node(2))),
+            'events' => $clauses->inspection(new ShowEvents($clauses->database($form->node(1))), $form->node(2)),
             'tableStatus' => $clauses->inspection(new ShowTableStatus($clauses->database($form->node(2))), $form->node(3)),
-            'openTables' => new ShowOpenTables($clauses->database($form->node(2), true), $clauses->filter($form->node(3))),
+            'openTables' => $clauses->inspection(new ShowOpenTables($clauses->database($form->node(2), true)), $form->node(3)),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),
             'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2))),
@@ -186,16 +186,16 @@ final class LegacyObjectRule
             'engine' => $this->engine($form),
             'engines' => $this->engines($form),
             'privileges' => new ShowPrivileges(),
-            'status' => new ShowStatus($clauses->scope($form->node(0)), $clauses->filter($form->node(2))),
-            'variables' => new ShowVariables($clauses->scope($form->node(0)), $clauses->filter($form->node(2))),
+            'status' => $clauses->inspection(new ShowStatus($clauses->scope($form->node(0))), $form->node(2)),
+            'variables' => $clauses->inspection(new ShowVariables($clauses->scope($form->node(0))), $form->node(2)),
             'processlist' => new ShowProcesslist($clauses->listing($form->node(0)) !== null),
-            'charset' => new ShowCharacterSet($clauses->filter($form->node(1))),
-            'collation' => new ShowCollation($clauses->filter($form->node(1))),
+            'charset' => $clauses->inspection(new ShowCharacterSet(), $form->node(1)),
+            'collation' => $clauses->inspection(new ShowCollation(), $form->node(1)),
             'grants' => new ShowGrants(),
             'grantsFor' => new ShowGrants($this->lowering->users->account($form->node(2))),
             'createUser' => $this->createUser($form),
-            'procedureStatus' => new ShowProcedureStatus($clauses->filter($form->node(2))),
-            'functionStatus' => new ShowFunctionStatus($clauses->filter($form->node(2))),
+            'procedureStatus' => $clauses->inspection(new ShowProcedureStatus(), $form->node(2)),
+            'functionStatus' => $clauses->inspection(new ShowFunctionStatus(), $form->node(2)),
             default => throw ImplementationGap::production($form),
         };
     }

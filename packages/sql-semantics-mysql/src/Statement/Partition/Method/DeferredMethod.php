@@ -53,6 +53,7 @@ final class DeferredMethod implements PartitionMethod
         Check::input(!$expression instanceof \SqlSemantics\Statement\Scalar || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A scalar retained partition method contains a subquery.');
         Check::input(!$linear || $kind === null, 'Only HASH partitioning accepts LINEAR.');
         Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

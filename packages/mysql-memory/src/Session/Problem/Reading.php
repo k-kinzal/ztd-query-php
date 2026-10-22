@@ -133,10 +133,8 @@ final class Reading
         if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEvents || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents) {
             $this->limited($operation->statement->limit, $session);
         }
-        foreach ($program ? [] : (new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable::class) as $variable) {
-            if ($session->program?->variable($variable->name->value) === null) {
-                throw ProgramError::UndeclaredVariable->error($variable->name->value);
-            }
+        if (!$program) {
+            (new \MySqlMemory\Session\Access\RelationEntry())->counts($operation->statement, $operation->facts, $session);
         }
         (new Placement())->check($operation->statement, $session->settings()->release(), function (Select $select, bool $ended) use ($session, $operation, $reached, $program): void {
             if (!$program && isset($reached[spl_object_id($select)])) {
@@ -162,6 +160,9 @@ final class Reading
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation && Stages::selfChecked($operation->statement))) {
+                if ($diagnostic instanceof UnknownSystemVariable) {
+                    (new \MySqlMemory\Session\Access\EventSchedule())->statement($operation->statement, $session);
+                }
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
             if (Stages::closing($diagnostic)) {

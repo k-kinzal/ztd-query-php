@@ -23,6 +23,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ReleaseDomainTest extends TestCase
 {
+    public function testOfKeepsRetainedPartitionSubqueriesInLegacyDefinitions(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new Select([], [new SelectExpression(new NumberLiteral('1'))]));
+        $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($query);
+        self::assertSame(3, (new ReleaseDomain())->of($method));
+        self::assertSame(511, (new ReleaseDomain())->of(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new NumberLiteral('1'))));
+    }
+
     public function testOrderingSeparatesBooleanConstantsFromLegacyPositions(): void
     {
         $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true);

@@ -17,6 +17,23 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod;
 #[Medium]
 final class DeferredMethodTest extends TestCase
 {
+    public function testRetainedSubqueryExcludesAModernNativeFunction(): void
+    {
+        $call = new M\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ST_LATITUDE'), [new M\Call\CallArgument(new M\Literal\NumberLiteral('1'))]);
+        $query = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression($call)]));
+        $this->expectExceptionMessage('The retained operands must share a supported MySQL release.');
+        new DeferredMethod($query);
+    }
+
+    public function testRetainedSubqueryExcludesAWithClause(): void
+    {
+        $definition = new M\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('q'), [], new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]));
+        $query = new M\Query\QueryExpression(new M\Query\With\With(false, [$definition]), new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]));
+        $operand = new M\Expression\Subquery\ScalarSubquery($query);
+        $this->expectExceptionMessage('The retained operands must share a supported MySQL release.');
+        new DeferredMethod($operand);
+    }
+
     public function testDeriveMethodRetainsItsWholeOperandForContextualization(): void
     {
         $row = new M\Expression\Row([new M\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('absent')), new M\Literal\NumberLiteral('1')]);

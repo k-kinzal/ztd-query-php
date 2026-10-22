@@ -58,6 +58,25 @@ final class PartitionExpressions
     }
 
     /**
+     * Retains the releases in which a method can be defined, independently of table state.
+     * Subqueries survive stored definition only in 5.6 and 5.7. The remaining
+     * partition restrictions intersect with function and enclosing language requirements.
+     */
+    public function releases(\SqlSemantics\Statement\Operand $expression): int
+    {
+        $languages = new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain();
+        $subquery = $this->condition($expression, GrammarRelease::MySql847) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery;
+        $domain = 0;
+        foreach (GrammarRelease::cases() as $release) {
+            $bit = $languages->bit($release);
+            if ($bit !== 0 && (!$subquery || ($bit & 3) !== 0) && !$this->forbidden($expression, $release)) {
+                $domain |= $bit;
+            }
+        }
+        return $domain;
+    }
+
+    /**
      * Derives the expression, preserving its warnings before an aborting partition diagnostic.
      */
     public function derive(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $expression, Derivation $derivation, Environment $scope): void

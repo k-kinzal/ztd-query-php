@@ -67,17 +67,17 @@ final class ServerRule
 
                 return new ShowEngineCatalog();
             case 'show_status_stmt: SHOW opt_var_type STATUS_SYM opt_wild_or_where':
-                return new ShowStatus($clauses->scope($form->node(1)), $clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowStatus($clauses->scope($form->node(1))), $form->node(3));
             case 'show_variables_stmt: SHOW opt_var_type VARIABLES opt_wild_or_where':
-                return new ShowVariables($clauses->scope($form->node(1)), $clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowVariables($clauses->scope($form->node(1))), $form->node(3));
             case 'show_processlist_stmt: SHOW opt_full PROCESSLIST_SYM':
                 return new ShowProcesslist($clauses->listing($form->node(1)) !== null);
             case 'show_character_set_stmt: SHOW character_set opt_wild_or_where':
                 $this->lowering->options->skip($form->node(1));
 
-                return new ShowCharacterSet($clauses->filter($form->node(2)));
+                return $clauses->inspection(new ShowCharacterSet(), $form->node(2));
             case 'show_collation_stmt: SHOW COLLATION_SYM opt_wild_or_where':
-                return new ShowCollation($clauses->filter($form->node(2)));
+                return $clauses->inspection(new ShowCollation(), $form->node(2));
             case 'show_privileges_stmt: SHOW PRIVILEGES':
                 return new ShowPrivileges();
             case 'show_grants_stmt: SHOW GRANTS':

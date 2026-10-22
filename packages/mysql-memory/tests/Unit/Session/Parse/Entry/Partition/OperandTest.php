@@ -19,6 +19,16 @@ use SqlSemantics\Statement\Source\SourceMap;
 #[Small]
 final class OperandTest extends TestCase
 {
+    public function testDatabasePrecedesAModernPartitionSubqueryRefusal(): void
+    {
+        $session = (new Instance())->connect();
+        $sql = 'ALTER TABLE t PARTITION BY HASH((SELECT 1))';
+        $query = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]));
+        $failure = new RejectedInput(new M\Partition\Problem\RefusedScalar($query, M\Partition\Problem\OperandCondition::Subquery), strlen($sql));
+        self::assertSame(1046, (new Operand())->database($failure, $sql, $session)?->getCode());
+        self::assertNull((new Operand())->database($failure, str_replace('TABLE t', 'TABLE d.t', $sql), $session));
+    }
+
     public function testDatabasePrecedesAnIntrinsicMethodCondition(): void
     {
         $session = (new Instance())->connect();

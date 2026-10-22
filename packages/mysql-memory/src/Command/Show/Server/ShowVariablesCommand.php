@@ -58,17 +58,25 @@ final class ShowVariablesCommand implements Command
         $global = $statement->scope === VariableScope::Global;
         $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && in_array($session->variables->read('show_compatibility_56'), ['ON', 1], true));
         $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context, $oldest) : $this->status($session, $global, $context->started, $context->zone());
-        $table = ($global ? 'global_' : 'session_') . ($statement instanceof ShowVariables ? 'variables' : 'status');
+        $headings = $this->headings($global, $oldest, $session->settings()->legacy(), $statement instanceof ShowVariables);
+
+        return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb4_0900_ai_ci');
+    }
+
+    /**
+     * @return list<Heading> The variable output domains for the selected catalog
+     */
+    public function headings(bool $global, bool $oldest, bool $legacy, bool $variables): array
+    {
+        $table = ($global ? 'global_' : 'session_') . ($variables ? 'variables' : 'status');
         if ($oldest) {
-            $table = $statement instanceof ShowVariables ? 'VARIABLES' : 'STATUS';
+            $table = $variables ? 'VARIABLES' : 'STATUS';
         }
-        $schema = $oldest ? 'information_schema' : ($session->settings()->legacy() ? '' : 'performance_schema');
-        $headings = [
+        $schema = $oldest ? 'information_schema' : ($legacy ? '' : 'performance_schema');
+        return [
             Heading::text('Variable_name', Field::VarString, 64, ColumnFlag::NotNull->value | ($oldest ? 0 : ColumnFlag::NoDefaultValue->value), 0, $oldest ? 'VARIABLE_NAME' : 'Variable_name', $table, $table, $schema, 'utf8mb4_0900_ai_ci'),
             Heading::text('Value', Field::VarString, 1024, 0, 0, $oldest ? 'VARIABLE_VALUE' : 'Value', $table, $table, $schema, 'utf8mb4_0900_ai_ci'),
         ];
-
-        return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb4_0900_ai_ci');
     }
 
     /**

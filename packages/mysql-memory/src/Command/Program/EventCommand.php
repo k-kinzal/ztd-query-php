@@ -269,7 +269,7 @@ final class EventCommand implements Command
             return [$this->time($schedule->at, 'AT', $planner, $context), null, null, null];
         }
         assert($schedule instanceof RecurringSchedule);
-        $quantity = $planner->compiler->compile($schedule->quantity, new Scope());
+        $quantity = $this->expression($schedule->quantity, 'INTERVAL', $planner);
         $value = $quantity->evaluate(new Frame($context));
         if ($value === null) {
             throw DataError::WrongValue->error('INTERVAL', 'NULL');
@@ -359,6 +359,25 @@ final class EventCommand implements Command
     }
 
     /**
+     * Preserves legacy conversion conditions following an invalid system-variable scope.
+     * Modern schedules stop during variable contextualization instead.
+     *
+     * @throws SqlError When an expression cannot be compiled, retaining subsequent conversion conditions
+     */
+    public function expression(Scalar $expression, string $clause, Planner $planner): \MySqlMemory\Evaluation\Evaluable
+    {
+        try {
+            return $planner->compiler->compile($expression, new Scope());
+        } catch (SqlError $error) {
+            if (!$planner->settings->legacy() || $error->error !== \MySqlMemory\Error\Family\AdministrationError::IncorrectGlobalLocalVariable) {
+                throw $error;
+            }
+            $conversion = $clause === 'ENDS' ? ProgramError::EndsBeforeStarts->error() : DataError::WrongValue->error($clause, 'NULL');
+            throw new SqlError($error->error, $error->getMessage(), $error, [...$error->following, [$conversion->getCode(), $conversion->getMessage()]]);
+        }
+    }
+
+    /**
      * Evaluates a time of a schedule into a datetime to the second.
      * Instants must fit the release's epoch range: through 2038 on MySQL 5.6/5.7,
      * through 3001 on modern releases. Bounds apply after the session zone conversion.
@@ -367,7 +386,7 @@ final class EventCommand implements Command
      */
     public function time(Scalar $expression, string $clause, Planner $planner, Context $context): string
     {
-        $compiled = $planner->compiler->compile($expression, new Scope());
+        $compiled = $this->expression($expression, $clause, $planner);
         $value = $compiled->evaluate(new Frame($context));
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $compiled->domain());
         $parts = $value === null ? null : Temporal::parseDateTime($text);

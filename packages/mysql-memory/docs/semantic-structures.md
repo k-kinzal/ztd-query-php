@@ -4820,3 +4820,40 @@ Execution rechecks that destination against the current catalog without parsing
 the request label or replaying engine warnings emitted during preparation. The
 native regression keeps one prepared instruction across database creation and
 removal, and checks syntax-stage notices separately for SHOW PARSE_TREE input.
+
+A partition method's release domain also participates in graph composition.
+Subqueries can survive stored definition only in MySQL 5.6 and 5.7; native
+functions available only in later releases cannot occupy that role. WITH,
+VECTOR and other later operands cannot be combined with a retained partition
+subquery. The constructors intersect these requirements before publishing the
+value. This is a language invariant, independent of whether a destination table
+exists or a stored branch is taken. Direct construction histories preserve the
+same legacy subquery method through both branch states and catalog changes.
+
+Event schedule dependency checks use the retained operand order. An unknown
+system variable and an unqualified table requiring a default database are
+resolved in that order, including nested query and CTE scopes. Legacy variable
+scope failures can be followed by schedule conversion conditions; modern
+releases stop during contextualization. Neither case requires the original
+SQL or a replacement expression.
+
+Window result domains depend on value and default arguments, not on the runtime
+type of a bucket count or row offset. Semantics retains complete result metadata
+for NTILE, LEAD and LAG with program variables, including inside retained
+non-scalar selections. Count variables participate in the same active dependency
+order as system variables and implicit table databases. Unused CTE definitions
+do not introduce count bindings. The regression compares both direct and stored
+queries, successful rows and metadata, and dependency failures before width or
+window-placement conditions.
+
+SHOW filter refusals retain every filter-owning inspection, including routine,
+variable, character-set and open-table listings. Their output scope is available
+without reconstructing a header from SQL. Native regressions compare unresolved
+columns and nested dependencies across selected and unselected databases in text
+and prepared execution.
+
+Count dependencies follow the reached semantic relation occurrences. A TABLE or
+VALUES query's LIMIT is checked before later aliases, and unused CTE definitions
+remain inactive. Directly constructed SELECT, TABLE and VALUES queries reuse the
+same count variables outside and inside routine declarations: the declaration
+permits populated results, and the binding disappears when the invocation ends.

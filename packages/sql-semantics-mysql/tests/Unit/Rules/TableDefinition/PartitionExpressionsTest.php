@@ -21,6 +21,17 @@ use SqlSemantics\Statement\Scalar;
 #[Small]
 final class PartitionExpressionsTest extends TestCase
 {
+    public function testReleasesIntersectsStoredSubqueriesWithNativeFunctionAvailability(): void
+    {
+        $json = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('JSON_VALID'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        $latitude = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ST_LATITUDE'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        $query = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($json)]));
+        $impossible = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($latitude)]));
+        self::assertSame(2, (new PartitionExpressions())->releases($query));
+        self::assertSame(508, (new PartitionExpressions())->releases($latitude));
+        self::assertSame(0, (new PartitionExpressions())->releases($impossible));
+    }
+
     public function testConditionDistinguishesTheRetainedPartitionRoles(): void
     {
         $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');

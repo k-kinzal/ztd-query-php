@@ -42,6 +42,7 @@ final class ExpressionMethod implements PartitionMethod
         Check::input($rules->possible($expression), 'A partition method cannot depend on session state or stored functions.');
         Check::input($rules->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A partition subquery needs a retained instruction.');
         Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

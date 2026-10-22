@@ -115,7 +115,7 @@ final class ClauseRule
      *
      * @throws \SqlSemantics\Construction\RejectedInput When the filter has no scalar role
      */
-    public function inspection(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys $header, Node $source): \SqlSemantics\Platform\MySql\Statement\Statement
+    public function inspection(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation $header, Node $source): \SqlSemantics\Platform\MySql\Statement\Statement
     {
         try {
             $filter = $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys ? $this->where($source) : $this->filter($source);
@@ -130,6 +130,15 @@ final class ClauseRule
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys($header->table, $header->extended, $header->database, $filter);
         }
         return match (true) {
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents($header->database, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables($header->database, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus($header->scope, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables($header->scope, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation($filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns($header->table, $header->listing, $header->database, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables($header->listing, $header->database, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers($header->full, $header->database, $filter),

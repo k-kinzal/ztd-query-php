@@ -31,7 +31,7 @@ final class Operand
      */
     public function database(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
     {
-        return $failure->problem instanceof InvalidPartitionExpression || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount
+        return $failure->problem instanceof InvalidPartitionExpression || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount || ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $failure->problem->condition === OperandCondition::Subquery)
             ? (new \MySqlMemory\Session\Parse\Definition\DefinitionPrefix())->database($statement, $failure->end, $session, 'TABLE_SYM') : null;
     }
 

@@ -45,6 +45,29 @@ use SqlSemantics\Statement\Type\NullOnly;
 final class WindowResults
 {
     /**
+     * Resolves the result from value arguments without requiring the count's runtime type.
+     * Counts select rows or buckets; they do not determine result storage metadata.
+     *
+     * @param list<ScalarFact> $arguments Facts of all operands, including dependent program counts
+     */
+    public function domain(WindowFunction $call, array $arguments, Derivation $derivation): ?Domain
+    {
+        $count = $call->kind === WindowFunctionKind::NthValue ? 1 : $call->kind->counted();
+        $values = [];
+        foreach ($arguments as $position => $argument) {
+            if ($position === $count) {
+                continue;
+            }
+            $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($argument->type);
+            if ($domain === null) {
+                return null;
+            }
+            $values[$position] = $domain->value();
+        }
+        return $this->resolved($call, $values, $derivation, false);
+    }
+
+    /**
      * Answers the facts of a window function call and reports what the server rejects.
      *
      * @param list<ScalarFact> $arguments
@@ -69,7 +92,7 @@ final class WindowResults
      * Resolves the type of a window function call over the resolved types of its arguments, or answers null after reporting collations that conflict.
      * A direct temporal result retains its textual collation or takes latin1; storage converts it to binary. Result encoding is separate.
      *
-     * @param list<Domain> $arguments
+     * @param array<int, Domain> $arguments Value domains by argument position; the unused count domain may be absent
      * @param bool $materialized Whether the result passes through a window's temporary column
      */
     public function resolved(WindowFunction $call, array $arguments, Derivation $derivation, bool $materialized = true): ?Domain
@@ -92,7 +115,7 @@ final class WindowResults
      *
      * MySQL 8.0 rounds the stored JSON byte bound to whole UTF-8 characters (verified on a live 8.0 server).
      *
-     * @param list<Domain> $arguments
+     * @param array<int, Domain> $arguments Value domains by argument position; the unused count domain may be absent
      * @param bool $materialized Whether the result passes through a window's temporary column
      */
     public function shifted(WindowFunction $call, array $arguments, Derivation $derivation, bool $materialized = true): ?Domain

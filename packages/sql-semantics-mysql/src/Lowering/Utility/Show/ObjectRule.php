@@ -62,17 +62,17 @@ final class ObjectRule
         $clauses = new ClauseRule($this->lowering);
         switch ($form->signature) {
             case 'show_databases_stmt: SHOW DATABASES opt_wild_or_where':
-                return new ShowDatabases($clauses->filter($form->node(2)));
+                return $clauses->inspection(new ShowDatabases(), $form->node(2));
             case 'show_tables_stmt: SHOW opt_show_cmd_type TABLES opt_db opt_wild_or_where':
                 return $clauses->inspection(new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3))), $form->node(4));
             case 'show_triggers_stmt: SHOW opt_full TRIGGERS_SYM opt_db opt_wild_or_where':
                 return $clauses->inspection(new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3))), $form->node(4));
             case 'show_events_stmt: SHOW EVENTS_SYM opt_db opt_wild_or_where':
-                return new ShowEvents($clauses->database($form->node(2)), $clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowEvents($clauses->database($form->node(2))), $form->node(3));
             case 'show_table_status_stmt: SHOW TABLE_SYM STATUS_SYM opt_db opt_wild_or_where':
                 return $clauses->inspection(new ShowTableStatus($clauses->database($form->node(3))), $form->node(4));
             case 'show_open_tables_stmt: SHOW OPEN_SYM TABLES opt_db opt_wild_or_where':
-                return new ShowOpenTables($clauses->database($form->node(3), true), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowOpenTables($clauses->database($form->node(3), true)), $form->node(4));
             case 'show_columns_stmt: SHOW opt_show_cmd_type COLUMNS from_or_in table_ident opt_db opt_wild_or_where':
                 $clauses->preposition($form->node(3));
 
@@ -112,9 +112,9 @@ final class ObjectRule
             case 'show_create_event_stmt: SHOW CREATE EVENT_SYM sp_name':
                 return new ShowCreateEvent($names->qualified($form->node(3)));
             case 'show_procedure_status_stmt: SHOW PROCEDURE_SYM STATUS_SYM opt_wild_or_where':
-                return new ShowProcedureStatus($clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowProcedureStatus(), $form->node(3));
             case 'show_function_status_stmt: SHOW FUNCTION_SYM STATUS_SYM opt_wild_or_where':
-                return new ShowFunctionStatus($clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowFunctionStatus(), $form->node(3));
             case 'show_procedure_code_stmt: SHOW PROCEDURE_SYM CODE_SYM sp_name':
                 return new ShowProcedureCode($names->qualified($form->node(3)));
             case 'show_function_code_stmt: SHOW FUNCTION_SYM CODE_SYM sp_name':

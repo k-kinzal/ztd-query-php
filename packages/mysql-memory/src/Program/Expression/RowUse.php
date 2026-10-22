@@ -45,6 +45,7 @@ final class RowUse
         $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($operand, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
         $derivation->scalar($operand, $derivation->environment());
         $problems = $derivation->facts()->diagnostics;
+        (new \MySqlMemory\Session\Access\RelationEntry())->check($operand, $derivation->facts(), $session);
         foreach ($problems as $problem) {
             if (Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);

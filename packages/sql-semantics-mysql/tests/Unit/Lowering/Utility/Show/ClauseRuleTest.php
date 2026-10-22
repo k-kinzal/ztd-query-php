@@ -111,4 +111,30 @@ final class ClauseRuleTest extends TestCase
         }
     }
 
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerFilteredInspections(): iterable
+    {
+        foreach (['5.7.44', '8.4.7'] as $release) {
+            foreach (['DATABASES', 'TABLES', 'TABLE STATUS', 'TRIGGERS', 'COLUMNS FROM t', 'KEYS FROM t', 'EVENTS', 'PROCEDURE STATUS', 'FUNCTION STATUS', 'OPEN TABLES', 'STATUS', 'VARIABLES', 'CHARACTER SET', 'COLLATION'] as $header) {
+                yield $release . ':' . $header => [$release, 'SHOW ' . $header];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerFilteredInspections')]
+    public function testInspectionRetainsEveryFilterOwner(string $release, string $header): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $release);
+        $expected = $semantics->analyze($header)->statement;
+        try {
+            $semantics->analyze($header . ' WHERE (1,2)');
+            self::fail('A row condition must retain its refused scalar role.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter::class, $failure->problem);
+            self::assertEquals($expected, $failure->problem->header);
+        }
+    }
 }

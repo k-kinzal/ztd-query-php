@@ -57,6 +57,9 @@ final class DerivedInput
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
             return $resolved ?? (new Dml\Targets())->unmatched($failure->problem, $session);
         }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate) {
+            return $resolved ?? (new \MySqlMemory\Program\Write\UpdateUse())->error($failure->problem, $session);
+        }
         return $this->targets($statement, $session, $failure->end) ?? $this->written($statement, $session, $failure->end);
     }
 

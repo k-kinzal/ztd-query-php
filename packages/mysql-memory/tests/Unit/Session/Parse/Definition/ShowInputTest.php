@@ -106,4 +106,32 @@ final class ShowInputTest extends TestCase
         $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter($header, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row));
         self::assertSame('missing', (new ShowInput())->selected($problem, $session, false));
     }
+
+    public function testHeadingsKeepTheOutputScopeWithoutInputText(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->text = 'opaque request label';
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('Db')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus(), new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($row));
+        self::assertSame(1241, (new ShowInput())->resolve($problem, $session)->getCode());
+        self::assertSame('opaque request label', $session->text);
+    }
+
+    public function testPrepareNamesTheWhereClauseForAnUnboundFilterColumn(): void
+    {
+        $this->expectExceptionMessage("Unknown column 'absent_column' in 'where clause'");
+        (new Instance())->connect()->query('SHOW PROCEDURE STATUS WHERE absent_column+(1,2)');
+    }
+
+    public function testResolvePreparesAnEventFilterBeforeInspectingItsDatabase(): void
+    {
+        $this->expectExceptionCode(1241);
+        (new Instance('8.4.7'))->connect()->query('SHOW EVENTS FROM missing WHERE (Name,1)');
+    }
+
+    public function testResolveRequiresTheInspectionDatabaseBeforeAWindowCount(): void
+    {
+        $this->expectExceptionCode(1046);
+        (new Instance('8.4.7'))->connect()->query('SHOW TABLES WHERE (NTILE(n) OVER (),1)');
+    }
 }

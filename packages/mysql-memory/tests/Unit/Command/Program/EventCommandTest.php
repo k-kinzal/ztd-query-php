@@ -360,4 +360,26 @@ final class EventCommandTest extends TestCase
         self::assertSame('2099-01-01 00:00:00', $schema->events['e']->at);
         self::assertSame('ENABLED', $schema->events['e']->status);
     }
+    /**
+     * @return iterable<string, array{string, list<int>}>
+     */
+    public static function providerScopeConditions(): iterable
+    {
+        yield 'legacy conversion' => ['5.7.44', [1238, 1543]];
+        yield 'modern contextualization' => ['8.4.7', [1238]];
+    }
+
+    /**
+     * @param list<int> $conditions Ordered diagnostic codes
+     */
+    #[DataProvider('providerScopeConditions')]
+    public function testExpressionPreservesLegacyScopeConversionConditions(string $release, array $conditions): void
+    {
+        $session = (new Instance($release, [], ['d']))->connect(database: 'd');
+        $error = $session->run('ALTER EVENT e ON SCHEDULE EVERY 1 DAY ENDS @@session.version')[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1238, $error->getCode());
+        self::assertSame($conditions, array_column($session->diagnostics->conditions, 1));
+    }
+
 }

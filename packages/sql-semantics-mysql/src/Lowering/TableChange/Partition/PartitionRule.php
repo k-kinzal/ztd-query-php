@@ -195,6 +195,9 @@ final class PartitionRule
             if (!$this->retainDeferredOperands || !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
                 throw $failure;
             }
+            if ($failure->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery && !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                throw $failure;
+            }
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($failure->problem->operand, $kind === 'hash' ? null : PartitionKind::from($kind), $isLinear);
         }
     }
@@ -338,13 +341,13 @@ final class PartitionRule
     }
 
     /**
-     * Refuses an intrinsically invalid method before any ordinary or deferred value is built.
+     * Refuses a method unavailable in the selected language before a value is built.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When no supported release admits the operand
+     * @throws \SqlSemantics\Construction\RejectedInput When the selected release refuses the operand
      */
     public function possible(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Node $function): void
     {
-        if (!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->possible($operand)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->forbidden($operand, $this->lowering->profile->grammar)) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression($operand), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0, true, $this->lowering->origins->publish());
         }
     }

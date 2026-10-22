@@ -51,16 +51,21 @@ final class ShowOpenTablesCommand implements Command
             }
             $rows[] = [$schema, $table, (new \MySqlMemory\Session\Access\OpenedTables())->uses($schema, $table, $session), 0];
         }
+        return (new Listing($this->headings($session->settings()->legacy())))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1, 'utf8mb4_bin');
+    }
+    /**
+     * @return list<Heading> The open-table output domains and column identities
+     */
+    public function headings(bool $legacy): array
+    {
         $table = 'OPEN_TABLES';
         $schema = 'information_schema';
-        $oldWidths = $session->settings()->legacy();
-        $headings = [
+        $oldWidths = $legacy;
+        return [
             Heading::text('Database', Field::VarString, 64, ColumnFlag::NotNull->value, 0, 'Database', $table, $table, $schema),
             Heading::text('Table', Field::VarString, 64, ColumnFlag::NotNull->value, 0, 'Table', $table, $table, $schema),
             new Heading('In_use', Field::LongLong, $oldWidths ? 1 : 2, ColumnFlag::NotNull->value | ColumnFlag::Numeric->value, 0, false, 'In_use', $table, $table, $schema),
             new Heading('Name_locked', Field::LongLong, $oldWidths ? 4 : 5, ColumnFlag::NotNull->value | ColumnFlag::Numeric->value, 0, false, 'Name_locked', $table, $table, $schema),
         ];
-
-        return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1, 'utf8mb4_bin');
     }
 }

@@ -31,18 +31,21 @@ final class RetainedCreationPartitionStructureTest extends TestCase
     public static function providerStructures(): iterable
     {
         $choices = new Choices('retained-creation-partitions-20261022');
-        $structures = [];
-        for ($trial = 0; $trial < 4; $trial++) {
-            $row = new M\Expression\Row([new M\Literal\NumberLiteral((string) $choices->one([1, 3, 7])), new M\Literal\NumberLiteral('2')]);
-            $method = new M\Partition\Method\DeferredMethod($row, linear: $choices->one([true, false]));
-            $clause = new M\Partition\PartitionClause($method, new M\Literal\Numeral('3'), null, []);
-            $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('x')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
-            $body = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t' . $trial), new Name('target')), [$column], partitioning: $clause);
-            $branch = new M\Routine\Program\Flow\ConditionalBranch(new M\Variable\UserVariable(new Name('run')), [$body]);
-            $structures[] = new M\Routine\CreateProcedure(new QualifiedName(new Name('p' . $trial)), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([$branch]));
-        }
-        foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
-            yield $release => [$release, $structures];
+        foreach ([false, true] as $subquery) {
+            $structures = [];
+            for ($trial = 0; $trial < 4; $trial++) {
+                $value = new M\Literal\NumberLiteral((string) $choices->one([1, 3, 7]));
+                $row = $subquery ? new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression($value)])) : new M\Expression\Row([$value, new M\Literal\NumberLiteral('2')]);
+                $method = new M\Partition\Method\DeferredMethod($row, linear: $choices->one([true, false]));
+                $clause = new M\Partition\PartitionClause($method, new M\Literal\Numeral('3'), null, []);
+                $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('x')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
+                $body = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t' . $trial), new Name('target')), [$column], partitioning: $clause);
+                $branch = new M\Routine\Program\Flow\ConditionalBranch(new M\Variable\UserVariable(new Name('run')), [$body]);
+                $structures[] = new M\Routine\CreateProcedure(new QualifiedName(new Name('p' . $trial)), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([$branch]));
+            }
+            foreach ($subquery ? ['5.6.51', '5.7.44'] : ['8.0.44', '8.4.7', '9.1.0'] as $release) {
+                yield $release => [$release, $structures];
+            }
         }
     }
 
@@ -73,7 +76,8 @@ final class RetainedCreationPartitionStructureTest extends TestCase
                     $session->text = 'unrelated invalid input';
                     return [(new Native())->observe($native, $sql), $memory->observe($session, $call)];
                 }, ['SET @run=0', 'SET @run=1', 'CREATE DATABASE target', 'CREATE TABLE target.t' . $index . '(x INT)', 'INSERT INTO target.t' . $index . ' VALUES(1),(2)', 'DROP DATABASE target', 'SET @run=0']);
-                self::assertSame([null, 1049, 1564, 1564, 1564, 1049, null], array_map(static fn (array $pair): ?int => $pair[0]['error'][0] ?? null, $history));
+                $missing = $session->settings()->legacy() ? 1564 : 1049;
+                self::assertSame([null, $missing, 1564, 1564, 1564, $missing, null], array_map(static fn (array $pair): ?int => $pair[0]['error'][0] ?? null, $history));
                 return [$definition, ...$history];
             }, $structures, array_keys($structures));
             $observations = array_merge(...$observations);

@@ -62,14 +62,15 @@ final class ShowInput
                 return (new Errors())->error($diagnostic, $session, 'where clause');
             }
         }
+        $selected = $this->selected($problem, $session, false);
+        if ($selected === '') {
+            return QueryError::NoDatabase->error();
+        }
+        (new \MySqlMemory\Session\Access\RelationEntry())->counts($operand, $derivation->facts(), $session);
         foreach ($diagnostics as $diagnostic) {
             if ($database === '' && $diagnostic instanceof MissingTable && $diagnostic->name->schema === null) {
                 return QueryError::NoDatabase->error();
             }
-        }
-        $selected = $this->selected($problem, $session, false);
-        if ($selected === '') {
-            return QueryError::NoDatabase->error();
         }
         foreach ($diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic)) {
@@ -77,7 +78,7 @@ final class ShowInput
             }
         }
         $this->selected($problem, $session);
-        if (!$session->preparation->inputPrepared && !$session->settings()->legacy() && $session->instance->dictionary->schema($selected) === null) {
+        if ($selected !== null && !$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents && !$session->preparation->inputPrepared && !$session->settings()->legacy() && $session->instance->dictionary->schema($selected) === null) {
             return QueryError::BadDatabase->error($selected);
         }
         foreach ($diagnostics as $diagnostic) {
@@ -100,25 +101,45 @@ final class ShowInput
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($problem->condition->operand, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
-        $headings = match (true) {
+        $headings = $this->headings($problem, $derivation, $session);
+        $domains = array_map(static fn (\MySqlMemory\Command\Show\Heading $heading): \MySqlMemory\Typing\Domain => $heading->domain(), $headings);
+        $scope = new \MySqlMemory\Evaluation\Scope();
+        $scope->place($problem->header, $domains);
+        $scope->clause = 'where clause';
+        (new RowUse())->prepare($problem->condition->operand, $planner->compiler, $scope);
+    }
+    /**
+     * @return list<\MySqlMemory\Command\Show\Heading> Domains of the retained inspection's output
+     */
+    public function headings(RefusedFilter $problem, Derivation $derivation, Session $session): array
+    {
+        return match (true) {
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus, $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus => (new \MySqlMemory\Command\Program\ShowRoutinesCommand())->headings(!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044], true), $session->settings()->release()),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents => (new \MySqlMemory\Command\Program\ShowEventsCommand())->headings(false),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet => (new \MySqlMemory\Command\Show\Server\ShowCollationCommand())->charsetHeadings($session->settings()->legacy()),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation => (new \MySqlMemory\Command\Show\Server\ShowCollationCommand())->collationHeadings($session->settings()->legacy()),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables => (new \MySqlMemory\Command\Show\ShowOpenTablesCommand())->headings($session->settings()->legacy()),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases => [\MySqlMemory\Command\Show\Heading::text('Database', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 64)],
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables, $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus => (new \MySqlMemory\Command\Show\Server\ShowVariablesCommand())->headings($problem->header->scope === \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651, $session->settings()->legacy(), $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables),
+
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys => (new \MySqlMemory\Command\Show\ShowKeysCommand())->headings(),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => (new \MySqlMemory\Command\Show\ShowColumnsCommand())->headings($problem->header->listing?->full() === true, $session->settings()->legacy(), $session->modes()->strict()),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => (new \MySqlMemory\Command\ShowTablesCommand())->headings((new \SqlSemantics\Statement\Operation($derivation->context, $problem->header)), $session),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus => $session->settings()->legacy() ? (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->legacyHeadings() : (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->headings(false),
             default => (new \MySqlMemory\Command\Program\ShowTriggersCommand())->headings($session->settings()->release()),
         };
-        $domains = array_map(static fn (\MySqlMemory\Command\Show\Heading $heading): \MySqlMemory\Typing\Domain => $heading->domain(), $headings);
-        $scope = new \MySqlMemory\Evaluation\Scope();
-        $scope->place($problem->header, $domains);
-        (new RowUse())->prepare($problem->condition->operand, $planner->compiler, $scope);
     }
+
     /**
      * Resolves the inspection identity before preparing a refused filter.
      *
      * @throws SqlError When modern text execution cannot open its inspection target
      */
-    public function selected(RefusedFilter $problem, Session $session, bool $open = true): string
+    public function selected(RefusedFilter $problem, Session $session, bool $open = true): ?string
     {
+        if (!$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns && !$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys && !$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables && !$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus && !$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers && !$problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents) {
+            return null;
+        }
         $table = $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
         if ($open && $table && !$session->preparation->inputPrepared && !$session->settings()->legacy()) {
             (new \MySqlMemory\Command\Show\Inspection())->check($problem->header, $session, $session->preparation->inputPrepared);
