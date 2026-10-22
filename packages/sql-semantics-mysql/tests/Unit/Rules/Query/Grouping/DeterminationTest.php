@@ -69,6 +69,13 @@ final class DeterminationTest extends TestCase
         self::assertSame(1, count($semantics->analyze('SELECT d.p FROM (SELECT a AS p, b FROM t1) AS d GROUP BY d.b', $context)->facts->diagnostics));
     }
 
+    public function testDerivedRequiresADeterminedColumnFromTheSameOccurrence(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        self::assertCount(1, $semantics->analyze('SELECT * FROM (SELECT 1 AS a) AS q JOIN (SELECT 2 AS b) AS r GROUP BY 1')->facts->diagnostics);
+        self::assertCount(0, $semantics->analyze('SELECT * FROM (SELECT 1 AS a, 2 AS b) AS q GROUP BY 1')->facts->diagnostics);
+    }
+
     public function testDependsRefusesAnAggregate(): void
     {
         $semantics = new Semantics(Dialect::MySql);

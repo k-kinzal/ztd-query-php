@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Existence;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
-use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -24,12 +23,14 @@ final class ExistenceTest extends TestCase
     public function testMarkIncludesSetBranchesButLeavesDerivedTablesUnchanged(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $query = $semantics->analyze('SELECT * FROM (SELECT 1,2) t UNION (SELECT 3)')->statement;
-        self::assertInstanceOf(QueryRoot::class, $query);
+        $items = [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))];
+        $left = new Select([], [new Star()], new DerivedTable(new Select([], $items), new Name('t')));
+        $right = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3'))]);
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($left, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $right);
         $derivation = new Derivation($semantics->context());
-        (new Existence())->mark($query->query, $derivation);
+        (new Existence())->mark($query, $derivation);
         self::assertCount(2, $derivation->existenceQueries);
-        $fact = $derivation->query($query->query, $derivation->environment());
+        $fact = $derivation->query($query, $derivation->environment());
         self::assertCount(1, $fact->projection);
         self::assertSame([], $derivation->facts()->diagnostics);
     }

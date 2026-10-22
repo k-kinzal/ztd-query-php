@@ -41,7 +41,7 @@ final class InputColumns
             $problem = match (true) {
                 $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable && ($node->on instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $node->on instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) => (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->on]),
                 $node instanceof JsonTable => (new JsonDocument())->problem($node) ?? (new JsonColumns())->problem($node->columns),
-                $node instanceof DerivedTable, $node instanceof CommonTableExpression => (new ReadColumns())->problem($node->query),
+                $node instanceof DerivedTable, $node instanceof CommonTableExpression => (new ReadColumns())->input($node->query, $node->columns),
                 default => null,
             };
             if ($problem !== null) {

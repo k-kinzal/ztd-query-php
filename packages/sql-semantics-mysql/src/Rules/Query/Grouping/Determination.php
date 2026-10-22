@@ -191,6 +191,10 @@ final class Determination
      */
     public function derived(VisibleRelation $relation, Facts $facts, array $determined, array $within): array
     {
+        $prefix = spl_object_id($relation->relation) . ':';
+        if (array_filter(array_keys($determined), static fn (string $key): bool => str_starts_with($key, $prefix)) === []) {
+            return $determined;
+        }
         $select = (new BlockParts())->block($relation->relation, $facts);
         if ($select === null || isset($within[spl_object_id($select)]) || $select->groupBy?->modifier !== null || !$facts->covers($select)) {
             return $determined;

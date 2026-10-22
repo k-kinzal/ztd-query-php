@@ -14,6 +14,20 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Small]
 final class ReadColumnsTest extends TestCase
 {
+    public function testInputPreservesAReadConditionBeforeItsRenameList(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\Star()]);
+        self::assertInstanceOf(M\Query\Problem\Misuse::class, (new ReadColumns())->input($query, [new \SqlSemantics\Statement\Identifier\Name('a')]));
+    }
+
+    public function testNamedRejectsAContradictoryFixedRenameList(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);
+        $names = [new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\Name('b')];
+        self::assertSame(1, (new ReadColumns())->named($query, $names)?->actual);
+        self::assertNull((new ReadColumns())->named($query, []));
+    }
+
     public function testTemplatesChecksTheReadRoleOfNestedValues(): void
     {
         $row = new M\Query\ValueRow([]);

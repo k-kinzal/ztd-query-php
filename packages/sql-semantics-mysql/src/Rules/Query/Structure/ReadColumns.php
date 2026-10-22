@@ -80,7 +80,7 @@ final class ReadColumns
         }
         foreach ((new ReadDependencies())->nodes($query) as $node) {
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable || $node instanceof M\With\CommonTableExpression) {
-                $problem = $this->problem($node->query);
+                $problem = $this->input($node->query, $node->columns);
                 if ($problem !== null) {
                     return $problem;
                 }
@@ -167,6 +167,27 @@ final class ReadColumns
             }
         }
         return null;
+    }
+
+    /**
+     * Checks the read body before its explicitly renamed output columns.
+     *
+     * @param list<\SqlSemantics\Statement\Identifier\Name> $columns Renamed output columns
+     */
+    public function input(Query $query, array $columns): ?Diagnostic
+    {
+        return $this->problem($query) ?? $this->named($query, $columns);
+    }
+
+    /**
+     * Requires an explicit relation column list to agree with a fixed query width.
+     *
+     * @param list<\SqlSemantics\Statement\Identifier\Name> $columns Renamed output columns
+     */
+    public function named(Query $query, array $columns): ?M\Problem\CountMismatch
+    {
+        $width = (new QueryWidth())->of($query);
+        return $columns !== [] && $width !== null && count($columns) !== $width ? new M\Problem\CountMismatch(M\Problem\CountedList::DerivedColumns, count($columns), $width) : null;
     }
 
     /**

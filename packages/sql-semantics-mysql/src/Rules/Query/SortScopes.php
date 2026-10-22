@@ -78,10 +78,24 @@ final class SortScopes
      */
     public function problem(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
     {
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryScopes())->of($query) as [$body, $common]) {
+            $columns = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryColumns())->of($body, common: $common);
+            $problem = $this->bounded($body, $columns === null ? null : count($columns));
+            if ($problem !== null) {
+                return $problem;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks the positional items of one block against its structurally known width.
+     */
+    public function bounded(\SqlSemantics\Statement\Query $query, ?int $width): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
+    {
         $groups = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->groupBy->items ?? []) : [];
         $orders = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation ? $query->orderBy : [];
         $late = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->late->orderBy ?? []) : [];
-        $width = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query);
         foreach ([...$groups, ...$orders, ...$late] as $item) {
             $ordinal = $item->expression;
             if ($ordinal instanceof OutputOrdinal && ($ordinal->position() === 0 || ($width !== null && $ordinal->position() > $width))) {

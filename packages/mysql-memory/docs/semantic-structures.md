@@ -4643,3 +4643,37 @@ wrapped positions, unsigned integer extremes, grouping through expanded stars,
 set queries, unused CTEs and expression subqueries over text and prepared
 connections. These targeted checks do not replace the complete construction and
 SQL Faker campaigns in the acceptance contract.
+
+A star does not necessarily make a projection catalog-dependent. SQL Semantics
+traces fixed columns through derived tables, lexical CTE bindings, JSON_TABLE,
+qualified stars and joins. NATURAL and USING joins coalesce their common
+columns; qualified stars still refer to the original relation's columns. A
+renaming list must agree with a query whose width is fixed. Recursive CTEs use
+their anchor output and unused definitions retain their template role. These
+structural checks also serve scalar/row subqueries and set operand widths.
+
+Direct histories retain both a base-table star and a derived-table star across
+missing, one-column, two-column and dropped-table states. Stored definitions
+retain the corresponding fixed-width contradictions until their branches are
+reached. The projection regression also compares grouping dependencies and
+prepared column origins: determining one derived occurrence does not determine
+an unrelated constant occurrence, and MySQL 5.7 prepared stars expose merged
+base-table origins while explicitly named fields retain their derived aliases.
+
+The projection history has two inputs whose ORDER BY keys can tie. Identical
+histories on four independent MySQL 5.6 instances returned both possible orders
+for the two tied rows. Those inputs compare complete row multisets within each
+adjacent group of identical selected keys. Different key groups retain their
+observed order; columns, errors, warnings and duplicate multiplicity are
+unchanged. This follows MySQL's [documented freedom to order tied rows](https://dev.mysql.com/doc/refman/8.4/en/limit-optimization.html).
+The comparison is explicit for those two inputs; it does not discard their SQL
+or normalize other results. Raw observations remain available alongside the
+comparison.
+
+Grouping and DISTINCT retain column origins across merged derived tables and
+views. Modern derived outputs lose the source database when copied for grouping;
+views retain their database and report the underlying table. A result known to
+be empty from its predicates or limit keeps the original metadata. Prepared
+MySQL 5.7 star expansion retains the derived output's column name while exposing
+the underlying table. Text and prepared comparisons cover these differences
+with populated, renamed and nested inputs on five server releases.

@@ -67,7 +67,34 @@ final class Origins
             default => $this->origin($field, $scope),
         }, $fields, $rolled, $domains);
 
+        if (!$this->planner->blocks->empty($select, $outer)) {
+            $origins = array_map(fn (Field $field, ?ColumnOrigin $origin): ?ColumnOrigin => $this->groupedDerived($select, $field, $scope, $origin), $fields, $origins);
+        }
+
         return $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins;
+    }
+
+    /**
+     * Grouping and DISTINCT copy modern merged derived columns without their source database.
+     * Merged views retain their database and expose the underlying table on every release.
+     * A separately materialized input retains the metadata of that input instead.
+     */
+    public function groupedDerived(Select $select, Field $field, Scope $scope, ?ColumnOrigin $origin): ?ColumnOrigin
+    {
+        if ($origin === null || ($select->groupBy === null && !in_array(SelectOption::Distinct, $select->options, true))) {
+            return $origin;
+        }
+        $resolution = $field->expression instanceof ColumnUse ? $this->planner->compiler->facts->scalar($field->expression)->resolution : $field->resolution;
+        if (!$resolution instanceof ResolvedColumn || !isset($scope->derived[spl_object_id($resolution->relation)])) {
+            return $origin;
+        }
+        $position = $this->planner->compiler->names->position($scope, $resolution);
+        $source = $scope->merged[spl_object_id($resolution->relation)][$position] ?? null;
+        $base = $source->underlying ?? $source;
+        if ($base === null || $base->table === '' || ($source?->underlying === null && $this->planner->settings->legacy())) {
+            return $origin;
+        }
+        return new ColumnOrigin($source?->underlying === null ? '' : $origin->schema, $origin->table, $base->originalTable, $origin->column, $origin->flags, $origin->exact, $origin->underlying);
     }
 
     /**
@@ -269,17 +296,30 @@ final class Origins
     }
 
     /**
+     * Retains derived output names and the source table exposed by a prepared 5.7 star.
+     */
+    public function derived(ResolvedColumn $resolution, Field $field, Scope $scope): ColumnOrigin
+    {
+        $id = spl_object_id($resolution->relation);
+        $position = $this->planner->compiler->names->position($scope, $resolution);
+
+        $inner = $scope->merged[$id][$position] ?? null;
+
+        if ($inner !== null && $inner->table !== '' && $field->expression === null && $this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $this->planner->compiler->connection->session()?->replayed === true) {
+            return new ColumnOrigin($inner->schema, $inner->table, $inner->originalTable, $scope->names[$id][$position] ?? '', $inner->flags, $inner->exact, $inner->underlying);
+        }
+
+        return new ColumnOrigin($inner->schema ?? '', $scope->derived[$id], $inner->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner->flags ?? $scope->columns[$id][$position]->flags(), $inner->exact ?? true, $inner?->underlying);
+    }
+
+    /**
      * Retains the source names and flags of a bound input column.
      */
     public function resolved(ResolvedColumn $resolution, Field $field, Scope $scope): ?ColumnOrigin
     {
         $id = spl_object_id($resolution->relation);
         if (isset($scope->derived[$id])) {
-            $position = $this->planner->compiler->names->position($scope, $resolution);
-
-            $inner = $scope->merged[$id][$position] ?? null;
-
-            return new ColumnOrigin($inner->schema ?? '', $scope->derived[$id], $inner->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner->flags ?? $scope->columns[$id][$position]->flags(), $inner->exact ?? true, $inner?->underlying);
+            return $this->derived($resolution, $field, $scope);
         }
         if (!isset($scope->tables[$id])) {
             return $field->expression instanceof ColumnUse && $this->planner->compiler->connection->program !== null && $scope->locate($resolution->relation) === null ? (new ProgramColumns($this->planner))->flagged($field, true) : null;

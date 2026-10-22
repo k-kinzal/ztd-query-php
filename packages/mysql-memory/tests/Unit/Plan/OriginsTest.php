@@ -68,6 +68,57 @@ final class OriginsTest extends TestCase
         self::assertSame(3, $result->columns[1]->flags & 3);
     }
 
+    public function testDerivedKeepsMySql57PreparedStarOriginsBeforeDerivedAliasing(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT,b INT)');
+        $star = $session->execute('SELECT * FROM (SELECT * FROM t) AS q', prepared: true);
+        $named = $session->execute('SELECT q.a FROM (SELECT * FROM t) AS q', prepared: true);
+        $text = $session->execute('SELECT * FROM (SELECT * FROM t) AS q');
+        $renamed = $session->execute('SELECT * FROM (SELECT a AS x,b AS y FROM t) AS q', prepared: true);
+        self::assertInstanceOf(ResultSet::class, $star);
+        self::assertInstanceOf(ResultSet::class, $named);
+        self::assertInstanceOf(ResultSet::class, $text);
+        self::assertInstanceOf(ResultSet::class, $renamed);
+        self::assertSame(['t', 'q', 'q'], [$star->columns[0]->table, $named->columns[0]->table, $text->columns[0]->table]);
+        self::assertSame(['x', 't'], [$renamed->columns[0]->originalName, $renamed->columns[0]->table]);
+    }
+
+    public function testGroupedDerivedCopiesModernMergedOriginsWithoutTheirDatabase(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT,b INT)');
+        $grouped = $session->query('SELECT * FROM (SELECT * FROM t) q GROUP BY 1,2')[0];
+        $materialized = $session->query('SELECT * FROM (SELECT * FROM t LIMIT 3) q GROUP BY 1,2')[0];
+        $distinct = $session->query('WITH c AS (SELECT * FROM t) SELECT DISTINCT * FROM c')[0];
+        self::assertInstanceOf(ResultSet::class, $grouped);
+        self::assertInstanceOf(ResultSet::class, $materialized);
+        self::assertInstanceOf(ResultSet::class, $distinct);
+        self::assertSame(['', 'd', ''], [$grouped->columns[0]->schema, $materialized->columns[0]->schema, $distinct->columns[0]->schema]);
+    }
+
+    public function testGroupedDerivedKeepsMetadataWhenConditionsMakeTheResultEmpty(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT,b INT); CREATE VIEW v AS SELECT a AS x,b AS y FROM t');
+        $grouped = $session->query('SELECT * FROM (SELECT * FROM t) q WHERE FALSE GROUP BY 1,2')[0];
+        $limited = $session->query('SELECT * FROM (SELECT * FROM t) q GROUP BY 1,2 LIMIT 0')[0];
+        $view = $session->query('SELECT DISTINCT * FROM v WHERE FALSE')[0];
+        self::assertInstanceOf(ResultSet::class, $grouped);
+        self::assertInstanceOf(ResultSet::class, $limited);
+        self::assertInstanceOf(ResultSet::class, $view);
+        self::assertSame(['d', 'd', 'v'], [$grouped->columns[0]->schema, $limited->columns[0]->schema, $view->columns[0]->originalTable]);
+    }
+
+    public function testGroupedDerivedKeepsViewNamesAlongsideTheUnderlyingTable(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT,b INT); CREATE VIEW v AS SELECT a AS x,b AS y FROM t');
+        $result = $session->query('SELECT DISTINCT * FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['x', 'x', 'v', 't', 'd'], [$result->columns[0]->name, $result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
+    }
+
     public function testResolvedPreservesTheWrittenSystemTableName(): void
     {
         $session = (new Instance())->connect();

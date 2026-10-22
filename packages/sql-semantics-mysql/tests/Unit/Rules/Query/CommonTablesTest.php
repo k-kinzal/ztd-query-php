@@ -58,7 +58,7 @@ final class CommonTablesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $unused = $semantics->analyze('WITH b AS (SELECT x FROM a), c (p, q) AS (SELECT 1) SELECT 1', []);
-        $used = $semantics->analyze('WITH c (p, q) AS (SELECT 1) SELECT * FROM c', []);
+        $used = $semantics->analyze('CREATE PROCEDURE p() WITH c (p, q) AS (SELECT 1) SELECT * FROM c', []);
         $once = $semantics->analyze('WITH b AS (SELECT x FROM a) SELECT * FROM b', []);
         $twice = $semantics->analyze('WITH b AS (SELECT x FROM a) SELECT * FROM b, b AS d', []);
 

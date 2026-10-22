@@ -67,6 +67,15 @@ final class SortScopesTest extends TestCase
         self::assertTrue((new SortScopes())->problem($zero)?->grouped);
     }
 
+    public function testBoundedUsesTheWidthOfTheLexicalProjection(): void
+    {
+        $ordinal = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2'));
+        $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('c'))), orderBy: [new OrderItem($ordinal)]);
+        self::assertSame($ordinal, (new SortScopes())->bounded($query, 1)?->ordinal);
+        self::assertNull((new SortScopes())->bounded($query, 2));
+        self::assertNull((new SortScopes())->bounded($query, null));
+    }
+
     public function testPositionPreservesOnlyUnsignedIntegerOperands(): void
     {
         $literal = new NumberLiteral('02');

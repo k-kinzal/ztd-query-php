@@ -35,10 +35,16 @@ final class QueryOrderingStructureTest extends TestCase
                 $items = [new M\Query\OrderItem($position), new M\Query\OrderItem(new M\Query\Clause\OutputOrdinal(new M\Literal\NumberLiteral('1')))];
                 $table = new M\Relation\TableReference(new QualifiedName(new Name('t')));
                 $queries[] = new M\QueryRoot(new M\Query\Select([], [new M\Query\Star()], $table, groupBy: $grouped ? new M\Query\Clause\Grouping($items) : null, orderBy: $grouped ? [] : $items));
+                $derived = new M\Relation\DerivedTable(new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new QualifiedName(new Name('t')))), new Name('q'));
+                $queries[] = new M\QueryRoot(new M\Query\Select([], [new M\Name\TableWildcard(new QualifiedName(new Name('q')))], $derived, groupBy: $grouped ? new M\Query\Clause\Grouping($items) : null, orderBy: $grouped ? [] : $items));
                 $fixed = new M\Query\Select([], [new M\Query\SelectExpression(new M\Name\ColumnUse(new Name('a')))], $table, groupBy: $grouped ? new M\Query\Clause\Grouping($items) : null, orderBy: $grouped ? [] : $items);
                 $instruction = new M\Routine\Program\Selection\DeferredQuery($fixed);
                 $branch = new M\Routine\Program\Flow\ConditionalBranch(new M\Variable\UserVariable(new Name('run')), [$instruction]);
                 $definitions[] = new M\Routine\CreateProcedure(new QualifiedName(new Name('p' . count($definitions))), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([$branch]));
+                $derivedFixed = new M\Query\Select([], [new M\Query\Star()], new M\Relation\DerivedTable(new M\Query\Select([], [new M\Query\SelectExpression(new M\Name\ColumnUse(new Name('a')))], new M\Relation\TableReference(new QualifiedName(new Name('t')))), new Name('q')), groupBy: $grouped ? new M\Query\Clause\Grouping($items) : null, orderBy: $grouped ? [] : $items);
+                $derivedInstruction = new M\Routine\Program\Selection\DeferredQuery($derivedFixed);
+                $derivedBranch = new M\Routine\Program\Flow\ConditionalBranch(new M\Variable\UserVariable(new Name('run')), [$derivedInstruction]);
+                $definitions[] = new M\Routine\CreateProcedure(new QualifiedName(new Name('p' . count($definitions))), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([$derivedBranch]));
             }
         }
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {

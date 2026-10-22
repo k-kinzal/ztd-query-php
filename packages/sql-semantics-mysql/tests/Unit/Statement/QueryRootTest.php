@@ -65,6 +65,22 @@ final class QueryRootTest extends TestCase
         new QueryRoot($query);
     }
 
+    public function testTheConstructorRejectsAPositionBeyondADerivedStar(): void
+    {
+        $source = new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new Select([], [new SelectExpression(new NumberLiteral('1'))]), new Name('q'));
+        $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], $source, orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')))]);
+        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
+        new QueryRoot($query);
+    }
+
+    public function testTheConstructorRejectsAPositionBeyondACommonStar(): void
+    {
+        $with = new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]);
+        $body = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new TableReference(new QualifiedName(new Name('c'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')))]);
+        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
+        new QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression($with, $body));
+    }
+
     public function testRenderRetainsTheQueryBody(): void
     {
         $root = new QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))]));
