@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rules\Dml;
+namespace Tests\Unit\Rules\Dml\Handler;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
+use SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerFacts;
 
 #[CoversClass(HandlerFacts::class)]
 #[Medium]

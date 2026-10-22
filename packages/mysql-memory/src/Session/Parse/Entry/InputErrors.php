@@ -70,6 +70,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedExistenceClause,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedSubquery,
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedLogSubquery => (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($diagnostic->offset, $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser()),
             default => $this->query($diagnostic, $session) ?? $this->source($diagnostic, $session),
         };
@@ -86,6 +87,7 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar => \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets => (new ExplainInput())->targets($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain => (new \MySqlMemory\Program\Expression\ExplainUse())->error($diagnostic->explanation, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead => (new Dml\HandlerInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter => (new \MySqlMemory\Session\Parse\Definition\ShowInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand => \MySqlMemory\Error\Family\StatementError::MisplacedInto->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody => (new \MySqlMemory\Session\Parse\Definition\ViewInput())->error($diagnostic, $session),
@@ -93,9 +95,6 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => (new \MySqlMemory\Program\Expression\PurgeUse())->error($diagnostic->moment, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand => (new \MySqlMemory\Program\Expression\KillUse())->error($diagnostic->process, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar => $this->scalar($diagnostic, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery,
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows,
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet => (new \MySqlMemory\Program\Expression\InsertUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation => (new EvaluationInput())->deferred($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery => $this->selection($diagnostic->query, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection => $this->selection($diagnostic->selection, $session),
@@ -204,11 +203,14 @@ final class InputErrors
     }
 
     /**
-     * Resolves retained UPDATE and DELETE operands without consulting source SQL.
+     * Resolves retained INSERT, UPDATE and DELETE operands without consulting source SQL.
      */
     public function write(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet => (new \MySqlMemory\Program\Expression\InsertUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete => (new \MySqlMemory\Program\Expression\DeleteUse())->error($diagnostic->write, $session),

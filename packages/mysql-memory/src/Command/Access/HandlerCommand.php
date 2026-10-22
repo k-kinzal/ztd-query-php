@@ -114,10 +114,6 @@ final class HandlerCommand implements Command
         $table = $session->instance->dictionary->table($handler->schema, $handler->table);
         (new \MySqlMemory\Session\Access\OpenedTables())->open($handler->schema, $handler->table, $session);
         assert($table !== null);
-        $key = $statement instanceof HandlerScan ? null : $this->key($table, $statement->index->value, $handler);
-        if ($statement instanceof HandlerIndexSeek && $key !== null && count($statement->values) > count($key->columns)) {
-            throw SchemaError::TooManyKeyParts->error(count($key->columns));
-        }
         $query = $this->select($handler, null);
         $select = new Operation($operation->context, new QueryRoot($query));
         foreach ([...$operation->facts->diagnostics, ...$select->facts->diagnostics] as $diagnostic) {
@@ -128,6 +124,10 @@ final class HandlerCommand implements Command
         $plan = $planner->query($query, null);
         $reading = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $condition = $this->filter($reading, $statement, $table);
+        $key = $statement instanceof HandlerScan ? null : $this->key($table, $statement->index->value, $handler);
+        if ($statement instanceof HandlerIndexSeek && $key !== null && count($statement->values) > count($key->columns)) {
+            throw SchemaError::TooManyKeyParts->error(count($key->columns));
+        }
         $rows = (new TimestampZones())->rows($table, (new ClusterOrder())->rows($table), $context);
         $cursor = new HandlerCursor();
         $numbers = $cursor->ordered($rows, $key, $table);

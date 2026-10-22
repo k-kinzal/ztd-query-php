@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Rules\Dml;
+namespace SqlSemantics\Platform\MySql\Rules\Dml\Handler;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Dml\WriteScope;
 use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
@@ -31,16 +32,20 @@ final class HandlerFacts
     /**
      * Derives a read of a handler and records its rows as the output.
      *
-     * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest> $values The key values of an index seek
+     * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $values The key values of an index seek
      */
-    public function read(OpenHandler $handler, array $values, ?Scalar $where, ?Limit $limit, Derivation $derivation): void
+    public function read(OpenHandler $handler, array $values, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $where, ?Limit $limit, Derivation $derivation): void
     {
         $this->functions([...$values, ...($where === null ? [] : [$where])], $derivation);
         $base = $derivation->environment();
         $fact = $derivation->relation($handler, $base);
         foreach ($values as $position => $value) {
             $column = new \SqlSemantics\Statement\Shape\Field($position, new \SqlSemantics\Statement\Shape\OutputSlot(null, new \SqlSemantics\Statement\Type\Dependent([new \SqlSemantics\Statement\Reference\Missing\SessionState('handler index key')]), \SqlSemantics\Statement\Type\Nullability::Dependent));
-            (new WriteScope())->value($value, $column, $derivation, $base);
+            if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) {
+                $derivation->scalar($value, $base);
+            } else {
+                (new WriteScope())->value($value, $column, $derivation, $base);
+            }
         }
         if ($where !== null) {
             $derivation->scalar($where, new Environment($derivation->context, $base, [new VisibleRelation($handler, $fact->shape, $handler->name, implicit: (new \SqlSemantics\Platform\MySql\Rules\Query\TableShapes())->implicit($fact))]));
@@ -68,7 +73,7 @@ final class HandlerFacts
         $pending = $operands;
         while ($pending !== []) {
             $node = array_pop($pending);
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall && !$node->native($derivation->context->profile->grammar)) {
+            if (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall) && !$node->native($derivation->context->profile->grammar)) {
                 $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('stored functions in HANDLER ... READ'));
 
                 return;

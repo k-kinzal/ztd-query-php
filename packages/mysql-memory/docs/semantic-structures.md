@@ -847,6 +847,18 @@ after CLOSE and after reopening, with populated rows, qualified aliases, index
 seeks and missing predicate columns. Native metadata also retains key membership
 and the release-specific original table name.
 
+HANDLER constructors exclude subqueries throughout key and WHERE operands,
+including unselected conditional branches. These commands have no subquery
+scope. SQL input that violates this domain retains only its diagnostic position.
+A non-scalar predicate or key instead retains the complete read as `RefusedRead`:
+handler identity, scan/index mode, index name, key operands, WHERE and LIMIT.
+Preparation opens the handler before WHERE and resolves WHERE before the index
+and its key values. Stored-call restrictions and the prepared-protocol refusal
+keep their earlier phases. No refused expression is replaced by a scalar, and
+neither request retains SQL or parser nodes. Tests compare unchanged operands
+across closed and open handles, and compare native text/prepared histories with
+missing columns, missing indices, row operands and subqueries.
+
 Condition lookup precedes runtime handler checks for directly constructed SIGNAL
 and RESIGNAL statements, just as it does on the SQL-input path. A transition test
 reuses one RESIGNAL object outside a declaration scope, inside a declared procedure

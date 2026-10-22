@@ -902,6 +902,17 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\OpenHandler": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\RefusedRead": {
+        "handler": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\OpenHandler",
+        "index": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
+        "mode": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\ScanDirection|SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\IndexDirection|SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\KeyComparison",
+        "values": "array",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\RefusedSubquery": {
+        "offset": "int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Handler\\ScanDirection": {
         "name": "string",
         "value": "string"

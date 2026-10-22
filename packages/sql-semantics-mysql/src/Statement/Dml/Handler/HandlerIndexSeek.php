@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
+use SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Statement;
@@ -60,6 +60,7 @@ final class HandlerIndexSeek implements Statement
             $accepted[] = $value;
         }
         $this->values = $accepted;
+        (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->check($this);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

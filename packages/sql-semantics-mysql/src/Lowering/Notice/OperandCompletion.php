@@ -48,6 +48,7 @@ final class OperandCompletion
         $derived = $lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Legacy\DerivedAliases())->rejected($node, $lowering) : null;
         return $this->views->starting($node, $lowering, $tokens)
             ?? $this->passwords->starting($node, $lookahead, $lowering, $tokens)
+            ?? (new \SqlSemantics\Platform\MySql\Lowering\Dml\SyntaxHandlerRead())->starting($node, $lookahead, $tokens, $lowering->profile->grammar)
             ?? $derived
             ?? (new \SqlSemantics\Platform\MySql\Lowering\Replication\SyntaxLogMoment())->starting($node, $lookahead, $parser, $statement, $lowering->profile->grammar);
     }
