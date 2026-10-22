@@ -4749,3 +4749,24 @@ constant groups, index changes and ordering with native MySQL 5.6 through 9.1.
 Unicode German DIN-2 comparisons and `WEIGHT_STRING` share primary weights derived
 from public Unicode data and black-box SQL observations, including expansion,
 combining sequences and release-specific length limits.
+
+Computed `CREATE TABLE ... SELECT` columns are inferred directly from resolved
+semantic domains. `QueryColumns` retains numeric dimensions, character sets,
+collations, decoded enumeration members and implicit defaults as typed column
+values. The memory consumer no longer renders a synthetic `CREATE TABLE` and
+parses it to recover those declarations. Copied input columns preserve their own
+declarations. A direct-construction history reuses the same creation object
+through a populated destination, removal and a lexical-mode change while the
+request text contains unrelated labels.
+
+An inferred default also has a preparation origin. MySQL 5.6, and later releases
+outside strict mode, assign zero DATE and DATETIME defaults to computed non-null fields even under `NO_ZERO_DATE`;
+using the default in an INSERT checks the session's current mode on MySQL 5.6
+and 5.7. MySQL 8.0 and later retain the previously accepted value. An explicit
+zero default is checked when its declaration is prepared. The consumer retains
+that distinction during creation rather than reinterpreting an inferred default
+as an explicit input clause. DOUBLE fields also retain reported widths that SQL
+type spelling cannot express. Modern computed fields use width 22, while literals,
+column references and set outputs retain their resolved width. Grouping and unary
+plus preserve the operand's role. Their
+resolved declarations keep those widths available to subsequent queries and ALTER.

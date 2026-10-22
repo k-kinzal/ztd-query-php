@@ -214,7 +214,7 @@ final class Writer
      *
      * @return array{bool, int|float|string|null} Whether the column has a value, and the value
      */
-    public function default(ColumnDefinition $column, Frame $frame): array
+    public function default(ColumnDefinition $column, Frame $frame, ?Store $store = null): array
     {
         $default = $column->default;
         if (!$default->declared) {
@@ -226,7 +226,7 @@ final class Writer
             return [true, (new Store($this->context, 1, $this->table->definition->name))->value($value, $default->expression->domain(), $column)];
         }
 
-        return [true, $default->value];
+        return [true, (new Times($store ?? new Store($this->context, 1, $this->table->definition->name)))->defaultValue($default->value, $column)];
     }
 
     /**

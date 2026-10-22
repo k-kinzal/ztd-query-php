@@ -48,6 +48,26 @@ final class Times
     }
 
     /**
+     * Checks a retained temporal default against legacy calendar modes. MySQL
+     * 8.0 and later reuse the value already accepted at declaration time.
+     * Stored timestamp values are already UTC; this check does not convert them again.
+     *
+     * @throws SqlError When the current mode rejects the date in a strict write
+     */
+    public function defaultValue(int|float|string|null $value, ColumnDefinition $column): int|float|string|null
+    {
+        $modes = $this->store->context->modes;
+        if (!in_array($modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) || !is_string($value) || !in_array($column->domain->kind, [Kind::Date, Kind::DateTime], true)) {
+            return $value;
+        }
+        if (!Temporal::accepted((int) substr($value, 0, 4), (int) substr($value, 5, 2), (int) substr($value, 8, 2), $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'))) {
+            return $this->problem(DataError::OutOfRange, $value, $column);
+        }
+
+        return $value;
+    }
+
+    /**
      * Stores into a temporal column.
      *
      * @throws SqlError When the value is refused

@@ -31,6 +31,39 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 #[Small]
 final class TimesTest extends TestCase
 {
+    public function testDefaultValueChecksCurrentModesAtTheSuppliedRowWithoutConvertingUtcAgain(): void
+    {
+        $context = new Context(new SqlModes(['NO_ZERO_DATE'], GrammarRelease::MySql5744), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql5744), new Globals()), 0.0);
+        $times = new Times(new Store($context, 3));
+        $date = new ColumnDefinition('d', new Domain(Kind::Date, Field::Date, 10), Fill::constant('0000-00-00', '0000-00-00'));
+        $timestamp = new ColumnDefinition('ts', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::constant('2024-01-02 03:04:05', '2024-01-02 03:04:05'));
+
+        self::assertSame('0000-00-00', $times->defaultValue($date->default->value, $date));
+        self::assertSame([['Warning', 1264, "Out of range value for column 'd' at row 3"]], $context->diagnostics->conditions);
+        self::assertSame('2024-01-02 03:04:05', $times->defaultValue($timestamp->default->value, $timestamp));
+        self::assertNull($times->defaultValue(null, $date));
+    }
+
+    public function testDefaultValueRefusesInvalidDefaultsInStrictWrites(): void
+    {
+        $context = new Context(new SqlModes(['STRICT_ALL_TABLES', 'NO_ZERO_DATE'], GrammarRelease::MySql5651), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql5651), new Globals()), 0.0);
+        $context->strict = true;
+        $column = new ColumnDefinition('d', new Domain(Kind::Date, Field::Date, 10), Fill::constant('0000-00-00', '0000-00-00'));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1292);
+        $this->expectExceptionMessage("Incorrect date value: '0000-00-00' for column 'd' at row 4");
+        (new Times(new Store($context, 4)))->defaultValue($column->default->value, $column);
+    }
+
+    public function testDefaultValuePreservesPreviouslyAcceptedDatesInModernStrictWrites(): void
+    {
+        $context = new Context(new SqlModes(['STRICT_ALL_TABLES', 'NO_ZERO_DATE']), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0, true);
+        $column = new ColumnDefinition('d', new Domain(Kind::Date, Field::Date, 10), Fill::constant('0000-00-00', '0000-00-00'));
+
+        self::assertSame('0000-00-00', (new Times(new Store($context, 4)))->defaultValue($column->default->value, $column));
+        self::assertSame([], $context->diagnostics->conditions);
+    }
+
     public function testValueWritesADateFromAString(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);

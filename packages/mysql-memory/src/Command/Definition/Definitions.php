@@ -50,6 +50,11 @@ use SqlSemantics\Statement\Type\Nullability;
 final class Definitions
 {
     /**
+     * @var array<string, string> Query-inferred defaults, already implied by the resolved field types
+     */
+    public array $inferredDefaults = [];
+
+    /**
      * @param Planner $planner The planner of the statement, to compile defaults and generated columns
      * @param string $schemaCollation The default collation of the database
      */
@@ -281,6 +286,10 @@ final class Definitions
      */
     public function default(array $attributes, ColumnDefinition $column, CreateTable|DeferredCreateTable $create): Fill
     {
+        $inferred = $this->inferredDefaults[mb_strtolower($column->name)] ?? null;
+        if ($inferred !== null) {
+            return Fill::constant($inferred, $inferred);
+        }
         foreach (array_reverse($attributes) as $attribute) {
             if ($attribute instanceof DefaultExpression) {
                 return Fill::none();

@@ -309,7 +309,7 @@ final class ChangeCommand implements Command
      */
     public function defaulted(\MySqlMemory\Dictionary\ColumnDefinition $column, Writer $writer, Frame $frame, Store $store): int|float|string|null
     {
-        [$has, $value] = $writer->default($column, $frame);
+        [$has, $value] = $writer->default($column, $frame, $store);
         if ($has || $column->autoIncrement) {
             return $value;
         }

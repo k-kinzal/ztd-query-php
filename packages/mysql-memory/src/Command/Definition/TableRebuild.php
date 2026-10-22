@@ -84,6 +84,7 @@ final class TableRebuild
         $planner = new Planner($create, $operation->facts, $this->session->settings(), $this->connection, $this->session->instance->dictionary);
         $command = new CreateTableCommand();
         $definitions = new Definitions($planner, $schema->collation);
+        $definitions->inferredDefaults = $layout->inferredDefaults;
         $constraints = new ConstraintLayout();
         $elements = array_map(static fn (array $key) => $key[0], $layout->keys);
         $definitions->checkBase = $constraints->highest($elements, $layout->original === '' ? $layout->name->name->value : $layout->original, '_chk_');

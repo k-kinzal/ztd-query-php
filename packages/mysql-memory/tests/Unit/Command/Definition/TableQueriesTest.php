@@ -24,6 +24,67 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class TableQueriesTest extends TestCase
 {
+    public function testInferredDefaultsPreservesTemporalDefaultsWithoutTreatingThemAsExplicitInput(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect(database: 'd');
+        $session->query("SET sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE'");
+        $created = $session->query("CREATE TABLE t SELECT DATE'2024-01-02' AS d")[0];
+        $column = $session->instance->dictionary->table('d', 't')?->definition->columns[0];
+        $insert = $session->run('INSERT INTO t () VALUES ()')[0];
+        $explicit = $session->run("CREATE TABLE explicit (d DATE NOT NULL DEFAULT '0000-00-00')")[0];
+
+        self::assertInstanceOf(Completion::class, $created);
+        self::assertSame('0000-00-00', $column?->default->value);
+        self::assertInstanceOf(SqlError::class, $insert);
+        self::assertSame(1292, $insert->getCode());
+        self::assertInstanceOf(SqlError::class, $explicit);
+        self::assertSame(1067, $explicit->getCode());
+    }
+
+    public function testCreateReusesTheSameSemanticQueryAcrossCatalogAndLexicalChanges(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [
+            new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['a\\b']), new \SqlSemantics\Statement\Identifier\Name('v')),
+            new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1e2'), new \SqlSemantics\Statement\Identifier\Name('n')),
+        ]);
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('kept')), query: new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery($query));
+        $session->text = 'not an SQL definition';
+        $first = (new \Fuzz\Structure\Audit\Memory())->observe($session, $definition);
+        $before = $session->query('SELECT * FROM kept')[0];
+        $session->text = 'not an SQL definition';
+        $existing = (new \Fuzz\Structure\Audit\Memory())->observe($session, $definition);
+        $session->query("DROP TABLE kept; SET sql_mode='NO_BACKSLASH_ESCAPES'");
+        $session->text = 'another unrelated label';
+        $again = (new \Fuzz\Structure\Audit\Memory())->observe($session, $definition);
+        $after = $session->query('SELECT * FROM kept')[0];
+
+        self::assertArrayNotHasKey('error', $first);
+        self::assertSame(1050, $existing['error'][0] ?? null);
+        self::assertArrayNotHasKey('error', $again);
+        self::assertInstanceOf(ResultSet::class, $before);
+        self::assertInstanceOf(ResultSet::class, $after);
+        self::assertSame([['a\\b', '100']], $before->rows);
+        self::assertSame($before->rows, $after->rows);
+        self::assertSame(3, $after->columns[1]->length);
+    }
+
+    public function testElementsRetainsDecodedMembersWithoutConsultingLexicalMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = 'NO_BACKSLASH_ESCAPES'");
+        $session->text = 'unrelated input that is not SQL';
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $members = ['a\\b', "c'd"];
+        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::String, Field::Enum, 3, collation: Collation::known('utf8mb4_bin'), members: $members)], ['e']);
+        $columns = (new TableQueries($session, $context, new Connection($session->variables, $context)))->elements($plan, []);
+        $type = $columns[0]->specification->dataType();
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Enumeration::class, $type);
+        self::assertSame($members, array_map(static fn ($member): string => $member->bytes(), $type->members));
+        self::assertSame('unrelated input that is not SQL', $session->text);
+    }
+
     public function testFillRefusesUnpartitionedSourceRowsAndIgnoreSkipsThem(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();
@@ -54,29 +115,17 @@ final class TableQueriesTest extends TestCase
         self::assertSame([0], $definition->partitioning->read);
     }
 
-    public function testFloatingRetainsFixedScaleAndUsesReleaseSpecificDoubleWidths(): void
+
+    public function testReportedLengthsRetainsComputedWidthsOnlyForUndeclaredColumns(): void
     {
-        $session = (new Instance())->connect();
+        $session = (new Instance('8.4.7'))->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-        $old = (new Instance('5.6.51'))->connect();
-        $legacy = new TableQueries($old, $context, new Connection($old->variables, $context));
-        $fixed = new Domain(Kind::Double, Field::Double, 9, 3);
+        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED)], ['X', 'y', 'wide']);
+        $query = $session->analyze('SELECT 1e2 AS X, 1e2 AS y, ABS(1e2) AS wide')->facts->output;
+        self::assertNotNull($query);
 
-        self::assertSame('DOUBLE(22,3)', $queries->floating($fixed, 'DOUBLE'));
-        self::assertSame('DOUBLE(9,3)', $legacy->floating($fixed, 'DOUBLE'));
-        self::assertSame('FLOAT(8,2)', $queries->floating(new Domain(Kind::Double, Field::Float, 8, 2), 'FLOAT'));
-        self::assertSame('DOUBLE', $legacy->floating(new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), 'DOUBLE'));
-    }
-
-    public function testReportedLengthsRetainsLegacyComputedWidthsOnlyForUndeclaredColumns(): void
-    {
-        $session = (new Instance('5.6.51'))->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED)], ['X', 'y']);
-
-        self::assertSame(['x' => 12], $queries->reportedLengths($plan, ['y' => true]));
+        self::assertSame(['x' => 12, 'wide' => 22], $queries->reportedLengths($plan, ['y' => true], $query));
     }
 
     public function testImplicitCollationsDistinguishesComputedAndCopiedColumns(): void
@@ -166,85 +215,11 @@ final class TableQueriesTest extends TestCase
         self::assertSame('c', $element?->name->column->value);
     }
 
-    public function testFieldUsesIntegerStorageForMySql80YearResults(): void
-    {
-        $session = (new Instance())->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
 
-        self::assertSame(Field::LongLong, $queries->field(new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31)));
-        self::assertSame(Field::Year, $queries->field(new Domain(Kind::Year, Field::Year, 4)));
-    }
 
-    public function testTypeAnswersTheTypeOfAnExpression(): void
-    {
-        $session = (new Instance())->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-        $collation = Collation::known('utf8mb4_0900_ai_ci');
 
-        self::assertSame(['BIGINT(12)', 'INT(2)', 'VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci', 'TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci', 'VARBINARY(0)', 'TIME(3)', 'DECIMAL(2,1)'], [
-            $queries->type(new Domain(Kind::Integer, Field::LongLong, 12)),
-            $queries->type(new Domain(Kind::Integer, Field::LongLong, 2)),
-            $queries->type(new Domain(Kind::String, Field::VarString, 512, Domain::NOT_FIXED, false, $collation)),
-            $queries->type(new Domain(Kind::String, Field::VarString, 513, Domain::NOT_FIXED, false, $collation)),
-            $queries->type(new Domain(Kind::Null, Field::Null)),
-            $queries->type(new Domain(Kind::Time, Field::Time, 14, 3)),
-            $queries->type(new Domain(Kind::Decimal, Field::NewDecimal, 4, 1)),
-        ]);
-    }
 
-    public function testIntegerAnswersTheIntegerTypeWithItsDisplayWidth(): void
-    {
-        $session = (new Instance())->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
 
-        self::assertSame(['TINYINT(4) UNSIGNED', 'MEDIUMINT(9)', 'BIGINT(11)', 'INT(3)'], [
-            $queries->integer(new Domain(Kind::Integer, Field::Tiny, 4, 0, true), 'TINYINT'),
-            $queries->integer(new Domain(Kind::Integer, Field::Int24, 9), 'MEDIUMINT'),
-            $queries->integer(new Domain(Kind::Integer, Field::LongLong, 11), 'INT'),
-            $queries->integer(new Domain(Kind::Integer, Field::LongLong, 10, display: 3), 'INT'),
-        ]);
-    }
-
-    public function testCharacterAnswersTheStringTypeWithItsCollation(): void
-    {
-        $session = (new Instance())->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-        $collation = Collation::known('latin1_swedish_ci');
-        $binary = Collation::known('binary');
-
-        self::assertSame(["ENUM('a','b''c') CHARACTER SET latin1 COLLATE latin1_swedish_ci", 'VARBINARY(10)', 'BLOB', 'MEDIUMTEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci'], [
-            $queries->character(new Domain(Kind::String, Field::Enum, 3, Domain::NOT_FIXED, false, $collation, true, ['a', "b'c"])),
-            $queries->character(new Domain(Kind::String, Field::VarString, 10, Domain::NOT_FIXED, false, $binary)),
-            $queries->character(new Domain(Kind::String, Field::Blob, 65535, Domain::NOT_FIXED, false, $binary)),
-            $queries->character(new Domain(Kind::String, Field::Blob, 65536, Domain::NOT_FIXED, false, $collation)),
-        ]);
-    }
-
-    public function testTextAnswersTheTypeThatHoldsTheBytes(): void
-    {
-        $session = (new Instance())->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-
-        self::assertSame(['TINYBLOB', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT'], [$queries->text(255, true), $queries->text(65535, false), $queries->text(80000, false), $queries->text(16777216, false)]);
-    }
-
-    public function testNullabilityAnswersTheImplicitDefaultOfANotNullColumn(): void
-    {
-        $session = (new Instance())->connect();
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-
-        self::assertSame([" NOT NULL DEFAULT '0.00'", ' NOT NULL', ''], [
-            $queries->nullability(new Domain(Kind::Decimal, Field::NewDecimal, 5, 2, false, null, false)),
-            $queries->nullability(new Domain(Kind::DateTime, Field::DateTime, 19, 0, false, null, false)),
-            $queries->nullability(new Domain(Kind::Integer, Field::Long, 11)),
-        ]);
-    }
 
     public function testFillStoresAValueOutsideTheRangeWithAWarningOutsideAStrictMode(): void
     {
@@ -283,7 +258,7 @@ final class TableQueriesTest extends TestCase
         $session->query('CREATE TABLE k (a INT NOT NULL) SELECT NULL AS a');
     }
 
-    public function testTypeMakesANullColumnABinaryBeforeMySql81(): void
+    public function testCreateMakesANullColumnABinaryBeforeMySql81(): void
     {
         $older = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
         $older->query('CREATE TABLE n AS SELECT NULL AS a; CREATE TABLE m AS SELECT NULL AS a UNION SELECT NULL');

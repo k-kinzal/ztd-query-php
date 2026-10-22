@@ -23,7 +23,6 @@ use MySqlMemory\Storage\Heap;
 use MySqlMemory\Storage\Store;
 use MySqlMemory\Storage\Writer;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
@@ -53,14 +52,6 @@ use SqlSemantics\Statement\Operation;
  */
 final class TableQueries
 {
-    /**
-     * The name of each integer type, by the name of the field of the column; a LONGLONG of 11 or
-     * more display characters is a BIGINT instead.
-     *
-     * @var array<string, string>
-     */
-    public const INTEGERS = ['Tiny' => 'TINYINT', 'Short' => 'SMALLINT', 'Int24' => 'MEDIUMINT', 'Long' => 'INT', 'LongLong' => 'INT'];
-
     /**
      * @param Session $session The session creating the table
      * @param Context $context The statement
@@ -104,7 +95,8 @@ final class TableQueries
         $layout = new TableLayout(new QualifiedName($create->name->name, new Name($schema->name)), $columns, $keys, $create->options, $create->temporaryWords);
         $layout->partitioning = $create->partitioning;
         $layout->implicitCollations = $this->implicitCollations($plan, $declared);
-        $layout->reportedLengths = $this->reportedLengths($plan, $declared);
+        $layout->reportedLengths = $this->reportedLengths($plan, $declared, $operation->facts->query($create->query->query));
+        $layout->inferredDefaults = $this->inferredDefaults($plan, $declared);
         $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
         $table = new StoredTable($definition, new Heap(), created: CreateTableCommand::created($this->context), clock: (int) floor($this->context->variables->clock()));
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
@@ -116,22 +108,54 @@ final class TableQueries
     }
 
     /**
-     * Retains legacy computed DOUBLE widths that have no CREATE TABLE spelling.
+     * Retains computed DOUBLE widths that have no CREATE TABLE spelling.
      *
      * @param array<string, true> $declared The names explicitly declared by CREATE TABLE
      * @return array<string, int>
      */
-    public function reportedLengths(QueryPlan $plan, array $declared): array
+    public function reportedLengths(QueryPlan $plan, array $declared, \SqlSemantics\Statement\Fact\QueryFact $query): array
     {
         $lengths = [];
+        $fields = $query->fields();
+        \SqlSemantics\Diagnostic\Check::invariant($fields !== null, 'A prepared creation query has a complete field list.');
+        $columns = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\QueryColumns($this->session->settings()->release(), $this->context->modes->strict());
         foreach ($plan->domains as $position => $domain) {
             $name = mb_strtolower($plan->names[$position]);
-            if (!isset($declared[$name]) && $this->session->settings()->legacy() && $domain->field === Field::Double && $domain->decimals === Domain::NOT_FIXED) {
-                $lengths[$name] = $domain->display ?? $domain->length;
+            if (!isset($declared[$name]) && $domain->field === Field::Double && $domain->decimals === Domain::NOT_FIXED) {
+                $copied = $this->copied($plan->origins[$position] ?? null, $name) !== null;
+                $lengths[$name] = $columns->width($domain->resolved(), $fields->at($position)->expression, $copied);
             }
         }
 
         return $lengths;
+    }
+
+    /**
+     * Retains defaults implied by computed fields. In 5.6, zero temporal defaults
+     * are inferred even when NO_ZERO_DATE would reject an explicit DEFAULT clause.
+     *
+     * @param array<string, true> $declared The explicitly declared column names
+     * @return array<string, string>
+     */
+    public function inferredDefaults(QueryPlan $plan, array $declared): array
+    {
+        $defaults = [];
+        if ($this->session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && $this->context->modes->strict()) {
+            return $defaults;
+        }
+        $columns = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\QueryColumns($this->session->settings()->release(), $this->context->modes->strict());
+        foreach ($plan->domains as $position => $domain) {
+            $name = $plan->names[$position];
+            if (!in_array($domain->kind, [Kind::Date, Kind::DateTime], true) || $domain->nullable || isset($declared[mb_strtolower($name)]) || $this->copied($plan->origins[$position] ?? null, $name) !== null) {
+                continue;
+            }
+            $default = $columns->default($domain->resolved());
+            if ($default !== null) {
+                $defaults[mb_strtolower($name)] = $default;
+            }
+        }
+
+        return $defaults;
     }
 
     /**
@@ -165,36 +189,21 @@ final class TableQueries
      * @param array<string, true> $declared The lowercase names of the columns the statement declares
      * @return list<ColumnElement>
      *
-     * @throws SqlError When a definition does not parse
      */
     public function elements(QueryPlan $plan, array $declared): array
     {
         $elements = [];
-        $texts = [];
+        $columns = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\QueryColumns($this->session->settings()->release(), $this->context->modes->strict());
         foreach ($plan->domains as $position => $domain) {
             $name = $plan->names[$position] ?? '';
             if (isset($declared[mb_strtolower($name)])) {
                 continue;
             }
-            $copied = $this->copied($plan->origins[$position] ?? null, $name);
-            if ($copied !== null) {
-                $elements[$position] = $copied;
-            } else {
-                $texts[$position] = '`' . str_replace('`', '``', $name) . '` ' . $this->type($domain) . $this->nullability($domain);
-            }
+            $elements[] = $this->copied($plan->origins[$position] ?? null, $name)
+                ?? $columns->column(new Name($name), $domain->resolved(), $domain->nullable);
         }
-        if ($texts !== []) {
-            $parsed = $this->session->analyze('CREATE TABLE `t` (' . implode(', ', $texts) . ')')->statement;
-            assert($parsed instanceof CreateTable);
-            foreach (array_keys($texts) as $index => $position) {
-                $element = $parsed->elements[$index];
-                assert($element instanceof ColumnElement);
-                $elements[$position] = $element;
-            }
-        }
-        ksort($elements);
 
-        return array_values($elements);
+        return $elements;
     }
 
     /**
@@ -213,132 +222,6 @@ final class TableQueries
         $index = $layout->column($origin->column);
 
         return $index === null ? null : new ColumnElement(new ColumnName(new Name($name)), $layout->columns[$index][0]->specification);
-    }
-
-    /**
-     * Answers the storage field SQL Semantics resolved for a computed expression. MySQL 8.0 YEAR results
-     * with a binary string field retain integer storage semantics.
-     */
-    public function field(Domain $domain): Field
-    {
-        return $domain->storageField ?? ($domain->kind === Kind::Year && $domain->field === Field::VarString && $domain->collation->bytes() ? Field::LongLong : $domain->field);
-    }
-
-    /**
-     * Answers the type a column of a query takes in the table, as SQL.
-     *
-     * A NULL column is a BINARY(0) before MySQL 8.1 and a VARBINARY(0) from 8.1, and so is the
-     * column of a set operation that is NULL in every operand (verified on live 8.0 and 8.4
-     * servers).
-     */
-    public function type(Domain $domain): string
-    {
-        $field = $this->field($domain);
-        $unsigned = $domain->unsigned ? ' UNSIGNED' : '';
-        $fraction = $domain->decimals > 0 && $domain->decimals < Domain::NOT_FIXED ? '(' . $domain->decimals . ')' : '';
-
-        return match ($field) {
-            Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => $this->integer($domain, self::INTEGERS[$field->name]),
-            Field::Decimal, Field::NewDecimal => 'DECIMAL(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
-            Field::Float => $this->floating($domain, 'FLOAT') . $unsigned,
-            Field::Double => $this->floating($domain, 'DOUBLE') . $unsigned,
-            Field::Null => in_array($this->session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true) ? 'BINARY(0)' : 'VARBINARY(0)',
-            Field::Date, Field::NewDate => 'DATE',
-            Field::Time => 'TIME' . $fraction,
-            Field::DateTime => 'DATETIME' . $fraction,
-            Field::Timestamp => 'TIMESTAMP' . $fraction,
-            Field::Year => 'YEAR',
-            Field::Bit => 'BIT(' . max(1, $domain->length) . ')',
-            Field::Json => 'JSON',
-            Field::Vector => 'VECTOR(' . max(1, intdiv($domain->length, 4)) . ')',
-            Field::Geometry => 'GEOMETRY',
-            Field::Enum, Field::Set, Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob => $this->character($domain),
-        };
-    }
-
-    /**
-     * Retains the scale of a computed floating result in its stored definition.
-     * Modern DOUBLE columns use the normal DOUBLE display width; legacy columns
-     * retain the expression width. Unfixed results omit the width and scale.
-     */
-    public function floating(Domain $domain, string $name): string
-    {
-        $length = $name === 'DOUBLE' && !$this->session->settings()->legacy() ? 22 : $domain->length;
-
-        return $name . ($domain->decimals < Domain::NOT_FIXED ? '(' . $length . ',' . $domain->decimals . ')' : '');
-    }
-
-    /**
-     * Answers the type an integer column of a query takes in the table, as SQL: it keeps the
-     * display width of the expression, and a LONGLONG is a BIGINT from 11 display characters on.
-     *
-     * @param string $name The name of the integer type of the field
-     */
-    public function integer(Domain $domain, string $name): string
-    {
-        $name = $this->field($domain) === Field::LongLong && $domain->length >= ($this->session->settings()->legacy() ? 10 : 11) ? 'BIGINT' : $name;
-
-        return $name . '(' . ($domain->display ?? $domain->length) . ')' . ($domain->unsigned ? ' UNSIGNED' : '');
-    }
-
-    /**
-     * Answers the type a string, ENUM or SET column of a query takes in the table, as SQL: a
-     * string of more than 512 characters, and a large object, is the TEXT or BLOB type that holds
-     * it, and a type that is not binary states its character set and collation.
-     */
-    public function character(Domain $domain): string
-    {
-        $bytes = $domain->collation->bytes();
-        $collation = $bytes ? '' : ' CHARACTER SET ' . $domain->collation->charset->name . ' COLLATE ' . $domain->collation->name;
-        if ($domain->field === Field::Enum || $domain->field === Field::Set) {
-            $members = implode(',', array_map(static fn (string $member): string => "'" . str_replace(['\\', "'"], ['\\\\', "''"], $member) . "'", $domain->members));
-
-            return ($domain->field === Field::Enum ? 'ENUM' : 'SET') . '(' . $members . ')' . $collation;
-        }
-        if ($bytes && $domain->field === Field::String && $domain->length === 0) {
-            return 'BINARY(0)';
-        }
-        $text = $domain->length * $domain->collation->charset->maxLength;
-        $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        if (!$blob && $domain->length <= 512) {
-            return ($bytes ? 'VARBINARY' : 'VARCHAR') . '(' . $domain->length . ')' . $collation;
-        }
-
-        return $this->text($blob && $bytes ? $domain->length : $text, $bytes) . $collation;
-    }
-
-    /**
-     * Answers the TEXT or BLOB type that holds a number of bytes.
-     */
-    public function text(int $bytes, bool $binary): string
-    {
-        $size = match (true) {
-            $bytes < 256 => 'TINY',
-            $bytes < 65536 => '',
-            $bytes < 16777216 => 'MEDIUM',
-            default => 'LONG',
-        };
-
-        return $size . ($binary ? 'BLOB' : 'TEXT');
-    }
-
-    /**
-     * Answers NOT NULL with the implicit default of the type for a column that cannot be NULL; a date, a datetime and the large types take no default.
-     */
-    public function nullability(Domain $domain): string
-    {
-        if ($domain->nullable || $domain->field === Field::Null) {
-            return '';
-        }
-        $default = match ($domain->kind) {
-            Kind::Integer, Kind::Double, Kind::Year => "'0'",
-            Kind::Decimal => "'0" . ($domain->decimals > 0 ? '.' . str_repeat('0', $domain->decimals) : '') . "'",
-            Kind::Time => "'00:00:00" . ($domain->decimals > 0 && $domain->decimals < Domain::NOT_FIXED ? '.' . str_repeat('0', $domain->decimals) : '') . "'",
-            Kind::String => $domain->length > 512 || in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob, Field::Geometry, Field::Enum, Field::Set, Field::Vector], true) ? null : "''",
-            Kind::Date, Kind::DateTime, Kind::Json, Kind::Bit, Kind::Null => null,
-        };
-
-        return ' NOT NULL' . ($default === null ? '' : ' DEFAULT ' . $default);
     }
 
     /**
@@ -405,7 +288,7 @@ final class TableQueries
      */
     public function defaulted(ColumnDefinition $column, Writer $writer, Store $store, Frame $frame): int|float|string|null
     {
-        [$has, $value] = $writer->default($column, $frame);
+        [$has, $value] = $writer->default($column, $frame, $store);
         if ($has || $column->nullable() || $column->autoIncrement) {
             return $value;
         }

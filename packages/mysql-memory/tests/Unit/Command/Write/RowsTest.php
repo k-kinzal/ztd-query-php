@@ -405,6 +405,18 @@ final class RowsTest extends TestCase
         self::assertSame([['1', '2', '3']], $result3->rows);
     }
 
+    public function testCompletedReportsEveryOmittedRequiredColumnAndPreservesStoredRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT NOT NULL, b INT DEFAULT 7, g INT AS (a+1) STORED NOT NULL, c INT NOT NULL); INSERT INTO t(a,b,c) VALUES (1,2,3)');
+        $session->run('INSERT INTO t () VALUES ()');
+
+        self::assertSame([['Error', 1364, "Field 'a' doesn't have a default value"], ['Error', 1364, "Field 'c' doesn't have a default value"]], $session->diagnostics->conditions);
+        $result = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '2', '2', '3']], $result->rows);
+    }
+
     public function testReferencesRefusesAChildRowWithoutParentRow(): void
     {
         $session = (new Instance())->connect();

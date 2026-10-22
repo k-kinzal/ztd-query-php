@@ -193,8 +193,14 @@ final class Rows
                 $value = $store->value($computed, $column->generated->domain(), $column);
                 array_splice($row, $position, 1, [$this->notNull($value, $position, $store, $number, $single)]);
             } elseif (!isset($named[$position])) {
-                array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, false)]);
+                try {
+                    array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, false)]);
+                } catch (SqlError $error) {
+                    $named[$position] = true;
+                    throw $error->error === DataError::NoDefaultForField ? $this->unfilled($error, $named, false) : $error;
+                }
             }
+            $named[$position] = true;
         }
 
         return $row;
@@ -202,14 +208,18 @@ final class Rows
 
     /**
      * Answers an error of INSERT ... SELECT followed by ER_NO_DEFAULT_FOR_FIELD for each NOT NULL column without a default that the row has no value for yet.
+     * Modern SELECT input failures include uncomputed generated fields; default
+     * filling and legacy releases report only ordinary missing fields.
      *
      * @param array<int, true> $named The positions of the columns the row has reached
+     * @param bool $queried Whether the failure occurred while assigning an INSERT ... SELECT input
      */
-    public function unfilled(SqlError $error, array $named): SqlError
+    public function unfilled(SqlError $error, array $named, bool $queried = true): SqlError
     {
         $following = $error->following;
+        $generated = $queried && !$this->planner->settings->legacy();
         foreach ($this->table->definition->columns as $position => $column) {
-            if (!isset($named[$position]) && !$column->default->declared && !$column->nullable() && !$column->autoIncrement) {
+            if (!isset($named[$position]) && ($generated || $column->generated === null) && !$column->default->declared && !$column->nullable() && !$column->autoIncrement) {
                 $following[] = [DataError::NoDefaultForField->value, DataError::NoDefaultForField->message($column->name)];
             }
         }
@@ -228,7 +238,7 @@ final class Rows
     public function defaulted(int $position, Frame $frame, Store $store, int $number, bool $explicit): int|float|string|null
     {
         $column = $this->table->definition->columns[$position];
-        [$has, $value] = $this->writer->default($column, $frame);
+        [$has, $value] = $this->writer->default($column, $frame, $store);
         if ($has || $column->autoIncrement) {
             return $value;
         }

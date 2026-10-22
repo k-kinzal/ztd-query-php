@@ -66,6 +66,11 @@ final class TableLayout
     public array $reportedLengths = [];
 
     /**
+     * @var array<string, string> Defaults inferred from query fields, rather than validated as explicit input clauses
+     */
+    public array $inferredDefaults = [];
+
+    /**
      * The name of each column of the table before the change, by its position.
      *
      * @var array<int, string>
