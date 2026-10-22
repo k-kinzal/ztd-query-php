@@ -1746,7 +1746,7 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OutputOrdinal": {
-        "literal": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral"
+        "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\BooleanLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Unary"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\ProcedureAnalyse": {
         "arguments": "array"
@@ -1860,7 +1860,9 @@
         "option": "SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\OrdinalOutOfRange": {
+        "grouped": "bool",
         "items": "int",
+        "ordinal": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Clause\\OutputOrdinal",
         "position": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Query\\Problem\\RecursiveReference": {

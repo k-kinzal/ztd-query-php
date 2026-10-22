@@ -12,7 +12,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement as M;
 
 /**
- * Invokes unchanged stored writes across missing and populated dependencies.
+ * Invokes unchanged stored instructions across missing and populated dependencies.
  */
 final class WriteOrderingHistory
 {

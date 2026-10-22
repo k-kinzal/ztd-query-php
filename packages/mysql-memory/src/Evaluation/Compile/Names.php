@@ -195,7 +195,7 @@ final class Names
     {
         $resolution = $this->compiler->facts->scalar($ordinal)->resolution;
         if (!$resolution instanceof AliasTarget) {
-            throw QueryError::BadField->error($ordinal->literal->text, 'order clause');
+            throw QueryError::BadField->error($ordinal->name(), 'order clause');
         }
 
         return $this->field($resolution->field, $scope);

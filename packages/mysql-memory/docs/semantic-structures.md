@@ -4624,3 +4624,22 @@ before later assignment warnings. Legacy prepared LOAD resolves an implicit
 database first. The regression fixture includes the original unseeded input,
 valid and unknown charsets, both spellings, and subsequent conversion failures.
 These focused comparisons do not replace the final-revision acceptance gates.
+
+Query ordering and grouping give an integer an `OutputOrdinal` role even when
+parentheses or unary plus surround it. The ordinal retains those semantic
+expression nodes and exposes its underlying integer through `literal()`; it does
+not retain SQL or parser nodes. Query constructors reject integers left in the
+ordinary scalar sort role. A completed read also rejects zero and positions
+beyond a fixed projection width. Catalog-dependent stars remain open: the same
+read can fail against a one-column table and succeed after a second column is
+added. Stored instructions retain fixed contradictory positions in
+`DeferredQuery`, so a skipped branch does not prepare that query.
+
+`QueryOrderingStructureTest` compares those unchanged catalog-dependent reads and
+stored definitions with native MySQL across catalog changes and invocation
+states. It supplies an opaque request label to memory and renders reference SQL
+only for the native connection. The native regression corpus additionally checks
+wrapped positions, unsigned integer extremes, grouping through expanded stars,
+set queries, unused CTEs and expression subqueries over text and prepared
+connections. These targeted checks do not replace the complete construction and
+SQL Faker campaigns in the acceptance contract.

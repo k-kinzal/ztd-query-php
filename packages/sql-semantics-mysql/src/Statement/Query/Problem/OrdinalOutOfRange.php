@@ -12,7 +12,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a position outside the select list
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 ORDER BY 3');
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $query = $semantics->analyze('SELECT * FROM t ORDER BY 3', [$semantics->analyze('CREATE TABLE t(a INT)')]);
  *     $query->facts->diagnostics[0]->message() // => "Unknown column '3' in 'order clause': the select list has 1 items."
  */
 final class OrdinalOutOfRange implements Diagnostic
@@ -22,9 +23,19 @@ final class OrdinalOutOfRange implements Diagnostic
     /**
      * @param int $position The position written, counting from one
      * @param int $items The number of select list items
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal|null $ordinal The written position, preserving its full integer value
+     * @param bool $grouped Whether the known structural constraint belongs to GROUP BY
      */
-    public function __construct(public readonly int $position, public readonly int $items)
+    public function __construct(public readonly int $position, public readonly int $items, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal $ordinal = null, public readonly bool $grouped = false)
     {
+    }
+
+    /**
+     * Answers the position without narrowing its written unsigned integer value.
+     */
+    public function name(): string
+    {
+        return $this->ordinal?->name() ?? (string) $this->position;
     }
 
     /**
@@ -32,6 +43,6 @@ final class OrdinalOutOfRange implements Diagnostic
      */
     public function message(): string
     {
-        return "Unknown column '" . $this->position . "' in 'order clause': the select list has " . $this->items . ' items.';
+        return "Unknown column '" . $this->name() . "' in '" . ($this->grouped ? 'group statement' : 'order clause') . "': the select list has " . $this->items . ' items.';
     }
 }

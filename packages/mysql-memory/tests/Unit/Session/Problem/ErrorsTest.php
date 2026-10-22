@@ -731,6 +731,13 @@ final class ErrorsTest extends TestCase
         self::assertNull($errors->call(new Misuse(MisuseRule::StarWithoutTables)));
     }
 
+    public function testOrdinalRetainsTheWrittenPositionAndGroupingRole(): void
+    {
+        $position = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('02'));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange(2, 1, $position, true);
+        self::assertSame("Unknown column '02' in 'group statement'", (new Errors())->ordinal($problem, 'field list')->getMessage());
+    }
+
     public function testDefinitionAnswersTheErrorOfAProblemOfADefinitionOrNull(): void
     {
         $errors = new Errors();

@@ -77,4 +77,27 @@ final class DeleteUseTest extends TestCase
         self::assertSame('opaque request label', $session->text);
     }
 
+    public function testInputsRegistersTheRetainedCommonTableDefinitions(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'), new Name('a'))]);
+        $with = new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], $query)]);
+        $input = new M\Dml\Target\DeletionInput([new M\Relation\TableReference(new QualifiedName(new Name('c')))]);
+        $write = new M\Routine\Program\Write\DeferredMultipleDelete($with, [], $input, M\Dml\MultipleDeleteForm::BeforeFrom);
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->text = 'opaque request label';
+        self::assertSame(1288, (new DeleteUse())->error($write, $session)->getCode());
+        self::assertSame('opaque request label', $session->text);
+    }
+
+    public function testInputsLeavesTheCommonTargetConditionAheadOfOrdering(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'), new Name('a'))]);
+        $with = new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], $query)]);
+        $write = new M\Routine\Program\Write\DeferredDelete($with, [], new M\Dml\WriteTarget(new QualifiedName(new Name('c'))), new M\Name\ColumnUse(new Name('missing')), [new M\Query\OrderItem(new M\Literal\NumberLiteral('1'))]);
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->text = 'opaque request label';
+        self::assertSame(1288, (new DeleteUse())->error($write, $session)->getCode());
+        self::assertSame('opaque request label', $session->text);
+    }
+
 }

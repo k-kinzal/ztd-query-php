@@ -118,7 +118,10 @@ final class Locations
             $problem = $problem instanceof Diagnostic && !in_array($problem, $operation->facts->diagnostics, true) ? null : $problem;
             $place = $locator->place($node);
             if ($problem !== null && $place !== null && !in_array(spl_object_id($problem), $dropped, true)) {
-                $located[spl_object_id($problem)] = [$problem, $place];
+                $previous = $located[spl_object_id($problem)] ?? null;
+                if ($previous === null || Locator::precedes($place[1], $previous[1][1])) {
+                    $located[spl_object_id($problem)] = [$problem, $place];
+                }
                 if (isset($searched[spl_object_id($node)])) {
                     $matched[spl_object_id($problem)] = true;
                 }

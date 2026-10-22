@@ -60,8 +60,27 @@ final class ReleaseDomain
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector => 384,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->qualify !== null => 480,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample => 448,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal => $this->ordering($value),
             default => self::ALL,
         };
+    }
+
+    /**
+     * Keeps scalar boolean sort operands in releases where they are constants.
+     */
+    public function ordering(\SqlSemantics\Platform\MySql\Statement\Query\Select|\SqlSemantics\Platform\MySql\Statement\Query\QueryExpression|\SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation|\SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal $query): int
+    {
+        if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) {
+            return $query->literal() instanceof \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral ? 3 : self::ALL;
+        }
+        $groups = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->groupBy->items ?? []) : [];
+        $late = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->late->orderBy ?? []) : [];
+        foreach ([...$groups, ...$query->orderBy, ...$late] as $item) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\Query\SortScopes())->position($item->expression, true) instanceof \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral) {
+                return 508;
+            }
+        }
+        return self::ALL;
     }
 
     /**

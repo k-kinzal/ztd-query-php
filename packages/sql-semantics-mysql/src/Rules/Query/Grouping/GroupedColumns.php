@@ -134,7 +134,7 @@ final class GroupedColumns
             $expression = $matching->target($item->expression, $facts);
             $groups[] = $expression;
             foreach ($reads->columns($expression, $relations, $facts, false) as [$key]) {
-                if ($matching->unwrap($expression) instanceof ColumnUse) {
+                if ($matching->unwrap($expression) instanceof ColumnUse || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) {
                     $determined[$key] = true;
                 }
             }

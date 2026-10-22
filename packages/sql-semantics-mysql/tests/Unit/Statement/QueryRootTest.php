@@ -51,6 +51,20 @@ final class QueryRootTest extends TestCase
         new QueryRoot($body);
     }
 
+    public function testTheConstructorRejectsAPositionBeyondTheFixedProjection(): void
+    {
+        $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')))]);
+        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
+        new QueryRoot($query);
+    }
+
+    public function testTheConstructorRejectsZeroEvenWhenTheProjectionDependsOnTheCatalog(): void
+    {
+        $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new TableReference(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('0')))]);
+        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
+        new QueryRoot($query);
+    }
+
     public function testRenderRetainsTheQueryBody(): void
     {
         $root = new QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))]));

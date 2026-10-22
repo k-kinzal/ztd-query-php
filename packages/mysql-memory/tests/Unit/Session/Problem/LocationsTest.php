@@ -39,7 +39,8 @@ final class LocationsTest extends TestCase
     public function testProblemAnswersTheProblemOfAnOrdinalAndOfACall(): void
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
-        $operation = $session->analyze('SELECT nosuch(1) ORDER BY 2');
+        $session->query('CREATE TABLE t(a INT)');
+        $operation = $session->analyze('SELECT nosuch(1), t.* FROM t ORDER BY 3');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
         self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
@@ -48,6 +49,15 @@ final class LocationsTest extends TestCase
 
         self::assertSame($operation->statement->query->items[0]->expression, (new Locations())->problem($operation->statement->query->items[0]->expression, $operation));
         self::assertInstanceOf(OrdinalOutOfRange::class, (new Locations())->problem($operation->statement->query->orderBy[0]->expression, $operation));
+    }
+
+    public function testNamesKeepsTheFirstLocationOfASharedColumnCondition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect(database: 'p');
+        $session->query('CREATE TABLE t(b INT)');
+        $error = $session->run('SELECT a FROM t ORDER BY 2, 1')[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame("Unknown column 'a' in 'field list'", $error->getMessage());
     }
 
     public function testWidthFindsTheWidthOfAllBeforeItsOperandAndOfInAfterIt(): void

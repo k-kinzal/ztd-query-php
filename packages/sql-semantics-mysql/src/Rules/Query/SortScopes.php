@@ -8,6 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -66,8 +69,40 @@ final class SortScopes
     public function check(array $items): void
     {
         foreach ($items as $item) {
-            Check::input(!$item->expression instanceof NumberLiteral || $item->expression->form !== NumberForm::Integer, 'An integer in ORDER BY or GROUP BY is a select list position.');
+            Check::input($this->position($item->expression) === null, 'An integer in ORDER BY or GROUP BY is a select list position.');
         }
+    }
+
+    /**
+     * Finds a position contradicted by the fixed projection, without resolving catalog columns.
+     */
+    public function problem(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
+    {
+        $groups = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->groupBy->items ?? []) : [];
+        $orders = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation ? $query->orderBy : [];
+        $late = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->late->orderBy ?? []) : [];
+        $width = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query);
+        foreach ([...$groups, ...$orders, ...$late] as $item) {
+            $ordinal = $item->expression;
+            if ($ordinal instanceof OutputOrdinal && ($ordinal->position() === 0 || ($width !== null && $ordinal->position() > $width))) {
+                return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange($ordinal->position(), $width ?? 0, $ordinal, in_array($item, $groups, true));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds an unsigned integer whose parentheses or unary plus preserve its positional role.
+     */
+    public function position(Operand $expression, bool $legacyBoolean = false): NumberLiteral|BooleanLiteral|null
+    {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
+            $expression = $expression->operand;
+        }
+        if ($legacyBoolean && $expression instanceof BooleanLiteral) {
+            return $expression;
+        }
+        return $expression instanceof NumberLiteral && $expression->form === NumberForm::Integer ? $expression : null;
     }
 
     /**

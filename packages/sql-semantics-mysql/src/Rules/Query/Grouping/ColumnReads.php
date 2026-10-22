@@ -44,10 +44,13 @@ final class ColumnReads
         if (!$aggregated && ($this->aggregate($value) || $this->anyValue($value))) {
             return [];
         }
-        if ($value instanceof ColumnUse && $facts->covers($value)) {
+        if (($value instanceof ColumnUse || $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) && $facts->covers($value)) {
             $resolution = $facts->scalar($value)->resolution;
             if ($resolution instanceof AliasTarget) {
-                return $resolution->field->expression === null ? [] : $this->columns($resolution->field->expression, $relations, $facts, $aggregated);
+                if ($resolution->field->expression !== null) {
+                    return $this->columns($resolution->field->expression, $relations, $facts, $aggregated);
+                }
+                $resolution = $resolution->field->resolution;
             }
 
             return $resolution instanceof ResolvedColumn && isset($relations[spl_object_id($resolution->relation)]) ? [[$this->key($resolution), $resolution]] : [];

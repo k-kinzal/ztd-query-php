@@ -50,6 +50,32 @@ final class SortScopesTest extends TestCase
         (new SortScopes())->check([new OrderItem(new NumberLiteral('2'))]);
     }
 
+    public function testCheckRefusesAGroupedUnaryIntegerItem(): void
+    {
+        $this->expectExceptionMessage('An integer in ORDER BY or GROUP BY is a select list position.');
+        (new SortScopes())->check([new OrderItem(new Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus, new NumberLiteral('2'))))]);
+    }
+
+    public function testProblemDistinguishesFixedAndCatalogDependentPositions(): void
+    {
+        $item = new OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')));
+        $fixed = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], orderBy: [$item]);
+        self::assertSame('2', (new SortScopes())->problem($fixed)?->name());
+        $open = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t'))), orderBy: [$item]);
+        self::assertNull((new SortScopes())->problem($open));
+        $zero = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t'))), groupBy: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([new OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('0')))]));
+        self::assertTrue((new SortScopes())->problem($zero)?->grouped);
+    }
+
+    public function testPositionPreservesOnlyUnsignedIntegerOperands(): void
+    {
+        $literal = new NumberLiteral('02');
+        self::assertSame($literal, (new SortScopes())->position(new Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus, $literal))));
+        self::assertNull((new SortScopes())->position(new Grouped(new NumberLiteral('2.0'))));
+        self::assertNull((new SortScopes())->position(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, $literal)));
+        self::assertNull((new SortScopes())->position(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal($literal)));
+    }
+
     public function testDeriveResolvesOrdinalsAliasesAndColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -30,7 +30,8 @@ final class ReadColumns
      */
     public function problem(Query|M\Set\LeadingUnion $query, bool $exists = false): ?Diagnostic
     {
-        $template = $this->templates($query);
+        $position = $query instanceof Query ? (new \SqlSemantics\Platform\MySql\Rules\Query\SortScopes())->problem($query) : null;
+        $template = $position ?? $this->templates($query);
         if ($template !== null) {
             return $template;
         }

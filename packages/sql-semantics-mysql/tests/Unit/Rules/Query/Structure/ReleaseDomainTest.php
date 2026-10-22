@@ -23,6 +23,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ReleaseDomainTest extends TestCase
 {
+    public function testOrderingSeparatesBooleanConstantsFromLegacyPositions(): void
+    {
+        $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true);
+        $select = new Select([], [new SelectExpression(new NumberLiteral('1'))], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem($literal)]);
+        self::assertSame(508, (new ReleaseDomain())->ordering($select));
+        self::assertSame(508, (new ReleaseDomain())->of($select));
+        self::assertSame(3, (new ReleaseDomain())->of(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal($literal)));
+    }
+
     public function testOfKeepsALimitBeforeUnionInMySql56(): void
     {
         $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('1')));

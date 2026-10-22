@@ -189,7 +189,7 @@ final class Errors
     public function query(Diagnostic $diagnostic, string $clause): ?SqlError
     {
         return match (true) {
-            $diagnostic instanceof OrdinalOutOfRange => QueryError::BadField->error((string) $diagnostic->position, $clause === 'group statement' ? $clause : 'order clause'),
+            $diagnostic instanceof OrdinalOutOfRange => $this->ordinal($diagnostic, $clause),
             $diagnostic instanceof NonUniqueTable => QueryError::NonUniqueTable->error($diagnostic->alias->value),
             $diagnostic instanceof UndeclaredVariable => ProgramError::UndeclaredVariable->error($diagnostic->name->value),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic),
@@ -219,6 +219,14 @@ final class Errors
             CountedList::ValueRows => QueryError::WrongValueCountOnRow->error($diagnostic->row),
             CountedList::DerivedColumns => SchemaError::ViewWrongList->error(),
         };
+    }
+
+    /**
+     * Reports a position using its written name and its grouping or ordering role.
+     */
+    public function ordinal(OrdinalOutOfRange $diagnostic, string $clause): SqlError
+    {
+        return QueryError::BadField->error($diagnostic->name(), $diagnostic->grouped || $clause === 'group statement' ? 'group statement' : 'order clause');
     }
 
     /**

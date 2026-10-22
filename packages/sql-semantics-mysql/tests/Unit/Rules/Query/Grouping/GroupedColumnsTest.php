@@ -32,6 +32,7 @@ final class GroupedColumnsTest extends TestCase
     public static function providerCheckReportsTheFirstUndeterminedColumn(): iterable
     {
         yield 'aggregated without GROUP BY' => ['SELECT a, COUNT(*) FROM t1', GroupingRule::WithoutGroupBy, 'fz.t1.a'];
+        yield 'star by nonkey position' => ['SELECT * FROM t1 GROUP BY ((+2))', GroupingRule::NotDetermined, 'fz.t1.id'];
         yield 'not grouped' => ['SELECT b, COUNT(*) FROM t1 GROUP BY a', GroupingRule::NotDetermined, 'fz.t1.b'];
         yield 'order key' => ['SELECT a FROM t1 GROUP BY a ORDER BY b', GroupingRule::NotDetermined, 'fz.t1.b'];
         yield 'alias' => ['SELECT x.b FROM t1 x GROUP BY x.a', GroupingRule::NotDetermined, 'fz.x.b'];
@@ -80,6 +81,8 @@ final class GroupedColumnsTest extends TestCase
         yield 'grouping argument' => ['SELECT a, GROUPING(b) FROM t1 GROUP BY a WITH ROLLUP'];
         yield 'qualified expression' => ['SELECT t1.a + 1 FROM t1 GROUP BY a + 1'];
         yield 'star by key' => ['SELECT * FROM t1 GROUP BY id'];
+        yield 'star by positional key' => ['SELECT * FROM t1 GROUP BY ((+1))'];
+        yield 'qualified star by positional key' => ['SELECT t1.* FROM t1 GROUP BY +(1)'];
         yield 'derived key' => ['SELECT id, a FROM (SELECT * FROM t1 LIMIT 3) x GROUP BY id'];
         yield 'derived expression' => ['SELECT i2, a FROM (SELECT id, id + 1 AS i2, a FROM t1) x GROUP BY id'];
         yield 'derived grouping' => ['SELECT m FROM (SELECT a + 1 AS k, MAX(b) AS m FROM t1 GROUP BY a + 1) x GROUP BY k'];

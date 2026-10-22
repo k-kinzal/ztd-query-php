@@ -118,7 +118,7 @@ final class WindowingTest extends TestCase
     public function testRootsAreTheSelectListAndTheOrderBy(): void
     {
         $session = (new Instance())->connect();
-        $operation = $session->analyze('SELECT 1, 2 FROM (SELECT 3) t WHERE 4 ORDER BY 5');
+        $operation = $session->analyze('SELECT 1, 2 FROM (SELECT 3) t WHERE 4 ORDER BY 5.0');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
         $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
