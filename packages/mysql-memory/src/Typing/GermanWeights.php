@@ -39,4 +39,22 @@ final class GermanWeights
             default => (new LegacyUnicodeWeights(false))->primary($point),
         };
     }
+
+    /**
+     * Answers a latin1 byte's primary weights. Unlike Unicode DIN-2, AE ligatures
+     * retain their Swedish weights. All 256 bytes were compared through native
+     * WEIGHT_STRING on MySQL 5.7.44 and 8.4.7.
+     */
+    public function latin1(int $byte): string
+    {
+        return match ($byte) {
+            0xC4, 0xE4 => 'AE',
+            0xC5, 0xE5 => 'A',
+            0xD6, 0xF6 => 'OE',
+            0xDC, 0xFC => 'UE',
+            0xDF => 'SS',
+            0xFF => 'Y',
+            default => Ordering::weights()['latin1_swedish_ci'][$byte],
+        };
+    }
 }

@@ -78,8 +78,8 @@ final class Ordering
     {
         $left = $this->padded($this->unicode($left));
         $right = $this->padded($this->unicode($right));
-        $leftWeight = $this->unicodeWeights($left);
-        $rightWeight = $this->unicodeWeights($right);
+        $leftWeight = $this->collation->name === 'latin1_german2_ci' ? $this->folded($left) : $this->unicodeWeights($left);
+        $rightWeight = $this->collation->name === 'latin1_german2_ci' ? $this->folded($right) : $this->unicodeWeights($right);
         if ($leftWeight !== null && $rightWeight !== null) {
             if ($this->collation->padSpace) {
                 $length = max(strlen($leftWeight), strlen($rightWeight));
@@ -209,6 +209,11 @@ final class Ordering
      */
     public function folded(string $text): string
     {
+        if ($this->collation->name === 'latin1_german2_ci') {
+            $weights = new GermanWeights();
+
+            return implode('', array_map(static fn (string $byte): string => $weights->latin1(ord($byte)), str_split($text)));
+        }
         $weights = self::weights()[$this->collation->name] ?? null;
         if ($weights !== null) {
             return strtr($text, self::bytes(), $weights);

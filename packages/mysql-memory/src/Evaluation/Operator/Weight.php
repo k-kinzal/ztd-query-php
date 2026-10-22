@@ -161,11 +161,13 @@ final class Weight implements Evaluable
         $flags = $this->flags | ($legacy && ($this->cast === WeightCast::Char || ($this->flags & 64) !== 0) ? 128 : 0);
         $pad = !$legacy || $this->cast === WeightCast::Char || ($this->flags & 64) !== 0;
         $weigher = new \MySqlMemory\Typing\Weights();
-        if ($legacy && (str_ends_with($domain->collation->name, '_unicode_520_ci') || str_ends_with($domain->collation->name, '_unicode_ci') || (new \MySqlMemory\Typing\GermanWeights())->supports($domain->collation))) {
+        $width = $weigher->legacyWidth($domain->collation);
+        if ($legacy && $width !== null) {
             $weight = $weigher->text($value, $domain->collation);
             if ($count > 0) {
-                $weight = substr($weight, 0, 2 * $count);
-                $weight = $pad ? str_pad($weight, 2 * $count, $weigher->character(' ', $domain->collation)) : $weight;
+                $length = $count * $width;
+                $weight = substr($weight, 0, $length);
+                $weight = $pad ? str_pad($weight, $length, $weigher->character(' ', $domain->collation)) : $weight;
             }
         } else {
             $weight = $weigher->text($value, $domain->collation, $count, $flags, $pad);

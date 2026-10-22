@@ -14,6 +14,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class WeightsTest extends TestCase
 {
+    public function testLegacyWidthDistinguishesWeightLimitsFromCharacterLimits(): void
+    {
+        $weights = new Weights();
+        self::assertSame(1, $weights->legacyWidth(Collation::known('latin1_german2_ci')));
+        self::assertSame(2, $weights->legacyWidth(Collation::known('utf8mb4_german2_ci')));
+        self::assertSame(2, $weights->legacyWidth(Collation::known('utf8mb4_unicode_ci')));
+        self::assertSame(2, $weights->legacyWidth(Collation::known('utf8mb4_unicode_520_ci')));
+        self::assertNull($weights->legacyWidth(Collation::known('utf8mb4_general_ci')));
+        self::assertNull($weights->legacyWidth(Collation::known('utf8mb4_0900_ai_ci')));
+    }
+
     public function testTextPadsGeneralWeightsWithSpaces(): void
     {
         self::assertSame('0041004500200020', bin2hex((new Weights())->text('aÉ', Collation::known('utf8mb4_general_ci'), 4)));

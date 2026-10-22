@@ -22,6 +22,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 final class Weights
 {
     /**
+     * Answers the primary-weight width when legacy length limits count expanded weights.
+     * Other collations limit input characters, even on the legacy releases.
+     */
+    public function legacyWidth(Collation $collation): ?int
+    {
+        if ($collation->name === 'latin1_german2_ci') {
+            return 1;
+        }
+
+        return str_ends_with($collation->name, '_unicode_520_ci') || str_ends_with($collation->name, '_unicode_ci') || (new GermanWeights())->supports($collation) ? 2 : null;
+    }
+
+    /**
      * Weighs a string, limiting or padding its character count when one is requested.
      *
      * @throws \MySqlMemory\Error\SqlError When the collation's weights are not emulated
@@ -60,6 +73,11 @@ final class Weights
      */
     public function character(string $character, Collation $collation): string
     {
+        if ($collation->name === 'latin1_german2_ci') {
+            $byte = Encoding::convert($character, Charset::known('utf8mb4'), $collation->charset);
+
+            return (new GermanWeights())->latin1(ord($byte));
+        }
         $single = Ordering::weights()[$collation->name] ?? null;
         if ($single !== null) {
             $byte = Encoding::convert($character, Charset::known('utf8mb4'), $collation->charset);

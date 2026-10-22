@@ -53,4 +53,34 @@ final class GermanWeightsTest extends TestCase
         self::assertFalse($weights->supports(Collation::known('latin1_german2_ci')));
         self::assertFalse($weights->supports(Collation::known('utf8mb4_unicode_ci')));
     }
+
+    /**
+     * @return array<string, array{int, string}>
+     */
+    public static function providerLatinWeights(): array
+    {
+        return [
+            'upper umlaut a' => [0xC4, '4145'],
+            'lower umlaut a' => [0xE4, '4145'],
+            'upper ring a' => [0xC5, '41'],
+            'lower ring a' => [0xE5, '41'],
+            'upper umlaut o' => [0xD6, '4f45'],
+            'lower umlaut o' => [0xF6, '4f45'],
+            'upper umlaut u' => [0xDC, '5545'],
+            'lower umlaut u' => [0xFC, '5545'],
+            'sharp s' => [0xDF, '5353'],
+            'umlaut y' => [0xFF, '59'],
+            'upper ae' => [0xC6, '5c'],
+            'lower ae' => [0xE6, '5c'],
+            'ordinary a' => [0x61, '41'],
+            'nul' => [0, '00'],
+            'space' => [0x20, '20'],
+        ];
+    }
+
+    #[DataProvider('providerLatinWeights')]
+    public function testLatin1PreservesSingleByteExpansionsAndLigatures(int $byte, string $expected): void
+    {
+        self::assertSame($expected, bin2hex((new GermanWeights())->latin1($byte)));
+    }
 }

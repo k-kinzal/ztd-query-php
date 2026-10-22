@@ -15,6 +15,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class OrderingTest extends TestCase
 {
+    public function testCompareLatinGermanWeightsPadsExpandedPrefixes(): void
+    {
+        $order = Ordering::of(Collation::known('latin1_german2_ci'));
+
+        self::assertSame(0, $order->compare("\xE4 ", 'ae'));
+        self::assertSame(-1, $order->compare("\xE4\0", 'ae'));
+        self::assertSame(1, $order->compare('a', "a\0"));
+        self::assertSame(1, $order->compare('a', "a\1"));
+        self::assertSame($order->key("\xE4 "), $order->key('ae'));
+        self::assertNotSame($order->key("\xC6"), $order->key('ae'));
+        self::assertSame('AE', $order->folded("\xE4"));
+    }
+
     public function testOfSharesTheOrderingOfACollation(): void
     {
         $ordering = Ordering::of(Collation::known('utf8mb4_0900_as_cs'));
