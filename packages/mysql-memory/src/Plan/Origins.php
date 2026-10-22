@@ -64,7 +64,7 @@ final class Origins
             $this->storedAggregate($select, $field, $domain) => $this->planner->materialized([$domain])[0],
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : $this->rollup($select, $field, $scope),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),
-            default => $this->origin($field, $scope),
+            default => (new Grouping\AggregateOutputs($this->planner))->origin($select, $field, $scope, $domain) ?? $this->origin($field, $scope),
         }, $fields, $rolled, $domains);
 
         if (!$this->planner->blocks->empty($select, $outer)) {

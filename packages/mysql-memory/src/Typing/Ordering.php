@@ -150,6 +150,9 @@ final class Ordering
         if (str_ends_with($this->collation->name, '_unicode_ci')) {
             return (new Weights())->text($text, Collation::known('utf8mb4_unicode_ci'));
         }
+        if ((new GermanWeights())->supports($this->collation)) {
+            return (new Weights())->text($text, Collation::known('utf8mb4_german2_ci'));
+        }
         if ($this->collation->charset->maxLength > 1 && str_ends_with($this->collation->name, '_general_ci')) {
             return (new Weights())->text($text, Collation::known('utf8mb4_general_ci'));
         }

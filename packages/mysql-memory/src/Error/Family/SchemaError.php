@@ -140,5 +140,6 @@ enum SchemaError: int implements ErrorCode
     case ConstraintNotFound = 3940;
     case AutoextendMultiple = 4023;
     case AutoextendSize = 4025;
+    case TemporaryAutoextend = 4026;
     case NoVisibleColumn = 4028;
 }

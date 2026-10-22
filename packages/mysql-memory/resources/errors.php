@@ -541,6 +541,7 @@ return [
     4027 => ['HY000', 'User account %s is directly or indirectly granted to the role %s. The GRANT would create a loop'],
     4023 => ['HY000', 'AUTOEXTEND_SIZE should be a multiple of %s'],
     4025 => ['HY000', 'AUTOEXTEND_SIZE value should be between 4M and 4096M'],
+    4026 => ['HY000', 'AUTOEXTEND_SIZE clause is not valid for temporary tablespace.'],
     4028 => ['HY000', 'A table must have at least one visible column.'],
     4035 => ['HY000', 'Keyring reload failed. Please check error log for more details.'],
     4052 => ['HY000', 'Invalid plugin "%s" specified as %s factor during "%s".'],

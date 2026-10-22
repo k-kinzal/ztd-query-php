@@ -54,6 +54,7 @@ final class LoadNotices
             $prepared->routines = [];
             $prepared->inspections = null;
             $prepared->indexCreations = null;
+            $prepared->storageCreations = null;
         }
         $identity = spl_object_id($routine);
         if (isset($prepared->routines[$identity]) || $routine->statement === null) {
@@ -100,6 +101,10 @@ final class LoadNotices
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto && $node->priority === \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Delayed) {
             $notice = $node->replace ? \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ReplaceDelayed : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::InsertDelayed;
             return $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice);
+        }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Type\Character && $node->national) {
+            $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::National;
+            return $notice->warnedIn($release) ? new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice) : null;
         }
         if ($node instanceof CollationName) {
             return $node->deprecation($release);

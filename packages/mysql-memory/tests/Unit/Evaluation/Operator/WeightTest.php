@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Operator;
 
-use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Constant;
@@ -136,14 +135,14 @@ final class WeightTest extends TestCase
         self::assertSame(["ab\0", 'abc'], [$weight->bytes('ab'), $weight->bytes('abcd')]);
     }
 
-    public function testEvaluateRefusesACollationWhoseWeightsAreNotEmulated(): void
+    public function testEvaluateUsesGermanPhonebookWeights(): void
     {
         $session = (new Instance())->connect();
 
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1235);
+        $result = $session->query("SELECT HEX(WEIGHT_STRING(_utf8mb4'ä' COLLATE utf8mb4_german2_ci))")[0];
 
-        $session->query("SELECT HEX(WEIGHT_STRING(_utf8mb4'a' COLLATE utf8mb4_german2_ci))");
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0E330E8B']], $result->rows);
     }
 
 

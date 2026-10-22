@@ -102,6 +102,16 @@ final class OrderingTest extends TestCase
         self::assertSame('0045', bin2hex((string) Ordering::of(Collation::known('utf16_general_ci'))->unicodeWeights('é')));
     }
 
+    public function testCompareAndKeyUseTheSameGermanPhonebookExpansions(): void
+    {
+        $ordering = Ordering::of(Collation::known('utf8mb4_german2_ci'));
+
+        self::assertSame([0, 0, 1, 0], [$ordering->compare('ä', 'ae'), $ordering->compare('æ', 'Ä'), $ordering->compare('ä', 'a'), $ordering->compare("a\u{308}", 'a')]);
+        self::assertSame($ordering->key('ä '), $ordering->key('ae'));
+        self::assertNotSame($ordering->key('ä'), $ordering->key("a\u{308}"));
+        self::assertSame($ordering->key('ü', true), $ordering->key('ue', true));
+    }
+
     public function testKeyRemovesPadWeightsBeforeTrailingIgnorableCharacters(): void
     {
         $ordering = Ordering::of(Collation::known('utf8mb4_unicode_520_ci'));

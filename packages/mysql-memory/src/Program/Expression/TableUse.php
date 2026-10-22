@@ -33,8 +33,12 @@ final class TableUse
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
             $session->diagnostics->clear();
             (new \MySqlMemory\Program\Definition\IndexMetadata())->refresh($definition, $session);
+            (new \MySqlMemory\Program\Definition\TemporaryStorage())->start($definition, $session);
         }
         $this->header($definition, $session);
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
+            (new \MySqlMemory\Program\Definition\TemporaryStorage())->raise($definition, $session);
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($definition->elements, $definition->query)) {
             return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($definition, $session);
         }
@@ -129,6 +133,9 @@ final class TableUse
     {
         $this->header($definition, $session, true);
         $query = $definition->query;
+        if ($query === null && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
+            return null;
+        }
         if ($query === null && ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($definition->elements) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, null) !== null)) {
             (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($this->bound($definition, $session), $session, new \MySqlMemory\Session\Problems());
             return null;

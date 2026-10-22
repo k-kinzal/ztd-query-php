@@ -4727,3 +4727,25 @@ the inner attribute for a nullable outer operand, whereas 8.1 and later retain
 the combined attribute. These differences are derived from native query
 observations and do not change the public statement constructors into an
 execution-eligibility interface.
+
+
+Temporary table storage is a constructor invariant. A positive final
+`AUTOEXTEND_SIZE` cannot inhabit an ordinary `CreateTable`; zero remains valid,
+and repeated options retain their order so the last value determines the request.
+SQL lowering preserves the entire conflicting definition as `DeferredCreateTable`
+for prepared or stored invocation. Selecting a database, resolving engines and
+preparing the creation query remain consumer responsibilities. Existing tables
+and `IF NOT EXISTS` do not satisfy this intrinsic conflict. The direct construction
+regression keeps the same instruction across a populated destination and uses
+unrelated input text; native comparisons also retain query, engine and foreign-key
+conditions that precede the storage condition.
+
+Grouped result metadata distinguishes the semantic expression type from the
+stored output field. The planner can choose streaming groups when an index supplies
+key order; it consumes both types and resolved input identities from semantic
+facts. A later output copy retains aggregate names and missing-default flags where
+MySQL exposes them. The regression compares populated and empty histories,
+constant groups, index changes and ordering with native MySQL 5.6 through 9.1.
+Unicode German DIN-2 comparisons and `WEIGHT_STRING` share primary weights derived
+from public Unicode data and black-box SQL observations, including expansion,
+combining sequences and release-specific length limits.

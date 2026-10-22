@@ -32,6 +32,9 @@ final class RefusedCreateTemplate implements Diagnostic
      */
     public function message(): string
     {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($this->definition->temporary(), $this->definition->options)) {
+            return 'A temporary table cannot request a positive AUTOEXTEND_SIZE.';
+        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->definition->elements, $this->definition->query)) {
             return 'The table definition has no declared column or creation query.';
         }

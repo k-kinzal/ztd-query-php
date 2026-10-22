@@ -75,6 +75,9 @@ final class Weights
         if (str_ends_with($collation->name, '_unicode_520_ci') || str_ends_with($collation->name, '_unicode_ci')) {
             return (new LegacyUnicodeWeights(str_ends_with($collation->name, '_unicode_520_ci')))->primary($point);
         }
+        if ((new GermanWeights())->supports($collation)) {
+            return (new GermanWeights())->primary($point);
+        }
         if ($collation->name === 'utf8mb4_0900_bin') {
             return $character;
         }

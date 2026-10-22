@@ -43,4 +43,27 @@ final class CreationRolesTest extends TestCase
         $this->expectExceptionMessage('An ordinary table creation has a declared column or a creation query.');
         new M\Table\CreateTable($name, ifNotExists: true);
     }
+    public function testTemporaryStorageDistinguishesZeroAndTheLastSpecifiedSize(): void
+    {
+        $positive = new M\Table\Option\AutoextendSizeOption(new M\Literal\ByteSize(new M\Literal\Numeral('0009')));
+        $zero = new M\Table\Option\AutoextendSizeOption(new M\Literal\ByteSize(null, new Name('00M')));
+        $rules = new CreationRoles();
+        self::assertTrue($rules->temporaryStorage(true, [$positive]));
+        self::assertFalse($rules->temporaryStorage(false, [$positive]));
+        self::assertFalse($rules->temporaryStorage(true, [$positive, $zero]));
+        self::assertTrue($rules->temporaryStorage(true, [$zero, $positive]));
+    }
+
+    public function testDeferredRetainsTheCompleteTemporaryStorageConflict(): void
+    {
+        $name = new QualifiedName(new Name('t'));
+        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
+        $option = new M\Table\Option\AutoextendSizeOption(new M\Literal\ByteSize(new M\Literal\Numeral('1')));
+        $instruction = new M\Routine\Program\Write\DeferredCreateTable($name, [$column], [$option], temporaryWords: 1);
+        self::assertSame([$column], $instruction->elements);
+        self::assertSame([$option], $instruction->options);
+        $this->expectExceptionMessage('Positive AUTOEXTEND_SIZE with TEMPORARY belongs to a deferred creation instruction.');
+        new M\Table\CreateTable($name, [$column], [$option], temporaryWords: 1);
+    }
+
 }

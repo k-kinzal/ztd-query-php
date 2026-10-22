@@ -99,7 +99,7 @@ final class DeferredCreateTable implements ProgramStatement, Relation
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($this->elements, $this->options, $query, $partitioning), 'A deferred table creation retains a columnless declaration, fixed read-shape condition, incompatible source roles, missing implicit partition keys or deferred generation.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($this->elements, $this->options, $query, $partitioning, $this->temporary()), 'A deferred table creation retains a columnless declaration, fixed read-shape condition, incompatible source roles, missing implicit partition keys, temporary storage conflicts or deferred generation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

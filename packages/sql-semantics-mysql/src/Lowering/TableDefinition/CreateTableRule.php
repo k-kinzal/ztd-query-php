@@ -249,7 +249,7 @@ final class CreateTableRule
      */
     public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false): CreateTable
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $options, $query, $partitioning)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $options, $query, $partitioning, $temporary > 0)) {
             $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate($definition), 0, false, $this->lowering->origins->publish());
         }
