@@ -73,7 +73,7 @@ final class DeferredDelete implements \SqlSemantics\Platform\MySql\Statement\Rou
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'DELETE ordering uses expressions, not output-column positions.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $table->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($this->orderBy) !== null, 'A deferred single-table DELETE retains a target, sampling or ordering contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $table->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($this->orderBy) !== null, 'A deferred single-table DELETE retains a target, input-column, sampling or ordering contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

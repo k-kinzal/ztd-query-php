@@ -4652,6 +4652,19 @@ renaming list must agree with a query whose width is fixed. Recursive CTEs use
 their anchor output and unused definitions retain their template role. These
 structural checks also serve scalar/row subqueries and set operand widths.
 
+Column constraints follow the lexical scope of each occurrence. An enclosing
+CTE can fix a nested star's width before any catalog exists. The completed read
+or write then rejects incompatible rename lists, set operands and scalar uses.
+The same open subquery can still supply several columns to a row comparison or
+membership predicate. EXISTS keeps its unexpanded projection through query and
+set wrappers; its derived inputs retain ordinary read-column semantics.
+
+For writes, WITH bindings reach assignments, predicates and ordering as well as
+relation inputs. A stored instruction retains its complete column contradiction
+until invocation. Resolution records the scalar role of WHERE and ORDER BY even
+when a subquery's width becomes known only after binding. Memory registers the
+write's retained CTE definitions before preparing those original operands.
+
 Direct histories retain both a base-table star and a derived-table star across
 missing, one-column, two-column and dropped-table states. Stored definitions
 retain the corresponding fixed-width contradictions until their branches are

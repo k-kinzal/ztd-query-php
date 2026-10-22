@@ -35,4 +35,19 @@ final class InputColumnsTest extends TestCase
         self::assertInstanceOf(M\Query\Problem\Misuse::class, $problem);
         self::assertSame($row, $problem->valueRow);
     }
+
+    public function testInputsChecksScalarWriteOperandsInTheirWithScope(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1')), new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]);
+        $with = new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], $query)]);
+        $value = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new QualifiedName(new Name('c')))));
+        $rules = new InputColumns();
+        self::assertNull($rules->inputs([$value]));
+        self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, $rules->inputs([$value], $with));
+        $target = new M\Dml\WriteTarget(new QualifiedName(new Name('t')));
+        $write = new M\Routine\Program\Write\DeferredDelete($with, [], $target, $value);
+        self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, $rules->of($write));
+        $this->expectExceptionMessage('An ordinary DELETE has coherent input and operand columns.');
+        new M\Dml\Delete($with, [], $target, $value);
+    }
 }

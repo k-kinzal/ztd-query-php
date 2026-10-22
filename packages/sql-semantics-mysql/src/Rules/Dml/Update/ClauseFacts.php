@@ -23,9 +23,11 @@ final class ClauseFacts
      */
     public function derive(Scalar|RowOperand|DeferredOperand $operand, Derivation $derivation, Environment $environment): void
     {
-        $derivation->scalar($operand, $environment);
+        $fact = $derivation->scalar($operand, $environment);
         if ($operand instanceof RowOperand || $operand instanceof DeferredOperand) {
             $derivation->report((new DeferredArguments())->problem([$operand]));
+        } else {
+            (new \SqlSemantics\Platform\MySql\Rules\Expression\Operands())->single($fact, $derivation);
         }
     }
 }

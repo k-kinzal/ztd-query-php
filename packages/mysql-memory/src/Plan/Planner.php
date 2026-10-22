@@ -106,6 +106,9 @@ final class Planner
         $this->compiler = new Compiler($facts, $settings, $this, $connection);
         $this->blocks = new Blocks($this);
         $this->relations = new Relations($this);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->with($statement)->tables ?? [] as $table) {
+            $this->definitions[spl_object_id($table)] = [$table, null];
+        }
     }
 
     /**
@@ -211,9 +214,8 @@ final class Planner
      */
     public function set(SetOperation|OrderedSetOperation|LeadingUnion $operation, ?Scope $outer, ?array $settled = null): QueryPlan
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($operation) !== null) {
-            (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation->left, $this, $outer);
-            (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation->right, $this, $outer);
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($operation) !== null || (new Union\Widths())->differ($operation->left, $operation->right, $this->compiler->facts)) {
+            (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation, $this, $outer);
         }
         \SqlSemantics\Diagnostic\Check::invariant(!$operation instanceof LeadingUnion || $settled !== null, 'A leading union receives the enclosing result domains.');
         $domains = $settled ?? $this->outputs($operation);

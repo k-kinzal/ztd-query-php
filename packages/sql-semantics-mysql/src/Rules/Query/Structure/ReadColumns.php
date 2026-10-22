@@ -27,22 +27,23 @@ final class ReadColumns
     /**
      * Finds a fixed contradiction in the written output, leaving catalog widths open.
      * EXISTS permits a bare star without tables because it does not read its columns.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function problem(Query|M\Set\LeadingUnion $query, bool $exists = false): ?Diagnostic
+    public function problem(Query|M\Set\LeadingUnion $query, bool $exists = false, array $common = []): ?Diagnostic
     {
-        $position = $query instanceof Query ? (new \SqlSemantics\Platform\MySql\Rules\Query\SortScopes())->problem($query) : null;
-        $template = $position ?? $this->templates($query);
+        $position = $query instanceof Query ? (new \SqlSemantics\Platform\MySql\Rules\Query\SortScopes())->problem($query, $exists, $common) : null;
+        $template = $position ?? $this->templates($query, $common, $exists);
         if ($template !== null) {
             return $template;
         }
         if ($query instanceof M\ParenthesizedQuery || $query instanceof M\QueryStatement) {
-            return $this->problem($query->query, $exists);
+            return $this->problem($query->query, $exists, $common);
         }
         if ($query instanceof M\QueryExpression) {
-            return $this->problem($query->body, $exists);
+            return $this->problem($query->body, $exists, (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryColumns())->common($query->with, $common));
         }
         if ($query instanceof M\Set\SetOperation || $query instanceof M\Set\OrderedSetOperation || $query instanceof M\Set\LeadingUnion) {
-            return $this->problem($query->left, $exists) ?? $this->problem($query->right, $exists) ?? $this->combined($query->left, $query->right, $exists);
+            return $this->problem($query->left, $exists, $common) ?? $this->problem($query->right, $exists, $common) ?? $this->combined($query->left, $query->right, $exists, $common);
         }
         if ($query instanceof M\ValuesQuery) {
             return $this->rows($query);
@@ -71,49 +72,41 @@ final class ReadColumns
 
     /**
      * Finds deferred bodies only along the read's lexical dependency graph.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function templates(Query|M\Set\LeadingUnion $query): ?Diagnostic
+    public function templates(Query|M\Set\LeadingUnion $query, array $common = [], bool $exists = false): ?Diagnostic
     {
         $recursion = (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputNames())->problem($query) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->problem($query);
         if ($recursion !== null) {
             return $recursion;
         }
-        foreach ((new ReadDependencies())->nodes($query) as $node) {
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable || $node instanceof M\With\CommonTableExpression) {
-                $problem = $this->input($node->query, $node->columns);
-                if ($problem !== null) {
-                    return $problem;
-                }
-            }
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable && ($node->on instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $node->on instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand)) {
-                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->on]);
-            }
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable) {
-                $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonDocument())->problem($node) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($node->columns);
-                if ($problem !== null) {
-                    return $problem;
-                }
-            }
-            if ($node instanceof M\Select) {
-                $problem = $this->windows($node);
-                if ($problem !== null) {
-                    return $problem;
-                }
-            }
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) {
-                return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->expression]);
-            }
-            if ($node instanceof M\With\DeferredBody || $node instanceof M\With\DeferredValuesQuery) {
-                return $node->problem();
-            }
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification) {
-                $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($node, false);
-                if ($problem !== null) {
-                    return $problem;
-                }
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryScopes())->nodes($query, $exists, $common) as [$node, $scope, $existence]) {
+            $problem = $this->template($node, $scope, $existence);
+            if ($problem !== null) {
+                return $problem;
             }
         }
         return null;
+    }
+
+    /**
+     * Checks one reached template in its own lexical scope and read position.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
+     */
+    public function template(\SqlSemantics\Statement\Node $node, array $common, bool $exists): ?Diagnostic
+    {
+        $problem = match (true) {
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable, $node instanceof M\With\CommonTableExpression => $this->input($node->query, $node->columns, $common),
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable && ($node->on instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $node->on instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand) => (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->on]),
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable => (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonDocument())->problem($node) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\From\JsonColumns())->problem($node->columns),
+            $node instanceof M\Select => $this->windows($node),
+            $node instanceof M\Set\SetOperation, $node instanceof M\Set\OrderedSetOperation, $node instanceof M\Set\LeadingUnion => $this->combined($node->left, $node->right, $exists, $common),
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem => (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$node->expression]),
+            $node instanceof M\With\DeferredBody, $node instanceof M\With\DeferredValuesQuery => $node->problem(),
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification => (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($node, false),
+            default => null,
+        };
+        return $problem ?? (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ScopedOperands())->problem($node, $common);
     }
 
     /**
@@ -173,30 +166,33 @@ final class ReadColumns
      * Checks the read body before its explicitly renamed output columns.
      *
      * @param list<\SqlSemantics\Statement\Identifier\Name> $columns Renamed output columns
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function input(Query $query, array $columns): ?Diagnostic
+    public function input(Query $query, array $columns, array $common = []): ?Diagnostic
     {
-        return $this->problem($query) ?? $this->named($query, $columns);
+        return $this->problem($query, common: $common) ?? $this->named($query, $columns, $common);
     }
 
     /**
      * Requires an explicit relation column list to agree with a fixed query width.
      *
      * @param list<\SqlSemantics\Statement\Identifier\Name> $columns Renamed output columns
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function named(Query $query, array $columns): ?M\Problem\CountMismatch
+    public function named(Query $query, array $columns, array $common = []): ?M\Problem\CountMismatch
     {
-        $width = (new QueryWidth())->of($query);
+        $width = (new QueryWidth())->of($query, common: $common);
         return $columns !== [] && $width !== null && count($columns) !== $width ? new M\Problem\CountMismatch(M\Problem\CountedList::DerivedColumns, count($columns), $width) : null;
     }
 
     /**
      * Compares fixed output widths; unknown declarations remain a resolution dependency.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function combined(Query|M\Set\LeadingUnion $left, Query $right, bool $exists = false): ?Diagnostic
+    public function combined(Query|M\Set\LeadingUnion $left, Query $right, bool $exists = false, array $common = []): ?Diagnostic
     {
-        $one = (new QueryWidth())->of($left, $exists);
-        $two = (new QueryWidth())->of($right, $exists);
+        $one = (new QueryWidth())->of($left, $exists, $common);
+        $two = (new QueryWidth())->of($right, $exists, $common);
         return $one !== null && $two !== null && $one !== $two ? new M\Problem\CountMismatch(M\Problem\CountedList::SetOperands, $one, $two) : null;
     }
 }

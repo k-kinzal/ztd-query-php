@@ -19,10 +19,12 @@ final class QueryWidth
 {
     /**
      * Answers the fixed width, or null when the output depends on the catalog.
+     *
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Visible common-table outputs
      */
-    public function of(\SqlSemantics\Statement\Query|Query\Set\LeadingUnion $query, bool $exists = false): ?int
+    public function of(\SqlSemantics\Statement\Query|Query\Set\LeadingUnion $query, bool $exists = false, array $common = []): ?int
     {
-        $columns = (new QueryColumns())->of($query, $exists);
+        $columns = (new QueryColumns())->of($query, $exists, $common);
         return $columns === null ? null : count($columns);
     }
 }

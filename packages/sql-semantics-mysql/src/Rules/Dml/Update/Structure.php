@@ -44,7 +44,7 @@ final class Structure
         if ($sampling !== null) {
             return $sampling;
         }
-        $columns = $this->names($tables) ?? (new InputColumns())->inputs($tables, $with);
+        $columns = $this->names($tables) ?? (new InputColumns())->inputs([...$tables, ...$assignments, ...$orderBy, ...($where === null ? [] : [$where])], $with);
         if ($columns !== null) {
             return $columns;
         }

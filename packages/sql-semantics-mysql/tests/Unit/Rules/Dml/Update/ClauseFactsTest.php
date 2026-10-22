@@ -25,4 +25,12 @@ final class ClauseFactsTest extends TestCase
         self::assertTrue($derivation->facts()->covers($row));
         self::assertSame([M\Expression\Problem\OperandColumns::class], array_map(static fn ($problem): string => $problem::class, $derivation->facts()->diagnostics));
     }
+
+    public function testDeriveRequiresOneColumnAfterResolvingAnOpenSubquery(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS(SELECT 1,2) DELETE FROM t WHERE (SELECT * FROM c)');
+        $widths = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof M\Expression\Problem\OperandColumns));
+        self::assertCount(1, $widths);
+        self::assertSame(2, $widths[0]->actual);
+    }
 }

@@ -144,6 +144,9 @@ final class Selections
         } elseif ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
             $this->set($query->left, $planner, $outer);
             $this->set($query->right, $planner, $outer);
+            if ((new \MySqlMemory\Plan\Union\Widths())->differ($query->left, $query->right, $planner->compiler->facts)) {
+                throw \MySqlMemory\Error\Family\QueryError::WrongNumberOfColumnsInSelect->error();
+            }
         } else {
             $planner->query($query, $outer);
         }

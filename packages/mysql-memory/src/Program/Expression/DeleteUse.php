@@ -88,7 +88,7 @@ final class DeleteUse
      */
     public function inputs(DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
     {
-        if ($write instanceof DeferredDelete && ((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($write->orderBy) === null || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($write->with, $write->table->name))) {
+        if ($write instanceof DeferredDelete && (((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($write->orderBy) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($write) === null) || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($write->with, $write->table->name))) {
             return;
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
@@ -103,11 +103,9 @@ final class DeleteUse
             $operands->ordering($write->orderBy, $planner, $scope);
             return;
         }
-        foreach ($write->with instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\With ? $write->with->tables : [] as $definition) {
-            $planner->definitions[spl_object_id($definition)] = [$definition, null];
-        }
         foreach ($write->tables as $table) {
             $planner->relations->plan($table, $scope);
         }
+        (new \MySqlMemory\Program\Write\UpdateOperands())->operand($write->where, $planner, $scope, 'where clause');
     }
 }

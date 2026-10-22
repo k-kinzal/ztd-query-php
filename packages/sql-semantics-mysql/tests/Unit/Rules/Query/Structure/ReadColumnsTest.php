@@ -102,4 +102,29 @@ final class ReadColumnsTest extends TestCase
         self::assertNull((new ReadColumns())->windows(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], windows: [$window])));
     }
 
+    public function testProblemRejectsAnExistsOrdinalBeyondItsUnexpandedProjection(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), orderBy: [new M\Query\OrderItem(new M\Query\Clause\OutputOrdinal(new M\Literal\NumberLiteral('2')))]);
+        self::assertNull((new ReadColumns())->problem($query));
+        self::assertInstanceOf(M\Query\Problem\OrdinalOutOfRange::class, (new ReadColumns())->problem($query, true));
+        $this->expectExceptionMessage('An ordinary subquery predicate has coherent fixed read columns.');
+        new M\Expression\Subquery\Exists($query);
+    }
+
+    public function testNamedUsesTheEnclosingCommonTableWidth(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('c'))));
+        $names = [new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Statement\Identifier\Name('y')];
+        self::assertNull((new ReadColumns())->named($query, $names));
+        self::assertSame(1, (new ReadColumns())->named($query, $names, ['c' => [new \SqlSemantics\Statement\Identifier\Name('a')]])?->actual);
+    }
+
+    public function testCombinedUsesTheEnclosingCommonTableWidth(): void
+    {
+        $left = new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('c'))));
+        $right = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1')), new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]);
+        self::assertNull((new ReadColumns())->combined($left, $right));
+        self::assertInstanceOf(M\Query\Problem\CountMismatch::class, (new ReadColumns())->combined($left, $right, common: ['c' => [new \SqlSemantics\Statement\Identifier\Name('a')]]));
+    }
+
 }

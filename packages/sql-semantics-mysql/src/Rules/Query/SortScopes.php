@@ -75,11 +75,13 @@ final class SortScopes
 
     /**
      * Finds a position contradicted by the fixed projection, without resolving catalog columns.
+     *
+     * @param array<string, list<Name|null>|null> $common Enclosing common-table outputs
      */
-    public function problem(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
+    public function problem(\SqlSemantics\Statement\Query $query, bool $exists = false, array $common = []): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
     {
-        foreach ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryScopes())->of($query) as [$body, $common]) {
-            $columns = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryColumns())->of($body, common: $common);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryScopes())->of($query, $exists, $common) as [$body, $scope, $existence]) {
+            $columns = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryColumns())->of($body, $existence, $scope);
             $problem = $this->bounded($body, $columns === null ? null : count($columns));
             if ($problem !== null) {
                 return $problem;

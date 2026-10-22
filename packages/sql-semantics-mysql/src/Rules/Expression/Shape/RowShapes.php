@@ -29,9 +29,10 @@ final class RowShapes
      * Answers immediate fields, an empty list for one value, or null for an unknown width.
      * A null field denotes a scalar output column of a subquery.
      *
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      * @return list<Scalar|RowOperand|null>|null
      */
-    public function parts(Scalar|RowOperand|null $operand): ?array
+    public function parts(Scalar|RowOperand|null $operand, array $common = []): ?array
     {
         while ($operand instanceof Grouped || $operand instanceof GroupedRow) {
             $operand = $operand->operand;
@@ -40,7 +41,7 @@ final class RowShapes
             return $operand->elements;
         }
         if ($operand instanceof ScalarSubquery || $operand instanceof RowSubquery) {
-            $width = (new QueryWidth())->of($operand->query);
+            $width = (new QueryWidth())->of($operand->query, common: $common);
             return $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null));
         }
         return [];
@@ -48,27 +49,29 @@ final class RowShapes
 
     /**
      * Finds the first incompatible position, including nested row fields.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function problem(Scalar|RowOperand|null $left, Scalar|RowOperand|null $right): ?OperandColumns
+    public function problem(Scalar|RowOperand|null $left, Scalar|RowOperand|null $right, array $common = []): ?OperandColumns
     {
-        return $this->pairs($this->parts($left), $this->parts($right));
+        return $this->pairs($this->parts($left, $common), $this->parts($right, $common), $common);
     }
 
     /**
      * Compares an operand with a query whose width may depend on declarations.
      * An unresolved projection can vary in width, but each output column is scalar.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function query(Scalar|RowOperand $operand, \SqlSemantics\Statement\Query $query): OperandColumns|Misuse|null
+    public function query(Scalar|RowOperand $operand, \SqlSemantics\Statement\Query $query, array $common = []): OperandColumns|Misuse|null
     {
-        $width = (new QueryWidth())->of($query);
+        $width = (new QueryWidth())->of($query, common: $common);
         if ($width === 0) {
             return new Misuse(MisuseRule::EmptyValuesRow);
         }
-        $parts = $this->parts($operand);
+        $parts = $this->parts($operand, $common);
         if ($width === null && $parts !== null) {
-            return $this->pairs($parts, array_fill(0, count($parts), null));
+            return $this->pairs($parts, array_fill(0, count($parts), null), $common);
         }
-        return $this->pairs($parts, $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null)));
+        return $this->pairs($parts, $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null)), $common);
     }
 
     /**
@@ -76,8 +79,9 @@ final class RowShapes
      *
      * @param list<Scalar|RowOperand|null>|null $one
      * @param list<Scalar|RowOperand|null>|null $two
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
      */
-    public function pairs(?array $one, ?array $two): ?OperandColumns
+    public function pairs(?array $one, ?array $two, array $common = []): ?OperandColumns
     {
         if ($one === null || $two === null) {
             return null;
@@ -86,7 +90,7 @@ final class RowShapes
             return new OperandColumns(max(1, count($one)), max(1, count($two)));
         }
         foreach ($one as $index => $element) {
-            $problem = $this->problem($element, $two[$index]);
+            $problem = $this->problem($element, $two[$index], $common);
             if ($problem !== null) {
                 return $problem;
             }

@@ -62,4 +62,12 @@ final class UpdateOperandsTest extends TestCase
         self::assertSame(1426, $reply[0]->getCode());
     }
 
+    public function testPrepareRetainsTheWritesCommonTableDefinitions(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $this->expectExceptionMessage('SELECT list and column names list have different column counts');
+        $session->query('WITH c AS(SELECT 1),q(x,y) AS(SELECT * FROM c) UPDATE t JOIN q SET a=1');
+    }
+
 }
