@@ -60,8 +60,9 @@
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * Rule: MYSQL-HANDLER-TABLE-001. A handler is opened by an earlier</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * statement of the session; which table it reads is session state, so its</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> * row shape is open and depends on that state. The WHERE condition of the</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * row shape is open unless the context supplies the handler&#039;s table and its declaration. The WHERE condition of the</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * read sees the handler under its name. Terminates: no child. Source:</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> * read sees the handler under its name. Terminates: no child. Source:</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * row shape is open unless the context supplies the handler&#039;s table and its declaration. The predicate and key operands of the</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * read see the handler under its name. Terminates: no child. Source:</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/handler.html. Status: Implemented.</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * @visibility public</span></span>
