@@ -400,8 +400,30 @@
 <span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;2099-01-01 00:00:00&#039;</span>, <span class="tok-var">$schema</span>-&gt;<span class="tok-id">events</span>[<span class="tok-str">&#039;e&#039;</span>]-&gt;<span class="tok-id">at</span>);</span>
 <span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;ENABLED&#039;</span>, <span class="tok-var">$schema</span>-&gt;<span class="tok-id">events</span>[<span class="tok-str">&#039;e&#039;</span>]-&gt;<span class="tok-id">status</span>);</span>
 <span class="src-line" id="L362" data-diff="added"><a class="ln" href="#L362">362</a>    }</span>
-<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a>}</span>
-<span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a></span>
+<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a><span class="tok-com">     * @return iterable&lt;string, array{string, list&lt;int&gt;}&gt;</span></span>
+<span class="src-line" id="L365" data-diff="added"><a class="ln" href="#L365">365</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L366" data-diff="added"><a class="ln" href="#L366">366</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerScopeConditions</span>(): <span class="tok-id">iterable</span></span>
+<span class="src-line" id="L367" data-diff="added"><a class="ln" href="#L367">367</a>    {</span>
+<span class="src-line" id="L368" data-diff="added"><a class="ln" href="#L368">368</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;legacy conversion&#039;</span> =&gt; [<span class="tok-str">&#039;5.7.44&#039;</span>, [<span class="tok-num">1238</span>, <span class="tok-num">1543</span>]];</span>
+<span class="src-line" id="L369" data-diff="added"><a class="ln" href="#L369">369</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;modern contextualization&#039;</span> =&gt; [<span class="tok-str">&#039;8.4.7&#039;</span>, [<span class="tok-num">1238</span>]];</span>
+<span class="src-line" id="L370" data-diff="added"><a class="ln" href="#L370">370</a>    }</span>
+<span class="src-line" id="L371" data-diff="added"><a class="ln" href="#L371">371</a></span>
+<span class="src-line" id="L372" data-diff="added"><a class="ln" href="#L372">372</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L373" data-diff="added"><a class="ln" href="#L373">373</a><span class="tok-com">     * @param list&lt;int&gt; $conditions Ordered diagnostic codes</span></span>
+<span class="src-line" id="L374" data-diff="added"><a class="ln" href="#L374">374</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L375" data-diff="added"><a class="ln" href="#L375">375</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerScopeConditions&#039;</span>)]</span>
+<span class="src-line" id="L376" data-diff="added"><a class="ln" href="#L376">376</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExpressionPreservesLegacyScopeConversionConditions</span>(<span class="tok-id">string</span> <span class="tok-var">$release</span>, <span class="tok-kw">array</span> <span class="tok-var">$conditions</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L377" data-diff="added"><a class="ln" href="#L377">377</a>    {</span>
+<span class="src-line" id="L378" data-diff="added"><a class="ln" href="#L378">378</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>(<span class="tok-var">$release</span>, [], [<span class="tok-str">&#039;d&#039;</span>]))-&gt;<span class="tok-id">connect</span>(<span class="tok-id">database</span>: <span class="tok-str">&#039;d&#039;</span>);</span>
+<span class="src-line" id="L379" data-diff="added"><a class="ln" href="#L379">379</a>        <span class="tok-var">$error</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">run</span>(<span class="tok-str">&#039;ALTER EVENT e ON SCHEDULE EVERY 1 DAY ENDS @@session.version&#039;</span>)[<span class="tok-num">0</span>];</span>
+<span class="src-line" id="L380" data-diff="added"><a class="ln" href="#L380">380</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">SqlError</span>::<span class="tok-kw">class</span>, <span class="tok-var">$error</span>);</span>
+<span class="src-line" id="L381" data-diff="added"><a class="ln" href="#L381">381</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">1238</span>, <span class="tok-var">$error</span>-&gt;<span class="tok-id">getCode</span>());</span>
+<span class="src-line" id="L382" data-diff="added"><a class="ln" href="#L382">382</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$conditions</span>, <span class="tok-id">array_column</span>(<span class="tok-var">$session</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">conditions</span>, <span class="tok-num">1</span>));</span>
+<span class="src-line" id="L383" data-diff="added"><a class="ln" href="#L383">383</a>    }</span>
+<span class="src-line" id="L384" data-diff="added"><a class="ln" href="#L384">384</a></span>
+<span class="src-line" id="L385" data-diff="added"><a class="ln" href="#L385">385</a>}</span>
+<span class="src-line" id="L386" data-diff="added"><a class="ln" href="#L386">386</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
