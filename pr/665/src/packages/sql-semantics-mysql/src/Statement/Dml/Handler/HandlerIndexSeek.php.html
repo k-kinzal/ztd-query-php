@@ -46,7 +46,8 @@
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\NameUse</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerFacts</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Limit</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
@@ -103,31 +104,32 @@
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-var">$accepted</span>[] = <span class="tok-var">$value</span>;</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        }</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">values</span> = <span class="tok-var">$accepted</span>;</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    }</span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a></span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a><span class="tok-com">     * Derives the handler, the key values, WHERE and LIMIT, and records the rows read.</span></span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    {</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>        (<span class="tok-kw">new</span> <span class="tok-id">HandlerFacts</span>())-&gt;<span class="tok-id">read</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">handler</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">values</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">where</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">limit</span>, <span class="tok-var">$derivation</span>);</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    }</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a></span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a><span class="tok-com">     * Writes the statement.</span></span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>    {</span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;HANDLER&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">handler</span>)-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;READ&#039;</span>)-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">index</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Label</span>)</span>
-<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>            -&gt;<span class="tok-id">symbol</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">comparison</span>-&gt;<span class="tok-id">value</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">list</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">values</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">where</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;WHERE&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">where</span>);</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>        }</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">limit</span>);</span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>    }</span>
-<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>}</span>
-<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>    }</span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a></span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a><span class="tok-com">     * Derives the handler, the key values, WHERE and LIMIT, and records the rows read.</span></span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    {</span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>        (<span class="tok-kw">new</span> <span class="tok-id">HandlerFacts</span>())-&gt;<span class="tok-id">read</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">handler</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">values</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">where</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">limit</span>, <span class="tok-var">$derivation</span>);</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>    }</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a><span class="tok-com">     * Writes the statement.</span></span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>    {</span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;HANDLER&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">handler</span>)-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;READ&#039;</span>)-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">index</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Label</span>)</span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>            -&gt;<span class="tok-id">symbol</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">comparison</span>-&gt;<span class="tok-id">value</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">list</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">values</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">where</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;WHERE&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">where</span>);</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        }</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">limit</span>);</span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>    }</span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>}</span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
