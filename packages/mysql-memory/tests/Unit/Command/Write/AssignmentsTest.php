@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 #[Small]
 final class AssignmentsTest extends TestCase
 {
+    public function testPositionRetainsTheQualifiedNameOfAMissingInsertColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1054);
+        $this->expectExceptionMessage("Unknown column 'missing.other.a' in 'field list'");
+
+        $session->query('INSERT t (missing.other.a) VALUE ()');
+    }
+
     public function testPositionFindsTheColumnAnAssignmentWrites(): void
     {
         $session = (new Instance())->connect();

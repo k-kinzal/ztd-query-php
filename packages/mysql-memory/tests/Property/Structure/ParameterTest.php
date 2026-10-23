@@ -27,6 +27,28 @@ use SqlSemantics\Statement\Identifier\Name;
 final class ParameterTest extends TestCase
 {
     /**
+     * Direct construction consumes bindings without imposing wire-protocol preparation restrictions.
+     */
+    public function testDirectExecutionBindsValuesWithoutRequiringPreparedProtocolSupport(): void
+    {
+        $node = new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(new Parameter());
+        $parameters = [['2024-01-01 00:00:00', Domain::string(19, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]];
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, (new Execution())->run($node, parameters: $parameters));
+    }
+
+    /**
+     * A native comparison retains the preparation checks of the selected wire protocol.
+     */
+    public function testNativeComparisonStillChecksPreparedProtocolSupport(): void
+    {
+        $node = new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(new Parameter());
+        $parameters = [['2024-01-01 00:00:00', Domain::string(19, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]];
+        $this->expectExceptionCode(1295);
+        (new Execution())->runIn((new \MySqlMemory\Instance())->connect(), $node, $parameters);
+    }
+
+    /**
      * Resolves parent result types from explicit NULL bindings instead of unbound placeholders.
      */
     public function testNullFixtureResolvesParametersInsideTypedParentExpressions(): void

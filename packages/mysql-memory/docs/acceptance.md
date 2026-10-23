@@ -1,54 +1,45 @@
-# Acceptance contract
+# Checking semantic structures and SQL execution
 
-MySQL Memory tests the adequacy of SQL Semantics by consuming its public statement
-and expression structures. The construction property concerns these values
-**before** `Operation` construction. SQL Semantics owns their types and invariants;
-it does not certify execution eligibility or own database execution.
+MySQL Memory follows the same unit testing, static analysis and package conventions
+as the repository's SQL libraries. Its additional properties have three parts:
 
-Completion requires these three checks and a green pull request on the same revision:
+1. Generate public SQL Semantics statement and scalar values from their constructor
+   types and invariants, before constructing an `Operation`.
+2. Execute those original values directly in MemoryDB with PHPUnit. Missing
+   information, contradictory structure, missing implementation, internal exceptions
+   and unexplained SQL errors are counterexamples. Explicit database and session
+   state conditions and interpreted data domains remain separate from structural failures.
+3. Generate SQL with SQL Faker and use PHP-Fuzzer to compare MemoryDB with
+   Testcontainers MySQL. The same target must replay SQL Faker's supplied grammar
+   coverage seeds and run for at least fifteen minutes from an empty corpus.
 
-1. **Generate semantic values from their public types.** The PBT generator discovers
-   statement and scalar roots from the reviewed semantic type inventories and samples
-   constructor arguments from PHP types and PHPDoc collection types. Constructor
-   invariants constrain construction. An accepted value is never discarded because
-   execution fails. Exhaustion and unsupported generator metadata fail the check.
-2. **Execute those values directly in MemoryDB.** Memory consumes the constructed
-   objects without parsing their rendered SQL. Missing information, contradictory
-   structure, missing implementation, internal exceptions and unexplained SQL errors
-   fail the check. Explicitly identified database or session state conditions are
-   recorded separately; an arbitrary SQL error is not evidence of structural validity.
-   Every public root participates in `GeneratedStructuresTest` in the unit suite; `fuzz/structures.php`
-   also supports longer, replayable random campaigns.
-3. **Compare generated SQL with MySQL.** SQL Faker supplies the SQL and owns grammar
-   coverage. Replay every supplied high-coverage seed against MemoryDB and
-   Testcontainers MySQL, then run without a specified seed for at least 900 seconds.
-   Compare results, metadata, errors and warnings under the documented comparison
-   contracts. An unexplained difference, infrastructure failure or crash fails the run.
+These are sampled properties used to find counterexamples, not proofs over every
+SQL statement or PHP value. SQL Faker owns grammar coverage and its seed selection.
+MySQL Memory adds no grammar coverage threshold or separate differential test gate.
+Native audits of generated structures and database-history campaigns are not part
+of this workflow.
 
-The supplied-seed check includes all nine shipped MySQL corpora: 5.6.51, 5.7.44,
-8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0. An earlier revision's run is
-useful evidence but does not replace verification of the final revision. MemoryDB
-does not impose its own grammar-coverage metric.
+`composer test:property` runs the construction and direct-execution property as part
+of the ordinary unit suite. Its seed and number of samples per root can be selected
+with `MYSQL_MEMORY_PBT_SEED` and `MYSQL_MEMORY_PBT_SAMPLES`; see
+[semantic structures](semantic-structures.md).
 
-Dependency checks and the retained-value schema keep source SQL and parser ASTs
-outside the semantic result and its planning/execution consumers. Runtime request
-labels remain outside semantic values. PDO connectivity and the parser → semantics
-→ plan/iterator path continue to have integration tests.
+`fuzz/fuzz_mysql.php` is the PHP-Fuzzer entry point for both supplied seeds and new
+inputs. Select a supported release with `MYSQL_VERSION`. Replay that release's
+normal, SQL-mode and diagnostic seed profiles with the matching generation settings.
+For exploration, use an empty corpus and `MYSQL_MEMORY_FUZZ_SECONDS=900`. The timer
+starts with the first input, after server initialization, and finishes only after
+an input has completed. See the [README](../README.md#how-correctness-is-checked)
+for the commands.
 
-Native comparisons and state-transition histories for directly generated structures
-remain useful diagnostic tools. They are not additional completion requirements for
-checks 1 and 2. In particular, each generated root does not need a separate native
-success witness or an exhaustive set of database histories. Version-specific behavior
-belongs to the implementation and differential checks.
+Differences in results, metadata, errors, warnings or fixture contents fail the
+property. Unstable reference observations, infrastructure failures and crashes also
+fail; they are not matching executions. Check PHP-Fuzzer's output for both crashes
+and timeouts because its process may exit successfully after reporting a finding.
+The workflow retains counterexample files and logs.
 
-Values determined by SQL session history must agree. Instance, operating-system and
-physical-storage values use explicit comparison contracts supported by observations
-from independent MySQL instances. Memory returns its own meaningful value, or an
-empty/zero value for an unavailable physical quantity; a `volatile` label alone does
-not establish agreement.
-
-These are sampled properties, not proofs over every SQL or PHP value. Keep the
-revision, seeds or duration, input counts and unresolved failures with the evidence.
-Do not remove roots or SQL Faker seeds, filter constructed values by execution
-success, or suppress unknown errors to obtain a passing run. Implementation is based
-on public SQL behavior and black-box observations, without translating MySQL code.
+Keep the revision, seed or duration, and unresolved counterexamples with each run.
+A previous revision's passing run does not validate changed code. Never remove
+roots or supplied seeds, filter constructed values by execution success, or suppress
+unknown errors to obtain a pass. Counterexamples must lead to a correction of the
+semantic model, the consumer, or an incorrectly specified property.

@@ -50,9 +50,10 @@ final class ItemLayouts
         Check::input($naming->keeps($expression) && $text !== $naming->canonical($expression), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
         $parser = $platform->parser($profile);
         try {
-            foreach ($layout->tokens as $token) {
-                $tokens = array_values(array_filter($parser->tokenize($token->text), static fn (Token $part): bool => $part->text !== ''));
-                Check::input(count($tokens) === 1 && $tokens[0]->text === $token->text, 'Each select-item spelling slot contains exactly one complete token.');
+            $tokens = array_values(array_filter($parser->tokenize($text), static fn (Token $part): bool => $part->text !== ''));
+            Check::input(count($tokens) === count($layout->tokens), 'Each select-item spelling slot contains exactly one complete token and must preserve the expression.');
+            foreach ($layout->tokens as $index => $token) {
+                Check::input($tokens[$index]->text === $token->text, 'Each select-item spelling slot contains exactly one complete token and must preserve the expression.');
             }
             $canonical = (new Lexical())->join($output->canonical());
             Check::input($this->pairs($parser->tokenize($canonical)) === $this->pairs($parser->tokenize($layout->text())), 'A select-item layout preserves contiguous negation pairs and their warnings.');

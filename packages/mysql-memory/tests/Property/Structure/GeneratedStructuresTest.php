@@ -12,6 +12,7 @@ use Fuzz\Structure\Execution;
 use Fuzz\Structure\Metadata;
 use Fuzz\Structure\Profiles;
 use Fuzz\Structure\Rejections;
+use InvalidArgumentException;
 use JsonException;
 use MySqlMemory\Error\SqlError;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -31,13 +32,24 @@ use SqlSemantics\Statement\Scalar;
 final class GeneratedStructuresTest extends TestCase
 {
     /**
-     * @return iterable<string, array{class-string, int}>
+     * @return iterable<string, array{class-string, int, string}>
      * @throws JsonException When the reviewed type inventory cannot be read
+     * @throws InvalidArgumentException When the sample count is not positive
      */
     public static function providerRoots(): iterable
     {
-        foreach ((new Catalogue())->roots() as $index => $class) {
-            yield $class => [$class, $index];
+        $seed = getenv('MYSQL_MEMORY_PBT_SEED');
+        $seed = $seed === false ? 'all-model-roots' : $seed;
+        $requested = getenv('MYSQL_MEMORY_PBT_SAMPLES');
+        $samples = $requested === false ? 1 : filter_var($requested, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($samples === false) {
+            throw new InvalidArgumentException('MYSQL_MEMORY_PBT_SAMPLES must be a positive integer.');
+        }
+        $roots = (new Catalogue())->roots();
+        foreach ($roots as $index => $class) {
+            for ($sample = 0; $sample < $samples; $sample++) {
+                yield $class . ':' . $sample => [$class, $index + $sample * count($roots), $seed];
+            }
         }
     }
 
@@ -47,10 +59,10 @@ final class GeneratedStructuresTest extends TestCase
      * @throws ReflectionException When a public constructor cannot be reflected
      */
     #[DataProvider('providerRoots')]
-    public function testPublicStructureHasNoUnexplainedExecutionFailure(string $class, int $index): void
+    public function testPublicStructureHasNoUnexplainedExecutionFailure(string $class, int $index, string $seed): void
     {
         $catalogue = new Catalogue();
-        $choices = new Choices('all-model-roots:' . $index);
+        $choices = new Choices($seed . ':' . $index);
         $choices->one($catalogue->roots());
         $node = (new Construction($choices, $catalogue, new Metadata()))->object($class, 6);
         self::assertTrue($node instanceof Statement || $node instanceof Scalar);
@@ -59,7 +71,7 @@ final class GeneratedStructuresTest extends TestCase
         try {
             (new Execution())->run($node, substr($profile->grammar->value, 6), (new Bindings())->nulls($node), $profiles->mode($profile));
         } catch (SqlError $error) {
-            self::assertNotNull((new Rejections())->reason($error, $node), $class . ': ' . $error->getCode() . ' ' . $error->getMessage());
+            self::assertNotNull((new Rejections())->reason($error, $node), $class . ' seed=' . $seed . ' index=' . $index . ': ' . $error->getCode() . ' ' . $error->getMessage());
         }
     }
 }

@@ -29,8 +29,6 @@ The releases below have been exercised against real servers. This is evidence fo
 | MySQL 5.6 | `5.6.51` | Yes |
 | MySQL 8.1, 8.2, 8.3, 9.0 | `8.1.0`, `8.2.0`, `8.3.0`, `9.0.1` | No |
 
-Historical campaign percentages are not a syntax coverage measure. Earlier campaigns did not compare subsequent result sets or insert ids and included unstable reference runs in their denominator. Use the current campaign report for separate compared, unstable and generation-failure counts.
-
 The `version` argument names the release to emulate; it defaults to `8.4.7`. It must be one of the MySQL grammar releases of SQL Parser: `5.6.51`, `5.7.44`, `8.0.44`, `8.1.0`, `8.2.0`, `8.3.0`, `8.4.7`, `9.0.1` or `9.1.0`. Any other value fails at the first statement with an `InvalidArgumentException`. The release decides the grammar, the keywords, the system variables and their defaults (for example the default `sql_mode`), and what `VERSION()` reports.
 
 ## Installation
@@ -268,45 +266,41 @@ The emulator is a test double. These differences are known:
 
 Rules are written from the MySQL reference manual and black-box observations of live servers. Differential fuzzing generates statements with SQL Faker, runs them on a real MySQL server and mysql-memory from the same fixture tables, and compares the metadata PDO exposes, every result set, affected rows, insert ids, errors, warnings and table contents. The fixture pins `timestamp` so that NOW() and related functions have the same clock on both servers. Both servers disable automatic statistics recalculation and execute `ANALYZE TABLE` synchronously after inserting the fixture rows, then execute `FLUSH TABLES`. This makes the initial statistics and table-handle cache independent of background recalculation and earlier inputs; it does not filter the tested statement's observations. Stateful regressions also exercise populated caches, named flushes, HANDLER cursors and locks. SHOW WARNINGS uses the text protocol even when the tested statement uses native prepares, so preparing the inspection cannot replace the diagnostics being inspected.
 
-The real server runs each input twice. Inputs whose reference observations differ after the bounded comparison contracts described below are counted separately and skipped; they are not counted as matches. The harness does not compare OK-packet information text or metadata PDO does not expose. It uses a textual ORDER BY check to decide whether to compare row order, including queries with LIMIT; nested ORDER BY clauses and unordered ties can still produce misleading findings. Grammar coverage and seed selection belong to SQL Faker.
+The real server runs each input twice. Inputs whose reference observations differ after the bounded comparison contracts described below fail the property; they are not counted as matches. The harness does not compare OK-packet information text or metadata PDO does not expose. It uses a textual ORDER BY check to decide whether to compare row order, including queries with LIMIT; nested ORDER BY clauses and unordered ties can still produce misleading findings. Grammar coverage and seed selection belong to SQL Faker.
 
 `composer test:integration` includes differential regressions against Testcontainers, covering text and prepared execution with and without CLIENT_FOUND_ROWS, insert ids, multiple result sets and resolution errors. Set `MYSQL_VERSION` to repeat them on another release.
-The [direct semantic structure campaign](docs/semantic-structures.md) additionally constructs objects from SQL Semantics' types and constructor invariants and executes them in memory. It exposes defects hidden by generating every structure through the SQL parser. This campaign still reports counterexamples; its bounded regression suite does not establish the property for the whole model.
+The [direct semantic property](docs/semantic-structures.md) constructs objects from SQL Semantics' public types and constructor invariants and executes the original values in memory using PHPUnit. `MYSQL_MEMORY_PBT_SEED` and `MYSQL_MEMORY_PBT_SAMPLES` control repeatable samples. This searches for defects hidden by generating every structure through the SQL parser.
 
-The [acceptance contract](docs/acceptance.md) requires public-type generation, direct execution of those values in the unit suite, SQL Faker differential fuzzing, and a green pull request. Database-history audits are optional diagnostics. The structure runner's `compare` mode can also compare generated objects with native MySQL; it is separate from the unit property.
+The [acceptance contract](docs/acceptance.md) combines that property with SQL Faker differential fuzzing and the ordinary package checks. Passing a finite run is evidence about its inputs, not a proof of the property.
 
 The fuzzer is part of the repository, not of the installed package. From `packages/mysql-memory` in a checkout:
 
 ```bash
-composer fuzz                                  # each target for 100 inputs
-composer fuzz:expression                       # expressions over the fixture tables, until stopped
-composer fuzz:query                            # queries over the fixture tables
-composer fuzz:statement                        # complete statements, with no excluded forms
-composer fuzz:seeds                            # the complete canonical sql-faker seed corpus
+composer test:property
+composer fuzz                         # replay the local corpus and run 100 mutations
+composer fuzz:mysql                   # continue until stopped
+MYSQL_VERSION=8.0.44 composer fuzz:mysql
 
-php fuzz/campaign.php select 500 7             # MODE COUNT [SEED]: differences grouped by kind
-MYSQL_VERSION=8.0.44 php fuzz/campaign.php statement 1000
+# Replay SQL Faker's supplied default-profile seeds with the same target.
+corpus=$(mktemp -d)
+cp ../sql-faker/seeds/mysql/mysql-8.4.7/*.txt "$corpus/"
+php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql.php \
+    "$corpus/" --max-runs=0 --timeout=60
+
+# Start without seeds and search for at least 15 minutes.
+MYSQL_MEMORY_FUZZ_SECONDS=900 php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz \
+    fuzz/fuzz_mysql.php --len-control-factor=1 --timeout=60
 ```
 
-The campaign modes are `expression`, `query`, `select`, `write` and `statement`. Each kind of difference is printed with its count and its shortest statement. Exit code 0 means all compared inputs matched, 1 means a difference was found, and 2 means invalid arguments, a generation failure, or no comparable input. `MYSQL_MEMORY_REPORT=/path/report.json` also saves the seed, counts and every finding, with the exact SQL bytes and generation input in hexadecimal. The parent directory must already exist.
+PHP-Fuzzer recursively loads corpus directories. For the default-profile replay, copy only that directory's `*.txt` files into an empty directory and pass it as the corpus; do not include its profile subdirectories. Replay `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/` separately with `SQLFAKER_SQL_MODE` set to the directory name. Replay `diagnostics/` with `SQLFAKER_DIAGNOSTICS=1`; it uses SQL Faker's original grammar with structural rewrites disabled. The workflow implements these four invocations. They use SQL Faker's root and byte decoding without excluding statement forms. Error-producing statements compare SQLSTATE, error code, message and warnings too.
 
-The seed replay uses the same root and byte decoding as SQL Faker's `bin/seeds.php check`, with no excluded statement forms. Isolated observations also reset enabled binary logs after fixture setup, using the same SQL on both servers, so each input starts with one empty log. Generated statements retain their effects on that log; event rows, file sizes and positions are not normalized. This establishes only the initial-log behavior: logging DML and administrative statements such as `FLUSH STATUS` remains unimplemented, and the harness still detects the resulting size differences in stateful regressions. SHUTDOWN and RESTART each run in a separate Testcontainers database and emulator. Their completion, disconnection and reconnection behavior is checked; a successful restart must preserve the fixture rows and reset aborted-client statistics. Successful lifecycle statements do not inspect warnings after the connection starts closing.
+Omitting the corpus directory starts PHP-Fuzzer with a new empty temporary corpus. The duration starts when the first input is evaluated, after fixture startup. A completion message records the elapsed time and matching inputs. A successful run must also contain no crash, timeout, instrumentation failure or unstable reference observation; PHP-Fuzzer can continue after finding a counterexample.
 
-`php fuzz/seeds.php [SEED_DIRECTORY] [REPORT_PREFIX]` replays every supplied SQL Faker seed and writes per-input JSON Lines and an execution summary (by default under `build/fuzz/seeds-mysql-VERSION`). Each record retains the seed bytes, generated SQL, execution SQL, profile and comparison outcome. SQL Faker owns grammar coverage and the selection of its high-coverage seed corpus. mysql-memory trusts that corpus; it does not measure grammar coverage or require branches to appear in a second parse of generated SQL.
+Pull requests changing this package or its SQL dependencies replay the supplied seed profiles and run an unseeded 15-minute search in GitHub Actions. Dispatch **Fuzz (mysql-memory)** with `mysql_version` to select another supported release. Logs and counterexamples are uploaded even when a run fails.
 
-Top-level inputs use the fixture's default lexical SQL modes. Inputs under `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/` use the supplied generation mode, which the replay adds to both sessions before executing the SQL. Inputs under `diagnostics/` use SQL Faker's original grammar with structural rewrites disabled. They compare error-producing statements as supplied, including SQLSTATE, error code, message and warnings. No input is removed because of its grammar derivation or parser path.
+Isolated observations reset enabled binary logs after fixture setup using the same SQL on both servers, so each input starts with one empty log. Generated statements retain their effects on that log; event rows, file sizes and positions are not normalized. `SHUTDOWN` and `RESTART` use disposable servers so their connection and lifecycle effects can be compared without stopping the shared fixture.
 
-The acceptance checks are a crash-free replay of SQL Faker's supplied seed corpus and a crash-free unseeded fuzz campaign of at least 15 minutes. Grammar reachability is SQL Faker's responsibility. The seed runner currently returns failure for differing or volatile observations, infrastructure failures and an empty corpus; execution exceptions are described below. Removing grammar measurement does not make unresolved execution differences pass.
-
-Limit concurrent native campaigns to the Docker host's capacity. In particular,
-an InnoDB startup log containing `io_setup() failed with EAGAIN` and `Cannot
-initialize AIO sub-system` indicates that the fixture could not acquire its
-Linux AIO resources. Reduce overlapping campaigns, retain the failed run, and
-repeat the complete affected gate. A startup failure or a reference server that
-cannot restart is not a successful comparison and does not justify excluding
-the lifecycle input.
-
-Pull requests changing this package or its SQL dependencies replay the complete supplied corpus in GitHub Actions. To request another run, dispatch **Fuzz (mysql-memory)** with `canonical_seeds=true` and the desired `mysql_version`. That mode runs only the seed replay and uploads the per-input observations, execution summary and console log, including when replay fails.
+Limit concurrent native runs to the Docker host's capacity. Fixture startup and restart failures fail the run; they do not justify excluding lifecycle inputs.
 
 Isolated observations on MySQL 8.0 and later reset historical mutex waits with `SET GLOBAL innodb_monitor_reset='latch'` after fixture setup, then restore the original global selector. Background engine activity can produce new waits immediately after a reset. Plain `SHOW ENGINE ALL MUTEX` and `SHOW ENGINE INNODB MUTEX` therefore use the explicit `physical-innodb-mutex-empty-memory-report` contract: native rows must name InnoDB latches with recognized nonnegative counters, and memory must return an empty report. Metadata, diagnostics and SQL-visible selector values remain exact. The same contract applies to directly constructed semantic reports. Other statements and compound requests do not acquire this exception.
 
@@ -327,7 +321,7 @@ Bounded comparison contracts handle measured nondeterministic fields:
 
 - `status-history-deltas-measured-wire-and-empty-physical-values` applies only to an isolated, complete `SHOW [GLOBAL|SESSION|LOCAL] STATUS`. Session command counts and Questions remain exact; global command counts, Queries and connection counters compare their increments from independent preceding snapshots. Bytes sent must equal mysqlnd's independently measured reply bytes, and bytes received must equal the query packet sizes. Uptime increments are bounded by elapsed time, and the maximum-connection timestamp must remain unchanged from its own snapshot. Engine, cache, optimizer, file, instrumentation and TLS resource quantities have no physical counterpart in memory: their numeric values must be zero and unavailable text must be empty. Configuration descriptors and unclassified variables remain exact. Missing, duplicate or malformed rows and failed checks preserve the complete raw observation. Column metadata, conditions and fixture contents remain exact. Independent native servers and memory run the same SQL history on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1 in the contract test. See the [MySQL status variable definitions](https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html) and [mysqlnd client statistics](https://www.php.net/manual/en/mysqlnd.stats.php).
 
-Applied contracts appear in the input report's `contracts` list. Other unstable reference observations remain failures of the canonical seed gate.
+Applied contracts are retained in the comparison result. Other unstable reference observations fail the property.
 
 | Variable | Meaning |
 |----------|---------|
@@ -336,12 +330,11 @@ Applied contracts appear in the input report's `contracts` list. Other unstable 
 | `MYSQL_MEMORY_NATIVE_USER`, `MYSQL_MEMORY_NATIVE_PASSWORD` | The account of that server, `root`/`root` by default |
 | `MYSQL_MEMORY_CONTAINER_PORT` | Optional fixed host port for disposable Testcontainers; use only for serial runs, or assign a distinct port to each concurrent worker. An explicitly selected lifecycle or structure port takes precedence. |
 | `MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT` | Optional host port (1–65535) for the separate disposable SHUTDOWN/RESTART container; useful when Docker's automatic port selection includes unavailable ports. Concurrent campaigns must use different ports. |
+| `MYSQL_MEMORY_FUZZ_SECONDS` | Optional positive duration in seconds, measured from the first input |
+| `SQLFAKER_SQL_MODE` | SQL mode of a supplied seed profile, empty by default |
+| `SQLFAKER_DIAGNOSTICS` | `1` selects the original grammar used by diagnostic seeds |
 | `MYSQL_MEMORY_FOUND_ROWS` | `1` requests CLIENT_FOUND_ROWS on both connections |
-| `MYSQL_MEMORY_REPORT` | Optional JSON report path for a campaign |
-| `MYSQL_MEMORY_EMULATE` | `0` makes the campaign use server-side prepared statements instead of PDO's emulated ones |
-| `MYSQL_MEMORY_BUDGET` | The expansion budget of the generated statements, 96 by default |
-| `MYSQL_MEMORY_VERBOSE` | `1` makes the campaign print every differing statement |
-| `MYSQL_MEMORY_DIFF_BYTES` | How many bytes of each difference the campaign prints, 900 by default |
+| `MYSQL_MEMORY_EMULATE` | `0` uses server-side prepared statements instead of PDO's emulated ones |
 
 mysql-memory starts with the global variables of the MySQL server it is compared with, so both report the same host name, paths and identities.
 

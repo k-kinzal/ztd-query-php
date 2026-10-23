@@ -81,7 +81,7 @@ final class ContinuingRefusal
             $operators = $warnings->before($tokens, $statement, $end, $parser);
         }
         $notices = (new ModernWarnings())->merge($notices, $operators, $tokens);
-        $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session)];
+        $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session), ...(new Entry\Query\Notices())->completed($failure, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $contextual = true;
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($parser->parse($statement), $session->semantics()->profile());

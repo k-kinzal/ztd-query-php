@@ -41,7 +41,7 @@ final class Execution
             $session->variables->session['sql_mode'] = $mode;
         }
 
-        return $this->runIn($session, $node, $parameters);
+        return $this->runIn($session, $node, $parameters, protocol: false);
     }
 
     /**
@@ -49,15 +49,16 @@ final class Execution
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to parameter occurrences
      * @param bool $prepared Whether to prepare the structure even with no outer parameters
+     * @param bool $protocol Whether to include text or prepared protocol preparation in a native comparison
      * @throws \MySqlMemory\Error\SqlError When execution rejects the structure
      */
-    public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = [], bool $prepared = false): Reply
+    public function runIn(Session $session, Statement|Scalar|\SqlSemantics\Statement\Query $node, array $parameters = [], bool $prepared = false, bool $protocol = true): Reply
     {
         $failure = $session->gone();
         if ($failure !== null) {
             throw $failure;
         }
-        $prepared = $prepared || $parameters !== [];
+        $prepared = $protocol && ($prepared || $parameters !== []);
         if ($session->running->using === []) {
             $session->activity->begin();
             \MySqlMemory\Session\State\StatementCounters::received($session, !$prepared);
@@ -67,7 +68,9 @@ final class Execution
         $statement = (new Embedding())->statement($node);
         $operation = $this->operation($session, $statement, $parameters);
 
-        return $this->execute($session, $operation, $parameters, $prepared);
+        return $protocol
+            ? $this->execute($session, $operation, $parameters, $prepared)
+            : (new StatementExecution($session))->perform($operation, (new Dispatcher())->command($operation->statement), $parameters);
     }
 
     /**

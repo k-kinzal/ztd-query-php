@@ -70,15 +70,16 @@ final class Differential
     }
 
     /**
-     * Compares one statement, throwing when the observations differ.
+     * Compares one statement, throwing when observations differ or the reference is unstable.
      *
-     * @throws Error When mysql-memory observes something else than the MySQL server
+     * @throws Error When either comparison differs
      */
     public function verify(string $sql, string $input = ''): void
     {
-        $difference = $this->difference($sql);
-        if ($difference !== null) {
-            throw new Error("mysql-memory differs from MySQL.\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n" . $difference);
+        $comparison = $this->compare($sql);
+        if ($comparison->difference !== null || $comparison->volatile) {
+            $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
+            throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference));
         }
     }
 

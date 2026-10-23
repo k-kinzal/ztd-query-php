@@ -22,6 +22,16 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class ItemLayoutsTest extends TestCase
 {
+    public function testCheckUsesTheLexicalContextOfAUserVariableName(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('..'));
+        $layout = new Layout([new Spelled('', '@'), new Spelled('', '..')]);
+        $item = new SelectExpression($expression, layout: $layout);
+
+        self::assertSame($layout, $item->layout);
+        self::assertSame($expression, $item->expression);
+    }
+
     public function testPairsFindsNonOverlappingPairsInEachContiguousRun(): void
     {
         $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');

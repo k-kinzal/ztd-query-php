@@ -21,6 +21,19 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 final class RejectionsTest extends TestCase
 {
     /**
+     * PREPARE interprets both quoted SQL and session values at execution time; neither is an outer syntax failure.
+     */
+    public function testPreparedSourceErrorsDescribeTheExecutedPayload(): void
+    {
+        $policy = new Rejections();
+        $name = new \SqlSemantics\Statement\Identifier\Name('statement');
+        $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('source'));
+        $error = new SqlError(StatementError::ParseError, 'Invalid prepared source');
+        self::assertSame('SQL parsed when PREPARE executes', $policy->reason($error, new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare($name, $variable)));
+        self::assertSame('SQL parsed when PREPARE executes', $policy->reason($error, new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare($name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('3'))));
+    }
+
+    /**
      * State conditions pass independently of the SQLSTATE shared with structural failures.
      */
     public function testOnlyAnExplicitStateDependencyExplainsARejection(): void

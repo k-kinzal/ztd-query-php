@@ -35,7 +35,7 @@ final class Lifecycle
      * @throws JsonException When an observation cannot be serialized
      * @throws RuntimeException When the native fixture cannot serve SQL within its startup budget
      */
-    public function compare(string $sql, string $version): Comparison
+    public function compare(string $sql, string $version, string $mode = ''): Comparison
     {
         $definition = new DisposableMySql($version);
         $port = filter_var(getenv('MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
@@ -53,9 +53,9 @@ final class Lifecycle
             }
             $server = Server::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version), resourceProcessors: (new Servers())->resourceProcessors($native, $version), namedTimeZones: (new Servers())->namedTimeZones($native));
             try {
-                $expected = $this->observe($native, $dsn, $endpoint->username, $endpoint->password, $sql);
+                $expected = $this->observe($native, $dsn, $endpoint->username, $endpoint->password, $sql, $mode);
                 $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-                $actual = $this->observe($memory, $server->dsn(), 'root', '', $sql);
+                $actual = $this->observe($memory, $server->dsn(), 'root', '', $sql, $mode);
             } finally {
                 $server->stop();
             }
@@ -71,12 +71,15 @@ final class Lifecycle
      *
      * @return array<string, mixed>
      */
-    public function observe(PDO $pdo, string $dsn, string $user, string $password, string $sql): array
+    public function observe(PDO $pdo, string $dsn, string $user, string $password, string $sql, string $mode = ''): array
     {
         $pdo->exec('CREATE DATABASE fz');
         $pdo->exec('USE fz');
         foreach ((new Fixture())->statements() as $statement) {
             (new Fixture())->execute($pdo, $statement);
+        }
+        if ($mode !== '') {
+            $pdo->exec("SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')');
         }
         $observer = new Observer();
         try {
