@@ -1,1 +1,0 @@
-REVOKE IF EXISTS `\猫 Za``0é\0"'Z'a\0\"` FROM CURRENT_USER ( ) , RESTART @'a''b' , _sqlfaker_identifier

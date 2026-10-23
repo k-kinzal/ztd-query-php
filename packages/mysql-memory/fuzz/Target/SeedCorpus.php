@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Faker\Factory;
-use Generator;
 use RuntimeException;
-use SqlFaker\Generation\Choice\BytePlanCompiler;
-use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\MySql\MySqlProvider;
 
 /**
- * Replays the supplied sql-faker corpus with exactly the constraints used by its seeds checker.
+ * Builds the SQL Faker generator and root used by a supplied seed profile.
  *
- * SQL Faker owns grammar coverage and seed selection. This target trusts that corpus and
- * records only execution outcomes, without measuring or requiring grammar coverage.
+ * SQL Faker owns grammar coverage and seed selection. PHP-Fuzzer supplies the inputs;
+ * this configuration does not implement another replay or reporting path.
  */
 final class SeedCorpus
 {
@@ -29,11 +26,6 @@ final class SeedCorpus
      * The grammar rule the canonical corpus starts from.
      */
     public readonly string $root;
-
-    /**
-     * @var array<string, int> Counts by comparison outcome
-     */
-    public array $counts = ['matched' => 0, 'different' => 0, 'volatile' => 0];
 
     /**
      * Creates the same generator as sql-faker's bin/seeds.php check command for the initial profile.
@@ -67,79 +59,4 @@ final class SeedCorpus
         return new SqlGenerator($grammar, $faker, $context->lexicalGrammar, null, $context->startSymbol);
     }
 
-    /**
-     * Generates every seed in filename order, without changing its bytes or generation plan.
-     *
-     * @return Generator<int, Seed>
-     * @throws RuntimeException When the corpus is missing or an input cannot be read
-     */
-    public function inputs(string $directory): Generator
-    {
-        yield from $this->profileInputs($directory);
-        $profiles = glob($directory . '/modes/*', GLOB_ONLYDIR);
-        if ($profiles === false) {
-            throw new RuntimeException('Cannot read SQL mode profiles in ' . $directory);
-        }
-        foreach ($profiles as $profile) {
-            yield from $this->profileInputs($profile, basename($profile));
-        }
-        if (is_dir($directory . '/diagnostics')) {
-            yield from $this->profileInputs($directory . '/diagnostics', diagnostics: true);
-        }
-    }
-
-    /**
-     * Replays a profile directory or individual seed with the explicitly supplied lexical mode.
-     *
-     * @return Generator<int, Seed>
-     * @throws RuntimeException When the profile or an input is unavailable
-     */
-    public function profileInputs(string $directory, string $mode = '', bool $diagnostics = false): Generator
-    {
-        if (!in_array($mode, ['', 'HIGH_NOT_PRECEDENCE', 'PIPES_AS_CONCAT'], true)) {
-            throw new RuntimeException('Unsupported corpus SQL mode: ' . $mode);
-        }
-        $files = is_file($directory) ? [$directory] : glob($directory . '/*.txt');
-        if ($files === false || $files === []) {
-            throw new RuntimeException('No sql-faker seeds found in ' . $directory);
-        }
-        sort($files);
-        $provider = $mode === $this->mode && $diagnostics === $this->diagnostics ? $this->provider : $this->providerFor($mode, $diagnostics);
-        $planner = $provider->planner();
-        $constraints = GenerationPlan::fromRule($this->root)->requiringNonEmpty();
-        $compiler = new BytePlanCompiler();
-        foreach ($files as $file) {
-            $input = file_get_contents($file);
-            if ($input === false) {
-                throw new RuntimeException('Cannot read seed ' . $file);
-            }
-            $sql = $provider->generate($compiler->compile($input, $planner, $constraints));
-            $name = ($diagnostics ? 'diagnostics/' : ($mode === '' ? '' : 'modes/' . $mode . '/')) . basename($file);
-            yield new Seed($name, $input, $sql, $mode, !$diagnostics);
-        }
-    }
-
-    /**
-     * Records a comparison and answers its status for the per-seed report.
-     */
-    public function record(Comparison $comparison): string
-    {
-        $status = $comparison->volatile ? 'volatile' : ($comparison->difference === null ? 'matched' : 'different');
-        $this->counts[$status]++;
-
-        return $status;
-    }
-
-    /**
-     * Reports execution counts for the supplied inputs.
-     *
-     * @return array{grammar: string, root: string, inputs: int, counts: array<string, int>}
-     */
-    public function summary(): array
-    {
-        return [
-            'grammar' => $this->grammar, 'root' => $this->root, 'counts' => $this->counts,
-            'inputs' => array_sum($this->counts),
-        ];
-    }
 }

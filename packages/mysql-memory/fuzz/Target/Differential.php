@@ -291,7 +291,6 @@ final class Differential
             }
             $this->baseline?->logs($pdo);
         } catch (PDOException $failure) {
-            Servers::discard($this);
             throw new RuntimeException("Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\nFirst native observation: " . ($this->nativeObservation ?? 'null') . "\n", 0, $failure);
         }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Account;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -17,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Result\Observation;
 
 /**
  * Keeps a password request unchanged across absent accounts and both native legacy plugins.
@@ -43,7 +43,7 @@ final class PasswordNoticesTest extends TestCase
     public function testUnchangedPasswordFollowsTheRecipientPlugin(SetPassword $statement): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $memory = new Memory();
+        $memory = new Observation();
         $session->text = 'unrelated invalid input';
         $missing = $memory->observe($session, $statement);
         $session->query('CREATE USER u@localhost IDENTIFIED WITH mysql_old_password');

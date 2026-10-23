@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Program;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -25,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * Directly constructed charset conversions preserve definition and load notices.
@@ -67,7 +67,7 @@ final class CharsetLoadTest extends TestCase
         $create = new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new IfStatement([new ConditionalBranch(new UserVariable(new Name('run')), [$body])]));
         $call = new ProcedureCall(new QualifiedName(new Name('p')));
         $session = (new Instance($release, [], ['d']))->connect(database: 'd');
-        $memory = new Memory();
+        $memory = new Observation();
         $session->text = 'unrelated invalid input';
         $defined = $memory->observe($session, $create);
         self::assertArrayNotHasKey('error', $defined);

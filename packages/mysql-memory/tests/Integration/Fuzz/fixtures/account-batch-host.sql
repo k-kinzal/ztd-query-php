@@ -1,4 +1,0 @@
-CREATE USER _sqlfaker_identifier @TABLE_CHECKSUM IDENTIFIED WITH 'text' INITIAL AUTHENTICATION IDENTIFIED WITH _sqlfaker_identifier AS '4猫''B_\\O*9P AB8T$E&th>
-wKFX.iAmFJAU;!erVt<nm
-*]XT\\Gp73B8tU# #kéR`c3qC$T~%A''Nr$e}(F"/z|k&Shc-,, *at"|_|%B{' , _sfOr_sSgpz7AzE @'|~/ nm''e|/ZC(Qmvi`né] W`1y_KJkC|[$=\\y3jV$Af<' IDENTIFIED BY 'f;Rn.rq3&i2`>oYMC%un3seV1?éM^YR"dLUlgW&8]_`	wrS=
-`>h>hzM`bNz&89]^y<.ZZF/L}:"6dn0N4dy[' REQUIRE X509 WITH MAX_QUERIES_PER_HOUR .6147340 MAX_UPDATES_PER_HOUR 0000000013406196669485576039 MAX_USER_CONNECTIONS .844702668473 COMMENT 'text'

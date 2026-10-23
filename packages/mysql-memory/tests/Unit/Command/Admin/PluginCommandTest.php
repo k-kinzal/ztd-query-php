@@ -147,7 +147,7 @@ final class PluginCommandTest extends TestCase
         $session = (new Instance('5.6.51'))->connect();
         $node = new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin(new \SqlSemantics\Statement\Identifier\Name('mysql_old_password'));
         $session->text = 'unrelated invalid input';
-        $result = (new \Fuzz\Structure\Audit\Memory())->observe($session, $node);
+        $result = (new \Tests\Result\Observation())->observe($session, $node);
 
         self::assertSame([1305, '42000', 'PLUGIN mysql_old_password does not exist'], $result['error'] ?? null);
         self::assertSame([['Warning', '1619', 'Built-in plugins cannot be deleted'], ['Error', '1305', 'PLUGIN mysql_old_password does not exist']], $result['warnings']);

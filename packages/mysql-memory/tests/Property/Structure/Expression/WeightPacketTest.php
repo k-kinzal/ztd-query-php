@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Expression;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -17,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Statement\Scalar;
+use Tests\Result\Observation;
 
 /**
  * Large constructor lengths must remain bounded by session state during execution.
@@ -56,7 +56,7 @@ final class WeightPacketTest extends TestCase
     {
         $session = (new Instance($release, globals: ['max_allowed_packet' => 4096, 'character_set_connection' => 'utf8mb4', 'collation_connection' => 'utf8mb4_bin']))->connect();
         $session->text = 'unrelated invalid input';
-        $outcome = (new Memory())->observe($session, $node);
+        $outcome = (new Observation())->observe($session, $node);
 
         self::assertArrayNotHasKey('error', $outcome);
         $rows = $outcome['results'][0]['rows'];

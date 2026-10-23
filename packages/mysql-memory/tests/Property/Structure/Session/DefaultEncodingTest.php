@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Session;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -16,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Result\Observation;
 
 /**
  * The unchanged DEFAULT structure follows the global client encoding through
@@ -53,7 +53,7 @@ final class DefaultEncodingTest extends TestCase
         ]);
         $statement = new SetVariables([new SetNames(new CharsetName(null), new CollationName(new Name($collation)))]);
         $session = (new Instance($release))->connect();
-        $memory = new Memory();
+        $memory = new Observation();
         foreach ([$charset, $other, $charset] as $phase => $value) {
             $session->query('SET GLOBAL character_set_server=' . $other . ', GLOBAL character_set_client=' . $value);
             $session->text = 'unrelated invalid input';

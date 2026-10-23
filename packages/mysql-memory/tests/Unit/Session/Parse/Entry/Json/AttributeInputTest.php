@@ -41,7 +41,7 @@ final class AttributeInputTest extends TestCase
         $session->query('CREATE DATABASE placement');
         $session->query('USE placement');
         $session->text = 'unrelated invalid input';
-        $result = (new \Fuzz\Structure\Audit\Memory())->observe($session, $statement);
+        $result = (new \Tests\Result\Observation())->observe($session, $statement);
         self::assertArrayNotHasKey('error', $result);
         self::assertSame('unrelated invalid input', $session->text);
     }

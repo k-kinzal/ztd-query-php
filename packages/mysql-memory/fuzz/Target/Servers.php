@@ -23,36 +23,6 @@ use Testcontainers\Testcontainers;
 final class Servers
 {
     /**
-     * @var array{Differential, string, Server}|null The pair kept alive for regression cases in this process
-     */
-    private static ?array $shared = null;
-
-    /**
-     * Answers one pair for regression cases in the current process, retaining the emulator until process shutdown.
-     *
-     * @return array{Differential, string, Server}
-     */
-    public static function shared(): array
-    {
-        return self::$shared ??= (new self())->start();
-    }
-
-    /**
-     * Releases a failed shared pair so the next independent test initializes a new pair.
-     * The failed input still raises an error; it is never retried or counted as a match.
-     * An owned reference is stopped before reuse can observe a container still exiting after a crash.
-     * External reference servers have no owned handle and remain under their caller's control.
-     */
-    public static function discard(Differential $target): void
-    {
-        if (self::$shared !== null && self::$shared[0] === $target) {
-            self::$shared[2]->stop();
-            $target->reference?->stop();
-            self::$shared = null;
-        }
-    }
-
-    /**
      * The account the differential target repairs the servers through.
      */
     public const GUARD = 'memory_guard';

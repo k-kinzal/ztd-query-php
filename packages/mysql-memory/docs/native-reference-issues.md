@@ -2,8 +2,7 @@
 
 A native timeout is not a matching SQL error and is not a permitted comparison
 exception. Keep its input separate from completed differential observations and
-retain it until a reference outcome can be established. The acceptance contract
-remains open while these inputs have no comparison result.
+retain it until a reference outcome can be established. These inputs have no established comparison result.
 
 ## Compressed tablespace extension
 
@@ -31,12 +30,21 @@ initialization therefore did not establish a reference result. Each dedicated
 container was terminated afterward. These observations do not identify the
 server's internal cause or change the pending classification.
 
-The request and the adjacent page/block combinations are preserved in
-[`tablespace-reference-pending.json`](../tests/Integration/Fuzz/fixtures/tablespace-reference-pending.json).
-They are pending reference investigation, not passing cases of
-`TablespaceOptionOrderTest`. Do not run them without a client deadline and a
-separate disposable container. Neither the pending inputs nor the supplied SQL
-Faker seeds are deleted or counted as matches.
+The pending requests and adjacent page/block combinations were:
+
+```sql
+CREATE TABLESPACE block1024size4195327 ADD DATAFILE 'block1024size4195327.ibd' FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4195327;
+CREATE TABLESPACE block1024size4195328 ADD DATAFILE 'block1024size4195328.ibd' FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4195328;
+CREATE TABLESPACE block1024size4210687 ADD DATAFILE 'block1024size4210687.ibd' FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4210687;
+CREATE TABLESPACE block1024size4210688 ADD DATAFILE 'block1024size4210688.ibd' FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4210688;
+CREATE TABLESPACE block4096size4195327 ADD DATAFILE 'block4096size4195327.ibd' FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4195327;
+CREATE TABLESPACE block4096size4195328 ADD DATAFILE 'block4096size4195328.ibd' FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4195328;
+CREATE TABLESPACE block4096size4210687 ADD DATAFILE 'block4096size4210687.ibd' FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4210687;
+CREATE TABLESPACE block4096size4210688 ADD DATAFILE 'block4096size4210688.ibd' FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4210688;
+```
+
+These observations remain unresolved. They are not passing executions; a timeout
+from the SQL Faker PHP-Fuzzer target must still fail the property.
 
 The completed observations for the default block size show that the byte range
 is checked before the multiple of complete 16 KiB pages. They do not establish

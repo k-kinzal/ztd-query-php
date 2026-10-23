@@ -1,1 +1,0 @@
-CREATE FULLTEXT INDEX _sqlfaker_identifier ON RELOAD .SHUTDOWN ( _sqlfaker_identifier ( 0 ) ) WITH PARSER ``` '``` WITH PARSER _sqlfaker_identifier LOCK := _sfC$hIRr

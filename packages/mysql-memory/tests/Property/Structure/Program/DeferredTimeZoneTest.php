@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Program;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -22,10 +21,10 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * The same stored conversion structure can be skipped, reached and skipped again.
- * Native integration histories establish the corresponding SQL conditions.
  */
 #[CoversNothing]
 #[Medium]
@@ -79,7 +78,7 @@ final class DeferredTimeZoneTest extends TestCase
         $call = new ProcedureCall(new QualifiedName(new Name('p')));
         $session = (new Instance($release, [], ['d']))->connect(database: 'd');
         $session->text = 'unrelated invalid input';
-        $memory = new Memory();
+        $memory = new Observation();
         self::assertArrayNotHasKey('error', $memory->observe($session, $create));
         $code = $form === 'zone' ? 1298 : 3998;
         $message = $form === 'zone' ? "Unknown or incorrect time zone: '" . $zone . "'" : 'Cannot cast value to TIMESTAMP WITH TIME ZONE.';

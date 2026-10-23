@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Program;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -25,10 +24,10 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * The same stored KILL structure can be skipped, reached and skipped again.
- * Native integration histories establish the corresponding SQL conditions.
  */
 #[CoversNothing]
 #[Medium]
@@ -62,7 +61,7 @@ final class DeferredKillTest extends TestCase
         $call = new ProcedureCall(new QualifiedName(new Name('p')));
         $session = (new Instance($release, [], ['d']))->connect(database: 'd');
         $session->text = 'unrelated invalid input';
-        $memory = new Memory();
+        $memory = new Observation();
         self::assertArrayNotHasKey('error', $memory->observe($session, $create));
         $conditions = [['Error', '1241', 'Operand should contain 1 column(s)'], ['Error', '1204', 'You may only use constant expressions with SET']];
         foreach ([0, 1, 0] as $step => $run) {

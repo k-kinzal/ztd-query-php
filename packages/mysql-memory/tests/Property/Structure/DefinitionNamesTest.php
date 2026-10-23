@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * Keeps definition-name structures unchanged while database and populated-table states change.
@@ -50,7 +50,7 @@ final class DefinitionNamesTest extends TestCase
     public function testTheSameQualifiedDefinitionFollowsTheCurrentDatabase(string $release, AlterTable $statement): void
     {
         $session = (new Instance($release))->connect();
-        $memory = new Memory();
+        $memory = new Observation();
         $session->query('CREATE DATABASE d; CREATE DATABASE x; USE d');
         $session->text = 'unrelated invalid input';
         $other = $memory->observe($session, $statement);
@@ -77,7 +77,7 @@ final class DefinitionNamesTest extends TestCase
         $session->query('CREATE DATABASE d; USE d');
         $statement = new AlterTable(new QualifiedName(new Name('t')), [new AddColumn(new ColumnDefinition(new ColumnName(new Name('a'), dot: OptionalWords::Written), new OrdinaryColumn(new Integral(IntegralKind::Int))))]);
         $session->text = 'unrelated invalid input';
-        $outcome = (new Memory())->observe($session, $statement);
+        $outcome = (new Observation())->observe($session, $statement);
         self::assertSame(1146, $outcome['error'][0] ?? null);
         self::assertIsArray($outcome['warnings']);
         self::assertArrayHasKey(0, $outcome['warnings']);

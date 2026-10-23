@@ -18,7 +18,7 @@ use ReflectionException;
 
 /**
  * Constructor-valid samples retain at least one supported language interpretation.
- * No profile failure is discarded; native execution is a separate campaign gate.
+ * No profile failure is discarded; SQL Faker fuzzing checks native execution separately.
  */
 #[CoversNothing]
 #[Medium]

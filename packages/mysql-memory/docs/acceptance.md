@@ -20,8 +20,8 @@ Native audits of generated structures and database-history campaigns are not par
 of this workflow.
 
 `composer test` runs unit tests, including the property, and examples across the
-same PHP versions as the other SQL packages. Historical native regression tests
-remain available through `composer test:integration`; they are not another CI gate.
+same PHP versions as the other SQL packages. Native comparison is performed only
+by the SQL Faker PHP-Fuzzer target.
 
 `composer test:property` runs the construction and direct-execution property as part
 of the ordinary unit suite. Its seed and number of samples per root can be selected

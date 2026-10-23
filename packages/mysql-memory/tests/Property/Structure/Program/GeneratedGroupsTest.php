@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Program;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -14,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * A generated grouped declaration retains the same operand across catalog changes.
@@ -50,7 +50,7 @@ final class GeneratedGroupsTest extends TestCase
         $call = new M\Dml\ProcedureCall(new QualifiedName(new Name('p')));
         $session = (new Instance($release, [], ['d']))->connect(database: 'd');
         $session->text = 'opaque request label';
-        $memory = new Memory();
+        $memory = new Observation();
         self::assertArrayNotHasKey('error', $memory->observe($session, $create));
         $before = $memory->observe($session, $call);
         self::assertSame([1111, 'HY000', 'Invalid use of group function'], $before['error'] ?? null);

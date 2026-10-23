@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session\Access;
 
-use Fuzz\Structure\Audit\Memory;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Access\LockNames;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 #[CoversClass(LockNames::class)]
 #[Medium]
@@ -38,7 +38,7 @@ final class LockNamesTest extends TestCase
         $node = new LockTables([new TableLock($qualified, new Name('a'), LockMode::LowPriorityWrite), new TableLock(new QualifiedName(new Name('t')), new Name('b'), LockMode::Read), new TableLock($qualified, new Name('c'), LockMode::LowPriorityWrite)]);
         $session = (new Instance('5.7.44'))->connect();
         $session->text = 'unrelated invalid input';
-        $result = (new Memory())->observe($session, $node);
+        $result = (new Observation())->observe($session, $node);
 
         self::assertSame(1046, $result['error'][0] ?? null);
         self::assertNotNull($result['warnings']);

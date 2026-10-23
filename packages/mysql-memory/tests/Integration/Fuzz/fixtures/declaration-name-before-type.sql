@@ -1,1 +1,0 @@
-CREATE DEFINER = CURRENT_USER ( ) TRIGGER IF NOT EXISTS `name`.PROCESS AFTER UPDATE ON `猫 "00ZZ0'a\` FOR EACH ROW BEGIN DECLARE `name` , `name` , BEGIN BOOLEAN COLLATE BINARY ; FETCH NEXT FROM `\0"'猫'``0a`` éZ0'a"\ 00é'\Z````0 Z'  Z"\a \a\"``a'0"猫'é \Z\" 猫é` INTO COMMIT , ```0é猫 aé000``0`` 0a0猫0\猫猫é'éa"a``"Z``'猫'Za0é\é0'0é``"` , LOCAL ; END

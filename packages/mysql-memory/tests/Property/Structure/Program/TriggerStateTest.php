@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Program;
 
-use Fuzz\Structure\Audit\Memory;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -17,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * Exercises unchanged trigger definitions across missing and populated schema states.
@@ -47,7 +47,7 @@ final class TriggerStateTest extends TestCase
     {
         $create = new CreateTrigger(new QualifiedName(new Name('tr'), new Name('x')), $time, $event, new TriggerTable(new QualifiedName(new Name('t'))), new Block([], []));
         $session = (new Instance($release))->connect();
-        $memory = new Memory();
+        $memory = new Observation();
         $session->text = 'unrelated invalid input';
         $absent = $memory->observe($session, $create);
         self::assertSame(str_starts_with($release, '5.') ? 1146 : 1049, $absent['error'][0] ?? null);

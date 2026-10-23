@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Program;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use LogicException;
 use MySqlMemory\Instance;
@@ -15,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * Direct retained index structures remain dormant until the same program reaches them.
@@ -64,7 +64,7 @@ final class FunctionalIndexKindTest extends TestCase
         $create = new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([$branch]));
         $call = new M\Dml\ProcedureCall(new QualifiedName(new Name('p')));
         $session = (new Instance($release, [], ['d']))->connect(database: 'd');
-        $memory = new Memory();
+        $memory = new Observation();
         self::assertArrayNotHasKey('error', $memory->observe($session, new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column])));
         $session->text = 'unrelated invalid input';
         self::assertArrayNotHasKey('error', $memory->observe($session, $create));

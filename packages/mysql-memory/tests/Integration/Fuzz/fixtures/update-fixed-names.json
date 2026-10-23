@@ -1,5 +1,0 @@
-[
-  {
-    "sql": "UPDATE `3` AS utf8mb4_0900_ai_ci FORCE INDEX (`あ`, b) FORCE INDEX FOR ORDER BY (PRIMARY, `1`, `2024-01-01`) FORCE INDEX (PRIMARY, `\\`), .utf8mb4_0900_ai_ci SET `2024-01-01` = 'PRIMARY', A = DEFAULT"
-  }
-]

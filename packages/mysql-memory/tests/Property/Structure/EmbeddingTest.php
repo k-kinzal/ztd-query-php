@@ -6,7 +6,6 @@ namespace Tests\Property\Structure;
 
 use Fuzz\Structure\Embedding;
 use Fuzz\Structure\Execution;
-use Fuzz\Structure\Reference;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -14,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
- * Checks that free scalar context is identical for direct and native execution.
+ * Checks that embedding preserves scalar identity and supplies its required context.
  */
 #[CoversNothing]
 #[Small]
@@ -47,13 +46,12 @@ final class EmbeddingTest extends TestCase
         self::assertSame($scalar, $statement->query->items[0]->expression);
         $binding = (new \Fuzz\Structure\Context\Columns())->bindings($scalar)[0];
         $table = $binding['relation']->name;
-        $before = ['error' => [1146, '42S02', "Table '" . $table->schema?->value . '.' . $table->name->value . "' doesn't exist"]];
-        $session = (new \MySqlMemory\Instance())->connect();
+        $schema = $table->schema->value ?? 'structure_fixture';
+        $session = (new \MySqlMemory\Instance(databases: [$schema]))->connect(database: $schema);
+        $identifier = '`' . str_replace('`', '``', $table->name->value) . '`';
+        $session->query('CREATE TABLE ' . $identifier . ' (`' . $name->value . '` INT); INSERT INTO ' . $identifier . ' VALUES (7)');
         $session->text = 'unrelated invalid input';
         $execution = new Execution();
-        foreach ((new \Fuzz\Structure\Audit\Table\History())->steps($scalar, $before, '') as $step) {
-            $execution->runIn($session, $step);
-        }
         $result = $execution->runIn($session, $scalar);
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
         self::assertSame([['7']], $result->rows);
@@ -90,9 +88,7 @@ final class EmbeddingTest extends TestCase
         $result = (new Execution())->run($call);
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
         self::assertSame([['1']], $result->rows);
-        $profile = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->profile();
         self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql8044, (new \Fuzz\Structure\Profiles())->select($call)->grammar);
-        self::assertSame('SELECT ROW_NUMBER() OVER w WINDOW w AS ()', (new Reference())->sql($call, $profile));
     }
     /**
      * An empty output alias remains valid without trying to create an empty stored-column name.

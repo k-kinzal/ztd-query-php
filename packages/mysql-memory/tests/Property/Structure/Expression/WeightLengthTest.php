@@ -73,7 +73,7 @@ final class WeightLengthTest extends TestCase
         $node = new WeightString($subject, WeightCast::Binary, $spelling);
         $session = (new \MySqlMemory\Instance($release))->connect();
         $session->text = 'unrelated invalid input';
-        $observer = new \Fuzz\Structure\Audit\Memory();
+        $observer = new \Tests\Result\Observation();
         $result = $observer->observe($session, $node);
 
         self::assertSame([[str_pad(substr('abcdefghij', 0, $length), $length, "\0")]], $result['results'][0]['rows']);

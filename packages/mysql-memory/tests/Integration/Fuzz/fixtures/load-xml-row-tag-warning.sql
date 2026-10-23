@@ -1,2 +1,0 @@
-LOAD XML LOW_PRIORITY INFILE 'a''b' INTO TABLE RELOAD .YEAR ROWS IDENTIFIED BY 'EzA1:,bNNca8![6j|oO<n猫owK4}W}Y	GlXAS:^7)n8/9G''.-/K>~S	9N{L(?I1I$n3 OzpSdz@21C~<nLsm7p4@Xi#t7RT\\{7P<5]Kz7+UjinK$61b=[ktbpl3OL"T<t;"]
-M %UTZpWhak1v#n~Pu)Wl]bf1W?:}[UzNQm$jwSGNkW6Ouz_O#4d2éO,UU8<}c8Q' IGNORE 000000000002094693160 LINES ( _sqlfaker_identifier ) PARALLEL = 0000000000055

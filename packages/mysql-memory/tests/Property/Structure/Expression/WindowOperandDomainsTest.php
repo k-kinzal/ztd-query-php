@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Structure\Expression;
 
-use Fuzz\Structure\Audit\Memory;
 use Fuzz\Structure\Choices;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Result\Observation;
 
 /**
  * Separates the fixed integer-token domain from session-dependent window counts.
@@ -51,7 +51,7 @@ final class WindowOperandDomainsTest extends TestCase
         $statement = new QueryRoot(new Select([], [new SelectExpression(new WindowFunction(WindowFunctionKind::Tile, [new UserVariable(new Name('n'))], new WindowSpec()))], new TableReference(new QualifiedName(new Name('t')))));
         $session = (new Instance($release))->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); INSERT INTO t VALUES(1),(2),(3)');
-        $memory = new Memory();
+        $memory = new Observation();
         foreach (['0', (string) $count, 'NULL', '1'] as $index => $value) {
             $session->query('SET @n=' . $value);
             $session->text = 'unrelated invalid input';
