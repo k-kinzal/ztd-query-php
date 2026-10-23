@@ -69,7 +69,7 @@ final class Differential
     }
 
     /**
-     * Compares one statement, distinguishing a skipped volatile observation from an equal one.
+     * Compares one statement, distinguishing an unstable reference observation from an equal one.
      * Repairs the emulator after observing it too, so later clients cannot inherit expired credentials or server restrictions.
      */
     public function compare(string $sql): Comparison
@@ -237,6 +237,10 @@ final class Differential
             Process\Listing::prepare($pdo);
         }
         $processes = Process\Listing::handles($sql) ? Process\Listing::capture($pdo, $dsn === $this->native ? $this->guard() : $this->memoryGuard()) : null;
+        if (Status\Listing::handles($sql)) {
+            /** Reset the connection maximum to current clients on both servers before capturing status. */
+            (new Fixture())->execute($pdo, 'FLUSH STATUS');
+        }
         $status = Status\Listing::handles($sql) ? Status\Listing::capture($pdo, $sql) : null;
         $observer = new Observer();
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;

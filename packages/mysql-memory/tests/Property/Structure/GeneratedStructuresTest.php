@@ -64,7 +64,7 @@ final class GeneratedStructuresTest extends TestCase
     {
         $catalogue = new Catalogue();
         $choices = new Choices($seed . ':' . $index);
-        // Preserve the choice stream used by existing constructor counterexamples.
+        /** Preserve the choice stream used by existing constructor counterexamples. */
         $choices->one($catalogue->roots());
         $node = (new Construction($choices, $catalogue, new Metadata()))->object($class, 6);
         self::assertTrue($node instanceof Statement || $node instanceof Scalar);
