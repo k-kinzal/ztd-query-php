@@ -39,7 +39,7 @@
 <div class="symbol-head"><h1><span class="chip chip-kind k-class">class</span>SqlModes</h1><div class="symbol-meta"><a class="source-link" href="../../../../src/packages/mysql-memory/src/Session/SqlModes.php.html#L24">packages/mysql-memory/src/Session/SqlModes.php:24</a></div></div>
 <div class="notice diff-banner" data-diff="added">Added in working tree, compared to 049665fc106.</div>
 <pre class="signature" data-diff="added"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">SqlModes</span></code></pre>
-<div class="notice tone-ok"><strong>Public API</strong>: explicitly declared with <code>@visibility public</code>.</div>
+<div class="notice tone-warn"><strong>Restricted visibility</strong>: declared "@visibility MySqlMemory". Code outside that scope must not name this declaration.</div>
 <p class="lede">The sql_mode of a session: the set of mode names it holds, in the order the server writes them.</p>
 <div class="prose"><p>A combination mode (ANSI, TRADITIONAL) adds the modes it stands for. Names are read without regard to case; a name the server does not know is refused by the caller. MySQL 5.6 and 5.7 also know NO_AUTO_CREATE_USER and the combination modes of other database systems, in the places 8.0 left unused, and lack TIME_TRUNCATE_FRACTIONAL; their ANSI adds ONLY_FULL_GROUP_BY from 5.7 on (verified on live 5.6.51 and 5.7.44 servers). Source: https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html, https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html.</p>
 </div>

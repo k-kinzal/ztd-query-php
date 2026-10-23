@@ -45,7 +45,7 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">MySqlMemory\Error</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com"> * The SQLSTATE, the message and the error of an error number, read from the error catalog.</span></span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com"> * The SQLSTATE, the message and the error of an error number, declared by the owning error family.</span></span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * The enums of the error families use it; the error number is the backing value of the case.</span></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.</span></span>
@@ -73,7 +73,7 @@
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sqlState</span>(): <span class="tok-id">string</span></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">return</span> <span class="tok-id">ErrorCatalog</span>::<span class="tok-id">instance</span>()-&gt;<span class="tok-id">entry</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>)[<span class="tok-num">0</span>];</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">MESSAGES</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>][<span class="tok-num">0</span>];</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    }</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
@@ -84,7 +84,7 @@
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">message</span>(<span class="tok-id">string</span>|<span class="tok-id">int</span> ...<span class="tok-var">$arguments</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    {</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-var">$format</span> = <span class="tok-id">ErrorCatalog</span>::<span class="tok-id">instance</span>()-&gt;<span class="tok-id">entry</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>)[<span class="tok-num">1</span>];</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-var">$format</span> = <span class="tok-id">self</span>::<span class="tok-id">MESSAGES</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">name</span>][<span class="tok-num">1</span>];</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">if</span> (!<span class="tok-id">str_contains</span>(<span class="tok-var">$format</span>, <span class="tok-str">&#039;%&#039;</span>) &amp;&amp; <span class="tok-var">$arguments</span> !== []) {</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>            <span class="tok-kw">return</span> (string) <span class="tok-var">$arguments</span>[<span class="tok-num">0</span>];</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        }</span>

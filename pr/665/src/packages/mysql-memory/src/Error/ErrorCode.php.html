@@ -50,10 +50,10 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Each family of errors is an enum of the Family namespace backed by the error number: AccountError,</span></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * AdministrationError, ConstraintError, DataError, PartitionError, ProgramError, QueryError, SchemaError,</span></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * StatementError and TransactionError. ErrorNumbers finds the error of a number.</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * The formats are those of the server error reference; resources/errors.php holds them.</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * The formats are those of the server error reference; each error family declares its definitions.</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Building the error of a missing table</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $error = \MySqlMemory\Error\Family\QueryError::NoSuchTable-&gt;error(&#039;shop&#039;, &#039;items&#039;);</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     [$error-&gt;getCode(), $error-&gt;sqlState(), $error-&gt;getMessage()] // =&gt; [1146, &#039;42S02&#039;, &quot;Table &#039;shop.items&#039; doesn&#039;t exist&quot;]</span></span>
