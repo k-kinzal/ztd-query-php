@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Flush;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] item, …`: a request to clear or reload server caches and logs.
@@ -17,7 +17,8 @@ use SqlSemantics\Statement\Statement;
  * Mirrors SQLCOM_FLUSH with the REFRESH_* flags of LEX::type. Rule:
  * MYSQL-FLUSH-001. The items are kept in written order; the server merges
  * them into flags. LOCAL is a synonym of NO_WRITE_TO_BINLOG, which is
- * written. The statement names no relation and has no facts.
+ * written. The statement names no relation. Each QUERY CACHE item reports its
+ * MySQL 5.7 deprecation, including repeated items.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
  *
@@ -31,7 +32,7 @@ final class Flush implements Statement
     use Snapshot;
 
     /**
-     * @var list<FlushItem> The items in written order; at least one
+     * @var non-empty-list<FlushItem> The items in written order; at least one
      */
     public readonly array $items;
 
@@ -43,13 +44,20 @@ final class Flush implements Statement
     public function __construct(public readonly bool $noWriteToBinlog, array $items)
     {
         $this->items = Check::listOf($items, FlushItem::class, 'FLUSH flushes at least one item.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: the request names no relation and no value.
+     * Reports each written query-cache item without resolving a relation or value.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        foreach ($this->items as $item) {
+            $notice = $item->deprecation($derivation->context->profile->grammar);
+            if ($notice !== null) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise($notice, $derivation, $item);
+            }
+        }
     }
 
     /**

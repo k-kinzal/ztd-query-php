@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\View;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a view, or to replace one with OR REPLACE.
@@ -23,6 +23,9 @@ use SqlSemantics\Statement\Statement;
  * what it declares.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-view.html,
  * https://dev.mysql.com/doc/refman/9.1/en/create-view.html. Status: Implemented.
+ *
+ * @example Refusing legacy column names with a modern query body
+ *     new \SqlSemantics\Platform\MySql\Statement\View\CreateView(new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]), [new \SqlSemantics\Statement\Identifier\Name('')])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Declaring a view with a column list
@@ -39,6 +42,8 @@ final class CreateView implements Statement
      */
     public function __construct(public readonly ViewDefinition $definition, public readonly bool $orReplace = false)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$orReplace || !$definition->ifNotExists, 'CREATE VIEW cannot combine OR REPLACE with IF NOT EXISTS.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

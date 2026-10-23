@@ -55,6 +55,7 @@ final class References implements Node
      */
     public function __construct(public readonly QualifiedName $table, ?array $columns = null, public readonly ?ReferenceMatch $match = null, array $actions = [])
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table name has at most a database qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, Name::class, 'A written reference column list names at least one column.', 1);
         $this->actions = Check::listOf($actions, ReferentialAction::class, 'Referential actions are an ordered list.');

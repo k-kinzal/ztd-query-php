@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET DEFAULT ROLE {NONE | ALL | role, …} TO account, …` (8.0+): a request to set the default roles of accounts.
@@ -30,7 +30,7 @@ final class SetDefaultRole implements Statement
     use Snapshot;
 
     /**
-     * @var list<AccountName> The accounts in order
+     * @var non-empty-list<AccountName> The accounts in order
      */
     public readonly array $users;
 
@@ -42,6 +42,7 @@ final class SetDefaultRole implements Statement
     {
         Check::input($roles->set !== RoleSet::Default && ($roles->set !== RoleSet::All || $roles->roles === []), 'SET DEFAULT ROLE names roles, ALL or NONE.');
         $this->users = Check::listOf($users, AccountName::class, 'SET DEFAULT ROLE names at least one account.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

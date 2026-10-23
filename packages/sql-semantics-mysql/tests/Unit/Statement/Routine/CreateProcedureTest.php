@@ -13,8 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -26,6 +24,24 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateProcedureTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Statement\Node}>
+     */
+    public static function providerLegacyUpgradeBodies(): iterable
+    {
+        $upgrade = new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new Name('old-name')));
+        yield 'direct instruction' => [$upgrade];
+        yield 'unreachable branch' => [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0'), [$upgrade])])];
+    }
+
+    #[DataProvider('providerLegacyUpgradeBodies')]
+    public function testLegacyUpgradeCannotBeAStoredInstruction(\SqlSemantics\Statement\Node $body): void
+    {
+        $this->expectExceptionMessage("Can't drop or alter a DATABASE from within another stored routine");
+
+        new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), $body);
+    }
+
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -67,15 +83,12 @@ final class CreateProcedureTest extends TestCase
         self::assertSame([], $create->facts->diagnostics);
     }
 
-    public function testDeriveStatementReportsADuplicateParameterWhateverItsCase(): void
+    public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Duplicate parameter: X');
 
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::DuplicateParameter, $problem->rule);
-        self::assertSame('Duplicate parameter: X', $problem->message());
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
     }
 
     /**
@@ -102,9 +115,9 @@ final class CreateProcedureTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
     }
 
     /**
@@ -171,5 +184,12 @@ final class CreateProcedureTest extends TestCase
         $this->expectExceptionMessage('A member of a stored program is a program statement or an SQL statement.');
 
         new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new Parameter(new Name('x'), new Integral(IntegralKind::Int)));
+    }
+
+    public function testRenderPreservesHintsWhenEnteringAStoredBody(): void
+    {
+        $sql = 'CREATE PROCEDURE p() UPDATE /*+ NO_ICP(`t` `i`) RESOURCE_GROUP(`batch`) */ t SET a = 1';
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertSame($sql, $operation->toString());
     }
 }

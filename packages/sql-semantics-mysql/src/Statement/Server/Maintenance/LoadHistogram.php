@@ -29,7 +29,7 @@ final class LoadHistogram implements Histogram
     use Snapshot;
 
     /**
-     * @var list<Name> The column names in written order; at least one
+     * @var non-empty-list<Name> The column names in written order; at least one
      */
     public readonly array $columns;
 
@@ -40,6 +40,7 @@ final class LoadHistogram implements Histogram
      */
     public function __construct(array $columns, public readonly Text $data)
     {
+        Check::input($data->radix === null, 'Histogram data is a quoted text string.');
         $this->columns = Check::listOf($columns, Name::class, 'A histogram request names at least one column.', 1);
     }
 

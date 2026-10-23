@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `LOAD INDEX INTO CACHE t [INDEX (…)] [IGNORE LEAVES], …`: a request to preload the indexes of MyISAM tables into their key caches.
@@ -35,7 +35,7 @@ final class LoadIndex implements Statement
     use Snapshot;
 
     /**
-     * @var list<PreloadedTable> The tables in written order; at least one
+     * @var non-empty-list<PreloadedTable> The tables in written order; at least one
      */
     public readonly array $tables;
 
@@ -49,6 +49,7 @@ final class LoadIndex implements Statement
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of LOAD INDEX INTO CACHE.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

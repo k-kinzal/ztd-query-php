@@ -12,7 +12,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the lengths of a set operation that disagree
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 UNION SELECT 1, 2');
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 UNION SELECT 1, 2');
  *     [$query->facts->diagnostics[0]->expected, $query->facts->diagnostics[0]->actual] // => [1, 2]
  */
 final class CountMismatch implements Diagnostic
@@ -23,9 +23,12 @@ final class CountMismatch implements Diagnostic
      * @param CountedList $list The lists that disagree
      * @param int $expected The length the first list fixes
      * @param int $actual The length of the list that disagrees
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow|null $valueRow The VALUES row that owns this mismatch, when supplied
+     * @param int $row The number of the row that disagrees, counted from 1, for the rows of VALUES
      */
-    public function __construct(public readonly CountedList $list, public readonly int $expected, public readonly int $actual)
+    public function __construct(public readonly CountedList $list, public readonly int $expected, public readonly int $actual, public readonly int $row = 1, public readonly \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow|null $valueRow = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($valueRow === null || ($list === CountedList::ValueRows && count($valueRow->values) === $actual && $expected !== $actual), 'A VALUES width condition identifies the mismatching row.');
     }
 
     /**

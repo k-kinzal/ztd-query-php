@@ -8,14 +8,13 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REVOKE [IF EXISTS] privileges ON [kind] level FROM accounts [IGNORE UNKNOWN USER]`: a request to revoke privileges.
@@ -29,26 +28,28 @@ use SqlSemantics\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html. Status: Implemented.
  *
  * @visibility public
+ * @example Refusing column privileges on a routine
+ *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges(false, [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Revoking a privilege
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
  */
-final class RevokePrivileges implements Statement
+final class RevokePrivileges implements Statement, PrivilegeChange
 {
     use Snapshot;
 
     /**
-     * @var list<Grantable> The revoked privileges in order; ALL stands alone
+     * @var non-empty-list<Privilege> The revoked privileges in order; ALL stands alone
      */
     public readonly array $privileges;
 
     /**
-     * @var list<UserSpecification> The accounts privileges are revoked from
+     * @var non-empty-list<UserSpecification> The accounts privileges are revoked from
      */
     public readonly array $users;
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
-     * @param list<Grantable> $privileges The revoked privileges in order; ALL stands alone
+     * @param list<Privilege> $privileges The revoked privileges in order; ALL stands alone
      * @param ObjectKind $kind The kind of object the level names
      * @param PrivilegeLevel $level The privilege level
      * @param list<UserSpecification> $users The accounts privileges are revoked from; at least one
@@ -62,15 +63,18 @@ final class RevokePrivileges implements Statement
         array $users,
         public readonly bool $ignoreUnknownUser = false,
     ) {
-        $this->privileges = Check::listOf($privileges, Grantable::class, 'REVOKE names at least one privilege.', 1);
+        $this->privileges = Check::listOf($privileges, Privilege::class, 'REVOKE names at least one privilege.', 1);
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE names at least one account.', 1);
         foreach ($this->privileges as $privilege) {
+            Check::input($kind === ObjectKind::Table || !$privilege instanceof Item\StaticPrivilege || $privilege->columns === [], 'Column privileges apply only to tables.');
             Check::input(!$privilege instanceof AllPrivileges || count($this->privileges) === 1, 'ALL is the only item of its list.');
-            Check::input(!$privilege instanceof GrantedRole || $privilege->role->host !== null, 'A role without a host in a privilege list reads as a dynamic privilege.');
         }
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');
+            Check::input($user->identification === null, 'A REVOKE account has no authentication clause.');
         }
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RevokeScopes())->deferred($this->privileges, $kind, $level), 'An ordinary revocation names a routine object or a global ALL interpretation.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

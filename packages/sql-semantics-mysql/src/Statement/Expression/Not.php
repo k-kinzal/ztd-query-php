@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Negating a comparison
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE NOT a = 1');
- *     $query->statement->where->operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Comparison // => true
+ *     $query->statement->query->where->operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Comparison // => true
  */
 final class Not implements Scalar
 {
@@ -43,6 +43,7 @@ final class Not implements Scalar
     public function __construct(public readonly Scalar $operand)
     {
         Check::input((new Precedence())->opening($operand) >= Precedence::NEGATION, 'The operand of NOT needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

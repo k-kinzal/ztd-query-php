@@ -14,9 +14,9 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Script;
 use SqlSemantics\Statement\Statement;
 
@@ -24,10 +24,12 @@ use SqlSemantics\Statement\Statement;
  * Establishes everything an operation publishes: audited structure, complete facts, and corresponding SQL.
  *
  * Rule: CORE-PUBLICATION-001. (1) The structure is audited against the closed
- * immutable value domain. (2) The statement derives its facts against the
- * context; every scalar, relation and query node must have received a fact.
- * (3) The structure is rendered to typed pieces and joined to text. (4) The
- * text is parsed under the same profile and lowered by the same rules, and the
+ * immutable value domain. (2) The structure renders typed pieces and records
+ * parameter occurrences in written order. (3) The statement derives its facts
+ * against the context; every scalar, relation and query node must have received
+ * a fact. (4) The pieces are joined to text. The
+ * text uses the model name representation, independently of client encoding,
+ * and is parsed under the same profile and lowered by the same rules. The
  * result must correspond operand by operand to the structure. Spelled regions
  * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
  * discards the candidate. Trusted: the parser, the lowering and derivation
@@ -41,26 +43,38 @@ final class Publication
      * Derives the facts and the checked SQL of a statement.
      *
      * @return array{Facts, string}
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a retained value is outside the closed immutable domain
      * @throws InvariantViolation When the rendered SQL does not correspond to the structure
      */
-    public function establish(AnalysisContext $context, Statement $statement): array
+    public function establish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): array
     {
         $platform = Platforms::of($context->profile->grammar->database());
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $platform->statementNamespace()]);
+        $graph->objects($context, true);
         $objects = $graph->objects($statement);
+        $graph->objects($sources);
+        foreach ($sources->origins as $origin) {
+            Check::input(in_array($origin->node, $objects, true), 'A source location belongs to an occurrence of this statement.');
+        }
 
-        $derivation = new Derivation($context);
+        foreach ($sources->notices as $notice) {
+            Check::input(in_array($notice->subject, $objects, true), 'An input notice belongs to an occurrence of this statement.');
+        }
+        $output = new Output($platform->codec($context->profile));
+        $statement->render($output);
+        $derivation = new Derivation($context, $sources, $output->parameters());
         $derivation->statement($statement);
         $facts = $derivation->facts();
         foreach ($objects as $object) {
-            if ($object instanceof Scalar || $object instanceof Relation || $object instanceof Query) {
+            if ($object instanceof Operand || $object instanceof Relation || $object instanceof Query) {
                 Check::invariant($facts->covers($object), 'Derivation left a ' . $object::class . ' without facts.');
+            }
+            if ($object instanceof Operand && ($replacement = $facts->scalar($object)->replacement) !== null) {
+                Check::invariant($replacement !== $object && in_array($replacement, $graph->objects($object), true) && $facts->covers($replacement), 'A scalar replacement is a bound strict descendant of its occurrence.');
             }
         }
         $graph->objects($facts);
 
-        $output = new Output($platform->codec($context->profile));
-        $statement->render($output);
         $sql = (new Lexical())->join($output->pieces()) . $output->trailing();
         (new Spellings($platform->parser($context->profile), $platform->productions($context->profile), $platform->leafKeys($context->profile)))->check((new Lexical())->join($output->canonical()), $sql);
         try {

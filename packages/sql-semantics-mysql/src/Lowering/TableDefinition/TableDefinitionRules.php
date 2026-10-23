@@ -14,10 +14,10 @@ use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\ReferenceRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\ViewRule;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the table definition family: the methods other families and the statement dispatcher call.
@@ -44,6 +44,8 @@ final class TableDefinitionRules
      * `drop_view_stmt` or `parse_gcol_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Node $statement): Statement
     {
@@ -62,6 +64,8 @@ final class TableDefinitionRules
      * family.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function definition(Form $form): Statement
     {
@@ -91,6 +95,8 @@ final class TableDefinitionRules
      * `field_spec` or `table_element`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function tableElement(Node $element): TableElement
     {
@@ -102,6 +108,8 @@ final class TableDefinitionRules
      *
      * @return list<TableElement>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function tableElements(Node $list): array
     {
@@ -113,15 +121,17 @@ final class TableDefinitionRules
      * when one follows, or the nodes of `type` and `opt_attribute` (5.6).
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
-    public function columnSpecification(Node $definition, ?Node $second = null): ColumnSpecification
+    public function columnSpecification(Node $definition, ?Node $second = null, ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
     {
         $rule = new ColumnRule($this->lowering);
         if ($definition->name === 'type') {
-            return $rule->specification($definition, $second);
+            return $rule->specification($definition, $second, name: $name);
         }
 
-        return $rule->specification($definition, null, $second === null ? null : (new ReferenceRule($this->lowering))->optional($second));
+        return $rule->specification($definition, null, $second === null ? null : (new ReferenceRule($this->lowering))->optional($second), name: $name);
     }
 
     /**

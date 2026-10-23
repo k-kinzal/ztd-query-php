@@ -33,4 +33,31 @@ final class HandlerRuleTest extends TestCase
         self::assertSame('HANDLER h READ i <= (1, 2)', (new Semantics(Dialect::MySql))->analyze('handler h read i <= (1, 2)')->toString());
         self::assertSame('HANDLER h READ i > (1)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('handler h read i > (1)')->toString());
     }
+    public function testReadRetainsTheIndexAndCompletePredicateOnRefusal(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i LAST WHERE ROW(1,2)+1 LIMIT 2');
+            self::fail('A non-scalar handler predicate cannot be an ordinary statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead::class, $failure->problem);
+            self::assertSame('h', $failure->problem->handler->name->value);
+            self::assertSame('i', $failure->problem->index?->value);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection::Last, $failure->problem->mode);
+            self::assertNotNull($failure->problem->where);
+            self::assertNotNull($failure->problem->limit);
+        }
+    }
+
+    public function testIndexRetainsAllSeekOperandsBeforeRefusal(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('HANDLER h READ i > (ROW(1,2), DEFAULT) WHERE a');
+            self::fail('A non-scalar handler key cannot be an ordinary statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead::class, $failure->problem);
+            self::assertCount(2, $failure->problem->values);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::Greater, $failure->problem->mode);
+            self::assertNotNull($failure->problem->where);
+        }
+    }
 }

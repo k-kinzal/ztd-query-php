@@ -21,8 +21,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the cursor an OPEN names
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() OPEN c');
- *     [$create->statement->body->cursor->value, $create->facts->diagnostics[0]->message()] // => ['c', 'Undefined CURSOR: c']
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; OPEN c; END');
+ *     [$create->statement->body->statements[0]->cursor->value, $create->facts->diagnostics] // => ['c', []]
  */
 final class OpenCursor implements ProgramStatement
 {

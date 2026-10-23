@@ -73,6 +73,28 @@ final class CheckTest extends TestCase
         (new Form(new Node('where_opt', 0, []), 'where_opt:'))->node(0);
     }
 
+    public function testPairsPreservesTypedPairs(): void
+    {
+        $pairs = [[new Name('a'), new QualifiedName(new Name('b'))]];
+
+        self::assertSame($pairs, Check::pairs($pairs, Name::class, QualifiedName::class, 'Invalid pair.'));
+        self::assertSame([], Check::pairs([], Name::class, QualifiedName::class, 'Invalid pair.'));
+    }
+
+    public function testPairsRejectsAnExtraMember(): void
+    {
+        $this->expectExceptionMessage('Invalid pair.');
+
+        Check::pairs([[new Name('a'), new QualifiedName(new Name('b')), new Name('c')]], Name::class, QualifiedName::class, 'Invalid pair.');
+    }
+
+    public function testPairsRejectsAnIncorrectMemberType(): void
+    {
+        $this->expectExceptionMessage('Invalid pair.');
+
+        Check::pairs([[new Name('a'), new Name('b')]], Name::class, QualifiedName::class, 'Invalid pair.');
+    }
+
     public function testInvariantKeepsAHoldingCondition(): void
     {
         $child = new Node('expr', 0, []);

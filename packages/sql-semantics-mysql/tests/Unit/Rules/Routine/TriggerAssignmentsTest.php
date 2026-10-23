@@ -40,26 +40,29 @@ final class TriggerAssignmentsTest extends TestCase
         yield 'NEW beside other variables' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT 1; SET @x = 1, v = 2, NEW.a = v; END'];
     }
 
+    /**
+     * @param list<string> $messages Non-trigger diagnostics still reported by target resolution
+     */
     #[DataProvider('providerCheckLeavesOtherAssignmentsAlone')]
-    public function testCheckLeavesOtherAssignmentsAlone(string $sql): void
+    public function testCheckLeavesOtherAssignmentsAlone(string $sql, array $messages = []): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        self::assertSame($messages, array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics));
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{string, 1?: list<string>}>
      */
     public static function providerCheckLeavesOtherAssignmentsAlone(): iterable
     {
         yield 'a user variable in an AFTER DELETE trigger' => ['CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW SET @x = OLD.a'];
         yield 'a system variable with a scope keyword' => ["CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET SESSION sql_mode = ''"];
-        yield 'a name qualified by something else' => ['CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW SET x.zz = 1'];
-        yield 'a system variable written with @@' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET @@x.y = 1'];
-        yield 'NEW in a procedure' => ['CREATE PROCEDURE p() SET NEW.zz = 1'];
-        yield 'OLD in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET OLD.zz = 1'];
-        yield 'OLD in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SET OLD.zz = 1; RETURN 1; END'];
+        yield 'a name qualified by something else' => ['CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW SET x.zz = 1', ["Unknown system variable 'x.zz'"]];
+        yield 'a system variable written with @@' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET @@x.y = 1', ["Unknown system variable 'x.y'"]];
+        yield 'NEW in a procedure' => ['CREATE PROCEDURE p() SET NEW.zz = 1', ["Unknown system variable 'NEW.zz'"]];
+        yield 'OLD in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET OLD.zz = 1', ["Unknown system variable 'OLD.zz'"]];
+        yield 'OLD in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SET OLD.zz = 1; RETURN 1; END', ["Unknown system variable 'OLD.zz'"]];
     }
 
     /**

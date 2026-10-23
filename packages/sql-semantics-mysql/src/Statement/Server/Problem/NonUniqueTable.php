@@ -9,7 +9,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A table or alias that a table list of a server administration statement names twice in one database.
+ * A table or alias that an input namespace names twice in one database.
  *
  * The server rejects the statement with ER_NONUNIQ_TABLE while it parses
  * the list.
@@ -26,8 +26,9 @@ final class NonUniqueTable implements Diagnostic
 
     /**
      * @param Name $alias The alias, or the table name when no alias is written, at its later occurrence
+     * @param \SqlSemantics\Statement\Relation|null $relation The later input identity, when the collision belongs to a bound relation namespace
      */
-    public function __construct(public readonly Name $alias)
+    public function __construct(public readonly Name $alias, public readonly ?\SqlSemantics\Statement\Relation $relation = null)
     {
     }
 

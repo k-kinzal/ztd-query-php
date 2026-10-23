@@ -13,6 +13,9 @@ use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -29,8 +32,13 @@ final class ClockCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new ClockCall(Clock::CurrentTime, new Numeral('2')), $derivation->environment());
 
-        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Time, '2')), $fact->type);
+        self::assertEquals(new Known(new Domain(Kind::Time, Field::Time, 11, 2)), $fact->type);
         self::assertSame(Nullability::NotNull, $fact->nullability);
+    }
+
+    public function testDecimalsReadsThePrecisionModulo256(): void
+    {
+        self::assertSame([0, 0, 2, 6], [(new ClockCall(Clock::Now))->decimals(), (new ClockCall(Clock::Now, new Numeral('256')))->decimals(), (new ClockCall(Clock::UtcTimestamp, new Numeral('258')))->decimals(), (new ClockCall(Clock::CurrentTime, new Numeral('00000000058374')))->decimals()]);
     }
 
     public function testRenderWritesEmptyParenthesesWithoutAPrecision(): void
@@ -41,5 +49,21 @@ final class ClockCallTest extends TestCase
         (new ClockCall(Clock::Now))->render($out);
 
         self::assertSame('NOW()', (new Lexical())->join($out->pieces()));
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['263'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['2147483647'])]
+    public function testPrecisionDomainRejectsAnIntrinsicCondition(string $precision): void
+    {
+        $this->expectExceptionMessage('A scalar clock precision resolves to at most six');
+        new ClockCall(Clock::Now, new Numeral($precision));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['2147483648'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['4294967296'])]
+    public function testPrecisionDomainRequiresAGrammarToken(string $precision): void
+    {
+        $this->expectExceptionMessage('a precision is a NUM integer token');
+        new ClockCall(Clock::Now, new Numeral($precision));
     }
 }

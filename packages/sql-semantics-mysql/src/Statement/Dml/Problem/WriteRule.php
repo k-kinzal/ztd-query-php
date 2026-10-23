@@ -20,7 +20,9 @@ enum WriteRule: string
     case DefaultOutsideInsert = 'A VALUES clause cannot use DEFAULT values, unless used as a source in an INSERT statement.';
     case OrderedMultipleUpdate = 'Incorrect usage of UPDATE and ORDER BY';
     case LimitedMultipleUpdate = 'Incorrect usage of UPDATE and LIMIT';
+    case SampledWrite = "'TABLESAMPLE' is not supported";
     case WildcardColumn = "Unknown column '*' in 'field list'";
     case CommonTableTarget = 'The target table is a common table expression, which is not updatable';
     case NonUpdatableTarget = 'The target table is a derived table, a table function or a common table expression, which is not updatable';
+    case NonUpdatableColumn = 'The assigned column of a derived table MySQL 5.7 merges is an expression, which is not updatable';
 }

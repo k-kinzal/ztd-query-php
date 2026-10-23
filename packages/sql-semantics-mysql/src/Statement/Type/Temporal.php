@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::DateTime, '6');
  *     [$type->name(), $type->precision] // => ['DATETIME', '6']
  */
-final class Temporal implements TypeName
+final class Temporal implements DeclaredName
 {
     use Snapshot;
 
@@ -40,6 +40,7 @@ final class Temporal implements TypeName
     {
         Check::input($precision === null || $kind !== TemporalKind::Date, 'DATE takes no precision.');
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
+        Check::input($precision === null || $kind === TemporalKind::Year || (new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($precision))->isIntegerToken(), 'A fractional seconds precision is a decimal NUM integer token.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
         Check::input($this->modifiers === [] || $kind === TemporalKind::Year, 'Only YEAR takes numeric attributes.');
     }

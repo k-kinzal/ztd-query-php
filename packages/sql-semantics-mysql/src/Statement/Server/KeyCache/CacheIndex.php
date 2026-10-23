@@ -10,10 +10,10 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CACHE INDEX t [INDEX (…)], … IN {cache | DEFAULT}`: a request to assign the indexes of MyISAM tables to a key cache.
@@ -38,7 +38,7 @@ final class CacheIndex implements Statement
     use Snapshot;
 
     /**
-     * @var list<CachedTable> The tables in written order; at least one
+     * @var non-empty-list<CachedTable> The tables in written order; at least one
      */
     public readonly array $tables;
 
@@ -53,6 +53,7 @@ final class CacheIndex implements Statement
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of CACHE INDEX.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

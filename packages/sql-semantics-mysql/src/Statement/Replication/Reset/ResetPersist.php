@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RESET PERSIST [[IF EXISTS] [component.]variable]`: removes persisted global system variable settings (MySQL 8.0 and later).
@@ -41,6 +41,7 @@ final class ResetPersist implements Statement
     public function __construct(public readonly bool $ifExists = false, public readonly ?Name $variable = null, public readonly ?Name $component = null)
     {
         Check::input($variable !== null || (!$ifExists && $component === null), 'IF EXISTS and a component need a variable.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -6,13 +6,12 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Query\ResultSlots;
+use SqlSemantics\Platform\MySql\Rules\Query\Result\ResultSlots;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The VALUES statement: a table of rows written with row constructors (MySQL 8.0.19 and later).
@@ -20,7 +19,8 @@ use SqlSemantics\Statement\Statement;
  * Rule: MYSQL-VALUES-001. The columns are named column_0, column_1 and so
  * on; the type of a column is aggregated over the rows
  * (MYSQL-RESULT-SLOTS-001) and it can be NULL when a value of it can. Rows of
- * different lengths are reported. The values see no column of the query.
+ * different lengths are reported, and so is an empty row, except in the
+ * rows an INSERT writes. The values see no column of the query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/values.html. Status: Implemented.
  *
  * @visibility public
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  * @example Refusing a VALUES statement without rows
  *     new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class ValuesQuery implements Statement, Query
+final class ValuesQuery implements Query
 {
     use Snapshot;
 
@@ -45,14 +45,7 @@ final class ValuesQuery implements Statement, Query
     public function __construct(array $rows)
     {
         $this->rows = Check::listOf($rows, ValueRow::class, 'VALUES holds at least one row.', 1);
-    }
-
-    /**
-     * Derives the statement as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

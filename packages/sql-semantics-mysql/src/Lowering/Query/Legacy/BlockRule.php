@@ -237,8 +237,8 @@ final class BlockRule
         $items = new ItemRule($this->lowering);
 
         return match ($form->signature) {
-            'create_select: SELECT_SYM select_options select_item_list opt_select_from' => $this->optional($form->node(3), $items->options($form->node(1)), $items->items($form->node(2))),
-            'create_select: SELECT_SYM select_options select_item_list table_expression' => $this->expression($form->node(3), $items->options($form->node(1)), $items->items($form->node(2))),
+            'create_select: SELECT_SYM select_options select_item_list opt_select_from' => $this->optional($form->node(3), $items->options($form->node(1)), $items->items($form->node(2)))->hinted($this->lowering->hints($form->token(0))),
+            'create_select: SELECT_SYM select_options select_item_list table_expression' => $this->expression($form->node(3), $items->options($form->node(1)), $items->items($form->node(2)))->hinted($this->lowering->hints($form->token(0))),
             default => throw ImplementationGap::production($form),
         };
     }

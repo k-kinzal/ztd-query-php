@@ -11,9 +11,9 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `STOP REPLICA [threads] [FOR CHANNEL 'name']`, or STOP SLAVE.
@@ -46,7 +46,9 @@ final class StopReplica implements Statement
      */
     public function __construct(public readonly Terminology $terminology, array $threads = [], public readonly ?Text $channel = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->threads = Check::listOf($threads, ReplicaThread::class, 'STOP REPLICA names a list of threads.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -54,6 +56,7 @@ final class StopReplica implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $release = $derivation->context->profile->grammar;
         Check::input((new Releases())->replica($release, $this->terminology), 'STOP ' . ($this->terminology === Terminology::Legacy ? 'SLAVE' : 'REPLICA') . ' is not a statement of this release.');
         Check::input($this->channel === null || $release !== GrammarRelease::MySql5651, 'A replication channel needs MySQL 5.7 or later.');

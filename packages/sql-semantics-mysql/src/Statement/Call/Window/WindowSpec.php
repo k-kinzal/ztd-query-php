@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -30,6 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a sort direction in a window partition
+ *     $item = new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending);
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(partition: [$item]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding the parts of a window
  *     $order = [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('b')))];
  *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(null, [], $order, new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::UnboundedPreceding)));
@@ -59,6 +63,12 @@ final class WindowSpec implements WindowSpecification
     {
         $this->partition = Check::listOf($partition, OrderItem::class, 'A window partition is a list of ordering items.');
         $this->order = Check::listOf($order, OrderItem::class, 'A window ordering is a list of ordering items.');
+        foreach ($this->partition as $item) {
+            Check::input($item->direction === null, 'A window partition item has no sort direction.');
+        }
+        foreach ([...$this->partition, ...$this->order] as $item) {
+            Check::input(!$item->expression instanceof OutputOrdinal, 'This ordering reads expressions rather than SELECT output positions.');
+        }
     }
 
     /**
@@ -72,11 +82,18 @@ final class WindowSpec implements WindowSpecification
         foreach ($this->frame?->offsets() ?? [] as $offset) {
             (new Arguments())->one($offset, $derivation, $environment);
         }
+        $constraints = new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints();
+        if ($constraints->positional($this)) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($this, true));
+        }
+        if ($constraints->reversed($this)) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint($this, false));
+        }
         if ($this->frame?->unit === FrameUnit::Groups) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupsUnit));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupsUnit, $this));
         }
         if ($this->frame?->exclusion !== null) {
-            $derivation->report(new UnsupportedWindowing(WindowingLimit::Exclusion));
+            $derivation->report(new UnsupportedWindowing(WindowingLimit::Exclusion, $this));
         }
     }
 

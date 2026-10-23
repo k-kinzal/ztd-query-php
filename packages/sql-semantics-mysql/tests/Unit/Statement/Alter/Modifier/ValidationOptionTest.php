@@ -17,7 +17,7 @@ final class ValidationOptionTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITH VALIDATION')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITH VALIDATION, ADD a INT')->facts->diagnostics);
     }
 
     public function testRenderWritesWithOrWithout(): void

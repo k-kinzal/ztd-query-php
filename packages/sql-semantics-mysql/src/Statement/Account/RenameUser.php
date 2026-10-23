@@ -7,15 +7,18 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RENAME USER old TO new, …`: a request to rename accounts, applied pair by pair in order.
  *
  * Mirrors SQLCOM_RENAME_USER. Rule: MYSQL-RENAME-USER-001. Accounts are not
- * declared in a context, so the statement has no resolution facts.
+ * declared in a context, so the statement has no resolution facts. Construction
+ * excludes contradictory ordered identities, considering fixed and following
+ * CURRENT_USER interpretations without resolving an account catalog. Complete
+ * contradictory input remains available as DeferredRenameUser in stored code.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/rename-user.html. Status: Implemented.
  *
  * @visibility public
@@ -27,7 +30,7 @@ final class RenameUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<UserRenaming> The renamings in order
+     * @var non-empty-list<UserRenaming> The renamings in order
      */
     public readonly array $renamings;
 
@@ -37,6 +40,8 @@ final class RenameUser implements Statement
     public function __construct(array $renamings)
     {
         $this->renamings = Check::listOf($renamings, UserRenaming::class, 'RENAME USER names at least one pair.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Account\Renamings())->problem($this->renamings) === null, 'RENAME USER has consistent ordered account identities.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

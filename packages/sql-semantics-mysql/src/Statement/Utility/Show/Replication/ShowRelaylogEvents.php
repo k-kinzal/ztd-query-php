@@ -10,9 +10,9 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW RELAYLOG EVENTS: the events of a relay log file of a replica.
@@ -42,6 +42,10 @@ final class ShowRelaylogEvents implements Statement
      */
     public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null, public readonly ?Text $channel = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($file === null || $file->radix === null, 'A relay log file name is quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
+        \SqlSemantics\Diagnostic\Check::input($position === null || !$position->hexadecimal, 'A log event position uses decimal number syntax.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

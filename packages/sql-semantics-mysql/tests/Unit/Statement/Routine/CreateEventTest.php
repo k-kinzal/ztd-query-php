@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -18,8 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
@@ -62,13 +59,9 @@ final class CreateEventTest extends TestCase
 
     public function testDeriveStatementReportsANestedEventDefinition(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO CREATE EVENT f ON SCHEDULE AT NOW() DO SELECT 1');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
-
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::EventRecursion, $problem->rule);
-        self::assertSame('Recursion of EVENT DDL statements is forbidden when body is present', $problem->message());
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Recursion of EVENT DDL statements is forbidden when body is present');
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO CREATE EVENT f ON SCHEDULE AT NOW() DO SELECT 1');
     }
 
     /**
@@ -85,9 +78,9 @@ final class CreateEventTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
     }
 
     /**
@@ -161,6 +154,13 @@ final class CreateEventTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', Radix::Hexadecimal));
+    }
+
+    public function testDeriveStatementWarnsOfDisableOnSlave(): void
+    {
+        $facts = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DISABLE ON SLAVE DO SELECT 1")->facts;
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
     }
 }

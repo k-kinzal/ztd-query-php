@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Predicate;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
@@ -23,7 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * written.
  *
  * Rule: MYSQL-LIKE-001. Facts: 1, 0 or NULL, an integer; it can be NULL
- * when an operand can. Every operand takes a single value. Terminates: the
+ * when the subject or pattern can. A NULL escape selects the default escape
+ * character. MySQL 5.6 and 5.7 exclude the escape from the NULL fact; later
+ * releases retain its nullable metadata. Every operand takes a single value. Terminates: the
  * operands are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-comparison-functions.html#operator_like.
  * Status: Implemented.
@@ -31,7 +34,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the escape character
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a LIKE 'x!%' ESCAPE '!'");
- *     $query->statement->where->escape->value() // => '!'
+ *     $query->statement->query->where->escape->value() // => '!'
  */
 final class Like implements Scalar
 {
@@ -49,6 +52,7 @@ final class Like implements Scalar
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of LIKE needs a grouping to keep its place.');
         Check::input($precedence->admits($pattern, Precedence::SIMPLE_EXPR), 'The pattern of LIKE needs a grouping to keep its place.');
         Check::input($escape === null || $precedence->admits($escape, Precedence::SIMPLE_EXPR), 'The escape character of LIKE needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -57,10 +61,15 @@ final class Like implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $nullability = $operands->single($derivation->scalar($this->operand, $environment), $derivation)->nullability
-            ->propagate($operands->single($derivation->scalar($this->pattern, $environment), $derivation)->nullability);
+        $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        $pattern = $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
+        $operands->collated([$operand, $pattern], 'like', $derivation);
+        $nullability = $operand->nullability->propagate($pattern->nullability);
         if ($this->escape !== null) {
-            $nullability = $nullability->propagate($operands->single($derivation->scalar($this->escape, $environment), $derivation)->nullability);
+            $escape = $operands->single($derivation->scalar($this->escape, $environment), $derivation);
+            if (!in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                $nullability = $nullability->propagate($escape->nullability);
+            }
         }
 
         return $operands->truth($nullability);

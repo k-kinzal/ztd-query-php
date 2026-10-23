@@ -46,10 +46,10 @@ final class CreateTableTest extends TestCase
         self::assertSame($create->declarations()[0]->columns[1], $resolution->slot->column);
     }
 
-    public function testDeriveStatementReportsTheProblems(): void
+    public function testDeriveStatementReportsTheProblemsOfOrdinaryAndStoredDefinitions(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t ENGINE = InnoDB');
-        $keys = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t ENGINE = InnoDB');
+        $keys = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
 
         self::assertInstanceOf(NoColumns::class, $create->facts->diagnostics[0]);
         self::assertInstanceOf(MultiplePrimaryKeys::class, $keys->facts->diagnostics[0]);
@@ -73,4 +73,15 @@ final class CreateTableTest extends TestCase
     {
         self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE InnoDB COMMENT \'x\' REPLACE AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
     }
+    public function testInputCompletionOrdersTypeNoticesBeforeTheRefusal(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $parser = $semantics->parser();
+        self::assertInstanceOf(\SqlParser\Parser\ReductionParser::class, $parser);
+        $sql = 'CREATE TABLE t(a INT(11), b BIT(65) DEFAULT (!1), c INT(11))';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $sql, strlen($sql), $semantics->profile());
+
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop ? $warning->name : ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated ? $warning->value : $warning->message()), array_column($notices, 1)));
+    }
+
 }

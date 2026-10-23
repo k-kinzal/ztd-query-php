@@ -48,6 +48,24 @@ final class ColumnDefinition implements TableElement
     }
 
     /**
+     * Answers the last SRID restriction, including zero, or null when none was declared.
+     *
+     * Repeated restrictions replace earlier ones. The attributes remain intact for rendering.
+     * Verified through CREATE TABLE and INFORMATION_SCHEMA.COLUMNS on MySQL 8.4.7.
+     */
+    public function srid(): ?int
+    {
+        $srid = null;
+        foreach ($this->specification->columnAttributes() as $attribute) {
+            if ($attribute instanceof SridAttribute) {
+                $srid = (int) ($attribute->srid->hexadecimal ? hexdec($attribute->srid->text) : $attribute->srid->text);
+            }
+        }
+
+        return $srid;
+    }
+
+    /**
      * Writes the name and the specification.
      */
     public function render(Output $out): void

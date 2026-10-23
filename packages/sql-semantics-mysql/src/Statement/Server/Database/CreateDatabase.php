@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE {DATABASE | SCHEMA} [IF NOT EXISTS] name [option …]`: a request to create a database.
@@ -49,13 +49,15 @@ final class CreateDatabase implements Statement
         foreach ($this->options as $option) {
             Check::input(!$option instanceof DatabaseReadOnly, 'READ ONLY is an option of ALTER DATABASE.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: a database is no relation.
+     * Resolves the character set and collation names without changing database state.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->derive($this->options, $derivation);
     }
 
     /**

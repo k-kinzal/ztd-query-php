@@ -10,11 +10,11 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DESCRIBE (DESC, EXPLAIN) with a table: the columns of a table or view, as SHOW COLUMNS reports them.
@@ -42,6 +42,7 @@ final class DescribeTable implements Statement
      */
     public function __construct(public readonly InspectedTable $table, public readonly Name|Text|null $column = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

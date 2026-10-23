@@ -11,7 +11,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -22,24 +21,51 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 #[Medium]
 final class MagnitudesTest extends TestCase
 {
+    public function testOption32ReadsLeadingDigitsWithoutEvaluatingExponents(): void
+    {
+        $magnitudes = new Magnitudes();
+
+        self::assertSame(1, $magnitudes->option32(new Numeral('1e2')));
+        self::assertSame(12, $magnitudes->option32(new Numeral('12.9')));
+        self::assertSame(0, $magnitudes->option32(new Numeral('.5')));
+        self::assertSame(10, $magnitudes->option32(new Numeral('A', true)));
+        self::assertSame(1, $magnitudes->option32(new Numeral('4294967297.0')));
+        self::assertSame(4294967295, $magnitudes->option32(new Numeral('18446744073709551616')));
+    }
+
+    public function testUnsigned32NarrowsDecimalAndHexadecimalTokensExactly(): void
+    {
+        $magnitudes = new Magnitudes();
+
+        self::assertSame(0, $magnitudes->unsigned32(new Numeral('4294967296')));
+        self::assertSame(1, $magnitudes->unsigned32(new Numeral('4294967297')));
+        self::assertSame(4294967295, $magnitudes->unsigned32(new Numeral('18446744073709551615')));
+        self::assertSame(4294967295, $magnitudes->unsigned32(new Numeral('ffffffffffffffff', true)));
+        self::assertSame(10, $magnitudes->unsigned32(new Numeral('A', true)));
+    }
+
     public function testBytesCountsTheBytesOfEachSpelling(): void
     {
         $magnitudes = new Magnitudes();
 
-        self::assertSame([3, 2, 1], [$magnitudes->bytes(new Text('abc')), $magnitudes->bytes(new Text('abc', EscapeRule::Backslash, Radix::Hexadecimal)), $magnitudes->bytes(new Text('101', EscapeRule::Backslash, Radix::Bit))]);
+        self::assertSame([3, 2, 1], [$magnitudes->bytes(new Text('abc')), $magnitudes->bytes(new Text('abc', Radix::Hexadecimal)), $magnitudes->bytes(new Text('101', Radix::Bit))]);
     }
 
     public function testIntegralTellsWhetherANumberIsAnInteger(): void
     {
         self::assertTrue((new Magnitudes())->integral(new Numeral('ff', true)));
         self::assertFalse((new Magnitudes())->integral(new Numeral('1.0')));
+        self::assertTrue((new Magnitudes())->integral(new Numeral('00018446744073709551615')));
+        self::assertFalse((new Magnitudes())->integral(new Numeral('18446744073709551616')));
+        self::assertFalse((new Magnitudes())->integral(new Numeral('00018446744073709551616')));
     }
 
     public function testIntegerReportsAFractionalNumber(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 1e2');
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
 
-        self::assertInstanceOf(FractionalNumber::class, $operation->facts->diagnostics[0]);
+        self::assertFalse((new Magnitudes())->integer($derivation, new Numeral('1e2')));
+        self::assertInstanceOf(FractionalNumber::class, $derivation->facts()->diagnostics[0]);
     }
 
     public function testAtMostComparesTheDigitsExactly(): void
@@ -78,4 +104,16 @@ final class MagnitudesTest extends TestCase
 
         (new Magnitudes())->identifier($xid, GrammarRelease::MySql847);
     }
+    public function testConnectionNarrowsAfterTheTokenSpecificConversion(): void
+    {
+        $numbers = new Magnitudes();
+
+        self::assertSame(255, $numbers->connection(new Numeral('000255')));
+        self::assertSame(255, $numbers->connection(new Numeral('FF', true)));
+        self::assertSame(0, $numbers->connection(new Numeral('9223372036854775808')));
+        self::assertSame(4294967295, $numbers->connection(new Numeral('8000000000000000', true)));
+        self::assertSame(4294967295, $numbers->connection(new Numeral('18446744073709551615')));
+        self::assertSame(1, $numbers->connection(new Numeral('4294967297')));
+    }
+
 }

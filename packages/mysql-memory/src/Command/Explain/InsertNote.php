@@ -1,0 +1,91 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Command\Explain;
+
+use MySqlMemory\Command\View\ViewText;
+use MySqlMemory\Dictionary\Routine;
+use MySqlMemory\Session\Session;
+use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
+use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
+use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Scalar;
+
+/**
+ * Writes modern EXPLAIN's note for explicit inserted rows from semantic operands.
+ * SET lists become column/value lists, and ROW spelling does not survive the note.
+ * Verified through MySQL 8.4, including omitted values and duplicate-key assignments.
+ *
+ * @visibility MySqlMemory
+ */
+final class InsertNote
+{
+    /**
+     * Returns the resolved write note for an explicit row source.
+     */
+    public function rows(Operation $operation, Session $session): ?string
+    {
+        $explain = $operation->statement;
+        $insert = $explain instanceof Explain ? $explain->statement : null;
+        if (!$insert instanceof InsertRows && !$insert instanceof InsertSet && !$insert instanceof InsertQuery) {
+            return null;
+        }
+        $values = $this->values($insert);
+        if ($values === null || $insert->into->table->partitions !== []) {
+            return null;
+        }
+        $database = $explain->database->value ?? $session->variables->database;
+        $target = $insert->into->table->name;
+        $table = Routine::quoted($target->schema->value ?? $database) . '.' . Routine::quoted($target->name->value);
+        $writer = new ViewText($operation->facts, '', $database);
+        $columns = $insert instanceof InsertSet ? array_column($insert->assignments, 'column') : $insert->into->columns?->columns;
+        $names = array_map(static fn ($column): ?string => $column instanceof ColumnUse ? $table . '.' . Routine::quoted($column->name->value) : null, $columns ?? []);
+        $rows = array_map(fn (array $row): ?string => $this->row($row, $writer), $values);
+        $updates = array_map(fn (Assignment $assignment): ?string => ($value = $this->value($assignment->value, $writer)) === null ? null : $table . '.' . Routine::quoted($assignment->column->name->value) . ' = ' . $value, $insert->onDuplicate);
+        if (in_array(null, [...$names, ...$rows, ...$updates], true)) {
+            return null;
+        }
+        $into = $insert->into;
+        return ($into->replace ? 'replace' : 'insert') . ($into->priority === null ? '' : ' ' . strtolower($into->priority->value)) . ($into->ignore ? ' ignore' : '') . ' into ' . $table . ($columns === null ? '' : ' (' . implode(',', $names) . ')') . ' values ' . implode(',', $rows) . ($updates === [] ? '' : ' on duplicate key update ' . implode(',', $updates));
+    }
+
+    /**
+     * Extracts explicit row operands without changing their semantic identities.
+     *
+     * @return list<list<Scalar|DefaultRequest>>|null
+     */
+    public function values(InsertRows|InsertSet|InsertQuery $insert): ?array
+    {
+        if ($insert instanceof InsertQuery) {
+            $source = $insert->values();
+            return $source === null ? null : array_column($source->rows, 'values');
+        }
+        if ($insert->alias !== null) {
+            return null;
+        }
+        return $insert instanceof InsertSet ? [array_column($insert->assignments, 'value')] : array_column($insert->rows, 'values');
+    }
+
+    /**
+     * @param list<Scalar|DefaultRequest> $values The original row values
+     */
+    public function row(array $values, ViewText $writer): ?string
+    {
+        $items = array_map(fn (Scalar|DefaultRequest $value): ?string => $this->value($value, $writer), $values);
+        return in_array(null, $items, true) ? null : '(' . implode(',', $items) . ')';
+    }
+
+    /**
+     * DEFAULT remains a request for the column's default in the diagnostic text.
+     */
+    public function value(Scalar|DefaultRequest $value, ViewText $writer): ?string
+    {
+        return $value instanceof DefaultRequest ? 'default' : $writer->expressions->scalar($value);
+    }
+}

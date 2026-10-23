@@ -24,4 +24,10 @@ final class GrantProxyTest extends TestCase
     {
         self::assertSame("GRANT PROXY ON a TO b IDENTIFIED BY 'x' WITH GRANT OPTION", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("grant proxy on a to b identified by 'x' with grant option")->toString());
     }
+    public function testValueRejectsRandomPasswordsInLegacyAuthentication(): void
+    {
+        $this->expectExceptionMessage('GRANT authentication does not generate a random password.');
+        new GrantProxy(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('proxy')), [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword))]);
+    }
+
 }

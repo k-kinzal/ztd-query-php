@@ -39,6 +39,8 @@ final class ColumnUseTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('SELECT t.a, b FROM t', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $first = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $first);
@@ -66,6 +68,8 @@ final class ColumnUseTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
         $operation = $semantics->analyze('SELECT A FROM t', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -80,6 +84,8 @@ final class ColumnUseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -99,6 +105,8 @@ final class ColumnUseTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('SELECT c FROM t', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -116,6 +124,8 @@ final class ColumnUseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT x.a FROM t');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -133,6 +143,8 @@ final class ColumnUseTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('a'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('SELECT a FROM t', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -150,6 +162,8 @@ final class ColumnUseTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
         $operation = $semantics->analyze('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $having = $select->having;
         self::assertInstanceOf(Comparison::class, $having);
@@ -165,6 +179,8 @@ final class ColumnUseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select shop.T.A from shop.t');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);

@@ -41,6 +41,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
@@ -48,7 +49,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Reports the statements a stored program may not contain.
@@ -60,13 +60,15 @@ use SqlSemantics\Statement\Statement;
  * of a procedure or function (ER_SP_NO_DROP_SP), or a CREATE EVENT or an
  * ALTER EVENT with a body (ER_EVENT_RECURSION_FORBIDDEN). A stored function
  * or trigger in addition returns no result set: no query without INTO, no
- * SHOW, EXPLAIN, DESCRIBE, HELP and no CHECK, ANALYZE, OPTIMIZE, REPAIR or
+ * ordinary SHOW, EXPLAIN, DESCRIBE, HELP and no CHECK, ANALYZE, OPTIMIZE, REPAIR or
  * CHECKSUM TABLE (ER_SP_NO_RETSET); performs no explicit commit or rollback
  * (ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG); and uses no PREPARE, EXECUTE or
  * DEALLOCATE PREPARE, no FLUSH and no RESET, RESET PERSIST included, which
  * the grammar reads as the same RESET command (rule `reset` of
- * sql_yacc.yy) (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). Limit: the implicit commit of a data
- * definition statement in a stored function or trigger is not reported.
+ * sql_yacc.yy) (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). SHOW PROFILE and SHOW PROFILES
+ * are accepted despite emitting unannounced results (observed on 5.6, 5.7, 8.4
+ * and 9.1). TransactionStatements identifies
+ * the permanent DDL instructions excluded from function and trigger bodies.
  * Terminates: the INTO search descends into strict parts of a query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html ("The USE
@@ -97,6 +99,11 @@ final class ProgramRestrictions
     public function anywhere(Statement $statement): ?ProgramProblem
     {
         return match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek => new ProgramProblem(ProgramRule::BadStatement, 'HANDLER'),
             $statement instanceof LockTables => new ProgramProblem(ProgramRule::BadStatement, 'LOCK'),
             $statement instanceof UnlockTables => new ProgramProblem(ProgramRule::BadStatement, 'UNLOCK'),
             $statement instanceof AlterView => new ProgramProblem(ProgramRule::BadStatement, 'ALTER VIEW'),
@@ -106,6 +113,7 @@ final class ProgramRestrictions
             $statement instanceof CreateFunction => new ProgramProblem(ProgramRule::RecursiveCreate, ProgramKind::Function->value),
             $statement instanceof CreateTrigger => new ProgramProblem(ProgramRule::RecursiveCreate, ProgramKind::Trigger->value),
             $statement instanceof CreateEvent, $statement instanceof AlterEvent && $statement->body !== null => new ProgramProblem(ProgramRule::EventRecursion),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName => new ProgramProblem(ProgramRule::NestedAlterOrDrop, 'DATABASE'),
             $statement instanceof AlterRoutine => new ProgramProblem(ProgramRule::NestedAlterOrDrop, $statement->kind->value),
             $statement instanceof DropProgram && ($statement->kind === ProgramKind::Procedure || $statement->kind === ProgramKind::Function) => new ProgramProblem(ProgramRule::NestedAlterOrDrop, $statement->kind->value),
             default => null,
@@ -119,7 +127,7 @@ final class ProgramRestrictions
     {
         return match (true) {
             $this->results($statement) => new ProgramProblem(ProgramRule::ResultSet, strtolower($kind->value)),
-            $statement instanceof Commit, $statement instanceof Rollback, $statement instanceof StartTransaction => new ProgramProblem(ProgramRule::CommitInFunction),
+            (new Declaration\TransactionStatements())->implicit($statement), $statement instanceof Commit, $statement instanceof Rollback, $statement instanceof StartTransaction, $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView, $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\DropView => new ProgramProblem(ProgramRule::CommitInFunction),
             $statement instanceof Prepare, $statement instanceof Execute, $statement instanceof Deallocate => new ProgramProblem(ProgramRule::FunctionStatement, 'Dynamic SQL'),
             $statement instanceof Flush, $statement instanceof FlushTables => new ProgramProblem(ProgramRule::FunctionStatement, 'FLUSH'),
             $statement instanceof Reset, $statement instanceof ResetPersist => new ProgramProblem(ProgramRule::FunctionStatement, 'RESET'),
@@ -128,12 +136,18 @@ final class ProgramRestrictions
     }
 
     /**
-     * Tells whether a statement returns a result set to the client.
+     * Tells whether a statement declares a result set to the stored-program machinery.
+     * SHOW PROFILE and SHOW PROFILES do not declare their results and are accepted
+     * in function and trigger definitions, despite emitting result packets at runtime.
      */
     public function results(Statement $statement): bool
     {
-        if ($statement instanceof Query) {
-            return !$this->into($statement);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile
+            || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles) {
+            return false;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+            return !$this->into($statement->query);
         }
 
         return $statement instanceof Explain || $statement instanceof ExplainConnection || $statement instanceof DescribeTable || $statement instanceof Help

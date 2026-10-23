@@ -22,6 +22,8 @@ interface Node
 {
     /**
      * Writes the typed output pieces of this node; it cannot write free SQL text.
+     *
+     * @throws \SqlSemantics\Diagnostic\UnrepresentableName When an identifier cannot be represented by the output codec
      */
     public function render(Output $out): void;
 }

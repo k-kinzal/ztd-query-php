@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Error\Family;
+
+use MySqlMemory\Error\Family\QueryError;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(QueryError::class)]
+#[Small]
+final class QueryErrorTest extends TestCase
+{
+    public function testNumberAnswersTheBackingValue(): void
+    {
+        self::assertSame(1146, QueryError::NoSuchTable->number());
+    }
+
+    public function testTryFromFindsTheCaseOfANumberOfTheFamily(): void
+    {
+        self::assertSame(QueryError::NoSuchTable, QueryError::tryFrom(1146));
+    }
+
+    public function testSqlStateAnswersTheStateOfTheError(): void
+    {
+        self::assertSame('42S02', QueryError::NoSuchTable->sqlState());
+    }
+
+    public function testMessageFillsTheArgumentsIntoTheFormat(): void
+    {
+        self::assertSame("Table 'shop.items' doesn't exist", QueryError::NoSuchTable->message('shop', 'items'));
+    }
+
+    public function testErrorAnswersTheNumberStateAndMessage(): void
+    {
+        $error = QueryError::NoSuchTable->error('shop', 'items');
+
+        self::assertSame([1146, '42S02', "Table 'shop.items' doesn't exist", QueryError::NoSuchTable], [$error->getCode(), $error->sqlState(), $error->getMessage(), $error->error]);
+    }
+    public function testMessageFormatsAnUnselectedDistinctAggregate(): void
+    {
+        self::assertSame('Expression #2 of ORDER BY clause is not in SELECT list, contains aggregate function; this is incompatible with DISTINCT', QueryError::AggregateInDistinctOrder->message(2));
+        self::assertSame('HY000', QueryError::AggregateInDistinctOrder->sqlState());
+    }
+
+}

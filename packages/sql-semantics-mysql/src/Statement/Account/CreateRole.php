@@ -7,13 +7,16 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE ROLE [IF NOT EXISTS] role, …` (8.0+): a request to create roles, which are locked accounts.
  *
+ * Unconditional definitions require distinct, nonanonymous account identities.
+ * With IF NOT EXISTS, anonymous and repeated operands can be skipped and remain
+ * part of the complete request.
  * Mirrors PT_create_role. Rule: MYSQL-CREATE-ROLE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-role.html. Status: Implemented.
  *
@@ -26,7 +29,7 @@ final class CreateRole implements Statement
     use Snapshot;
 
     /**
-     * @var list<AccountName> The roles in order
+     * @var non-empty-list<AccountName> The roles in order
      */
     public readonly array $roles;
 
@@ -37,6 +40,9 @@ final class CreateRole implements Statement
     public function __construct(public readonly bool $ifNotExists, array $roles)
     {
         $this->roles = Check::listOf($roles, AccountName::class, 'CREATE ROLE names at least one role.', 1);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($this->ifNotExists, $this->roles);
+        Check::input($problem === null, $problem ?? 'A role definition has consistent account identities.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

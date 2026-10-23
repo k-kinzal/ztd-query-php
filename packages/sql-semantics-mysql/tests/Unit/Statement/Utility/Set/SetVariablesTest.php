@@ -36,7 +36,7 @@ final class SetVariablesTest extends TestCase
 
     public function testDeriveStatementDerivesEveryItem(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET @a = b, @@x = c', []);
+        $set = (new Semantics(Dialect::MySql))->analyze('SET @a = b, @@sort_buffer_size = c', []);
         self::assertInstanceOf(SetVariables::class, $set->statement);
         self::assertCount(1, $set->facts->diagnostics);
         self::assertNull($set->shape());

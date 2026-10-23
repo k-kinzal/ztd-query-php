@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '8');
  *     [$type->name(), $type->length] // => ['BIT', '8']
  */
-final class Elementary implements TypeName
+final class Elementary implements DeclaredName
 {
     use Snapshot;
 

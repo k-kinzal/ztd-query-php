@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers FLUSH.

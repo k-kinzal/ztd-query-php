@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE, ALTER and DROP DATABASE.
@@ -77,16 +77,36 @@ final class DatabaseRule
                 $names->optional($form->node(2)),
                 $this->options($form->node(3)),
             ),
-            'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => new UpgradeDatabaseName($names->identifier($form->node(2))),
+            'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => $this->upgrade($form),
             'drop: DROP DATABASE if_exists ident', 'drop_database_stmt: DROP DATABASE if_exists ident' => new DropDatabase($options->present($form->node(2)), $names->identifier($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
     }
 
     /**
+     * Separates the legacy directory marker from its decoded name component.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the name has no legacy directory interpretation
+     */
+    public function upgrade(Form $form): UpgradeDatabaseName
+    {
+        $name = $this->lowering->names->decoded($form->node(2));
+        $suffix = substr($name->value, 9);
+        if (!str_starts_with($name->value, '#mysql50#') || !\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName::valid($suffix)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName($name), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        $legacy = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name($suffix)), $form->node(2));
+
+        return new UpgradeDatabaseName($this->lowering->leaves->record($legacy));
+    }
+
+    /**
      * Lowers an option list: a node of `opt_create_database_options`, `create_database_options` or `alter_database_options`.
      *
      * @return list<DatabaseOption>
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When an encryption operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function options(Node $list): array
@@ -108,6 +128,8 @@ final class DatabaseRule
     /**
      * Lowers one option: a node of `create_database_option` or `alter_database_option`.
      *
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When an encryption operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function option(Node $option): DatabaseOption
@@ -129,18 +151,24 @@ final class DatabaseRule
      * Lowers READ ONLY.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When the value converts to neither 0 nor 1
      */
     public function readOnly(Form $form): DatabaseReadOnly
     {
         $this->lowering->options->present($form->node(2));
+        $value = $this->lowering->numbers->ternary($form->node(3));
+        if ($value !== null && !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '1')) {
+            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: READ ONLY accepts 0, 1 or DEFAULT.', 0, new \SqlParser\Parser\SyntaxException($form->node(3)->tokens()[0], [], ''));
+        }
 
-        return new DatabaseReadOnly($this->lowering->numbers->ternary($form->node(3)));
+        return new DatabaseReadOnly($value);
     }
 
     /**
      * Lowers ENCRYPTION: a node of `default_encryption`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the input does not denote Y or N
      */
     public function encryption(Node $encryption): DatabaseEncryption
     {
@@ -151,6 +179,14 @@ final class DatabaseRule
         $this->lowering->options->present($form->node(0));
         $this->lowering->options->present($form->node(2));
 
-        return new DatabaseEncryption($this->lowering->literals->text($form->node(3)));
+        $text = $this->lowering->literals->bytes($form->node(3));
+        $value = \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::fromOperand($text);
+        if ($value === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), (new \SqlSemantics\Construction\SourceRanges())->span($encryption)[1] ?? 0);
+        }
+
+        $spelling = $text === $value->value ? null : $this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text));
+
+        return new DatabaseEncryption($this->lowering->leaves->record($value), $spelling);
     }
 }

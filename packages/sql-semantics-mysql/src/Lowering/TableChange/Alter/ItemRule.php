@@ -99,6 +99,8 @@ final class ItemRule
      * Lowers one action: a node of `alter_list_item`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function item(Node $item): AlterCommand
     {
@@ -127,7 +129,7 @@ final class ItemRule
         $definitions = $this->lowering->tableDefinitions;
 
         return match (self::SIMPLE[$form->signature] ?? throw ImplementationGap::production($form)) {
-            'constraint' => new AddConstraint($definitions->tableElement($form->node(1))),
+            'constraint' => new AddConstraint((new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule($this->lowering))->element($form->node(1))),
             'disable' => new ToggleKeys(false),
             'enable' => new ToggleKeys(true),
             'rename' => $this->rename($form),

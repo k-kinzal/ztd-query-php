@@ -40,6 +40,20 @@ final class Numeral implements Node
     }
 
     /**
+     * Tells whether the spelling is a NUM token: decimal digits up to 2147483647.
+     *
+     * Leading zeros are retained and do not change the token's range. This is
+     * a lexical domain, independent of the value an individual option permits.
+     */
+    public function isIntegerToken(): bool
+    {
+        $digits = ltrim($this->text, '0');
+
+        return !$this->hexadecimal && preg_match('/\A[0-9]+\z/', $this->text) === 1
+            && (strlen($digits) < 10 || (strlen($digits) === 10 && strcmp($digits, '2147483647') <= 0));
+    }
+
+    /**
      * Writes the number, a hexadecimal one in the spelling its digit count permits.
      */
     public function render(Output $out): void

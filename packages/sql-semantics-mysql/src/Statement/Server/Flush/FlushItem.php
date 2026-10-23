@@ -33,6 +33,16 @@ final class FlushItem implements Node
     public function __construct(public readonly FlushOption $option, public readonly ?Text $channel = null)
     {
         Check::input($channel === null || $option === FlushOption::RelayLogs, 'FOR CHANNEL follows RELAY LOGS only.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
+    }
+
+    /**
+     * Answers the item's definition-time notice for the selected release.
+     */
+    public function deprecation(\SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::FlushQueryCache;
+        return $this->option === FlushOption::QueryCache && $notice->warnedIn($release) ? $notice : null;
     }
 
     /**

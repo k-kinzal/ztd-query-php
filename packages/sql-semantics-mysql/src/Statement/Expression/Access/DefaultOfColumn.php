@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the column
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = DEFAULT(a)');
- *     $query->statement->where->right->column->name->value // => 'a'
+ *     $query->statement->query->where->right->column->name->value // => 'a'
  */
 final class DefaultOfColumn implements Scalar
 {
@@ -36,6 +36,7 @@ final class DefaultOfColumn implements Scalar
      */
     public function __construct(public readonly ColumnUse $column)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -61,8 +61,8 @@ final class RoutineCallsTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull);
-        $count = (new RoutineCalls())->result(new FunctionCall(new Name('abs')), [], $derivation);
-        $named = (new RoutineCalls())->result(new FunctionCall(new Name('abs'), [new CallArgument(new NumberLiteral('1'), new Name('x'))]), [$int], $derivation);
+        $count = (new RoutineCalls())->result(new FunctionCall(new Name('regexp_like')), [], $derivation);
+        $named = (new RoutineCalls())->result(new FunctionCall(new Name('regexp_like'), [new CallArgument(new NumberLiteral('1'), new Name('x')), new CallArgument(new NumberLiteral('2'))]), [$int, $int], $derivation);
         $reserved = (new RoutineCalls())->result(new FunctionCall(new Name('internal_use_terminology_previous')), [], $derivation);
 
         self::assertInstanceOf(Invalid::class, $count->type);
@@ -73,4 +73,54 @@ final class RoutineCallsTest extends TestCase
         self::assertInstanceOf(ReservedFunction::class, $reserved->type->cause);
         self::assertCount(3, $derivation->facts()->diagnostics);
     }
+
+    public function testResultRejectsAReservedFunctionWhateverItsArguments(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $int = new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull);
+        $reserved = (new RoutineCalls())->result(new FunctionCall(new Name('convert_cpu_id_mask'), [new CallArgument(new NumberLiteral('1'), null), new CallArgument(new NumberLiteral('2'), null)]), [$int, $int], $derivation);
+
+        self::assertInstanceOf(Invalid::class, $reserved->type);
+        self::assertInstanceOf(ReservedFunction::class, $reserved->type->cause);
+    }
+
+    public function testResultTypesAStoredFunctionTheSessionHolds(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), functions: ['d.f' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $operation = $semantics->analyze('SELECT f(1), g(1)', $semantics->context(null, true, new \SqlSemantics\Contract\SearchPath('d'), $settings));
+        $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
+
+        [$first, $second] = $select->items;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $first);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $second);
+
+        self::assertSame([Known::class, Dependent::class], [$operation->facts->scalar($first->expression)->type::class, $operation->facts->scalar($second->expression)->type::class]);
+    }
+
+    public function testSignatureReportsNativeConstraintsWithoutDerivingOperands(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $call = new FunctionCall(new Name('ST_SRID'), [new CallArgument(new NumberLiteral('1')), new CallArgument(new NumberLiteral('4326'))]);
+        $fact = (new RoutineCalls())->signature($call, $derivation);
+        self::assertInstanceOf(Invalid::class, $fact?->type);
+        self::assertInstanceOf(WrongArgumentCount::class, $fact->type->cause);
+        self::assertSame([$fact->type->cause], $derivation->facts()->diagnostics);
+    }
+    public function testResultKeepsLegacyStoredFunctionWidthsThroughAnAssignment(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51');
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), functions: ['d.f' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11)]);
+        $operation = $semantics->analyze('SELECT @a := f()', $semantics->context(null, true, new \SqlSemantics\Contract\SearchPath('d'), $settings));
+        $type = $operation->field(0)->type;
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $type->descriptor);
+        self::assertSame(11, $type->descriptor->metadataLength());
+    }
+
 }

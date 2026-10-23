@@ -1,0 +1,85 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\Query\Structure;
+
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Statement\Query;
+
+/**
+ * Checks the grammar position of a query submitted as a statement.
+ *
+ * Legacy subqueries and INSERT sources admit no-FROM filters that standalone
+ * SELECT does not. Their bodies remain valid query objects. Observed on an
+ * isolated MySQL 5.7.44 server and checked against the shipped parser profiles.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class StatementQuery
+{
+    /**
+     * Rejects forms whose syntax exists only in a query operand position.
+     */
+    public function check(Query $query): void
+    {
+        Check::input($this->problem($query) === null, 'A statement query cannot combine ALL and DISTINCT in one query block.');
+        foreach ($this->blocks($query) as $block) {
+            Check::input(!$block instanceof OrderedSetOperation, 'An ordered legacy set operation belongs to a subquery only.');
+            if ($block instanceof Select) {
+                Check::input($block->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
+                Check::input($block->procedure === null || $block->from !== null, 'A standalone PROCEDURE ANALYSE query requires a FROM clause.');
+            }
+        }
+    }
+
+    /**
+     * Finds contradictory quantifiers on the statement query's own block spine.
+     * Expression subqueries and unreferenced definitions have separate roles.
+     */
+    public function problem(Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict
+    {
+        foreach ($this->blocks($query) as $block) {
+            if ($block instanceof Select && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, $block->options, true) && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $block->options, true)) {
+                return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Answers whether the statement's query blocks need modern no-FROM syntax.
+     */
+    public function requiresModern(Query $query): bool
+    {
+        foreach ($this->blocks($query) as $block) {
+            if ($block instanceof Select && $block->from === null && ($block->where !== null || $block->groupBy !== null || $block->having !== null)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Collects statement-level bodies without entering scalar subqueries or CTE definitions.
+     *
+     * @return non-empty-list<Query>
+     */
+    public function blocks(Query|LeadingUnion $query): array
+    {
+        return match (true) {
+            $query instanceof QueryExpression => $this->blocks($query->body),
+            $query instanceof ParenthesizedQuery, $query instanceof QueryStatement => $this->blocks($query->query),
+            $query instanceof SetOperation, $query instanceof LeadingUnion => [...$this->blocks($query->left), ...$this->blocks($query->right)],
+            default => [$query],
+        };
+    }
+}

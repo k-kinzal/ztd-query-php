@@ -7,7 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
-use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Snapshot;
@@ -30,9 +32,9 @@ final class AddConstraint implements AlterCommand
     use Snapshot;
 
     /**
-     * @param TableElement $element The key or constraint
+     * @param IndexDefinition|ForeignKey|CheckConstraint $element The key or constraint
      */
-    public function __construct(public readonly TableElement $element)
+    public function __construct(public readonly IndexDefinition|ForeignKey|CheckConstraint $element)
     {
     }
 
@@ -41,7 +43,7 @@ final class AddConstraint implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
-        (new ElementFacts())->element($this->element, $derivation, $scope);
+        (new ElementFacts())->element($this->element, $derivation, $scope, typeNotices: true);
     }
 
     /**

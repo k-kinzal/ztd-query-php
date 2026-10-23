@@ -11,10 +11,10 @@ use SqlSemantics\Platform\MySql\Rules\Routine\BlockFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A BEGIN ... END compound statement with its declarations, statements and optional label.
@@ -23,12 +23,14 @@ use SqlSemantics\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/begin-end.html.
  *
  * @visibility public
+ * @example Refusing a connection explanation as a program member
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: [new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading a labeled block
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work');
  *     $block = $create->statement->body;
  *     [$block->label->value, count($block->declarations), count($block->statements)] // => ['work', 1, 1]
  */
-final class Block implements ProgramStatement
+final class Block implements Flow\FunctionBody
 {
     use Snapshot;
 

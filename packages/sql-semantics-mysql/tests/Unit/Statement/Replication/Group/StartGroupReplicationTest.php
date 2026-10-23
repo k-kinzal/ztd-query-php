@@ -10,19 +10,22 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Statement\Operation;
 
 #[CoversClass(StartGroupReplication::class)]
 #[Medium]
 final class StartGroupReplicationTest extends TestCase
 {
-    public function testDeriveStatementReportsALongPassword(): void
+    public function testDeriveStatementAcceptsExplicitCredentials(): void
     {
-        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'");
+        self::assertSame([], $start->facts->diagnostics);
+    }
 
-        self::assertEquals([new RefusedSetting(ReplicationError::GroupPasswordTooLong)], $start->facts->diagnostics);
+    public function testRenderRequiresConsistentCredentials(): void
+    {
+        $this->expectExceptionMessage('Group recovery credentials require a nonempty user with a password of at most 32 bytes.');
+        new StartGroupReplication([new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('p'))]);
     }
 
     public function testDeriveStatementRejectsMySql56(): void

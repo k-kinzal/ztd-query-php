@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `LOCK {TABLE | TABLES} t [[AS] alias] lock_type, …`: a request to lock tables for the session.
@@ -33,7 +33,7 @@ final class LockTables implements Statement
     use Snapshot;
 
     /**
-     * @var list<TableLock> The locked tables in written order; at least one
+     * @var non-empty-list<TableLock> The locked tables in written order; at least one
      */
     public readonly array $locks;
 
@@ -44,16 +44,20 @@ final class LockTables implements Statement
     public function __construct(array $locks)
     {
         $this->locks = Check::listOf($locks, TableLock::class, 'LOCK TABLES locks at least one table.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Records the resolution of each table and reports a repeated alias.
+     * Records the resolution of each table and reports a repeated alias; each LOW_PRIORITY WRITE warns that it is deprecated.
      */
     public function deriveStatement(Derivation $derivation): void
     {
         $tables = [];
         foreach ($this->locks as $lock) {
             $tables[] = [$lock, $lock->table, $lock->alias];
+            if ($lock->mode === LockMode::LowPriorityWrite) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::LowPriorityWrite, $derivation);
+            }
         }
         (new TableNames())->record($derivation, $tables);
     }

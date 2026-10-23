@@ -38,10 +38,11 @@ final class SetCharacterSet implements SetItem
     }
 
     /**
-     * Derives nothing: the name is resolved by the server.
+     * Resolves an explicitly named character set before assignment preparation.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Utility\SetEncoding())->derive($this, $derivation);
     }
 
     /**

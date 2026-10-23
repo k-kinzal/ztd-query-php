@@ -7,10 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SET TRANSACTION: the isolation level and access mode of later transactions.
@@ -60,6 +60,7 @@ final class SetTransaction implements Statement
         }
         Check::input(count($kinds) === count($written), 'SET TRANSACTION writes at most one characteristic of each kind.');
         $this->characteristics = $written;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

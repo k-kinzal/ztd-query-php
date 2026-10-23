@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Program\StatementRule;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
@@ -42,6 +41,24 @@ use SqlSemantics\Statement\Node as StatementNode;
 #[Medium]
 final class StatementRuleTest extends TestCase
 {
+    public function testAdministrativeRefusalKeepsCredentialsUntilInvocation(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() START GROUP_REPLICATION PASSWORD = 'p'");
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart::class, $operation->statement->body);
+    }
+
+    public function testRejectedKeepsLoadOutsideTheStoredInstructionDomain(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, '8.4.7'))->analyze("CREATE PROCEDURE p() LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(1,2)");
+            self::fail('LOAD is prohibited in a stored program.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem::class, $failure->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, $failure->problem->rule);
+        }
+    }
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -51,6 +68,19 @@ final class StatementRuleTest extends TestCase
         yield 'mysql 5.7' => ['mysql-5.7.44'];
         yield 'mysql 8.0' => ['mysql-8.0.44'];
         yield 'mysql 9.1' => ['mysql-9.1.0'];
+    }
+
+    public function testSqlRefusesConnectionExplanationsAsProgramMembers(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() EXPLAIN FOR CONNECTION 0');
+    }
+
+    public function testRejectedRetainsDeferredWriteOperandsAsProgramMembers(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES(ROW(1, 2))');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows::class, $operation->statement->body);
     }
 
     #[DataProvider('providerStatementRoutesEveryKindOfProgramStatement')]
@@ -101,7 +131,7 @@ final class StatementRuleTest extends TestCase
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertSame([SetVariables::class, Select::class, SetVariables::class], array_map(static fn (StatementNode $node): string => $node::class, $statement->body->statements));
+        self::assertSame([SetVariables::class, \SqlSemantics\Platform\MySql\Statement\QueryRoot::class, SetVariables::class], array_map(static fn (StatementNode $node): string => $node::class, $statement->body->statements));
         self::assertSame('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN SET @a = 1; SELECT 2 INTO @b; SET `new`.a = 3; END', $operation->toString());
         self::assertSame([], $operation->facts->diagnostics);
     }
@@ -111,7 +141,7 @@ final class StatementRuleTest extends TestCase
      */
     public static function providerEventLowersTheStatementOfAnEvent(): iterable
     {
-        yield 'an SQL statement in 5.6' => ['mysql-5.6.51', 'select 1', Select::class, 'SELECT 1'];
+        yield 'an SQL statement in 5.6' => ['mysql-5.6.51', 'select 1', \SqlSemantics\Platform\MySql\Statement\QueryRoot::class, 'SELECT 1'];
         yield 'a block in 5.7' => ['mysql-5.7.44', 'begin set @a = 1; end', Block::class, 'BEGIN SET @a = 1; END'];
         yield 'an IF in 8.0' => ['mysql-8.0.44', 'if 1 then set @a = 1; end if', IfStatement::class, 'IF 1 THEN SET @a = 1; END IF'];
         yield 'a CASE in 8.4' => ['mysql-8.4.7', 'case when 1 then set @a = 1; end case', SearchedCase::class, 'CASE WHEN 1 THEN SET @a = 1; END CASE'];

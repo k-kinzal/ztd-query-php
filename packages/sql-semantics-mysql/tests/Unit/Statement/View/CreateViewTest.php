@@ -18,13 +18,22 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 #[Medium]
 final class CreateViewTest extends TestCase
 {
+    public function testValueRejectsContradictoryExistencePolicies(): void
+    {
+        $definition = new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), ifNotExists: true);
+        self::assertSame($definition, (new CreateView($definition))->definition);
+        $this->expectExceptionMessage('CREATE VIEW cannot combine OR REPLACE with IF NOT EXISTS.');
+        new CreateView($definition, true);
+    }
+
     public function testDeriveStatementDeclaresTheView(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a, NULL AS b');
         $table = $create->declarations()[0];
 
-        self::assertSame('a', $table->columns[0]->name->value);
-        self::assertFalse($table->complete);
+        self::assertSame(['a', 'b'], [$table->columns[0]->name->value, $table->columns[1]->name->value]);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), [], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable), $table->columns[1]->type);
+        self::assertTrue($table->complete);
     }
 
     public function testDeriveStatementReportsTheProblems(): void

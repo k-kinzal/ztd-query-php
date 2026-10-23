@@ -32,6 +32,8 @@ final class OrderedSetOperationTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT 1 AS x UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x LIMIT 3)', []);
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -40,6 +42,7 @@ final class OrderedSetOperationTest extends TestCase
         $union = $subquery->query;
         self::assertInstanceOf(OrderedSetOperation::class, $union);
 
+        self::assertInstanceOf(Select::class, $union->right);
         self::assertNotNull($union->right->limit);
         self::assertNotNull($union->limit);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($union->orderBy[0]->expression)->resolution);
@@ -54,7 +57,7 @@ final class OrderedSetOperationTest extends TestCase
 
         $this->expectExceptionMessage('A set operation ordered after the clauses of its last SELECT needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($union))]));
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ScalarSubquery($union))])));
     }
 
     public function testRenderWritesTheOrderingAfterTheLockingClauseOfTheLastSelect(): void
@@ -62,7 +65,9 @@ final class OrderedSetOperationTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
 
         self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->analyze('select (select 1 union select a from t for update order by 1) as v')->toString());
-        self::assertInstanceOf(QueryExpression::class, $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement);
+        $root = $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(QueryExpression::class, $root->query);
     }
 
     public function testRejectsALastSelectWithoutClausesOfItsOwn(): void

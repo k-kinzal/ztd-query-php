@@ -83,4 +83,22 @@ final class StatementSequenceTest extends TestCase
         self::assertSame('SELECT 1; SET @a = 1;', (new Lexical())->join($out->pieces()));
         self::assertSame('CREATE PROCEDURE p() BEGIN SELECT 1; BEGIN END; END', $semantics->analyze('create procedure p() begin select 1; begin end; end')->toString());
     }
+    public function testMemberRejectsAClientOnlyBinlogStatement(): void
+    {
+        $this->expectExceptionMessage('BINLOG is a top-level client statement, not a stored program member.');
+        (new StatementSequence())->member(new \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent(new Text('A')));
+    }
+
+    public function testMemberRejectsATransactionBeginInTheBlockPosition(): void
+    {
+        $this->expectExceptionMessage('BEGIN in a stored program introduces a block; use START TRANSACTION for a transaction.');
+        (new StatementSequence())->member(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin());
+    }
+
+    public function testMemberRetainsStartTransaction(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('START TRANSACTION')->statement;
+        self::assertSame($statement, (new StatementSequence())->member($statement));
+    }
+
 }

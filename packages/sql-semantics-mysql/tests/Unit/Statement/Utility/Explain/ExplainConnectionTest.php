@@ -30,9 +30,19 @@ final class ExplainConnectionTest extends TestCase
         self::assertSame('EXPLAIN FORMAT = `json` FOR CONNECTION 7', (new Semantics(Dialect::MySql))->analyze('explain format = json for connection 7')->toString());
     }
 
+    public function testDeriveStatementRejectsAnOversizedDecimalConnection(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Only integers are allowed');
+
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
+    }
+
     public function testRefusesAModifierWithOptions(): void
     {
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');
-        new ExplainConnection(new Numeral('1'), new Name('JSON'), false, ExplainModifier::Extended);
+        new ExplainConnection(new Numeral('1'), new Name('JSON'), ExplainModifier::Extended);
     }
+
+
 }

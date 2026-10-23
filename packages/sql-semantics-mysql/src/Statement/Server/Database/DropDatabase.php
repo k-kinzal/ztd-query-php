@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP {DATABASE | SCHEMA} [IF EXISTS] name`: a request to remove a database and every table in it.
@@ -34,6 +34,7 @@ final class DropDatabase implements Statement
      */
     public function __construct(public readonly bool $ifExists, public readonly Name $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

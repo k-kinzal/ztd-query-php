@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a 5.x ODBC escape
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM { oj t LEFT JOIN u ON t.a = u.a }');
- *     $query->statement->from->word->value // => 'oj'
+ *     $query->statement->query->from->word->value // => 'oj'
  */
 final class EscapedRelation implements Relation
 {

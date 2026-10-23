@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Access;
  * @visibility public
  * @example Reading the boolean mode
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE MATCH (a) AGAINST ('x' IN BOOLEAN MODE)");
- *     $query->statement->where->mode // => \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextMode::Boolean
+ *     $query->statement->query->where->mode // => \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextMode::Boolean
  */
 enum FullTextMode
 {

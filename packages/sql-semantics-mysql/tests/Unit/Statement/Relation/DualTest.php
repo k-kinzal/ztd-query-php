@@ -20,10 +20,11 @@ final class DualTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM DUAL');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Dual::class, $operation->statement->from);
-        self::assertSame([], $operation->facts->relation($operation->statement->from)->shape->slots);
-        self::assertTrue($operation->facts->relation($operation->statement->from)->shape->complete());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(Dual::class, $operation->statement->query->from);
+        self::assertSame([], $operation->facts->relation($operation->statement->query->from)->shape->slots);
+        self::assertTrue($operation->facts->relation($operation->statement->query->from)->shape->complete());
     }
 
     public function testRenderWritesTheKeyword(): void

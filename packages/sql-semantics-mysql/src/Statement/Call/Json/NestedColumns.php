@@ -34,7 +34,7 @@ final class NestedColumns implements JsonTableColumn
     use Snapshot;
 
     /**
-     * @var list<JsonTableColumn> The nested columns in order
+     * @var non-empty-list<JsonTableColumn> The nested columns in order
      */
     public readonly array $columns;
 

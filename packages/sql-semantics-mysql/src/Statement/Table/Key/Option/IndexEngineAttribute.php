@@ -28,6 +28,7 @@ final class IndexEngineAttribute implements IndexOption
      */
     public function __construct(public readonly Text $attribute, public readonly bool $secondary = false)
     {
+        \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }
 
     /**

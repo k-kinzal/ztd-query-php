@@ -14,7 +14,8 @@ use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
  * Rule: CORE-COLUMN-LOOKUP-001 (per-position part). A qualifier admits an
  * occurrence by its alias, or, without an alias, by its relation name and the
  * schema the qualifier writes. Within an admitted occurrence the declared
- * slots are searched before the implicit ones. An occurrence whose shape is
+ * slots are searched before the implicit ones; an unqualified name skips the
+ * hidden slots of either kind. An occurrence whose shape is
  * open, or which has a slot whose name depends on missing inputs, can still
  * own a name it does not visibly have.
  *
@@ -52,7 +53,10 @@ final class LookupLevel
                 }
             }
             if ($matches === []) {
-                foreach ($relation->implicit as $implicit) {
+                foreach ($relation->implicit as $index => $implicit) {
+                    if ($qualifier === null && in_array(count($relation->shape->slots) + $index, $relation->hidden, true)) {
+                        continue;
+                    }
                     foreach ($implicit->names as $candidate) {
                         if ($names->equal($candidate->value, $column->value)) {
                             $matches = [new ResolvedColumn($relation->relation, $implicit->slot, $depth)];

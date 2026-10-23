@@ -18,8 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSERT and REPLACE of every release.
@@ -92,14 +92,17 @@ final class InsertRule
         $priority = $this->priority($form->node($lock));
         $skip = $ignore === null ? false : $this->lowering->options->present($form->node($ignore));
         $alias = $layout[6] === null ? null : $this->alias($form->node($layout[6]));
-        $updates = $layout[7] === null ? [] : $this->updates($form->node($layout[7]));
+        $clause = $layout[7] === null ? null : $form->node($layout[7]);
+        $hints = $this->lowering->hints($form->token(0));
         if ($form->node->children[$source] instanceof Node) {
             [$columns, $body] = (new InsertSourceRule($this->lowering))->source($form->node($source));
+            $updates = $clause === null ? [] : (is_array($body) ? (new RetainedUpdates($this->lowering))->read($clause) : $this->updates($clause));
 
-            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, $alias, $updates);
+            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
 
-        return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
+        $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
+        return $this->set(new InsertInto($replace, $priority, $skip, $target, hints: $hints), $form->node($source + 1), $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**
@@ -113,33 +116,65 @@ final class InsertRule
         if (!$replace && $form->signature !== 'insert: INSERT insert_lock_option opt_ignore insert2 insert_field_spec opt_insert_update') {
             throw ImplementationGap::production($form);
         }
+        $hints = $this->lowering->hints($form->token(0));
         $offset = $replace ? 0 : 1;
         $target = $this->target($form->node(2 + $offset));
         $priority = $this->priority($form->node(1));
         $skip = !$replace && $this->lowering->options->present($form->node(2));
-        $updates = $replace ? [] : $this->updates($form->node(5));
+        $clause = $replace ? null : $form->node(5);
         $spec = $this->lowering->form($form->node(3 + $offset));
         if ($spec->signature === 'insert_field_spec: SET ident_eq_list') {
-            return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($spec->node(1)), null, $updates);
+            $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
+            return $this->set(new InsertInto($replace, $priority, $skip, $target, hints: $hints), $spec->node(1), null, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
         [$columns, $body] = (new InsertSourceRule($this->lowering))->source($spec->node);
+        $updates = $clause === null ? [] : (is_array($body) ? (new RetainedUpdates($this->lowering))->read($clause) : $this->updates($clause));
 
-        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, null, $updates);
+        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, null, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**
      * Builds the statement of rows or of a query.
      *
-     * @param list<InsertedRow>|Query $body
-     * @param list<Assignment> $updates
+     * @param list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>|Query $body
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $updates
+     * @throws \SqlSemantics\Construction\RejectedInput When a reached call has an invalid identity or signature
      */
-    public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates): Statement
+    public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates, int $end = 0): Statement
     {
         if ($body instanceof Query) {
+            $updates = \SqlSemantics\Diagnostic\Check::listOf($updates, Assignment::class, 'Query-source assignments were lowered as scalar values.');
+            $used = (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) ?? $body;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($used);
+            if ($problem !== null) {
+                $origin = $this->lowering->origins->publish()->of($body);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $origin === null ? 0 : $origin->offset + $origin->length, false);
+            }
+            if ((new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($body) !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery($into, $body, $updates)), $end, false);
+            }
             return new InsertQuery($into, $body, $updates);
         }
 
-        return new InsertRows($into, $body, $alias, $updates);
+        if ($body !== [] && (array_filter($updates, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) !== [] || (new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $body) !== null || array_filter($body, static fn ($row): bool => $row instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow) !== [])) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($into, $body, $alias, $updates)), $end, false);
+        }
+        return new InsertRows($into, array_values(array_filter($body, static fn ($row): bool => $row instanceof InsertedRow)), $alias, \SqlSemantics\Diagnostic\Check::listOf($updates, Assignment::class, 'Ordinary INSERT holds scalar assignments.'));
+    }
+
+    /**
+     * Builds an ordinary SET write or retains the complete refused template.
+     *
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $updates Duplicate-key assignments
+     * @throws \SqlSemantics\Construction\RejectedInput When any assignment has a non-scalar role
+     */
+    public function set(InsertInto $into, Node $list, ?RowAlias $alias, array $updates, int $end): InsertSet
+    {
+        $assignments = (new RetainedUpdates($this->lowering))->assignments($list);
+        if (array_filter([...$assignments, ...$updates], static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) !== []) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet($into, $assignments, $alias, $updates)), $end, false);
+        }
+        return new InsertSet($into, \SqlSemantics\Diagnostic\Check::listOf($assignments, Assignment::class, 'Ordinary INSERT holds scalar assignments.'), $alias, \SqlSemantics\Diagnostic\Check::listOf($updates, Assignment::class, 'Ordinary INSERT holds scalar assignments.'));
     }
 
     /**

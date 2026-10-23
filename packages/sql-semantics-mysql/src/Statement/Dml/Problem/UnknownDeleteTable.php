@@ -16,8 +16,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the unknown table
- *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE u FROM t');
- *     $delete->facts->diagnostics[0]->message() // => "Unknown table 'u' in MULTI DELETE"
+ *     $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')));
+ *     $problem->message() // => "Unknown table 'u' in MULTI DELETE"
  */
 final class UnknownDeleteTable implements Diagnostic
 {

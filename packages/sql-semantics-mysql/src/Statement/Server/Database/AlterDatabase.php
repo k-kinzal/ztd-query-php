@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER {DATABASE | SCHEMA} [name] option …`: a request to change the options of a database.
@@ -32,7 +32,7 @@ final class AlterDatabase implements Statement
     use Snapshot;
 
     /**
-     * @var list<DatabaseOption> The options in written order; at least one
+     * @var non-empty-list<DatabaseOption> The options in written order; at least one
      */
     public readonly array $options;
 
@@ -44,13 +44,15 @@ final class AlterDatabase implements Statement
     public function __construct(public readonly ?Name $name, array $options)
     {
         $this->options = Check::listOf($options, DatabaseOption::class, 'ALTER DATABASE changes at least one option.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: a database is no relation.
+     * Resolves the character set and collation names without changing database state.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->derive($this->options, $derivation);
     }
 
     /**

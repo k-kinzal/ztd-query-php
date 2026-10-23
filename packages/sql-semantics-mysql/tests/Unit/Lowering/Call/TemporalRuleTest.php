@@ -29,6 +29,56 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 #[Medium]
 final class TemporalRuleTest extends TestCase
 {
+    public function testTimestampRetainsTheSiblingOfANonScalarOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT TIMESTAMPDIFF(DAY, ROW(1,2), (SELECT a FROM t))')->find('function_call_nonkeyword')[0];
+        $value = (new TemporalRule($lowering))->timestamp($lowering->form($node), TimestampOperation::Difference);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp::class, $value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $value->second);
+    }
+
+    public function testArithmeticRetainsBothOperandsAroundAnIntrinsicRowCondition(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT DATE_SUB(ROW(1,2), INTERVAL (SELECT a FROM t) DAY)')->find('function_call_nonkeyword')[0];
+        $value = (new TemporalRule($lowering))->arithmetic($lowering->form($node), true);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic::class, $value);
+        self::assertTrue($value->subtract);
+        self::assertSame(IntervalUnit::Day, $value->unit);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $value->quantity);
+    }
+
+    public function testExtractRetainsTheUnitAroundARowSource(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT EXTRACT(DAY FROM ROW(1,2))')->find('function_call_nonkeyword')[0];
+        $value = (new TemporalRule($lowering))->extract($lowering->form($node));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredExtract::class, $value);
+        self::assertSame(IntervalUnit::Day, $value->unit);
+    }
+
+    public function testGetFormatRetainsTheCompleteDeferredStandard(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT GET_FORMAT(DATE, CAST(EXTRACT(DAY FROM NULL) AT TIME ZONE '+00:00' AS DATETIME))")->find('function_call_nonkeyword')[0];
+        $value = (new TemporalRule($lowering))->getFormat($lowering->form($node));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredGetFormat::class, $value);
+        self::assertSame(TemporalFormat::Date, $value->format);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone::class, $value->standard);
+    }
+
     public function testClaimsTellsTheProductionsOfTheRule(): void
     {
         $platform = new Platform();
@@ -46,7 +96,7 @@ final class TemporalRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $list = $platform->parser($profile)->parse('SELECT UTC_TIME(2), CURRENT_DATE, SUBDATE(a, INTERVAL 1 DAY), EXTRACT(HOUR FROM a), GET_FORMAT(DATETIME, a), TIMESTAMPADD(SQL_TSI_DAY, 1, a), NOW()')->find('select_item_list')[0];
         $rule = new TemporalRule($lowering);
-        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar => $rule->call($lowering->form($node)), $list->find('function_call_nonkeyword'));
+        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand => $rule->call($lowering->form($node)), $list->find('function_call_nonkeyword'));
 
         self::assertEquals(new ClockCall(Clock::UtcTime, new Numeral('2')), $calls[0]);
         self::assertEquals(new ClockCall(Clock::CurrentDate, null, OptionalWords::Omitted), $calls[1]);
@@ -127,5 +177,15 @@ final class TemporalRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('SELECT GET_FORMAT(TIME, a)')->find('date_time_type')[0];
         self::assertSame(TemporalFormat::Time, (new TemporalRule($lowering))->format($node));
+    }
+    public function testClockKeepsAnIntrinsicPrecisionOutsideScalar(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT NOW(263)')->find('func_datetime_precision')[0];
+        $clock = (new TemporalRule($lowering))->clock(Clock::Now, $node);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock::class, $clock);
+        self::assertSame(7, $clock->problem()->precision);
     }
 }

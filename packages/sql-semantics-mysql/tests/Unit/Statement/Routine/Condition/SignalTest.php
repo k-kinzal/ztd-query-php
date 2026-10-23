@@ -19,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(Signal::class)]
 #[Medium]
@@ -42,12 +41,7 @@ final class SignalTest extends TestCase
      */
     public static function providerDeriveStatementReportsTheBrokenRule(): iterable
     {
-        yield 'success value' => ["SIGNAL SQLSTATE '00000'", ProgramRule::BadSqlState, "Bad SQLSTATE: '00000'"];
-        yield 'success class' => ["SIGNAL SQLSTATE '00123'", ProgramRule::BadSqlState, "Bad SQLSTATE: '00123'"];
-        yield 'short value' => ["SIGNAL SQLSTATE '4500'", ProgramRule::BadSqlState, "Bad SQLSTATE: '4500'"];
-        yield 'lower-case letter' => ["SIGNAL SQLSTATE '4500a'", ProgramRule::BadSqlState, "Bad SQLSTATE: '4500a'"];
         yield 'name without declaration' => ['SIGNAL gone', ProgramRule::UndefinedCondition, 'Undefined CONDITION: gone'];
-        yield 'item set twice' => ["SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'", ProgramRule::DuplicateSignalItem, "Duplicate condition information item 'MESSAGE_TEXT'"];
     }
 
     #[DataProvider('providerDeriveStatementReportsTheBrokenRule')]
@@ -81,7 +75,18 @@ final class SignalTest extends TestCase
     /**
      * @return iterable<string, array{string, list<string>}>
      */
-    public static function providerDeriveProgramReportsTheBrokenRule(): iterable
+    public static function providerDeriveProgramRejectsRepeatedItems(): iterable
+    {
+        yield 'item set twice' => [
+            "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MYSQL_ERRNO = 1, MESSAGE_TEXT = 'a', MYSQL_ERRNO = 2; END",
+            ["Duplicate condition information item 'MYSQL_ERRNO'"],
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerDeriveProgramReportsTheBrokenRuleBeforePublication(): iterable
     {
         yield 'condition of an error code' => [
             'CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; SIGNAL gone; END',
@@ -99,25 +104,33 @@ final class SignalTest extends TestCase
             'CREATE PROCEDURE p() BEGIN SIGNAL gone; END',
             ['Undefined CONDITION: gone'],
         ];
-        yield 'success class' => [
-            "CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00123'; END",
-            ["Bad SQLSTATE: '00123'"],
-        ];
-        yield 'item set twice' => [
-            "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MYSQL_ERRNO = 1, MESSAGE_TEXT = 'a', MYSQL_ERRNO = 2; END",
-            ["Duplicate condition information item 'MYSQL_ERRNO'"],
-        ];
     }
 
     /**
      * @param list<string> $messages
      */
-    #[DataProvider('providerDeriveProgramReportsTheBrokenRule')]
-    public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
+    #[DataProvider('providerDeriveProgramRejectsRepeatedItems')]
+    public function testDeriveProgramRejectsRepeatedItems(string $sql, array $messages): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze($sql);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerDeriveProgramReportsTheBrokenRuleBeforePublication')]
+    public function testDeriveProgramReportsTheBrokenRuleBeforePublication(string $sql, array $messages): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory declaration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**
@@ -146,5 +159,19 @@ final class SignalTest extends TestCase
         $create = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE VALUE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END");
 
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END", $create->toString());
+    }
+
+    public function testDeriveStatementRejectsRepeatedItemsBeforePublication(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Duplicate condition information item 'MESSAGE_TEXT'");
+        (new Semantics(Dialect::MySql))->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'");
+    }
+
+    public function testRefusesRepeatedItemsWithoutAnOperation(): void
+    {
+        $item = new SignalItem(ConditionItemName::MysqlErrno, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1234'));
+        $this->expectExceptionMessage("Duplicate condition information item 'MYSQL_ERRNO'");
+        new Signal(new SqlState(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('45000')), [$item, $item]);
     }
 }

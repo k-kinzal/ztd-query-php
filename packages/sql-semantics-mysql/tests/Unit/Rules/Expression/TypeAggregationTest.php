@@ -35,7 +35,7 @@ final class TypeAggregationTest extends TestCase
 
         self::assertEquals(new Known(new Decimal()), $aggregation->aggregate([new NullOnly(), new Known(new Integral(IntegralKind::Int)), new Known(new Decimal())]));
         self::assertInstanceOf(NullOnly::class, $aggregation->aggregate([new NullOnly()]));
-        self::assertEquals(new Choice([new Decimal(), new Character(CharacterKind::VarChar)]), $aggregation->aggregate([new Choice([new Integral(IntegralKind::Int), new Character(CharacterKind::Char)]), new Known(new Decimal())]));
+        self::assertEquals(new Choice([new Decimal(), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()]), $aggregation->aggregate([new Choice([new Integral(IntegralKind::Int), new Character(CharacterKind::Char)]), new Known(new Decimal())]));
     }
 
     public function testDistinctKeepsTheFirstOfEqualTypes(): void
@@ -49,11 +49,11 @@ final class TypeAggregationTest extends TestCase
         $json = new Elementary(ElementaryKind::Json);
 
         self::assertEquals(
-            [new Character(CharacterKind::LongText), new Spatial(SpatialKind::Geometry), new Binary(BinaryKind::Blob), new Character(CharacterKind::VarChar), new Temporal(TemporalKind::DateTime), $json],
+            [new Character(CharacterKind::LongText), new Spatial(SpatialKind::Geometry), new Binary(BinaryKind::Blob), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(), new Temporal(TemporalKind::DateTime), $json],
             [
                 $aggregation->merge($json, new Integral(IntegralKind::Int)),
                 $aggregation->merge(new Spatial(SpatialKind::Point), new Spatial(SpatialKind::Polygon)),
-                $aggregation->merge(new Binary(BinaryKind::VarBinary), new Character(CharacterKind::Text)),
+                $aggregation->merge(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true), new Character(CharacterKind::Text)),
                 $aggregation->merge(new Character(CharacterKind::Char), new Integral(IntegralKind::Int)),
                 $aggregation->merge(new Temporal(TemporalKind::Date), new Temporal(TemporalKind::Timestamp)),
                 $aggregation->merge($json, new Elementary(ElementaryKind::Json)),
@@ -83,6 +83,6 @@ final class TypeAggregationTest extends TestCase
 
     public function testTextSizeRanksTheTextTypes(): void
     {
-        self::assertSame([0, 1, 4], [(new TypeAggregation())->textSize(new Character(CharacterKind::VarChar)), (new TypeAggregation())->textSize(new Character(CharacterKind::TinyText)), (new TypeAggregation())->textSize(new Character(CharacterKind::LongText))]);
+        self::assertSame([0, 1, 4], [(new TypeAggregation())->textSize(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), (new TypeAggregation())->textSize(new Character(CharacterKind::TinyText)), (new TypeAggregation())->textSize(new Character(CharacterKind::LongText))]);
     }
 }

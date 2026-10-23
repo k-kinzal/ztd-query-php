@@ -48,7 +48,7 @@ final class ItemLayout
      *
      * @throws \SqlSemantics\Diagnostic\InvariantViolation When the node covers no token
      */
-    public function of(Node $expression): Layout
+    public function of(Node $expression, bool $leading = false): Layout
     {
         $layout = (new Layouts())->of($expression);
         $tokens = [];
@@ -60,7 +60,33 @@ final class ItemLayout
             }
         }
 
+        if ($leading && $this->release === GrammarRelease::MySql5651) {
+            $gap = ltrim($this->gap($expression->tokens()[0]->leading, ' ', $tokens[0]->text));
+            $tokens[0] = new Spelled($gap, $tokens[0]->text);
+        }
+
         return new Layout($tokens);
+    }
+
+    /**
+     * Decodes the name slots of a layout; string literals retain their bytes.
+     *
+     * The expression's typed rendering identifies name positions. The layout
+     * retains equivalent spelling in the same representation as semantic names,
+     * so another client character set cannot change the referenced identifiers.
+     */
+    public function names(Layout $layout, \SqlSemantics\Statement\Scalar $expression, \SqlSemantics\Contract\LanguageProfile $profile, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client): Layout
+    {
+        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($profile->grammar, $profile->lexical));
+        $expression->render($output);
+        $pieces = $output->canonical();
+        $tokens = [];
+        foreach ($layout->tokens as $index => $token) {
+            $text = ($pieces[$index]->kind ?? null) === \SqlSemantics\Rendering\PieceKind::Name ? (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($token->text, $client) : $token->text;
+            $tokens[] = new Spelled($token->gap, $text);
+        }
+
+        return new Layout($tokens, $layout->trail);
     }
 
     /**

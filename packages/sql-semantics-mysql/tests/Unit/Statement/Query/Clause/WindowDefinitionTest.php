@@ -23,13 +23,14 @@ final class WindowDefinitionTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('select a from t window w as (), v as (w)');
 
         self::assertSame('SELECT a FROM t WINDOW w AS (), v AS (w)', $operation->toString());
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame('v', $operation->statement->windows[1]->name->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertSame('v', $operation->statement->query->windows[1]->name->value);
     }
 
     public function testANameDefinedTwiceIsReported(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WINDOW w AS (), W AS ()');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WINDOW w AS (), W AS ()');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);

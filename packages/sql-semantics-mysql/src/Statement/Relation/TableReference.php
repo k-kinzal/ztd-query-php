@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rendering\LeadingDot;
+use SqlSemantics\Platform\MySql\Rules\Query\From\PartitionSelection;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
@@ -38,9 +39,9 @@ use SqlSemantics\Statement\Snapshot;
  *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['shop', 't', 'x']
  * @example Reading the partitions of a table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0, p1)');
- *     count($query->statement->from->partitions) // => 2
+ *     count($query->statement->query->from->partitions) // => 2
  */
-final class TableReference implements NamedRelation
+final class TableReference implements NamedRelation, TableSource
 {
     use Snapshot;
 
@@ -65,6 +66,7 @@ final class TableReference implements NamedRelation
      */
     public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], array $indexHints = [], public readonly ?TableSample $sample = null, public readonly AliasMark $mark = AliasMark::As, public readonly OptionalWords $dot = OptionalWords::Omitted)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($dot === OptionalWords::Omitted || $name->schema === null, 'Only a table name without database is written after a leading dot.');
         Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');
@@ -97,7 +99,10 @@ final class TableReference implements NamedRelation
             $derivation->scalar($this->sample->percentage, new Environment($derivation->context, $environment));
         }
 
-        return (new TableShapes())->named($this->name, $derivation, $environment);
+        $fact = (new TableShapes())->named($this->name, $derivation, $environment);
+        (new PartitionSelection())->check($this->partitions, $fact, $derivation);
+
+        return $fact;
     }
 
     /**

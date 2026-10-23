@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a spatial type
  *     (new \SqlSemantics\Platform\MySql\Statement\Type\Spatial(\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind::Point))->name() // => 'POINT'
  */
-final class Spatial implements TypeName
+final class Spatial implements DeclaredName
 {
     use Snapshot;
 

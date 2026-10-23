@@ -1,0 +1,171 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Command\Definition\Partition;
+
+use MySqlMemory\Command\Definition\Partition\PartitionDefinitions;
+use MySqlMemory\Dictionary\Partition\PartitionMethod;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(PartitionDefinitions::class)]
+#[Small]
+final class PartitionDefinitionsTest extends TestCase
+{
+    public function testNamesReadsHexadecimalAndWrappedCountsAsUnsignedValues(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query("CREATE TABLE d.t(a INT PRIMARY KEY) PARTITION BY KEY() PARTITIONS X'0b'");
+        $table = $session->instance->dictionary->schema('d')?->table('t');
+        self::assertNotNull($table);
+        self::assertCount(11, $table->definition->partitioning->partitions ?? []);
+        $session->query('DROP TABLE d.t');
+        $session->query('CREATE TABLE d.t(a INT PRIMARY KEY) PARTITION BY KEY() PARTITIONS 4294967297');
+        $table = $session->instance->dictionary->schema('d')?->table('t');
+        self::assertNotNull($table);
+        self::assertCount(1, $table->definition->partitioning->partitions ?? []);
+    }
+
+    public function testApplyIsDeferredUntilCreationAndPreservedInTheStoredDefinition(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t(a INT)');
+
+        $skipped = $session->query('CREATE TABLE IF NOT EXISTS d.t(a INT) PARTITION BY HASH(1)')[0];
+        $session->query('DROP TABLE d.t');
+        $refused = $session->run('CREATE TABLE IF NOT EXISTS d.t(a INT) PARTITION BY HASH(1)')[0];
+        $session->query('CREATE TABLE d.t(a INT) PARTITION BY HASH(a) PARTITIONS 2');
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $skipped);
+        self::assertInstanceOf(SqlError::class, $refused);
+        self::assertSame(1486, $refused->getCode());
+        self::assertNotNull($definition?->partitioning);
+        self::assertCount(2, $definition->partitioning->partitions);
+    }
+
+    public function testSourceRefusesAConstantPartitionFunctionWithoutCreatingTheTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('CREATE TABLE t(a INT) PARTITION BY HASH(1)');
+
+        self::assertSame([['Error', 1486, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed']], $session->diagnostics->conditions);
+        self::assertNull($session->instance->dictionary->table('d', 't'));
+    }
+
+    public function testPartitioningAnswersHowTheTableSplitsItsRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE h (a INT) PARTITION BY HASH (a) PARTITIONS 3');
+        $table = $session->instance->dictionary->table('d', 'h');
+
+        self::assertNotNull($table);
+        self::assertSame([PartitionMethod::Hash, ['p0', 'p1', 'p2']], [$table->definition->partitioning?->method, array_map(static fn ($partition): string => $partition->name, $table->definition->partitioning->partitions ?? [])]);
+    }
+
+    public function testPartitioningRefusesATemporaryTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1562);
+        $this->expectExceptionMessage('Cannot create temporary table with partitions');
+
+        $session->query('CREATE TEMPORARY TABLE t (a INT) PARTITION BY HASH (a)');
+    }
+
+    public function testMethodAnswersTheMethodOfAClause(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE r (a INT, b CHAR(2)) PARTITION BY RANGE COLUMNS (a, b) (PARTITION p0 VALUES LESS THAN (5, 'm'))");
+        $table = $session->instance->dictionary->table('d', 'r');
+
+        self::assertNotNull($table);
+        self::assertSame(PartitionMethod::RangeColumns, $table->definition->partitioning?->method);
+    }
+
+    public function testNamesRefusesRangeWithoutPartitions(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1492);
+        $this->expectExceptionMessage('For LIST partitions each partition must be defined');
+
+        $session->query('CREATE TABLE t (a INT) PARTITION BY LIST (a)');
+    }
+
+    public function testNamesRefusesAPartitionNamedTwice(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1517);
+        $this->expectExceptionMessage('Duplicate partition name p0');
+
+        $session->query('CREATE TABLE t (a INT) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN (10), PARTITION p0 VALUES LESS THAN (20))');
+    }
+
+    public function testSourceRefusesAColumnOfAnotherTypeThanAnInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1659);
+        $this->expectExceptionMessage("Field 'a' is of a not allowed type for this type of partitioning");
+
+        $session->query('CREATE TABLE t (a VARCHAR(5)) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN (10))');
+    }
+
+    public function testSourceRefusesAnExpressionThatIsNoInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1564);
+        $this->expectExceptionMessage('This partition function is not allowed');
+
+        $session->query('CREATE TABLE t (a INT) PARTITION BY RANGE (a / 2) (PARTITION p0 VALUES LESS THAN (10))');
+    }
+
+    public function testUniqueRefusesAUniqueKeyWithoutThePartitioningColumns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1503);
+        $this->expectExceptionMessage("A UNIQUE INDEX must include all columns in the table's partitioning function (prefixed columns are not considered).");
+
+        $session->query('CREATE TABLE t (a INT, b INT, UNIQUE (a)) PARTITION BY HASH (b)');
+    }
+
+    public function testTextWritesTheExpressionAsTheServerStoresIt(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (a INT) PARTITION BY RANGE (a + 1) (PARTITION p0 VALUES LESS THAN (1 + 1))');
+
+        $result1 = $session->query('SHOW CREATE TABLE a')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result1);
+        self::assertSame("CREATE TABLE `a` (\n  `a` int DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci\n/*!50100 PARTITION BY RANGE ((`a` + 1))\n(PARTITION p0 VALUES LESS THAN (2) ENGINE = InnoDB) */", $result1->rows[0][1]);
+    }
+    public function testKeyColumnsUsesANonnullableUniqueKey(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, b INT NOT NULL UNIQUE) PARTITION BY KEY() PARTITIONS 3');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table?->definition->partitioning);
+        self::assertSame([1], $table->definition->partitioning->columns);
+        self::assertCount(3, $table->definition->partitioning->partitions);
+    }
+}

@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Testing a column for NULL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a IS NOT NULL');
- *     $query->statement->where->negated // => true
+ *     $query->statement->query->where->negated // => true
  */
 final class NullTest implements Scalar
 {
@@ -43,6 +43,7 @@ final class NullTest implements Scalar
     public function __construct(public readonly Scalar $operand, public readonly bool $negated = false)
     {
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a NULL test needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

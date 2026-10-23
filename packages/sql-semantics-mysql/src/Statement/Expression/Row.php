@@ -17,37 +17,45 @@ use SqlSemantics\Statement\Type\Nullability;
 /**
  * A row constructor: `(expr, expr …)` or `ROW(expr, expr …)` (`Item_row`).
  *
- * The keyword ROW is optional and does not change the row, so it is not
- * part of the structure; the row is written in parentheses.
+ * The keyword ROW is optional and does not change the row. Its explicit
+ * spelling is retained by the keyword operand.
  *
  * Rule: MYSQL-ROW-001. Facts: a row of as many columns as elements; it can
- * be NULL when an element can. A row may appear only where a comparison,
- * IN or a row subquery takes it; elsewhere MYSQL-OPERAND-COLUMNS-001 reports
- * it. Terminates: the elements are strict parts.
+ * be NULL when an element can. Comparisons and IN explicitly accept rows.
+ * Stored program operand positions may retain them until a reached instruction
+ * applies MYSQL-OPERAND-COLUMNS-001. Ordinary scalar positions require Scalar
+ * and cannot accept a row. Terminates: the elements are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Comparing two rows
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE ROW(a, b) = (1, 2)');
- *     [count($query->statement->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
+ *     [count($query->statement->query->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
  */
-final class Row implements Scalar
+final class Row implements RowOperand
 {
     use Snapshot;
 
     /**
-     * @var non-empty-list<Scalar> The elements in order; at least two
+     * @var non-empty-list<Scalar|RowOperand> The elements in order; at least two
      */
     public readonly array $elements;
 
     /**
-     * @param list<Scalar> $elements The elements in order; at least two
+     * @param list<Scalar|RowOperand> $elements The elements in order; at least two
      * @param OptionalWords $keyword Whether the optional ROW keyword is written
      */
     public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted)
     {
-        $this->elements = Check::listOf($elements, Scalar::class, 'A row constructor has at least two elements.', 2);
+        $checked = Check::listOf($elements, \SqlSemantics\Statement\Operand::class, 'A row constructor has at least two elements.', 2);
+        $accepted = [];
+        foreach ($checked as $element) {
+            Check::input($element instanceof Scalar || $element instanceof RowOperand, 'A row element is a scalar or another row.');
+            $accepted[] = $element;
+        }
+        $this->elements = $accepted;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

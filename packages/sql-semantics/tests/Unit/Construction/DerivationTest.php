@@ -7,6 +7,7 @@ namespace Tests\Unit\Construction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Facade\Semantics;
@@ -20,6 +21,7 @@ use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -34,6 +36,29 @@ use SqlSemantics\Statement\Shape\RowShape;
 #[Medium]
 final class DerivationTest extends TestCase
 {
+    public function testBindReferencePreservesOccurrenceIdentity(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $name = new QualifiedName(new Name('t'));
+        $input = new TableInput($name);
+        $derivation->bindReference($name, $input);
+        $derivation->bindReference($name, $input);
+
+        self::assertSame($input, $derivation->facts()->referencedRelation($name));
+        self::assertNull($derivation->facts()->referencedRelation(new QualifiedName(new Name('t'))));
+    }
+
+    public function testParameterPositionUsesOccurrenceIdentityAndWrittenOrder(): void
+    {
+        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]), parameters: [$first, $second]);
+
+        self::assertSame(1, $derivation->parameterPosition($second));
+        self::assertSame(0, $derivation->parameterPosition($first));
+        self::assertNull($derivation->parameterPosition(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()));
+    }
+
     public function testEnvironmentSeesNoRelationAndTheContext(): void
     {
         $context = (new Semantics(Dialect::Sqlite))->context([]);
@@ -158,6 +183,27 @@ final class DerivationTest extends TestCase
         self::assertSame($declared->declarations()[0], $qualified->table);
     }
 
+    public function testDeferredWithholdsTheProblemsOfADefinitionUntilItsFirstUse(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $definition = new Star();
+        $problem = new MissingColumn(new Name('a'));
+        $environment = new Environment($derivation->context, null, [], [new CommonBinding(new Name('c'), $definition, new RowShape([]))]);
+
+        $result = $derivation->deferred($definition, static function () use ($derivation, $problem): string {
+            $derivation->report($problem);
+
+            return 'derived';
+        });
+        $withheld = $derivation->facts()->diagnostics;
+        $derivation->table(new QualifiedName(new Name('c')), $environment);
+        $derivation->table(new QualifiedName(new Name('c')), $environment);
+
+        self::assertSame('derived', $result);
+        self::assertSame([], $withheld);
+        self::assertSame([$problem], $derivation->facts()->diagnostics);
+    }
+
     public function testDeclareRecordsADeclarationTheStatementProvides(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -197,6 +243,22 @@ final class DerivationTest extends TestCase
         $derivation->report($problem);
 
         self::assertSame([$problem], $derivation->facts()->diagnostics);
+    }
+
+    public function testWarnRecordsAConditionThatIsNoProblem(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $warning = new class () implements Warning {
+            public function message(): string
+            {
+                return 'deprecated';
+            }
+        };
+
+        $derivation->warn($warning);
+
+        self::assertSame([$warning], $derivation->facts()->warnings);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testFactsFreezesEverythingRecorded(): void
@@ -289,4 +351,132 @@ final class DerivationTest extends TestCase
         self::assertTrue($derivation->facts()->covers($select));
         self::assertNotSame($environment, $derivation->environment());
     }
+
+    public function testProgramDerivesAStoredStatementWhileInProgramHolds(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1');
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testInProgramIsFalseOutsideAStoredProgram(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+
+        self::assertFalse($derivation->inProgram());
+    }
+
+    public function testStoredInstructionNoticesKeepTheirOwnersWithoutSourceLocations(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $parsed = $semantics->analyze('CREATE PROCEDURE p() BEGIN ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin; ALTER TABLE t CONVERT TO CHARSET missing; END');
+        $operation = new \SqlSemantics\Statement\Operation($parsed->context, $parsed->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $operation->statement->body);
+        $instructions = $operation->statement->body->statements;
+        $warnings = $operation->facts->warnings;
+
+        self::assertSame([], $operation->sources->origins);
+        self::assertCount(2, $warnings);
+        self::assertSame($instructions, array_map($operation->facts->warningInstruction(...), $warnings));
+        self::assertSame(array_map(static fn ($warning): string => $warning->message(), $parsed->facts->warnings), array_map(static fn ($warning): string => $warning->message(), $warnings));
+    }
+
+    public function testWritesRecordsTheColumnsTheRowsOfAQueryAreWrittenTo(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $query = new Select([new Star()]);
+        $derivation->writes($query, [], true);
+
+        self::assertSame([[], true], $derivation->written($query));
+    }
+
+    public function testWrittenIsNullForAQueryWhoseRowsAreNotWritten(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+
+        self::assertNull($derivation->written(new Select([new Star()])));
+    }
+
+    public function testReadingWarningsMergesSourceNoticesAtExplicitBoundaries(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $operation = $semantics->analyze('SELECT !full, BINARY full');
+        $derivation = new Derivation($operation->context, $operation->sources);
+        $derivation->statement($operation->statement);
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->value], array_map(static fn ($warning): string => $warning->message(), $derivation->readingWarnings()));
+    }
+
+    public function testOrderWarningsOrdersOnlyTheRequestedInputScope(): void
+    {
+        $node = new Select([new Star()]);
+        $sources = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($node, 0, 10)]);
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]), $sources);
+        $before = self::createStub(Warning::class);
+        $after = self::createStub(Warning::class);
+        $derivation->warn($after, $node);
+        $derivation->warn($before, $node, false);
+        $derivation->orderWarnings($node);
+
+        self::assertSame([$before, $after], $derivation->facts()->warnings);
+    }
+
+
+    public function testStoredKeepsProgramMemberOwnershipAndRestoresTheOuterContext(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $outer = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block();
+        $inner = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block();
+        $first = self::createStub(Warning::class);
+        $second = self::createStub(Warning::class);
+        $third = self::createStub(Warning::class);
+        $derivation->stored($outer, static function () use ($derivation, $inner, $first, $second, $third): void {
+            self::assertTrue($derivation->inProgram());
+            $derivation->warn($first);
+            $derivation->stored($inner, static function () use ($derivation, $second): void {
+                $derivation->warn($second);
+            });
+            self::assertTrue($derivation->inProgram());
+            $derivation->warn($third);
+        });
+        self::assertFalse($derivation->inProgram());
+        self::assertSame($outer, $derivation->facts()->warningInstruction($first));
+        self::assertSame($inner, $derivation->facts()->warningInstruction($second));
+        self::assertSame($outer, $derivation->facts()->warningInstruction($third));
+    }
+
+    public function testStoredRestoresScopeWhenTheMemberCannotBeDerived(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $member = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block();
+        $warning = self::createStub(Warning::class);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('scope exit');
+        try {
+            $derivation->stored($member, static function (): void {
+                throw new RuntimeException('scope exit');
+            });
+        } finally {
+            self::assertFalse($derivation->inProgram());
+            $derivation->warn($warning);
+            self::assertNull($derivation->facts()->warningInstruction($warning));
+        }
+    }
+
+    public function testDeferredCanKeepOnlyTheWarningsOfAnUnusedRole(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $kept = self::createStub(Warning::class);
+        $omitted = self::createStub(Warning::class);
+        $node = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1');
+        $derivation->deferred($node, static function () use ($derivation, $kept, $omitted): void {
+            $derivation->warn($kept);
+            $derivation->warn($omitted);
+        }, static fn (Warning $warning): bool => $warning === $kept);
+        $derivation->warn($omitted);
+        self::assertSame([$kept, $omitted], $derivation->facts()->warnings);
+    }
+
 }

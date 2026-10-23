@@ -77,22 +77,22 @@ final class WeightRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function call(Form $form): Scalar
+    public function call(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
-        $subject = $this->lowering->expressions->expression($form->node(2));
+        $subject = $this->lowering->expressions->operand($form->node(2));
         if (isset(self::CASTS[$form->signature])) {
             [$cast, $position] = self::CASTS[$form->signature];
             $length = $this->length($form->node($position));
             $levels = count($form->node->children) > 7 ? $this->levels($form->node(6)) : [[], null];
 
-            return new WeightString($subject, $cast, $length, ...$levels);
+            return $this->composed($subject, $cast, $length, ...$levels);
         }
         $numbers = $this->lowering->numbers;
 
         return match ($form->signature) {
-            'function_call_conflict: WEIGHT_STRING_SYM ( expr opt_ws_levels )' => new WeightString($subject, null, null, ...$this->levels($form->node(3))),
-            'function_call_conflict: WEIGHT_STRING_SYM ( expr )' => new WeightString($subject),
-            'function_call_conflict: WEIGHT_STRING_SYM ( expr , ulong_num , ulong_num , ulong_num )' => new WeightStringParameters(
+            'function_call_conflict: WEIGHT_STRING_SYM ( expr opt_ws_levels )' => $this->composed($subject, null, null, ...$this->levels($form->node(3))),
+            'function_call_conflict: WEIGHT_STRING_SYM ( expr )' => $this->composed($subject),
+            'function_call_conflict: WEIGHT_STRING_SYM ( expr , ulong_num , ulong_num , ulong_num )' => $this->parameters(
                 $subject,
                 $numbers->numeral($form->node(4)),
                 $numbers->numeral($form->node(6)),
@@ -103,9 +103,29 @@ final class WeightRule
     }
 
     /**
+     * Retains the subject's role alongside cast and level operands.
+     *
+     * @param list<WeightLevel> $levels The complete LEVEL list
+     */
+    public function composed(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $subject, ?WeightCast $cast = null, ?Numeral $length = null, array $levels = [], ?WeightLevelRange $range = null): WeightString|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWeightString
+    {
+        return $subject instanceof Scalar ? new WeightString($subject, $cast, $length, $levels, $range) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWeightString($subject, $cast, $length, $levels, $range);
+    }
+
+    /**
+     * Retains all numeric options without converting a non-scalar subject.
+     */
+    public function parameters(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $subject, Numeral $length, Numeral $weights, Numeral $flags): WeightStringParameters|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWeightParameters
+    {
+        return $subject instanceof Scalar ? new WeightStringParameters($subject, $length, $weights, $flags) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWeightParameters($subject, $length, $weights, $flags);
+    }
+
+    /**
      * Lowers the length of the cast: a node of ws_nweights or ws_num_codepoints.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand is not an integer token
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When the cast length is zero
      */
     public function length(Node $length): Numeral
     {
@@ -114,7 +134,12 @@ final class WeightRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->numbers->numeral($form->node(1));
+        $value = $this->lowering->numbers->integral($form->node(1));
+        if ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '0')) {
+            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: WEIGHT_STRING requires a positive cast length.', 0, new \SqlParser\Parser\SyntaxException($form->node(1)->tokens()[0], [], ''));
+        }
+
+        return $value;
     }
 
     /**

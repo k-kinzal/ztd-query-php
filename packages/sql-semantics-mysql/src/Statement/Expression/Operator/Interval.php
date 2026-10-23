@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the quantity and the unit
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a + INTERVAL 2 DAY_HOUR');
- *     [$query->statement->where->interval->quantity->text, $query->statement->where->interval->unit->value] // => ['2', 'DAY_HOUR']
+ *     [$query->statement->query->where->interval->quantity->text, $query->statement->query->where->interval->unit->value] // => ['2', 'DAY_HOUR']
  */
 final class Interval implements Node
 {

@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * @visibility public
  * @example Reading the operator of a comparison
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a != 1');
- *     $query->statement->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual
+ *     $query->statement->query->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual
  */
 enum ComparisonOperator: string
 {

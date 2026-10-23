@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rendering;
 
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LexicalSettings;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Rules\Strings;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -25,16 +27,26 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Codec implements \SqlSemantics\Contract\Codec
+final class Codec implements \SqlSemantics\Contract\StringCodec
 {
     private readonly Keywords $keywords;
 
     /**
      * @param GrammarRelease $release The grammar release whose keywords decide quoting
+     * @param LexicalSettings $lexical The settings used to spell decoded string bytes
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The character set used to write decoded names
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, private readonly LexicalSettings $lexical = new LexicalSettings(''), private readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null)
     {
         $this->keywords = new Keywords($release);
+    }
+
+    /**
+     * Quotes decoded bytes using the escape rule of the output profile.
+     */
+    public function quote(string $value): string
+    {
+        return (new Strings())->encode($value, !$this->lexical->noBackslashEscapes);
     }
 
     /**
@@ -42,10 +54,33 @@ final class Codec implements \SqlSemantics\Contract\Codec
      */
     public function name(Name $name, NameUse $use): string
     {
+        if (str_contains($name->value, "\0") && ($use === NameUse::Alias || $use === NameUse::Label)) {
+            return $this->quote($this->spelling($name->value));
+        }
         if (preg_match('/\A[A-Za-z][A-Za-z0-9_]*\z/', $name->value) === 1 && !$this->keywords->reserved($name->value)) {
             return $name->value;
         }
 
-        return '`' . str_replace('`', '``', $name->value) . '`';
+        return '`' . str_replace('`', '``', $this->spelling($name->value)) . '`';
     }
+
+    /**
+     * Encodes identifier spelling while preserving its quote marks and escapes.
+     *
+     * @throws \SqlSemantics\Diagnostic\UnrepresentableName When the client character set cannot represent the name
+     */
+    public function spelling(string $text): string
+    {
+        if ($this->client === null) {
+            return $text;
+        }
+        $encoding = new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding();
+        $bytes = $encoding->encode($text, $this->client);
+        if ($encoding->decode($bytes, $this->client) !== $text) {
+            throw new \SqlSemantics\Diagnostic\UnrepresentableName('A name cannot be written in ' . $this->client->name . '.');
+        }
+
+        return $bytes;
+    }
+
 }

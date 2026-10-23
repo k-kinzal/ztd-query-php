@@ -15,6 +15,32 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\ModifierRule;
 #[Medium]
 final class ModifierRuleTest extends TestCase
 {
+    public function testCompletedRetainsTheFirstUnknownOptionBeforeLaterSyntax(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+        $sql = 'ALTER TABLE t ALGORITHM=bad TRAILING';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile);
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
+        self::assertTrue($notices[0][1]->aborts);
+        self::assertSame('bad is not an ALGORITHM the server knows.', $notices[0][1]->problem->message());
+    }
+
+    public function testOptionRefusesUnknownInputBeforeConstruction(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('bad is not an ALGORITHM the server knows.');
+        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM=bad');
+    }
+
+    public function testOptionRefusesANameAbsentFromTheRelease(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('INSTANT is not an ALGORITHM the server knows.');
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t ALGORITHM=INSTANT');
+    }
+
     public function testOptionLowersTheValue(): void
     {
         self::assertSame('ALTER TABLE t ALGORITHM = INSTANT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM INSTANT')->toString());
@@ -37,7 +63,14 @@ final class ModifierRuleTest extends TestCase
 
     public function testModifierLowersValidation(): void
     {
-        self::assertSame('ALTER TABLE t WITHOUT VALIDATION', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITHOUT VALIDATION')->toString());
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t WITHOUT VALIDATION', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t WITHOUT VALIDATION')->toString());
+    }
+
+    public function testModifierRetainsTheStandaloneValidationCondition(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('The alteration retains an action with an invocation-time condition.');
+        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITHOUT VALIDATION');
     }
 
     public function testValidationLowersTheOptionOfExchange(): void

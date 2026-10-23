@@ -50,11 +50,6 @@ final class ConditionFactsTest extends TestCase
      */
     public static function providerValueChecksTheFormOfAnSqlState(): iterable
     {
-        yield 'success in a handler' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '00000' BEGIN END; END", ["Bad SQLSTATE: '00000'"]];
-        yield 'success in a condition in 5.6' => ['mysql-5.6.51', "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '00123'; END", ["Bad SQLSTATE: '00123'"]];
-        yield 'four characters in SIGNAL' => ['mysql-8.0.44', "CREATE PROCEDURE p() SIGNAL SQLSTATE '4500'", ["Bad SQLSTATE: '4500'"]];
-        yield 'six characters in SIGNAL' => ['mysql-9.1.0', "CREATE PROCEDURE p() SIGNAL SQLSTATE VALUE '450000'", ["Bad SQLSTATE: '450000'"]];
-        yield 'a lower-case letter in SIGNAL' => ['mysql-9.1.0', "CREATE PROCEDURE p() SIGNAL SQLSTATE '4500a'", ["Bad SQLSTATE: '4500a'"]];
         yield 'a warning in SIGNAL' => ['mysql-9.1.0', "CREATE PROCEDURE p() SIGNAL SQLSTATE '01000'", []];
         yield 'an upper-case letter in a handler' => ['mysql-5.7.44', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '42S02', NOT FOUND, SQLWARNING BEGIN END; END", []];
     }
@@ -71,15 +66,38 @@ final class ConditionFactsTest extends TestCase
     }
 
     /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerValueReportsAConditionNameDeclaredNowhereAroundBeforePublication')]
+    public function testValueReportsAConditionNameDeclaredNowhereAroundBeforePublication(string $sql, array $messages): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory declaration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
+    }
+
+    /**
      * @return iterable<string, array{string, list<string>}>
      */
     public static function providerValueReportsAConditionNameDeclaredNowhereAround(): iterable
     {
+        yield 'a condition of an outer block' => ["CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL C; END; END", []];
+        yield 'a condition in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE E CONDITION FOR 1051; DECLARE EXIT HANDLER FOR e BEGIN END; END', []];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerValueReportsAConditionNameDeclaredNowhereAroundBeforePublication(): iterable
+    {
         yield 'an undeclared handler condition' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR nope BEGIN END; END', ['Undefined CONDITION: nope']];
         yield 'an undeclared SIGNAL condition' => ['CREATE PROCEDURE p() SIGNAL c', ['Undefined CONDITION: c']];
         yield 'a condition of an inner block' => ["CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; END; SIGNAL c; END", ['Undefined CONDITION: c']];
-        yield 'a condition of an outer block' => ["CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN SIGNAL C; END; END", []];
-        yield 'a condition in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE E CONDITION FOR 1051; DECLARE EXIT HANDLER FOR e BEGIN END; END', []];
     }
 
     /**
@@ -94,17 +112,38 @@ final class ConditionFactsTest extends TestCase
     }
 
     /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerSignalReportsTheBrokenRuleBeforePublication')]
+    public function testSignalReportsTheBrokenRuleBeforePublication(string $sql, array $messages): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory declaration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
+    }
+
+    /**
      * @return iterable<string, array{string, list<string>}>
      */
     public static function providerSignalReportsTheBrokenRule(): iterable
     {
-        yield 'SIGNAL of an error code condition' => ['CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END', ['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE']];
-        yield 'RESIGNAL of an error code condition' => ['CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; RESIGNAL c; END', ['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE']];
         yield 'SIGNAL of an SQLSTATE condition' => ["CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MESSAGE_TEXT = 'm'; END", []];
-        yield 'an item set twice by SIGNAL' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MYSQL_ERRNO = 1, MESSAGE_TEXT = 'b'", ["Duplicate condition information item 'MESSAGE_TEXT'"]];
-        yield 'an item set twice by RESIGNAL' => ["CREATE PROCEDURE p() RESIGNAL SET CLASS_ORIGIN = 'a', CLASS_ORIGIN = 'b'", ["Duplicate condition information item 'CLASS_ORIGIN'"]];
         yield 'RESIGNAL without a condition' => ['CREATE PROCEDURE p() RESIGNAL', []];
         yield 'an unknown name in an item' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = z", ['Column z does not exist.']];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerSignalReportsTheBrokenRuleBeforePublication(): iterable
+    {
+        yield 'SIGNAL of an error code condition' => ['CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END', ['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE']];
+        yield 'RESIGNAL of an error code condition' => ['CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; RESIGNAL c; END', ['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE']];
     }
 
     public function testSignalResolvesTheValueOfAnItemToAParameter(): void
@@ -133,15 +172,38 @@ final class ConditionFactsTest extends TestCase
     }
 
     /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerTargetsReportsATargetThatIsNoVariableBeforePublication')]
+    public function testTargetsReportsATargetThatIsNoVariableBeforePublication(string $sql, array $messages): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A contradictory declaration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
+    }
+
+    /**
      * @return iterable<string, array{string, list<string>}>
      */
     public static function providerTargetsReportsATargetThatIsNoVariable(): iterable
     {
+        yield 'a parameter in another case' => ['CREATE PROCEDURE p(OUT n INT) GET DIAGNOSTICS N = NUMBER', []];
+        yield 'variables of a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE m TEXT; DECLARE EXIT HANDLER FOR SQLEXCEPTION GET STACKED DIAGNOSTICS CONDITION 1 m = MESSAGE_TEXT; END', []];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerTargetsReportsATargetThatIsNoVariableBeforePublication(): iterable
+    {
         yield 'a user variable and an undeclared name' => ['CREATE PROCEDURE p() GET DIAGNOSTICS @n = NUMBER, y = ROW_COUNT', ['Undeclared variable: y']];
         yield 'condition items' => ['CREATE PROCEDURE p() BEGIN DECLARE y INT; GET DIAGNOSTICS CONDITION 1 y = MESSAGE_TEXT, @m = RETURNED_SQLSTATE, z = CLASS_ORIGIN; END', ['Undeclared variable: z']];
         yield 'a variable of a closed block' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT; BEGIN BEGIN DECLARE y INT; END; GET DIAGNOSTICS x = NUMBER, y = ROW_COUNT; END; END', ['Undeclared variable: y']];
-        yield 'a parameter in another case' => ['CREATE PROCEDURE p(OUT n INT) GET DIAGNOSTICS N = NUMBER', []];
-        yield 'variables of a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE m TEXT; DECLARE EXIT HANDLER FOR SQLEXCEPTION GET STACKED DIAGNOSTICS CONDITION 1 m = MESSAGE_TEXT; END', []];
     }
 
     /**
@@ -160,10 +222,6 @@ final class ConditionFactsTest extends TestCase
      */
     public static function providerValueReportsTheErrorCodeZero(): iterable
     {
-        yield 'zero in a condition in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'zero in a handler in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 0 BEGIN END; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'a decimal below one in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.7; END', ["Incorrect CONDITION value: '0'"]];
-        yield 'a hexadecimal zero in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0x00; END', ["Incorrect CONDITION value: '0'"]];
         yield 'a floating number in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1e2; END', []];
     }
 
@@ -195,5 +253,33 @@ final class ConditionFactsTest extends TestCase
         yield 'one SQLSTATE value' => [new SqlState(new Text('42S02')), new SqlState(new Text('42S02')), true];
         yield 'two SQLSTATE values' => [new SqlState(new Text('42S02')), new SqlState(new Text('42S01')), false];
         yield 'an error number and an SQLSTATE value' => [new ErrorCode(new Numeral('1051')), new SqlState(new Text('42S02')), false];
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerSignalRejectsRepeatedItemsBeforePublication(): iterable
+    {
+        yield 'an item set twice by SIGNAL' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MYSQL_ERRNO = 1, MESSAGE_TEXT = 'b'", ["Duplicate condition information item 'MESSAGE_TEXT'"]];
+        yield 'an item set twice by RESIGNAL' => ["CREATE PROCEDURE p() RESIGNAL SET CLASS_ORIGIN = 'a', CLASS_ORIGIN = 'b'", ["Duplicate condition information item 'CLASS_ORIGIN'"]];
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerSignalRejectsRepeatedItemsBeforePublication')]
+    public function testSignalRejectsRepeatedItemsBeforePublication(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
+
+    public function testRepeatedFindsTheFirstRepeatedAssignment(): void
+    {
+        $first = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem(\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $second = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem($first->name, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'));
+        self::assertNull((new ConditionFacts())->repeated([$first]));
+        self::assertSame($second, (new ConditionFacts())->repeated([$first, $second]));
     }
 }

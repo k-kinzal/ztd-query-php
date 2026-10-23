@@ -1,0 +1,156 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Rules\Typing\Builtin;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Invocation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\MathResults;
+use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Type\Known;
+
+#[CoversClass(MathResults::class)]
+#[Small]
+final class MathResultsTest extends TestCase
+{
+    public function testRoundingOperandReadsTheDecimalBoundBeforeLegacySignDisplayExpansion(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, new NumberLiteral('1.123'));
+        $fact = $derivation->scalar($operand, $derivation->environment());
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        $call = new Invocation([$fact->type->descriptor, Domain::integer()], [$operand, new NumberLiteral('2')], new Settings(Collation::binary()), $derivation);
+        $rules = new MathResults();
+        self::assertSame(6, $rules->roundingOperand($call)->length);
+        self::assertSame([6, 5], [$rules->rounded($call)->length, $rules->legacyTruncated($call)->length]);
+    }
+
+    public function testRulesTypePiAndTheRealFunctions(): void
+    {
+        $rules = (new MathResults())->rules();
+
+        self::assertEquals(Domain::double(8, 6), $rules['PI'](new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::double(23), $rules['SQRT'](new Invocation([Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
+
+    public function testSameKeepsTheClassOfTheArgument(): void
+    {
+        self::assertEquals(Domain::integer(Field::LongLong, 11), (new MathResults())->same(Domain::integer(Field::Long, 11)));
+        self::assertEquals(Domain::double(23), (new MathResults())->same(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)));
+    }
+
+    public function testAbsolutePropagatesExpandedLegacyWidthsIntoArithmetic(): void
+    {
+        $settings = new Settings(Collation::known('latin1_swedish_ci'), userVariables: ['v' => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer(), Collation::known('utf8mb4_general_ci'))]);
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $operation = $semantics->analyze('SELECT ABS(@v),ABS(@v)+0', $semantics->context([], session: $settings));
+        $absolute = $operation->field(0)->type;
+        $added = $operation->field(1)->type;
+
+        self::assertInstanceOf(Known::class, $absolute);
+        self::assertInstanceOf(Domain::class, $absolute->descriptor);
+        self::assertSame(80, $absolute->descriptor->metadataLength());
+        self::assertSame(80, $absolute->descriptor->value()->length);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 67)), $added);
+    }
+
+    public function testIntegralIsABigIntUpToEighteenDigits(): void
+    {
+        self::assertEquals(Domain::integer(Field::LongLong, 21), (new MathResults())->integral(Domain::decimal(2, 1)));
+        self::assertEquals(Domain::decimal(19, 0), (new MathResults())->integral(Domain::decimal(19, 1)));
+    }
+
+    public function testRoundedTakesTheDecimalsOfALiteral(): void
+    {
+        $number = new NumberLiteral('1.234');
+
+        self::assertEquals(Domain::decimal(4, 2), (new MathResults())->rounded(new Invocation([Domain::decimal(4, 3), Domain::integer()], [$number, new NumberLiteral('2')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::decimal(4, 3), (new MathResults())->rounded(new Invocation([Domain::decimal(4, 3), Domain::integer()], [$number, new StringLiteral(['x'])], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::double(23), (new MathResults())->rounded(new Invocation([Domain::double()], [new NumberLiteral('1e0')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
+
+    public function testNearestMakesAnIntegerABigintAndKeepsTheDecimalsOfADecimal(): void
+    {
+        $number = new NumberLiteral('1.55');
+
+        self::assertEquals(Domain::integer(Field::LongLong, 21), (new MathResults())->nearest(new Invocation([Domain::integer(Field::Long, 11), Domain::integer()], [new NumberLiteral('15'), new NumberLiteral('1')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::decimal(3, 1), (new MathResults())->nearest(new Invocation([Domain::decimal(3, 2), Domain::integer()], [$number, new NumberLiteral('1')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::decimal(3, 2), (new MathResults())->nearest(new Invocation([Domain::decimal(3, 2), Domain::integer()], [$number, new NumberLiteral('5')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
+
+    public function testRulesTypeLogAsADouble(): void
+    {
+        $rules = (new MathResults())->rules();
+
+        self::assertEquals(Domain::double(23), $rules['LOG'](new Invocation([Domain::integer(), Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
+
+    public function testLegacyMakesAbsOfAnIntegerABigintAndFloorAsLongAsItsArgumentIn57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ABS(CAST(1 AS UNSIGNED)), FLOOR(1.5)');
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
+        self::assertInstanceOf(Select::class, $statement);
+        $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $operation->facts->scalar($item->expression)->type : null, $statement->items);
+
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 1, true)), new Known(Domain::integer(Field::LongLong, 4))], $items);
+    }
+
+    public function testTruncatedKeepsTheIntegralDigitsOfADecimal(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $results = new MathResults();
+
+        self::assertEquals([Domain::decimal(9, 2), Domain::decimal(7, 0), Domain::decimal(10, 3), Domain::integer(Field::LongLong, 21), Domain::double(23)], [
+            $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new NumberLiteral('2')], $settings, $derivation)),
+            $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, new NumberLiteral('2'))], $settings, $derivation)),
+            $results->truncated(new Invocation([Domain::decimal(10, 3), Domain::integer()], [new NumberLiteral('1.234'), new NumberLiteral('9')], $settings, $derivation)),
+            $results->truncated(new Invocation([Domain::integer(Field::Tiny, 4), Domain::integer()], [new NumberLiteral('1'), new NumberLiteral('2')], $settings, $derivation)),
+            $results->truncated(new Invocation([new Domain(Kind::Date, Field::Date, 10), Domain::integer()], [new NumberLiteral('1'), new NumberLiteral('2')], $settings, $derivation)),
+        ]);
+    }
+
+    public function testLegacyTruncatedKeepsTheLengthOfAnIntegerIn57(): void
+    {
+        $call = new Invocation([Domain::integer(Field::Tiny, 4), Domain::integer()], [new NumberLiteral('1'), new NumberLiteral('2')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])));
+        $real = new Invocation([Domain::double(), Domain::integer()], [new NumberLiteral('1e0'), new NumberLiteral('2')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])));
+
+        self::assertEquals([Domain::integer(Field::LongLong, 4), new Domain(Kind::Double, Field::Double, 19, 2, false, null, [], Coercibility::Numeric)], [(new MathResults())->legacyTruncated($call), (new MathResults())->legacyTruncated($real)]);
+    }
+
+    public function testPlacesReadsAConstantSecondArgument(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $places = static fn (Scalar $node): ?int => (new MathResults())->places(new Invocation([Domain::decimal(4, 3), Domain::integer()], [new NumberLiteral('1.234'), $node], $settings, $derivation));
+
+        self::assertSame([2, 0, 2, 2], [$places(new NumberLiteral('2')), $places(new NullLiteral()), $places(new NumberLiteral('1.6')), $places(new NumberLiteral('2.5e0'))]);
+    }
+
+    public function testModuloTypesModAsTheOperator(): void
+    {
+        $call = new Invocation([Domain::integer(Field::LongLong, 2), Domain::decimal(2, 1)], [new NumberLiteral('7'), new NumberLiteral('2.5')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+
+        self::assertEquals(Domain::decimal(2, 1), (new MathResults())->modulo($call));
+    }
+}

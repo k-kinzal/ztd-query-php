@@ -5,10 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -47,6 +54,8 @@ final class TimestampCall implements Scalar
      */
     public function __construct(public readonly TimestampOperation $operation, public readonly IntervalUnit $unit, public readonly Scalar $first, public readonly Scalar $second)
     {
+        Check::input(in_array($unit, [IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true), 'TIMESTAMPADD and TIMESTAMPDIFF take a simple interval unit.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -54,9 +63,17 @@ final class TimestampCall implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        (new Arguments())->one($this->first, $derivation, $environment);
+        $first = (new Arguments())->one($this->first, $derivation, $environment);
         $second = (new Arguments())->one($this->second, $derivation, $environment);
         $type = $this->operation === TimestampOperation::Add ? (new ResultTyping())->dateArithmetic($second->type, $this->unit) : new Known(TypeClass::Integer->descriptor());
+        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $domain = (new Precision())->domain($second->type);
+        if ($this->operation === TimestampOperation::Add && $domain !== null) {
+            $moments = new Moments(Settings::of($derivation->context));
+            $type = new Known($moments->shifted($domain->value(), $this->unit, $moments->quantity((new Precision())->domain($first->type)), $legacy));
+        } elseif ($this->operation === TimestampOperation::Difference) {
+            $type = new Known(Domain::integer(Field::LongLong, 21));
+        }
 
         return new ScalarFact($type, Nullability::Nullable);
     }

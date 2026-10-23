@@ -18,9 +18,9 @@ use SqlSemantics\Statement\Snapshot;
  * character_set_results to `cs` and collation_connection to `co`, or to
  * the default collation of `cs`; `SET NAMES DEFAULT` maps the three to the
  * default character set. The character set and collation are names the
- * server resolves; the context holds no character set catalog, so a
- * collation of another character set (ER_COLLATION_CHARSET_MISMATCH) is not
- * detected. Facts: none. Terminates: the parts are leaves.
+ * server resolves. Unknown names are grammar-stage conditions; explicit
+ * charset/collation mismatches are contextualization conditions. DEFAULT
+ * retains its session-dependent interpretation. Facts: ordered diagnostics. Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-names.html.
  * Status: Implemented.
  *
@@ -42,10 +42,11 @@ final class SetNames implements SetItem
     }
 
     /**
-     * Derives nothing: the names are resolved by the server.
+     * Resolves explicit encoding names and records their ordered notices.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Utility\SetEncoding())->derive($this, $derivation);
     }
 
     /**

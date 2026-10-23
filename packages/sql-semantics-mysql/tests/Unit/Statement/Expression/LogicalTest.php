@@ -14,8 +14,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -32,7 +32,7 @@ final class LogicalTest extends TestCase
         $and = new Logical(LogicalOperator::And, new NumberLiteral('1'), new NumberLiteral('2'));
         $or = new Logical(LogicalOperator::Or, new NumberLiteral('1'), new NullLiteral());
 
-        self::assertEquals(new Known(new Integral(IntegralKind::BigInt)), $derivation->scalar($and, $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 1)), $derivation->scalar($and, $derivation->environment())->type);
         self::assertSame(Nullability::NotNull, $derivation->scalar($and, $derivation->environment())->nullability);
         self::assertSame(Nullability::Nullable, $derivation->scalar($or, $derivation->environment())->nullability);
     }
@@ -58,5 +58,21 @@ final class LogicalTest extends TestCase
         $this->expectExceptionMessage('The right operand of OR needs a grouping to keep its place.');
 
         new Logical(LogicalOperator::Or, new NumberLiteral('1'), new Logical(LogicalOperator::Or, new NumberLiteral('2'), new NumberLiteral('3')));
+    }
+
+    public function testSymbolicXorIsRejectedBeforeRendering(): void
+    {
+        $this->expectExceptionMessage('XOR has no symbolic spelling.');
+
+        new Logical(LogicalOperator::Xor, new NumberLiteral('1'), new NumberLiteral('0'), true);
+    }
+
+    public function testDeriveScalarRejectsSymbolicOrInConcatenationMode(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'), ParameterStyle::Native), null, [], true));
+        $this->expectExceptionMessage('The symbolic OR operator || requires PIPES_AS_CONCAT to be disabled.');
+
+        $derivation->scalar(new Logical(LogicalOperator::Or, new NumberLiteral('1'), new NumberLiteral('0'), true), $derivation->environment());
     }
 }

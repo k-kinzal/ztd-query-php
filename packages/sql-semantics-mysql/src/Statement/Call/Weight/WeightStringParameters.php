@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Weight;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
-use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -18,10 +17,11 @@ use SqlSemantics\Statement\Snapshot;
  * The internal form WEIGHT_STRING(string, length, weights, flags) the server writes into view definitions.
  *
  * Rule: MYSQL-WEIGHT-STRING-002. The three numbers are the result length,
- * the number of weights and the flags of Item_func_weight_string. The
+ * the number of weights and formatting flags. The
  * result is a binary string; it is NULL when the argument is NULL.
  * Terminates: the operand is a strict part.
- * Source: https://github.com/mysql/mysql-server/blob/8.4/sql/item_strfunc.cc (Item_func_weight_string::print).
+ * Result capacities and the four-argument form are verified through live SQL on MySQL 8.4.7.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_weight-string.
  * Status: Implemented.
  *
  * @visibility public
@@ -41,6 +41,7 @@ final class WeightStringParameters implements Scalar
      */
     public function __construct(public readonly Scalar $subject, public readonly Numeral $length, public readonly Numeral $weights, public readonly Numeral $flags)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -48,7 +49,31 @@ final class WeightStringParameters implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('BY', [(new Arguments())->one($this->subject, $derivation, $environment)]);
+        return (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->fact((new Arguments())->one($this->subject, $derivation, $environment), $derivation, resultLength: $this->resultLength(), weights: $this->weightCount());
+    }
+
+    /**
+     * Answers the result byte limit after unsigned option conversion.
+     */
+    public function resultLength(): int
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($this->length);
+    }
+
+    /**
+     * Answers the requested number of weights after unsigned option conversion.
+     */
+    public function weightCount(): int
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($this->weights);
+    }
+
+    /**
+     * Answers the formatting bits after unsigned option conversion.
+     */
+    public function formatFlags(): int
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($this->flags);
     }
 
     /**

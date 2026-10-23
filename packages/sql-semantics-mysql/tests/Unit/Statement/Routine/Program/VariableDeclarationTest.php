@@ -61,7 +61,7 @@ final class VariableDeclarationTest extends TestCase
     {
         yield 'several names with a default' => ['mysql-9.1.0', 'create procedure p() begin declare a, b int default 0; end', 'CREATE PROCEDURE p() BEGIN DECLARE a, b INT DEFAULT 0; END'];
         yield 'a character set and a collation' => ['mysql-8.4.7', 'create procedure p() begin declare x varchar(10) character set utf8mb4 collate utf8mb4_bin default "a"; end', 'CREATE PROCEDURE p() BEGIN DECLARE x VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT \'a\'; END'];
-        yield 'a collation in 5.6' => ['mysql-5.6.51', 'create procedure p() begin declare x text collate utf8_bin; end', 'CREATE PROCEDURE p() BEGIN DECLARE x TEXT COLLATE utf8_bin; END'];
+        yield 'a collation in 5.6' => ['mysql-5.6.51', 'create procedure p() begin declare x text character set utf8 collate utf8_bin; end', 'CREATE PROCEDURE p() BEGIN DECLARE x TEXT CHARACTER SET utf8 COLLATE utf8_bin; END'];
         yield 'type synonyms in 8.0' => ['mysql-8.0.44', 'create procedure p() begin declare y double precision; declare z national char(2); end', 'CREATE PROCEDURE p() BEGIN DECLARE y DOUBLE; DECLARE z NCHAR(2); END'];
         yield 'JSON in 5.7' => ['mysql-5.7.44', 'create procedure p() begin declare x json default null; end', 'CREATE PROCEDURE p() BEGIN DECLARE x JSON DEFAULT NULL; END'];
         yield 'a display width in 5.6' => ['mysql-5.6.51', 'create procedure p() begin declare x int(11) unsigned zerofill default 1; end', 'CREATE PROCEDURE p() BEGIN DECLARE x INT(11) UNSIGNED ZEROFILL DEFAULT 1; END'];
@@ -72,5 +72,18 @@ final class VariableDeclarationTest extends TestCase
         $this->expectExceptionMessage('DECLARE names at least one variable.');
 
         new VariableDeclaration([], new Integral(IntegralKind::Int));
+    }
+    public function testDeriveRelationChecksTheTypeAfterDefaultNotices(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(255) DEFAULT !1; END');
+        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(Block::class, $operation->statement->body);
+        $original = $operation->statement->body->declarations[0];
+        self::assertInstanceOf(VariableDeclaration::class, $original);
+        $declaration = new VariableDeclaration($original->names, new Integral(IntegralKind::Int, '256'), default: $original->default);
+        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
+        $declaration->deriveRelation($derivation, $derivation->environment());
+
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", "Display width out of range for column '' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $derivation->facts()->warnings));
     }
 }

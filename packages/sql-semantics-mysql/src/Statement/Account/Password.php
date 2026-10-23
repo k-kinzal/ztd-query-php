@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -31,6 +32,17 @@ final class Password implements Node
      */
     public function __construct(public readonly Text $text, public readonly ?PasswordFunction $function = null)
     {
+        Check::input($text->radix === null, 'A password is quoted text.');
+    }
+
+    /**
+     * Records the versioned notice of the retained password function.
+     */
+    public function derivePassword(\SqlSemantics\Construction\Derivation $derivation): void
+    {
+        if ($this->function === PasswordFunction::OldPassword) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::OldPassword, $derivation, $this);
+        }
     }
 
     /**

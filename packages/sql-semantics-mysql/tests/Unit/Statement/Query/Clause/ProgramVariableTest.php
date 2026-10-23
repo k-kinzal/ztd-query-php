@@ -22,9 +22,10 @@ final class ProgramVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT n');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
-        $type = $operation->facts->scalar($operation->statement->limit->count)->type;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(RowLimit::class, $operation->statement->query->limit);
+        $type = $operation->facts->scalar($operation->statement->query->limit->count)->type;
         self::assertInstanceOf(Dependent::class, $type);
         self::assertSame('the session state: stored program variable n', $type->missing[0]->describe());
     }
@@ -32,5 +33,36 @@ final class ProgramVariableTest extends TestCase
     public function testRenderWritesTheName(): void
     {
         self::assertSame('SELECT a FROM t INTO x, `select`', (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t INTO x, 'select'")->toString());
+    }
+
+    public function testDeriveScalarTypesAVariableARunningProgramDeclares(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), program: [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('n')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()])]);
+        $operation = $semantics->analyze('SELECT 1 LIMIT n', $semantics->context(null, true, null, $settings));
+        $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
+        self::assertInstanceOf(Select::class, $select);
+        $limit = $select->limit;
+        self::assertInstanceOf(RowLimit::class, $limit);
+
+        self::assertSame([\SqlSemantics\Statement\Type\Known::class, []], [$operation->facts->scalar($limit->count)->type::class, $operation->facts->diagnostics]);
+    }
+
+    public function testDeriveScalarResolvesAParameterDuringProgramDefinition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(`É` INT) SELECT 1 INTO e');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        $body = $operation->statement->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $body);
+        self::assertInstanceOf(Select::class, $body->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables::class, $body->query->into);
+        $fact = $operation->facts->scalar($body->query->into->targets[0]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $fact->resolution);
+
+        self::assertSame($operation->statement->parameters, $fact->resolution->relation);
+        self::assertSame('É', $fact->resolution->slot->name?->value);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 }

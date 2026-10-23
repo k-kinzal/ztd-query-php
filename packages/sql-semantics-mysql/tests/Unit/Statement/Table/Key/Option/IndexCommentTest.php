@@ -31,4 +31,11 @@ final class IndexCommentTest extends TestCase
         self::assertSame('c', $option->comment->value);
         self::assertSame('CREATE TABLE t (a INT, INDEX (a) COMMENT \'c\')', $create->toString());
     }
+
+    public function testCommentDomainRequiresQuotedText(): void
+    {
+        $this->expectExceptionMessage('An index comment is a quoted text string.');
+        new IndexComment(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('0', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Bit));
+    }
+
 }

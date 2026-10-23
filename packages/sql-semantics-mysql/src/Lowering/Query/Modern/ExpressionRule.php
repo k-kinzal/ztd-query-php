@@ -8,7 +8,6 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
-use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
@@ -107,6 +106,10 @@ final class ExpressionRule
      */
     public function expression(Node $expression, Trailer $later): Query
     {
+        $retained = $later->empty() ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($expression) : null;
+        if ($retained !== null) {
+            return $retained instanceof Query ? $retained : new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($retained);
+        }
         $form = $this->lowering->form($expression);
         $offset = match ($form->signature) {
             'query_expression: query_expression_body opt_order_clause opt_limit_clause' => 0,
@@ -114,7 +117,7 @@ final class ExpressionRule
             default => throw ImplementationGap::production($form),
         };
         $with = $offset === 1 ? (new PrimaryRule($this->lowering))->with($form->node(0)) : null;
-        $own = new Trailer((new ClauseRule($this->lowering))->ordering($form->node($offset + 1)), (new TailRule($this->lowering))->limit($form->node($offset + 2)));
+        $own = new Trailer((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->ordering($form->node($offset + 1)), (new TailRule($this->lowering))->limit($form->node($offset + 2)));
         $body = $this->body($form->node($offset));
         if ($body instanceof Block) {
             $select = $body->then($own->then($later))->select();
@@ -129,10 +132,16 @@ final class ExpressionRule
     /**
      * Lowers a query expression body; a single query block stays open for the clauses written after it.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a leading operand redirects its result
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function body(Node $body): Block|Query
     {
+        $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($body);
+        if ($selection !== null) {
+            return $selection instanceof Block ? $selection : new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        }
         $steps = [];
         $form = $this->lowering->form($body);
         while (isset(self::OPERATIONS[$form->signature])) {
@@ -140,7 +149,7 @@ final class ExpressionRule
             $form = $this->lowering->form($form->node(0));
         }
         $first = match ($form->signature) {
-            'query_expression_body: query_primary' => (new PrimaryRule($this->lowering))->primary($form->node(0)),
+            'query_expression_body: query_primary' => $steps === [] ? (new PrimaryRule($this->lowering))->primary($form->node(0)) : $this->body($form->node),
             'query_expression_body: query_expression_parens' => $this->parenthesized($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
@@ -149,6 +158,10 @@ final class ExpressionRule
         }
         $query = $first instanceof Block ? $first->select() : $first;
         foreach (array_reverse($steps) as [$operator, $quantifier, $right]) {
+            if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $query->into !== null) {
+                $origin = $this->lowering->origins->publish()->of($query->into);
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand($query, $operator), $origin->offset ?? 0);
+            }
             $operand = $this->body($right);
             $query = new SetOperation($query, $operator, $quantifier, $operand instanceof Block ? $operand->select() : $operand);
         }

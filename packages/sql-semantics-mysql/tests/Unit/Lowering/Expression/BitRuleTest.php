@@ -34,4 +34,15 @@ final class BitRuleTest extends TestCase
         self::assertInstanceOf(Arithmetic::class, $expression->operand->left);
         self::assertSame(ArithmeticOperator::Modulo, $expression->operand->left->operator);
     }
+
+    public function testArithmeticPreservesScalarAndDeferredRoles(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new BitRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
+        $two = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2');
+        self::assertInstanceOf(Arithmetic::class, $rule->arithmetic(ArithmeticOperator::Plus, $one, $two));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic::class, $rule->arithmetic(ArithmeticOperator::Plus, $one, new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')])));
+    }
 }

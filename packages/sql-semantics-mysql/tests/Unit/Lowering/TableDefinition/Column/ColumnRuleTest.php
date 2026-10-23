@@ -34,7 +34,7 @@ final class ColumnRuleTest extends TestCase
         self::assertInstanceOf(GeneratedColumn::class, (new ColumnRule($lowering))->specification($node));
     }
 
-    public function testSpecificationLowersALegacyTypeAndAttributes(): void
+    public function testOrdinaryLowersALegacyTypeAndAttributes(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('5.6.51', null, ParameterStyle::Native);
@@ -44,6 +44,19 @@ final class ColumnRuleTest extends TestCase
 
         self::assertInstanceOf(OrdinaryColumn::class, $specification);
         self::assertCount(1, $specification->attributes);
+    }
+
+    public function testCompatibleRefusesATypeContradictionWithItsColumnIdentity(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT');
+            self::fail('The incompatible column must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute::class, $failure->problem);
+            self::assertSame('c', $failure->problem->column->value);
+            self::assertSame('d', $failure->problem->scope?->schema?->value);
+            self::assertSame('AUTO_INCREMENT', $failure->problem->attribute);
+        }
     }
 
     public function testAttributesLowersTheListInOrder(): void
@@ -127,13 +140,16 @@ final class ColumnRuleTest extends TestCase
         self::assertInstanceOf(NumberLiteral::class, (new ColumnRule($lowering))->expression($node));
     }
 
-    public function testParseLowersParseGcolExpr(): void
+    public function testParseRefusesAnInternalEntryInsteadOfPublishingAStatement(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('PARSE_GCOL_EXPR(1)')->find('parse_gcol_expr')[0];
 
-        self::assertInstanceOf(NumberLiteral::class, (new ColumnRule($lowering))->parse($node)->expression);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('PARSE_GCOL_EXPR is not a client statement.');
+
+        (new ColumnRule($lowering))->parse($node);
     }
 }

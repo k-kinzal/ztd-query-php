@@ -130,7 +130,7 @@ final class TableOptionRule
         }
         $options = [];
         foreach ((new Spine($this->lowering))->items($list, self::LISTS, ['create_table_option']) as $item) {
-            $options[] = $this->option($item);
+            $options[] = $this->lowering->origins->record($this->option($item), $item);
         }
 
         return $options;

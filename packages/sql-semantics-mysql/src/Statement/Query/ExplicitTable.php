@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The TABLE statement: every row and column of one table (MySQL 8.0.19 and later).
@@ -32,9 +31,9 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the table of a TABLE statement
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('TABLE shop.t');
- *     [$query->statement->name()->schema?->value, $query->statement->name()->name->value] // => ['shop', 't']
+ *     [$query->statement->query->name()->schema?->value, $query->statement->query->name()->name->value] // => ['shop', 't']
  */
-final class ExplicitTable implements Statement, Query, NamedRelation
+final class ExplicitTable implements Query, NamedRelation
 {
     use Snapshot;
 
@@ -43,7 +42,9 @@ final class ExplicitTable implements Statement, Query, NamedRelation
      */
     public function __construct(public readonly QualifiedName $table)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -60,14 +61,6 @@ final class ExplicitTable implements Statement, Query, NamedRelation
     public function alias(): ?Name
     {
         return null;
-    }
-
-    /**
-     * Derives the statement as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
     /**

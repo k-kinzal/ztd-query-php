@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Renamings;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RENAME TABLE old TO new, …`: a request to rename tables, one rename after the other.
@@ -47,6 +47,7 @@ final class RenameTable implements Statement
     {
         Check::input($renamings !== [], 'RENAME TABLE renames at least one table.');
         $this->renamings = Check::listOf($renamings, TableRenaming::class, 'RENAME TABLE holds a list of renames.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

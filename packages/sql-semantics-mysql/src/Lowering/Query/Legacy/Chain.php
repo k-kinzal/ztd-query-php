@@ -77,16 +77,19 @@ final class Chain
             $operand = $operand instanceof Block ? $this->earlier($operand, $clauses, $index) : $this->enclosed($operand, $clauses, $index);
             $query = match (true) {
                 $query === null => $operand,
-                $operand instanceof Select && $operand->trailed() => new LeadingUnion($query, $this->quantifiers[$index - 1] ?? null, $operand),
+                ($operand instanceof Select && $operand->trailed()) || ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $operand->selection->limit !== null) => new LeadingUnion($query, $this->quantifiers[$index - 1] ?? null, $operand),
                 default => new SetOperation($query, SetOperator::Union, $this->quantifiers[$index - 1] ?? null, $operand),
             };
         }
         $quantifier = $this->quantifiers[$last - 1] ?? null;
+        if ($final instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            return (new RetainedTails())->union($query, $quantifier, $final, $after);
+        }
         if (!$final instanceof Block) {
             return $after->wrap(new SetOperation($query, SetOperator::Union, $quantifier, $final));
         }
         if ($final->trailer->procedure !== null) {
-            throw new AnalysisException('Incorrect usage of PROCEDURE and UNION: PROCEDURE ANALYSE follows a single query block only.');
+            throw new AnalysisException('Incorrect usage of PROCEDURE and subquery: PROCEDURE ANALYSE follows a single query block only.');
         }
         if (!$after->empty() && !$final->trailer->empty()) {
             return new OrderedSetOperation($query, SetOperator::Union, $quantifier, $final->select(), $after->orderBy, $after->limit);
@@ -98,16 +101,18 @@ final class Chain
     /**
      * Finishes an operand before the last one, rejecting the clauses the server does not accept there.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When an ordering or limit precedes UNION in a forbidden position
+     *
      * @throws AnalysisException When the operand writes such a clause: ER_WRONG_USAGE "UNION and ORDER BY|LIMIT|INTO|PROCEDURE ANALYSE" of `add_select_to_union_list` and `mysql_new_select` (5.6, run by the `union_list` action) and of `LEX::new_union_query` (5.7, run while contextualizing the union), or ER_SYNTAX_ERROR when the clauses written after an earlier SELECT made the fake query block current (`add_select_to_union_list` refuses GLOBAL_OPTIONS_TYPE)
      */
     public function earlier(Block $operand, Trailer $clauses, int $index): Query
     {
         $trailer = $operand->trailer;
-        if ($trailer->orderBy !== [] || ($trailer->limit !== null && $this->release !== GrammarRelease::MySql5651)) {
-            throw new AnalysisException('Incorrect usage of UNION and ORDER BY or LIMIT: only the last SELECT of a union takes them without parentheses.');
-        }
         if ($trailer->into !== null || $operand->into !== null) {
             throw new AnalysisException('Incorrect usage of UNION and INTO: only the last SELECT of a union takes INTO.');
+        }
+        if ($trailer->orderBy !== [] || ($trailer->limit !== null && $this->release !== GrammarRelease::MySql5651)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause($operand->select()), 0, false);
         }
         if ($trailer->procedure !== null) {
             throw new AnalysisException('Incorrect usage of UNION and SELECT ... PROCEDURE ANALYSE(): a union takes no PROCEDURE ANALYSE.');
@@ -133,6 +138,9 @@ final class Chain
      */
     public function enclosed(Query $operand, Trailer $clauses, int $index): Query
     {
+        if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            (new RetainedTails())->earlier($operand, $this->release);
+        }
         $inner = $operand;
         while ($inner instanceof ParenthesizedQuery) {
             $inner = $inner->query;

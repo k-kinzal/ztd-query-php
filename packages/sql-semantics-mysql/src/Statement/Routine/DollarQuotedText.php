@@ -33,7 +33,7 @@ final class DollarQuotedText implements Node
      */
     public function __construct(public readonly string $text, public readonly string $tag = '')
     {
-        Check::input(preg_match('/\A[^$\s]*\z/', $tag) === 1, 'The tag of a dollar-quoted string holds no dollar sign and no space.');
+        Check::input(preg_match('/\A[A-Za-z0-9_\x80-\xFF]*\z/', $tag) === 1, 'A dollar-quote tag contains only letters, digits, underscores and multibyte characters.');
         Check::input(!str_contains($text, '$' . $tag . '$'), 'The text of a dollar-quoted string cannot hold its closing delimiter.');
     }
 

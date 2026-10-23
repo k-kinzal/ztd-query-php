@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Insert;
 
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
@@ -19,24 +21,30 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the values of a row
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t VALUES (1, 2), ()');
- *     [count($insert->statement->rows[0]->values), count($insert->statement->rows[1]->values)] // => [2, 0]
+ *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t VALUES (1, 2), (3, DEFAULT)');
+ *     [count($insert->statement->rows[0]->values), count($insert->statement->rows[1]->values)] // => [2, 2]
  */
 final class InsertedRow implements Node
 {
     use Snapshot;
 
     /**
-     * @var list<Scalar> The values in written order
+     * @var list<Scalar|DefaultRequest> The values in written order
      */
     public readonly array $values;
 
     /**
-     * @param list<Scalar> $values The values in written order
+     * @param list<Scalar|DefaultRequest> $values The values in written order
      */
     public function __construct(array $values)
     {
-        $this->values = Check::listOf($values, Scalar::class, 'A row holds values.');
+        $accepted = [];
+        foreach (Check::listOf($values, Operand::class, 'A row holds values.') as $value) {
+            Check::input($value instanceof Scalar || $value instanceof DefaultRequest, 'A row value is an expression or DEFAULT.');
+            Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($value) === null, 'A VALUES element has no ambient grouping or window role.');
+            $accepted[] = $value;
+        }
+        $this->values = $accepted;
     }
 
     /**

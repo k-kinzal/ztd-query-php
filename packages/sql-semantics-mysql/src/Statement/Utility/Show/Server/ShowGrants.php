@@ -10,10 +10,10 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW GRANTS: the GRANT statements that reproduce the privileges of an account or role.
@@ -49,6 +49,7 @@ final class ShowGrants implements Statement
     {
         $this->using = Check::listOf($using, Account::class, 'USING names a list of roles.');
         Check::input($user !== null || $this->using === [], 'USING requires FOR.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -62,7 +63,7 @@ final class ShowGrants implements Statement
 
             return;
         }
-        $name = 'Grants for ' . $this->user->user->value . '@' . ($this->user->host->value ?? '%');
+        $name = 'Grants for ' . $this->user->username() . '@' . ($this->user->hostname() ?? '%');
         $derivation->output($facts->query($facts->shape($derivation, Report::Grants, $name), $derivation->context->columnNames));
     }
 

@@ -7,7 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -33,13 +36,26 @@ final class ComponentSetting implements Node
     use Snapshot;
 
     /**
-     * @param SystemVariable $variable The variable with its scope and component
-     * @param Scalar $value The value: an expression, or OnWord
+     * The assigned expression or word. A standalone name is a word, not a column lookup.
+     */
+    public readonly Scalar|BareName|OnWord $value;
+
+    /**
+     * @param SystemTarget $variable The variable with its scope and component
+     * @param Scalar|BareName|OnWord $value The value: an expression, a standalone word, or OnWord
      * @throws InvalidConstruction When the scope is neither absent, GLOBAL nor PERSIST
      */
-    public function __construct(public readonly SystemVariable $variable, public readonly Scalar $value)
+    public function __construct(public readonly SystemTarget $variable, Scalar|BareName|OnWord $value)
     {
         Check::input(in_array($variable->scope, [null, VariableScope::Global, VariableScope::Persist], true), 'A component variable is set GLOBAL or PERSIST.');
+        $unwrapped = $value;
+        $parentheses = 0;
+        while ($unwrapped instanceof Grouped) {
+            $parentheses++;
+            $unwrapped = $unwrapped->operand;
+        }
+        $this->value = $unwrapped instanceof ColumnUse ? new BareName($unwrapped->name, $unwrapped->qualifier, parentheses: $parentheses) : $value;
+        Check::input(!$this->value instanceof BareName || $this->value->system, 'A component setting word belongs to a system variable.');
     }
 
     /**

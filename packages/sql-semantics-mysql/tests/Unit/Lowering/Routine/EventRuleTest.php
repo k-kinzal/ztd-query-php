@@ -33,6 +33,19 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 #[Medium]
 final class EventRuleTest extends TestCase
 {
+    public function testRejectedKeepsOnlyACompletedEmptyHeader(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile(null, null, ParameterStyle::Native);
+        $rule = new EventRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $tree = (new Semantics(Dialect::MySql))->parser()->parse('ALTER DEFINER=CURRENT_USER EVENT db.e');
+        $failure = $rule->rejected($tree->find('alter_event_stmt')[0]);
+
+        self::assertSame('ALTER EVENT changes at least one event property after its name.', $failure?->getMessage());
+        self::assertSame(37, $failure->end);
+        self::assertNull($rule->rejected($tree));
+    }
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -53,7 +66,8 @@ final class EventRuleTest extends TestCase
         self::assertSame('e', $statement->name->name->value);
         self::assertSame('db', $statement->name->schema?->value);
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
-        self::assertInstanceOf(Select::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->body);
+        self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertSame(Completion::NotPreserve, $statement->completion);
         self::assertSame(EventStatus::Disable, $statement->status);
         self::assertSame('c', $statement->comment?->value);
@@ -121,7 +135,8 @@ final class EventRuleTest extends TestCase
         self::assertSame('db', $statement->newName->schema?->value);
         self::assertSame(EventStatus::Disable, $statement->status);
         self::assertSame('x', $statement->comment?->value);
-        self::assertInstanceOf(Select::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->body);
+        self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertNotNull($statement->definer);
 
         $bare = (new Semantics(Dialect::MySql))->analyze('alter event e on completion preserve')->statement;
@@ -274,7 +289,7 @@ final class EventRuleTest extends TestCase
         self::assertSame($status, $create->statement->status);
         self::assertSame('CREATE EVENT e ON SCHEDULE AT 1' . $clause . ' DO SELECT 1', $create->toString());
 
-        $alter = $semantics->analyze('ALTER EVENT e' . $clause);
+        $alter = $semantics->analyze('ALTER EVENT e' . $clause . " COMMENT 'changed'");
         self::assertInstanceOf(AlterEvent::class, $alter->statement);
         self::assertSame($status, $alter->statement->status);
     }
@@ -313,4 +328,18 @@ final class EventRuleTest extends TestCase
 
         $rule->comment(new Node('sp_name', 1, []));
     }
+
+    public function testExpressionRetainsTheClauseOfARefusedNestedRow(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e ON SCHEDULE EVERY 1 DAY STARTS ABS((1,2))');
+            self::fail('A row operand must be refused.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth::class, $failure->problem->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Clause::Starts, $failure->problem->problem->clause);
+            self::assertFalse($failure->problem->problem->rowValue);
+        }
+    }
+
 }

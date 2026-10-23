@@ -19,10 +19,10 @@ final class SqlGeneratorFactory
     /**
      * Binds a release's grammar and lexical behavior to the generator.
      */
-    public static function create(Generator $faker, Grammar $grammar, string $version, ?GrammarCoverage $coverage = null): SqlGenerator
+    public static function create(Generator $faker, Grammar $grammar, string $version, ?GrammarCoverage $coverage = null, bool $highNotPrecedence = false, bool $pipesAsConcat = false): SqlGenerator
     {
         $grammar = $grammar->identified();
-        $context = new GenerationContext($grammar, $faker, $version);
+        $context = new GenerationContext($grammar, $faker, $version, $highNotPrecedence, $pipesAsConcat);
 
         return new SqlGenerator(
             $context->grammar,

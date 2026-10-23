@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER USER [IF EXISTS] account DEFAULT ROLE {ALL | NONE | role, …}` (8.0+): a request to set the default roles of an account.
@@ -35,6 +35,7 @@ final class AlterDefaultRole implements Statement
     public function __construct(public readonly bool $ifExists, public readonly Account $user, public readonly RoleSelection $roles)
     {
         Check::input($roles->set !== RoleSet::Default && ($roles->set !== RoleSet::All || $roles->roles === []), 'DEFAULT ROLE names roles, ALL or NONE.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

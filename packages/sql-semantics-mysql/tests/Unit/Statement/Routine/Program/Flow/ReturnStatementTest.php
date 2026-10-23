@@ -51,9 +51,6 @@ final class ReturnStatementTest extends TestCase
     {
         yield 'a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN DECLARE x INT DEFAULT 2; RETURN x; END', []];
         yield 'an unknown name in a function' => ['CREATE FUNCTION f(a INT) RETURNS INT RETURN b', ['Column b does not exist.']];
-        yield 'a procedure' => ['CREATE PROCEDURE p() RETURN 1', ['RETURN is only allowed in a FUNCTION']];
-        yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN 1', ['RETURN is only allowed in a FUNCTION']];
-        yield 'an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO RETURN 1', ['RETURN is only allowed in a FUNCTION']];
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]
@@ -70,5 +67,26 @@ final class ReturnStatementTest extends TestCase
         yield 'a parameter in 5.6' => ['mysql-5.6.51', 'create function f(a int) returns int return a', 'CREATE FUNCTION f(a INT) RETURNS INT RETURN a'];
         yield 'a subquery in 8.0' => ['mysql-8.0.44', 'create function f(a int) returns int return (select a + 1)', 'CREATE FUNCTION f(a INT) RETURNS INT RETURN (SELECT a + 1)'];
         yield 'in a block in 9.1' => ['mysql-9.1.0', 'create function f() returns int begin return 1; end', 'CREATE FUNCTION f() RETURNS INT BEGIN RETURN 1; END'];
+    }
+
+    /**
+     * @return iterable<string, array{string, non-empty-list<string>}>
+     */
+    public static function providerRefusesIntrinsicBodyContradictions(): iterable
+    {
+        yield 'a procedure' => ['CREATE PROCEDURE p() RETURN 1', ['RETURN is only allowed in a FUNCTION']];
+        yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN 1', ['RETURN is only allowed in a FUNCTION']];
+        yield 'an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO RETURN 1', ['RETURN is only allowed in a FUNCTION']];
+    }
+
+    /**
+     * @param non-empty-list<string> $messages
+     */
+    #[DataProvider('providerRefusesIntrinsicBodyContradictions')]
+    public function testRefusesIntrinsicBodyContradictions(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 }

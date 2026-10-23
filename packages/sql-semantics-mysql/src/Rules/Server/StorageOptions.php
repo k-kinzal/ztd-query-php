@@ -87,6 +87,8 @@ final class StorageOptions
      * @param list<string> $accepted The keywords of the accepted options
      * @param int $minimum The least number of options
      * @return list<StorageOption>
+     * @example Refusing two effective engine settings
+     *     (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->checked([new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB')), new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB'))], \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions::DROP) // throws \SqlSemantics\Diagnostic\InvalidConstruction
      */
     public function checked(array $options, array $accepted, int $minimum = 0): array
     {
@@ -94,8 +96,33 @@ final class StorageOptions
         foreach ($checked as $option) {
             Check::input(in_array($option->keyword(), $accepted, true), 'The statement takes no ' . $option->keyword() . ' option.');
         }
+        Check::input($this->repeated($checked) === null, 'A storage setting accepted once cannot be repeated.');
 
         return $checked;
+    }
+
+    /**
+     * Finds the first conflicting setting, preserving the unset sentinels.
+     *
+     * @param list<StorageOption> $options The options in written order
+     * @param bool $legacy Whether consecutive NO_WAIT settings are also forbidden
+     */
+    public function repeated(array $options, bool $legacy = false): ?StorageProblem
+    {
+        $set = [];
+        $wait = true;
+        foreach ($options as $option) {
+            $keyword = $option->keyword();
+            if (isset(self::ONCE[$keyword], $set[$keyword]) || ($legacy && $option instanceof WaitOption && !$option->wait && !$wait)) {
+                return new StorageProblem(StorageRule::RepeatedOption, $option instanceof WaitOption ? 'NO_WAIT' : $keyword);
+            }
+            if (isset(self::ONCE[$keyword]) && !$this->unset($option)) {
+                $set[$keyword] = true;
+            }
+            $wait = $option instanceof WaitOption ? $option->wait : $wait;
+        }
+
+        return null;
     }
 
     /**

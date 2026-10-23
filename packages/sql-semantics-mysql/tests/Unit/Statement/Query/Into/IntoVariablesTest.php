@@ -25,10 +25,11 @@ final class IntoVariablesTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('select a, b from t into @x, y');
 
         self::assertSame('SELECT a, b FROM t INTO @x, y', $operation->toString());
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(IntoVariables::class, $operation->statement->into);
-        self::assertInstanceOf(UserVariable::class, $operation->statement->into->targets[0]);
-        self::assertInstanceOf(ProgramVariable::class, $operation->statement->into->targets[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(IntoVariables::class, $operation->statement->query->into);
+        self::assertInstanceOf(UserVariable::class, $operation->statement->query->into->targets[0]);
+        self::assertInstanceOf(ProgramVariable::class, $operation->statement->query->into->targets[1]);
     }
 
     public function testADifferentNumberOfColumnsIsReported(): void

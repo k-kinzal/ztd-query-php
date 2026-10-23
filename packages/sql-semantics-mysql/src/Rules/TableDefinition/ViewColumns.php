@@ -59,6 +59,22 @@ final class ViewColumns
     }
 
     /**
+     * Finds the first explicit column name outside the MySQL 8.0-and-later domain.
+     * Legacy view column lists retain their broader name domain.
+     *
+     * @param list<Name>|null $columns The explicit column list, when written
+     */
+    public static function explicit(?array $columns): ?\SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName
+    {
+        foreach ($columns ?? [] as $name) {
+            if (!(new ColumnNameRule())->valid($name->value)) {
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName($name);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Answers the name of each view column, null when it is not fixed.
      *
      * @param list<Field> $fields The output fields of the query, in order

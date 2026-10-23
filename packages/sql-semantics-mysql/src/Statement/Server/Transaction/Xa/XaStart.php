@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `XA {START | BEGIN} xid [JOIN | RESUME]`: a request to start an XA transaction.
@@ -33,6 +33,7 @@ final class XaStart implements Statement
      */
     public function __construct(public readonly Xid $xid, public readonly ?XaStartOption $option = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

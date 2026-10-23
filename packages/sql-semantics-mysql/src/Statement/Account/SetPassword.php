@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET PASSWORD [FOR account] {= 'password' | TO RANDOM} [REPLACE 'current'] [RETAIN CURRENT PASSWORD]`: a request to set an account's password.
@@ -40,14 +40,17 @@ final class SetPassword implements Statement
      */
     public function __construct(public readonly ?Account $user, public readonly ?Password $password, public readonly ?Text $replace = null, public readonly bool $retainCurrent = false)
     {
+        Check::input($replace === null || $replace->radix === null, 'A replaced password is quoted text.');
         Check::input($password?->function === null || ($replace === null && !$retainCurrent), 'A password written with a function has no REPLACE and no RETAIN.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the retained password function notice.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->password?->derivePassword($derivation);
     }
 
     /**

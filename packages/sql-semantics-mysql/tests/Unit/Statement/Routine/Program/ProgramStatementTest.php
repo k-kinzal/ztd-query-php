@@ -42,7 +42,8 @@ final class ProgramStatementTest extends TestCase
         self::assertInstanceOf(Block::class, $block);
 
         self::assertNotInstanceOf(ProgramStatement::class, $block->statements[0]);
-        self::assertInstanceOf(Select::class, $block->statements[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $block->statements[0]);
+        self::assertInstanceOf(Select::class, $block->statements[0]->query);
     }
 
     #[DataProvider('providerDeriveProgramIsImplementedByTheProgramStatementClasses')]

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -37,6 +38,7 @@ final class GetFormat implements Scalar
      */
     public function __construct(public readonly TemporalFormat $format, public readonly Scalar $standard)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -44,7 +46,9 @@ final class GetFormat implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('TY', [(new Arguments())->one($this->standard, $derivation, $environment)]);
+        $standard = (new Arguments())->one($this->standard, $derivation, $environment);
+
+        return (new Results())->refine('GET_FORMAT', [$this->standard], [$standard], (new ResultTyping())->fact('TY', [$standard]), $derivation);
     }
 
     /**

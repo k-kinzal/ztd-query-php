@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE EVENT: the statement that creates a scheduled event.
@@ -36,6 +36,9 @@ final class ShowCreateEvent implements Statement
      */
     public function __construct(public readonly QualifiedName $name)
     {
+        \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($name);
+        \SqlSemantics\Diagnostic\Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

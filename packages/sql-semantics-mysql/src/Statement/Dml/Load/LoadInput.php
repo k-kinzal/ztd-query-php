@@ -20,9 +20,10 @@ use SqlSemantics\Statement\Snapshot;
  * LOCAL makes the client read the file. COUNT and IN PRIMARY KEY ORDER
  * belong to the bulk load of the HeatWave grammars (8.0.30 and later) and
  * tell how many files the name pattern matches and that they are sorted by
- * primary key. The 8.4 and later grammars read the word COUNT as an
- * identifier, which the server requires to be `count` in any letter case;
- * that word is kept so it is written back the way the grammar reads it.
+ * primary key. COUNT may be read as an identifier, which the server requires
+ * to be `count` in any letter case; that word is kept so it is written back
+ * the way the grammar reads it. MySQL 8.0 through 8.3 also have a keyword
+ * production, while 8.4 and later use only the identifier production.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
  *
  * @visibility public
@@ -35,12 +36,17 @@ final class LoadInput implements Node
     use Snapshot;
 
     /**
+     * The noncanonical spelling of COUNT when read as an identifier.
+     */
+    public readonly ?Name $countWord;
+
+    /**
      * @param bool $local Whether the client reads the file
      * @param LoadSource $source The kind of location
      * @param Text $file The file name, URL or pattern
      * @param Numeral|null $count The number of files
      * @param bool $primaryKeyOrder Whether the files are sorted by primary key
-     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier (8.4 and later), which may be quoted; null for the keyword
+     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier, which may be quoted; null for the keyword
      * @throws InvalidConstruction When the word COUNT is given without a count or is another word
      */
     public function __construct(
@@ -49,9 +55,12 @@ final class LoadInput implements Node
         public readonly Text $file,
         public readonly ?Numeral $count = null,
         public readonly bool $primaryKeyOrder = false,
-        public readonly ?Name $countWord = null,
+        ?Name $countWord = null,
     ) {
+        Check::input($file->radix === null, 'A LOAD file name is quoted text.');
+        Check::input($count === null || $count->isIntegerToken(), 'A LOAD file count is a decimal integer token no greater than 2147483647.');
         Check::input($countWord === null || ($count !== null && strcasecmp($countWord->value, 'count') === 0), 'The word before the number of files is COUNT.');
+        $this->countWord = $countWord?->value === 'COUNT' ? null : $countWord;
     }
 
     /**

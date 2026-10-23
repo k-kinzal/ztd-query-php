@@ -108,6 +108,7 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\IntegerToken::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\StartRuleResolver::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\GenerationContext::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -38,7 +37,7 @@ final class PrivilegeChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT BACKUP_ADMIN ON db.* TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics[0]);
         self::assertSame([], $semantics->analyze('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics);
     }
 
@@ -46,15 +45,18 @@ final class PrivilegeChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT EXECUTE ON t TO u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT SELECT ON PROCEDURE p TO u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('GRANT SELECT (a) ON PROCEDURE p TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE EXECUTE ON t FROM u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE SELECT ON PROCEDURE p FROM u')->facts->diagnostics[0]);
     }
 
-    public function testRolesReportsAPrivilegeInARoleList(): void
+    public function testColumnPrivilegesOnRoutinesAreRefusedBeforeDerivation(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics(Dialect::MySql))->analyze('REVOKE CREATE ROLE FROM u')->facts->diagnostics[0]);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Column privileges apply only to tables.');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT (a) ON PROCEDURE p TO u');
     }
+
 
     public function testTargetResolvesTheTable(): void
     {
@@ -68,5 +70,47 @@ final class PrivilegeChecksTest extends TestCase
     public function testDescribeNamesTheItem(): void
     {
         self::assertSame(['GRANT OPTION', 'r@h'], [(new PrivilegeChecks())->describe(new StaticPrivilege(PrivilegeKind::GrantOption)), (new PrivilegeChecks())->describe(new GrantedRole(new AccountName(new Name('r'), new Name('h'))))]);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerModernGlobalAll(): iterable
+    {
+        yield '8.0' => ['mysql-8.0.44'];
+        yield '8.4' => ['mysql-8.4.7'];
+        yield '9.1' => ['mysql-9.1.0'];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyGlobalAll(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51'];
+        yield '5.7' => ['mysql-5.7.44'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerModernGlobalAll')]
+    public function testRevokeGlobalAllHasNoRoutineTargetInModernReleases(string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        self::assertSame([], $semantics->analyze('REVOKE ALL ON FUNCTION *.* FROM u')->facts->diagnostics);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]
+    public function testRevokeLegacyGlobalAllIsNotAnOrdinaryRoutineStatement(string $release): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('The routine revocation does not name a routine object.');
+        (new Semantics(Dialect::MySql, $release))->analyze('REVOKE ALL ON FUNCTION *.* FROM u');
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerModernGlobalAll')]
+    public function testGrantGlobalAllRequiresTheRoutineObjectInEveryRelease(string $release): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql, $release))->analyze('GRANT ALL ON FUNCTION *.* TO u');
     }
 }

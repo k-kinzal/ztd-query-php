@@ -90,6 +90,7 @@ final class LoadRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When the word before the number of files is not COUNT
+     * @throws \SqlSemantics\Construction\RejectedInput When LOAD features have no common language interpretation
      */
     public function statement(Form $form): LoadTable
     {
@@ -106,22 +107,34 @@ final class LoadRule
         $format = new FormatRule($this->lowering);
         $queries = $this->lowering->queries;
 
-        return new LoadTable(
-            $this->format($parts['data_or_xml']),
-            $this->lock($parts['load_data_lock']),
-            $this->input($parts),
-            $this->lowering->dml->duplicateHandling($parts['opt_duplicate']),
-            new WriteTarget($this->lowering->names->qualified($parts['table_ident']), null, $queries->partitions($parts['opt_use_partition'])),
-            $format->charset($parts['opt_load_data_charset']),
-            $this->tagged($parts['opt_compression_algorithm'] ?? null),
-            $this->tagged($parts['opt_xml_rows_identified_by']),
-            $format->fields($parts['opt_field_term']),
-            $format->lines($parts['opt_line_term']),
-            $this->ignored($parts['opt_ignore_lines']),
-            $this->columns($parts['opt_field_or_var_spec']),
-            $this->assignments($parts['opt_load_data_set_spec']),
-            $this->bulk($parts),
-        );
+        $operands = [
+            'format' => $this->format($parts['data_or_xml']),
+            'lock' => $this->lock($parts['load_data_lock']),
+            'input' => $this->input($parts),
+            'duplicates' => $this->lowering->dml->duplicateHandling($parts['opt_duplicate']),
+            'table' => new WriteTarget($this->lowering->names->qualified($parts['table_ident']), null, $queries->partitions($parts['opt_use_partition'])),
+            'charset' => $format->charset($parts['opt_load_data_charset']),
+            'compression' => $this->tagged($parts['opt_compression_algorithm'] ?? null),
+            'rowTag' => $this->tagged($parts['opt_xml_rows_identified_by']),
+            'fields' => $format->fields($parts['opt_field_term']),
+            'lines' => $format->lines($parts['opt_line_term']),
+            'ignored' => $this->ignored($parts['opt_ignore_lines']),
+            'columns' => $this->columns($parts['opt_field_or_var_spec']),
+            'bulk' => $this->bulk($parts),
+        ];
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], $operands['columns'] !== [], $parts['opt_load_data_set_spec']->children !== [], $operands['bulk'], $operands['lines']);
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
+        $retained = new LoadAssignments($this->lowering);
+        $assignments = $retained->read($parts['opt_load_data_set_spec']);
+        $active = !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true);
+        $nonScalar = array_filter($assignments, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) !== [];
+        if ($problem !== null && (($active && $nonScalar) || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->modern($operands['input'], $operands['bulk'], $operands['compression']))) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions($operands['table']->name, $operands['format'], $problem, $operands['charset'], $assignments), $end, false);
+        }
+        if ($nonScalar || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($operands['format'], $operands['fields'], $operands['columns'])) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments(...$operands, assignments: $assignments), $end, false);
+        }
+        return new LoadTable(...$operands, assignments: $retained->ordinary($assignments, $end));
     }
 
     /**
@@ -196,11 +209,19 @@ final class LoadRule
             return new LoadInput($local, $source, $file, null, $order);
         }
         $number = $this->lowering->numbers->token($count->token(1));
+        $failure = (new SyntaxLoadInput())->rejected($parts['opt_source_count'], $this->lowering);
+        if ($failure !== null) {
+            throw $failure;
+        }
         if ($count->signature === 'opt_source_count: COUNT_SYM NUM') {
             return new LoadInput($local, $source, $file, $number, $order);
         }
         if ($count->signature !== 'opt_source_count: IDENT_sys NUM') {
             throw ImplementationGap::production($count);
+        }
+        $spelling = $this->lowering->form($count->node(0))->token(0)->text;
+        if ((new \SqlSemantics\Platform\MySql\Rules\Identifiers())->decode($spelling) === 'COUNT') {
+            return new LoadInput($local, $source, $file, $number, $order);
         }
         $word = $this->lowering->names->identifier($count->node(0));
         if (strcasecmp($word->value, 'count') !== 0) {

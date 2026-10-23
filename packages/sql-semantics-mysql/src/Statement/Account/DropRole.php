@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP ROLE [IF EXISTS] role, …` (8.0+): a request to remove roles.
@@ -26,7 +26,7 @@ final class DropRole implements Statement
     use Snapshot;
 
     /**
-     * @var list<AccountName> The roles in order
+     * @var non-empty-list<AccountName> The roles in order
      */
     public readonly array $roles;
 
@@ -37,6 +37,7 @@ final class DropRole implements Statement
     public function __construct(public readonly bool $ifExists, array $roles)
     {
         $this->roles = Check::listOf($roles, AccountName::class, 'DROP ROLE names at least one role.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

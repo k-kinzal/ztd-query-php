@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Property\MySql\Statement\Partition\Bound;
+
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Large;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesIn as Model;
+use Tests\Property\SemanticValueProperty;
+
+/**
+ * Samples the public semantic value and checks its constructor contract.
+ */
+#[CoversNothing]
+#[Large]
+final class ValuesInProperties extends TestCase
+{
+    use SemanticValueProperty;
+
+    /**
+     * The semantic value sampled by this property.
+     */
+    public const MODEL = Model::class;
+}

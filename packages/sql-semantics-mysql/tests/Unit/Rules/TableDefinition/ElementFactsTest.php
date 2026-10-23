@@ -76,6 +76,44 @@ final class ElementFactsTest extends TestCase
         self::assertSame(Nullability::NotNull, (new ElementFacts())->declaration($column)->nullability);
     }
 
+    public function testOptionsPreservesTheOrderOfAbortingNameFailures(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) CHARACTER SET missing COLLATE other AS SELECT BINARY 1');
+        $warnings = $create->facts->warnings;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warnings[0]->problem);
+        self::assertTrue($warnings[0]->aborts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[1]->problem);
+        self::assertTrue($warnings[1]->aborts);
+    }
+
+    public function testEncodingRejectsACollationBeforeItsFirstReleaseWithoutSql(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_0900_ai_ci'));
+        (new ElementFacts())->encoding($name, $derivation, $name);
+        $warnings = $derivation->facts()->warnings;
+
+        self::assertCount(1, $warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[0]->problem);
+        self::assertTrue($warnings[0]->aborts);
+    }
+
+    public function testEncodingLeavesDefaultToTheDatabaseContext(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null);
+        (new ElementFacts())->encoding($name, $derivation, $name);
+
+        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertSame([], $derivation->facts()->warnings);
+    }
+
     public function testReferencesAnswersTheInlineReference(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT REFERENCES p (x))');
@@ -86,4 +124,14 @@ final class ElementFactsTest extends TestCase
         self::assertInstanceOf(ColumnDefinition::class, $element0);
         self::assertSame('p', (new ElementFacts())->references($element0->specification)?->table->name->value);
     }
+    public function testNamesResolvesTheDefinitionQualifierBeforeExpressionFacts(): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('other')));
+        $element = new ColumnDefinition($name, new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        (new ElementFacts())->names($element, $derivation, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName::class, $derivation->facts()->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+    }
+
 }

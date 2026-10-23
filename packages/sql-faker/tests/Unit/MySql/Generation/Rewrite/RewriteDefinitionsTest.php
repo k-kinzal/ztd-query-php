@@ -63,6 +63,27 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
+    #[DataProvider('providerOperatorModes')]
+    public function testOperatorsPreservesModeSpecificTokens(string $rule, string $terminal, bool $highNotPrecedence, bool $pipesAsConcat, string $expected): void
+    {
+        $trace = new DerivationTrace($rule);
+        $trace->expand(0, new Production([new Terminal($terminal)]), 0);
+
+        self::assertSame([$expected], (new RewriteDefinitions())->operators($highNotPrecedence, $pipesAsConcat)->rewrite($trace->terminals())->names());
+    }
+
+    /**
+     * @return iterable<string, array{string, string, bool, bool, string}>
+     */
+    public static function providerOperatorModes(): iterable
+    {
+        yield 'default NOT' => ['not2', 'NOT2_SYM', false, false, '!'];
+        yield 'high NOT precedence' => ['not2', 'NOT2_SYM', true, false, 'NOT2_SYM'];
+        yield 'default OR' => ['or', 'OR2_SYM', false, false, 'OR2_SYM'];
+        yield 'logical OR with pipes concatenation' => ['or', 'OR2_SYM', false, true, 'OR_SYM'];
+        yield 'combined modes' => ['not2', 'NOT2_SYM', true, true, 'NOT2_SYM'];
+    }
+
     public function testCreateComposesTheDeclaredSourceRules(): void
     {
         $trace = new DerivationTrace('option_value_no_option_type');

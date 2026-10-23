@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\Query;
+
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+
+/**
+ * Raises what the server reports while it parses the modifiers of a query block.
+ *
+ * Rule: MYSQL-SELECT-OPTIONS-001. The deprecated modifiers warn in written
+ * order (MYSQL-DEPRECATION-001). MySQL 5.6 and 5.7 refuse a query cache
+ * modifier that meets another one: 5.6 compares it with the first one the
+ * block writes, 5.7 only with the modifier written just before it, so another
+ * modifier between the two separates them (verified on live 5.6.51 and 5.7.44
+ * servers). The same modifier twice is ER_DUP_ARGUMENT, SQL_CACHE with
+ * SQL_NO_CACHE is ER_WRONG_USAGE; the parse stops at the second one, after
+ * its warning. Terminates: one pass over the modifiers. Source:
+ * https://dev.mysql.com/doc/refman/5.7/en/query-cache-in-select.html.
+ * Status: Implemented.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class SelectOptions
+{
+    /**
+     * Raises the warnings of the modifiers of a block and the first conflict of its query cache modifiers.
+     */
+    public function raise(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, Derivation $derivation): void
+    {
+        foreach ($this->notices($select, $derivation->context->profile->grammar) as $notice) {
+            if ($notice instanceof ParseFailure) {
+                $derivation->report($notice->problem);
+            }
+            $derivation->warn($notice, $select, false);
+        }
+        if ($derivation->context->profile->grammar !== GrammarRelease::MySql5651 && in_array(SelectOption::All, $select->options, true) && in_array(SelectOption::Distinct, $select->options, true)) {
+            $derivation->report(new SelectOptionConflict(SelectOption::All, SelectOption::Distinct));
+        }
+    }
+
+    /**
+     * Returns the ordered conditions of a block's modifiers without deriving its operands.
+     *
+     * @return list<Deprecation|ParseFailure> Conditions through the first aborting conflict
+     */
+    public function notices(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, GrammarRelease $grammar): array
+    {
+        $notices = [];
+        $previous = null;
+        $first = null;
+        foreach ($select->options as $option) {
+            $construct = match ($option) {
+                SelectOption::CalcFoundRows => Deprecated::CalcFoundRows,
+                SelectOption::NoCache => Deprecated::NoCache,
+                SelectOption::Cache => Deprecated::Cache,
+                SelectOption::All, SelectOption::Distinct, SelectOption::StraightJoin, SelectOption::HighPriority, SelectOption::SmallResult, SelectOption::BigResult, SelectOption::BufferResult => null,
+            };
+            if ($construct !== null && $construct->warnedIn($grammar)) {
+                $notices[] = new Deprecation($construct);
+            }
+            $cache = $option === SelectOption::Cache || $option === SelectOption::NoCache;
+            $earlier = $grammar === GrammarRelease::MySql5651 ? $first : ($grammar === GrammarRelease::MySql5744 ? $previous : null);
+            if ($cache && $earlier !== null) {
+                $problem = new SelectOptionConflict($earlier, $option);
+                $notices[] = new ParseFailure($problem, true);
+
+                return $notices;
+            }
+            $previous = $cache ? $option : null;
+            $first ??= $cache ? $option : null;
+        }
+
+        return $notices;
+    }
+}

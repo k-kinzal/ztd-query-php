@@ -53,7 +53,7 @@ final class PartitionRow implements Node
     {
         foreach ($this->items as $item) {
             if ($item instanceof Scalar) {
-                $derivation->scalar($item, $derivation->environment());
+                (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->derive($item, $derivation, $derivation->environment());
             }
         }
     }

@@ -32,10 +32,11 @@ final class CollateAttribute implements ColumnAttribute
     }
 
     /**
-     * Derives nothing: the attribute holds no expression.
+     * Resolves the collation name before the enclosing table is opened.
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts())->encoding($this->collation, $derivation, $this);
     }
 
     /**

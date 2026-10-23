@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor;
-use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(FetchCursor::class)]
@@ -35,26 +34,23 @@ final class FetchCursorTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    /**
-     * @param list<string> $messages
-     */
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredName')]
-    public function testDeriveProgramReportsAnUndeclaredName(string $sql, array $messages): void
+    public function testDeriveProgramReportsAnUndeclaredName(string $sql, string $message): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze($sql);
     }
 
     /**
-     * @return iterable<string, array{string, list<string>}>
+     * @return iterable<string, array{string, string}>
      */
     public static function providerDeriveProgramReportsAnUndeclaredName(): iterable
     {
-        yield 'an undefined cursor and variable' => ['CREATE PROCEDURE p() FETCH c INTO z', ['Undefined CURSOR: c', 'Undeclared variable: z']];
-        yield 'a variable of an inner block' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; BEGIN DECLARE x INT; END; FETCH c INTO x; END', ['Undeclared variable: x']];
-        yield 'a variable in a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE EXIT HANDLER FOR SQLWARNING FETCH c INTO x, y; END', ['Undeclared variable: y']];
-        yield 'a user variable' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO `@u`; END', ['Undeclared variable: @u']];
+        yield 'an undefined cursor and variable' => ['CREATE PROCEDURE p() FETCH c INTO z', 'Undefined CURSOR: c'];
+        yield 'a variable of an inner block' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; BEGIN DECLARE x INT; END; FETCH c INTO x; END', 'Undeclared variable: x'];
+        yield 'a variable in a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE EXIT HANDLER FOR SQLWARNING FETCH c INTO x, y; END', 'Undeclared variable: y'];
+        yield 'a user variable' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO `@u`; END', 'Undeclared variable: @u'];
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]

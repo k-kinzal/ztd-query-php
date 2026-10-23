@@ -66,9 +66,11 @@ final class IndexDefinition implements TableElement
     ) {
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->check($kind, $this->options);
         Check::input($constraint === null || $kind === IndexKind::Primary || $kind === IndexKind::Unique, 'Only a primary key or a unique index has a CONSTRAINT clause.');
         Check::input(!$keyword || $kind === IndexKind::Unique || $kind === IndexKind::FullText || $kind === IndexKind::Spatial, 'Only UNIQUE, FULLTEXT and SPATIAL are followed by an optional INDEX.');
         Check::input($algorithm === null || ($kind !== IndexKind::FullText && $kind !== IndexKind::Spatial), 'A full-text or spatial index has no USING clause before its key parts.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -76,6 +78,14 @@ final class IndexDefinition implements TableElement
      */
     public function deriveElement(Derivation $derivation, Environment $scope): void
     {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Names())->definition($this);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
+        $shape = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Shapes())->problem($this->kind, $this->parts);
+        if ($shape !== null) {
+            $derivation->report($shape);
+        }
         foreach ($this->parts as $part) {
             $part->deriveKeyPart($derivation, $scope);
         }

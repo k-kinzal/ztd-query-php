@@ -24,13 +24,21 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class LikeTest extends TestCase
 {
-    public function testDeriveScalarIsNullWhenTheEscapeCanBe(): void
+    public function testDeriveScalarDoesNotPropagateNullFromTheLegacyEscape(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], true));
 
-        self::assertSame(Nullability::Nullable, $derivation->scalar(new Like(new StringLiteral(['a']), new StringLiteral(['b']), new NullLiteral()), $derivation->environment())->nullability);
+        self::assertSame(Nullability::NotNull, $derivation->scalar(new Like(new StringLiteral(['a']), new StringLiteral(['b']), new NullLiteral()), $derivation->environment())->nullability);
         self::assertSame(Nullability::NotNull, $derivation->scalar(new Like(new StringLiteral(['a']), new StringLiteral(['b'])), $derivation->environment())->nullability);
+    }
+
+    public function testDeriveScalarRetainsModernNullableEscapeMetadata(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+
+        self::assertSame(Nullability::Nullable, $derivation->scalar(new Like(new StringLiteral(['a']), new StringLiteral(['b']), new NullLiteral()), $derivation->environment())->nullability);
     }
 
     public function testRenderWritesTheEscapeClause(): void

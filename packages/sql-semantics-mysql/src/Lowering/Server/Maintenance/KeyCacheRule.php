@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CACHE INDEX and LOAD INDEX INTO CACHE.

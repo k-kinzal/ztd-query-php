@@ -26,6 +26,13 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 #[Medium]
 final class FormRuleTest extends TestCase
 {
+    public function testEscapeRetainsTheKindAndRowRoleInAComparison(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('SELECT {foo (1,2)} = (1,2)');
+        self::assertSame('SELECT {foo (1,2)} = (1,2)', $operation->toString());
+    }
+
     public function testLowerLowersTheBracketedAndColumnForms(): void
     {
         $platform = new Platform();
@@ -56,4 +63,12 @@ final class FormRuleTest extends TestCase
         self::assertInstanceOf(ScalarSubquery::class, $rule->lower($platform->productions($profile)->form($platform->parser($profile)->parse('SELECT (SELECT 1)')->find('simple_expr')[0])));
         self::assertInstanceOf(Exists::class, $rule->lower($platform->productions($profile)->form($platform->parser($profile)->parse('SELECT EXISTS (SELECT 1)')->find('simple_expr')[0])));
     }
+    public function testRowRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT (ROW(1,2) REGEXP 3,4)) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
 }

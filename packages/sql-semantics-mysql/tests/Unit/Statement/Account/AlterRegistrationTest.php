@@ -10,15 +10,14 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterRegistration;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 
 #[CoversClass(AlterRegistration::class)]
 #[Medium]
 final class AlterRegistrationTest extends TestCase
 {
-    public function testDeriveStatementReportsAnInvalidFactor(): void
+    public function testDeriveStatementDeclaresNoRelationOrOutput(): void
     {
-        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics(Dialect::MySql))->analyze('ALTER USER u 4 FACTOR UNREGISTER')->facts->diagnostics[0]);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER USER u 2 FACTOR UNREGISTER')->facts->diagnostics);
     }
 
     public function testRenderWritesTheStep(): void

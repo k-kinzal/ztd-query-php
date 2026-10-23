@@ -46,7 +46,12 @@ final class GeneratedWritesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
 
-        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2, 3)', $tables)->facts->diagnostics));
+        $operation = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (a, g) VALUES (1, 2, 3)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows::class, $operation->statement->body);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context($tables));
+        (new \SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics));
     }
 
     public function testAssignmentsReportsAssignedGeneratedColumns(): void

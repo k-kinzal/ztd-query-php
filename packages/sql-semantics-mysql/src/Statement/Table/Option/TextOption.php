@@ -31,6 +31,9 @@ final class TextOption implements TableOption
      */
     public function __construct(public readonly TextOptionKind $kind, public readonly Text $value)
     {
+        if (in_array($kind, [TextOptionKind::EngineAttribute, TextOptionKind::SecondaryEngineAttribute], true)) {
+            \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($value);
+        }
     }
 
     /**

@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ROLLBACK [WORK] TO [SAVEPOINT] name`: a request to undo the changes made after a savepoint.
@@ -35,6 +35,7 @@ final class RollbackToSavepoint implements Statement
      */
     public function __construct(public readonly Name $savepoint)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

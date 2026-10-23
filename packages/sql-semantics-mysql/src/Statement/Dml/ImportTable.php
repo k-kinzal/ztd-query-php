@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * IMPORT TABLE: creates MyISAM tables from the metadata files a server exported (MySQL 8.0 and later).
@@ -30,7 +30,7 @@ final class ImportTable implements Statement
     use Snapshot;
 
     /**
-     * @var list<Text> The file name patterns in written order
+     * @var non-empty-list<Text> The file name patterns in written order
      */
     public readonly array $files;
 
@@ -40,6 +40,10 @@ final class ImportTable implements Statement
     public function __construct(array $files)
     {
         $this->files = Check::listOf($files, Text::class, 'IMPORT TABLE names at least one file.', 1);
+        foreach ($this->files as $file) {
+            Check::input($file->radix === null, 'An imported file name is a quoted string.');
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

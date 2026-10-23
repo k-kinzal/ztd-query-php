@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
@@ -27,6 +28,7 @@ final class EncryptionOption implements StorageOption
      */
     public function __construct(public readonly Text $encryption)
     {
+        Check::input($encryption->radix === null, 'A tablespace encryption value is quoted text.');
     }
 
     /**

@@ -26,10 +26,10 @@ final class LeafNoiseTest extends TestCase
         self::assertSame([0], LeafNoise::positions()['opt_storage: STORAGE_SYM']);
         self::assertSame([0], LeafNoise::positions()['opt_table: TABLE_SYM']);
         self::assertSame([0], LeafNoise::positions()['table_ident: . ident']);
-        self::assertSame([0], LeafNoise::positions()['field_ident: . ident']);
+        self::assertArrayNotHasKey('field_ident: . ident', LeafNoise::positions());
         self::assertSame([1], LeafNoise::positions()['charset: CHAR_SYM SET']);
         self::assertSame([1], LeafNoise::positions()['character_set: CHAR_SYM SET_SYM']);
-        self::assertCount(13, LeafNoise::positions());
+        self::assertCount(12, LeafNoise::positions());
         self::assertArrayNotHasKey('optional_braces: ( )', LeafNoise::positions());
         self::assertArrayNotHasKey('simple_ident_q: . ident . ident', LeafNoise::positions());
         self::assertArrayNotHasKey('table_ident: ident', LeafNoise::positions());

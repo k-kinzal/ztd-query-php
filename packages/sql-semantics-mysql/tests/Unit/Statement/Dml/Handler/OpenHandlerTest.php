@@ -22,6 +22,27 @@ use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 #[Medium]
 final class OpenHandlerTest extends TestCase
 {
+    public function testDeriveRelationUsesTheContextOfTheSameHandlerOccurrence(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE d.t(a INT, hidden INT INVISIBLE)')->declarations()[0];
+        $column = new ColumnUse(new Name('hidden'));
+        $handler = new OpenHandler(new Name('h'));
+        $node = new HandlerScan($handler, \SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::First, $column);
+        $before = new \SqlSemantics\Statement\Operation($semantics->context([$table]), $node);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), handlers: ['h' => $table->name]);
+        $after = new \SqlSemantics\Statement\Operation($semantics->context([$table], session: $settings), $node);
+        $resolution = $after->facts->scalar($column)->resolution;
+
+        self::assertInstanceOf(ConditionalColumn::class, $before->facts->scalar($column)->resolution);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $resolution);
+        self::assertSame($handler, $resolution->relation);
+        self::assertSame($table->implicit[0]->column, $resolution->slot->declaration());
+        self::assertSame('a', $after->field(0)->name?->value);
+        self::assertTrue($after->facts->relation($handler)->shape->complete());
+        self::assertFalse($before->facts->relation($handler)->shape->complete());
+    }
+
     public function testDeriveRelationIsOpen(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ FIRST WHERE a');

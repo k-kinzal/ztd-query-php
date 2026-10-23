@@ -17,11 +17,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * CREATE EVENT: a statement the event scheduler runs once or repeatedly.
@@ -29,6 +29,12 @@ use SqlSemantics\Statement\Statement;
  * The statement is structured as a request: it declares nothing to a
  * context. The facts follow MYSQL-EVENT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
+ *
+ * @example Rejecting RETURN outside a function declaration
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
+ * @example Rejecting a multi-valued index cast in a stored body
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['2030-01-01'])), new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Reading an event definition
@@ -65,16 +71,22 @@ final class CreateEvent implements Statement
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
     ) {
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         $this->body = (new StatementSequence())->member($body);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Event, $name);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the schedule and the body.
+     * Derives the schedule and the body; DISABLE ON SLAVE is deprecated from MySQL 8.4 (verified on live 8.0.44, 8.4.7 and 9.1.0 servers).
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->status === EventStatus::DisableOnSlave) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
+        }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
     }
 

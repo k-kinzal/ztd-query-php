@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -80,6 +81,15 @@ final class NumberLiteralTest extends TestCase
         self::assertInstanceOf(Decimal::class, $huge);
     }
 
+    public function testTypePreservesFiniteBoundaryAndUnderflowSpellings(): void
+    {
+        $values = ['1.7976931348623158e308', '1e-309', '1e-400', '0e99999', '1e-99999'];
+        $literals = array_map(static fn (string $text): NumberLiteral => new NumberLiteral($text), $values);
+
+        self::assertSame($values, array_column($literals, 'text'));
+        self::assertSame(array_fill(0, count($values), NumberForm::Float), array_column($literals, 'form'));
+    }
+
     public function testTypeAnswersDoubleForAnExponent(): void
     {
         $type = (new NumberLiteral('1.5E-3'))->type();
@@ -92,6 +102,8 @@ final class NumberLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 18446744073709551615');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
@@ -101,8 +113,8 @@ final class NumberLiteralTest extends TestCase
         self::assertSame('18446744073709551615', $literal->text);
         self::assertSame(NumberForm::Integer, $literal->form);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Integral::class, $fact->type->descriptor);
-        self::assertTrue($fact->type->descriptor->unsigned());
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['BIGINT', 20, true], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->unsigned]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -110,13 +122,16 @@ final class NumberLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT .5');
         $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Decimal::class, $fact->type->descriptor);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['DECIMAL', 3, 1], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->decimals]);
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
     }
 

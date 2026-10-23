@@ -24,4 +24,10 @@ final class BinlogEventTest extends TestCase
     {
         self::assertSame("BINLOG 'AAAA'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("binlog 'AAAA'")->toString());
     }
+
+    public function testValueRejectsIncompatibleEvents(): void
+    {
+        $this->expectExceptionMessage('Encoded binary log events are quoted text.');
+        new BinlogEvent(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

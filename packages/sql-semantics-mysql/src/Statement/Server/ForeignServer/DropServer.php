@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\ForeignServer;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP SERVER [IF EXISTS] name`: a request to remove a FEDERATED server definition.
@@ -33,13 +33,15 @@ final class DropServer implements Statement
      */
     public function __construct(public readonly bool $ifExists, public readonly Name $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: a server is no relation.
+     * Derives the character conversion of system-string operands.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\ForeignStrings())->derive($this, $derivation);
     }
 
     /**
@@ -51,6 +53,6 @@ final class DropServer implements Statement
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }
-        $out->name($this->name, NameUse::Identifier);
+        $out->name($this->name, NameUse::Label);
     }
 }

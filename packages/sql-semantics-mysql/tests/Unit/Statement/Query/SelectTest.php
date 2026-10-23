@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -53,18 +52,20 @@ final class SelectTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        self::assertSame($operation->statement->from, $operation->statement->input());
-        self::assertSame($operation->statement->from, $operation->inputRelation());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        self::assertSame($operation->statement->query->from, $operation->statement->query->input());
+        self::assertSame($operation->statement->query->from, $operation->inputRelation());
     }
 
     public function testInputAnswersNullWithoutAFromClause(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertNull($operation->statement->input());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertNull($operation->statement->query->input());
         self::assertNull($operation->inputRelation());
     }
 
@@ -77,8 +78,9 @@ final class SelectTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a, b FROM t', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame($operation->facts->query($operation->statement), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertSame($operation->facts->query($operation->statement->query), $operation->facts->output);
         self::assertNotNull($operation->shape());
         self::assertTrue($operation->shape()->complete());
         self::assertCount(2, $operation->shape()->slots);
@@ -177,13 +179,14 @@ final class SelectTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t WHERE b = 1', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Comparison::class, $operation->statement->where);
-        $left = $operation->facts->scalar($operation->statement->where->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
+        $left = $operation->facts->scalar($operation->statement->query->where->left);
         self::assertInstanceOf(ResolvedColumn::class, $left->resolution);
         self::assertSame($table->columns[1], $left->resolution->declaration());
-        self::assertSame($operation->statement->from, $left->resolution->relation);
-        self::assertSame(Nullability::Nullable, $operation->facts->scalar($operation->statement->where)->nullability);
+        self::assertSame($operation->statement->query->from, $left->resolution->relation);
+        self::assertSame(Nullability::Nullable, $operation->facts->scalar($operation->statement->query->where)->nullability);
     }
 
     public function testDeriveQueryDependsOnAnUndeclaredTable(): void
@@ -233,7 +236,7 @@ final class SelectTest extends TestCase
         $operation = $semantics->analyze('SELECT "a" FROM t', [$table]);
 
         self::assertSame($table->columns[0], $operation->field('a')->column());
-        self::assertSame('SELECT a FROM t', $operation->toString());
+        self::assertSame('SELECT "a" FROM t', $operation->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
@@ -248,7 +251,7 @@ final class SelectTest extends TestCase
             new TableReference(new QualifiedName(new Name('t')), new Name('u')),
             new Comparison(ComparisonOperator::Less, new ColumnUse(new Name('a'), new QualifiedName(new Name('u'))), new NumberLiteral('3')),
         );
-        $operation = new Operation($semantics->context([$table]), $select);
+        $operation = new Operation($semantics->context([$table]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select));
 
         self::assertSame('SELECT a AS x FROM t AS u WHERE u.a < 3', $operation->toString());
         self::assertSame($table->columns[0], $operation->field('x')->column());
@@ -259,7 +262,11 @@ final class SelectTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $plain = $semantics->analyze('SELECT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
+        $plain = $plain->query;
         $limited = $semantics->analyze('SELECT 1 LIMIT 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $limited);
+        $limited = $limited->query;
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $limited);
@@ -271,8 +278,14 @@ final class SelectTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $plain = $semantics->analyze('SELECT a FROM t WHERE a = 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
+        $plain = $plain->query;
         $locked = $semantics->analyze('SELECT a FROM t FOR UPDATE')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $locked);
+        $locked = $locked->query;
         $into = $semantics->analyze('SELECT a INTO @x FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $into);
+        $into = $into->query;
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $locked);
@@ -361,21 +374,19 @@ final class SelectTest extends TestCase
 
     public function testANodeUsedAtTwoPositionsIsRejected(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
         $column = new ColumnUse(new Name('a'));
 
         $this->expectExceptionMessage('A statement node occurs at one position only.');
 
-        new Operation($semantics->context(), new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
+        new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column);
     }
 
-    public function testAStringLiteralUnderAnotherEscapeRuleIsRejected(): void
+    public function testAStringLiteralRetainsItsDecodedBytes(): void
     {
         $semantics = new Semantics(Dialect::MySql);
+        $statement = new Select([], [new SelectExpression(new StringLiteral(["a\\b'c"]))]);
 
-        $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
-
-        new Operation($semantics->context(), new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
+        self::assertSame("SELECT 'a\\\\b''c'", (new Operation($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement)))->toString());
     }
 
     public function testRejectsALateOrderingThatIsWrittenInPlace(): void
@@ -392,13 +403,20 @@ final class SelectTest extends TestCase
         new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([new OrderItem(new NumberLiteral('1.5'))]));
     }
 
+    public function testRejectsALateLimitAfterANoFromOrdering(): void
+    {
+        $this->expectExceptionMessage('A late clause after an ordered block requires an ordinary FROM relation.');
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], orderBy: [new OrderItem(new NumberLiteral('1.5'))], limit: new RowLimit(new NumberLiteral('1')), late: new LateOrdering([], new RowLimit(new NumberLiteral('2'))));
+    }
+
+
     public function testDeriveStatementRefusesALateOrderingAtTheTop(): void
     {
         $select = new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([], new RowLimit(new NumberLiteral('2'))));
 
         $this->expectExceptionMessage('An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), $select);
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select));
     }
 
     public function testDeriveQueryRefusesALateOrderingBefore56(): void
@@ -407,6 +425,23 @@ final class SelectTest extends TestCase
 
         $this->expectExceptionMessage('An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($select))]));
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ScalarSubquery($select))])));
     }
+
+    public function testRenderWritesTheHintCommentAfterSelect(): void
+    {
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ DISTINCT 1', (new Semantics(Dialect::MySql))->analyze('select/*+max_execution_time(1000)*/ distinct 1')->toString());
+        self::assertSame('SELECT 1', (new Semantics(Dialect::MySql))->analyze('SELECT /*+ FOO */ 1')->toString());
+        self::assertSame('SELECT /*+ BKA(`t`) */ 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT /*+ BKA(t) */ 1')->toString());
+        self::assertSame('SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT /*+ BKA(t) */ 1')->toString());
+    }
+
+    public function testProcedureWithoutFromCanBeAnInsertSource(): void
+    {
+        $procedure = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse();
+        $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], procedure: $procedure);
+
+        self::assertSame($procedure, $query->procedure);
+    }
+
 }

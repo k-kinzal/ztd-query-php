@@ -8,6 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -16,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 
@@ -41,22 +44,87 @@ use SqlSemantics\Statement\Shape\OpenStar;
 final class SortScopes
 {
     /**
+     * Retains each sort operand's scalar, ordinal or deferred role.
+     *
+     * @param list<\SqlSemantics\Statement\Node> $items Ordered sort items
+     * @return list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem>
+     */
+    public function items(array $items): array
+    {
+        $ordered = [];
+        foreach (Check::listOf($items, \SqlSemantics\Statement\Node::class, 'ORDER BY holds ordering items.') as $item) {
+            Check::input($item instanceof OrderItem || $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem, 'A query ordering retains scalar, ordinal or deferred operands.');
+            $ordered[] = $item;
+        }
+        $this->check($ordered);
+        return $ordered;
+    }
+
+    /**
      * Requires every integer literal item to be given as a select list position.
      *
-     * @param list<OrderItem> $items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $items
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an integer literal is an ordinary item
      */
     public function check(array $items): void
     {
         foreach ($items as $item) {
-            Check::input(!$item->expression instanceof NumberLiteral || $item->expression->form !== NumberForm::Integer, 'An integer in ORDER BY or GROUP BY is a select list position.');
+            Check::input($this->position($item->expression) === null, 'An integer in ORDER BY or GROUP BY is a select list position.');
         }
+    }
+
+    /**
+     * Finds a position contradicted by the fixed projection, without resolving catalog columns.
+     *
+     * @param array<string, list<Name|null>|null> $common Enclosing common-table outputs
+     */
+    public function problem(\SqlSemantics\Statement\Query $query, bool $exists = false, array $common = []): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
+    {
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryScopes())->of($query, $exists, $common) as [$body, $scope, $existence]) {
+            $columns = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryColumns())->of($body, $existence, $scope);
+            $problem = $this->bounded($body, $columns === null ? null : count($columns));
+            if ($problem !== null) {
+                return $problem;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks the positional items of one block against its structurally known width.
+     */
+    public function bounded(\SqlSemantics\Statement\Query $query, ?int $width): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange
+    {
+        $groups = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->groupBy->items ?? []) : [];
+        $orders = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation ? $query->orderBy : [];
+        $late = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? ($query->late->orderBy ?? []) : [];
+        foreach ([...$groups, ...$orders, ...$late] as $item) {
+            $ordinal = $item->expression;
+            if ($ordinal instanceof OutputOrdinal && ($ordinal->position() === 0 || ($width !== null && $ordinal->position() > $width))) {
+                return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange($ordinal->position(), $width ?? 0, $ordinal, in_array($item, $groups, true));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds an unsigned integer whose parentheses or unary plus preserve its positional role.
+     */
+    public function position(Operand $expression, bool $legacyBoolean = false): NumberLiteral|BooleanLiteral|null
+    {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
+            $expression = $expression->operand;
+        }
+        if ($legacyBoolean && $expression instanceof BooleanLiteral) {
+            return $expression;
+        }
+        return $expression instanceof NumberLiteral && $expression->form === NumberForm::Integer ? $expression : null;
     }
 
     /**
      * Derives the items in the given environment, whose aliases are the aliased output fields.
      *
-     * @param list<OrderItem> $items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $items
      * @param list<Field|OpenStar> $projection The output of the query, in order
      * @param bool $aliasFirst Whether a bare name looks at the aliases first, as in ORDER BY
      * @return list<ScalarFact> The facts of the items, in order
@@ -73,11 +141,15 @@ final class SortScopes
         $open = count($known) < count($projection);
         $facts = [];
         foreach ($items as $item) {
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) {
+                $facts[] = $derivation->scalar($item->expression, $environment);
+                continue;
+            }
             $word = $aliasFirst ? $this->word($item->expression) : null;
             if ($item->expression instanceof OutputOrdinal) {
-                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known));
+                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection));
             } elseif ($word !== null && $environment->aliased($word) !== []) {
-                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word)));
+                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word), aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection));
             } else {
                 $facts[] = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
             }
@@ -89,7 +161,7 @@ final class SortScopes
     /**
      * Answers the name of an item that is a bare unqualified column reference, possibly in parentheses.
      */
-    public function word(Scalar $expression): ?Name
+    public function word(Operand $expression): ?Name
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;

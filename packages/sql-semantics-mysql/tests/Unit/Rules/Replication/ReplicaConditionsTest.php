@@ -30,8 +30,7 @@ final class ReplicaConditionsTest extends TestCase
 
         self::assertNull($conditions->until(new ReplicaUntil(null, null, [$file, $position])));
         self::assertNull($conditions->until(new ReplicaUntil(UntilPoint::AfterGaps)));
-        self::assertSame(ReplicationError::UntilCondition, $conditions->until(new ReplicaUntil(UntilPoint::BeforeGtids, new Text('g'), [new SourceOption(Terminology::Current, SourceOptionKind::LogPosition, new Numeral('4'))])));
-        self::assertSame(ReplicationError::UntilCondition, $conditions->until(new ReplicaUntil(UntilPoint::AfterGaps, null, [new SourceOption(Terminology::Current, SourceOptionKind::LogFile, new Text('f'))])));
+
     }
 
     public function testCredentialsRefusedNeedsTheApplierAlone(): void
@@ -42,5 +41,16 @@ final class ReplicaConditionsTest extends TestCase
         self::assertFalse($conditions->credentialsRefused([ReplicaThread::Applier, ReplicaThread::Receiver], true));
         self::assertFalse($conditions->credentialsRefused([], true));
         self::assertFalse($conditions->credentialsRefused([ReplicaThread::Applier], false));
+    }
+
+    public function testCombinationRejectsMixedConditionsBeforeConstruction(): void
+    {
+        $conditions = new ReplicaConditions();
+        $file = new SourceOption(Terminology::Current, SourceOptionKind::LogFile, new Text('f'));
+        $position = new SourceOption(Terminology::Current, SourceOptionKind::LogPosition, new Numeral('4'));
+        self::assertSame(ReplicationError::UntilCondition, $conditions->combination(null, null, [$file]));
+        self::assertSame(ReplicationError::UntilCondition, $conditions->combination(UntilPoint::BeforeGtids, new Text('g'), [$position]));
+        self::assertSame(ReplicationError::UntilCondition, $conditions->combination(UntilPoint::AfterGaps, null, [$file]));
+        self::assertNull($conditions->combination(null, null, [$position, $file]));
     }
 }

@@ -119,9 +119,9 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $create = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);
     }
 
     /**
@@ -162,6 +162,12 @@ final class CreateTriggerTest extends TestCase
         $this->expectExceptionMessage('A trigger name has at most a database qualifier.');
 
         new CreateTrigger(new QualifiedName(new Name('tr'), new Name('shop'), new Name('def')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'))), new Block([]));
+    }
+
+    public function testDistinctExplicitDatabasesAreRejected(): void
+    {
+        $this->expectExceptionMessage('A trigger and its table cannot name distinct explicit databases.');
+        new CreateTrigger(new QualifiedName(new Name('tr'), new Name('a')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('b'))), new Block([], []));
     }
 
     public function testABodyOfAnotherClassIsRejected(): void

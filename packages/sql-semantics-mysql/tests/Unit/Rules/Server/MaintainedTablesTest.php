@@ -28,9 +28,16 @@ final class MaintainedTablesTest extends TestCase
 
     public function testDeriveReportsATableNamedTwiceInOneDatabase(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CHECKSUM TABLE db.t, db.t');
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context([]));
+        (new MaintainedTables())->derive($derivation, [new MaintainedTable(new QualifiedName(new Name('t'), new Name('db'))), new MaintainedTable(new QualifiedName(new Name('t'), new Name('db')))]);
 
-        self::assertInstanceOf(NonUniqueTable::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, array_filter($derivation->facts()->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof NonUniqueTable));
+    }
+
+    public function testCheckedRefusesRepeatedIdentitiesBeforeDerivation(): void
+    {
+        $this->expectExceptionMessage('A maintenance statement cannot repeat an identical table name.');
+        (new MaintainedTables())->checked([new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('t')))]);
     }
 
     public function testDeriveAcceptsOneNameInTwoDatabases(): void

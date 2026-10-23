@@ -12,7 +12,10 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
+use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -20,7 +23,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a table from column, index and constraint definitions, a query, or both.
@@ -53,6 +55,9 @@ use SqlSemantics\Statement\Statement;
  * @example The relation fact of the statement resolves to the declaration it provides
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
  *     $create->facts->scalar($create->statement->elements[1]->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ * @example A contradictory column namespace cannot form an ordinary declaration
+ *     $column = static fn () => new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [$column(), $column()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class CreateTable implements Statement, Relation
 {
@@ -88,14 +93,26 @@ final class CreateTable implements Statement, Relation
         public readonly bool $ifNotExists = false,
         public readonly bool $enclosed = false,
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         $this->elements = Check::listOf($elements, TableElement::class, 'Table elements are an ordered list of table elements.');
         $this->options = Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($partitioning), 'A non-scalar partition method belongs to a retained ALTER instruction.');
         Check::input(
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
+        Check::input($query === null || array_filter($this->options, static fn ($option): bool => $option instanceof Option\UnionOption) === [], 'MERGE sources with a query belong to a deferred table-creation instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->elements), 'Deferred generation declarations belong to a stored table-creation instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->elements, $query), 'An ordinary table creation has a declared column or a creation query.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($query) === null, 'A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->elements, $partitioning, $query), 'An implicit partition key absent from the declaration belongs to a deferred creation instruction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->elements, $query) === null, 'Fixed column and key contradictions belong to a deferred creation instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->elements), 'An index with a fixed name or operand condition belongs to a deferred creation instruction.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($this->temporary(), $this->options), 'Positive AUTOEXTEND_SIZE with TEMPORARY belongs to a deferred creation instruction.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -120,6 +137,7 @@ final class CreateTable implements Statement, Relation
             $facts->element($element, $derivation, $scope, $table, $this->name);
         }
         $this->partitioning?->derivePartitioning($derivation, $scope);
+        $derivation->orderWarnings($this);
     }
 
     /**
@@ -127,6 +145,16 @@ final class CreateTable implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
+        foreach ($this->elements as $element) {
+            (new ElementFacts())->names($element, $derivation, $this->name);
+            if ($element instanceof ColumnDefinition) {
+                (new TypeNotices())->type($element->specification->dataType(), $derivation);
+                (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);
+            } elseif ($element instanceof Key\IndexDefinition) {
+                (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($element->options, $derivation);
+            }
+        }
+        (new ElementFacts())->options($this->options, $derivation);
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());
         $table = (new TableDeclaration())->table($this, $output, $derivation);
         $derivation->declare($table);

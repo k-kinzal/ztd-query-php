@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a qualified column use
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT shop.t.a FROM shop.t');
- *     $use = $query->statement->items[0]->expression;
+ *     $use = $query->statement->query->items[0]->expression;
  *     [$use->qualifier?->schema?->value, $use->qualifier?->name->value, $use->name->value] // => ['shop', 't', 'a']
  */
 final class ColumnUse implements Scalar

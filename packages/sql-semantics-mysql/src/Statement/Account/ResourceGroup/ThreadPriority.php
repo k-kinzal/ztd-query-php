@@ -29,6 +29,7 @@ final class ThreadPriority implements Node
      */
     public function __construct(public readonly bool $negative, public readonly Numeral $number)
     {
+        \SqlSemantics\Diagnostic\Check::input($number->isIntegerToken(), 'A thread priority uses a decimal integer token no greater than 2147483647.');
     }
 
     /**
@@ -37,6 +38,26 @@ final class ThreadPriority implements Node
     public function describe(): string
     {
         return ($this->negative ? '-' : '') . $this->number->text;
+    }
+
+    /**
+     * Answers the signed numeric value, independently of leading zeros.
+     */
+    public function value(): int
+    {
+        $magnitude = (int) $this->number->text;
+
+        return $this->negative ? -$magnitude : $magnitude;
+    }
+
+    /**
+     * Tells whether the priority belongs to the declared group's range.
+     */
+    public function fits(ResourceGroupKind $kind): bool
+    {
+        $value = $this->value();
+
+        return $kind === ResourceGroupKind::System ? $value >= -20 && $value <= 0 : $value >= 0 && $value <= 19;
     }
 
     /**

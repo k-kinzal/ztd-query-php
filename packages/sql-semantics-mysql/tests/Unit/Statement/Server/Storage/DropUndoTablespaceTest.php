@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace;
 
 #[CoversClass(DropUndoTablespace::class)]
@@ -21,10 +20,10 @@ final class DropUndoTablespaceTest extends TestCase
         self::assertSame('DROP UNDO TABLESPACE u ENGINE innodb', (new Semantics(Dialect::MySql))->analyze('drop undo tablespace u engine innodb')->toString());
     }
 
-    public function testDeriveStatementReportsRejectedOptions(): void
+    public function testDeriveStatementAcceptsAConsistentOptionList(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DROP UNDO TABLESPACE u ENGINE a ENGINE b');
+        $operation = (new Semantics(Dialect::MySql))->analyze('DROP UNDO TABLESPACE u ENGINE a');
 
-        self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 }

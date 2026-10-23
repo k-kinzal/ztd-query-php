@@ -5,11 +5,23 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Dml;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Dml\LoadFacts;
+use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadRule;
+use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -23,6 +35,78 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class LoadFactsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{array<string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null, string, string}>
+     */
+    public static function providerInputVariables(): iterable
+    {
+        yield 'unknown session' => [null, 'utf8mb4_general_ci', '5.7.44'];
+        yield 'absent entry' => [[], 'utf8mb4_general_ci', '5.7.44'];
+        yield 'prior numeric entry' => [['v' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()], 'latin1_swedish_ci', '5.7.44'];
+        yield '5.6 input collation' => [['v' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()], 'utf8mb4_general_ci', '5.6.51'];
+    }
+
+    /**
+     * @param array<string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null $variables The unchanged session snapshot
+     */
+    #[DataProvider('providerInputVariables')]
+    public function testVariablesResolvesInputBeforeTheSetExpressions(?array $variables, string $collation, string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), userVariables: $variables);
+        $table = $semantics->analyze('CREATE TABLE t(a VARCHAR(30))')->declarations();
+        $operation = $semantics->analyze("LOAD DATA LOCAL INFILE 'file' INTO TABLE t CHARACTER SET utf8mb4 (@v) SET a=@v", $semantics->context($table, session: $settings));
+        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        $fact = $operation->facts->scalar($operation->statement->assignments[0]->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding::class, $fact->resolution);
+        self::assertTrue($fact->resolution->exists);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $fact->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $fact->type->descriptor);
+        self::assertSame($collation, $fact->type->descriptor->collation->name);
+        self::assertSame($variables, $settings->userVariables);
+    }
+
+    /**
+     * @return iterable<string, array{LoadTable, ?LoadRule}>
+     */
+    public static function providerAlgorithms(): iterable
+    {
+        $target = new WriteTarget(new QualifiedName(new Name('t')));
+        $file = new LoadInput(false, LoadSource::Infile, new Text('f'));
+        $local = new LoadInput(true, LoadSource::Url, new Text('f'), new Numeral('2'));
+        $bulk = new BulkOptions(bulk: true);
+        yield 'XML before LOCAL and IGNORE' => [new LoadTable(LoadFormat::Xml, null, $local, DuplicateHandling::Ignore, $target, bulk: $bulk), LoadRule::XmlBulk];
+        yield 'columns before LOCAL and IGNORE' => [new LoadTable(LoadFormat::Data, null, $local, DuplicateHandling::Ignore, $target, columns: [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a'))], bulk: $bulk), LoadRule::ColumnsBulk];
+        yield 'LOCAL before IGNORE' => [new LoadTable(LoadFormat::Data, null, $local, DuplicateHandling::Ignore, $target, bulk: $bulk), LoadRule::LocalBulk];
+        yield 'IGNORE' => [new LoadTable(LoadFormat::Data, null, $file, DuplicateHandling::Ignore, $target, bulk: $bulk), LoadRule::IgnoreBulk];
+        yield 'files before URL' => [new LoadTable(LoadFormat::Data, null, $local, null, $target), LoadRule::MultipleFilesWithoutBulk];
+        yield 'URL' => [new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Url, new Text('f')), null, $target), LoadRule::UrlWithoutBulk];
+        yield 'bulk capability belongs to execution' => [new LoadTable(LoadFormat::Data, null, $file, DuplicateHandling::Replace, $target, bulk: $bulk), null];
+        yield 'ordinary file' => [new LoadTable(LoadFormat::Data, null, $file, null, $target), null];
+        yield 'zero count is not multiple files' => [new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f'), new Numeral('000')), null, $target), null];
+    }
+
+    #[DataProvider('providerAlgorithms')]
+    public function testAlgorithmResolvesConstructedOptions(LoadTable $load, ?LoadRule $expected): void
+    {
+        self::assertSame($expected, (new LoadFacts())->algorithm($load)?->rule);
+    }
+
+    public function testDerivePublishesTheAlgorithmConflictBeforeTargetResolution(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+
+        self::assertInstanceOf(LoadConflict::class, $operation->facts->diagnostics[0]);
+        self::assertSame(LoadRule::XmlBulk, $operation->facts->diagnostics[0]->rule);
+    }
+
+    public function testDeriveKeepsBulkAnnotationsInTheEarlierLanguageWithoutAConflict(): void
+    {
+        $facts = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK")->facts;
+
+        self::assertSame([], array_values(array_filter($facts->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof LoadConflict)));
+    }
+
     public function testDeriveReportsAnUnknownColumn(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -31,4 +115,30 @@ final class LoadFactsTest extends TestCase
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
+
+    public function testDeriveFindsTheInvisibleColumnsOfTheTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations();
+
+        self::assertSame([], $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE v (a, e)", $tables)->facts->diagnostics);
+    }
+
+    public function testDeriveWarnsOfTheCharacterSetTheStatementNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (a INT)');
+        $facts = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET utf8", [$t])->facts;
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+    }
+    public function testDeriveRecordsTheCharsetFailureBeforeAssignmentNotices(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=(@v:=1)");
+        $warning = $operation->facts->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
+        self::assertTrue($warning->aborts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warning->problem);
+    }
+
 }

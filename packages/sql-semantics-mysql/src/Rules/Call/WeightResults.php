@@ -1,0 +1,128 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\Call;
+
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Type\Known;
+
+/**
+ * Resolves the binary result capacity of both WEIGHT_STRING forms.
+ *
+ * AS CHAR limits evaluated weights, retaining at least the operand's declared byte capacity.
+ * A larger requested weight count expands that capacity before collation-specific sizing.
+ * AS BINARY and a nonzero internal result length specify the capacity directly. Modern
+ * releases retain a minimum of eight bytes. Legacy sizing uses the charset byte width;
+ * modern collation expansion is sampled from public
+ * result metadata in resources/weight-lengths.php. Temporal stored fields retain their
+ * fixed sort-key widths; expression references retain expression capacities. JSON
+ * uses its text bound, including the legacy unsigned 32-bit length narrowing.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_weight-string.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class WeightResults
+{
+    /**
+     * Resolves the capacity when the operand has a precise domain.
+     */
+    public function fact(ScalarFact $fact, Derivation $derivation, ?WeightCast $cast = null, ?int $castLength = null, int $resultLength = 0, int $weights = 0): ScalarFact
+    {
+        $base = (new ResultTyping())->fact('BY', [$fact]);
+        $operand = (new Precision())->domain($fact->type);
+        if ($operand === null) {
+            return $base;
+        }
+        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $count = $cast === WeightCast::Char ? $castLength ?? 0 : $weights;
+        $length = match (true) {
+            $cast !== WeightCast::Binary && $this->stored($fact, $derivation->facts(), $derivation->context->profile->grammar, Settings::of($derivation->context)->derivedMerge) && ($operand->kind->temporal() || (!$legacy && $operand->kind === Kind::Year)) => $legacy ? $this->temporalLength($operand) : 8,
+            $resultLength > 0 => $resultLength,
+            $cast === WeightCast::Binary => $castLength ?? 0,
+            $operand->kind === Kind::Json => $this->jsonLength($operand, $count, $legacy),
+            $operand->kind === Kind::String => $legacy ? $this->characterBytes($operand, $count) : $this->length($operand, $count),
+            default => max($count, (new Texts(Settings::of($derivation->context)))->length($operand)),
+        };
+        $minimum = $legacy ? 0 : 8;
+
+        $length = min(4294967295, max($minimum, $length));
+        $field = $length <= 65535 ? Field::VarString : ($length <= 16777215 ? Field::MediumBlob : Field::LongBlob);
+
+        return new ScalarFact(new Known(Domain::string($length, Collation::binary(), $field)), $base->nullability);
+    }
+
+    /**
+     * Resolves JSON text capacity, retaining the legacy unsigned length narrowing.
+     */
+    public function jsonLength(Domain $domain, int $count, bool $legacy): int
+    {
+        return $legacy ? max($domain->length * 4, $count) % 4294967296 : max(intdiv($domain->length, 4), $count) * 3;
+    }
+
+    /**
+     * Tells whether the operand reads a stored field instead of a merged expression.
+     */
+    public function stored(ScalarFact $fact, \SqlSemantics\Statement\Fact\Facts $facts, GrammarRelease $release, bool $derivedMerge): bool
+    {
+        $reference = $fact->resolution;
+        $domain = (new Precision())->domain($fact->type);
+        if (!$reference instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn || $domain === null || !$domain->collation->bytes()) {
+            return false;
+        }
+        $relation = $reference->relation;
+        $input = $facts->relation($relation)->table;
+        $query = $relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable ? $relation->query : ($input instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $input->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression ? $input->definition->query : null);
+
+        return $query === null ? !($reference->declaration()->expression ?? false) : !(new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $release, $facts, $derivedMerge);
+    }
+
+    /**
+     * Answers the legacy field's sort-key width, including stored fractional bytes.
+     */
+    public function temporalLength(Domain $domain): int
+    {
+        return $domain->kind === Kind::Date ? 3 : ($domain->kind === Kind::Time ? 3 : ($domain->field === Field::Timestamp ? 4 : 5)) + intdiv($domain->decimals + 1, 2);
+    }
+
+    /**
+     * Answers the declared weight capacity of a string under its collation.
+     */
+    public function length(Domain $operand, int $count = 0): int
+    {
+        return $this->capacity($operand->collation, intdiv($this->characterBytes($operand, $count), $operand->collation->charset->maxLength));
+    }
+
+    /**
+     * Answers the character cast's declared byte capacity after 32-bit narrowing.
+     * The retained operand capacity is a lower bound before the multiplication.
+     */
+    public function characterBytes(Domain $operand, int $count): int
+    {
+        $width = $operand->collation->charset->maxLength;
+
+        return (max($operand->length * $width, $count) * $width) % 4294967296;
+    }
+
+    /**
+     * Answers a weight buffer's size from its input byte capacity and requested weight count.
+     */
+    public function capacity(Collation $collation, int $bytes, int $count = 0): int
+    {
+        /** @var array<string, array{int, int}> $lengths */
+        $lengths = require dirname(__DIR__, 3) . '/resources/weight-lengths.php';
+        [$factor, $overhead] = $lengths[$collation->name] ?? [$collation->charset->maxLength, 0];
+
+        return max($bytes, $count) * intdiv($factor, $collation->charset->maxLength) + $overhead;
+    }
+}

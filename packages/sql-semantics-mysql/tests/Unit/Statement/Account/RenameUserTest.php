@@ -24,4 +24,11 @@ final class RenameUserTest extends TestCase
     {
         self::assertSame('RENAME USER a@h TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("rename user 'a'@'h' to b, c to d")->toString());
     }
+    public function testDeriveStatementExcludesContradictoryCurrentIdentityPairs(): void
+    {
+        $this->expectExceptionMessage('RENAME USER has consistent ordered account identities.');
+        $current = new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser();
+        new RenameUser([new \SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming($current, $current)]);
+    }
+
 }

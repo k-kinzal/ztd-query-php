@@ -26,4 +26,11 @@ final class LoadHistogramTest extends TestCase
     {
         self::assertSame('a', (new LoadHistogram([new Name('a')], new Text('{}')))->columns()[0]->value);
     }
+
+    public function testDataDomainRequiresQuotedText(): void
+    {
+        $this->expectExceptionMessage('Histogram data is a quoted text string.');
+        new LoadHistogram([new Name('a')], new Text('A', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
 }

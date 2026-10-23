@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 
 /**
  * Lowers the parameter lists of stored routines and the data types of parameters, variables and return values.
@@ -51,6 +55,7 @@ final class ParameterRule
      * Lowers a parameter list: a node of `sp_fdparam_list` or `sp_pdparam_list`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a completed parameter repeats an earlier name
      */
     public function parameters(Node $list): ParameterList
     {
@@ -59,10 +64,18 @@ final class ParameterRule
         $items = match ($form->signature) {
             'sp_fdparam_list:', 'sp_pdparam_list:' => [],
             'sp_fdparam_list: sp_fdparams', 'sp_pdparam_list: sp_pdparams' => (new Sequence($this->lowering))->items($form->node(0), self::LISTS),
+            'sp_fdparams: sp_fdparams , sp_fdparam', 'sp_fdparams: sp_fdparam', 'sp_pdparams: sp_pdparams , sp_pdparam', 'sp_pdparams: sp_pdparam' => (new Sequence($this->lowering))->items($list, self::LISTS),
             default => throw ImplementationGap::production($form),
         };
+        $seen = [];
         foreach ($items as $item) {
-            $parameters[] = $this->parameter($item);
+            $parameter = $this->parameter($item);
+            $key = $parameter->key();
+            if (isset($seen[$key])) {
+                throw new RejectedInput(new ProgramProblem(ProgramRule::DuplicateParameter, $parameter->name->value), (new SourceRanges())->span($item)[1] ?? 0);
+            }
+            $seen[$key] = true;
+            $parameters[] = $parameter;
         }
 
         return new ParameterList($parameters);
@@ -72,6 +85,7 @@ final class ParameterRule
      * Lowers one parameter: a node of `sp_fdparam` or `sp_pdparam`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a parameter name is outside its intrinsic domain
      */
     public function parameter(Node $parameter): Parameter
     {
@@ -96,15 +110,23 @@ final class ParameterRule
         }
         [$declared, $collate] = $this->declared($form->node($type), $collation === null ? null : $form->node($collation));
 
-        return new Parameter($this->lowering->names->identifier($form->node($name)), $declared, $collate, $direction);
+        $identifier = $this->lowering->names->identifier($form->node($name));
+        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        $problem = $legacy ? null : Parameter::nameProblem($identifier);
+        if ($problem !== null) {
+            throw new RejectedInput($problem, (new SourceRanges())->span($parameter)[1] ?? 0);
+        }
+
+        return new Parameter($identifier, $declared, $collate, $direction);
     }
 
     /**
      * Lowers a data type with its optional COLLATE clause: a node of `type_with_opt_collate`, or a node
      * of `type` and the node of `opt_collate` that follows it.
      *
-     * @return array{TypeName, CollationName|null}
+     * @return array{DeclaredName, CollationName|null}
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a named collation has no compatible declared character set
      */
     public function declared(Node $type, ?Node $collation): array
     {
@@ -116,6 +138,16 @@ final class ParameterRule
             [$type, $collation] = [$form->node(0), $form->node(1)];
         }
 
-        return [$this->lowering->types->type($type), $this->lowering->charsets->collation($collation)];
+        $declared = $this->lowering->types->type($type);
+        $collate = $this->lowering->charsets->collation($collation);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->problem($declared, $collate, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            if ($collate?->name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($collate->name->value, $this->lowering->profile->grammar) === null) {
+                throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($collate->name->value), (new SourceRanges())->span($collation)[1] ?? 0);
+            }
+            throw new RejectedInput($problem, (new SourceRanges())->span($collation)[1] ?? 0);
+        }
+
+        return [$declared, $collate];
     }
 }

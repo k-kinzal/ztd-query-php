@@ -10,9 +10,9 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REPAIR [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, … [QUICK] [EXTENDED] [USE_FRM]`: a request to repair possibly corrupted tables.
@@ -54,6 +54,7 @@ final class RepairTable implements Statement
     {
         $this->tables = (new MaintainedTables())->checked($tables);
         $this->options = Check::listOf($options, RepairOption::class, 'REPAIR TABLE takes a list of repair options.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

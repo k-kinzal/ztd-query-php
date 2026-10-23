@@ -46,14 +46,16 @@ final class GenerationContext
      * @param Grammar $grammar Common AST for this release
      * @param Generator $faker Source of random lexical choices
      * @param string|null $version Exact release or null for the declared default
+     * @param bool $highNotPrecedence Whether NOT has unary precedence
+     * @param bool $pipesAsConcat Whether || denotes concatenation
      * @throws RuntimeException When the requested release is unavailable
      */
-    public function __construct(Grammar $grammar, Generator $faker, ?string $version = null)
+    public function __construct(Grammar $grammar, Generator $faker, ?string $version = null, bool $highNotPrecedence = false, bool $pipesAsConcat = false)
     {
         $version = MySqlGrammar::resolveVersion($version);
-        $lexical = new LexicalGrammar($faker, $version);
+        $lexical = new LexicalGrammar($faker, $version, highNotPrecedence: $highNotPrecedence, pipesAsConcat: $pipesAsConcat);
         $this->grammar = $grammar;
-        $this->rewriter = (new RewriteDefinitions())->create($version);
+        $this->rewriter = (new RewriteDefinitions())->create($version, $highNotPrecedence, $pipesAsConcat);
         $this->startSymbol = (new StartRuleResolver($grammar))->startSymbolFor(...);
         $this->lexicalGrammar = $lexical;
     }

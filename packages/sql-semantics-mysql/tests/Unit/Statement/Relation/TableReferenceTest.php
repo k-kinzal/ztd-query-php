@@ -67,9 +67,10 @@ final class TableReferenceTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        $fact = $operation->facts->relation($operation->statement->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        $fact = $operation->facts->relation($operation->statement->query->from);
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertSame($table, $fact->table->table);
         self::assertTrue($fact->shape->complete());
@@ -87,9 +88,10 @@ final class TableReferenceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM shop.t AS x');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        $fact = $operation->facts->relation($operation->statement->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        $fact = $operation->facts->relation($operation->statement->query->from);
         self::assertInstanceOf(UndeclaredTable::class, $fact->table);
         self::assertFalse($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
@@ -102,9 +104,10 @@ final class TableReferenceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t', []);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        $fact = $operation->facts->relation($operation->statement->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        $fact = $operation->facts->relation($operation->statement->query->from);
         self::assertInstanceOf(MissingTable::class, $fact->table);
         self::assertTrue($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
@@ -134,9 +137,10 @@ final class TableReferenceTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM shop.t', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        self::assertInstanceOf(MissingTable::class, $operation->facts->relation($operation->statement->from)->table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        self::assertInstanceOf(MissingTable::class, $operation->facts->relation($operation->statement->query->from)->table);
         self::assertSame('(current)', $semantics->context()->searchPath[0]->value);
     }
 
@@ -149,9 +153,10 @@ final class TableReferenceTest extends TestCase
         $second = new Table(new QualifiedName(new Name('t')), $semantics->profile(), []);
         $operation = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        $fact = $operation->facts->relation($operation->statement->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
+        $fact = $operation->facts->relation($operation->statement->query->from);
         self::assertInstanceOf(ConflictingTables::class, $fact->table);
         self::assertSame([$first, $second], $fact->table->candidates);
         self::assertTrue($fact->shape->complete());

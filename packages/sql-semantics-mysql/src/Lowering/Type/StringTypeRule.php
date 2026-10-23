@@ -10,11 +10,11 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 
 /**
  * Lowers the character string, binary string and enumeration type productions.
@@ -114,7 +114,7 @@ final class StringTypeRule
      *
      * @throws ImplementationGap When a part has no rule
      */
-    public function type(Form $form): ?TypeName
+    public function type(Form $form): ?DeclaredName
     {
         if (isset(self::CHARACTERS[$form->signature])) {
             [$kind, $length, $charset] = self::CHARACTERS[$form->signature];

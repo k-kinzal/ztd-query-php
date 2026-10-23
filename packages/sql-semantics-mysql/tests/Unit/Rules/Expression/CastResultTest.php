@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Expression\CastResult;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
@@ -42,4 +43,35 @@ final class CastResultTest extends TestCase
 
         self::assertSame([Nullability::Nullable, Nullability::NotNull], [$results->nullability(new CastTarget(CastKind::Year), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Signed), Nullability::NotNull)]);
     }
+
+    public function testNullabilityMakesAStringCastNullableAndANumericCastPropagate(): void
+    {
+        $results = new CastResult();
+
+        self::assertSame(
+            [Nullability::Nullable, Nullability::Nullable, Nullability::Nullable, Nullability::Nullable, Nullability::NotNull, Nullability::Nullable],
+            [$results->nullability(new CastTarget(CastKind::Char, '2'), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Binary), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::NationalChar), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Point), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Decimal, '5', '2'), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Double), Nullability::Nullable)],
+        );
+    }
+
+    public function testNullabilityPropagatesStringOperandsOnlyInMySql56(): void
+    {
+        $results = new CastResult();
+        $target = new CastTarget(CastKind::Char, '17000');
+
+        self::assertSame(Nullability::NotNull, $results->nullability($target, Nullability::NotNull, GrammarRelease::MySql5651));
+        self::assertSame(Nullability::Nullable, $results->nullability($target, Nullability::Nullable, GrammarRelease::MySql5651));
+        self::assertSame(Nullability::Nullable, $results->nullability($target, Nullability::NotNull, GrammarRelease::MySql5744));
+    }
+
+    public function testTypeKeepsUnsizedStringFactsSeparateFromDeclarations(): void
+    {
+        $results = new CastResult();
+        $charset = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Ascii);
+
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)), $results->type(new CastTarget(CastKind::Binary)));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(national: true)), $results->type(new CastTarget(CastKind::NationalChar)));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(charset: $charset)), $results->type(new CastTarget(CastKind::Char, charset: $charset)));
+    }
+
 }

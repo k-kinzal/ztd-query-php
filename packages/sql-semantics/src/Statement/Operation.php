@@ -20,7 +20,7 @@ use SqlSemantics\Validation\Publication;
  * One analyzed statement: its structure, the facts derived against a fixed context, and its SQL.
  *
  * The constructor is the only way to obtain an operation and it is a checking
- * boundary. It audits the structure, derives every fact, renders the SQL, and
+ * boundary. It audits and renders the structure, derives every fact, and
  * confirms that the rendered SQL has the same structure. Nothing is filled in
  * afterwards and nothing can be changed. A different statement is a new
  * operation built from explicit inputs or from newly analyzed SQL; it has no
@@ -47,8 +47,6 @@ final class Operation
      */
     public readonly Facts $facts;
 
-    private readonly string $sql;
-
     /**
      * Derives and checks a new root from a context and an explicit statement structure.
      *
@@ -59,20 +57,26 @@ final class Operation
      *
      * @param AnalysisContext $context The fixed profile and declaration snapshot
      * @param Statement $statement The requested statement
+     * @param Source\SourceMap $sources Optional original input locations, independent of the semantic structure
      */
-    public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement)
+    public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement, public readonly Source\SourceMap $sources = new Source\SourceMap())
     {
-        [$facts, $sql] = (new Publication())->establish($context, $statement);
-        $this->facts = $facts;
-        $this->sql = $sql;
+        [$this->facts] = (new Publication())->establish($context, $statement, $sources);
+        (new \SqlSemantics\Validation\ValueGraph(['SqlSemantics\\Statement\\']))->members($this);
     }
 
     /**
-     * Answers the SQL rendered from the structure and confirmed to correspond to it; never the analyzed text.
+     * Answers SQL rendered from the structure in its client character set; never the analyzed text.
+     *
+     * @throws \SqlSemantics\Diagnostic\UnrepresentableName When the client character set cannot represent a decoded name
      */
     public function toString(): string
     {
-        return $this->sql;
+        $platform = \SqlSemantics\Contract\Platforms::of($this->context->profile->grammar->database());
+        $output = new \SqlSemantics\Rendering\Output($platform->codec($this->context->profile, $this->context->session));
+        $this->statement->render($output);
+
+        return (new \SqlSemantics\Rendering\Lexical())->join($output->pieces()) . $output->trailing();
     }
 
     /**

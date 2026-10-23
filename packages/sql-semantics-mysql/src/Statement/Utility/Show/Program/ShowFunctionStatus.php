@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Program;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Rendering\Output;
@@ -14,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW FUNCTION STATUS: the stored functions the account can see.
@@ -39,6 +39,7 @@ final class ShowFunctionStatus implements Statement, Relation
      */
     public function __construct(public readonly ShowLike|ShowWhere|null $filter = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

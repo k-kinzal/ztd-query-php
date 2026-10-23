@@ -8,17 +8,15 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -35,16 +33,16 @@ use SqlSemantics\Statement\Type\Nullability;
  * VARBINARY; with an introducer a character string, VARCHAR, of the
  * introduced character set; never NULL. In a numeric context the server
  * converts the value, which is a rule of the operator, not of the literal.
- * Precision: the type family is exact; the length is not derived.
+ * Precision: the length counts bytes without an introducer and characters in the introduced character set.
  * Diagnostics: none. Source: https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/bit-value-literals.html. Status: Implemented.
  *
  * @visibility public
  * @example Reading one literal from either spelling
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
- *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
+ *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->query->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
  */
-final class RadixLiteral implements Scalar
+final class RadixLiteral implements LiteralExpression
 {
     use Snapshot;
 
@@ -64,11 +62,38 @@ final class RadixLiteral implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $type = $this->introducer === null
-            ? new Binary(BinaryKind::VarBinary)
-            : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $this->introducer));
+        if ($this->introducer !== null) {
+            Deprecation::charset($this->introducer->value, $derivation);
+        }
 
-        return new ScalarFact(new Known($type), Nullability::NotNull);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Literal\Utf32Radix())->problem($this, $derivation->context->profile->grammar);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
+
+        return new ScalarFact(new Known(Literals::of($derivation->context)->radix($this)), Nullability::NotNull);
+    }
+
+    /**
+     * Decodes the literal's bytes, preserving leading zeros and padding incomplete octets on the left.
+     *
+     * @example Decoding odd hexadecimal digits
+     *     bin2hex((new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, 'ABC'))->bytes()) // => '0abc'
+     */
+    public function bytes(): string
+    {
+        if ($this->digits === '') {
+            return '';
+        }
+        if ($this->radix === Radix::Hexadecimal) {
+            return (string) hex2bin(strlen($this->digits) % 2 === 1 ? '0' . $this->digits : $this->digits);
+        }
+        $bytes = '';
+        foreach (str_split(str_pad($this->digits, (int) ceil(strlen($this->digits) / 8) * 8, '0', STR_PAD_LEFT), 8) as $octet) {
+            $bytes .= chr((int) bindec($octet));
+        }
+
+        return $bytes;
     }
 
     /**

@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
@@ -58,13 +57,13 @@ final class RoutineCommentTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new RoutineComment(new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new RoutineComment(new Text('41', Radix::Hexadecimal));
     }
 
     public function testABitTextIsRejected(): void
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new RoutineComment(new Text('01', EscapeRule::Backslash, Radix::Bit));
+        new RoutineComment(new Text('01', Radix::Bit));
     }
 }

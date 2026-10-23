@@ -6,11 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -29,7 +28,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $install = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("INSTALL COMPONENT 'file://c' SET c.v = ON");
  *     $install->statement->settings[0]->value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord // => true
  */
-final class OnWord implements Scalar
+final class OnWord implements Operand
 {
     use Snapshot;
 
@@ -38,7 +37,7 @@ final class OnWord implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Known(new Character(CharacterKind::VarChar)), Nullability::NotNull);
+        return new ScalarFact(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), Nullability::NotNull);
     }
 
     /**

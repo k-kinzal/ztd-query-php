@@ -20,8 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\RenameTablespace;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the tablespace and undo tablespace statements.

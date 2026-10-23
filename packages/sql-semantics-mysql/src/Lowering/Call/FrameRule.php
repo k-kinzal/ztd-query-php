@@ -14,7 +14,10 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameExclusion;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrameBound;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers a parenthesized window specification and its frame.
@@ -75,14 +78,21 @@ final class FrameRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function specification(Node $specification): WindowSpec
+    public function specification(Node $specification): WindowSpec|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec
     {
         $form = $this->lowering->form($specification);
         $this->lowering->names->claimed($form, ['window_spec: ( window_spec_details )']);
         $details = $this->lowering->form($form->node(1));
         $this->lowering->names->claimed($details, ['window_spec_details: opt_existing_window_name opt_partition_clause opt_window_order_by_clause opt_window_frame_clause']);
 
-        return new WindowSpec($this->base($details->node(0)), $this->ordering($details->node(1)), $this->ordering($details->node(2)), $this->frame($details->node(3)));
+        $base = $this->base($details->node(0));
+        $partition = $this->ordering($details->node(1));
+        $order = $this->ordering($details->node(2));
+        $frame = $this->frame($details->node(3));
+        if ($frame instanceof DeferredFrame || array_filter([...$partition, ...$order], static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec($base, $partition, $order, $frame);
+        }
+        return new WindowSpec($base, array_values(array_filter($partition, static fn ($item): bool => $item instanceof OrderItem)), array_values(array_filter($order, static fn ($item): bool => $item instanceof OrderItem)), $frame);
     }
 
     /**
@@ -104,7 +114,7 @@ final class FrameRule
     /**
      * Lowers the partitioning or the ordering: a node of opt_partition_clause or opt_window_order_by_clause.
      *
-     * @return list<OrderItem>
+     * @return list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem>
      * @throws ImplementationGap When the production has no rule
      */
     public function ordering(Node $clause): array
@@ -113,7 +123,7 @@ final class FrameRule
 
         return match ($form->signature) {
             'opt_partition_clause:', 'opt_window_order_by_clause:' => [],
-            'opt_partition_clause: PARTITION_SYM BY group_list', 'opt_window_order_by_clause: ORDER_SYM BY order_list' => $this->lowering->queries->ordering($form->node(2)),
+            'opt_partition_clause: PARTITION_SYM BY group_list', 'opt_window_order_by_clause: ORDER_SYM BY order_list' => (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->items($form->node(2), false),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -123,7 +133,7 @@ final class FrameRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function frame(Node $clause): ?Frame
+    public function frame(Node $clause): Frame|DeferredFrame|null
     {
         $form = $this->lowering->form($clause);
         if ($form->signature === 'opt_window_frame_clause:') {
@@ -140,13 +150,16 @@ final class FrameRule
         }
         $extent = $this->lowering->form($form->node(1));
         if ($extent->signature === 'window_frame_extent: window_frame_start') {
-            return new Frame($unit, $this->bound($extent->node(0)), null, self::EXCLUSIONS[$exclusion->signature]);
+            $start = $this->bound($extent->node(0));
+            return $start instanceof DeferredFrameBound ? new DeferredFrame($unit, $start, null, self::EXCLUSIONS[$exclusion->signature]) : new Frame($unit, $start, null, self::EXCLUSIONS[$exclusion->signature]);
         }
         $this->lowering->names->claimed($extent, ['window_frame_extent: window_frame_between']);
         $between = $this->lowering->form($extent->node(0));
         $this->lowering->names->claimed($between, ['window_frame_between: BETWEEN_SYM window_frame_bound AND_SYM window_frame_bound']);
 
-        return new Frame($unit, $this->bound($between->node(1)), $this->bound($between->node(3)), self::EXCLUSIONS[$exclusion->signature]);
+        $start = $this->bound($between->node(1));
+        $end = $this->bound($between->node(3));
+        return $start instanceof DeferredFrameBound || $end instanceof DeferredFrameBound ? new DeferredFrame($unit, $start, $end, self::EXCLUSIONS[$exclusion->signature]) : new Frame($unit, $start, $end, self::EXCLUSIONS[$exclusion->signature]);
     }
 
     /**
@@ -154,7 +167,7 @@ final class FrameRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function bound(Node $bound): FrameBound
+    public function bound(Node $bound): FrameBound|DeferredFrameBound
     {
         $form = $this->lowering->form($bound);
         if ($form->signature === 'window_frame_bound: window_frame_start') {
@@ -165,7 +178,9 @@ final class FrameRule
             return new FrameBound($kind);
         }
         if ($unit !== null) {
-            return new FrameBound($kind, $this->lowering->expressions->expression($form->node($offset)), $this->lowering->expressions->intervalUnit($form->node($unit)));
+            $operand = $this->lowering->expressions->operand($form->node($offset));
+            $interval = $this->lowering->expressions->intervalUnit($form->node($unit));
+            return $operand instanceof Scalar ? new FrameBound($kind, $operand, $interval) : new DeferredFrameBound($kind, $operand, $interval);
         }
         $operand = $this->lowering->form($form->node($offset))->node->name === 'param_marker'
             ? $this->lowering->literals->parameter($form->node($offset))

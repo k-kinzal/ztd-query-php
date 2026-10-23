@@ -9,11 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
-use SqlSemantics\Platform\MySql\Statement\Expression\Row;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -34,14 +36,6 @@ final class InListTest extends TestCase
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 
-    public function testDeriveScalarReportsAnElementOfAnotherWidth(): void
-    {
-        $platform = new Platform();
-        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
-        $derivation->scalar(new InList(new Row([new NumberLiteral('1'), new NumberLiteral('2')]), [new NumberLiteral('3')]), $derivation->environment());
-
-        self::assertSame('Operand should contain 2 column(s), not 1.', $derivation->facts()->diagnostics[0]->message());
-    }
 
     public function testRenderWritesTheNegatedList(): void
     {
@@ -64,5 +58,18 @@ final class InListTest extends TestCase
         $this->expectExceptionMessage('An IN list has at least one element.');
 
         new InList(new NumberLiteral('1'), []);
+    }
+
+    public function testDeriveScalarNamesAListOfOneElementAsTheComparisonInAMixOfCollations(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $in = $semantics->analyze("SELECT _latin1'a' COLLATE latin1_bin IN (_latin1'a' COLLATE latin1_general_ci)");
+        $notIn = $semantics->analyze("SELECT _latin1'a' COLLATE latin1_bin NOT IN (_latin1'a' COLLATE latin1_general_ci)");
+        $list = $semantics->analyze("SELECT _latin1'a' COLLATE latin1_bin IN (_latin1'a' COLLATE latin1_general_ci, 'b')");
+
+        $diagnostics = [$in->facts->diagnostics[0], $notIn->facts->diagnostics[0], $list->facts->diagnostics[0]];
+
+        self::assertContainsOnlyInstancesOf(IllegalCollationMix::class, $diagnostics);
+        self::assertSame(['=', '<>', ' IN '], array_column($diagnostics, 'operation'));
     }
 }

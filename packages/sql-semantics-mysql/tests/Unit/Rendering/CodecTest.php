@@ -16,6 +16,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CodecTest extends TestCase
 {
+    public function testQuoteSpellsDecodedBytesUnderEachLexicalMode(): void
+    {
+        $escaped = new Codec(GrammarRelease::MySql847);
+        $verbatim = new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES'));
+
+        self::assertSame("'a\\\\b''c'", $escaped->quote("a\\b'c"));
+        self::assertSame("'a\\b''c'", $verbatim->quote("a\\b'c"));
+    }
+
     public function testNameWritesAPlainAsciiWordBare(): void
     {
         $codec = new Codec(GrammarRelease::MySql8044);
@@ -83,4 +92,18 @@ final class CodecTest extends TestCase
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Routine));
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Label));
     }
+    public function testSpellingEncodesCanonicalNamesAndPreservesQuoteMarks(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        self::assertSame('`é``x`', $codec->spelling('`Ã©``x`'));
+        self::assertSame("'é\\0x'", $codec->name(new Name("Ã©\0x"), NameUse::Alias));
+    }
+
+    public function testSpellingRefusesLossySqlEncodingInsteadOfChangingTheName(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $this->expectException(\SqlSemantics\Diagnostic\UnrepresentableName::class);
+        $codec->spelling('猫');
+    }
+
 }

@@ -79,6 +79,26 @@ final class TriggerRuleTest extends TestCase
         self::assertSame('CREATE TRIGGER IF NOT EXISTS tr AFTER INSERT ON t FOR EACH ROW BEGIN END', $create->toString());
     }
 
+    public function testCreateRetainsOnlyTypedHeaderOperandsForDistinctDatabases(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW SET @x=1');
+            self::fail('Contradictory explicit trigger qualifiers must be refused.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\TriggerSchemaMismatch::class, $failure->problem);
+            self::assertSame('a', $failure->problem->name->schema?->value);
+            self::assertSame('b', $failure->problem->table->name->schema?->value);
+            self::assertFalse($failure->aborts);
+        }
+    }
+
+    public function testCreateKeepsABodyConditionBeforeTheSchemaRelationship(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('RETURN is only allowed in a FUNCTION');
+        (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW RETURN 1');
+    }
+
     public function testCreateRefusesAnotherProduction(): void
     {
         $platform = new Platform();

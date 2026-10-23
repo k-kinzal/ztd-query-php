@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
@@ -39,8 +40,10 @@ use SqlSemantics\Statement\Type\TypeFact;
  * otherwise: the profile does not hold the mode, so the type is the known
  * choice of FLOAT and DOUBLE; the spatial targets are their
  * geometry types. A cast to a temporal type or YEAR yields NULL for a value
- * that is not a valid date or time, so it can always be NULL; every other
- * cast is NULL only when its operand is. Terminates: no recursion.
+ * that is not a valid date or time, and the server marks a cast to a
+ * string, JSON or a geometry as nullable too, so all of them can always be
+ * NULL; a cast to a number is NULL only when its operand is (verified on a
+ * live 8.4 server for every target and operands that are not NULL). Terminates: no recursion.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
  *
@@ -63,9 +66,10 @@ final class CastResult
     public function type(CastTarget $target): TypeFact
     {
         return match ($target->kind) {
-            CastKind::Binary => new Known(new Binary(BinaryKind::VarBinary, $target->length)),
-            CastKind::Char => new Known(new Character(CharacterKind::VarChar, $target->length, false, $target->charset)),
-            CastKind::NationalChar => new Known(new Character(CharacterKind::VarChar, $target->length, true)),
+            CastKind::Binary => new Known($target->length === null ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new Binary(BinaryKind::VarBinary, $target->length)),
+            CastKind::Char, CastKind::NationalChar => new Known($target->length === null
+                ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(national: $target->kind === CastKind::NationalChar, charset: $target->charset)
+                : new Character(CharacterKind::VarChar, $target->length, $target->kind === CastKind::NationalChar, $target->charset)),
             CastKind::Signed => new Known(new Integral(IntegralKind::BigInt)),
             CastKind::Unsigned => new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])),
             CastKind::Date => new Known(new Temporal(TemporalKind::Date)),
@@ -84,11 +88,14 @@ final class CastResult
 
     /**
      * Answers the NULL fact of a cast to a target of an operand with a NULL fact.
+     * MySQL 5.6 string casts retain operand nullability, including character-set
+     * conversions and large strings; later releases report them as nullable.
      */
-    public function nullability(CastTarget $target, Nullability $operand): Nullability
+    public function nullability(CastTarget $target, Nullability $operand, GrammarRelease $release = GrammarRelease::MySql847): Nullability
     {
-        $temporal = in_array($target->kind, [CastKind::Date, CastKind::Time, CastKind::DateTime, CastKind::Year], true);
+        $numeric = in_array($target->kind, [CastKind::Signed, CastKind::Unsigned, CastKind::Decimal, CastKind::Real, CastKind::Double, CastKind::Float], true);
+        $legacy = $release === GrammarRelease::MySql5651 && in_array($target->kind, [CastKind::Char, CastKind::Binary, CastKind::NationalChar], true);
 
-        return $temporal ? Nullability::Nullable : $operand;
+        return $numeric || $legacy ? $operand : Nullability::Nullable;
     }
 }

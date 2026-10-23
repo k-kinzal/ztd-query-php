@@ -9,9 +9,12 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\CastResult;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -27,7 +30,10 @@ use SqlSemantics\Statement\Type\Known;
  * a multi-valued index.
  *
  * Rule: MYSQL-CAST-001. Facts: MYSQL-CAST-RESULT-001; a cast to an array is
- * a JSON value. The operand takes a single value. Terminates: the operand
+ * a JSON value. Construction excludes element types no multi-valued index
+ * takes. Construction also excludes impossible temporal precision, decimal
+ * precision/scale combinations and character widths. Profile-specific bounds
+ * remain resolution facts. The operand takes a single value. Terminates: the operand
  * is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast,
  * https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_convert.
@@ -36,6 +42,12 @@ use SqlSemantics\Statement\Type\Known;
  * @visibility public
  * @example Writing CONVERT with a type as CAST
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE CONVERT(a, SIGNED)')->toString() // => 'SELECT a FROM t WHERE CAST(a AS SIGNED)'
+ * @example Refusing an impossible temporal precision
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Time, '7')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an impossible floating precision
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Float, '54')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an impossible array element type
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Json), true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Cast implements Scalar
 {
@@ -48,6 +60,10 @@ final class Cast implements Scalar
      */
     public function __construct(public readonly Scalar $operand, public readonly CastTarget $target, public readonly bool $array = false)
     {
+        Check::input(!$array || (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->array($target) === null, 'An array cast needs a supported multi-valued index element type.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->size($target) === null, 'A CAST width, precision and scale must fit its target type.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -56,15 +72,28 @@ final class Cast implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $grammar = $derivation->context->profile->grammar;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->size($this->target, $grammar) === null, 'A CAST width must fit its language profile.');
         Check::input(!$this->array || ($grammar !== GrammarRelease::MySql5651 && $grammar !== GrammarRelease::MySql5744), 'A cast to an array needs MySQL 8.0 or later.');
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->derive($this->target, $derivation);
         $result = new CastResult();
         if ($this->array) {
             return new ScalarFact(new Known(new Elementary(ElementaryKind::Json)), $fact->nullability);
         }
 
-        return new ScalarFact($result->type($this->target), $result->nullability($this->target, $fact->nullability));
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null ? null : (new Casts(Settings::of($derivation->context), $grammar))->cast($operand, $this->target);
+        if ($domain !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->capacity($this->target, $domain, $derivation);
+        }
+
+        return new ScalarFact($domain === null ? $result->type($this->target) : new Known($domain), $result->nullability($this->target, $fact->nullability, $grammar));
     }
+
+    /**
+     * The form the server refuses, when it resolves the expression, for a cast to an array outside a functional index.
+     */
+    public const ARRAY_OUTSIDE_INDEX = 'Use of CAST( .. AS .. ARRAY) outside of functional index in CREATE(non-SELECT)/ALTER TABLE or in general expressions';
 
     /**
      * Writes CAST, the operand, AS, the target and the optional ARRAY in parentheses.

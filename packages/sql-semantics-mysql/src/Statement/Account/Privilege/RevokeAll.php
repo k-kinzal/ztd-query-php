@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REVOKE [IF EXISTS] ALL [PRIVILEGES], GRANT OPTION FROM accounts [IGNORE UNKNOWN USER]`: a request to revoke every privilege at every level.
@@ -24,12 +24,12 @@ use SqlSemantics\Statement\Statement;
  * @example Revoking everything
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
  */
-final class RevokeAll implements Statement
+final class RevokeAll implements Statement, PrivilegeChange
 {
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The accounts
+     * @var non-empty-list<UserSpecification> The accounts
      */
     public readonly array $users;
 
@@ -43,7 +43,9 @@ final class RevokeAll implements Statement
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE names at least one account.', 1);
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');
+            Check::input($user->identification === null, 'A REVOKE account has no authentication clause.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

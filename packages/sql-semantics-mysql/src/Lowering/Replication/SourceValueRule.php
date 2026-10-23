@@ -55,6 +55,7 @@ final class SourceValueRule
      * Lowers the value of an option production: the child after `=`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an anonymous-GTID string has no UUID prefix
      */
     public function value(Form $option): Text|Numeral|NumberLiteral|ServerIds|AccountName|PrimaryKeyCheck|AnonymousGtids|null
     {
@@ -133,18 +134,24 @@ final class SourceValueRule
      * Lowers the setting of ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS: OFF, LOCAL or a UUID string.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the string has no UUID prefix
      */
     public function anonymousGtids(Node $value): AnonymousGtids|Text
     {
         $form = $this->lowering->form($value);
         $literals = $this->lowering->literals;
 
-        return match ($form->signature) {
+        $setting = match ($form->signature) {
             'assign_gtids_to_anonymous_transactions_def: OFF_SYM' => AnonymousGtids::Off,
             'assign_gtids_to_anonymous_transactions_def: LOCAL_SYM' => AnonymousGtids::Local,
-            'assign_gtids_to_anonymous_transactions_def: TEXT_STRING' => $this->lowering->leaves->record(new Text($literals->decode($form->token(0)->text), $literals->escapes())),
+            'assign_gtids_to_anonymous_transactions_def: TEXT_STRING' => $this->lowering->leaves->record(new Text($literals->decode($form->token(0)->text))),
             default => throw ImplementationGap::production($form),
         };
+        if ($setting instanceof Text && !\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::AssignGtidsToAnonymousTransactions->accepts($setting)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, text: $setting), (new \SqlSemantics\Construction\SourceRanges())->span($value)[1] ?? 0);
+        }
+
+        return $setting;
     }
 
     /**

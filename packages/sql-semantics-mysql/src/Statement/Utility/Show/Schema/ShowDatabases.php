@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Rendering\Output;
@@ -14,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW DATABASES (SHOW SCHEMAS): the databases the account can see.
@@ -40,6 +40,7 @@ final class ShowDatabases implements Statement, Relation
      */
     public function __construct(public readonly ShowLike|ShowWhere|null $filter = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -55,7 +56,10 @@ final class ShowDatabases implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return (new ShowFacts())->fact($derivation, Report::Databases, $this->filter instanceof ShowLike ? 'Database (' . $this->filter->pattern->value . ')' : null);
+        $heading = new \SqlSemantics\Platform\MySql\Rules\Utility\ShowHeading();
+        $name = $this->filter instanceof ShowLike ? 'Database (' . $heading->pattern($derivation, $this->filter->pattern, false) . ')' : 'Database';
+
+        return (new ShowFacts())->fact($derivation, Report::Databases, $heading->name($derivation, $name, false));
     }
 
     /**

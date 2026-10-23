@@ -9,6 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowListing;
@@ -19,7 +20,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW COLUMNS (SHOW FIELDS): the columns of a table or view.
@@ -32,6 +32,9 @@ use SqlSemantics\Statement\Statement;
  * Terminates: a fixed layout.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-columns.html.
  * Status: Implemented.
+ *
+ * @example Rejecting an empty database operand
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), database: new \SqlSemantics\Statement\Identifier\Name('')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Reading the statement
@@ -50,6 +53,8 @@ final class ShowColumns implements Statement, Relation
      */
     public function __construct(public readonly InspectedTable $table, public readonly ?ShowListing $listing = null, public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($database?->value !== '', 'A SHOW database operand is nonempty.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

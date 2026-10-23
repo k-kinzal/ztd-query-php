@@ -8,7 +8,10 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
+use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
@@ -231,7 +234,8 @@ final class ClauseRule
         $result = [];
         foreach ($items as $item) {
             $expression = $item->expression;
-            $result[] = $expression instanceof NumberLiteral && $expression->form === NumberForm::Integer ? new OrderItem(new OutputOrdinal($expression), $item->direction) : $item;
+            $positional = ($expression instanceof NumberLiteral || $expression instanceof BooleanLiteral || $expression instanceof Grouped || $expression instanceof Unary) && (new SortScopes())->position($expression, in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) !== null;
+            $result[] = $positional ? new OrderItem(new OutputOrdinal($expression), $item->direction) : $item;
         }
 
         return $result;

@@ -22,6 +22,13 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 #[Medium]
 final class AttributeRuleTest extends TestCase
 {
+    public function testSridRefusesTheFirstOutOfRangeRestrictionBeforeColumnCompatibility(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("SRID value is out of range in 'SRID'");
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t(a INT SRID 4294967296 SRID 0)');
+    }
+
     public function testAttributeLowersAKeywordAttribute(): void
     {
         $platform = new Platform();

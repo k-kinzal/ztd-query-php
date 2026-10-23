@@ -11,6 +11,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -58,5 +60,14 @@ final class RowAliasTest extends TestCase
     public function testRenderWritesTheAliasAndColumns(): void
     {
         self::assertSame('INSERT INTO t VALUES (1) AS `new` (m) ON DUPLICATE KEY UPDATE a = m', (new Semantics(Dialect::MySql))->analyze('insert into t values (1) as new (m) on duplicate key update a = m')->toString());
+    }
+
+    public function testDeriveRelationNamesAColumnNamedTwice(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
+        $operation = $semantics->analyze('INSERT INTO t VALUES (1, 2) AS n (x, X) ON DUPLICATE KEY UPDATE a = 1', [$t]);
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('X'))], $operation->facts->diagnostics);
     }
 }

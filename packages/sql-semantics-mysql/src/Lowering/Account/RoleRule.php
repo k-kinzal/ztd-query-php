@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\SetRole;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the role statements and role lists (8.0+).
@@ -48,7 +48,7 @@ final class RoleRule
     public function statement(Form $form): Statement
     {
         return match ($form->signature) {
-            'create_role_stmt: CREATE ROLE_SYM opt_if_not_exists role_list' => new CreateRole($this->lowering->options->present($form->node(2)), $this->roles($form->node(3))),
+            'create_role_stmt: CREATE ROLE_SYM opt_if_not_exists role_list' => $this->create($form),
             'drop_role_stmt: DROP ROLE_SYM if_exists role_list' => new DropRole($this->lowering->options->present($form->node(2)), $this->roles($form->node(3))),
             'set_role_stmt: SET_SYM ROLE_SYM role_list' => new SetRole(new RoleSelection(RoleSet::Named, $this->roles($form->node(2)))),
             'set_role_stmt: SET_SYM ROLE_SYM NONE_SYM' => new SetRole(new RoleSelection(RoleSet::None)),
@@ -59,6 +59,22 @@ final class RoleRule
             'set_role_stmt: SET_SYM DEFAULT_SYM ROLE_SYM ALL TO_SYM role_list' => new SetDefaultRole(new RoleSelection(RoleSet::All), $this->roles($form->node(5))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Separates ordinary definitions from retained invocation-time conditions.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the account definition is contradictory
+     */
+    public function create(Form $form): CreateRole
+    {
+        $roles = $this->roles($form->node(3));
+        $conditional = $this->lowering->options->present($form->node(2));
+        if ((new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($conditional, $roles) !== null) {
+            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole($conditional, $roles);
+            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+        return new CreateRole($conditional, $roles);
     }
 
     /**

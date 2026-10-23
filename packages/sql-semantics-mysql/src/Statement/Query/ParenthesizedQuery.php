@@ -10,7 +10,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A query written in parentheses where the parentheses group it.
@@ -28,9 +27,9 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a parenthesized operand
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
- *     $query->statement->left->query->limit !== null // => true
+ *     $query->statement->query->left->query->limit !== null // => true
  */
-final class ParenthesizedQuery implements Statement, Query
+final class ParenthesizedQuery implements Query
 {
     use Snapshot;
 
@@ -39,14 +38,7 @@ final class ParenthesizedQuery implements Statement, Query
      */
     public function __construct(public readonly Query $query)
     {
-    }
-
-    /**
-     * Derives the query as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

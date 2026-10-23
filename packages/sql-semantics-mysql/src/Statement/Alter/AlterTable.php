@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\StandaloneCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\TrailingCommand;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
@@ -21,7 +22,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER [IGNORE] TABLE t action, …`: a request to change the structure of a table.
@@ -39,7 +39,10 @@ use SqlSemantics\Statement\Statement;
  * (MYSQL-COLUMN-CHANGES-001), which also reports a changed, dropped,
  * renamed or altered column the completely known table does not have and a
  * column name the table would have twice. The statement changes no
- * declaration and provides none. IGNORE exists in 5.6 only.
+ * declaration and provides none. Added and changed column types are checked
+ * after the action list, retaining the notices raised while reading definitions.
+ * CHECK, ANALYZE, OPTIMIZE and REPAIR PARTITION return the
+ * administration result shape (MYSQL-ADMIN-ROWS-001). IGNORE exists in 5.6 only.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html,
  * https://dev.mysql.com/doc/refman/5.6/en/alter-table.html.
  * Status: Implemented.
@@ -67,6 +70,7 @@ final class AlterTable implements Statement, Relation
      */
     public function __construct(public readonly QualifiedName $table, array $commands, public readonly bool $ignore = false)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         $this->commands = Check::listOf($commands, AlterCommand::class, 'ALTER TABLE holds a list of actions.');
         $last = count($this->commands) - 1;
@@ -78,6 +82,9 @@ final class AlterTable implements Statement, Relation
                 'Only modifiers precede a partition or tablespace operation.',
             );
         }
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($table, $this->commands);
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($this->commands), 'An ordinary ALTER statement excludes actions with an intrinsic invocation-time condition.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -85,13 +92,42 @@ final class AlterTable implements Statement, Relation
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->ignore) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AlterIgnore, $derivation);
+        }
         $original = (new Targets())->target($derivation, $this->table);
         (new RelationKinds())->require($derivation, $this->table, $original->table, RelationKind::BaseTable);
         $changes = new ColumnChanges();
         $fact = $derivation->target($this, new RelationFact($changes->apply($original, $this->commands, $derivation, true), $original->table));
         $scope = new Environment($derivation->context, null, [new VisibleRelation($this, $fact->shape, null, $this->table, [], $changes->implicit())]);
         foreach ($this->commands as $command) {
+            if ($command instanceof Partition\ExchangePartition && (new Targets())->same($derivation->context, $this->table, $command->table)) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($command->table->name));
+            }
             $command->deriveCommand($derivation, $scope);
+            if ($command instanceof Partition\MaintainPartitions && $command->kind->reports()) {
+                (new \SqlSemantics\Platform\MySql\Rules\Server\AdminRows())->admin($derivation);
+            }
+        }
+        foreach ($this->commands as $command) {
+            $columns = match (true) {
+                $command instanceof Column\AddColumn => [$command->column],
+                $command instanceof Column\ChangeColumn => [$command->definition],
+                $command instanceof Column\AddColumns => $command->elements,
+                default => [],
+            };
+            foreach ($columns as $column) {
+                if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) {
+                    (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($column->specification->dataType(), $column->name->column->value, $derivation);
+                }
+            }
+        }
+        if (!in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            foreach ($this->commands as $command) {
+                if ($command instanceof Command\ConvertCharset) {
+                    $command->deriveCollation($derivation, $this);
+                }
+            }
         }
     }
 

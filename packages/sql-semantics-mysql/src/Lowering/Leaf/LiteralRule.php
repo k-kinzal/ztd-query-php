@@ -12,8 +12,8 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Platform\MySql\Rules\Strings;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 
@@ -106,29 +107,22 @@ final class LiteralRule
     }
 
     /**
-     * Answers the escape rule of the profile.
-     */
-    public function escapes(): EscapeRule
-    {
-        return EscapeRule::under($this->lowering->profile->lexical);
-    }
-
-    /**
      * Lowers a literal at an expression position.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a temporal operand is outside its representation domain
      * @throws ImplementationGap When the production has no rule
      */
-    public function literal(Node $literal): Scalar
+    public function literal(Node $literal): LiteralExpression
     {
         $form = $this->lowering->productions->form($literal);
         while (isset(self::FORWARD[$form->signature])) {
             $form = $this->lowering->productions->form($form->node(0));
         }
         if (isset(self::NUMBERS[$form->signature])) {
-            return $this->lowering->leaves->record(new NumberLiteral($form->token(0)->text));
+            return $this->number($form->node);
         }
         if (isset(self::TEMPORAL[$form->signature])) {
-            return $this->lowering->leaves->record(new TemporalLiteral(self::TEMPORAL[$form->signature], $this->decode($form->token(1)->text), $this->escapes()));
+            return $this->temporal($form);
         }
         if ($form->node->name === 'text_literal') {
             return $this->string($form->node);
@@ -138,11 +132,27 @@ final class LiteralRule
     }
 
     /**
+     * Decodes temporal text, refusing temporal operands outside their representation domains.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand has no bounded representation
+     */
+    public function temporal(Form $form): TemporalLiteral
+    {
+        $kind = self::TEMPORAL[$form->signature];
+        $text = $this->decode($form->token(1)->text);
+        if ($kind === TemporalForm::Timestamp ? !\SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::valid($text) : \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($kind->value, $text, 6, false, false, true) === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral($text, $kind), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record(new TemporalLiteral($kind, $text));
+    }
+
+    /**
      * Lowers the keyword, signed, hexadecimal and bit literal productions.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function constant(Form $form): Scalar
+    public function constant(Form $form): LiteralExpression
     {
         $digits = new RadixSpelling();
 
@@ -154,15 +164,51 @@ final class LiteralRule
             'literal: BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(0)->text)),
             'literal: UNDERSCORE_CHARSET HEX_NUM' => new RadixLiteral(Radix::Hexadecimal, $digits->digits($form->token(1)->text), $this->introducer($form)),
             'literal: UNDERSCORE_CHARSET BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(1)->text), $this->introducer($form)),
-            'signed_literal: + NUM_literal' => new SignedLiteral(false, $this->number($form->node(1))),
-            'signed_literal: - NUM_literal' => new SignedLiteral(true, $this->number($form->node(1))),
             default => throw ImplementationGap::production($form),
         });
     }
 
     /**
+     * Preserves the invalid UTF-32 value MySQL 5.6 checks before reading later input.
+     */
+    public function radixNotice(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name !== 'literal' || $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
+        $form = $this->lowering->form($node);
+        if (!in_array($form->signature, ['literal: UNDERSCORE_CHARSET HEX_NUM', 'literal: UNDERSCORE_CHARSET BIN_NUM'], true)) {
+            return null;
+        }
+        $literal = $this->constant($form);
+        $problem = $literal instanceof RadixLiteral ? (new \SqlSemantics\Platform\MySql\Rules\Literal\Utf32Radix())->problem($literal, $this->lowering->profile->grammar) : null;
+
+        return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
+    }
+
+    /**
+     * Lowers a literal in a position that also accepts a signed number.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function signed(Node $literal): Literal
+    {
+        $form = $this->lowering->productions->form($literal);
+        while (isset(self::FORWARD[$form->signature])) {
+            $form = $this->lowering->productions->form($form->node(0));
+        }
+
+        return match ($form->signature) {
+            'signed_literal: + NUM_literal' => $this->lowering->leaves->record(new SignedLiteral(false, $this->number($form->node(1)))),
+            'signed_literal: - NUM_literal' => $this->lowering->leaves->record(new SignedLiteral(true, $this->number($form->node(1)))),
+            default => $this->literal($form->node),
+        };
+    }
+
+    /**
      * Lowers an unsigned number literal.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the floating literal exceeds its finite domain
      * @throws ImplementationGap When the production has no rule
      */
     public function number(Node $number): NumberLiteral
@@ -173,6 +219,11 @@ final class LiteralRule
         }
         if (!isset(self::NUMBERS[$form->signature])) {
             throw ImplementationGap::production($form);
+        }
+
+        $notice = $this->lowering->numbers->completed($form->node);
+        if ($notice !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($notice->problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $notice->aborts);
         }
 
         return $this->lowering->leaves->record(new NumberLiteral($form->token(0)->text));
@@ -193,9 +244,9 @@ final class LiteralRule
         }
 
         return $this->lowering->leaves->record(match ($form->signature) {
-            'text_literal: TEXT_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], $this->escapes()),
-            'text_literal: NCHAR_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], $this->escapes(), null, true),
-            'text_literal: UNDERSCORE_CHARSET TEXT_STRING' => new StringLiteral([$this->decode($form->token(1)->text), ...$segments], $this->escapes(), $this->introducer($form)),
+            'text_literal: TEXT_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments]),
+            'text_literal: NCHAR_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], null, true),
+            'text_literal: UNDERSCORE_CHARSET TEXT_STRING' => new StringLiteral([$this->decode($form->token(1)->text), ...$segments], $this->introducer($form)),
             default => throw ImplementationGap::production($form),
         });
     }
@@ -237,17 +288,28 @@ final class LiteralRule
     /**
      * Lowers a string at a position that is not an expression.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a restricted system-text operand contains a line feed
      * @throws ImplementationGap When the production has no rule
      */
     public function text(Node $string): Text
     {
+        $failure = (new SyntaxJsonAttribute())->rejected($string, $this->lowering);
+        if ($failure !== null) {
+            throw $failure;
+        }
         $form = $this->lowering->productions->form($string);
         $radix = self::RADIX_TEXT[$form->signature] ?? null;
         if ($radix !== null) {
-            return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $this->escapes(), $radix));
+            return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $radix));
         }
 
-        return $this->lowering->leaves->record(new Text($this->bytes($string), $this->escapes()));
+        $text = new Text($this->bytes($string));
+        $problem = $string->name === 'TEXT_STRING_sys_nonewline' ? (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text) : null;
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($string)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record($text);
     }
 
     /**

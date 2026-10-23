@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a common table expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c');
- *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->value] // => ['c', 'x']
+ *     [$query->statement->query->with->tables[0]->name->value, $query->statement->query->with->tables[0]->columns[0]->value] // => ['c', 'x']
  */
 final class CommonTableExpression implements Node
 {
@@ -41,6 +41,7 @@ final class CommonTableExpression implements Node
     public function __construct(public readonly Name $name, array $columns, public readonly Query $query)
     {
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a common table expression holds names.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -29,11 +29,13 @@ final class ResolvedColumn implements Resolution
      * @param Relation $relation The relation occurrence the name was found in
      * @param OutputSlot $slot The output slot of that occurrence
      * @param int $depth How many enclosing queries lie between the use and the occurrence; zero for the same query
+     * @param bool $resultReference Whether the name reads an enclosing query result rather than its input rows
      */
     public function __construct(
         public readonly Relation $relation,
         public readonly OutputSlot $slot,
         public readonly int $depth = 0,
+        public readonly bool $resultReference = false,
     ) {
         Check::input($depth >= 0, 'A correlation depth is not negative.');
     }

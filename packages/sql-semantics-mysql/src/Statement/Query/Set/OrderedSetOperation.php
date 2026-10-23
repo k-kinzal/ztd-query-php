@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -44,7 +45,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the ordering of a 5.6 union written after the locking clause of its last SELECT
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1)');
- *     $union = $query->statement->items[0]->expression->query;
+ *     $union = $query->statement->query->items[0]->expression->query;
  *     [count($union->right->locking), count($union->orderBy)] // => [1, 1]
  * @example Refusing a last SELECT without clauses of its own
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
@@ -56,7 +57,7 @@ final class OrderedSetOperation implements Query
     use Snapshot;
 
     /**
-     * @var list<OrderItem> The ORDER BY items of the result in written order
+     * @var list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> The ORDER BY items of the result in written order
      */
     public readonly array $orderBy;
 
@@ -64,25 +65,27 @@ final class OrderedSetOperation implements Query
      * @param Query|LeadingUnion $left The operands before the last SELECT
      * @param SetOperator $operator The operator before the last SELECT
      * @param SetQuantifier|null $quantifier The written DISTINCT or ALL
-     * @param Select $right The last SELECT with its own ORDER BY, LIMIT or locking clauses
-     * @param list<OrderItem> $orderBy The ORDER BY items of the result
+     * @param Select|DeferredBody $right The last SELECT with its own ORDER BY, LIMIT or locking clauses
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items of the result
      * @param Limit|null $limit The LIMIT of the result
      */
     public function __construct(
         public readonly Query|LeadingUnion $left,
         public readonly SetOperator $operator,
         public readonly ?SetQuantifier $quantifier,
-        public readonly Select $right,
+        public readonly Select|DeferredBody $right,
         array $orderBy = [],
         public readonly ?Limit $limit = null,
     ) {
-        $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
-        (new SortScopes())->check($this->orderBy);
+        $this->orderBy = (new SortScopes())->items($orderBy);
         Check::input($this->orderBy !== [] || $limit !== null, 'An ordered set operation holds an ORDER BY or a LIMIT of its result.');
-        Check::input($right->trailed() && $right->late === null && $right->into === null && $right->procedure === null, 'The last SELECT of an ordered set operation writes an ORDER BY, LIMIT or locking clause of its own and nothing after them.');
+        $own = $right instanceof DeferredBody ? ($right->selection->orderBy !== [] || $right->selection->limit !== null) && $right->selection->procedure === null : $right->trailed() && $right->late === null && $right->into === null && $right->procedure === null;
+        Check::input($own, 'The last SELECT of an ordered set operation writes an ORDER BY, LIMIT or locking clause of its own and nothing after them.');
         Check::input(!$left instanceof SetOperation || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
         Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');
         Check::input(!$left instanceof self && !$left instanceof QueryStatement && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -20,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * must therefore hold it in a grouping.
  *
  * Rule: MYSQL-VARIABLE-ASSIGNMENT-001. Facts: the assignment yields the
- * assigned value, so its type and NULL fact are those of the value.
+ * assigned value with an assignment result type, preserving the value's NULL fact.
  * Diagnostics: none. Terminates: the value is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/assignment-operators.html#operator_assign-value.
  * Status: Implemented.
@@ -28,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an assignment
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @n := 5');
- *     [$query->statement->where->right->target->name->value, $query->statement->where->right->value->text] // => ['n', '5']
+ *     [$query->statement->query->where->right->target->name->value, $query->statement->query->where->right->value->text] // => ['n', '5']
  */
 final class VariableAssignment implements Scalar
 {
@@ -40,17 +42,21 @@ final class VariableAssignment implements Scalar
      */
     public function __construct(public readonly UserVariable $target, public readonly Scalar $value)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the target and the value; the assignment has the facts of the value.
+     * Derives the target and value, then resolves the assignment's result type.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $derivation->scalar($this->target, $environment);
         $fact = (new Operands())->single($derivation->scalar($this->value, $environment), $derivation);
+        $variables = new \SqlSemantics\Platform\MySql\Rules\Typing\Variables(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context), $derivation->context->profile->grammar);
+        $variables->introduce($this->target->name->value, $derivation, (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type), $this->value);
+        Deprecation::raise(Deprecated::AssignmentInExpression, $derivation);
 
-        return new ScalarFact($fact->type, $fact->nullability);
+        return new ScalarFact($variables->assigned($fact->type), $fact->nullability);
     }
 
     /**

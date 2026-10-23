@@ -23,6 +23,25 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 #[Medium]
 final class LoweringTest extends TestCase
 {
+    public function testStatementsKeepParameterOccurrencesDistinct(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $select = $lowering->statements($platform->parser($profile)->parse('SELECT ?, ?'))[0];
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
+        self::assertInstanceOf(Select::class, $select);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class, $select->items[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class, $select->items[1]->expression);
+        self::assertNotSame($select->items[0]->expression, $select->items[1]->expression);
+        self::assertSame('?', $select->items[0]->expression->marker);
+        self::assertSame('?', $select->items[1]->expression->marker);
+    }
+
     public function testStatementsAnswerTheOneStatementOfAnInput(): void
     {
         $platform = new Platform();
@@ -33,7 +52,9 @@ final class LoweringTest extends TestCase
         self::assertSame([], $lowering->statements($parser->parse('')));
         self::assertCount(1, $lowering->statements($parser->parse('SELECT 1')));
         self::assertCount(1, $lowering->statements($parser->parse('SELECT 1;')));
-        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT 1;'))[0]);
+        $root = $lowering->statements($parser->parse('SELECT 1;'))[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
         self::assertCount(3, $lowering->leaves->all());
         $recorded = new Leaves();
         $projected = (new Lowering($platform->productions($profile), $recorded, $profile))->statements($parser->parse('SELECT a, 1 FROM t'));
@@ -49,8 +70,12 @@ final class LoweringTest extends TestCase
         $parser = $platform->parser($profile);
 
         self::assertSame([], $lowering->statements($parser->parse('')));
-        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT 1;'))[0]);
-        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT a FROM t WHERE a = 1'))[0]);
+        $root = $lowering->statements($parser->parse('SELECT 1;'))[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
+        $root = $lowering->statements($parser->parse('SELECT a FROM t WHERE a = 1'))[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
     }
 
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
@@ -103,4 +128,56 @@ final class LoweringTest extends TestCase
         self::assertSame('start_entry: sql_statement', $lowering->form($platform->parser($profile)->parse('SELECT 1'))->signature);
         self::assertSame($profile, $lowering->profile);
     }
+
+    public function testHintsAnswerTheHintsOfTheCommentAfterAKeyword(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT /*+ QB_NAME(q) */ 1');
+
+        $lowering->statements($tree);
+
+        self::assertSame(['QB_NAME(`q`)'], array_map(static fn ($hint): string => $hint->text(), $lowering->hints($tree->tokens()[0])));
+        self::assertSame([], $lowering->hints($tree->tokens()[1]));
+    }
+    public function testInProgramScopesTheDatabaseWithoutReplacingInputOrigins(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('d'));
+        $scoped = $lowering->inProgram($name);
+        self::assertNull($lowering->programName);
+        self::assertSame($name, $scoped->inProgram(null)->programName);
+        self::assertSame($lowering->origins, $scoped->origins);
+        self::assertSame($lowering->leaves, $scoped->leaves);
+    }
+
+    public function testUnpreparedSharesInputOwnershipWithoutNativeContextualization(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $inactive = $lowering->unprepared();
+        self::assertFalse($inactive->contextualized);
+        self::assertSame($lowering->leaves, $inactive->leaves);
+        self::assertSame($lowering->origins, $inactive->origins);
+        self::assertTrue($lowering->contextualized);
+    }
+
+    public function testUnpreparedRetainsHintsAndColumnOwnershipInDefinitions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT /*+ INDEX(t ka) */ a FROM t');
+        $lowering->statements($tree);
+        $lowering->columnTable = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $inactive = $lowering->unprepared();
+        self::assertNotEmpty($lowering->hints($tree->tokens()[0]));
+        self::assertSame($lowering->hints($tree->tokens()[0]), $inactive->hints($tree->tokens()[0]));
+        self::assertSame($lowering->columnTable, $inactive->columnTable);
+    }
+
 }

@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a selection from DUAL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM DUAL');
- *     $query->statement->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
+ *     $query->statement->query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
  */
 final class Dual implements \SqlSemantics\Statement\Relation
 {

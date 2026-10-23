@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
@@ -29,6 +29,8 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a generated column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED)');
  *     $create->statement->elements[1]->specification->storage // => \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored
+ * @example Refusing a marker as an ordinary generation expression
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GeneratedColumn implements ColumnSpecification
 {
@@ -40,7 +42,7 @@ final class GeneratedColumn implements ColumnSpecification
     public readonly array $attributes;
 
     /**
-     * @param TypeName $type The data type
+     * @param DeclaredName $type The data type
      * @param Scalar $expression The generation expression
      * @param CollationName|null $collation The collation written before AS
      * @param GeneratedStorage|null $storage VIRTUAL or STORED, when written
@@ -48,20 +50,26 @@ final class GeneratedColumn implements ColumnSpecification
      * @param References|null $references The inline reference, when written
      */
     public function __construct(
-        public readonly TypeName $type,
+        public readonly DeclaredName $type,
         public readonly Scalar $expression,
         public readonly ?CollationName $collation = null,
         public readonly ?GeneratedStorage $storage = null,
         array $attributes = [],
         public readonly ?References $references = null,
     ) {
+        Check::input($collation === null || $collation->name !== null, 'A generated column names an explicit collation.');
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($this->attributes) === null, 'Column enforcement follows a CHECK constraint or its enforcement chain.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $this->attributes) === null, 'A generated column cannot have a DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT, STORAGE or SERIAL type.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $this->attributes) === [], 'Column attributes must fit the declared type and temporal precision.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->contains($expression), 'An ordinary generation expression has no aggregate or window role.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($expression, new \SqlSemantics\Statement\Identifier\Name('')) === null, 'A generation expression excludes subqueries, session variables, parameter markers and forbidden functions.');
     }
 
     /**
      * Answers the data type.
      */
-    public function dataType(): TypeName
+    public function dataType(): DeclaredName
     {
         return $this->type;
     }
@@ -81,6 +89,9 @@ final class GeneratedColumn implements ColumnSpecification
      */
     public function deriveSpecification(Derivation $derivation, Environment $scope): void
     {
+        if ($this->collation !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts())->encoding($this->collation, $derivation, $this);
+        }
         $derivation->scalar($this->expression, $scope);
         foreach ($this->attributes as $attribute) {
             $attribute->deriveAttribute($derivation, $scope);

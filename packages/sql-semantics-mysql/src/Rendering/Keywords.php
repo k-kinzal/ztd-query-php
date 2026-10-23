@@ -42,6 +42,15 @@ final class Keywords
      */
     public function reserved(string $word): bool
     {
+        return ($word[0] ?? '') === '_' || $this->contains($word);
+    }
+
+    /**
+     * Tells whether the release names a word as a keyword or a keyword function.
+     * Introducer-shaped identifiers do not become keywords merely by starting with an underscore.
+     */
+    public function contains(string $word): bool
+    {
         if (!isset(self::$words[$this->release->value])) {
             $words = [];
             $tables = require (new VersionRegistry())->resolve('mysql', $this->release->value)->keywordPath;
@@ -53,6 +62,6 @@ final class Keywords
             self::$words[$this->release->value] = $words;
         }
 
-        return ($word[0] ?? '') === '_' || isset(self::$words[$this->release->value][strtr($word, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')]);
+        return isset(self::$words[$this->release->value][strtr($word, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')]);
     }
 }

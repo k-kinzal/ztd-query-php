@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
@@ -33,5 +34,39 @@ final class SourceOptionTest extends TestCase
         $this->expectExceptionMessage('The value of SOURCE_HOST is outside the domain of the option.');
 
         new SourceOption(Terminology::Current, SourceOptionKind::Host, new Numeral('1'));
+    }
+
+    public function testRenderWritesTheSpellingOfTheSynonym(): void
+    {
+        $change = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("change replication source to master_host = 'h', source_port = 1, get_master_public_key = 1");
+
+        self::assertSame("CHANGE REPLICATION SOURCE TO MASTER_HOST = 'h', SOURCE_PORT = 1, GET_MASTER_PUBLIC_KEY = 1", $change->toString());
+        self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
+        self::assertSame([true, false, true], array_column($change->statement->options, 'synonym'));
+    }
+    public function testValueRejectsUnrenamedSynonyms(): void
+    {
+        $this->expectExceptionMessage('A replication option synonym is a MASTER spelling of a current SOURCE option.');
+
+        new SourceOption(Terminology::Current, SourceOptionKind::PrivilegeChecksUser, null, true);
+    }
+    public function testValueRejectsSynonymsInLegacyVocabulary(): void
+    {
+        $this->expectExceptionMessage('A replication option synonym is a MASTER spelling of a current SOURCE option.');
+
+        new SourceOption(Terminology::Legacy, SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('host'), true);
+    }
+    public function testValueRejectsRadixStrings(): void
+    {
+        $this->expectExceptionMessage('A replication option string is quoted text.');
+
+        new SourceOption(Terminology::Current, SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testValueRejectsHexadecimalSourceLogPositions(): void
+    {
+        $this->expectExceptionMessage('The value of SOURCE_LOG_POS is outside the domain of the option.');
+
+        new SourceOption(Terminology::Current, SourceOptionKind::LogPosition, new Numeral('b', true));
     }
 }

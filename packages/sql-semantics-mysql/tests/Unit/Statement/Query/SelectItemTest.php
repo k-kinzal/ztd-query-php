@@ -28,9 +28,10 @@ final class SelectItemTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, 1 AS one FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertContainsOnlyInstancesOf(SelectItem::class, $operation->statement->items);
-        self::assertContainsOnlyInstancesOf(SelectExpression::class, $operation->statement->items);
-        self::assertCount(2, $operation->statement->items);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertContainsOnlyInstancesOf(SelectItem::class, $operation->statement->query->items);
+        self::assertContainsOnlyInstancesOf(SelectExpression::class, $operation->statement->query->items);
+        self::assertCount(2, $operation->statement->query->items);
     }
 }

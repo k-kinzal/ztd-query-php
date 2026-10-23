@@ -123,4 +123,48 @@ final class ConditionRuleTest extends TestCase
         self::assertEquals([new HandlerDeclaration(HandlerAction::Exit, [new GeneralCondition(ConditionClass::SqlException)], new Block())], $statement->body->declarations);
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END', $operation->toString());
     }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerRejectedSqlStates(): iterable
+    {
+        $inputs = [
+            ["SIGNAL SQLSTATE '00000'", '00000'],
+            ["SIGNAL SQLSTATE '00123'", '00123'],
+            ["SIGNAL SQLSTATE '4500'", '4500'],
+            ["SIGNAL SQLSTATE '4500a'", '4500a'],
+            ["RESIGNAL SQLSTATE '00000'", '00000'],
+            ["RESIGNAL SQLSTATE '450001'", '450001'],
+            ["CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00123'; END", '00123'],
+            ["CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL SQLSTATE '00000'; END", '00000'],
+            ["CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '00000' BEGIN END; END", '00000'],
+            ["CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '00123'; END", '00123'],
+            ["CREATE PROCEDURE p() SIGNAL SQLSTATE '4500'", '4500'],
+            ["CREATE PROCEDURE p() SIGNAL SQLSTATE VALUE '450000'", '450000'],
+            ["CREATE PROCEDURE p() SIGNAL SQLSTATE '4500a'", '4500a'],
+        ];
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+            foreach ($inputs as $index => [$sql, $value]) {
+                yield $release . ':' . $index => [$release, $sql, $value];
+            }
+        }
+    }
+
+    #[DataProvider('providerRejectedSqlStates')]
+    public function testValueRejectsAnInvalidOperandBeforePublishingAStructure(string $release, string $sql, string $value): void
+    {
+        $failure = null;
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze($sql);
+        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
+            $failure = $caught;
+        }
+
+        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState, $value), $failure->problem);
+        $offset = strpos($sql, "'" . $value . "'");
+        self::assertNotFalse($offset);
+        self::assertSame($offset + strlen($value) + 2, $failure->end);
+    }
 }

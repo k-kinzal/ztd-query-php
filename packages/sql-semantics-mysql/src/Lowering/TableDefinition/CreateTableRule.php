@@ -9,12 +9,12 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Platform\MySql\Statement\Table\TableQuery;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CREATE TABLE in its column list, query and LIKE forms.
@@ -48,6 +48,8 @@ final class CreateTableRule
      * Lowers the 5.x `create` alternative of CREATE TABLE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function legacy(Form $form): Statement
     {
@@ -57,13 +59,14 @@ final class CreateTableRule
         $temporary = $this->temporary($form->node(1));
         $exists = $this->lowering->options->present($form->node(3));
         $name = $this->lowering->names->qualified($form->node(4));
+        $this->lowering->columnTable = $name;
         $tail = $this->lowering->productions->form($form->node(5));
         $options = new TableOptionRule($this->lowering);
         $changes = $this->lowering->tableChanges;
 
         return match ($tail->signature) {
             'create2: ( create2a' => $this->enclosed($name, $this->lowering->productions->form($tail->node(1)), $temporary, $exists),
-            'create2: opt_create_table_options opt_create_partitioning create3' => new CreateTable($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists),
+            'create2: opt_create_table_options opt_create_partitioning create3' => $this->create($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists),
             'create2: LIKE table_ident' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(1)), $temporary, $exists),
             'create2: ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(2)), $temporary, $exists),
             default => throw ImplementationGap::production($tail),
@@ -74,13 +77,15 @@ final class CreateTableRule
      * Lowers the 5.x forms that open a parenthesis after the table name: a column list, or a query.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function enclosed(QualifiedName $name, Form $form, int $temporary, bool $exists): CreateTable
     {
         $changes = $this->lowering->tableChanges;
 
         return match ($form->signature) {
-            'create2a: create_field_list ) opt_create_table_options opt_create_partitioning create3' => new CreateTable(
+            'create2a: create_field_list ) opt_create_table_options opt_create_partitioning create3' => $this->create(
                 $name,
                 (new ElementRule($this->lowering))->elements($form->node(0)),
                 (new TableOptionRule($this->lowering))->options($form->node(2)),
@@ -99,7 +104,7 @@ final class CreateTableRule
      */
     public function partitioned(QualifiedName $name, ?Partitioning $partitioning, TableQuery $query, int $temporary, bool $exists): CreateTable
     {
-        return new CreateTable($name, [], [], $partitioning, $query, $temporary, $exists, $partitioning !== null);
+        return $this->create($name, [], [], $partitioning, $query, $temporary, $exists, $partitioning !== null);
     }
 
     /**
@@ -151,6 +156,8 @@ final class CreateTableRule
      * Lowers CREATE TABLE of MySQL 8.0 and later: a node of `create_table_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function modern(Node $statement): Statement
     {
@@ -158,6 +165,7 @@ final class CreateTableRule
         $temporary = $this->lowering->options->present($form->node(1)) ? 1 : 0;
         $exists = $this->lowering->options->present($form->node(3));
         $name = $this->lowering->names->qualified($form->node(4));
+        $this->lowering->columnTable = $name;
 
         return match ($form->signature) {
             'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( table_element_list ) opt_create_table_options_etc' => $this->rest($name, (new ElementRule($this->lowering))->elements($form->node(6)), $form->node(8), $temporary, $exists),
@@ -173,6 +181,7 @@ final class CreateTableRule
      *
      * @param list<TableElement> $elements The elements already lowered
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When partitioning or query operands are refused
      */
     public function rest(QualifiedName $name, array $elements, Node $rest, int $temporary, bool $exists): CreateTable
     {
@@ -182,22 +191,30 @@ final class CreateTableRule
             'opt_create_table_options_etc: opt_create_partitioning_etc' => [[], $form->node(0)],
             default => throw ImplementationGap::production($form),
         };
-        $part = $this->lowering->productions->form($partitioning);
-        [$clause, $query] = match ($part->signature) {
-            'opt_create_partitioning_etc: partition_clause opt_duplicate_as_qe' => [$this->lowering->tableChanges->partitioning($part->node(0)), $part->node(1)],
-            'opt_create_partitioning_etc: opt_duplicate_as_qe' => [null, $part->node(0)],
-            default => throw ImplementationGap::production($part),
-        };
+        try {
+            $part = $this->lowering->productions->form($partitioning);
+            [$clause, $query] = match ($part->signature) {
+                'opt_create_partitioning_etc: partition_clause opt_duplicate_as_qe' => [$this->lowering->tableChanges->partitioning($part->node(0)), $part->node(1)],
+                'opt_create_partitioning_etc: opt_duplicate_as_qe' => [null, $part->node(0)],
+                default => throw ImplementationGap::production($part),
+            };
 
-        return new CreateTable($name, $elements, $options, $clause, $this->query($query), $temporary, $exists);
+            return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
+                throw $failure;
+            }
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts, $failure->sources);
+        }
     }
 
     /**
      * Lowers the 8.0 query part: a node of `opt_duplicate_as_qe`; none is null.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When query operands require deferred preparation
      */
-    public function query(Node $part): ?TableQuery
+    public function query(Node $part, bool $retained = false): ?TableQuery
     {
         $form = $this->lowering->productions->form($part);
         [$duplicate, $query] = match ($form->signature) {
@@ -211,10 +228,31 @@ final class CreateTableRule
         }
         $as = $this->lowering->productions->form($query);
 
-        return new TableQuery($this->lowering->queries->query(match ($as->signature) {
+        $node = match ($as->signature) {
             'as_create_query_expression: AS query_expression_with_opt_locking_clauses' => $as->node(1),
             'as_create_query_expression: query_expression_with_opt_locking_clauses' => $as->node(0),
             default => throw ImplementationGap::production($as),
-        }), $duplicate);
+        };
+        if (!$retained) {
+            return new TableQuery($this->lowering->queries->embedded($node), $duplicate);
+        }
+        $body = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($node) ?? $this->lowering->queries->query($node);
+        return new TableQuery($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection ? new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($body) : $body, $duplicate);
+    }
+
+    /**
+     * Publishes an ordinary definition or retains its incompatible MERGE/query roles.
+     *
+     * @param list<TableElement> $elements Complete column and key definitions
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption> $options Complete table options
+     * @throws \SqlSemantics\Construction\RejectedInput When the definition belongs to a stored template
+     */
+    public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false): CreateTable
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $options, $query, $partitioning, $temporary > 0)) {
+            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate($definition), 0, false, $this->lowering->origins->publish());
+        }
+        return new CreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
     }
 }

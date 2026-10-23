@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `XA PREPARE xid`: a request to prepare an XA transaction for commit.
@@ -32,6 +32,7 @@ final class XaPrepare implements Statement
      */
     public function __construct(public readonly Xid $xid)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

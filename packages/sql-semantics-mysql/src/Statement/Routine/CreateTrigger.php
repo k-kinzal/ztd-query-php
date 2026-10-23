@@ -16,11 +16,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerOrder;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * CREATE TRIGGER: a statement that runs for each row an INSERT, UPDATE or DELETE changes in a table.
@@ -28,6 +28,12 @@ use SqlSemantics\Statement\Statement;
  * The statement is structured as a request: it declares nothing to a
  * context. The facts follow MYSQL-TRIGGER-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
+ *
+ * @example Rejecting RETURN outside a function declaration
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
+ * @example Rejecting a multi-valued index cast in a stored body
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @visibility public
  * @example Reading a trigger definition
@@ -64,8 +70,12 @@ final class CreateTrigger implements Statement
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
     ) {
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
+        Check::input(\SqlSemantics\Platform\MySql\Rules\Routine\Declaration\TriggerSchemas::compatible($name, $table), 'A trigger and its table cannot name distinct explicit databases.');
         $this->body = (new StatementSequence())->member($body);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Trigger, $name);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

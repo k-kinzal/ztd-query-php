@@ -15,9 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -28,6 +25,21 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateFunctionTest extends TestCase
 {
+    public function testNameCollisionIncludesKeywordsAndNativeFunctions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $keyword = $semantics->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1')->statement;
+        $native = $semantics->analyze('CREATE FUNCTION d.ABS() RETURNS INT RETURN 1')->statement;
+        $plain = $semantics->analyze('CREATE FUNCTION d.f() RETURNS INT RETURN 1')->statement;
+
+        self::assertInstanceOf(CreateFunction::class, $keyword);
+        self::assertInstanceOf(CreateFunction::class, $native);
+        self::assertInstanceOf(CreateFunction::class, $plain);
+        self::assertTrue($keyword->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertTrue($native->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($plain->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -48,26 +60,19 @@ final class CreateFunctionTest extends TestCase
         self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
-    public function testDeriveStatementReportsADuplicateParameter(): void
+    public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Duplicate parameter: x');
 
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::DuplicateParameter, $problem->rule);
-        self::assertSame('Duplicate parameter: x', $problem->message());
+        (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
     }
 
-    public function testDeriveStatementReportsAMissingReturn(): void
+    public function testDeriveStatementRefusesAMissingReturnBeforePublishingTheDefinition(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION shop.f(x INT) RETURNS INT BEGIN SET @a = x; END');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
-
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::MissingReturn, $problem->rule);
-        self::assertSame('No RETURN found in FUNCTION f', $problem->message());
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('No RETURN found in FUNCTION f');
+        (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION shop.f(x INT) RETURNS INT BEGIN SET @a = x; END');
     }
 
     /**
@@ -121,9 +126,9 @@ final class CreateFunctionTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredFunctionMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredFunctionMayNotContain(string $statement, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN ' . $statement . '; RETURN 1; END');
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN ' . $statement . '; RETURN 1; END');
     }
 
     public function testDeriveStatementAcceptsAQueryThatWritesIntoVariables(): void
@@ -133,14 +138,11 @@ final class CreateFunctionTest extends TestCase
         self::assertSame([], $create->facts->diagnostics);
     }
 
-    public function testDeriveStatementReportsAResultSetAndAMissingReturnTogether(): void
+    public function testDeriveStatementRefusesAResultSetBeforeAMissingReturn(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT SELECT 1');
-
-        self::assertSame(
-            ['Not allowed to return a result set from a function', 'No RETURN found in FUNCTION f'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics),
-        );
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Not allowed to return a result set from a function');
+        (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT SELECT 1');
     }
 
     /**
@@ -160,8 +162,8 @@ final class CreateFunctionTest extends TestCase
         ];
         yield 'MySQL 8.0 IF NOT EXISTS and COLLATE' => [
             'mysql-8.0.44',
-            "create function if not exists f(a int) returns char(3) collate utf8mb4_bin no sql begin return 'x'; end",
-            "CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) COLLATE utf8mb4_bin NO SQL BEGIN RETURN 'x'; END",
+            "create function if not exists f(a int) returns char(3) character set utf8mb4 collate utf8mb4_bin no sql begin return 'x'; end",
+            "CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS CHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NO SQL BEGIN RETURN 'x'; END",
         ];
         yield 'MySQL 9.1 external body' => [
             'mysql-9.1.0',
@@ -180,18 +182,13 @@ final class CreateFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('A function parameter has no direction.');
 
-        new CreateFunction(
-            new QualifiedName(new Name('f')),
-            new ParameterList([new Parameter(new Name('x'), new Integral(IntegralKind::Int), null, ParameterMode::In)]),
-            new Integral(IntegralKind::Int),
-            new Block([]),
-        );
+        new CreateFunction(new QualifiedName(new Name('f')), new ParameterList([new Parameter(new Name('x'), new Integral(IntegralKind::Int), null, ParameterMode::In)]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())));
     }
 
     public function testANameWithACatalogIsRejected(): void
     {
         $this->expectExceptionMessage('A routine name has at most a database qualifier.');
 
-        new CreateFunction(new QualifiedName(new Name('f'), new Name('shop'), new Name('def')), new ParameterList([]), new Integral(IntegralKind::Int), new Block([]));
+        new CreateFunction(new QualifiedName(new Name('f'), new Name('shop'), new Name('def')), new ParameterList([]), new Integral(IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())));
     }
 }

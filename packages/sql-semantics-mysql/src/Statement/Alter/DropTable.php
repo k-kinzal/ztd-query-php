@@ -9,10 +9,10 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP [TEMPORARY] TABLE [IF EXISTS] t, … [RESTRICT | CASCADE]`: a request to remove tables.
@@ -21,7 +21,8 @@ use SqlSemantics\Statement\Statement;
  * resolves by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact
  * of its TargetTable; under IF EXISTS a name a complete context does not
  * declare resolves to AbsentTable. A table named twice is the diagnostic
- * RepeatedTable. A declared view is not a table DROP TABLE finds: without
+ * RepeatedTable after contextual name comparison; identical written identities
+ * are excluded by construction. A declared view is not a table DROP TABLE finds: without
  * IF EXISTS it is refused (MYSQL-RELATION-KIND-001). TEMPORARY restricts the request to temporary tables, which a
  * declaration context does not distinguish. RESTRICT and CASCADE have no
  * effect and are kept as written. The statement removes no declaration and
@@ -54,6 +55,8 @@ final class DropTable implements Statement
     {
         Check::input($tables !== [], 'DROP TABLE names at least one table.');
         $this->tables = Check::listOf($tables, TargetTable::class, 'DROP TABLE names a list of tables.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated(array_map(static fn (TargetTable $table): \SqlSemantics\Statement\Identifier\QualifiedName => $table->name, $this->tables)) === null, 'DROP TABLE cannot repeat an identical table name.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

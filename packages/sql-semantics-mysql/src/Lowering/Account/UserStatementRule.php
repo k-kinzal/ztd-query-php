@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE USER, ALTER USER, DROP USER and RENAME USER of every release.
@@ -94,7 +94,7 @@ final class UserStatementRule
             'alter: ALTER USER clear_privileges alter_user_list' => $this->skipped($form, 2, new ExpireUserPasswords($this->expired($form->node(3)))),
             'alter: alter_user_command grant_list require_clause connect_options opt_account_lock_password_expire_options' => new AlterUser(
                 $this->command($form->node(0)),
-                $this->lists->granted($form->node(1)),
+                $this->lists->legacyAltered($form->node(1)),
                 $clauses->tls($form->node(2)),
                 $clauses->limits($form->node(3)),
                 $clauses->options($form->node(4)),
@@ -277,6 +277,8 @@ final class UserStatementRule
      * Lowers the rename_list of RENAME USER.
      *
      * @throws ImplementationGap When a production has no rule
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the ordered identities contradict each other
      */
     public function rename(Node $list): RenameUser
     {
@@ -290,6 +292,10 @@ final class UserStatementRule
             $renamings[] = new UserRenaming($this->lowering->users->account($users[$index]), $this->lowering->users->account($users[$index + 1]));
         }
 
+        if ((new \SqlSemantics\Platform\MySql\Rules\Account\Renamings())->problem($renamings) !== null) {
+            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRenameUser($renamings);
+            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0, false);
+        }
         return new RenameUser($renamings);
     }
 }

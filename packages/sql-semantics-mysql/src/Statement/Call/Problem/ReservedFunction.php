@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a reserved function
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT internal_table_rows(1, 2, 3, 4, 5, 6, 7, 8)');
- *     $query->facts->diagnostics[0]->message() // => "Access to native function 'internal_table_rows' is rejected"
+ *     (new \SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction(new \SqlSemantics\Statement\Identifier\Name('internal_table_rows')))->message() // => "Access to native function 'internal_table_rows' is rejected"
  */
 final class ReservedFunction implements Diagnostic
 {

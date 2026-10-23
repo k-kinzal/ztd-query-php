@@ -26,6 +26,8 @@ final class AliasTargetTest extends TestCase
         self::assertInstanceOf(AliasTarget::class, $resolution);
         self::assertSame($query->field('y'), $resolution->field);
         self::assertSame(1, $resolution->field->position);
+        self::assertSame(0, $resolution->depth);
+        self::assertSame(2, (new AliasTarget($query->field('y'), 2))->depth);
     }
 
     public function testFieldIsNotUsedWhenTheNameIsAColumnOfTheInput(): void

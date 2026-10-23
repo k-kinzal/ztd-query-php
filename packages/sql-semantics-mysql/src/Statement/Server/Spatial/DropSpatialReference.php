@@ -7,15 +7,16 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Spatial;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP SPATIAL REFERENCE SYSTEM [IF EXISTS] srid`: a request to remove a spatial reference system (MySQL 8.0 and later).
  *
  * Mirrors PT_drop_srs (Sql_cmd_drop_srs). Rule: MYSQL-DROP-SRS-001. An
- * identifier of 0 or above 2^32-1 is a diagnostic (MYSQL-SRS-CHECK-001).
+ * identifier of 0 or above 2^32-1 is outside the constructor domain
+ * (MYSQL-SRS-CHECK-001); catalog existence remains a consumer condition.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-spatial-reference-system.html.
  * Status: Implemented.
  *
@@ -34,6 +35,9 @@ final class DropSpatialReference implements Statement
      */
     public function __construct(public readonly bool $ifExists, public readonly Numeral $srid)
     {
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
+        \SqlSemantics\Diagnostic\Check::input((new SpatialChecks())->identifier($srid) === null, 'A modifiable spatial reference identifier is between 1 and 4294967295.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

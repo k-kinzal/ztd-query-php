@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Snapshot;
@@ -18,8 +18,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-ORDINARY-COLUMN-001. The attributes are kept in written order,
  * because the server applies them in that order (a later NULL cancels an
- * earlier NOT NULL). An inline REFERENCES clause is parsed and ignored by
- * the server; it is kept as a request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
+ * earlier NOT NULL). Effective clock defaults and updates require DATETIME or
+ * TIMESTAMP with matching precision; SRID requires a spatial type. AUTO_INCREMENT
+ * requires an integer or floating type (floating types are accepted only by legacy releases).
+ * Intrinsic contradictions are rejected during construction. An inline REFERENCES clause is ignored through MySQL 8.4 and declares a
+ * foreign key from MySQL 9.0 onward; the reference request is retained. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/ansi-diff-foreign-keys.html. Status: Implemented.
  *
  * @visibility public
@@ -37,19 +40,21 @@ final class OrdinaryColumn implements ColumnSpecification
     public readonly array $attributes;
 
     /**
-     * @param TypeName $type The data type
+     * @param DeclaredName $type The data type
      * @param list<ColumnAttribute> $attributes The attributes in written order
      * @param References|null $references The inline reference, when written
      */
-    public function __construct(public readonly TypeName $type, array $attributes = [], public readonly ?References $references = null)
+    public function __construct(public readonly DeclaredName $type, array $attributes = [], public readonly ?References $references = null)
     {
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($this->attributes) === null, 'Column enforcement follows a CHECK constraint or its enforcement chain.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $this->attributes) === [], 'Column attributes must fit the declared type and temporal precision.');
     }
 
     /**
      * Answers the data type.
      */
-    public function dataType(): TypeName
+    public function dataType(): DeclaredName
     {
         return $this->type;
     }

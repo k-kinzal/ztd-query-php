@@ -23,6 +23,18 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class TableDeclarationTest extends TestCase
 {
+    public function testTableResolvesTimestampNullabilityFromSessionSettings(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = 'CREATE TABLE t(a TIMESTAMP, b TIMESTAMP NULL, c TIMESTAMP NOT NULL)';
+        $off = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), explicitDefaultsForTimestamp: false);
+        $columns = $semantics->analyze($sql, $semantics->context(session: $off))->declarations()[0]->columns;
+
+        self::assertSame([Nullability::NotNull, Nullability::Nullable, Nullability::NotNull], [$columns[0]->nullability, $columns[1]->nullability, $columns[2]->nullability]);
+        self::assertSame(Nullability::Nullable, $semantics->analyze($sql)->declarations()[0]->columns[0]->nullability);
+        self::assertSame(Nullability::NotNull, (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql)->declarations()[0]->columns[0]->nullability);
+    }
+
     public function testColumnDeclaresOneColumnDefinition(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL)');
@@ -154,4 +166,43 @@ final class TableDeclarationTest extends TestCase
         self::assertTrue((new TableDeclaration())->named(new Name('A'), [new Name('a')], Comparison::AsciiInsensitive));
         self::assertFalse((new TableDeclaration())->named(new Name('b'), [new Name('a')], Comparison::AsciiInsensitive));
     }
+
+    public function testKeysListsThePrimaryKeyFirstThenTheUniqueKeys(): void
+    {
+        $table = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT UNIQUE, c SERIAL, UNIQUE (a, b), PRIMARY KEY (a), INDEX (b), UNIQUE (b(2)))')->declarations()[0];
+
+        self::assertSame([['a'], ['b'], ['c'], ['a', 'b']], array_map(static fn ($key): array => array_map(static fn ($column): string => $column->name->value, $key->columns), $table->keys));
+        self::assertTrue($table->keys[0]->primary);
+    }
+
+    public function testPartitionsNarrowsCountsBeforeExpandingNamesAndKeepsOversizedClausesIntact(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '8.4.7');
+        $retained = static function (string $sql) use ($semantics): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable {
+            try {
+                $semantics->analyze($sql);
+            } catch (\SqlSemantics\Construction\RejectedInput $error) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate::class, $error->problem);
+                return $error->problem->definition;
+            }
+            self::fail('An implicit partition key without a source retains a complete instruction.');
+        };
+        $wrapped = $retained('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 4294967297');
+        self::assertEquals([new Name('p0')], (new TableDeclaration())->partitions($wrapped));
+        $large = $retained('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 0xFFFFFFFFFFFFFFFF');
+        self::assertNull((new TableDeclaration())->partitions($large));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause::class, $large->partitioning);
+        self::assertSame('FFFFFFFFFFFFFFFF', $large->partitioning->partitions?->text);
+    }
+
+    public function testPartitionsNameEveryPartitionAndSubpartition(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $names = static fn (string $sql): ?array => ($partitions = $semantics->analyze($sql)->declarations()[0]->partitions) === null ? null : array_map(static fn ($name): string => $name->value, $partitions);
+
+        self::assertSame([], $names('CREATE TABLE t (a INT)'));
+        self::assertSame(['p0', 'p1', 'p2'], $names('CREATE TABLE t (a INT) PARTITION BY HASH (a) PARTITIONS 3'));
+        self::assertSame(['r0', 'r0sp0', 'r0sp1', 'r1', 'r1sp0', 'r1sp1'], $names('CREATE TABLE t (a INT) PARTITION BY RANGE (a) SUBPARTITION BY HASH (a) SUBPARTITIONS 2 (PARTITION r0 VALUES LESS THAN (10), PARTITION r1 VALUES LESS THAN MAXVALUE)'));
+    }
+
 }

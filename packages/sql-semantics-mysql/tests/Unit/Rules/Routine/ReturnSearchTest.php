@@ -84,16 +84,16 @@ final class ReturnSearchTest extends TestCase
         yield 'conditionals and loops without RETURN' => [new Block([], [new IfStatement([new ConditionalBranch(new NumberLiteral('1'), [$set])], [$set]), new WhileLoop(new NumberLiteral('1'), [$set]), new Loop([new Leave(new Name('l'))], new Name('l'))])];
     }
 
-    public function testNestedAnswersTheStatementsAndHandlerStatementsOfABlock(): void
+    public function testNestedAnswersHandlerBodiesBeforeFollowingStatements(): void
     {
         $set = new SetVariables([new UserAssignment(new UserVariable(new Name('a')), new NumberLiteral('1'))]);
         $return = new ReturnStatement(new NumberLiteral('1'));
         $block = new Block([new HandlerDeclaration(HandlerAction::Continue, [new GeneralCondition(ConditionClass::SqlWarning)], $return)], [$set]);
 
-        self::assertSame([$set, $return], (new ReturnSearch())->nested($block));
+        self::assertSame([$return, $set], (new ReturnSearch())->nested($block));
     }
 
-    public function testNestedAnswersTheElseStatementsBeforeTheBranchStatements(): void
+    public function testNestedAnswersBranchesBeforeElseStatements(): void
     {
         $first = new SetVariables([new UserAssignment(new UserVariable(new Name('a')), new NumberLiteral('1'))]);
         $second = new SetVariables([new UserAssignment(new UserVariable(new Name('b')), new NumberLiteral('2'))]);
@@ -101,8 +101,8 @@ final class ReturnSearchTest extends TestCase
         $branches = [new ConditionalBranch(new NumberLiteral('1'), [$first]), new ConditionalBranch(new NumberLiteral('2'), [$second])];
         $search = new ReturnSearch();
 
-        self::assertSame([$otherwise, $first, $second], $search->nested(new IfStatement($branches, [$otherwise])));
-        self::assertSame([$otherwise, $first, $second], $search->nested(new SimpleCase(new NumberLiteral('1'), $branches, [$otherwise])));
+        self::assertSame([$first, $second, $otherwise], $search->nested(new IfStatement($branches, [$otherwise])));
+        self::assertSame([$first, $second, $otherwise], $search->nested(new SimpleCase(new NumberLiteral('1'), $branches, [$otherwise])));
         self::assertSame([$first, $second], $search->nested(new SearchedCase($branches)));
     }
 

@@ -40,6 +40,7 @@ final class ChangeColumn implements AlterCommand
      */
     public function __construct(public readonly ?ColumnName $column, public readonly ColumnDefinition $definition, public readonly ?ColumnPosition $position = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($column === null || $definition->name->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted || $column->table?->schema !== null, 'A dot-prefixed CHANGE definition follows a fully qualified old name.');
     }
 
     /**
@@ -55,7 +56,8 @@ final class ChangeColumn implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
-        (new ElementFacts())->element($this->definition, $derivation, $scope);
+        $this->column?->deriveName($derivation, $scope->relations[0]->name ?? null);
+        (new ElementFacts())->element($this->definition, $derivation, $scope, typeNotices: true);
     }
 
     /**

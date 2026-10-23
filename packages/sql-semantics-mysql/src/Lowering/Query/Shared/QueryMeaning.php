@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
+
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery;
+use SqlSemantics\Statement\Query;
+
+/**
+ * Assigns the read-statement or stored-instruction role to a complete query.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class QueryMeaning
+{
+    /**
+     * Retains contradictory fixed columns only as a deferred stored instruction.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When statement-level quantifiers conflict
+     */
+    public function of(Query $query, int $end = 0): QueryRoot|DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, $end, false);
+        }
+        if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            return $query->selection;
+        }
+        return (new ReadColumns())->problem($query) === null ? new QueryRoot($query) : new DeferredQuery($query);
+    }
+}

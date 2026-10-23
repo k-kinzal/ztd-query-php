@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Key\Option;
 
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
@@ -28,6 +30,22 @@ final class IndexParser implements IndexOption
      */
     public function __construct(public readonly Name $parser)
     {
+    }
+
+    /**
+     * Resolves the plugin name when the context supplies a complete parser catalog.
+     */
+    public function problem(Settings $settings): ?UnknownIndexParser
+    {
+        if ($settings->fullTextParsers === null) {
+            return null;
+        }
+        foreach ($settings->fullTextParsers as $available) {
+            if (strcasecmp($available->value, $this->parser->value) === 0) {
+                return null;
+            }
+        }
+        return new UnknownIndexParser($this->parser);
     }
 
     /**

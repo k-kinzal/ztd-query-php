@@ -19,4 +19,10 @@ final class UserCommentTest extends TestCase
     {
         self::assertSame('ALTER USER u ATTRIBUTE \'{"team": "ops"}\'', (new Semantics(Dialect::MySql))->analyze('alter user u attribute \'{"team": "ops"}\'')->toString());
     }
+    public function testValueRejectsRadixComments(): void
+    {
+        $this->expectExceptionMessage('An account comment or attribute is quoted text.');
+
+        new UserComment(\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Attribute, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

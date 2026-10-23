@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW ERRORS: the errors of the last statement of the session.
@@ -35,6 +35,7 @@ final class ShowErrors implements Statement
      */
     public function __construct(public readonly ?Limit $limit = null)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

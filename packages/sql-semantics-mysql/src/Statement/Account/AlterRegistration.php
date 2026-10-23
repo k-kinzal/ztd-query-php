@@ -6,22 +6,21 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Factor;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RegistrationStep;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
-use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER USER [IF EXISTS] account n FACTOR {INITIATE REGISTRATION | FINISH REGISTRATION SET CHALLENGE_RESPONSE AS '…' | UNREGISTER}` (8.0.27+).
  *
  * Mirrors the registration flags of LEX_MFA. Rule: MYSQL-ALTER-REGISTRATION-001.
- * The challenge response is an operand with its exact value. A factor
- * number other than 2 or 3 is reported (MYSQL-ACCOUNT-NUMBER-001).
+ * The challenge response is an operand with its exact value. The factor
+ * type admits exactly the second and third authentication factors.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-registration. Status: Implemented.
  *
  * @visibility public
@@ -35,26 +34,26 @@ final class AlterRegistration implements Statement
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Account|SessionUser $user The account
-     * @param Numeral $factor The factor number as written
+     * @param Factor $factor The additional authentication factor
      * @param RegistrationStep $step The registration step
      * @param Text|null $challengeResponse The challenge response of FINISH REGISTRATION
      */
     public function __construct(
         public readonly bool $ifExists,
         public readonly Account|SessionUser $user,
-        public readonly Numeral $factor,
+        public readonly Factor $factor,
         public readonly RegistrationStep $step,
         public readonly ?Text $challengeResponse = null,
     ) {
         Check::input(($challengeResponse !== null) === ($step === RegistrationStep::Finish), 'A challenge response is written exactly by FINISH REGISTRATION.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Reports a factor number the server rejects.
+     * Declares no relation or result columns.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new NumberChecks())->factor($derivation, $this->factor);
     }
 
     /**
@@ -66,7 +65,7 @@ final class AlterRegistration implements Statement
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }
-        $out->node($this->user)->node($this->factor)->keyword('FACTOR');
+        $out->node($this->user)->spelled($this->factor->value)->keyword('FACTOR');
         match ($this->step) {
             RegistrationStep::Initiate => $out->keyword('INITIATE', 'REGISTRATION'),
             RegistrationStep::Unregister => $out->keyword('UNREGISTER'),

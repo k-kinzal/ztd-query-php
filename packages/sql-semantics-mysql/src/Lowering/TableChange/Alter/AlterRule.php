@@ -80,19 +80,22 @@ final class AlterRule
      * Lowers ALTER TABLE: a production of `alter` routed to this family, or a node of `alter_table_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Form $form): AlterTable
     {
+        $this->lowering->columnTable = $this->lowering->names->qualified($form->node(str_contains($form->signature, 'opt_ignore') ? 3 : 2));
         return match ($form->signature) {
-            'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => new AlterTable(
-                $this->lowering->names->qualified($form->node(3)),
+            'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => $this->definition(
+                $this->lowering->columnTable,
                 $this->commands($form->node(4)),
                 $this->lowering->options->present($form->node(1)),
             ),
             'alter: ALTER TABLE_SYM table_ident alter_commands',
             'alter_table_stmt: ALTER TABLE_SYM table_ident opt_alter_table_actions',
-            'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => new AlterTable(
-                $this->lowering->names->qualified($form->node(2)),
+            'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => $this->definition(
+                $this->lowering->columnTable,
                 $this->commands($form->node(3)),
             ),
             default => throw ImplementationGap::production($form),
@@ -100,10 +103,27 @@ final class AlterRule
     }
 
     /**
+     * Keeps every action when a legacy declaration must be checked at invocation.
+     *
+     * @param list<AlterCommand> $commands The ordered actions
+     * @throws \SqlSemantics\Construction\RejectedInput When an ordinary statement cannot retain the declaration
+     */
+    public function definition(\SqlSemantics\Statement\Identifier\QualifiedName $table, array $commands, bool $ignore = false): AlterTable
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($commands)) {
+            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable($table, $commands, $ignore);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate($definition), 0, false, $this->lowering->origins->publish());
+        }
+        return new AlterTable($table, $commands, $ignore);
+    }
+
+    /**
      * Lowers the actions a node holds, in the order written.
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function commands(Node $node): array
     {
@@ -136,6 +156,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function others(Form $form): array
     {
@@ -151,7 +173,7 @@ final class AlterRule
             'partitioning: PARTITION_SYM partition' => $form->node,
             default => throw ImplementationGap::production($form),
         };
-        $clause = (new PartitionRule($this->lowering))->partitioning($partitioning);
+        $clause = (new PartitionRule($this->lowering, true))->partitioning($partitioning);
 
         return $clause === null ? [] : [new PartitionBy($clause)];
     }
@@ -161,6 +183,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function items(Node $list): array
     {

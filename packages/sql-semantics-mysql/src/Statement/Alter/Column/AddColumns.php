@@ -50,7 +50,7 @@ final class AddColumns implements AlterCommand
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
         foreach ($this->elements as $element) {
-            (new ElementFacts())->element($element, $derivation, $scope);
+            (new ElementFacts())->element($element, $derivation, $scope, typeNotices: true);
         }
     }
 

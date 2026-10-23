@@ -14,11 +14,27 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(TableProblems::class)]
 #[Medium]
 final class TableProblemsTest extends TestCase
 {
+    public function testCollationsRejectsNamesUnavailableInTheRelease(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, '5.7.44');
+        $column = $legacy->analyze('CREATE TABLE t(v VARCHAR(10) COLLATE utf8mb4_0900_ai_ci)');
+        $table = $legacy->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs');
+        $generated = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10) COLLATE missing_collation AS (\'x\'))');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $column->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $table->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $generated->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $generated->facts->warnings[0]);
+        self::assertTrue($generated->facts->warnings[0]->aborts);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs')->facts->diagnostics);
+    }
+
     public function testReportReportsANullablePrimaryKeyFromMySql57(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NULL, PRIMARY KEY (a))');
@@ -28,9 +44,18 @@ final class TableProblemsTest extends TestCase
         self::assertSame([], $legacy->facts->diagnostics);
     }
 
+    public function testReportKeepsExplicitNullForInlinePrimaryKeys(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertInstanceOf(NullablePrimaryKey::class, $semantics->analyze('CREATE TABLE t(a INT NULL KEY)')->facts->diagnostics[0]);
+        self::assertInstanceOf(NullablePrimaryKey::class, $semantics->analyze('CREATE TABLE t(a INT NULL NOT NULL PRIMARY KEY)')->facts->diagnostics[0]);
+        self::assertSame([], $semantics->analyze('CREATE TABLE t(a INT NOT NULL PRIMARY KEY)')->facts->diagnostics);
+    }
+
     public function testDuplicatesReportsARepeatedColumn(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, A INT)');
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, A INT)');
 
         self::assertInstanceOf(DuplicateColumn::class, $create->facts->diagnostics[0]);
     }
@@ -47,7 +72,7 @@ final class TableProblemsTest extends TestCase
 
     public function testKeyColumnsReportsAMissingKeyColumn(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, UNIQUE (b))');
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, UNIQUE (b))');
 
         self::assertInstanceOf(UnknownKeyColumn::class, $create->facts->diagnostics[0]);
     }
@@ -59,5 +84,13 @@ final class TableProblemsTest extends TestCase
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(IncorrectColumnName::class, $operation->facts->diagnostics[0]);
         self::assertSame("Incorrect column name 'a '.", $operation->facts->diagnostics[0]->message());
+    }
+
+    public function testKeyColumnsReportsTheFirstColumnAnIndexNamesTwice(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn(new Name('A'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (a, A, zz))')->facts->diagnostics);
+        self::assertEquals([new UnknownKeyColumn(new Name('zz')), new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn(new Name('a'))], $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, KEY (zz, a, a))')->facts->diagnostics);
     }
 }

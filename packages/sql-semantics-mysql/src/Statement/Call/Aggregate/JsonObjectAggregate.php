@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -34,6 +39,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Typing JSON_OBJECTAGG()
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_OBJECTAGG('a', 1)");
  *     $query->field(0)->type->descriptor->name() // => 'JSON'
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), over: $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class JsonObjectAggregate implements SetFunction
 {
@@ -53,6 +61,9 @@ final class JsonObjectAggregate implements SetFunction
         public readonly bool $valueAll = false,
         public readonly Name|WindowSpecification|null $over = null,
     ) {
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Aggregation\AggregateNesting())->problem([$key, $value], $over !== null) === null, 'An ordinary JSON aggregate excludes fixed group and window nesting contradictions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -64,16 +75,18 @@ final class JsonObjectAggregate implements SetFunction
     }
 
     /**
-     * Derives the operands and the window; the result is JSON.
+     * Derives the operands and the window; the result is JSON, as the temporary table of a window holds it over a window.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
+        $environment = $this->aggregates() ? (new HavingScope())->arguments($environment) : $environment;
         (new Arguments())->one($this->key, $derivation, $environment);
         (new Arguments())->one($this->value, $derivation, $environment);
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
 
-        return new ScalarFact(new Known(TypeClass::Json->descriptor()), Nullability::Nullable);
+        $domain = $derivation->context->profile->grammar === GrammarRelease::MySql5744 ? new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::binary()) : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'));
+        return new ScalarFact(new Known($domain), Nullability::Nullable);
     }
 
     /**

@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Derives the statements of a stored program at their position.
@@ -24,9 +24,9 @@ use SqlSemantics\Statement\Statement;
  * statement as an inspected request read at the environment of the
  * position, so it sees the same parameters and variables: its parts receive
  * their facts and its diagnostics are kept, while it declares nothing and
- * returns nothing. Limit: a nested statement finds a column of its own
- * tables before a variable of the same name, where the server prefers the
- * variable; that needs a resolution order the core does not offer. An
+ * returns nothing. A name a variable of the program has denotes the
+ * variable before a column of the statement's own tables
+ * (MYSQL-PROGRAM-VARIABLE-LOOKUP-001). An
  * external routine body holds no SQL and derives nothing. Terminates: one
  * pass over the list; nested statements are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/local-variable-scope.html,
@@ -55,7 +55,7 @@ final class BodyFacts
     public function statement(Node $statement, Derivation $derivation, ProgramScope $scope): void
     {
         if ($statement instanceof ProgramStatement) {
-            $statement->deriveProgram($derivation, $scope);
+            $derivation->stored($statement, fn () => $statement->deriveProgram($derivation, $scope));
 
             return;
         }
@@ -65,10 +65,25 @@ final class BodyFacts
         if ($statement instanceof SetVariables && $scope->time !== null && $scope->event !== null) {
             (new TriggerAssignments())->check($statement, $scope->time, $scope->event, $derivation, $scope);
         }
-        if ($statement instanceof Query) {
-            $derivation->query($statement, $scope->environment);
-        } elseif ($statement instanceof Statement) {
-            $derivation->inspected($statement, $scope->environment);
+        if ($statement instanceof SetVariables) {
+            foreach ($statement->items as $item) {
+                if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment) {
+                    continue;
+                }
+                if ($item->qualifier === null) {
+                    if ($scope->complete && !$scope->variable($item->name)) {
+                        (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($item->name->value, $derivation, true);
+                    }
+                    continue;
+                }
+                $row = $scope->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger && $item->scope === null && in_array(strtoupper($item->qualifier->value), ['NEW', 'OLD'], true);
+                if (!$row) {
+                    (new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget($item->name, null, $item->qualifier))->structured($derivation);
+                }
+            }
+        }
+        if ($statement instanceof Statement) {
+            $derivation->program($statement, $scope->environment);
         }
     }
 }

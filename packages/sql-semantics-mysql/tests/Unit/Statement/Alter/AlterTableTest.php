@@ -18,6 +18,25 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 #[Medium]
 final class AlterTableTest extends TestCase
 {
+    public function testDeriveStatementRecordsPartitionMaintenanceResults(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $check = $semantics->analyze('ALTER TABLE missing CHECK PARTITION ALL');
+
+        self::assertSame(4, $check->fields()?->count());
+        self::assertSame('Msg_text', $check->field(3)->slot->name?->value);
+        self::assertNull($semantics->analyze('ALTER TABLE missing REBUILD PARTITION ALL')->fields());
+    }
+
+    public function testDeriveStatementReportsAnExchangeWithTheSameTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $alter = $semantics->analyze('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE t', [$table]);
+
+        self::assertSame(["Not unique table/alias: 't'."], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+    }
+
     public function testDeriveStatementReportsTheColumnProblems(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -52,5 +71,23 @@ final class AlterTableTest extends TestCase
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
         self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->facts->diagnostics));
+    }
+
+    public function testDeriveStatementWarnsOfIgnoreIn56(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
+
+        self::assertSame(["'IGNORE' is deprecated and will be removed in a future release."], array_map(static fn ($warning): string => $warning->message(), $semantics->analyze('ALTER IGNORE TABLE t ADD b INT', $tables)->facts->warnings));
+    }
+    public function testDeriveStatementChecksAddedAndChangedTypesAfterTheirNotices(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $parser = $semantics->parser();
+        self::assertInstanceOf(\SqlParser\Parser\ReductionParser::class, $parser);
+        $sql = 'ALTER TABLE missing ADD (a INT(11), b BIT(65)), CHANGE c d INT(256)';
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $sql, strlen($sql), $semantics->profile());
+
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop ? $warning->name : ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated ? $warning->value : $warning->message()), array_column($notices, 1)));
     }
 }

@@ -24,5 +24,6 @@ final class KeywordFunctionTest extends TestCase
     {
         self::assertSame('+C', KeywordFunction::Coalesce->result());
         self::assertSame('ZR', KeywordFunction::If->result());
+        self::assertSame(['IY', 'IN'], [KeywordFunction::Grouping->result(), KeywordFunction::RowCount->result()]);
     }
 }

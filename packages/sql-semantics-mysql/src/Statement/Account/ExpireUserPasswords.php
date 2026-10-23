@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * MySQL 5.6 `ALTER USER account PASSWORD EXPIRE, …`: a request to mark the passwords of accounts expired.
@@ -19,6 +19,9 @@ use SqlSemantics\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/5.6/en/alter-user.html. Status: Implemented.
  *
  * @visibility public
+ * @example Requiring account names from the same release as the expiration form
+ *     $user = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('seventeen_letters'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords([$user]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Expiring two passwords
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('alter user a password expire, b password expire')->toString() // => 'ALTER USER a PASSWORD EXPIRE, b PASSWORD EXPIRE'
  */
@@ -27,7 +30,7 @@ final class ExpireUserPasswords implements Statement
     use Snapshot;
 
     /**
-     * @var list<Account> The accounts in order
+     * @var non-empty-list<Account> The accounts in order
      */
     public readonly array $users;
 
@@ -37,6 +40,7 @@ final class ExpireUserPasswords implements Statement
     public function __construct(array $users)
     {
         $this->users = Check::listOf($users, Account::class, 'ALTER USER names at least one account.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

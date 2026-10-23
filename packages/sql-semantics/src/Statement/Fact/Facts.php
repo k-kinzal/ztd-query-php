@@ -6,9 +6,11 @@ namespace SqlSemantics\Statement\Fact;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -27,7 +29,7 @@ final class Facts
     use Snapshot;
 
     /**
-     * @var array<int, array{Scalar, ScalarFact}>
+     * @var array<int, array{Operand, ScalarFact}>
      */
     private readonly array $scalars;
 
@@ -42,6 +44,11 @@ final class Facts
     private readonly array $queries;
 
     /**
+     * @var array<int, array{QualifiedName, Relation}> Resolved names of input occurrences, such as multiple-table DELETE targets
+     */
+    private readonly array $references;
+
+    /**
      * @var list<Table> The relation declarations the statement provides to a context
      */
     public readonly array $declarations;
@@ -52,20 +59,80 @@ final class Facts
     public readonly array $diagnostics;
 
     /**
-     * @param list<array{Scalar, ScalarFact}> $scalars The fact of each scalar expression
+     * @var list<Warning> The conditions the statement raises without failing, in the order it raises them
+     */
+    public readonly array $warnings;
+
+    /**
+     * @var list<array{Warning, Node}> The stored instruction owning each nested notice
+     */
+    private readonly array $warningInstructions;
+
+    /**
+     * @var list<array{Warning, Node}> Semantic subjects, without source text or parser nodes
+     */
+    private readonly array $warningSubjects;
+
+    /**
+     * @param list<array{Operand, ScalarFact}> $scalars The fact of each scalar expression
      * @param list<array{Node, RelationFact}> $relations The fact of each relation occurrence and table use
      * @param list<array{Query, QueryFact}> $queries The fact of each query
      * @param list<Table> $declarations The relation declarations the statement provides
      * @param QueryFact|null $output The rows the statement returns, when it returns rows
      * @param list<Diagnostic> $diagnostics The semantic problems of the statement
+     * @param list<Warning> $warnings The conditions the statement raises without failing
+     * @param list<array{Warning, Node}> $warningInstructions Explicit instruction ownership, independent of source locations
+     * @param list<array{QualifiedName, Relation}> $references Names bound to particular input occurrences
+     * @param list<array{Warning, Node}> $warningSubjects Semantic occurrences that raised warnings
      */
-    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics)
+    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [], array $warningInstructions = [], array $references = [], array $warningSubjects = [])
     {
         $this->scalars = $this->index($scalars);
         $this->relations = $this->index($relations);
         $this->queries = $this->index($queries);
+        $this->references = $this->index(Check::pairs($references, QualifiedName::class, Relation::class, 'Relation references pair names with input occurrences.'));
         $this->declarations = Check::listOf($declarations, Table::class, 'Provided declarations are tables.');
         $this->diagnostics = Check::listOf($diagnostics, Diagnostic::class, 'Diagnostics are diagnostic values.');
+        $this->warnings = Check::listOf($warnings, Warning::class, 'Warnings are warning values.');
+        $this->warningInstructions = Check::pairs($warningInstructions, Warning::class, Node::class, 'Notice instructions are ordered pairs of warnings and statements.');
+        $seen = [];
+        foreach ($this->warningInstructions as [$warning]) {
+            Check::input(in_array($warning, $this->warnings, true) && !isset($seen[spl_object_id($warning)]), 'Each notice instruction identifies a distinct recorded warning.');
+            $seen[spl_object_id($warning)] = true;
+        }
+        $this->warningSubjects = Check::pairs($warningSubjects, Warning::class, Node::class, 'Notice subjects are ordered pairs of warnings and semantic nodes.');
+        $seen = [];
+        foreach ($this->warningSubjects as [$warning]) {
+            Check::input(in_array($warning, $this->warnings, true) && !isset($seen[spl_object_id($warning)]), 'Each notice subject identifies a distinct recorded warning.');
+            $seen[spl_object_id($warning)] = true;
+        }
+    }
+
+    /**
+     * Answers the stored instruction that owns a notice, or null for the outer request.
+     */
+    public function warningInstruction(Warning $warning): ?Node
+    {
+        foreach ($this->warningInstructions as [$candidate, $instruction]) {
+            if ($candidate === $warning) {
+                return $instruction;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers the semantic occurrence that raised a warning, independent of input text.
+     */
+    public function warningSubject(Warning $warning): ?Node
+    {
+        foreach ($this->warningSubjects as [$candidate, $subject]) {
+            if ($candidate === $warning) {
+                return $subject;
+            }
+        }
+        return null;
     }
 
     /**
@@ -91,7 +158,7 @@ final class Facts
     /**
      * Answers the facts of a scalar expression of this operation.
      */
-    public function scalar(Scalar $node): ScalarFact
+    public function scalar(Operand $node): ScalarFact
     {
         $entry = $this->scalars[spl_object_id($node)] ?? null;
         Check::input($entry !== null && $entry[0] === $node, 'The expression is not part of this operation.');
@@ -111,6 +178,16 @@ final class Facts
     }
 
     /**
+     * Answers the input occurrence a name was bound to, or null when no binding was established.
+     *
+     * Consumers use this identity instead of repeating name resolution against their own scopes.
+     */
+    public function referencedRelation(QualifiedName $name): ?Relation
+    {
+        return $this->references[spl_object_id($name)][1] ?? null;
+    }
+
+    /**
      * Answers the facts of a query of this operation.
      */
     public function query(Query $node): QueryFact
@@ -119,6 +196,17 @@ final class Facts
         Check::input($entry !== null && $entry[0] === $node, 'The query is not part of this operation.');
 
         return $entry[1];
+    }
+
+    /**
+     * Retains resolved dependencies while selecting the conditions of one query.
+     *
+     * Nested preparation does not inherit diagnostics belonging to sibling clauses.
+     */
+    public function forQuery(Query $query): self
+    {
+        $output = $this->query($query);
+        return new self(array_values($this->scalars), array_values($this->relations), array_values($this->queries), $this->declarations, $output, $output->diagnostics, $this->warnings, $this->warningInstructions, array_values($this->references), $this->warningSubjects);
     }
 
     /**

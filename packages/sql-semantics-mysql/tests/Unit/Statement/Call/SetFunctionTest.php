@@ -20,7 +20,7 @@ final class SetFunctionTest extends TestCase
     public function testAggregatesTellsAnAggregateFromItsWindowedForm(): void
     {
         self::assertTrue((new GroupConcat([new NumberLiteral('1')]))->aggregates());
-        self::assertFalse((new GroupConcat([new NumberLiteral('1')], over: new Name('w')))->aggregates());
+        self::assertFalse((new Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Minimum, [new NumberLiteral('1')], over: new Name('w')))->aggregates());
         self::assertContains(SetFunction::class, class_implements(Aggregate::class));
     }
 }

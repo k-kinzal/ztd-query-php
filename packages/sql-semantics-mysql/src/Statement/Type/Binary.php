@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Binary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind::VarBinary, '16');
  *     [$type->name(), $type->length] // => ['VARBINARY', '16']
  */
-final class Binary implements TypeName
+final class Binary implements DeclaredName
 {
     use Snapshot;
 
@@ -31,6 +31,7 @@ final class Binary implements TypeName
      */
     public function __construct(public readonly BinaryKind $kind, public readonly ?string $length = null)
     {
+        Check::input($kind !== BinaryKind::VarBinary || $length !== null, 'A VARBINARY declaration requires a length.');
         Check::input($length === null || in_array($kind, [BinaryKind::Binary, BinaryKind::VarBinary, BinaryKind::Blob], true), 'Only BINARY, VARBINARY and BLOB take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
     }

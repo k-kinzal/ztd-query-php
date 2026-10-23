@@ -11,6 +11,7 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyOptionRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
@@ -28,7 +29,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the attributes of a column definition.
@@ -117,7 +117,7 @@ final class AttributeRule
             'attribute: COMMENT_SYM TEXT_STRING_sys', 'column_attribute: COMMENT_SYM TEXT_STRING_sys', 'gcol_attribute: COMMENT_SYM TEXT_STRING_sys' => new CommentAttribute($literals->text($form->node(1))),
             'attribute: COLLATE_SYM collation_name', 'column_attribute: COLLATE_SYM collation_name' => new CollateAttribute($this->collation($form->node(1))),
             'column_attribute: COLUMN_FORMAT_SYM column_format', 'column_attribute: STORAGE_SYM storage_media' => $this->attribute($form->node(1)),
-            'column_attribute: SRID_SYM real_ulonglong_num' => new SridAttribute($this->lowering->numbers->numeral($form->node(1))),
+            'column_attribute: SRID_SYM real_ulonglong_num' => $this->srid($form->node(1)),
             'column_attribute: opt_constraint_name check_constraint' => new CheckConstraint((new KeyRule($this->lowering))->check($form->node(1)), (new KeyRule($this->lowering))->constraint($form->node(0))),
             'column_attribute: constraint_enforcement' => new EnforcementAttribute((new KeyRule($this->lowering))->enforced($form->node(0))),
             'column_attribute: ENGINE_ATTRIBUTE_SYM opt_equal json_attribute' => new EngineAttribute($literals->text($form->node(2))),
@@ -125,6 +125,20 @@ final class AttributeRule
             'column_attribute: visibility' => new KeywordAttribute((new KeyOptionRule($this->lowering))->visible($form->node(0)) ? ColumnKeyword::Visible : ColumnKeyword::Invisible),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Checks the SRID token before constructing a column restriction.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the integer exceeds the column identifier domain
+     */
+    public function srid(Node $number): SridAttribute
+    {
+        $value = $this->lowering->numbers->integral($number);
+        if (!(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '4294967295')) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange($value), (new \SqlSemantics\Construction\SourceRanges())->span($number)[1] ?? 0);
+        }
+        return new SridAttribute($value);
     }
 
     /**
@@ -150,13 +164,13 @@ final class AttributeRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function value(Node $value): Scalar
+    public function value(Node $value): Literal|\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp
     {
         $form = $this->lowering->productions->form($value);
 
         return match ($form->signature) {
             'now_or_signed_literal: now' => $this->lowering->calls->currentTimestamp($form->node(0)),
-            'now_or_signed_literal: signed_literal', 'now_or_signed_literal: signed_literal_or_null' => $this->lowering->literals->literal($form->node(0)),
+            'now_or_signed_literal: signed_literal', 'now_or_signed_literal: signed_literal_or_null' => $this->lowering->literals->signed($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
     }

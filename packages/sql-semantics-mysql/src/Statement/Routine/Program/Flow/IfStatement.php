@@ -11,9 +11,9 @@ use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * IF ... THEN ... ELSEIF ... ELSE ... END IF.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) IF a THEN SELECT 1; ELSE SELECT 2; END IF');
  *     [count($create->statement->body->branches), count($create->statement->body->otherwise)] // => [1, 1]
  */
-final class IfStatement implements ProgramStatement
+final class IfStatement implements FunctionBody
 {
     use Snapshot;
 

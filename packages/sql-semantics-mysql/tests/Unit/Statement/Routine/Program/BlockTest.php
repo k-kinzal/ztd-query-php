@@ -31,24 +31,10 @@ final class BlockTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testDeriveProgramKeepsTheFirstMeaningOfADuplicateVariable(): void
+    public function testDeriveProgramRejectsDuplicateVariablesBeforePublication(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE X CHAR(1); SELECT x; END');
-        $create = $operation->statement;
-        self::assertInstanceOf(CreateProcedure::class, $create);
-        $block = $create->body;
-        self::assertInstanceOf(Block::class, $block);
-        $select = $block->statements[0];
-        self::assertInstanceOf(Select::class, $select);
-        $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
-        $use = $item->expression;
-        self::assertInstanceOf(ColumnUse::class, $use);
-        $resolution = $operation->facts->scalar($use)->resolution;
-        self::assertInstanceOf(ResolvedColumn::class, $resolution);
-
-        self::assertSame(['Duplicate variable: X'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
-        self::assertSame($block->declarations[0], $resolution->relation);
+        $this->expectExceptionMessage('Duplicate variable: X');
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE X CHAR(1); SELECT x; END');
     }
 
     public function testDeriveProgramHidesAParameterWithAVariableOfTheSameName(): void
@@ -59,6 +45,8 @@ final class BlockTest extends TestCase
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -78,7 +66,6 @@ final class BlockTest extends TestCase
     public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
@@ -88,18 +75,6 @@ final class BlockTest extends TestCase
     public static function providerDeriveProgramReportsTheBrokenRule(): iterable
     {
         yield 'a variable used in its own default' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT x; END', ['Column x does not exist.']];
-        yield 'a duplicate condition' => ["CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE E CONDITION FOR SQLSTATE '42S02'; END", ['Duplicate condition: E']];
-        yield 'a duplicate cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE c CURSOR FOR SELECT 2; END', ['Duplicate cursor: c']];
-        yield 'a variable after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE x INT; END', ['Variable or condition declaration after cursor or handler declaration']];
-        yield 'a condition after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING BEGIN END; DECLARE e CONDITION FOR 1; END', ['Variable or condition declaration after cursor or handler declaration']];
-        yield 'a cursor after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE c CURSOR FOR SELECT 1; END', ['Cursor declaration after handler declaration']];
-        yield 'a handler before the cursor it uses' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING OPEN c; DECLARE c CURSOR FOR SELECT 1; END', ['Undefined CURSOR: c', 'Cursor declaration after handler declaration']];
-        yield 'an undefined handler condition' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR nope BEGIN END; END', ['Undefined CONDITION: nope']];
-        yield 'a redefined label' => ['CREATE PROCEDURE p() a: BEGIN a: BEGIN END; END', ['Redefining label a']];
-        yield 'an end label without match' => ['CREATE PROCEDURE p() a: BEGIN END b', ['End-label b without match']];
-        yield 'ITERATE of a block label' => ['CREATE PROCEDURE p() a: BEGIN ITERATE a; END', ['ITERATE with no matching label: a']];
-        yield 'LEAVE of a block label from a handler' => ['CREATE PROCEDURE p() a: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE a; END a', ['LEAVE with no matching label: a']];
-        yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; OPEN c; END', ['Undefined CURSOR: c']];
     }
 
     #[DataProvider('providerDeriveProgramAcceptsAWellFormedBlock')]
@@ -145,4 +120,32 @@ final class BlockTest extends TestCase
         new Block([], [new Leave(new Name('a'))], null, new Name('a'));
     }
 
+
+
+    #[DataProvider('providerDeriveProgramReportsTheBrokenRuleRejectsBeforePublication')]
+    public function testDeriveProgramReportsTheBrokenRuleRejectsBeforePublication(string $sql, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDeriveProgramReportsTheBrokenRuleRejectsBeforePublication(): iterable
+    {
+        yield 'a duplicate condition' => ["CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE E CONDITION FOR SQLSTATE '42S02'; END", 'Duplicate condition: E'];
+        yield 'a duplicate cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE c CURSOR FOR SELECT 2; END', 'Duplicate cursor: c'];
+        yield 'a variable after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE x INT; END', 'Variable or condition declaration after cursor or handler declaration'];
+        yield 'a condition after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING BEGIN END; DECLARE e CONDITION FOR 1; END', 'Variable or condition declaration after cursor or handler declaration'];
+        yield 'a cursor after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE c CURSOR FOR SELECT 1; END', 'Cursor declaration after handler declaration'];
+        yield 'a handler before the cursor it uses' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING OPEN c; DECLARE c CURSOR FOR SELECT 1; END', 'Undefined CURSOR: c'];
+        yield 'an undefined handler condition' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR nope BEGIN END; END', 'Undefined CONDITION: nope'];
+        yield 'a redefined label' => ['CREATE PROCEDURE p() a: BEGIN a: BEGIN END; END', 'Redefining label a'];
+        yield 'an end label without match' => ['CREATE PROCEDURE p() a: BEGIN END b', 'End-label b without match'];
+        yield 'ITERATE of a block label' => ['CREATE PROCEDURE p() a: BEGIN ITERATE a; END', 'ITERATE with no matching label: a'];
+        yield 'LEAVE of a block label from a handler' => ['CREATE PROCEDURE p() a: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE a; END a', 'LEAVE with no matching label: a'];
+        yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; OPEN c; END', 'Undefined CURSOR: c'];
+    }
 }

@@ -189,4 +189,15 @@ final class CharacterTest extends TestCase
 
         new Character(CharacterKind::VarChar, '3', true, new CharsetAttribute(CharsetForm::Ascii));
     }
+    public function testValueRequiresTheLengthOfAVaryingDeclaration(): void
+    {
+        $this->expectExceptionMessage('A VARCHAR declaration requires a length.');
+        new Character(CharacterKind::VarChar);
+    }
+
+    public function testValueRejectsALengthOnAFixedCapacityTextType(): void
+    {
+        $this->expectExceptionMessage('Only CHAR, VARCHAR and TEXT take a length.');
+        new Character(CharacterKind::TinyText, '10');
+    }
 }

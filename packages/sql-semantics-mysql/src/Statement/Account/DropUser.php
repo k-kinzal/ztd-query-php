@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP USER [IF EXISTS] account, …`: a request to remove accounts and their privileges.
@@ -27,7 +27,7 @@ final class DropUser implements Statement
     use Snapshot;
 
     /**
-     * @var list<Account> The accounts in order
+     * @var non-empty-list<Account> The accounts in order
      */
     public readonly array $users;
 
@@ -38,6 +38,7 @@ final class DropUser implements Statement
     public function __construct(public readonly bool $ifExists, array $users)
     {
         $this->users = Check::listOf($users, Account::class, 'DROP USER names at least one account.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

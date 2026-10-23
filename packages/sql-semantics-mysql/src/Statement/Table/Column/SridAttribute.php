@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Column;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -29,10 +30,13 @@ final class SridAttribute implements ColumnAttribute
      */
     public function __construct(public readonly Numeral $srid)
     {
+        $magnitudes = new Magnitudes();
+        \SqlSemantics\Diagnostic\Check::input($magnitudes->integral($srid) && $magnitudes->atMost($srid, '4294967295'), 'A column SRID is an unsigned 32-bit integer token.');
     }
 
     /**
-     * Derives nothing: the attribute holds no expression.
+     * Has no expression dependencies; construction already bounds the identifier.
+     * Availability of the referenced system belongs to the database catalog.
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {

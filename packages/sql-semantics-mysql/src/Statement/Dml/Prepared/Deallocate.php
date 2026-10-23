@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Prepared;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DEALLOCATE PREPARE (or its synonym DROP PREPARE): releases a prepared statement.
@@ -32,6 +32,7 @@ final class Deallocate implements Statement
      */
     public function __construct(public readonly Name $name)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -20,17 +20,18 @@ final class ReferenceRuleTest extends TestCase
 {
     public function testReferenceLowersEveryReference(): void
     {
-        self::assertSame('SELECT 1 FROM { OJ t }, (t JOIN u), t', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select 1 from { oj t }, (t join u), t')->toString());
+        self::assertSame('SELECT 1 FROM { OJ t }, (u JOIN v), w', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select 1 from { oj t }, (u join v), w')->toString());
     }
 
     public function testJoinedWalksTheJoinsOnTheLeft(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t JOIN u ON 1 JOIN v ON 2 JOIN w ON 3');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(JoinedTable::class, $operation->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $operation->statement->from->left);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from->right);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(JoinedTable::class, $operation->statement->query->from);
+        self::assertInstanceOf(JoinedTable::class, $operation->statement->query->from->left);
+        self::assertInstanceOf(TableReference::class, $operation->statement->query->from->right);
     }
 
     public function testStepLowersEveryJoinForm(): void

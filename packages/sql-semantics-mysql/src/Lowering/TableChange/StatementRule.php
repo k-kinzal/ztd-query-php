@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
 use SqlSemantics\Platform\MySql\Statement\Alter\TargetTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the statements of the table change family other than the actions of ALTER TABLE.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  * MYSQL-ALTER-STATEMENT-001. TABLE and TABLES are synonyms; the TABLE of
  * TRUNCATE is optional. RENAME USER belongs to the account family, which
  * lowers its list. Constructs: DropTable, DropIndex, RenameTable,
- * TableRenaming, TruncateTable, TargetTable, PartitionEntry. Terminates:
+ * TableRenaming, TruncateTable, TargetTable. Standalone partitioning is refused. Terminates:
  * lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/drop-index.html,
@@ -77,6 +77,8 @@ final class StatementRule
      * Lowers one statement of the family.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Form $form): Statement
     {
@@ -99,12 +101,18 @@ final class StatementRule
      * Lowers DROP TABLE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table identity is repeated
      */
     public function dropTable(Form $form): DropTable
     {
         $this->lowering->options->skip($form->node(2));
+        $names = $this->lowering->names->qualifiedList($form->node(4));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated($names);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
         $tables = [];
-        foreach ($this->lowering->names->qualifiedList($form->node(4)) as $name) {
+        foreach ($names as $name) {
             $tables[] = new TargetTable($name);
         }
 

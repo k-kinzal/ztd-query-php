@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('s'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('m')]);
  *     [$type->name(), $type->members[1]->value] // => ['ENUM', 'm']
  */
-final class Enumeration implements TypeName
+final class Enumeration implements DeclaredName
 {
     use Snapshot;
 

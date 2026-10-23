@@ -11,9 +11,9 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the dml family: the methods other families and the statement dispatcher call.
@@ -88,14 +88,14 @@ final class DmlRules
 
     /**
      * Lowers the table names of a multiple-table DELETE or of a locking clause: a node of
-     * `table_alias_ref_list`.
+     * `table_alias_ref_list` or the 5.6 `table_wild_list`.
      *
      * @return list<QualifiedName>
      * @throws ImplementationGap When a production has no rule
      */
     public function deleteTargets(Node $list): array
     {
-        return (new TargetRule($this->lowering))->tables($list);
+        return $list->name === 'table_wild_list' ? (new ChangeRule($this->lowering))->wildTargets($list) : (new TargetRule($this->lowering))->tables($list);
     }
 
     /**
@@ -113,7 +113,7 @@ final class DmlRules
      * Lowers the values of one row, each an expression or DEFAULT: a node of `opt_values` or `values`; an
      * absent list is empty.
      *
-     * @return list<Scalar>
+     * @return list<Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest>
      * @throws ImplementationGap When a production has no rule
      */
     public function rowValues(Node $values): array

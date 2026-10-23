@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START TRANSACTION [characteristic, …]`: a request to start a transaction.
@@ -48,6 +48,7 @@ final class StartTransaction implements Statement
             !in_array(TransactionCharacteristic::ReadOnly, $this->characteristics, true) || !in_array(TransactionCharacteristic::ReadWrite, $this->characteristics, true),
             'READ ONLY and READ WRITE exclude each other.',
         );
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

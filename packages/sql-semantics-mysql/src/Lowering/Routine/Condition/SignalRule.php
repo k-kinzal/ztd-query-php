@@ -8,13 +8,17 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 
 /**
  * Lowers SIGNAL and RESIGNAL.
@@ -67,18 +71,22 @@ final class SignalRule
     public function statement(Form $form): Signal|Resignal
     {
         if ($form->signature === 'signal_stmt: SIGNAL_SYM signal_value opt_set_signal_information') {
-            return new Signal($this->condition($form->node(1)), $this->items($form->node(2)));
+            $condition = $this->condition($form->node(1));
+
+            return new Signal($condition, $this->items($form->node(2), $condition));
         }
         if ($form->signature !== 'resignal_stmt: RESIGNAL_SYM opt_signal_value opt_set_signal_information') {
             throw ImplementationGap::production($form);
         }
         $value = $this->lowering->form($form->node(1));
 
-        return new Resignal(match ($value->signature) {
+        $condition = match ($value->signature) {
             'opt_signal_value:' => null,
             'opt_signal_value: signal_value' => $this->condition($value->node(0)),
             default => throw ImplementationGap::production($value),
-        }, $this->items($form->node(2)));
+        };
+
+        return new Resignal($condition, $this->items($form->node(2), $condition));
     }
 
     /**
@@ -90,7 +98,7 @@ final class SignalRule
     {
         $form = $this->lowering->form($value);
         if ($form->signature === 'signal_value: ident') {
-            return new ConditionName($this->lowering->names->identifier($form->node(0)));
+            return $this->lowering->origins->record(new ConditionName($this->lowering->names->identifier($form->node(0))), $value);
         }
         $state = $form->signature === 'signal_value: sqlstate' ? (new ConditionRule($this->lowering))->value($form->node(0)) : null;
 
@@ -101,48 +109,83 @@ final class SignalRule
      * Lowers the SET clause: a node of `opt_set_signal_information`; an absent clause is empty.
      *
      * @return list<SignalItem>
+     * @throws \SqlSemantics\Construction\RejectedInput When an item operand is outside its value domain
      * @throws ImplementationGap When a production has no rule
      */
-    public function items(Node $clause): array
+    public function items(Node $clause, ConditionName|SqlState|null $condition = null): array
     {
         $form = $this->lowering->form($clause);
         if ($form->signature === 'opt_set_signal_information:') {
             return [];
         }
-        if ($form->signature !== 'opt_set_signal_information: SET signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET_SYM signal_information_item_list') {
+        if ($clause->name !== 'signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET signal_information_item_list' && $form->signature !== 'opt_set_signal_information: SET_SYM signal_information_item_list') {
             throw ImplementationGap::production($form);
         }
-        $items = [];
-        $list = $this->lowering->form($form->node(1));
+        $pending = [];
+        $list = $clause->name === 'signal_information_item_list' ? $form : $this->lowering->form($form->node(1));
         while (true) {
             $first = match ($list->signature) {
                 'signal_information_item_list: signal_condition_information_item_name EQ signal_allowed_expr' => 0,
                 'signal_information_item_list: signal_information_item_list , signal_condition_information_item_name EQ signal_allowed_expr' => 2,
                 default => throw ImplementationGap::production($list),
             };
-            $name = $this->lowering->form($list->node($first));
-            array_unshift($items, new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($list->node($first + 2))));
+            $pending[] = [$list, $first];
             if ($first === 0) {
-                return $items;
+                break;
             }
             $list = $this->lowering->form($list->node(0));
         }
+        $items = [];
+        foreach (array_reverse($pending) as [$item, $offset]) {
+            $name = $this->lowering->form($item->node($offset));
+            try {
+                $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
+                    throw $failure;
+                }
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $failure->problem), $failure->end);
+            }
+            if (in_array($candidate->name, array_column($items, 'name'), true)) {
+                $tokens = $item->node($offset + 2)->tokens();
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $candidate), $tokens[count($tokens) - 1]->end());
+            }
+            $items[] = $candidate;
+        }
+
+        return $items;
     }
 
     /**
      * Lowers the value of an item or a condition number: a node of `signal_allowed_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a literal is outside its value domain
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When the operand assigns a variable instead of reading it
      */
-    public function operand(Node $expression): Scalar
+    public function operand(Node $expression, ?Node $container = null): LiteralExpression|ColumnUse|SystemVariable|UserVariable
     {
         $form = $this->lowering->form($expression);
 
-        return match ($form->signature) {
+        $value = match ($form->signature) {
             'signal_allowed_expr: literal', 'signal_allowed_expr: literal_or_null' => $this->lowering->literals->literal($form->node(0)),
             'signal_allowed_expr: variable', 'signal_allowed_expr: rvalue_system_or_user_variable' => $this->lowering->variables->variable($form->node(0)),
             'signal_allowed_expr: simple_ident' => $this->lowering->names->column($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
+        if ($value instanceof VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment) {
+            $tokens = $expression->tokens();
+            $end = $tokens[count($tokens) - 1]->end();
+            $at = new \SqlParser\Lexer\Token(0, '$end', '', $end);
+            foreach ($container === null ? [] : $container->tokens() as $token) {
+                if ($token->offset >= $end) {
+                    $at = $token->text === ',' ? new \SqlParser\Lexer\Token(0, '$end', '', $token->end()) : $token;
+                    break;
+                }
+            }
+            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: a condition operand reads a variable; it cannot assign one.', 0, new \SqlParser\Parser\SyntaxException($at, [], ''));
+        }
+
+        return $value;
     }
 }

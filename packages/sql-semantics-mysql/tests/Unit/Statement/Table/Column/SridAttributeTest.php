@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 #[Medium]
 final class SridAttributeTest extends TestCase
 {
-    public function testDeriveAttributeDerivesNothing(): void
+    public function testDeriveAttributeAcceptsAKnownRestriction(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)');
         $statement = $create->statement;
@@ -35,5 +35,16 @@ final class SridAttributeTest extends TestCase
     public function testRenderWritesTheAttribute(): void
     {
         self::assertSame('CREATE TABLE t (g POINT SRID 4326)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)')->toString());
+    }
+    public function testRejectsAnIntrinsicRangeViolation(): void
+    {
+        $this->expectExceptionMessage('A column SRID is an unsigned 32-bit integer token.');
+        new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967296'));
+    }
+
+    public function testAcceptsBothBoundsWithoutRequiringACatalog(): void
+    {
+        self::assertSame('0', (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')))->srid->text);
+        self::assertSame('FFFFFFFF', (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('FFFFFFFF', true)))->srid->text);
     }
 }

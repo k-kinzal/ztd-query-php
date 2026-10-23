@@ -17,6 +17,7 @@ use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
 
 #[CoversClass(LrParser::class)]
+#[UsesClass(\SqlParser\Parser\Reductions::class)]
 #[UsesClass(Node::class)]
 #[UsesClass(SyntaxException::class)]
 #[UsesClass(Token::class)]
@@ -77,8 +78,12 @@ final class LrParserTest extends TestCase
         $builder->rule('s', ['A', '$@1', 'A']);
         $table = (new ParseTableBuilder())->build($builder->build())->table;
         $a = $table->symbols->id('A') ?? -1;
-        $tree = (new LrParser($table))->parse([new Token($a, 'A', 'a', 0), new Token($a, 'A', 'a', 1), new Token(0, '$end', '', 2)], 'aa');
+        $observed = [];
+        $tree = (new LrParser($table))->parse([new Token($a, 'A', 'a', 0), new Token($a, 'A', 'a', 1), new Token(0, '$end', '', 2)], 'aa', static function (Node $node) use (&$observed): void {
+            $observed[] = $node->name;
+        });
 
+        self::assertSame(['s'], $observed);
         self::assertCount(2, $tree->children);
         self::assertSame('aa', $tree->text('aa'));
     }

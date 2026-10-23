@@ -34,6 +34,36 @@ final class OutputOrdinalTest extends TestCase
         self::assertSame(PHP_INT_MAX, (new OutputOrdinal(new NumberLiteral('9999999999999999999')))->position());
     }
 
+    public function testNamePreservesLegacyBooleanPositions(): void
+    {
+        $true = new OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true));
+        $false = new OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(false));
+        self::assertSame(['TRUE', 1, 'FALSE', 0], [$true->name(), $true->position(), $false->name(), $false->position()]);
+        self::assertSame('02', (new OutputOrdinal(new NumberLiteral('02')))->name());
+    }
+
+    public function testLiteralRetainsTheIntegerAndItsWrappers(): void
+    {
+        $literal = new NumberLiteral('02');
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus, $literal));
+        $ordinal = new OutputOrdinal($expression);
+        self::assertSame(2, $ordinal->position());
+        self::assertSame($expression, $ordinal->expression);
+        self::assertSame($literal, $ordinal->literal());
+    }
+
+    public function testANegativeOperandIsRejected(): void
+    {
+        $this->expectExceptionMessage('A select list position is an unsigned integer.');
+        new OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, new NumberLiteral('2')));
+    }
+
+    public function testAGroupedDecimalIsRejected(): void
+    {
+        $this->expectExceptionMessage('A select list position is an unsigned integer.');
+        new OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new NumberLiteral('2.0')));
+    }
+
     public function testDeriveScalarTakesTheFactsOfTheField(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -42,8 +72,9 @@ final class OutputOrdinalTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1, a FROM t GROUP BY 2 ORDER BY 2', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $fact = $operation->facts->scalar($operation->statement->orderBy[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        $fact = $operation->facts->scalar($operation->statement->query->orderBy[0]->expression);
         self::assertInstanceOf(AliasTarget::class, $fact->resolution);
         self::assertSame($operation->field(1), $fact->resolution->field);
         self::assertSame(Nullability::Nullable, $fact->nullability);
@@ -52,7 +83,9 @@ final class OutputOrdinalTest extends TestCase
 
     public function testDeriveScalarReportsAPositionOutsideTheSelectList(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 ORDER BY 3');
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(a INT)');
+        $operation = $semantics->analyze('SELECT * FROM t ORDER BY 3', [$table]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(OrdinalOutOfRange::class, $operation->facts->diagnostics[0]);
@@ -62,8 +95,9 @@ final class OutputOrdinalTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t ORDER BY 2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->type);
         self::assertSame([], $operation->facts->diagnostics);
     }
 

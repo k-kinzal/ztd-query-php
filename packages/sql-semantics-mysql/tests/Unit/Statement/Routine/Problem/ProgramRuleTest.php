@@ -16,6 +16,7 @@ final class ProgramRuleTest extends TestCase
     public function testCasesHoldTheirMessagePatterns(): void
     {
         self::assertSame([
+            "Incorrect routine name '%s'", "Identifier name '%s' is too long",
             'Duplicate parameter: %s',
             'Duplicate variable: %s',
             'Duplicate condition: %s',
@@ -41,18 +42,20 @@ final class ProgramRuleTest extends TestCase
             "Can't drop or alter a %s from within another stored routine",
             'Recursion of EVENT DDL statements is forbidden when body is present',
             'Not allowed to return a result set from a %s',
+            'Not allowed to set autocommit from a stored function or trigger',
             'Explicit or implicit commit is not allowed in stored function or trigger.',
             '%s is not allowed in stored function or trigger',
             'Updating of OLD row is not allowed in trigger',
             'Updating of NEW row is not allowed in after trigger',
             'There is no NEW row in on DELETE trigger',
+            'Incorrect usage of CAST( .. AS .. ARRAY) and stored routines',
         ], array_map(static fn (ProgramRule $rule): string => $rule->value, ProgramRule::cases()));
     }
 
     public function testCasesNameTheCasesOfTheServerErrors(): void
     {
         self::assertSame([
-            'DuplicateParameter',
+            'IncorrectName', 'NameTooLong', 'DuplicateParameter',
             'DuplicateVariable',
             'DuplicateCondition',
             'DuplicateCursor',
@@ -77,11 +80,13 @@ final class ProgramRuleTest extends TestCase
             'NestedAlterOrDrop',
             'EventRecursion',
             'ResultSet',
+            'AutocommitInFunction',
             'CommitInFunction',
             'FunctionStatement',
             'OldRowUpdate',
             'AfterRowUpdate',
             'NoNewRow',
+            'ArrayCast',
         ], array_map(static fn (ProgramRule $rule): string => $rule->name, ProgramRule::cases()));
     }
 }

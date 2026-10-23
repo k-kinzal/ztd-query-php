@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `UNINSTALL PLUGIN name`: a request to remove an installed server plugin.
@@ -32,6 +32,7 @@ final class UninstallPlugin implements Statement
      */
     public function __construct(public readonly Name $plugin)
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

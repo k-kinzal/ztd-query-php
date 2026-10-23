@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
@@ -17,10 +17,10 @@ use SqlSemantics\Platform\MySql\Lowering\Call\CallRules;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionRoutes;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionTails;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\Family;
-use SqlSemantics\Platform\MySql\Lowering\Dispatch\OptimizerHints;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\StatementRoutes;
 use SqlSemantics\Platform\MySql\Lowering\Dml\DmlRules;
 use SqlSemantics\Platform\MySql\Lowering\Expression\ExpressionRules;
+use SqlSemantics\Platform\MySql\Lowering\Hint\HintReader;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\CharsetRule;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\NameRule;
@@ -36,7 +36,9 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\TableChangeRules;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\TableDefinitionRules;
 use SqlSemantics\Platform\MySql\Lowering\Type\TypeRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\UtilityRules;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The lowering of one MySQL parse tree: the statement dispatcher and the entry rules of every family.
@@ -48,8 +50,9 @@ use SqlSemantics\Statement\Statement;
  * input holds none. A statement is handed to the family that owns its rule
  * (MYSQL-STATEMENT-ROUTES-001, MYSQL-DEFINITION-ROUTES-001). The other
  * start_entry alternatives begin with a grammar selector token the lexer
- * never produces, so no SQL text reaches them. An optimizer hint comment is
- * reported as a missing rule (MYSQL-OPTIMIZER-HINTS-001). Terminates: the
+ * never produces, so no SQL text reaches them. The hint comments of the
+ * input are read once (MYSQL-OPTIMIZER-HINTS-001) and kept with the query
+ * block or statement whose keyword they follow. Terminates: the
  * root rules are unit productions over strict subtrees.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-statements.html.
  * Status: Implemented.
@@ -58,6 +61,11 @@ use SqlSemantics\Statement\Statement;
  */
 final class Lowering
 {
+    /**
+     * The table currently declaring column operands; only its typed name can escape.
+     */
+    public ?\SqlSemantics\Statement\Identifier\QualifiedName $columnTable = null;
+
     /**
      * The start_entry alternatives the server enters by a grammar selector token; no SQL text parses to them.
      */
@@ -171,11 +179,19 @@ final class Lowering
     public readonly UtilityRules $utility;
 
     /**
+     * @var array<int, HintComment> The hint comments of the input, by the offset of the keyword each follows
+     */
+    private array $hints = [];
+
+    /**
+     * @param bool $contextualized Whether native function signatures are bound in these operands
      * @param Productions $productions The productions of the grammar release
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
+     * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The character set of identifier bytes in this input
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile)
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $programName = null, public readonly bool $contextualized = true)
     {
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);
@@ -199,17 +215,40 @@ final class Lowering
     }
 
     /**
+     * Shares input ownership while retaining clauses that a VALUES write does not contextualize.
+     */
+    public function unprepared(): self
+    {
+        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false);
+        $lowering->hints = $this->hints;
+        $lowering->columnTable = $this->columnTable;
+        return $lowering;
+    }
+
+    /**
+     * Answers the hints of the comment that follows a keyword of the input statements() last read, in written order; none when no comment does.
+     *
+     * @return list<OptimizerHint>
+     */
+    public function hints(Token $keyword): array
+    {
+        return $this->hints[$keyword->offset]->hints ?? [];
+    }
+
+    /**
      * Lowers a complete input into the statements it holds: one, or none for an empty input.
      *
      * @return list<Statement>
-     * @throws ImplementationGap When a production has no rule or the input holds an optimizer hint comment
+     * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand has no semantic value
      */
     public function statements(Node $input): array
     {
-        $hint = $this->profile->grammar === GrammarRelease::MySql5651 ? null : (new OptimizerHints())->first($input);
-        if ($hint !== null) {
-            throw ImplementationGap::rule('MySQL optimizer hints, which the parser delivers as a comment: ' . $hint);
+        $rejection = (new SyntaxWarnings())->rejected($input, $this->profile);
+        if ($rejection !== null) {
+            throw $rejection;
         }
+        $this->hints = (new HintReader($this->profile->grammar, $this->profile->lexical->ansiQuotes))->comments($input);
         $form = $this->productions->form($input);
         Check::invariant(!isset(self::SELECTED[$form->signature]), 'A grammar selector entry is not reachable from SQL text: ' . $form->signature);
         if ($form->signature === 'start_entry: sql_statement') {
@@ -236,6 +275,8 @@ final class Lowering
      * statement they contain through this method.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand is outside the semantic domain
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function statement(Node $statement): Statement
     {
@@ -248,13 +289,14 @@ final class Lowering
         }
         $family = (new StatementRoutes())->family($form->signature) ?? throw ImplementationGap::production($form);
 
-        return $family === Family::Definition ? $this->definition($form->node(0)) : $this->routed($family, $form->node(0));
+        return $this->origins->record($family === Family::Definition ? $this->definition($form->node(0)) : $this->routed($family, $form->node(0)), $statement);
     }
 
     /**
      * Lowers a node of create, alter or drop through the family its production is routed to.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function definition(Node $definition): Statement
     {
@@ -276,6 +318,7 @@ final class Lowering
 
     /**
      * Hands the node of a statement rule to the family that owns the rule.
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand has no semantic interpretation
      */
     public function routed(Family $family, Node $statement): Statement
     {
@@ -291,6 +334,17 @@ final class Lowering
             Family::TableDefinition => $this->tableDefinitions->statement($statement),
             Family::Utility => $this->utility->statement($statement),
         };
+    }
+
+    /**
+     * Interprets a stored body in its declared database while sharing input origins.
+     * The scope belongs to lowering only; published refusals retain decoded names.
+     */
+    public function inProgram(?\SqlSemantics\Statement\Identifier\QualifiedName $name): self
+    {
+        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName);
+        $lowering->hints = $this->hints;
+        return $lowering;
     }
 
     /**

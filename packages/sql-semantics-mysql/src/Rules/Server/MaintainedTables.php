@@ -31,7 +31,9 @@ final class MaintainedTables
      */
     public function checked(array $tables): array
     {
-        return Check::listOf($tables, MaintainedTable::class, 'The statement names at least one table.', 1);
+        $tables = Check::listOf($tables, MaintainedTable::class, 'The statement names at least one table.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated(array_map(static fn (MaintainedTable $table): \SqlSemantics\Statement\Identifier\QualifiedName => $table->name, $tables)) === null, 'A maintenance statement cannot repeat an identical table name.');
+        return $tables;
     }
 
     /**

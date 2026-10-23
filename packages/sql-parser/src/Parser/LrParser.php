@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlParser\Parser;
 
+use Closure;
 use SqlParser\Lexer\Token;
 use SqlParser\Table\ActionCode;
 use SqlParser\Table\ParseTable;
@@ -34,14 +35,16 @@ final class LrParser
      *
      * @param list<Token> $tokens Tokens ending with the end marker
      * @param string $source The SQL text, for error positions
+     * @param (Closure(Node, Token): void)|null $reduced Receives completed visible productions
      *
      * @return Node The node of the start symbol
      *
      * @throws SyntaxException When a token is not allowed where it stands
      */
-    public function parse(array $tokens, string $source = ''): Node
+    public function parse(array $tokens, string $source = '', ?Closure $reduced = null): Node
     {
         $table = $this->table;
+        $reductions = new Reductions($reduced);
         $states = [0];
         $nodes = [];
         $index = 0;
@@ -74,7 +77,7 @@ final class LrParser
                     : new Node($table->symbols->name($rule->lhs), 0, $children, $trailing);
             }
             $states[] = $table->action($states[count($states) - 1], $rule->lhs);
-            $nodes[] = $rule->hidden ? null : new Node($table->symbols->name($rule->lhs), $rule->ordinal, $children);
+            $nodes[] = $reductions->node($table->symbols->name($rule->lhs), $rule, $children, $token);
         }
     }
 

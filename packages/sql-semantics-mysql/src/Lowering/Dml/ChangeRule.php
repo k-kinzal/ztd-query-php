@@ -17,8 +17,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers UPDATE and DELETE of every release.
@@ -34,7 +34,7 @@ use SqlSemantics\Statement\Statement;
  * https://dev.mysql.com/doc/refman/8.4/en/delete.html,
  * https://dev.mysql.com/doc/refman/5.6/en/delete.html. Status: Implemented.
  *
- * @visibility SqlSemantics\Platform\MySql\Lowering\Dml
+ * @visibility SqlSemantics\Platform\MySql\Lowering
  */
 final class ChangeRule
 {
@@ -81,22 +81,32 @@ final class ChangeRule
      * Lowers a node of `update` or `update_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the input namespace needs a retained instruction
      */
     public function update(Form $form): Update
     {
         [$with, $low, $ignore, $tables, $list, $where, $order, $limit] = self::UPDATES[$form->signature] ?? throw ImplementationGap::production($form);
         $queries = $this->lowering->queries;
 
-        return new Update(
+        $parts = [
             $with === null ? null : $queries->with($form->node($with)),
             $this->lowPriority($form->node($low)),
             $this->lowering->options->present($form->node($ignore)),
             $queries->tables($form->node($tables)),
-            (new ValueRule($this->lowering))->assignments($form->node($list)),
-            $queries->where($form->node($where)),
-            $queries->ordering($form->node($order)),
+            (new Insert\RetainedUpdates($this->lowering))->assignments($form->node($list)),
+            (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->where($form->node($where)),
+            (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->ordering($form->node($order), false),
             $this->limit($form->node($limit)),
-        );
+            $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
+        ];
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($parts[3]) !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(...$parts), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($parts[0], $parts[3], $parts[4], $parts[6], $parts[7], $parts[5]) !== null) {
+            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate(...$parts);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate($write), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+        return (new \SqlSemantics\Platform\MySql\Lowering\Dml\Update\Publication())->create(...$parts);
     }
 
     /**
@@ -112,17 +122,19 @@ final class ChangeRule
             [$with, $options, $table, $alias, $partitions, $where, $order, $limit] = $single;
             $target = new WriteTarget($this->lowering->names->qualified($form->node($table)), $alias === null ? null : $queries->alias($form->node($alias)), $queries->partitions($form->node($partitions)), $alias === null ? AliasMark::As : $queries->mark($form->node($alias)));
 
-            return new Delete($with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)));
+            return $this->single($form->node, $with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)), $this->lowering->hints($form->token($with === null ? 0 : $with + 1)));
         }
         [$spelling, $with, $options, $targets, $tables, $where] = self::MULTIPLE[$form->signature] ?? throw ImplementationGap::production($form);
 
-        return new MultipleDelete(
+        return $this->multiple(
+            $form->node,
             $with === null ? null : $queries->with($form->node($with)),
             $this->options($form->node($options)),
-            $this->lowering->dml->deleteTargets($form->node($targets)),
+            $this->targets($form->node($targets)),
             $spelling,
             $queries->tables($form->node($tables)),
             $queries->where($form->node($where)),
+            $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         );
     }
 
@@ -141,18 +153,60 @@ final class ChangeRule
         $queries = $this->lowering->queries;
 
         return match ($body->signature) {
-            'single_multi: FROM table_ident opt_use_partition where_clause opt_order_clause delete_limit_clause' => new Delete(
+            'single_multi: FROM table_ident opt_use_partition where_clause opt_order_clause delete_limit_clause' => $this->single(
+                $body->node,
                 null,
                 $options,
                 new WriteTarget($this->lowering->names->qualified($body->node(1)), null, $queries->partitions($body->node(2))),
                 $queries->where($body->node(3)),
                 $queries->ordering($body->node(4)),
                 $this->limit($body->node(5)),
+                [],
             ),
-            'single_multi: table_wild_list FROM join_table_list where_clause' => new MultipleDelete(null, $options, $this->wildTargets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
-            'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => new MultipleDelete(null, $options, $this->lowering->dml->deleteTargets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
+            'single_multi: table_wild_list FROM join_table_list where_clause' => $this->multiple($body->node, null, $options, $this->targets($body->node(0)), MultipleDeleteForm::BeforeFrom, $queries->tables($body->node(2)), $queries->where($body->node(3))),
+            'single_multi: FROM table_alias_ref_list USING join_table_list where_clause' => $this->multiple($body->node, null, $options, $this->targets($body->node(1)), MultipleDeleteForm::Using, $queries->tables($body->node(3)), $queries->where($body->node(4))),
             default => throw ImplementationGap::production($body),
         };
+    }
+
+    /**
+     * Keeps a locally bound common-table target in a stored instruction role.
+     *
+     * @param list<DeleteOption> $options The written modifiers
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Query\OrderItem> $orderBy The complete ordering
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The optimizer hints
+     * @throws \SqlSemantics\Construction\RejectedInput When the target is intrinsically read-only
+     */
+    public function single(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, WriteTarget $target, ?\SqlSemantics\Statement\Scalar $where, array $orderBy, ?Limit $limit, array $hints): Delete
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->inputs([$target, ...$orderBy, ...($where === null ? [] : [$where])], $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $target->name) || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([$target, ...$orderBy, ...($where === null ? [] : [$where])], $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($orderBy) !== null) {
+            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete($with, $options, $target, $where, $orderBy, $limit, $hints);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
+        }
+        return new Delete($with, $options, $target, $where, $orderBy, $limit, $hints);
+    }
+
+    /**
+     * Constructs a deletion only after its targets can belong to its input namespace.
+     *
+     * @param list<DeleteOption> $options The written modifiers
+     * @param list<QualifiedName> $targets The deletion targets
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource> $tables The complete inputs
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The optimizer hints
+     * @throws \SqlSemantics\Construction\RejectedInput When an input occurrence cannot supply a target
+     */
+    public function multiple(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, array $targets, MultipleDeleteForm $form, array $tables, ?\SqlSemantics\Statement\Scalar $where = null, array $hints = []): MultipleDelete
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($targets, $tables) !== null) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets($targets, $tables, $with, $where, $this->lowering->programName);
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744);
+        }
+        $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets);
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($targets, $tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->inputs([...$tables, ...($where === null ? [] : [$where])], $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->inputs([...$tables, ...($where === null ? [] : [$where])], $with) !== null) {
+            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($with, $options, $input, $form, $where, $hints);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($write), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, false);
+        }
+        return new MultipleDelete($with, $options, $input, $form, $where, $hints);
     }
 
     /**
@@ -205,6 +259,47 @@ final class ChangeRule
     }
 
     /**
+     * Lowers deletion targets, refusing intrinsic repetitions before relation operands.
+     *
+     * @return list<QualifiedName>
+     * @throws \SqlSemantics\Construction\RejectedInput When a target is intrinsically repeated
+     */
+    public function targets(Node $list): array
+    {
+        $targets = $this->lowering->dml->deleteTargets($list);
+        $position = (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($targets);
+        if ($position !== null) {
+            $items = (new ListRule($this->lowering))->items($list, [
+                'table_wild_list: table_wild_one', 'table_wild_list: table_wild_list , table_wild_one',
+                'table_alias_ref_list: table_alias_ref', 'table_alias_ref_list: table_alias_ref_list , table_alias_ref',
+                'table_alias_ref_list: table_ident_opt_wild', 'table_alias_ref_list: table_alias_ref_list , table_ident_opt_wild',
+            ]);
+            $legacy = $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget(array_slice($targets, 0, $position + 1), $this->lowering->programName), (new \SqlSemantics\Construction\SourceRanges())->span($items[$position])[1] ?? 0, $legacy);
+        }
+
+        return $targets;
+    }
+
+    /**
+     * MySQL 5.6 DELETE lists refuse a repetition before reading a later suffix.
+     * In this release the list productions belong only to DELETE.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || !in_array($node->name, ['table_wild_list', 'table_alias_ref_list'], true)) {
+            return null;
+        }
+        try {
+            $this->targets($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
+        }
+
+        return null;
+    }
+
+    /**
      * Lowers the tables to delete from of a node of `table_wild_list` (5.6).
      *
      * @return list<QualifiedName>
@@ -225,4 +320,5 @@ final class ChangeRule
 
         return $targets;
     }
+
 }

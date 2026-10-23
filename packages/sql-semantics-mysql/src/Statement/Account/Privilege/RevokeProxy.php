@@ -8,9 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REVOKE [IF EXISTS] PROXY ON account FROM account, … [IGNORE UNKNOWN USER]`: a request to withdraw a proxy grant.
@@ -22,12 +22,12 @@ use SqlSemantics\Statement\Statement;
  * @example Revoking a proxy
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE PROXY ON root FROM app')->toString() // => 'REVOKE PROXY ON root FROM app'
  */
-final class RevokeProxy implements Statement
+final class RevokeProxy implements Statement, PrivilegeChange
 {
     use Snapshot;
 
     /**
-     * @var list<UserSpecification> The proxy accounts
+     * @var non-empty-list<UserSpecification> The proxy accounts
      */
     public readonly array $users;
 
@@ -42,7 +42,9 @@ final class RevokeProxy implements Statement
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE PROXY names at least one account.', 1);
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');
+            Check::input($user->identification === null, 'A REVOKE account has no authentication clause.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

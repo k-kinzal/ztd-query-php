@@ -38,6 +38,7 @@ final class UnionOption implements TableOption
     {
         $this->tables = Check::listOf($tables, QualifiedName::class, 'The merged tables are an ordered list of table names.');
         foreach ($this->tables as $table) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
             Check::input($table->catalog === null, 'A table name has at most a database qualifier.');
         }
     }

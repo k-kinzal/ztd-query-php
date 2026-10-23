@@ -9,10 +9,10 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * ALTER PROCEDURE or ALTER FUNCTION: changes the characteristics of a stored routine.
@@ -47,11 +47,13 @@ final class AlterRoutine implements Statement
     public function __construct(public readonly ProgramKind $kind, public readonly QualifiedName $name, array $characteristics = [])
     {
         Check::input($kind === ProgramKind::Procedure || $kind === ProgramKind::Function, 'ALTER of a routine names a procedure or a function.');
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         foreach ($this->characteristics as $characteristic) {
             Check::input(!$characteristic instanceof Determinism, 'ALTER of a routine has no DETERMINISTIC characteristic.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

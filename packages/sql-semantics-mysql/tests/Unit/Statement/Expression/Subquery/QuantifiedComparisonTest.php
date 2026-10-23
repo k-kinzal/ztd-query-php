@@ -9,7 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
@@ -59,5 +61,32 @@ final class QuantifiedComparisonTest extends TestCase
         $this->expectExceptionMessage('The operand of a quantified comparison needs a grouping to keep its place.');
 
         new QuantifiedComparison(new TruthTest(new NumberLiteral('1'), Truth::True), ComparisonOperator::Equal, Quantifier::All, $comparison->query);
+    }
+
+    public function testDeriveScalarComparesRowsForEqualAny(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->facts->diagnostics);
+    }
+
+    public function testEqualAllCannotPublishARowOperand(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ALL (SELECT 1, 2)');
+    }
+
+    public function testNullSafeEqualityCannotBeQuantified(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))]);
+        $this->expectExceptionMessage('Null-safe equality is not a quantified comparison operator.');
+
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::NullSafeEqual, Quantifier::Any, $query);
+    }
+
+    public function testRenderExcludesAnIntoDestinationWithinTheSelect(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'target'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $this->expectExceptionMessage('An expression subquery cannot have an INTO destination.');
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $operation->statement->query);
     }
 }

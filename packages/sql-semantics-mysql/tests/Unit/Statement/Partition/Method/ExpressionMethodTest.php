@@ -27,4 +27,17 @@ final class ExpressionMethodTest extends TestCase
     {
         self::assertSame('ALTER TABLE t PARTITION BY LIST (a) (PARTITION p VALUES IN (1, 2))', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LIST (a) (PARTITION p VALUES IN (1, 2))')->toString());
     }
+
+    public function testRenderRequiresGroupingForAPredicateOperand(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\NullTest(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $this->expectExceptionMessage('A partition expression needs a grouping to keep its place.');
+        new ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, $expression);
+    }
+
+    public function testRenderPreservesAGroupedPredicateOperand(): void
+    {
+        $sql = 'ALTER TABLE t PARTITION BY RANGE ((a IS NULL))';
+        self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze($sql)->toString());
+    }
 }

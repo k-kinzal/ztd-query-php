@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
@@ -47,15 +46,11 @@ final class AlterEventTest extends TestCase
         self::assertSame(['Column a does not exist.', 'Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
-    public function testDeriveStatementAcceptsAnAlterationWithoutClauses(): void
+    public function testDeriveStatementRejectsAnAlterationWithoutClauses(): void
     {
-        $alter = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e');
-        $statement = $alter->statement;
-        self::assertInstanceOf(AlterEvent::class, $statement);
+        $this->expectExceptionMessage('ALTER EVENT changes at least one event property after its name.');
 
-        self::assertNull($statement->schedule);
-        self::assertNull($statement->body);
-        self::assertSame([], $alter->facts->diagnostics);
+        (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e');
     }
 
     /**
@@ -70,9 +65,9 @@ final class AlterEventTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $alter = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
     }
 
     public function testDeriveStatementAcceptsANestedAlterationWithoutABody(): void
@@ -93,7 +88,7 @@ final class AlterEventTest extends TestCase
             "ALTER DEFINER = CURRENT_USER EVENT shop.e ON SCHEDULE AT '2030-01-01' + INTERVAL 1 DAY ON COMPLETION NOT PRESERVE RENAME TO shop.f ENABLE COMMENT 'n' DO UPDATE t SET a = 1",
         ];
         yield 'MySQL 8.4 DISABLE ON REPLICA' => ['mysql-8.4.7', 'alter event e disable on replica', 'ALTER EVENT e DISABLE ON REPLICA'];
-        yield 'MySQL 9.1 nothing' => ['mysql-9.1.0', 'alter definer = current_user event e', 'ALTER DEFINER = CURRENT_USER EVENT e'];
+        yield 'MySQL 9.1 definer and status' => ['mysql-9.1.0', 'alter definer = current_user event e enable', 'ALTER DEFINER = CURRENT_USER EVENT e ENABLE'];
     }
 
     #[DataProvider('providerRenderWritesTheChanges')]
@@ -109,7 +104,6 @@ final class AlterEventTest extends TestCase
         (new AlterEvent(new QualifiedName(new Name('e')), null, null, null, EventStatus::Disable))->render($out);
 
         self::assertSame('ALTER EVENT e DISABLE', (new Lexical())->join($out->pieces()));
-        self::assertSame('ALTER EVENT e', $semantics->analyze('ALTER EVENT e')->toString());
     }
 
     public function testANewNameWithACatalogIsRejected(): void
@@ -123,7 +117,7 @@ final class AlterEventTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new AlterEvent(new QualifiedName(new Name('e')), null, null, null, null, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new AlterEvent(new QualifiedName(new Name('e')), null, null, null, null, new Text('41', Radix::Hexadecimal));
     }
 
     public function testABodyOfAnotherClassIsRejected(): void
@@ -132,4 +126,29 @@ final class AlterEventTest extends TestCase
 
         new AlterEvent(new QualifiedName(new Name('e')), null, null, null, null, null, new Parameter(new Name('x'), new Integral(IntegralKind::Int)));
     }
+
+    public function testDeriveStatementWarnsOfDisableOnSlave(): void
+    {
+        $facts = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DISABLE ON SLAVE')->facts;
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+    }
+    public function testAnEmptyChangeIsRejectedEvenWithADefiner(): void
+    {
+        $this->expectExceptionMessage('ALTER EVENT changes at least one event property after its name.');
+
+        new AlterEvent(new QualifiedName(new Name('e')), definer: new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser());
+    }
+
+    public function testAnEmptyInputKeepsOnlyItsTypedHeaderRefusal(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER DEFINER=CURRENT_USER EVENT db.e');
+            self::fail('An empty event alteration must not be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $error) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration::class, $error->problem);
+            self::assertSame('db', $error->problem->name->schema?->value);
+        }
+    }
+
 }

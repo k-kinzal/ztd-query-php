@@ -10,15 +10,20 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 
 #[CoversClass(GrantRoles::class)]
 #[Medium]
 final class GrantRolesTest extends TestCase
 {
-    public function testDeriveStatementReportsAPrivilegeInTheRoleList(): void
+    public function testRenderRequiresAConsistentOrdinaryGrant(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics(Dialect::MySql))->analyze('GRANT r, UPDATE TO u')->facts->diagnostics[0]);
+        $this->expectExceptionMessage('A role grant excludes anonymous operands and explicit self-grants.');
+        new GrantRoles([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r')))], [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r'))]);
+    }
+
+    public function testDeriveStatementNeedsNoExpressionBindings(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('GRANT r TO u')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAdminOption(): void

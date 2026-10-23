@@ -29,7 +29,7 @@ final class UpdateHistogram implements Histogram
     use Snapshot;
 
     /**
-     * @var list<Name> The column names in written order; at least one
+     * @var non-empty-list<Name> The column names in written order; at least one
      */
     public readonly array $columns;
 

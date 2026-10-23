@@ -9,9 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Routine\ConditionFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SIGNAL: raises a condition.
@@ -42,6 +42,9 @@ final class Signal implements Statement, ProgramStatement
     public function __construct(public readonly ConditionName|SqlState $condition, array $items = [])
     {
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
+        $repeated = (new ConditionFacts())->repeated($this->items);
+        Check::input($repeated === null, "Duplicate condition information item '" . ($repeated?->name->value ?? '') . "'");
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

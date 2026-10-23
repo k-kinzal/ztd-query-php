@@ -35,6 +35,7 @@ final class BulkOptions implements Node
     public function __construct(public readonly ?Numeral $parallel = null, public readonly ?ByteSize $memory = null, public readonly bool $bulk = false)
     {
         Check::input($parallel !== null || $memory !== null || $bulk, 'Bulk options hold at least one option.');
+        Check::input($parallel === null || $parallel->isIntegerToken(), 'LOAD parallelism is a decimal integer token no greater than 2147483647.');
     }
 
     /**
