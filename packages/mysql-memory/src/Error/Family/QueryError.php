@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about the names and the shape of a query: databases, tables and columns it names, grouping, subqueries, windows, common table expressions and VALUES.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a missing table
  *     \MySqlMemory\Error\Family\QueryError::NoSuchTable->error('shop', 'items')->getMessage() // => "Table 'shop.items' doesn't exist"
  */
 enum QueryError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\QueryMessages::DEFINITIONS;
 
     case RewrittenQuery = 1003;
     case RecordNotFound = 1032;

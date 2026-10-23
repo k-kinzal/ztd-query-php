@@ -11,6 +11,7 @@ use MySqlMemory\Registry\Registry;
 use MySqlMemory\Session\Globals;
 use MySqlMemory\Session\Session;
 use MySqlMemory\System\SystemSchemas;
+use RuntimeException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 use WeakReference;
@@ -22,7 +23,7 @@ use WeakReference;
  * Semantics against the tables of the server, and executed over rows held in memory. Nothing is
  * written to disk; the server lives as long as this object.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Running statements in a session
  *     $session = (new \MySqlMemory\Instance())->connect();
  *     $session->query('CREATE DATABASE shop');
@@ -83,13 +84,24 @@ final class Instance
      */
     public readonly Concurrency\Transactions $transactions;
 
+    /**
+     * @var list<array{string, int, bool}> The installed zone names, identifiers and leap-second flags
+     */
+    public readonly array $timeZones;
+
+    /**
+     * @var array<string, string> Canonical installed names indexed without regard to case
+     */
+    public readonly array $timeZoneNames;
+
     private int $connections = 0;
 
     /**
      * A server of MySQL 5.6 or 5.7 starts with latin1 connections, as it greets its clients in latin1
      * (verified on live 5.6.51 and 5.7.44 servers).
      *
-     * @param bool $namedTimeZones Whether the initial named time-zone catalog is loaded
+     * @throws RuntimeException When the selected MySQL release is unsupported
+     * @param list<array{string, int, bool}>|null $timeZones Installed zone names, identifiers and leap-second flags; null uses PHP’s IANA catalog
      * @param string $version The MySQL release emulated, as `8.4.7`
      * @param array<string, string|int|null> $globals Global variable values the server starts with, by name
      * @param list<string> $databases Databases created at start, besides the system ones
@@ -100,9 +112,15 @@ final class Instance
      * @param positive-int $resourceProcessors The number of logical processors visible to resource groups
      * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, public readonly array $help = [], public readonly bool $namedTimeZones = true)
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [], bool $resourcePriorities = true, int $resourceProcessors = 8, public readonly array $help = [], ?array $timeZones = null)
     {
-        $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
+        $release = GrammarRelease::tryFrom('mysql-' . $version) ?? throw new RuntimeException('Unsupported MySQL release: ' . $version);
+        $this->timeZones = $timeZones ?? System\Server\TimeZones::initial();
+        $names = [];
+        foreach ($this->timeZones as [$name]) {
+            $names[strtolower($name)] = $name;
+        }
+        $this->timeZoneNames = $names;
         $this->catalog = SystemVariables::of($release);
         $globals = array_change_key_case($globals, CASE_LOWER);
         if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {

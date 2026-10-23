@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace MySqlMemory\Value;
 
 use DateTimeZone;
-use SqlSemantics\Contract\GrammarRelease;
 
 /**
  * A time zone: an offset from UTC, or a named zone of the time zone tables, and the conversion of times between it and UTC.
  *
  * A zone is named as `time_zone` and CONVERT_TZ name it: SYSTEM, the system time zone, which is
  * UTC here; an offset `+h:mm` or `-h:mm` from -13:59 to +14:00, written back as `+hh:mm`; or a
- * name of the time zone tables of the release, compared without regard to case or trailing
- * spaces. The names are those a server of the release loaded with mysql_tzinfo_to_sql holds, as
- * resources/time-zones holds them; a release without a catalog of its own has that of the latest
- * series of its major version. The rules of a named zone, with or without its `posix/` or
- * `right/` prefix, follow the tz database PHP carries, and a name PHP has no rules for is no
+ * name installed in the instance, compared without regard to case or trailing spaces.
+ * The default catalog uses PHP's IANA time-zone database. A caller may supply another
+ * installation's names and identifiers independently of the MySQL release. The rules
+ * of a named zone, with or without its `posix/` or `right/` prefix, follow PHP's tz
+ * database, and a name PHP has no rules for is no
  * zone. The tables of the server hold transitions up to the end of 2037, so a later time keeps
  * the offset in force then; CET, MET, EET and WET follow Europe/Brussels, Europe/Athens and
  * Europe/Lisbon as the tables do. A local time a change of offset skips is the instant of the change; a local
@@ -38,17 +37,17 @@ final class Zone
     public const ALIASES = ['cet' => 'Europe/Brussels', 'met' => 'Europe/Brussels', 'eet' => 'Europe/Athens', 'wet' => 'Europe/Lisbon', 'posixrules' => 'America/New_York'];
 
     /**
-     * @var array<string, list<array{string, int, bool}>> The named zones of each release read so far, by the release
+     * @var list<array{string, int, bool}>|null The default installation from PHP’s IANA database
      */
-    private static array $catalogs = [];
+    private static ?array $catalog = null;
 
     /**
-     * @var array<string, array<string, string>> The name of each named zone of each release, by the release and its lower-case name
+     * @var array<string, string>|null The default names indexed without regard to case
      */
-    private static array $names = [];
+    private static ?array $names = null;
 
     /**
-     * @var array<string, array<string, self>> The zones read so far, by the release and the text that named them
+     * @var array<string, self> Named zones with their rules
      */
     private static array $zones = [];
 
@@ -62,25 +61,21 @@ final class Zone
     }
 
     /**
-     * Answers the zone of a name on a release, or null when the name is no zone.
+     * Answers an installed name or a fixed offset, independent of the MySQL release.
+     *
+     * @param array<string, string>|null $names Installed canonical names indexed in lowercase; null uses PHP's catalog
      */
-    public static function named(string $text, GrammarRelease $release = GrammarRelease::MySql847): ?self
+    public static function named(string $text, ?array $names = null): ?self
     {
-        if (isset(self::$zones[$release->value][$text])) {
-            return self::$zones[$release->value][$text];
-        }
-        $zone = self::read($text, $release);
-        if ($zone !== null) {
-            self::$zones[$release->value][$text] = $zone;
-        }
-
-        return $zone;
+        return self::read($text, $names);
     }
 
     /**
-     * Reads a zone from its name on a release, or answers null.
+     * Reads an installed name, SYSTEM or an offset; unknown names are SQL null.
+     *
+     * @param array<string, string>|null $names Installed canonical names indexed in lowercase
      */
-    public static function read(string $text, GrammarRelease $release = GrammarRelease::MySql847): ?self
+    public static function read(string $text, ?array $names = null): ?self
     {
         if (preg_match('/\A([+-])([0-9]+):([0-9]+)\z/', $text, $match) === 1) {
             $hours = (int) ltrim($match[2], '0');
@@ -96,9 +91,12 @@ final class Zone
         if (strcasecmp($trimmed, 'SYSTEM') === 0) {
             return new self('SYSTEM');
         }
-        $name = self::names($release)[strtolower($trimmed)] ?? null;
+        $name = ($names ?? self::names())[strtolower($trimmed)] ?? null;
         if ($name === null) {
             return null;
+        }
+        if (isset(self::$zones[$name])) {
+            return self::$zones[$name];
         }
         $base = (string) preg_replace('/\A(posix|right)\//', '', $name);
         set_error_handler(static fn (): bool => true);
@@ -111,7 +109,7 @@ final class Zone
             return null;
         }
 
-        return new self($name, 0, $rules);
+        return self::$zones[$name] = new self($name, 0, $rules);
     }
 
     /**
@@ -123,41 +121,38 @@ final class Zone
     }
 
     /**
-     * Answers the named zones of the time zone tables of a release, in the order they are numbered: the name, its Time_zone_id and whether it counts leap seconds.
+     * Builds a default installation from the host's IANA database, with local sequential identifiers.
      *
      * @return list<array{string, int, bool}>
      */
-    public static function catalog(GrammarRelease $release): array
+    public static function catalog(): array
     {
-        if (!isset(self::$catalogs[$release->value])) {
-            $directory = dirname(__DIR__, 2) . '/resources/time-zones/';
-            $files = glob($directory . substr($release->value, 0, 9) . '*.php');
-            $major = glob($directory . substr($release->value, 0, 7) . '*.php');
-            $file = is_array($files) && $files !== [] ? $files[0] : (is_array($major) && $major !== [] ? $major[count($major) - 1] : $directory . GrammarRelease::MySql847->value . '.php');
-            /** @var list<array{string, int, bool}> $zones */
-            $zones = require $file;
-            self::$catalogs[$release->value] = $zones;
+        if (self::$catalog === null) {
+            $names = DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC);
+            $names[] = 'posixrules';
+            sort($names, SORT_STRING);
+            self::$catalog = [];
+            foreach ($names as $name) {
+                self::$catalog[] = [$name, count(self::$catalog) + 1, false];
+            }
         }
-
-        return self::$catalogs[$release->value];
+        return self::$catalog;
     }
 
     /**
-     * Answers the names of the named zones of a release, by their lower-case names.
+     * Answers the default installation's names indexed without regard to case.
      *
      * @return array<string, string>
      */
-    public static function names(GrammarRelease $release = GrammarRelease::MySql847): array
+    public static function names(): array
     {
-        if (!isset(self::$names[$release->value])) {
-            $names = [];
-            foreach (self::catalog($release) as [$name]) {
-                $names[strtolower($name)] = $name;
+        if (self::$names === null) {
+            self::$names = [];
+            foreach (self::catalog() as [$name]) {
+                self::$names[strtolower($name)] = $name;
             }
-            self::$names[$release->value] = $names;
         }
-
-        return self::$names[$release->value];
+        return self::$names;
     }
 
     /**

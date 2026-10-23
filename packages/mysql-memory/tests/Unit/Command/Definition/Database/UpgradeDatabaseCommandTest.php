@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command\Definition\Database;
 
-use Fuzz\Structure\Execution;
 use MySqlMemory\Command\Definition\Database\UpgradeDatabaseCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -18,6 +17,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Fake\MemoryClient as Execution;
 
 #[CoversClass(UpgradeDatabaseCommand::class)]
 #[Medium]

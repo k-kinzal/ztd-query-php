@@ -98,12 +98,10 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/",
+            "Rules\\": "rules/"
         }
     },
-    "bin": [
-        "bin/mysql-memory"
-    ],
     "scripts": {
         "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
         "compat": "phpcs",
@@ -125,7 +123,7 @@
         "fuzz:mysql": [
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
-            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql.php fuzz/corpus/mysql/ --timeout=60"
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_execution.php fuzz/corpus/mysql/ --timeout=60"
         ],
         "fuzz:smoke": [
             "@fuzz:mysql --max-runs=100"
@@ -142,8 +140,8 @@
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "paratest --processes=auto",
-        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
-        "test:property": "phpunit tests/Property/Structure/GeneratedStructuresTest.php",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit,property --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:property": "phpunit --testsuite property",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
     },
@@ -165,7 +163,7 @@
         "loc-guard": "Check file size limits.",
         "phpstan": "Run PHPStan.",
         "test": "Run unit properties and examples in parallel; native SQL comparison uses fuzz:mysql.",
-        "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
+        "test:coverage": "Run unit and property tests in parallel and write the coverage and JUnit reports to build/.",
         "test:property": "Construct public semantic values and execute them directly using PHPUnit.",
         "test:unit": "Run the unit tests.",
         "tree-guard": "Check the directory structure rules."

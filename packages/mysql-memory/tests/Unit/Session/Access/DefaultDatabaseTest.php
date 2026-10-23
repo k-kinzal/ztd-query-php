@@ -66,10 +66,10 @@ final class DefaultDatabaseTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect();
         $session->text = 'unrelated invalid input';
         $node = new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query);
-        $first = (new \Tests\Result\Observation())->observe($session, $node);
+        $first = (new \Tests\Fake\MemoryClient())->observe($session, $node);
         self::assertSame(1046, $first['error'][0] ?? null);
         $session->variables->database = 'd';
-        $second = (new \Tests\Result\Observation())->observe($session, $node);
+        $second = (new \Tests\Fake\MemoryClient())->observe($session, $node);
         self::assertSame(3569, $second['error'][0] ?? null);
         self::assertSame('unrelated invalid input', $session->text);
     }

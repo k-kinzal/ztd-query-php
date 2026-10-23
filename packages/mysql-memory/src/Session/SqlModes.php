@@ -17,7 +17,7 @@ use SqlSemantics\Contract\GrammarRelease;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html,
  * https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Reading a mode list
  *     \MySqlMemory\Session\SqlModes::parse('strict_trans_tables,ansi_quotes')?->toString() // => 'ANSI_QUOTES,STRICT_TRANS_TABLES'
  */

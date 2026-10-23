@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about accounts: users, roles, privileges, passwords and authentication factors.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/access-control.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a missing user
  *     \MySqlMemory\Error\Family\AccountError::CannotUser->error('DROP USER', "'u'@'%'")->getMessage() // => "Operation DROP USER failed for 'u'@'%'"
  */
 enum AccountError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\AccountMessages::DEFINITIONS;
 
     case DatabaseAccessDenied = 1044;
     case PasswordNoMatch = 1133;

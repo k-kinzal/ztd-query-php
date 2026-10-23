@@ -35,7 +35,7 @@ final class DebugRequestTest extends TestCase
         $session->diagnostics->error(1327, 'Undeclared variable: previous');
         $statement = new ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block()));
         $session->text = 'unrelated input';
-        $actual = (new \Tests\Result\Observation())->observe($session, $statement);
+        $actual = (new \Tests\Fake\MemoryClient())->observe($session, $statement);
         self::assertSame([1046, '3D000', 'No database selected'], $actual['error'] ?? null);
         self::assertSame([['Error', '1046', 'No database selected']], $actual['warnings']);
     }
@@ -48,7 +48,7 @@ final class DebugRequestTest extends TestCase
         $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
         $problem = (new DebugRequest())->operand($operation);
         self::assertSame('Undeclared variable: x', $problem?->message());
-        $actual = (new \Tests\Result\Observation())->observe($session, $statement);
+        $actual = (new \Tests\Fake\MemoryClient())->observe($session, $statement);
         self::assertSame([1327, '42000', 'Undeclared variable: x'], $actual['error'] ?? null);
         self::assertSame('unrelated input', $session->text);
     }

@@ -73,14 +73,7 @@ final class InstalledCatalog
      */
     public static function data(GrammarRelease $release = GrammarRelease::MySql847): array
     {
-        if ($release === GrammarRelease::MySql5651) {
-            return ['routines' => [], 'parameters' => []];
-        }
-        $version = $release === GrammarRelease::MySql5744 ? '5.7.44' : '8.4.7';
-        /** @var array{routines: list<list<int|string|null>>, parameters: list<list<int|string|null>>} $data */
-        $data = require dirname(__DIR__, 3) . '/resources/system-routines/mysql-' . $version . '.php';
-
-        return $data;
+        return InstalledDefinitions::of($release);
     }
 
     /**

@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about administration: system variables, replication and binary logs, plugins and components, keyrings, resource groups, threads, loadable functions and files.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/server-administration.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of an unknown system variable
  *     \MySqlMemory\Error\Family\AdministrationError::UnknownSystemVariable->error('nope')->getMessage() // => "Unknown system variable 'nope'"
  */
 enum AdministrationError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\AdministrationMessages::DEFINITIONS;
 
     case FileCreate = 1;
     case FileStat = 13;

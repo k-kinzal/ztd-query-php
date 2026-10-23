@@ -9,7 +9,7 @@ use mysqli_result;
 use mysqli_sql_exception;
 use MySqlMemory\Instance;
 use MySqlMemory\Server\Listener;
-use MySqlMemory\Server\Server;
+use MySqlMemory\Server\MemoryDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -58,7 +58,7 @@ final class ListenerTest extends TestCase
 
     public function testCloseReleasedClosesAnIdleConnectionKilledByAnotherConnection(): void
     {
-        $server = Server::start();
+        $server = MemoryDatabase::start('8.4.7');
         $first = new mysqli($server->host, 'root', '', '', $server->port);
         $second = new mysqli($server->host, 'root', '', '', $server->port);
         $second->query('KILL CONNECTION ' . $first->thread_id);
@@ -72,7 +72,7 @@ final class ListenerTest extends TestCase
 
     public function testServeInterruptsALockWaitWithoutEndingTheTransactionForKillQuery(): void
     {
-        $server = Server::start();
+        $server = MemoryDatabase::start('8.4.7');
         $holder = new mysqli($server->host, 'root', '', '', $server->port);
         $waiter = new mysqli($server->host, 'root', '', '', $server->port);
         $holder->query('CREATE DATABASE d');
@@ -137,7 +137,7 @@ final class ListenerTest extends TestCase
     }
     public function testServeLetsAStatementWaitForARowLockWhileTheOtherConnectionsAreServed(): void
     {
-        $server = Server::start();
+        $server = MemoryDatabase::start('8.4.7');
         $holder = new mysqli($server->host, 'root', '', '', $server->port);
         $waiter = new mysqli($server->host, 'root', '', '', $server->port);
         $holder->query('CREATE DATABASE d');
@@ -159,7 +159,7 @@ final class ListenerTest extends TestCase
 
     public function testServeRefusesTheRequestThatClosesADeadlockBetweenEqualTransactions(): void
     {
-        $server = Server::start();
+        $server = MemoryDatabase::start('8.4.7');
         $first = new mysqli($server->host, 'root', '', '', $server->port);
         $second = new mysqli($server->host, 'root', '', '', $server->port);
         $first->query('CREATE DATABASE d');

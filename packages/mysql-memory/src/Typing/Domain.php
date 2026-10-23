@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * in characters, the number of decimals, the collation of a string, and whether the value can
  * be NULL. The kind says how a value of the domain is held at run time.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example The domain of an integer column
  *     $domain = \MySqlMemory\Typing\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11);
  *     [$domain->kind, $domain->field, $domain->unsigned] // => [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, false]

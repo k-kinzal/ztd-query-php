@@ -7,7 +7,7 @@ namespace MySqlMemory\Registry;
 /**
  * The spatial reference systems of the server: those it defines when it is installed, and those CREATE SPATIAL REFERENCE SYSTEM adds.
  *
- * The installed systems are those of resources/spatial-reference-systems.php. The name of a
+ * The installed systems are owned by the versioned coordinate-system definitions. The name of a
  * system is unique without regard to letter case. SRIDs from 0 to 32767 are reserved for the
  * systems of the server.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/spatial-reference-systems.html,
@@ -66,19 +66,7 @@ final class SpatialCatalog
     {
         $generation = version_compare($version, '8.1.0', '<') ? '8.0' : '8.1';
         if (!isset(self::$catalogs[$generation])) {
-            /** @var array<int, array{string, ?string, ?int, string, ?string}> $records */
-            $records = require dirname(__DIR__, 2) . '/resources/spatial-reference-systems.php';
-            if ($generation === '8.0') {
-                /** @var array<int, array{string, ?string, ?int, string, ?string}|null> $changes */
-                $changes = require dirname(__DIR__, 2) . '/resources/spatial-reference-systems-8.0.php';
-                foreach ($changes as $id => $record) {
-                    if ($record === null) {
-                        unset($records[$id]);
-                    } else {
-                        $records[$id] = $record;
-                    }
-                }
-            }
+            $records = Spatial\InstalledCoordinates::of(\SqlSemantics\Contract\GrammarRelease::from('mysql-' . $version));
             self::$catalogs[$generation] = $records;
         }
         return self::$catalogs[$generation];

@@ -17,7 +17,7 @@ final class ServerTablesTest extends TestCase
     public function testOfReadsTheCatalogOfARelease(): void
     {
         self::assertSame(ServerTables::of(GrammarRelease::MySql847), ServerTables::of(GrammarRelease::MySql847));
-        self::assertSame([[], 'InnoDB'], [ServerTables::of(GrammarRelease::MySql5744)->keywords, ServerTables::of(GrammarRelease::MySql5744)->engines[0][0]]);
-        self::assertCount(count(ServerTables::of(GrammarRelease::MySql910)->keywords), ServerTables::of(GrammarRelease::MySql901)->keywords);
+        self::assertSame('InnoDB', ServerTables::of(GrammarRelease::MySql5744)->engines[0][0]);
+        self::assertContains('InnoDB', array_column(ServerTables::of(GrammarRelease::MySql910)->engines, 0));
     }
 }

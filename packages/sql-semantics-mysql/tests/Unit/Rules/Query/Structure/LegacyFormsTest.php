@@ -123,4 +123,12 @@ final class LegacyFormsTest extends TestCase
         self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames($charset, new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_bin')))));
     }
 
+    public function testDefinitionRecognizesEmptyPartitionColumnsOnly(): void
+    {
+        $kind = \SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::List;
+        $forms = new LegacyForms();
+        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod($kind, [])));
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod($kind, [new \SqlSemantics\Statement\Identifier\Name('a')])));
+    }
+
 }

@@ -50,13 +50,13 @@ final class TableQueriesTest extends TestCase
         ]);
         $definition = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('kept')), query: new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery($query));
         $session->text = 'not an SQL definition';
-        $first = (new \Tests\Result\Observation())->observe($session, $definition);
+        $first = (new \Tests\Fake\MemoryClient())->observe($session, $definition);
         $before = $session->query('SELECT * FROM kept')[0];
         $session->text = 'not an SQL definition';
-        $existing = (new \Tests\Result\Observation())->observe($session, $definition);
+        $existing = (new \Tests\Fake\MemoryClient())->observe($session, $definition);
         $session->query("DROP TABLE kept; SET sql_mode='NO_BACKSLASH_ESCAPES'");
         $session->text = 'another unrelated label';
-        $again = (new \Tests\Result\Observation())->observe($session, $definition);
+        $again = (new \Tests\Fake\MemoryClient())->observe($session, $definition);
         $after = $session->query('SELECT * FROM kept')[0];
 
         self::assertArrayNotHasKey('error', $first);

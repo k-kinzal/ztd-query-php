@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about stored programs: routines, triggers and events, their bodies, and the conditions they declare and signal.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-programs-views.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a missing routine
  *     \MySqlMemory\Error\Family\ProgramError::RoutineMissing->error('PROCEDURE', 'd.p')->getMessage() // => 'PROCEDURE d.p does not exist'
  */
 enum ProgramError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\ProgramMessages::DEFINITIONS;
 
     case RecursiveCreate = 1303;
     case RoutineExists = 1304;

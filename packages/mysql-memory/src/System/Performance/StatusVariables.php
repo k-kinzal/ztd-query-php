@@ -9,7 +9,7 @@ use MySqlMemory\Value\Zone;
 use SqlSemantics\Contract\GrammarRelease;
 
 /**
- * The status variables of a release, as resources/status holds them, with the values the emulated server shows.
+ * The status variables of a release, defined by their release, with the values the emulated server shows.
  *
  * SQL request, command and protocol byte counters reflect execution in their scope. Unmodeled storage and
  * operating-system counters retain their catalog defaults. What describes the
@@ -19,7 +19,7 @@ use SqlSemantics\Contract\GrammarRelease;
  * clients connected, Threads_running includes the reader and enabled event daemon, and
  * Connections counts client sessions opened so far. The connection maximum survives
  * disconnects until FLUSH STATUS and records its clock in the reading session time zone.
- * A release without a catalog of its own has that of the latest series of its major version.
+ * Each supported release selects its own catalog explicitly.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html.
  *
  * @visibility MySqlMemory
@@ -44,13 +44,7 @@ final class StatusVariables
     public static function of(GrammarRelease $release): self
     {
         if (!isset(self::$releases[$release->value])) {
-            $directory = dirname(__DIR__, 3) . '/resources/status/';
-            $files = glob($directory . substr($release->value, 0, 9) . '*.php');
-            $major = glob($directory . substr($release->value, 0, 7) . '*.php');
-            $file = is_array($files) && $files !== [] ? $files[0] : (is_array($major) && $major !== [] ? $major[count($major) - 1] : $directory . GrammarRelease::MySql847->value . '.php');
-            /** @var list<array{string, string, string, bool}> $entries */
-            $entries = require $file;
-            self::$releases[$release->value] = new self($entries);
+            self::$releases[$release->value] = new self(StatusDefinitions::of($release));
         }
 
         return self::$releases[$release->value];

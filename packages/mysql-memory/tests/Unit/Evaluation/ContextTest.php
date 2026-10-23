@@ -45,7 +45,7 @@ final class ContextTest extends TestCase
 
     public function testTimeZoneWithAnEmptyNamedCatalogPreservesOffsetsAndSystemTime(): void
     {
-        $session = (new Instance(namedTimeZones: false))->connect();
+        $session = (new Instance(timeZones: []))->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         self::assertNull($context->timeZone('UTC'));
         self::assertNull($context->timeZone('Asia/Tokyo'));

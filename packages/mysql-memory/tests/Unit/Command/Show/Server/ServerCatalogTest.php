@@ -67,4 +67,9 @@ final class ServerCatalogTest extends TestCase
         self::assertNotContains('Create role', array_column($privileges, 0));
         self::assertNotContains('SYSTEM_USER', array_column($privileges, 0));
     }
+    public function testSortLengthFollowsTheCollationWeightingAlgorithm(): void
+    {
+        self::assertSame([0, 1, 2, 4, 8, 24], array_map(static fn (string $name): int => ServerCatalog::sortLength(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known($name)), ['utf8mb4_0900_ai_ci', 'utf8mb4_0900_bin', 'latin1_german2_ci', 'latin2_czech_cs', 'utf8mb4_unicode_520_ci', 'utf8mb4_ja_0900_as_cs_ks']));
+    }
+
 }

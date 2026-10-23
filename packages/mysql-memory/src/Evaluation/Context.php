@@ -114,8 +114,7 @@ final class Context
      */
     public function timeZone(string $name): ?Zone
     {
-        $zone = Zone::named($name, $this->modes->release);
-        return $zone !== null && ($zone->rules === null || $this->variables->instance->namedTimeZones) ? $zone : null;
+        return Zone::named($name, $this->variables->instance->timeZoneNames);
     }
 
     /**

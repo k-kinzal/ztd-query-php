@@ -10,16 +10,21 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about the constraints of a table: generated columns, expression defaults, CHECK constraints and foreign keys.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a violated foreign key
  *     \MySqlMemory\Error\Family\ConstraintError::NoReferencedRow->error('(`d`.`c`, CONSTRAINT `fk`)')->getMessage() // => 'Cannot add or update a child row: a foreign key constraint fails ((`d`.`c`, CONSTRAINT `fk`))'
  */
 enum ConstraintError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\ConstraintMessages::DEFINITIONS;
 
     case CannotAddForeign = 1215;
     case ParentRowReferenced = 1217;

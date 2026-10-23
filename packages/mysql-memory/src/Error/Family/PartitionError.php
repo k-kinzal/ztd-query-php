@@ -10,16 +10,21 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about the partitions of a table: how a table is partitioned, and the rows a partition holds.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a row no partition holds
  *     \MySqlMemory\Error\Family\PartitionError::NoPartitionForValue->error('5')->getMessage() // => 'Table has no partition for value 5'
  */
 enum PartitionError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\PartitionMessages::DEFINITIONS;
 
     case MissingValues = 1479;
     case WrongValuesKind = 1480;

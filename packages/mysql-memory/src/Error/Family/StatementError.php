@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about a statement as a whole: its syntax, forms the server does not support, prepared statements, table locks, XA transactions and EXPLAIN.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-statements.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of an empty query
  *     \MySqlMemory\Error\Family\StatementError::EmptyQuery->error()->getMessage() // => 'Query was empty'
  */
 enum StatementError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\StatementMessages::DEFINITIONS;
 
     case UnknownCommand = 1047;
     case ParseError = 1064;

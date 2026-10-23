@@ -9,7 +9,7 @@ use Override;
 /**
  * The completion of a statement that returns no rows: what the server sends in an OK packet.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Reading the rows a write affected
  *     $session = (new \MySqlMemory\Instance())->connect();
  *     $session->query('CREATE DATABASE d; CREATE TABLE d.t (a INT); INSERT INTO d.t VALUES (1), (2)')[2]->affectedRows // => 2

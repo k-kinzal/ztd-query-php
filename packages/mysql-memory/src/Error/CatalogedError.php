@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Error;
 
 /**
- * The SQLSTATE, the message and the error of an error number, read from the error catalog.
+ * The SQLSTATE, the message and the error of an error number, declared by the owning error family.
  *
  * The enums of the error families use it; the error number is the backing value of the case.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
@@ -33,7 +33,7 @@ trait CatalogedError
      */
     public function sqlState(): string
     {
-        return ErrorCatalog::instance()->entry($this->value)[0];
+        return self::MESSAGES[$this->name][0];
     }
 
     /**
@@ -44,7 +44,7 @@ trait CatalogedError
      */
     public function message(string|int ...$arguments): string
     {
-        $format = ErrorCatalog::instance()->entry($this->value)[1];
+        $format = self::MESSAGES[$this->name][1];
         if (!str_contains($format, '%') && $arguments !== []) {
             return (string) $arguments[0];
         }

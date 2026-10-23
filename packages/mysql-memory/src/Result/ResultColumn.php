@@ -9,7 +9,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 /**
  * The definition of one column of a result set, as the server describes it to the client.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Describing an integer column
  *     $column = new \MySqlMemory\Result\ResultColumn('id', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11, 0, \MySqlMemory\Result\ColumnFlag::NotNull->value, 63);
  *     [$column->name, $column->type->name, $column->binary()] // => ['id', 'Long', true]

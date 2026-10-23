@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about schema objects: databases, tables, columns, keys, constraints, views, partitions, tablespaces and spatial reference systems.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-data-definition-statements.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of an existing table
  *     \MySqlMemory\Error\Family\SchemaError::TableExists->error('t')->getMessage() // => "Table 't' already exists"
  */
 enum SchemaError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\SchemaMessages::DEFINITIONS;
 
     case WrongIndexName = 1280;
     case FullTextColumn = 1283;

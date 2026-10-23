@@ -171,7 +171,7 @@ final class SourceChangeTest extends TestCase
         ]);
         $session = (new Instance())->connect();
         $session->text = 'unrelated request label';
-        $result = (new \Tests\Result\Observation())->observe($session, $statement);
+        $result = (new \Tests\Fake\MemoryClient())->observe($session, $statement);
         self::assertSame([4037, 'HY000', "Value too long setting SOURCE_COMPRESSION_ALGORITHMS option to a 129 chars long string for channel ''."], $result['error'] ?? null);
         self::assertSame('local', $session->instance->registry->replication->host);
         self::assertSame('unrelated request label', $session->text);

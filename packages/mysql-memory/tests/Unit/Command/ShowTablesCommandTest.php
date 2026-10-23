@@ -36,7 +36,7 @@ final class ShowTablesCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(database: new \SqlSemantics\Statement\Identifier\Name('other'));
-        $headings = (new ShowTablesCommand())->headings((new \Fuzz\Structure\Execution())->operation($session, $statement, []), $session);
+        $headings = (new ShowTablesCommand())->headings((new \Tests\Fake\MemoryClient())->operation($session, $statement, []), $session);
 
         self::assertCount(1, $headings);
         self::assertSame('Tables_in_other', $headings[0]->name);

@@ -10,17 +10,22 @@ use MySqlMemory\Error\ErrorCode;
 /**
  * A server error about values: NULL in a NOT NULL column, duplicate keys, truncated or out-of-range values, conversions, collations and JSON.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, declared alongside this error family.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/out-of-range-and-overflow.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a duplicate key
  *     \MySqlMemory\Error\Family\DataError::DuplicateEntry->error('1', 't.PRIMARY')->getMessage() // => "Duplicate entry '1' for key 't.PRIMARY'"
  */
 enum DataError: int implements ErrorCode
 {
     use CatalogedError;
+
+    /**
+     * SQLSTATE and message definitions for this family.
+     */
+    private const MESSAGES = \MySqlMemory\Error\Message\DataMessages::DEFINITIONS;
 
     case BadNull = 1048;
     case DuplicateEntry = 1062;

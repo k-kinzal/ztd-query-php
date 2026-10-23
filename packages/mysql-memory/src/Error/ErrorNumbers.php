@@ -21,7 +21,7 @@ use ValueError;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Finding the error of a number
  *     \MySqlMemory\Error\ErrorNumbers::tryFrom(1146) // => \MySqlMemory\Error\Family\QueryError::NoSuchTable
  */

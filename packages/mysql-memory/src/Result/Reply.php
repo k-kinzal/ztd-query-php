@@ -7,7 +7,7 @@ namespace MySqlMemory\Result;
 /**
  * What the server answers for one statement that succeeds: rows, or a completion.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Telling rows from a completion
  *     $session = (new \MySqlMemory\Instance())->connect();
  *     $session->query('DO 1')[0] instanceof \MySqlMemory\Result\Completion // => true

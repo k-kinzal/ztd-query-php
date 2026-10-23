@@ -103,7 +103,7 @@ final class SignalProblems
         if ($node instanceof TemporalLiteral) {
             $form = $node->form === TemporalForm::Timestamp ? 'DATETIME' : $node->form->value;
             $modes = $session->modes();
-            $value = $node->form === TemporalForm::Timestamp ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($node->text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) $session->variables->read('time_zone'), $modes->release) ?? \MySqlMemory\Value\Zone::utc())) : Temporal::literal($form, $node->text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
+            $value = $node->form === TemporalForm::Timestamp ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($node->text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) $session->variables->read('time_zone'), $session->instance->timeZoneNames) ?? \MySqlMemory\Value\Zone::utc())) : Temporal::literal($form, $node->text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
             if ($value === null) {
                 throw $node->form === TemporalForm::Timestamp ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::error($node->text, $modes) : DataError::WrongValue->error($form, substr($node->text, 0, 128));
             }

@@ -9,7 +9,7 @@ namespace MySqlMemory\Result;
  *
  * Source: https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__column__definition__flags.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Combining flags
  *     \MySqlMemory\Result\ColumnFlag::NotNull->value | \MySqlMemory\Result\ColumnFlag::Unsigned->value // => 33
  */

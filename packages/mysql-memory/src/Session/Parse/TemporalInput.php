@@ -70,7 +70,7 @@ final class TemporalInput
         $form = $literal->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $literal->form->value;
         $text = $literal->text;
         $value = $form === 'DATETIME'
-            ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) ($session?->variables->read('time_zone') ?? 'SYSTEM'), $modes->release) ?? \MySqlMemory\Value\Zone::utc()))
+            ? \MySqlMemory\Evaluation\Compile\Family\TimestampLiteral::value($text, 6, $modes, (\MySqlMemory\Value\Zone::named((string) ($session?->variables->read('time_zone') ?? 'SYSTEM'), $session?->instance->timeZoneNames) ?? \MySqlMemory\Value\Zone::utc()))
             : \MySqlMemory\Value\Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'), $modes->has('ALLOW_INVALID_DATES'));
         if ($value !== null) {
             return null;

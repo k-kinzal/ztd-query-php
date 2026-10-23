@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Container\Endpoint;
 use JsonException;
-use MySqlMemory\Server\Server;
+use MySqlMemory\Server\MemoryDatabase;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -51,7 +51,7 @@ final class Lifecycle
             foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
                 $globals[strtolower($name)] = $value;
             }
-            $server = Server::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version), resourceProcessors: (new Servers())->resourceProcessors($native, $version), namedTimeZones: (new Servers())->namedTimeZones($native));
+            $server = MemoryDatabase::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version), resourceProcessors: (new Servers())->resourceProcessors($native, $version), timeZones: (new Servers())->timeZones($native));
             try {
                 $expected = $this->observe($native, $dsn, $endpoint->username, $endpoint->password, $sql, $mode);
                 $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);

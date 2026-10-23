@@ -8,13 +8,20 @@ parameters:
         # The session turns an ImplementationGap of SQL Semantics, which no method declares, into ER_NOT_SUPPORTED_YET.
         reportUncheckedExceptionDeadCatch: false
     toolkit:
-        visibilityExemptNamespacePrefixes: ['Tests', 'Fuzz']
-        forbiddenNamespacePrefixes: ['Tests\\Fixture', 'Tests\\Fixtures']
+        visibilityExemptNamespacePrefixes: ['Tests', 'Fuzz', 'Rules']
         broadCatchAllowedPaths:
             - src/Server/Client.php
             - src/Session/Session.php
             # Construction rejects only choices outside the constructor invariants.
-            - fuzz/Structure/Construction.php
+            - tests/Generator/Construction.php
     phpVersion: 80100
     level: max
-    paths: [src, tests, fuzz]
+    paths: [src, tests, fuzz, rules]
+
+services:
+    -
+        class: Rules\SemanticPropertyCoverageRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Rules\SemanticCache
+        tags: [phpstan.resultCacheMetaExtension]

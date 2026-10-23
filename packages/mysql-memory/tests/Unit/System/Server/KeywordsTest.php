@@ -8,11 +8,11 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\System\Server\Keywords;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Keywords::class)]
-#[Small]
+#[Medium]
 final class KeywordsTest extends TestCase
 {
     public function testRowsListsTheKeywordsOfTheRelease(): void

@@ -13,7 +13,7 @@ use Override;
  * the same text by the column type. Non-finite floating values retain their IEEE value
  * separately, since their text-protocol spelling is zero.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Reading the rows of a query
  *     $session = (new \MySqlMemory\Instance())->connect();
  *     $result = $session->query('SELECT 1 + 1 AS two, NULL AS nothing')[0];

@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Container\Endpoint;
 use Container\MySqlRelease;
-use MySqlMemory\Server\Server;
+use MySqlMemory\Server\MemoryDatabase;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -30,7 +30,7 @@ final class Servers
     /**
      * Starts both servers and answers the differential target over them, and the grammar of the release.
      *
-     * @return array{Differential, string, Server}
+     * @return array{Differential, string, MemoryDatabase}
      */
     public function start(bool $emulate = true, bool $isolate = false): array
     {
@@ -53,7 +53,7 @@ final class Servers
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
-        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version), help: $this->help($native), namedTimeZones: $this->namedTimeZones($native));
+        $server = MemoryDatabase::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version), help: $this->help($native), timeZones: $this->timeZones($native));
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
@@ -77,12 +77,18 @@ final class Servers
     }
 
     /**
-     * Captures whether the reference initialized its named time-zone tables.
+     * Shares the installed tzdata names and identifiers as initial state, before generated SQL runs.
+     * Conversion and temporal arithmetic still execute independently in the two engines.
+     *
+     * @return list<array{string, int, bool}>
      */
-    public function namedTimeZones(PDO $native): bool
+    public function timeZones(PDO $native): array
     {
-        $statement = $native->query('SELECT COUNT(*) FROM mysql.time_zone_name');
-        return $statement !== false && (int) $statement->fetchColumn() > 0;
+        $zones = [];
+        foreach ($this->rows($native, 'SELECT n.Name, n.Time_zone_id, z.Use_leap_seconds FROM mysql.time_zone_name n JOIN mysql.time_zone z USING (Time_zone_id) ORDER BY n.Time_zone_id') as [$name, $id, $leaps]) {
+            $zones[] = [$name, (int) $id, $leaps === 'Y'];
+        }
+        return $zones;
     }
 
     /**

@@ -10,10 +10,10 @@ namespace MySqlMemory\Error;
  * Each family of errors is an enum of the Family namespace backed by the error number: AccountError,
  * AdministrationError, ConstraintError, DataError, PartitionError, ProgramError, QueryError, SchemaError,
  * StatementError and TransactionError. ErrorNumbers finds the error of a number.
- * The formats are those of the server error reference; resources/errors.php holds them.
+ * The formats are those of the server error reference; each error family declares its definitions.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Building the error of a missing table
  *     $error = \MySqlMemory\Error\Family\QueryError::NoSuchTable->error('shop', 'items');
  *     [$error->getCode(), $error->sqlState(), $error->getMessage()] // => [1146, '42S02', "Table 'shop.items' doesn't exist"]

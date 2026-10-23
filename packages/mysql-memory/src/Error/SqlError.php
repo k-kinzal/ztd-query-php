@@ -10,7 +10,7 @@ use Throwable;
 /**
  * An error the server reports for a statement: the error number, the SQLSTATE and the message.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Reading the error of a statement
  *     $session = (new \MySqlMemory\Instance())->connect();
  *     $session->query('SELECT * FROM nowhere') // throws \MySqlMemory\Error\SqlError: No database selected

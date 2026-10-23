@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\System\Server;
 
+use MySqlMemory\Session\Parse\Grammar\KeywordCatalog;
 use MySqlMemory\System\Reading;
 use MySqlMemory\System\SystemRows;
 use Override;
@@ -23,6 +24,6 @@ final class Keywords implements SystemRows
     #[Override]
     public function rows(Reading $reading): array
     {
-        return array_map(static fn (array $keyword): array => ['WORD' => $keyword[0], 'RESERVED' => $keyword[1]], ServerTables::of($reading->release)->keywords);
+        return array_map(static fn (array $keyword): array => ['WORD' => $keyword[0], 'RESERVED' => $keyword[1]], (new KeywordCatalog())->of($reading->release));
     }
 }

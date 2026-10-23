@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command;
 
-use Fuzz\Structure\Execution;
 use MySqlMemory\Command\InternalCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
+use Tests\Fake\MemoryClient as Execution;
 
 #[CoversClass(InternalCommand::class)]
 #[Medium]

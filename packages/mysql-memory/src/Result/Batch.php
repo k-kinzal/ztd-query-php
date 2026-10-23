@@ -12,7 +12,7 @@ use Override;
  * A session answers each reply of the batch as the reply of a statement of its own.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/call.html.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Reading the replies of a batch
  *     $batch = new \MySqlMemory\Result\Batch([new \MySqlMemory\Result\Completion(1)]);
  *     count($batch->replies) // => 1

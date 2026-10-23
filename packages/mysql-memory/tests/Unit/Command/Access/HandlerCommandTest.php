@@ -30,7 +30,7 @@ final class HandlerCommandTest extends TestCase
 
         $this->expectExceptionCode(1295);
         $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
-        (new \Fuzz\Structure\Execution())->runIn($session, $node, [[2, $domain], [5, $domain], [1, $domain], [1, $domain]]);
+        (new \Tests\Fake\MemoryClient())->runIn($session, $node, [[2, $domain], [5, $domain], [1, $domain], [1, $domain]]);
     }
 
     public function testDefaultWarnsAndReadsTheImplicitDefaultInMySql56(): void

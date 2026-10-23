@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Compile\Family;
 
-use Fuzz\Structure\Execution;
 use MySqlMemory\Evaluation\Compile\Family\LegacyPatterns;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
@@ -19,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use Tests\Fake\MemoryClient as Execution;
 
 #[CoversClass(LegacyPatterns::class)]
 #[Small]

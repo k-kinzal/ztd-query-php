@@ -9,7 +9,6 @@ use MySqlMemory\Value\Zone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
 
 #[CoversClass(Zone::class)]
 #[Small]
@@ -17,12 +16,13 @@ final class ZoneTest extends TestCase
 {
     public function testNamedReadsOffsetsSystemAndTheNamesOfTheTables(): void
     {
-        self::assertSame(['+05:30', '-00:30', 'SYSTEM', 'Europe/Paris', 'UTC', 'posix/Europe/Paris'], [Zone::named('+5:30')?->name, Zone::named('-0:30')?->name, Zone::named('system')?->name, Zone::named('europe/paris')?->name, Zone::named('utc ')?->name, Zone::named('POSIX/europe/paris')?->name]);
+        self::assertSame(['+05:30', '-00:30', 'SYSTEM', 'Europe/Paris', 'UTC'], [Zone::named('+5:30')?->name, Zone::named('-0:30')?->name, Zone::named('system')?->name, Zone::named('europe/paris')?->name, Zone::named('utc ')?->name]);
     }
 
-    public function testNamedReadsTheNamesOfTheTablesOfTheRelease(): void
+    public function testNamedUsesOnlyTheInstalledNamesIncludingPrefixedAliases(): void
     {
-        self::assertSame(['Europe/Kyiv', null, null, null], [Zone::named('Europe/Kyiv')?->name, Zone::named('Europe/Kyiv', GrammarRelease::MySql5651)?->name, Zone::named('America/Coyhaique', GrammarRelease::MySql5744)?->name, Zone::named('posix/posixrules')?->name]);
+        $installed = ['posix/europe/paris' => 'posix/Europe/Paris', 'europe/kyiv' => 'Europe/Kyiv'];
+        self::assertSame(['posix/Europe/Paris', 'Europe/Kyiv', null, null], [Zone::named('POSIX/europe/paris', $installed)?->name, Zone::named('Europe/Kyiv', $installed)?->name, Zone::named('Asia/Tokyo', $installed)?->name, Zone::named('Europe/Kyiv', [])?->name]);
     }
 
     public function testReadRefusesWhatNamesNoZone(): void
@@ -30,9 +30,12 @@ final class ZoneTest extends TestCase
         self::assertSame([null, null, null, null], [Zone::read('+14:01'), Zone::read('-14:00'), Zone::read(' UTC'), Zone::read('+01:00 ')]);
     }
 
-    public function testCatalogNumbersTheZonesAsTheTablesOfTheReleaseDo(): void
+    public function testCatalogInstallsHostZonesWithLocalIdentifiers(): void
     {
-        self::assertSame([['Africa/Abidjan', 1, false], ['posixrules', 1197, false], ['right/UTC', 1791, true], 1795, ['posixrules', 1218, false], 1826, 1795], [Zone::catalog(GrammarRelease::MySql847)[0], Zone::catalog(GrammarRelease::MySql847)[1196], Zone::catalog(GrammarRelease::MySql847)[1790], count(Zone::catalog(GrammarRelease::MySql847)), Zone::catalog(GrammarRelease::MySql5651)[1217], count(Zone::catalog(GrammarRelease::MySql5651)), count(Zone::catalog(GrammarRelease::MySql830))]);
+        $catalog = Zone::catalog();
+        self::assertSame(['Africa/Abidjan', 1, false], $catalog[0]);
+        self::assertContains('Asia/Tokyo', array_column($catalog, 0));
+        self::assertSame(range(1, count($catalog)), array_column($catalog, 1));
     }
 
     public function testUtcIsTheOffsetZero(): void

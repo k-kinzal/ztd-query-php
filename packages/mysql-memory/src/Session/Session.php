@@ -33,7 +33,7 @@ use WeakReference;
  * by SQL Semantics against the tables of the server, and executed by the command of its kind.
  * Statements of one text run in order until one fails.
  *
- * @visibility public
+ * @visibility MySqlMemory
  * @example Reading the warnings of a statement
  *     $session = (new \MySqlMemory\Instance())->connect();
  *     $session->query("SELECT 'x' + 1");
