@@ -39,7 +39,7 @@
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Unresolved native reference observations</h1><div class="symbol-meta"><span class="source-link">docs/native-reference-issues.md</span></div></div>
 <div class="notice diff-banner" data-diff="added">Added in working tree, compared to 049665fc106.</div>
 <section class="readme prose" data-diff="added"><div class="doc-block" data-diff="added"><h2>Unresolved native reference observations</h2>
-</div><div class="doc-block" data-diff="added"><p>A native timeout is not a matching SQL error and is not a permitted comparison exception. Keep its input separate from completed differential observations and retain it until a reference outcome can be established. The acceptance contract remains open while these inputs have no comparison result.</p>
+</div><div class="doc-block" data-diff="added"><p>A native timeout is not a matching SQL error and is not a permitted comparison exception. Keep its input separate from completed differential observations and retain it until a reference outcome can be established. These inputs have no established comparison result.</p>
 </div><div class="doc-block" data-diff="added"><h3>Compressed tablespace extension</h3>
 </div><div class="doc-block" data-diff="added"><p>This request did not complete on the disposable MySQL 8.0.44 and 8.4.7 images:</p>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code>CREATE TABLESPACE blocked ADD DATAFILE &#039;blocked.ibd&#039;
@@ -47,7 +47,16 @@
 </div><div class="doc-block" data-diff="added"><p>On 8.0.44, <code>SHOW FULL PROCESSLIST</code> still reported the request as <code>starting</code> after 216 seconds. <code>KILL QUERY</code> did not terminate it. The container used one CPU core and approximately 27 GiB of memory, so the test process and its dedicated container were terminated. This was not an emulator observation.</p>
 </div><div class="doc-block" data-diff="added"><p>A fresh 8.4.7 instance reproduced the noncompletion with a five-second mysqli read deadline. The client returned error 2006 and could not read warnings. That error is a consequence of the client deadline; it is not the SQL outcome of the request and must not be compared with an emulator SQL error.</p>
 </div><div class="doc-block" data-diff="added"><p>A second bounded 8.4.7 probe used fresh containers with a 2 GiB memory limit and compared <code>innodb_extend_and_initialize=OFF</code> and <code>ON</code>. Both exceeded the five-second client deadline (5.004 and 5.002 seconds). Disabling physical page initialization therefore did not establish a reference result. Each dedicated container was terminated afterward. These observations do not identify the server&#039;s internal cause or change the pending classification.</p>
-</div><div class="doc-block" data-diff="added"><p>The request and the adjacent page/block combinations are preserved in <span class="md-target" title="../tests/Integration/Fuzz/fixtures/tablespace-reference-pending.json"><code>tablespace-reference-pending.json</code></span>. They are pending reference investigation, not passing cases of <code>TablespaceOptionOrderTest</code>. Do not run them without a client deadline and a separate disposable container. Neither the pending inputs nor the supplied SQL Faker seeds are deleted or counted as matches.</p>
+</div><div class="doc-block" data-diff="added"><p>The pending requests and adjacent page/block combinations were:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code>CREATE TABLESPACE block1024size4195327 ADD DATAFILE &#039;block1024size4195327.ibd&#039; FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4195327;
+CREATE TABLESPACE block1024size4195328 ADD DATAFILE &#039;block1024size4195328.ibd&#039; FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4195328;
+CREATE TABLESPACE block1024size4210687 ADD DATAFILE &#039;block1024size4210687.ibd&#039; FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4210687;
+CREATE TABLESPACE block1024size4210688 ADD DATAFILE &#039;block1024size4210688.ibd&#039; FILE_BLOCK_SIZE 1024 AUTOEXTEND_SIZE 4210688;
+CREATE TABLESPACE block4096size4195327 ADD DATAFILE &#039;block4096size4195327.ibd&#039; FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4195327;
+CREATE TABLESPACE block4096size4195328 ADD DATAFILE &#039;block4096size4195328.ibd&#039; FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4195328;
+CREATE TABLESPACE block4096size4210687 ADD DATAFILE &#039;block4096size4210687.ibd&#039; FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4210687;
+CREATE TABLESPACE block4096size4210688 ADD DATAFILE &#039;block4096size4210688.ibd&#039; FILE_BLOCK_SIZE 4096 AUTOEXTEND_SIZE 4210688;</code></pre>
+</div><div class="doc-block" data-diff="added"><p>These observations remain unresolved. They are not passing executions; a timeout from the SQL Faker PHP-Fuzzer target must still fail the property.</p>
 </div><div class="doc-block" data-diff="added"><p>The completed observations for the default block size show that the byte range is checked before the multiple of complete 16 KiB pages. They do not establish what a successful compressed-block request should do at every extension size.</p>
 </div></section>
 </main>
