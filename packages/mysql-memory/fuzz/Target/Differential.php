@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fuzz\Target;
 
-use Error;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -67,28 +66,6 @@ final class Differential
         public readonly ?\MySqlMemory\Server\Server $server = null,
         public readonly ?\Testcontainers\Containers\ContainerInstance $reference = null,
     ) {
-    }
-
-    /**
-     * Compares one statement, throwing when observations differ or the reference is unstable.
-     *
-     * @throws Error When either comparison differs
-     */
-    public function verify(string $sql, string $input = ''): void
-    {
-        $comparison = $this->compare($sql);
-        if ($comparison->difference !== null || $comparison->volatile) {
-            $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
-            throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference));
-        }
-    }
-
-    /**
-     * Answers how the observations differ, or null when they are equal or the statement is volatile.
-     */
-    public function difference(string $sql): ?string
-    {
-        return $this->compare($sql)->difference;
     }
 
     /**

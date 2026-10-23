@@ -11,9 +11,9 @@ use Fuzz\Structure\Construction;
 use Fuzz\Structure\Execution;
 use Fuzz\Structure\Metadata;
 use Fuzz\Structure\Profiles;
-use Fuzz\Structure\Rejections;
 use InvalidArgumentException;
 use JsonException;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -25,7 +25,8 @@ use SqlSemantics\Statement\Scalar;
 
 /**
  * Samples every public root from its constructor types and consumes it directly.
- * No native comparison or state-transition history is part of this property.
+ * SQL errors are outcomes; internal failures and missing implementation are counterexamples.
+ * SQL Faker fuzzing checks whether the outcomes agree with MySQL.
  */
 #[CoversNothing]
 #[Large]
@@ -59,10 +60,11 @@ final class GeneratedStructuresTest extends TestCase
      * @throws ReflectionException When a public constructor cannot be reflected
      */
     #[DataProvider('providerRoots')]
-    public function testPublicStructureHasNoUnexplainedExecutionFailure(string $class, int $index, string $seed): void
+    public function testPublicStructureHasNoInternalExecutionFailure(string $class, int $index, string $seed): void
     {
         $catalogue = new Catalogue();
         $choices = new Choices($seed . ':' . $index);
+        // Preserve the choice stream used by existing constructor counterexamples.
         $choices->one($catalogue->roots());
         $node = (new Construction($choices, $catalogue, new Metadata()))->object($class, 6);
         self::assertTrue($node instanceof Statement || $node instanceof Scalar);
@@ -71,7 +73,7 @@ final class GeneratedStructuresTest extends TestCase
         try {
             (new Execution())->run($node, substr($profile->grammar->value, 6), (new Bindings())->nulls($node), $profiles->mode($profile));
         } catch (SqlError $error) {
-            self::assertNotNull((new Rejections())->reason($error, $node), $class . ' seed=' . $seed . ' index=' . $index . ': ' . $error->getCode() . ' ' . $error->getMessage());
+            self::assertTrue($error->signalled !== null || !in_array($error->error, [StatementError::UnknownError, StatementError::NotSupportedYet], true), $class . ' seed=' . $seed . ' index=' . $index . ': ' . $error->getCode() . ' ' . $error->getMessage());
         }
     }
 }

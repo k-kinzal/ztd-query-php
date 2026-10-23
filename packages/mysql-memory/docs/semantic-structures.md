@@ -45,18 +45,19 @@ and facts. Standalone scalars receive their required query embedding; parameters
 receive explicit NULL bindings. Neither input SQL nor a parser AST is supplied to
 the executor.
 
-An internal exception, incomplete implementation, structural contradiction or
-unexplained SQL error fails the property. The explicit state conditions in
-`Fuzz\Structure\Rejections` identify dependencies such as absent tables or accounts;
-they do not establish successful execution of later operands. A valid semantic
-request can also ask the database to report an error. Such cases need a precise
-contract: accepting arbitrary SQL errors or tightening constructors only to make a
-particular fixture succeed would defeat the property. In particular, PREPARE's SQL
-text, encoded binary-log events and spatial definitions are interpreted during
-execution. Invalid JSON document values, component URNs and storage-engine file
-names also have explicit SQL error outcomes. These identified data conditions are
-allowed; outer syntax errors, missing implementation and unknown errors are not.
-SQL Faker fuzzing separately checks that these errors agree with MySQL.
+After generation, PHP exceptions, constructor and publication invariant violations,
+and missing implementation fail the property. An ordinary `SqlError` is an execution outcome,
+not an internal crash. Error 1105 (`UnknownError`) and 1235 (`NotSupportedYet`)
+remain failures, except when explicitly requested by SQL SIGNAL. There is no
+per-statement or per-error allowlist, and an input is never discarded or replaced
+because it produces an SQL error.
+
+This boundary follows [SQL Semantics' guarantees](../../sql-semantics/docs/guarantees.md):
+a well-formed model is not a statement guaranteed to succeed. Missing tables,
+invalid JSON values, NULL limit bindings and malformed SQL inside PREPARE can all
+be represented without violating the model's types. This property checks that the
+consumer handles the values; SQL Faker fuzzing checks whether its successful
+results and SQL errors agree with MySQL. Neither check substitutes for the other.
 
 This property requires no native comparison or separate database-history test.
 Counterexamples are retained and investigated through this PHPUnit entry point and

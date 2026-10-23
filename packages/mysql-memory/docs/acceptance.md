@@ -5,10 +5,10 @@ as the repository's SQL libraries. Its additional properties have three parts:
 
 1. Generate public SQL Semantics statement and scalar values from their constructor
    types and invariants, before constructing an `Operation`.
-2. Execute those original values directly in MemoryDB with PHPUnit. Missing
-   information, contradictory structure, missing implementation, internal exceptions
-   and unexplained SQL errors are counterexamples. Explicit database and session
-   state conditions and interpreted data domains remain separate from structural failures.
+2. Execute those original values directly in MemoryDB with PHPUnit. Contradictory
+   structures, missing implementation and internal exceptions are counterexamples.
+   Defined SQL errors are execution outcomes: a valid model can describe a request
+   that fails in the current session or for its operand values.
 3. Generate SQL with SQL Faker and use PHP-Fuzzer to compare MemoryDB with
    Testcontainers MySQL. The same target must replay SQL Faker's supplied grammar
    coverage seeds and run for at least fifteen minutes from an empty corpus.
@@ -18,6 +18,10 @@ SQL statement or PHP value. SQL Faker owns grammar coverage and its seed selecti
 MySQL Memory adds no grammar coverage threshold or separate differential test gate.
 Native audits of generated structures and database-history campaigns are not part
 of this workflow.
+
+`composer test` runs unit tests, including the property, and examples across the
+same PHP versions as the other SQL packages. Historical native regression tests
+remain available through `composer test:integration`; they are not another CI gate.
 
 `composer test:property` runs the construction and direct-execution property as part
 of the ordinary unit suite. Its seed and number of samples per root can be selected
