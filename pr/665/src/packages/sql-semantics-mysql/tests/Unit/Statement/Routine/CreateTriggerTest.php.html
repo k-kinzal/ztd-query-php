@@ -179,17 +179,20 @@
 <span class="src-line" id="L137" data-diff="same"><a class="ln" href="#L137">137</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 5.7 order&#039;</span> =&gt; [</span>
 <span class="src-line" id="L138" data-diff="same"><a class="ln" href="#L138">138</a>            <span class="tok-str">&#039;mysql-5.7.44&#039;</span>,</span>
 <span class="src-line" id="L139" data-diff="same"><a class="ln" href="#L139">139</a>            <span class="tok-str">&#039;create trigger tr before update on t for each row follows other set new.a = old.a&#039;</span>,</span>
-<span class="src-line" id="L140" data-diff="same"><a class="ln" href="#L140">140</a>            <span class="tok-str">&#039;CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET `new`.a = old.a&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">140</span>            <span class="tok-str">&#039;CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET `new`.a = old.a&#039;</span>,</span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a>            <span class="tok-str">&#039;CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET new.a = old.a&#039;</span>,</span>
 <span class="src-line" id="L141" data-diff="same"><a class="ln" href="#L141">141</a>        ];</span>
 <span class="src-line" id="L142" data-diff="same"><a class="ln" href="#L142">142</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 8.0 IF NOT EXISTS&#039;</span> =&gt; [</span>
 <span class="src-line" id="L143" data-diff="same"><a class="ln" href="#L143">143</a>            <span class="tok-str">&#039;mysql-8.0.44&#039;</span>,</span>
 <span class="src-line" id="L144" data-diff="same"><a class="ln" href="#L144">144</a>            <span class="tok-str">&#039;create trigger if not exists tr after delete on t for each row precedes o begin delete from u where c = old.a; end&#039;</span>,</span>
-<span class="src-line" id="L145" data-diff="same"><a class="ln" href="#L145">145</a>            <span class="tok-str">&#039;CREATE TRIGGER IF NOT EXISTS tr AFTER DELETE ON t FOR EACH ROW PRECEDES o BEGIN DELETE FROM u WHERE c = `old`.a; END&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">145</span>            <span class="tok-str">&#039;CREATE TRIGGER IF NOT EXISTS tr AFTER DELETE ON t FOR EACH ROW PRECEDES o BEGIN DELETE FROM u WHERE c = `old`.a; END&#039;</span>,</span>
+<span class="src-line" id="L145" data-diff="added"><a class="ln" href="#L145">145</a>            <span class="tok-str">&#039;CREATE TRIGGER IF NOT EXISTS tr AFTER DELETE ON t FOR EACH ROW PRECEDES o BEGIN DELETE FROM u WHERE c = old.a; END&#039;</span>,</span>
 <span class="src-line" id="L146" data-diff="same"><a class="ln" href="#L146">146</a>        ];</span>
 <span class="src-line" id="L147" data-diff="same"><a class="ln" href="#L147">147</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 9.1 program body&#039;</span> =&gt; [</span>
 <span class="src-line" id="L148" data-diff="same"><a class="ln" href="#L148">148</a>            <span class="tok-str">&#039;mysql-9.1.0&#039;</span>,</span>
 <span class="src-line" id="L149" data-diff="same"><a class="ln" href="#L149">149</a>            <span class="tok-str">&#039;create trigger tr before insert on t for each row begin declare v int default new.a; set new.b = v; end&#039;</span>,</span>
-<span class="src-line" id="L150" data-diff="same"><a class="ln" href="#L150">150</a>            <span class="tok-str">&#039;CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT `new`.a; SET `new`.b = v; END&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">150</span>            <span class="tok-str">&#039;CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT `new`.a; SET `new`.b = v; END&#039;</span>,</span>
+<span class="src-line" id="L150" data-diff="added"><a class="ln" href="#L150">150</a>            <span class="tok-str">&#039;CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT new.a; SET new.b = v; END&#039;</span>,</span>
 <span class="src-line" id="L151" data-diff="same"><a class="ln" href="#L151">151</a>        ];</span>
 <span class="src-line" id="L152" data-diff="same"><a class="ln" href="#L152">152</a>    }</span>
 <span class="src-line" id="L153" data-diff="same"><a class="ln" href="#L153">153</a></span>

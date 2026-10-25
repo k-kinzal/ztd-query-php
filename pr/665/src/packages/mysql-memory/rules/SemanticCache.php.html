@@ -51,7 +51,7 @@
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SplFileInfo</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Invalidates the coverage rule when dependency models or property declarations change.</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Invalidates the coverage rule when dependency models or generator declarations change.</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility Rules</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> */</span></span>
@@ -62,18 +62,18 @@
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">getKey</span>(): <span class="tok-id">string</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    {</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;mysql-memory-semantic-properties&#039;</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;mysql-memory-semantic-generators&#039;</span>;</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    }</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Includes file names so additions and removals invalidate a previously successful run.</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @throws RuntimeException When a model or property file cannot be hashed</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @throws RuntimeException When a model or generator file cannot be hashed</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">getHash</span>(): <span class="tok-id">string</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$files</span> = [];</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">foreach</span> ([<span class="tok-str">&#039;vendor/k-kinzal/sql-semantics/src&#039;</span>, <span class="tok-str">&#039;vendor/k-kinzal/sql-semantics-mysql/src&#039;</span>, <span class="tok-str">&#039;tests/Property&#039;</span>] <span class="tok-kw">as</span> <span class="tok-var">$directory</span>) {</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">foreach</span> ([<span class="tok-str">&#039;vendor/k-kinzal/sql-semantics/src&#039;</span>, <span class="tok-str">&#039;vendor/k-kinzal/sql-semantics-mysql/src&#039;</span>, <span class="tok-str">&#039;tests/Generator&#039;</span>] <span class="tok-kw">as</span> <span class="tok-var">$directory</span>) {</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>            <span class="tok-kw">foreach</span> (<span class="tok-kw">new</span> <span class="tok-id">RecursiveIteratorIterator</span>(<span class="tok-kw">new</span> <span class="tok-id">RecursiveDirectoryIterator</span>(<span class="tok-id">dirname</span>(__DIR__) . <span class="tok-str">&#039;/&#039;</span> . <span class="tok-var">$directory</span>)) <span class="tok-kw">as</span> <span class="tok-var">$file</span>) {</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>                <span class="tok-kw">if</span> (<span class="tok-var">$file</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SplFileInfo</span> &amp;&amp; <span class="tok-var">$file</span>-&gt;<span class="tok-id">getExtension</span>() === <span class="tok-str">&#039;php&#039;</span>) {</span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>                    <span class="tok-var">$hash</span> = <span class="tok-id">hash_file</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$file</span>-&gt;<span class="tok-id">getPathname</span>());</span>

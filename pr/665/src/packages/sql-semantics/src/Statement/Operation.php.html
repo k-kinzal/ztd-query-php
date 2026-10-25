@@ -78,7 +78,8 @@
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com"> *     $other = new \SqlSemantics\Statement\Operation($query-&gt;context, $semantics-&gt;analyze(&#039;SELECT baz FROM bar&#039;)-&gt;statement);</span></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com"> *     $other-&gt;toString() // =&gt; &#039;SELECT baz FROM bar&#039;</span></span>
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Operation</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">41</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Operation</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Operation</span> <span class="tok-kw">implements</span> <span class="tok-id">AnalyzedStatement</span></span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>{</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
