@@ -69,6 +69,7 @@ final class TemporalResult
      */
     public function result(?TypeDescriptor $type, IntervalUnit $unit, GrammarRelease $release): TypeDescriptor
     {
+        $unit = $unit->canonical();
         if (!$type instanceof Temporal) {
             return new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily();
         }
@@ -87,6 +88,7 @@ final class TemporalResult
      */
     public function time(IntervalUnit $unit, GrammarRelease $release): TypeDescriptor
     {
+        $unit = $unit->canonical();
         if (!in_array($unit, self::TIME_UNITS, true)) {
             return new Temporal(TemporalKind::DateTime);
         }

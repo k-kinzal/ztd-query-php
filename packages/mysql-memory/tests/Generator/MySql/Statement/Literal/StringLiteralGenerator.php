@@ -28,7 +28,7 @@ final class StringLiteralGenerator implements ErisGenerator
      * @param ErisGenerator<string>|null $strings The decoded literal values
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $locations Optional independent location metadata
      */
-    public function __construct(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation $collation, ?ErisGenerator $strings = null, ?ErisGenerator $locations = null)
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation $collation = null, ?ErisGenerator $strings = null, ?ErisGenerator $locations = null)
     {
         $strings ??= Generators::map(static fn (array $characters): string => implode('', $characters), Generators::seq(Generators::elements('0', '1', 'a', "'", '\\\\', 'é', '列')));
         $this->delegate = Generators::map(static function (array $data) use ($collation): StringLiteral {

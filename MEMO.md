@@ -422,3 +422,34 @@ invariant tests pass 9 / 34. Targeted static analysis and the 1,048-definition
 schema check pass. The six-input INSERT corpus again passes exact round-trip and
 native prepared execution on MySQL 8.4.7. These remain focused checks; the full
 migration, generator coverage and corpus/seedless gates are still outstanding.
+
+
+### Interval keyword reconstruction (2026-10-25)
+
+IntervalUnit now retains the eight SQL_TSI aliases and exposes their canonical
+unit for typing and execution. Date arithmetic, extraction, timestamp differences
+and event schedules consume that meaning; source reconstruction retains the
+written keyword. Per-type Eris delegates for IntervalUnit and DateArithmetic
+replace their old constructor-sampling properties with a statement execution
+property. It compares rows and result type metadata for the written and canonical
+units, without using a SQL request label. This query path still uses Operation
+and remains subject to the concrete SELECT migration.
+
+The new property passes 9 tests / 8,100 assertions (900 trials across the nine
+releases, ERIS_SEED=20261025). Related executor tests pass 102 / 217; the subsequent
+event subset passes 35 / 77. The full MySQL semantic unit suite passes 9,102 tests /
+20,219 assertions after correcting a legacy assertion that discarded SQL_TSI_DAY.
+Targeted static analysis and PHP 8.1 compatibility checks pass for the changes.
+The existing round-trip fuzz target passes interval_time_stamp-1.txt and
+interval_time_stamp-8.txt on 8.4.7. Native execution replay also passes all nine
+supplied seeds containing SQL_TSI keywords plus the original recorded event input.
+
+The complete corpus is still failing. The next PHP-Fuzzer finding adds COLUMN in
+`ALTER TABLE _sqlfaker_identifier ALTER _sqlfaker_identifier SET DEFAULT NULL`
+(input `0c00000000000a0000000000000000000000020000000800000000000000000000`).
+A replay of all SQL_TSI keyword seeds additionally finds CAST(... AS SQL_TSI_YEAR)
+rendered as CAST(... AS YEAR); a type keyword is distinct from an interval unit.
+A temporary diagnostic audit called the unchanged round-trip target for all
+2,181 default 8.4.7 seeds: 1,806 passed and 375 failed, including 187 Compact
+mismatches and grammar-valid requests rejected for semantic errors. This audit
+collects defects; it is not a passing PHP-Fuzzer run or acceptance evidence.

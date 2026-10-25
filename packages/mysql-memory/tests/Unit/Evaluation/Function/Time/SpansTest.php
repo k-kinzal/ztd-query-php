@@ -15,6 +15,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SpansTest extends TestCase
 {
+    public function testDifferenceCountsEverySqlTsiAliasInItsOwnUnits(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->query("SELECT TIMESTAMPDIFF(SQL_TSI_SECOND, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_MINUTE, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_HOUR, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_DAY, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_WEEK, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_MONTH, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_QUARTER, '2024-01-01', '2025-01-01'), TIMESTAMPDIFF(SQL_TSI_YEAR, '2024-01-01', '2025-01-01')")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['31622400', '527040', '8784', '366', '52', '12', '4', '1']], $reply->rows);
+        self::assertSame(0, $reply->warnings);
+    }
+
     public function testDifferenceCountsWholeUnits(): void
     {
         $session = (new Instance())->connect();

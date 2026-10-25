@@ -33,6 +33,7 @@ final class Interval
      */
     public static function read(string $quantity, IntervalUnit $unit): ?self
     {
+        $unit = $unit->canonical();
         $simple = [IntervalUnit::Microsecond->name => 1, IntervalUnit::Second->name => 1000000, IntervalUnit::Minute->name => 60000000, IntervalUnit::Hour->name => 3600000000, IntervalUnit::Day->name => 86400000000, IntervalUnit::Week->name => 604800000000];
         if (isset($simple[$unit->name])) {
             $number = NumericText::exact($quantity)->number;
@@ -89,6 +90,7 @@ final class Interval
      */
     public static function parts(IntervalUnit $unit): array
     {
+        $unit = $unit->canonical();
         return match ($unit) {
             IntervalUnit::YearMonth => ['year', 'month'],
             IntervalUnit::DayHour => ['day', 'hour'],
@@ -109,6 +111,7 @@ final class Interval
      */
     public static function dated(IntervalUnit $unit): bool
     {
+        $unit = $unit->canonical();
         return in_array($unit, [IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year, IntervalUnit::YearMonth], true);
     }
 }

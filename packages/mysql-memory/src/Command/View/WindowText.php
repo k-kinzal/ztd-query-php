@@ -135,7 +135,7 @@ final class WindowText
             return null;
         }
 
-        return $bound->unit === null ? $offset . ' ' . $bound->kind->value : 'INTERVAL ' . $offset . ' ' . strtolower($bound->unit->value) . '  ' . $bound->kind->value;
+        return $bound->unit === null ? $offset . ' ' . $bound->kind->value : 'INTERVAL ' . $offset . ' ' . strtolower($bound->unit->canonical()->value) . '  ' . $bound->kind->value;
     }
 
     /**

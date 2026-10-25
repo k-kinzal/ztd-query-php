@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
@@ -57,7 +58,11 @@ final class IntervalRule
             $form = $this->lowering->form($form->node(0));
         }
 
-        return self::UNITS[$form->signature] ?? throw ImplementationGap::production($form);
+        $expected = self::UNITS[$form->signature] ?? throw ImplementationGap::production($form);
+        $keyword = IntervalUnit::tryFrom(strtoupper($form->token(0)->text));
+        Check::invariant($keyword !== null && $keyword->canonical() === $expected, 'An interval keyword agrees with its grammar unit.');
+
+        return $keyword;
     }
 
     /**

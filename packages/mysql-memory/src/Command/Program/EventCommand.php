@@ -274,12 +274,13 @@ final class EventCommand implements Command
         if ($value === null) {
             throw DataError::WrongValue->error('INTERVAL', 'NULL');
         }
-        if (in_array($schedule->unit, [IntervalUnit::Microsecond, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::HourMicrosecond, IntervalUnit::DayMicrosecond], true)) {
+        $unit = $schedule->unit->canonical();
+        if (in_array($unit, [IntervalUnit::Microsecond, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::HourMicrosecond, IntervalUnit::DayMicrosecond], true)) {
             throw StatementError::NotSupportedYet->error('MICROSECOND');
         }
-        $simple = in_array($schedule->unit, [IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true);
+        $simple = in_array($unit, [IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true);
         $text = (string) Convert::toText($value, $quantity->domain());
-        $number = $simple ? $this->intervalNumber($value, $quantity, $context, $schedule->unit) : $this->composite($text, $schedule->unit);
+        $number = $simple ? $this->intervalNumber($value, $quantity, $context, $unit) : $this->composite($text, $unit);
         if ((int) $number <= 0 && !str_contains($number, "'")) {
             throw ProgramError::IntervalNotPositive->error();
         }
@@ -290,7 +291,7 @@ final class EventCommand implements Command
             throw ProgramError::EndsBeforeStarts->error();
         }
 
-        return [null, [$number, $schedule->unit->value], $starts, $ends];
+        return [null, [$number, $unit->value], $starts, $ends];
     }
 
     /**
@@ -298,6 +299,7 @@ final class EventCommand implements Command
      */
     public function intervalNumber(int|float|string $value, \MySqlMemory\Evaluation\Evaluable $quantity, Context $context, IntervalUnit $unit = IntervalUnit::Second): string
     {
+        $unit = $unit->canonical();
         if ($unit !== IntervalUnit::Second) {
             return (string) Convert::toInteger($value, $quantity->domain(), $context);
         }
@@ -315,6 +317,7 @@ final class EventCommand implements Command
      */
     public function composite(string $text, IntervalUnit $unit): string
     {
+        $unit = $unit->canonical();
         $formats = match ($unit) {
             IntervalUnit::YearMonth => [[1, 12], ['', '-']],
             IntervalUnit::DayHour => [[1, 24], ['', ' ']],

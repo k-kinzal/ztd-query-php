@@ -67,6 +67,7 @@ final class Moments
      */
     public function shifted(Domain $operand, IntervalUnit $unit, int $quantity = 0, bool $legacy = false): Domain
     {
+        $unit = $unit->canonical();
         $micro = in_array($unit, self::MICRO, true) ? 6 : ($unit === IntervalUnit::Second ? $quantity : 0);
         $fraction = $micro > 0 ? $micro + 1 : 0;
         $dated = !$legacy && in_array($unit, [...self::DATED, IntervalUnit::DaySecond, IntervalUnit::DayMinute, IntervalUnit::DayHour], true);
@@ -100,6 +101,7 @@ final class Moments
      */
     public function extract(IntervalUnit $unit, bool $legacy = false): Domain
     {
+        $unit = $unit->canonical();
         return Domain::integer(Field::LongLong, ($legacy ? self::LEGACY_EXTRACT_LENGTHS[$unit->value] ?? null : null) ?? self::EXTRACT_LENGTHS[$unit->value]);
     }
 

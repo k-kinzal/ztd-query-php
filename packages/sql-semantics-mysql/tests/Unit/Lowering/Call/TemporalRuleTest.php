@@ -106,7 +106,7 @@ final class TemporalRuleTest extends TestCase
         self::assertInstanceOf(GetFormat::class, $calls[4]);
         self::assertSame(TemporalFormat::DateTime, $calls[4]->format);
         self::assertInstanceOf(TimestampCall::class, $calls[5]);
-        self::assertSame(IntervalUnit::Day, $calls[5]->unit);
+        self::assertSame(IntervalUnit::SqlTsiDay, $calls[5]->unit);
         self::assertEquals(new ClockCall(Clock::Now), $calls[6]);
     }
 

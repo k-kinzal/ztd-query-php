@@ -25,8 +25,8 @@ use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
 use Tests\Generator\MySql\Statement\Table\CreateTableGenerator;
 
 /**
- * Composes CREATE TABLE operations for generated column names in an empty database.
- * This first composition does not yet cover other statement types.
+ * Publishes generated legacy statements in a fixed empty database context.
+ * Concrete migrated statements use their own generators; Operation remains transitional.
  *
  * @implements ErisGenerator<Operation>
  */
@@ -38,15 +38,15 @@ final class OperationGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * @param ErisGenerator<CreateTable>|null $statements The statements to publish in a matching context
+     * @param ErisGenerator<\SqlSemantics\Statement\Statement>|null $statements The statements to publish in a matching context
      */
     public function __construct(GrammarRelease $release, ?ErisGenerator $statements = null)
     {
         $this->delegate = Generators::map(
-            static fn (CreateTable $statement): Operation => new Operation(
+            static fn (\SqlSemantics\Statement\Statement $statement): Operation => new Operation(
                 new AnalysisContext(
                     new LanguageProfile($release),
-                    [$statement->name->schema ?? new Name('pbt')],
+                    [$statement instanceof CreateTable ? ($statement->name->schema ?? new Name('pbt')) : new Name('pbt')],
                     session: new Settings(Collation::known('utf8mb4_unicode_ci'), client: Charset::known('utf8mb4')),
                 ),
                 $statement,

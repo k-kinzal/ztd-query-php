@@ -32,6 +32,7 @@ final class Spans
      */
     public function difference(Frame $frame, IntervalUnit $unit, Evaluable $first, Evaluable $second): ?int
     {
+        $unit = $unit->canonical();
         $readings = new Readings();
         $from = $readings->moment($frame, $first, Zeros::Refused);
         if ($from === null) {

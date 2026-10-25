@@ -25,6 +25,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class EventCommandTest extends TestCase
 {
+    public function testScheduleStoresTheCanonicalUnitOfAnSqlTsiAlias(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
+        $session->query('SET GLOBAL event_scheduler=OFF; CREATE EVENT target ON SCHEDULE EVERY 2 SQL_TSI_WEEK DO SELECT 1');
+        self::assertSame(['2', 'WEEK'], $session->instance->dictionary->schema('pbt')?->events['target']->every);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testLapseKeepsPinnedClockDefinitionsEnabledWhenTheSchedulerIsOff(): void
     {
         $session = (new Instance())->connect();
@@ -256,6 +264,7 @@ final class EventCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00.5' DO SELECT 1");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context, 'root', 'localhost', 1, []), $session->instance->dictionary);
         $statement = $operation->statement;

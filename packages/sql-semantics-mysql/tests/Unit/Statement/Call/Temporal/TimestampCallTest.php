@@ -37,7 +37,7 @@ final class TimestampCallTest extends TestCase
     public static function providerCompositeUnits(): iterable
     {
         foreach (IntervalUnit::cases() as $unit) {
-            if (str_contains($unit->value, '_')) {
+            if (str_contains($unit->canonical()->value, '_')) {
                 yield $unit->value => [$unit];
             }
         }

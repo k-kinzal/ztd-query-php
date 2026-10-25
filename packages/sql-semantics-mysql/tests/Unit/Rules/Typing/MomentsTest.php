@@ -27,6 +27,7 @@ final class MomentsTest extends TestCase
         $date = new Domain(Kind::Date, Field::Date, 10);
 
         self::assertEquals($date, $moments->shifted($date, IntervalUnit::Month));
+        self::assertEquals($date, $moments->shifted($date, IntervalUnit::SqlTsiMonth));
         self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 19), $moments->shifted($date, IntervalUnit::Hour));
         self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 26, 6), $moments->shifted(new Domain(Kind::DateTime, Field::DateTime, 21, 1), IntervalUnit::Microsecond));
         self::assertEquals(Domain::string(29, Collation::known('utf8mb4_0900_ai_ci'), Field::String, Coercibility::Coercible), $moments->shifted(Domain::integer(), IntervalUnit::Day));
@@ -57,6 +58,7 @@ final class MomentsTest extends TestCase
 
         self::assertEquals(Domain::integer(Field::LongLong, 7), $moments->extract(IntervalUnit::YearMonth));
         self::assertEquals(Domain::integer(Field::LongLong, 5), $moments->extract(IntervalUnit::Year));
+        self::assertEquals(Domain::integer(Field::LongLong, 5), $moments->extract(IntervalUnit::SqlTsiYear));
         self::assertEquals(Domain::integer(Field::LongLong, 2), $moments->extract(IntervalUnit::Microsecond, true));
         self::assertEquals(Domain::integer(Field::LongLong, 7), $moments->extract(IntervalUnit::Microsecond));
     }

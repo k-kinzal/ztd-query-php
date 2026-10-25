@@ -165,7 +165,7 @@ final class DateShift implements Evaluable
             return null;
         }
         $domain = $this->quantity->domain();
-        $text = match ($this->unit) {
+        $text = match ($this->unit->canonical()) {
             IntervalUnit::Second => (string) Convert::toDecimal($quantity, $domain, $frame->context),
             IntervalUnit::Microsecond, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year => Integer::text((int) Convert::toInteger($quantity, $domain, $frame->context), $domain->unsigned && $domain->kind === Kind::Integer),
             IntervalUnit::YearMonth, IntervalUnit::DayHour, IntervalUnit::DayMinute, IntervalUnit::DaySecond, IntervalUnit::DayMicrosecond, IntervalUnit::HourMinute, IntervalUnit::HourSecond, IntervalUnit::HourMicrosecond, IntervalUnit::MinuteSecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::SecondMicrosecond => (string) Convert::toText($quantity, $domain),

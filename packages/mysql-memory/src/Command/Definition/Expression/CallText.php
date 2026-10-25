@@ -68,7 +68,7 @@ final class CallText
             $scalar instanceof CharsetConversion => $this->items->wrap($scalar->operand, 'convert(', ' using ' . strtolower($scalar->charset->name->value ?? 'binary') . ')'),
             $scalar instanceof JsonExtraction => $this->json($scalar),
             $scalar instanceof Trim => $this->trim($scalar),
-            $scalar instanceof Extract => $this->items->wrap($scalar->source, 'extract(' . strtolower($scalar->unit->value) . ' from ', ')'),
+            $scalar instanceof Extract => $this->items->wrap($scalar->source, 'extract(' . strtolower($scalar->unit->canonical()->value) . ' from ', ')'),
             $scalar instanceof Position => $this->call('locate', [$scalar->substring, $scalar->string]),
             $scalar instanceof CharCall => $this->items->joined(array_map($this->items->scalar(...), $scalar->arguments), 'char(', ',', $scalar->charset === null ? ')' : ' using ' . strtolower($scalar->charset->name->value ?? 'binary') . ')'),
             $scalar instanceof DefaultOfColumn => $this->call('default', [$scalar->column]),
@@ -160,7 +160,7 @@ final class CallText
      */
     public function interval(Scalar $operand, Scalar $quantity, IntervalUnit $unit, bool $subtract): ?string
     {
-        return $this->items->joined([$this->items->scalar($operand), $this->items->scalar($quantity)], '(', $subtract ? ' - interval ' : ' + interval ', ' ' . strtolower($unit->value) . ')');
+        return $this->items->joined([$this->items->scalar($operand), $this->items->scalar($quantity)], '(', $subtract ? ' - interval ' : ' + interval ', ' ' . strtolower($unit->canonical()->value) . ')');
     }
 
     /**

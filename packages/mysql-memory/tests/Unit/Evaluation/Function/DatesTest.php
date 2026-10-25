@@ -176,7 +176,7 @@ final class DatesTest extends TestCase
         $parts = [2024, 2, 29, 13, 14, 15, 16];
         $units = array_map(static fn (IntervalUnit $unit): int => $dates->unit($unit, $parts), IntervalUnit::cases());
 
-        self::assertSame([16, 15, 14, 13, 29, 8, 2, 1, 2024, 15000016, 1415000016, 1415, 131415000016, 131415, 1314, 29131415000016, 29131415, 291314, 2913, 202402], $units);
+        self::assertSame([16, 15, 14, 13, 29, 8, 2, 1, 2024, 15000016, 1415000016, 1415, 131415000016, 131415, 1314, 29131415000016, 29131415, 291314, 2913, 202402, 15, 14, 13, 29, 8, 2, 1, 2024], $units);
     }
 
     public function testPartTakesAZeroDayButDayOfWeekRefusesIt(): void

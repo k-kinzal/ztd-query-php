@@ -150,6 +150,7 @@ final class Dates
      */
     public function extract(Frame $frame, Evaluable $argument, IntervalUnit $unit): ?int
     {
+        $unit = $unit->canonical();
         $value = $argument->evaluate($frame);
         if ($value === null) {
             return null;
@@ -174,6 +175,7 @@ final class Dates
      */
     public function unit(IntervalUnit $unit, array $parts): int
     {
+        $unit = $unit->canonical();
         if ($unit === IntervalUnit::Quarter) {
             return intdiv($parts[1] + 2, 3);
         }
