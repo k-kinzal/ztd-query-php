@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Prepared;
 
 use LogicException;
-use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Result\Batch;
 use MySqlMemory\Result\Reply;
@@ -86,7 +85,7 @@ final class PreparedStatement
                 throw new LogicException('An unmigrated prepared statement requires its literal settings.');
             }
             $operation = (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals);
-            return (new Execution($session))->perform($operation, (new Dispatcher())->command($this->statement), $parameters);
+            return (new Execution($session))->statement($operation, $parameters);
         } finally {
             $session->variables->preparedEngines = $engines;
             $session->variables->database = $database;

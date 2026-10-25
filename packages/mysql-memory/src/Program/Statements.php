@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program;
 
-use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -79,8 +78,7 @@ final class Statements
         $this->activation->sqlStatements++;
         \MySqlMemory\Session\State\StatementCounters::query($this->session);
         $operation = $this->operation($statement);
-        $command = (new Dispatcher())->command($operation->statement);
-        $reply = (new \MySqlMemory\Session\Execution($this->session))->perform($operation, $command, [], false, $this->activation->contained);
+        $reply = (new \MySqlMemory\Session\Execution($this->session))->statement($operation, [], false, $this->activation->contained);
         $results = array_values(array_filter($reply instanceof Batch ? $reply->replies : [$reply], static fn (Reply $reply): bool => $reply instanceof ResultSet));
         if ($results !== [] && $this->activation->contained
             && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile

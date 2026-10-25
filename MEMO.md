@@ -447,7 +447,7 @@ the structural migration, rather than permission to keep parallel APIs.
 | `sql-semantics-mysql/src/Platform.php`, `Lowering/`, `Rules/` | Lower syntax and bind local semantic values for every grammar-dispatched family | No INSERT-only publication route or default Operation route |
 | `sql-semantics*/src/Statement/` | Apply the ownership and identity contracts above; preserve grammar-valid refused requests | Every executable fact is reachable through the corresponding element, including missing-input alternatives |
 | `mysql-memory/src/Session/Session.php`, `Session/Parse/`, `Hint/` | Separate SQL input parsing from typed execution; move semantic prefix/tree inspection into analysis | Input text is available for input handling and diagnostic excerpts, never for completing a published statement |
-| `mysql-memory/src/Session/Execution.php`, `Session/Problem/`, `Session/Access/` | Implement one lifecycle with explicit SQL-specific phases and local condition ownership | Analyzed and generated instances of the same statement execute the same phases |
+| `mysql-memory/src/Session/Execution.php`, `Session/Statement/Lifecycle.php`, `Session/Problem/`, `Session/Access/` | Implement one lifecycle with explicit SQL-specific phases and local condition ownership | Analyzed and generated instances of the same statement execute the same phases |
 | `mysql-memory/src/Command/Command.php`, `Command/Dispatcher.php`, `Command/*` | Consume concrete SQL statements and legitimate runtime services | No command receives Operation/Facts or interprets AST/text |
 | `mysql-memory/src/Plan/Planner.php`, `Evaluation/Compile/Compiler.php` | Read query shape, expression types and references locally; derive execution operators | No external fact lookup and no fallback conversion from rendered SQL |
 | `mysql-memory/src/Command/Prepared/`, `Session/Statement/Binding.php`, `Program/` | Store typed operands, lexical interpretation and dependencies; rebind from typed inputs | Text/prepared/stored execution shares the same lifecycle and preserves declaration identity |
@@ -842,6 +842,39 @@ the observer, restoration sources or their new tests. Changed-file analysis,
 formatting and PHP 8.1 compatibility pass. The current restoration suite has
 five tests and nine assertions, with the credential-age regression above as its
 one failure; it is not a passing acceptance check.
+
+### Shared execution lifetime
+
+`Session/Statement/Lifecycle` now owns diagnostic initialization, the active table
+scope, statement journal, temporary-table dictionary selection and final row
+count for both current statement representations. Prepared execution and stored
+program statements enter `Execution::statement`, carrying the existing SQL
+condition and containment policies. Successful procedure statements retain their
+independent commit behavior; function/trigger writes remain contained.
+
+The journal unwinds on every exceptional exit through `finally`, without changing
+the exception into a SQL error. Protocol error reporting no longer aborts a
+journal a second time, which could previously discard an enclosing statement's
+writes. A concrete INSERT registers its bound destination while triggers run.
+Both representations reject a mismatched session release before executing. A
+valid statement belonging to another runtime release is a runtime input failure;
+missing implementations remain LogicException failures.
+
+This is the runtime part of C, not its completion. Preparation still depends on
+Operation/Facts, and the concrete INSERT still has separate preparation logic.
+Deferred instructions and the public semantic ownership migration remain open.
+The shared scope cannot make those old preparation boundaries acceptable.
+
+The final lifecycle regressions pass seven cases and 50 assertions, including a
+fault-injected non-SQL failure after a successful nested write, SQL error reporting
+inside an enclosing journal, diagnostic history, release mismatch and bound
+trigger access. Existing Eris properties pass 36 cases and 29,896 assertions with
+`ERIS_SEED=20261025`. The broader execution/prepared/transaction/program run has
+1,650 cases and 3,999 assertions with no assertion failure, but one existing
+multi-query ErrorsTest exceeds its one-second limit. An isolated retry also
+times out; neither run counts as a complete pass. Changed-file PHPStan, formatting,
+PHP 8.1 compatibility, the package size/tree guards and Deptrac pass. Protected
+configuration and the timeout limit are unchanged.
 
 ## Historical investigation results
 

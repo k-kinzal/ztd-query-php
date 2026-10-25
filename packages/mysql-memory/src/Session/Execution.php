@@ -10,10 +10,11 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
-use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Stages;
+use MySqlMemory\Session\Statement\Lifecycle;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Statement\Operation;
@@ -36,38 +37,30 @@ final class Execution
      * Executes the published semantic statement without rendering or analyzing it.
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound parameter values
+     * @param bool $read Whether initial input conditions are emitted here
+     * @param bool $contained Whether successful writes belong to the enclosing statement
      * @throws SqlError When SQL execution fails
      * @throws LogicException When a statement has no execution implementation
+     * @throws RuntimeException When the execution session selects another MySQL release
      */
-    public function statement(\SqlSemantics\Statement\AnalyzedStatement $statement, array $parameters = []): Reply
+    public function statement(\SqlSemantics\Statement\AnalyzedStatement $statement, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
         if ($statement instanceof Operation) {
-            return $this->perform($statement, (new \MySqlMemory\Command\Dispatcher())->command($statement->statement), $parameters);
+            return $this->perform($statement, (new \MySqlMemory\Command\Dispatcher())->command($statement->statement), $parameters, $read, $contained);
         }
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
             throw new LogicException('No semantic statement executor for ' . $statement::class);
         }
         $session = $this->session;
         if ($statement->profile()->grammar !== $session->settings()->release()) {
-            throw new LogicException('The statement and execution session must select the same MySQL release.');
+            throw new RuntimeException('The statement and execution session must select the same MySQL release.');
         }
+        (new Lifecycle($session))->start();
         $session->diagnostics->clear();
-        $session->variables->setByFunction = false;
-        $session->interrupted = false;
         State\StatementCounters::command($session, 'Com_insert');
         (new \MySqlMemory\Concurrency\Access())->writes([$statement->target->resolvedName ?? $statement->target->name], $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-        $session->transaction->statements->begin(true);
-        $session->instance->dictionary->temporaries = $session->temporaries;
-        try {
-            $reply = (new \MySqlMemory\Command\Write\InsertValuesCommand())->execute($statement, $session, $context, new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, $session->program, WeakReference::create($session)));
-        } catch (SqlError $error) {
-            $session->transaction->statements->abort();
-            throw $error;
-        }
-        $session->transaction->statements->end(true);
-        $session->variables->rowCount = $reply->affectedRows;
-        return $reply;
+        return (new Lifecycle($session))->run($statement, fn (): Reply => (new \MySqlMemory\Command\Write\InsertValuesCommand())->execute($statement, $session, $context, new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, $session->program, WeakReference::create($session))), $contained);
     }
 
     /**
@@ -88,9 +81,13 @@ final class Execution
      * @param bool $contained Whether the statement is part of the statement around it
      *
      * @throws SqlError When the statement fails
+     * @throws RuntimeException When the statement belongs to another MySQL release
      */
     public function perform(Operation $operation, Command $command, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
+        if ($operation->profile()->grammar !== $this->session->settings()->release()) {
+            throw new RuntimeException('The statement and execution session must select the same MySQL release.');
+        }
         $hints = (new \MySqlMemory\Hint\Hints())->apply($operation->statement, $this->session);
         $previous = $this->session->preparation->resolution;
         $this->session->preparation->resolution = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($operation->context);
@@ -143,27 +140,7 @@ final class Execution
             (new \MySqlMemory\Command\Access\Locks())->check($operation, $session);
         }
         (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
-        if ($session->program?->contained === true) {
-            $session->running->check($operation->statement, $session->variables->database);
-        }
-        $session->transaction->statements->begin($contained);
-        $session->instance->dictionary->temporaries = $session->temporaries;
-        $session->running->using[] = $session->running->used($operation->statement, $session->variables->database);
-        try {
-            $reply = $command->execute($operation, $session, $context, new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, $session->program, WeakReference::create($session)));
-        } catch (SqlError $error) {
-            $session->transaction->statements->abort();
-            throw $error;
-        } finally {
-            array_pop($session->running->using);
-        }
-        $session->transaction->statements->end($contained);
-        $last = $reply instanceof \MySqlMemory\Result\Batch ? ($reply->replies[count($reply->replies) - 1] ?? null) : $reply;
-        $session->variables->rowCount = $last instanceof Completion ? $last->affectedRows : -1;
-        if ($session->program === null && $session->running->embeddedResults !== []) {
-            return new \MySqlMemory\Result\Batch([...$session->running->takeEmbedded(), $reply]);
-        }
-        return $reply;
+        return (new Lifecycle($session))->run($operation->statement, fn (): Reply => $command->execute($operation, $session, $context, new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, $session->program, WeakReference::create($session))), $contained);
     }
 
     /**
@@ -235,10 +212,7 @@ final class Execution
     public function area(Operation $operation, Command $command): void
     {
         $session = $this->session;
-        $session->variables->setByFunction = false;
-        $session->interrupted = false;
-        $session->diagnostics->previous = [$session->diagnostics->raised(), $session->diagnostics->errors()];
-        $session->diagnostics->limit = $session->variables->count('max_error_count', 1024);
+        (new Lifecycle($session))->start();
         if ((new Parse\DebugRequest())->preserves($operation)) {
             return;
         }
@@ -392,7 +366,8 @@ final class Execution
     /**
      * Records the failure of a statement of the text the session runs, and answers the replies the text then ends with: those of the stored program statements that ran before it, then the error.
      *
-     * The statement journal is aborted and ROW_COUNT() answers -1. The error is recorded unless it
+     * Execution has already unwound its own journal; this boundary never aborts an
+     * enclosing statement. ROW_COUNT() answers -1. The error is recorded unless it
      * was recorded already, followed by the errors it carries, and a rollback that could not
      * restore every row warns ER_WARNING_NOT_COMPLETE_ROLLBACK.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_row-count.
@@ -402,7 +377,6 @@ final class Execution
     public function failed(SqlError $error): array
     {
         $session = $this->session;
-        $session->transaction->statements->abort();
         $session->variables->rowCount = -1;
         $answers = [...$session->running->replies, ...$session->running->takeEmbedded()];
         $session->running->replies = [];

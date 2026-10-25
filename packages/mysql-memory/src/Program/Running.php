@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
@@ -92,6 +93,9 @@ final class Running
         foreach ([...(new Walker())->find($statement, TableReference::class), ...(new Walker())->find($statement, WriteTarget::class)] as $table) {
             $names[] = $this->key($table->name, $database);
         }
+        if ($statement instanceof InsertStatement) {
+            $names[] = $this->key($statement->target->resolvedName ?? $statement->target->name, $database);
+        }
 
         return array_values(array_unique($names));
     }
@@ -104,6 +108,7 @@ final class Running
     public function check(Node $statement, string $database): void
     {
         $targets = match (true) {
+            $statement instanceof InsertStatement => [$statement->target->resolvedName ?? $statement->target->name],
             $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => [$statement->into->table->name],
             $statement instanceof Delete => [$statement->table->name],
             $statement instanceof Update => array_map(static fn (TableReference $table): QualifiedName => $table->name, array_merge(...array_map(static fn (Node $relation): array => (new Walker())->find($relation, TableReference::class), $statement->tables))),
