@@ -77,7 +77,7 @@
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerCompositeUnits</span>(): <span class="tok-id">iterable</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">IntervalUnit</span>::<span class="tok-id">cases</span>() <span class="tok-kw">as</span> <span class="tok-var">$unit</span>) {</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-kw">if</span> (<span class="tok-id">str_contains</span>(<span class="tok-var">$unit</span>-&gt;<span class="tok-id">value</span>, <span class="tok-str">&#039;_&#039;</span>)) {</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-kw">if</span> (<span class="tok-id">str_contains</span>(<span class="tok-var">$unit</span>-&gt;<span class="tok-id">canonical</span>()-&gt;<span class="tok-id">value</span>, <span class="tok-str">&#039;_&#039;</span>)) {</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>                <span class="tok-kw">yield</span> <span class="tok-var">$unit</span>-&gt;<span class="tok-id">value</span> =&gt; [<span class="tok-var">$unit</span>];</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>            }</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        }</span>
