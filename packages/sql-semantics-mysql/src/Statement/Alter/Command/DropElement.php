@@ -21,8 +21,8 @@ use SqlSemantics\Statement\Snapshot;
  * element (5.x lets a table qualify the name). RESTRICT and CASCADE are
  * accepted only after a column and have no effect; they are kept as written.
  * Only columns are part of a declaration context, so only a dropped column
- * is checked (see AlterTable). The word COLUMN is optional and always
- * written.
+ * is checked (see AlterTable). The presence of the optional COLUMN keyword
+ * belongs only to a column drop and is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
  * @visibility public
@@ -35,14 +35,21 @@ final class DropElement implements AlterCommand
     use Snapshot;
 
     /**
+     * Whether COLUMN was written; absent for other dropped elements.
+     */
+    public readonly ?bool $columnWritten;
+
+    /**
      * @param ElementKind $kind The kind of element
      * @param ColumnName|null $name The element name; null only for the primary key
      * @param DropBehavior|null $behavior RESTRICT or CASCADE after a column, when written
      */
-    public function __construct(public readonly ElementKind $kind, public readonly ?ColumnName $name = null, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly ElementKind $kind, public readonly ?ColumnName $name = null, public readonly ?DropBehavior $behavior = null, ?bool $columnWritten = null)
     {
         Check::input(($name === null) === ($kind === ElementKind::PrimaryKey), 'Every dropped element but the primary key is named.');
         Check::input($behavior === null || $kind === ElementKind::Column, 'Only a dropped column takes RESTRICT or CASCADE.');
+        Check::input($columnWritten === null || $kind === ElementKind::Column, 'Only a dropped column has an optional COLUMN keyword.');
+        $this->columnWritten = $kind === ElementKind::Column ? ($columnWritten ?? true) : null;
     }
 
     /**
@@ -58,7 +65,11 @@ final class DropElement implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword('DROP', ...explode(' ', $this->kind->value))->node($this->name);
+        $out->keyword('DROP');
+        if ($this->columnWritten !== false) {
+            $out->keyword(...explode(' ', $this->kind->value));
+        }
+        $out->node($this->name);
         if ($this->behavior !== null) {
             $out->keyword($this->behavior->value);
         }

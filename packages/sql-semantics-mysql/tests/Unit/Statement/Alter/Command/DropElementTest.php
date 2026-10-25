@@ -15,17 +15,24 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement;
 #[Medium]
 final class DropElementTest extends TestCase
 {
+    public function testRejectsAColumnKeywordChoiceForAnotherElementKind(): void
+    {
+        $this->expectExceptionMessage('Only a dropped column has an optional COLUMN keyword.');
+        new DropElement(\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::PrimaryKey, columnWritten: false);
+    }
+
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t DROP INDEX i, DROP FOREIGN KEY f', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesEveryKind(): void
     {
-        self::assertSame('ALTER TABLE t DROP COLUMN a CASCADE, DROP PRIMARY KEY, DROP INDEX i, DROP CHECK c, DROP CONSTRAINT d', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP KEY i, DROP CHECK c, DROP CONSTRAINT d')->toString());
+        self::assertSame('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP INDEX i, DROP CHECK c, DROP CONSTRAINT d', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP KEY i, DROP CHECK c, DROP CONSTRAINT d')->toString());
     }
 }

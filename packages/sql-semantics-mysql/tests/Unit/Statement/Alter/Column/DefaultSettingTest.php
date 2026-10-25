@@ -45,12 +45,13 @@ final class DefaultSettingTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER a SET DEFAULT (b + x)', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
 
         self::assertSame(['Column x does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
     public function testRenderWritesEveryForm(): void
     {
-        self::assertSame("ALTER TABLE t ALTER COLUMN a SET DEFAULT 'x', ALTER COLUMN b SET DEFAULT (1), ALTER COLUMN c DROP DEFAULT", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ALTER a SET DEFAULT 'x', ALTER b SET DEFAULT (1), ALTER c DROP DEFAULT")->toString());
+        self::assertSame("ALTER TABLE t ALTER a SET DEFAULT 'x', ALTER b SET DEFAULT (1), ALTER c DROP DEFAULT", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ALTER a SET DEFAULT 'x', ALTER b SET DEFAULT (1), ALTER c DROP DEFAULT")->toString());
     }
 }

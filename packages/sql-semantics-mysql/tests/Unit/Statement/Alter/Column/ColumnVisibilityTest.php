@@ -20,12 +20,13 @@ final class ColumnVisibilityTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER a SET VISIBLE', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheVisibility(): void
     {
-        self::assertSame('ALTER TABLE t ALTER COLUMN a SET VISIBLE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET VISIBLE')->toString());
+        self::assertSame('ALTER TABLE t ALTER a SET VISIBLE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET VISIBLE')->toString());
     }
 }

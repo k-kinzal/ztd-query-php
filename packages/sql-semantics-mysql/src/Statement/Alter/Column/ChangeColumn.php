@@ -20,14 +20,14 @@ use SqlSemantics\Statement\Snapshot;
  * statements: MODIFY is CHANGE with the old name equal to the new one. The
  * old name is kept when CHANGE writes it, and is absent for MODIFY, whose
  * definition names the column. The expressions of the definition are
- * derived in the scope of the changed table. The word COLUMN is optional and
- * always written.
+ * derived in the scope of the changed table. The presence of the optional COLUMN keyword
+ * is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-redefine-column.
  *
  * @visibility public
  * @example Renaming and retyping a column
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b BIGINT FIRST');
- *     [$alter->statement->commands[0]->column?->column->value, $alter->toString()] // => ['a', 'ALTER TABLE t CHANGE COLUMN a b BIGINT FIRST']
+ *     [$alter->statement->commands[0]->column?->column->value, $alter->toString()] // => ['a', 'ALTER TABLE t CHANGE a b BIGINT FIRST']
  */
 final class ChangeColumn implements AlterCommand
 {
@@ -38,7 +38,7 @@ final class ChangeColumn implements AlterCommand
      * @param ColumnDefinition $definition The new definition with the new name
      * @param ColumnPosition|null $position Where the column goes, when written
      */
-    public function __construct(public readonly ?ColumnName $column, public readonly ColumnDefinition $definition, public readonly ?ColumnPosition $position = null)
+    public function __construct(public readonly ?ColumnName $column, public readonly ColumnDefinition $definition, public readonly ?ColumnPosition $position = null, public readonly bool $columnWritten = true)
     {
         \SqlSemantics\Diagnostic\Check::input($column === null || $definition->name->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted || $column->table?->schema !== null, 'A dot-prefixed CHANGE definition follows a fully qualified old name.');
     }
@@ -65,6 +65,10 @@ final class ChangeColumn implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->column === null ? 'MODIFY' : 'CHANGE', 'COLUMN')->node($this->column)->node($this->definition)->node($this->position);
+        $out->keyword($this->column === null ? 'MODIFY' : 'CHANGE');
+        if ($this->columnWritten) {
+            $out->keyword('COLUMN');
+        }
+        $out->node($this->column)->node($this->definition)->node($this->position);
     }
 }

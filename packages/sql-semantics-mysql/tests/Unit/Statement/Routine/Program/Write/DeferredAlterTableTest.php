@@ -19,6 +19,7 @@ final class DeferredAlterTableTest extends TestCase
     public function testDeriveProgramAndDeriveRelationKeepTheTargetAndCompleteActions(): void
     {
         $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER()), ADD a INT');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
         $alter = $operation->statement->body;
         self::assertInstanceOf(DeferredAlterTable::class, $alter);
@@ -29,7 +30,8 @@ final class DeferredAlterTableTest extends TestCase
     public function testRenderRetainsColumnAttributesAndActionOrder(): void
     {
         $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER()) STORED NOT NULL, ADD a INT');
-        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t MODIFY COLUMN g INT AS (USER()) STORED NOT NULL, ADD COLUMN a INT', $operation->toString());
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS (USER()) STORED NOT NULL, ADD a INT', $operation->toString());
     }
 
     public function testRejectsAnOrdinaryActionList(): void
@@ -42,6 +44,7 @@ final class DeferredAlterTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, '5.7.44');
         $table = $semantics->analyze('CREATE TABLE t(g INT)');
         $operation = $semantics->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER())', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
         $alter = $operation->statement->body;
         self::assertInstanceOf(DeferredAlterTable::class, $alter);

@@ -379,13 +379,16 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\AddColumn": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\ColumnDefinition",
+        "columnWritten": "bool",
         "position": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnPosition"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\AddColumns": {
+        "columnWritten": "bool",
         "elements": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ChangeColumn": {
         "column": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "columnWritten": "bool",
         "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\ColumnDefinition",
         "position": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnPosition"
     },
@@ -394,10 +397,12 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\ColumnVisibility": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "columnWritten": "bool",
         "visible": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Column\\DefaultSetting": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "columnWritten": "bool",
         "default": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\DefaultExpression|null"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\AddConstraint": {
@@ -414,6 +419,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement": {
         "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
+        "columnWritten": "?bool",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind",
         "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
     },
@@ -2926,6 +2932,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDefaultSetting": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
+        "columnWritten": "bool",
         "expression": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete": {

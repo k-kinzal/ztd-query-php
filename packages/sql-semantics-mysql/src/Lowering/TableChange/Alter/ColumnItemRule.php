@@ -103,11 +103,11 @@ final class ColumnItemRule
      */
     public function item(Form $form): AlterCommand
     {
-        $this->column($form);
+        $written = $this->column($form);
         if (isset(self::LISTED[$form->signature])) {
             [$kind, $list] = self::LISTED[$form->signature];
 
-            return $kind === 'adds' ? new AddColumns($this->lowering->tableDefinitions->tableElements($form->node($list))) : new Reorder($this->order($form->node($list)));
+            return $kind === 'adds' ? new AddColumns($this->lowering->tableDefinitions->tableElements($form->node($list)), $written) : new Reorder($this->order($form->node($list)));
         }
         if (isset(self::ALTERED[$form->signature])) {
             return $this->altered($form);
@@ -116,9 +116,9 @@ final class ColumnItemRule
         $position = $this->position($form, $place);
 
         return match ($kind) {
-            'add' => new AddColumn($this->definition($form, $name, $operand, $second), $position),
-            'change' => new ChangeColumn($this->name($form->node(2)), $this->definition($form, $second, $operand, null), $position),
-            'modify' => new ChangeColumn(null, $this->definition($form, $name, $operand, $second), $position),
+            'add' => new AddColumn($this->definition($form, $name, $operand, $second), $position, $written),
+            'change' => new ChangeColumn($this->name($form->node(2)), $this->definition($form, $second, $operand, null), $position, $written),
+            'modify' => new ChangeColumn(null, $this->definition($form, $name, $operand, $second), $position, $written),
         };
     }
 
@@ -131,34 +131,35 @@ final class ColumnItemRule
     {
         [$kind, $name, $operand] = self::ALTERED[$form->signature] ?? throw ImplementationGap::production($form);
         $column = $this->name($form->node($name));
+        $written = $this->column($form);
         if ($operand === null) {
-            return new DefaultSetting($column, null);
+            return new DefaultSetting($column, null, $written);
         }
 
         return match ($kind) {
-            'default' => new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($this->lowering->literals->signed($form->node($operand)))),
-            'expression' => $this->defaultExpression($column, $form->node($operand)),
-            'visibility' => new ColumnVisibility($column, $this->lowering->tableDefinitions->visible($form->node($operand))),
+            'default' => new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($this->lowering->literals->signed($form->node($operand))), $written),
+            'expression' => $this->defaultExpression($column, $form->node($operand), $written),
+            'visibility' => new ColumnVisibility($column, $this->lowering->tableDefinitions->visible($form->node($operand)), $written),
         };
     }
 
     /**
      * Retains a non-scalar default in its complete alteration instruction.
      */
-    public function defaultExpression(ColumnName $column, Node $node): AlterCommand
+    public function defaultExpression(ColumnName $column, Node $node, bool $columnWritten = true): AlterCommand
     {
         $operand = $this->lowering->expressions->operand($node);
         return $operand instanceof \SqlSemantics\Statement\Scalar
-            ? new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression($operand))
-            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting($column, $operand);
+            ? new DefaultSetting($column, new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression($operand), $columnWritten)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting($column, $operand, $columnWritten);
     }
 
     /**
-     * Confirms the optional COLUMN keyword of an action, or of its `add_column` prefix.
+     * Reads whether COLUMN was written in an action or its `add_column` prefix.
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function column(Form $form): void
+    public function column(Form $form): bool
     {
         $first = $form->node->children[0] ?? null;
         if ($first instanceof Node && $first->name === 'add_column') {
@@ -166,27 +167,27 @@ final class ColumnItemRule
             if ($prefix->signature !== 'add_column: ADD opt_column') {
                 throw ImplementationGap::production($prefix);
             }
-            $this->optional($prefix->node(1));
-
-            return;
+            return $this->optional($prefix->node(1));
         }
         $second = $form->node->children[1] ?? null;
         if ($second instanceof Node && $second->name === 'opt_column') {
-            $this->optional($second);
+            return $this->optional($second);
         }
+        return false;
     }
 
     /**
-     * Confirms a node of `opt_column`, whose keyword has no effect.
+     * Reads the optional COLUMN keyword without discarding its presence.
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function optional(Node $column): void
+    public function optional(Node $column): bool
     {
         $form = $this->lowering->form($column);
         if ($form->signature !== 'opt_column:' && $form->signature !== 'opt_column: COLUMN_SYM') {
             throw ImplementationGap::production($form);
         }
+        return $form->signature === 'opt_column: COLUMN_SYM';
     }
 
     /**

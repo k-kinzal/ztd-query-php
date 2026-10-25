@@ -34,7 +34,7 @@ final class DeferredDefaultSetting implements AlterCommand
      * @param ColumnName $column The target column
      * @param RowOperand|DeferredOperand $expression The complete default operand
      */
-    public function __construct(public readonly ColumnName $column, public readonly RowOperand|DeferredOperand $expression)
+    public function __construct(public readonly ColumnName $column, public readonly RowOperand|DeferredOperand $expression, public readonly bool $columnWritten = true)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -53,6 +53,10 @@ final class DeferredDefaultSetting implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'COLUMN')->node($this->column)->keyword('SET', 'DEFAULT')->symbol('(')->node($this->expression)->symbol(')');
+        $out->keyword('ALTER');
+        if ($this->columnWritten) {
+            $out->keyword('COLUMN');
+        }
+        $out->node($this->column)->keyword('SET', 'DEFAULT')->symbol('(')->node($this->expression)->symbol(')');
     }
 }

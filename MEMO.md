@@ -453,3 +453,35 @@ A temporary diagnostic audit called the unchanged round-trip target for all
 2,181 default 8.4.7 seeds: 1,806 passed and 375 failed, including 187 Compact
 mismatches and grammar-valid requests rejected for semantic errors. This audit
 collects defects; it is not a passing PHP-Fuzzer run or acceptance evidence.
+
+
+### Optional COLUMN reconstruction (2026-10-25)
+
+ALTER column actions now retain whether COLUMN was written. ADD (single and
+multiple columns), CHANGE/MODIFY, ALTER DEFAULT, visibility and DROP render that
+choice from a typed field; deferred stored-program defaults retain it too.
+Constructor defaults preserve the existing generated spelling. Non-column DROP
+requests cannot carry a column keyword choice.
+
+All nine grammar releases have explicit presence/absence regressions for seven
+column actions. The full MySQL semantic unit suite passes 9,229 tests / 20,346
+assertions. After narrowing legacy Operation-only assertions at their actual
+boundary, the final affected subset passes 294 / 382. PHPDoc passes 1,111 / 1,111;
+related memory ALTER tests pass 38 / 105. Targeted PHPStan, retained-field schema
+checks and PHP 8.1 compatibility pass. The unchanged exact round-trip fuzz target
+passes the thirteen supplied seeds selected for COLUMN-only mismatches on 8.4.7.
+
+Native replay of those same thirteen seeds still fails on signed_literal-2.txt:
+`ALTER TABLE _sqlfaker_identifier ALTER _sqlfaker_identifier SET DEFAULT
+-18446744073709551616`. The final error 1067 agrees, but MySQL records two preceding
+1264 conversion errors that Memory currently omits. Input hex:
+`0d00000000000a00000000000000000000000200000008000000000000000000020000`.
+This is an execution counterexample, not a reason to omit diagnostics.
+
+The full round-trip corpus now first fails on column_attribute-15.txt:
+`CREATE TABLE _sqlfaker_identifier (_sqlfaker_identifier BIT NULL SRID 1)`.
+Analysis rejects the SRID/non-geometry combination before it can reconstruct the
+request. Input hex:
+`1600000000001a00000000000000000000000000000000000000000000000000030001000000000000000c00000000000000000000`.
+The complete corpus, seedless budgets and concrete-statement migrations remain
+open gates.

@@ -161,6 +161,7 @@ final class ItemRule
             $kind,
             $name === null ? null : $columns->name($form->node($name)),
             $behavior === null ? null : $this->lowering->options->dropBehavior($form->node($behavior)),
+            $kind === ElementKind::Column ? $columns->column($form) : null,
         );
     }
 

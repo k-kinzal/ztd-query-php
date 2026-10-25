@@ -20,12 +20,13 @@ final class AddColumnTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t ADD c INT AS (a + d), ADD d INT', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheDefinitionAndThePosition(): void
     {
-        self::assertSame('ALTER TABLE t ADD COLUMN c INT NOT NULL AFTER a', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t ADD c INT NOT NULL AFTER a')->toString());
+        self::assertSame('ALTER TABLE t ADD c INT NOT NULL AFTER a', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t ADD c INT NOT NULL AFTER a')->toString());
     }
 }

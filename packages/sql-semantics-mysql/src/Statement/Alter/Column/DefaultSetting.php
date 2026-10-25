@@ -24,14 +24,14 @@ use SqlSemantics\Statement\Snapshot;
  * each row, so the form is kept. The value is derived in the scope of the
  * changed table. The bare current-timestamp clause belongs to column
  * definitions, not this action: a clock default here requires DefaultExpression.
- * The word COLUMN is optional and always written.
+ * The presence of the optional COLUMN keyword is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
  * @visibility public
  * @example Setting a literal default
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
- *     [$alter->statement->commands[0]->default instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral, $alter->toString()] // => [true, 'ALTER TABLE t ALTER COLUMN a SET DEFAULT 1']
+ *     [$alter->statement->commands[0]->default instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral, $alter->toString()] // => [true, 'ALTER TABLE t ALTER a SET DEFAULT 1']
  */
 final class DefaultSetting implements AlterCommand
 {
@@ -41,7 +41,7 @@ final class DefaultSetting implements AlterCommand
      * @param ColumnName $column The column
      * @param DefaultLiteral|DefaultExpression|null $default The replacement default, or null for DROP DEFAULT
      */
-    public function __construct(public readonly ColumnName $column, public readonly DefaultLiteral|DefaultExpression|null $default)
+    public function __construct(public readonly ColumnName $column, public readonly DefaultLiteral|DefaultExpression|null $default, public readonly bool $columnWritten = true)
     {
         Check::input(!$default instanceof DefaultLiteral || $default->value instanceof Literal, 'ALTER COLUMN SET DEFAULT accepts a literal or a parenthesized expression; a bare timestamp clause belongs to a column definition.');
     }
@@ -60,7 +60,11 @@ final class DefaultSetting implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'COLUMN')->node($this->column);
+        $out->keyword('ALTER');
+        if ($this->columnWritten) {
+            $out->keyword('COLUMN');
+        }
+        $out->node($this->column);
         if ($this->default === null) {
             $out->keyword('DROP', 'DEFAULT');
         } else {

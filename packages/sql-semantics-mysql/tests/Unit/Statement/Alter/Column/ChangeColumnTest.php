@@ -19,6 +19,7 @@ final class ChangeColumnTest extends TestCase
     public function testChangedAnswersTheRedefinedColumn(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIGINT, CHANGE b c INT');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
 
         self::assertInstanceOf(AlterTable::class, $alter->statement);
         [$modify, $change] = $alter->statement->commands;
@@ -32,13 +33,14 @@ final class ChangeColumnTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t MODIFY a INT DEFAULT (x)', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
 
         self::assertSame('Column x does not exist.', $alter->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesChangeOrModify(): void
     {
-        self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
+        self::assertSame('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
     }
     public function testRejectsADotPrefixThatWouldChangeTheOldNameInterpretation(): void
     {
@@ -52,8 +54,9 @@ final class ChangeColumnTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $operation = $semantics->analyze('ALTER TABLE d.t CHANGE d.t.a .b INT');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(AlterTable::class, $operation->statement);
-        self::assertSame('ALTER TABLE d.t CHANGE COLUMN d.t.a .b INT', $operation->toString());
+        self::assertSame('ALTER TABLE d.t CHANGE d.t.a .b INT', $operation->toString());
     }
 
 }
