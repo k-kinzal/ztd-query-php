@@ -430,9 +430,10 @@ the SQL families:
   parsing are not an alternative to these invariants.
 - Reinterpretation operates on those SQL alternatives directly. For example, a
   double-quoted segment can bind as a column use under ANSI_QUOTES; a symbolic
-  pipe operator can bind as disjunction or concatenation. Operator regrouping
-  uses typed operator precedence and explicit grouping boundaries. It cannot
-  render text and call a parser to recover the lost distinctions.
+  pipe operator can bind as disjunction or concatenation. This alone does not
+  cover changes to lexical boundaries; preparation must capture the complete
+  alternatives described below. Execution cannot render text and call a parser
+  to recover the lost distinctions.
 - The binding reason is explicit: initial binding, parameter-type refresh,
   metadata invalidation or routine invocation. Its versioned rules select the
   database, lexical interpretation, client encoding and parameter constraints.
@@ -452,6 +453,65 @@ execution comparison must exercise those same observable sequences. The existing
 PreparedCache source-reanalysis path and its example regression demonstrate the
 needed behavior, but do not satisfy the typed-input boundary. Replacing that path
 before retaining these distinctions would silently weaken the model.
+
+Changing NO_BACKSLASH_ESCAPES can change more than a local operand. Native 8.4.7
+preparation of `SELECT 'left\' AS changed FROM u -- ' FROM t` initially reads
+one row from `t`, with the apparent clause inside a string. After invalidating
+`t` and enabling NO_BACKSLASH_ESCAPES, the same preparation reads two rows from
+`u`; the string now ends before the clause. The binary PDO observation retains
+the original exposed column label, so metadata must still be checked separately.
+The input and observations are in
+`mysql-memory/build/verification/reprepare-boundaries-native.log`. A binder that
+merely changes a StringLiteral into a ColumnUse or rearranges known operators
+cannot implement this case: the new clause was not in the original SQL graph.
+
+The executable preparation contract is therefore:
+
+1. Ordinary `analyze()` still returns a concrete statement for its selected
+   profile. At SQL PREPARE or COM_STMT_PREPARE, the SQL input boundary additionally
+   constructs a typed preparation definition. While the input is available there,
+   the official parser and lowering determine the complete statement alternatives
+   or syntax refusals under the release's possible lexical interpretations and
+   client encodings. Identical alternatives can share immutable values. This work
+   occurs at the authorized SQL input boundary, before the input is discarded.
+2. The preparation definition owns those SQL alternatives, the original database
+   binding and parameter identities. Its alternatives are semantic statements
+   with local meaning and explicit declaration-dependent inputs, never parser
+   trees or a saved SQL buffer. It has no Facts registry or AnalysisContext.
+   It is a SQL preparation value, not a replacement aggregate returned by ordinary
+   `analyze()`. Runtime cache entries retain it and the currently bound statement.
+3. A mode/encoding selection has complete coverage of the supported preparation
+   domain. An absent implementation branch fails explicitly; there is no fallback
+   to the active statement, original text or a parser. Version-specific rules
+   select the alternative and bind it against current declarations and parameters.
+   Only dependencies of the active interpretation invalidate the current cache;
+   inactive alternatives must not cause premature repreparation.
+4. Pure binding checks types, names and catalog conditions on the selected SQL
+   values. It does not rediscover clauses from string contents. Replacement of the
+   active statement, parameter domains and dependency list is atomic; a failed
+   alternative leaves the previous cache available for a later retry.
+5. Eris constructs the same preparation definitions and their dependent statement
+   sequences directly. The generators compose the alternatives together and
+   preserve their shared written form and parameter relationships while shrinking.
+   Checking that alternatives reconstruct the same input is separate from their
+   execution; rendering and analyzing a generated value to manufacture a missing
+   alternative is prohibited. A generator for only the active interpretation does
+   not cover a preparation definition.
+
+This finite profile closure is an analysis responsibility, not another testing
+framework or a runtime parser. The lexical domain is the 32 combinations of
+ANSI_QUOTES, PIPES_AS_CONCAT, HIGH_NOT_PRECEDENCE, NO_BACKSLASH_ESCAPES and
+IGNORE_SPACE; mode aliases expand to these flags. Grammar release and protocol
+parameter style remain fixed. Client encodings come from the release's character
+set catalog, with the server's client-encoding restrictions applied; for example,
+[8.4 excludes ucs2, utf16, utf16le and utf32](https://dev.mysql.com/doc/refman/8.4/en/charset-connection.html).
+Session modes such as REAL_AS_FLOAT and strict conversion modes are separate
+typed-binding or execution inputs, not additional lexer branches. Syntax-refusal
+alternatives and deduplication of identical semantic values must be explicit.
+The current statement
+types, generated preparation definitions and native sequence observation do not
+yet implement it. C cannot close by substituting the existing ordinary Binding
+operation for PreparedCache's reanalysis call.
 
 ### One execution lifecycle
 
@@ -478,9 +538,10 @@ entry used by PBT. It must not run a second semantic interpretation of prefixes
 which changes the meaning of an already published statement. Parsed semantic
 conditions belong to analysis, not duplicated parser walks inside commands.
 
-Prepared execution stores the concrete semantic statement, parameter slots and
-catalog dependencies. Rebinding after catalog invalidation uses typed operands
-and fresh catalog inputs; it is not a rendered-SQL fallback inside execution.
+Prepared execution stores the typed preparation definition, its active concrete
+statement, parameter slots and active catalog dependencies. Rebinding after
+catalog invalidation selects a retained semantic alternative and uses fresh
+catalog inputs; it is not a rendered-SQL fallback inside execution.
 SQL PREPARE legitimately evaluates SQL-valued application data and sends that new
 input through the SQL input boundary. This is distinct from reparsing an existing
 statement to recover information its model omitted.
@@ -510,6 +571,7 @@ the structural migration, rather than permission to keep parallel APIs.
 | --- | --- | --- |
 | `sql-semantics/src/Facade/Semantics.php`, `Validation/Publication.php`, `Statement/Operation.php` | Publish concrete statements through the result interface; keep construction/binding indexes private to analysis | No published Operation, context, Facts or source map; construction does not render/reparse to discover meaning |
 | `sql-semantics-mysql/src/Platform.php`, `Lowering/`, `Rules/` | Lower syntax and bind local semantic values for every grammar-dispatched family | No INSERT-only publication route or default Operation route |
+| `sql-parser/src/MySql/`, MySQL profile construction and preparation input handling | Read each supported lexical profile and client encoding consistently before retaining typed preparation alternatives | Repreparation selects complete semantic alternatives without runtime parsing; missing lexer/encoding support is exposed |
 | `sql-semantics*/src/Statement/` | Apply the ownership and identity contracts above; preserve grammar-valid refused requests | Every executable fact is reachable through the corresponding element, including missing-input alternatives |
 | `mysql-memory/src/Session/Session.php`, `Session/Parse/`, `Hint/` | Separate SQL input parsing from typed execution; move semantic prefix/tree inspection into analysis | Input text is available for input handling and diagnostic excerpts, never for completing a published statement |
 | `mysql-memory/src/Session/Execution.php`, `Session/Statement/Lifecycle.php`, `Session/Problem/`, `Session/Access/` | Implement one lifecycle with explicit SQL-specific phases and local condition ownership | Analyzed and generated instances of the same statement execute the same phases |
