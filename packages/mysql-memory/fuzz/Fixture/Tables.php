@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Fixture;
 
 use PDO;
+use PDOException;
 use RuntimeException;
 
 /**
@@ -62,6 +63,32 @@ final class Tables
             throw new RuntimeException('A differential fixture statement failed: ' . json_encode($pdo->errorInfo()));
         }
         $statement->closeCursor();
+    }
+
+    /**
+     * Removes the owned fixture database before restoring accounts and tablespaces.
+     *
+     * Only an absent database can make the modern READ ONLY reset unnecessary.
+     * MySQL 5.x has no schema READ ONLY option.
+     *
+     * @throws RuntimeException When the database cannot be made writable or removed
+     */
+    public function remove(PDO $pdo, string $database, string $version): void
+    {
+        $name = '`' . str_replace('`', '``', $database) . '`';
+        if (!str_starts_with($version, '5.')) {
+            try {
+                $reset = $pdo->exec('ALTER SCHEMA ' . $name . ' READ ONLY = 0');
+                if ($reset === false && !in_array($pdo->errorInfo()[1] ?? null, [1049, 3503], true)) {
+                    throw new RuntimeException('Cannot make the fixture database writable: ' . json_encode($pdo->errorInfo()));
+                }
+            } catch (PDOException $failure) {
+                if (!in_array($failure->errorInfo[1] ?? null, [1049, 3503], true)) {
+                    throw new RuntimeException('Cannot make the fixture database writable.', 0, $failure);
+                }
+            }
+        }
+        $this->execute($pdo, 'DROP DATABASE IF EXISTS ' . $name);
     }
 
 }

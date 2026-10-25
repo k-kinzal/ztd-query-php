@@ -7,17 +7,20 @@ namespace Fuzz\Container;
 use Container\MySqlContainer;
 use Container\MySqlRelease;
 use Override;
+use RuntimeException;
 use Testcontainers\Containers\ReuseMode;
 
 /**
- * A fresh Testcontainers database for a statement that stops or restarts its server.
+ * A fresh Testcontainers database owned by one campaign or lifecycle observation.
  *
- * ADD prevents a lifecycle input from stopping a container another test or fuzz input uses.
+ * ADD prevents restoration and lifecycle inputs from changing another campaign's server.
  */
 final class DisposableMySql extends MySqlContainer
 {
     /**
      * Uses the repository's pinned image for the requested release.
+     *
+     * @throws RuntimeException When no pinned image exists for the requested release
      */
     public function __construct(string $version)
     {

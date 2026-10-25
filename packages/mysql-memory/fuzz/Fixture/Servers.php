@@ -6,6 +6,7 @@ namespace Fuzz\Fixture;
 
 use Container\Endpoint;
 use Container\MySqlRelease;
+use Fuzz\Container\DisposableMySql;
 use Fuzz\Target\ExecutionTarget;
 use MySqlMemory\Server\MemoryDatabase;
 use PDO;
@@ -62,19 +63,16 @@ final class Servers
     }
 
     /**
-     * Applies the harness's optional fixed port to the repository's reusable reference container.
+     * Owns a fresh reference container, using the repository's pinned release image.
+     *
+     * A failed reset must not contaminate a later campaign or another test's server.
+     * DisposableMySql also applies the harness's optional fixed port.
      *
      * @throws RuntimeException When no pinned image exists for the requested release
      */
     public function reference(string $version): \Container\MySqlContainer
     {
-        $definition = MySqlRelease::container($version);
-        $container = new $definition();
-        $port = filter_var(getenv('MYSQL_MEMORY_CONTAINER_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
-        if (is_int($port)) {
-            $container->withPortStrategy(new \Testcontainers\Containers\PortStrategy\StaticPortStrategy($port));
-        }
-        return $container;
+        return new DisposableMySql($version);
     }
 
     /**
@@ -114,6 +112,7 @@ final class Servers
      * Captures startup configuration, preserving NULL reads that SHOW VARIABLES renders as empty strings.
      *
      * @return array<string, string|null>
+     * @throws RuntimeException When the initial configuration cannot be read completely
      */
     public function globals(PDO $native, string $version): array
     {
@@ -128,8 +127,11 @@ final class Servers
         if ($empty !== []) {
             $read = $native->query('SELECT ' . implode(', ', array_map(static fn (string $name): string => '@@GLOBAL.`' . str_replace('`', '``', $name) . '`', $empty)));
             $values = $read === false ? false : $read->fetch(PDO::FETCH_NUM);
+            if (!is_array($values) || count($values) !== count($empty)) {
+                throw new RuntimeException('Cannot distinguish NULL global fixture variables from empty strings.');
+            }
             foreach ($empty as $position => $name) {
-                if (is_array($values) && array_key_exists($position, $values) && $values[$position] === null) {
+                if ($values[$position] === null) {
                     $globals[$name] = null;
                 }
             }
@@ -155,7 +157,7 @@ final class Servers
             : ["CREATE USER IF NOT EXISTS {$account} IDENTIFIED BY {$quoted}", "GRANT ALL ON *.* TO {$account} WITH GRANT OPTION"];
         $statements[] = "GRANT PROXY ON CURRENT_USER TO {$account} WITH GRANT OPTION";
         foreach ($statements as $statement) {
-            $connection->exec($statement);
+            (new Tables())->execute($connection, $statement);
         }
     }
 
@@ -180,7 +182,7 @@ final class Servers
         foreach ($this->rows($native, 'SELECT Server_name FROM mysql.servers') as [$name]) {
             $statements[] = 'DROP SERVER IF EXISTS `' . str_replace('`', '``', $name) . '`';
         }
-        foreach ($this->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
+        foreach (str_starts_with($version, '5.') ? [] : $this->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
             if (!in_array($name, ['SYS_default', 'USR_default'], true)) {
                 $statements[] = 'DROP RESOURCE GROUP `' . str_replace('`', '``', $name) . '` FORCE';
             }
@@ -193,26 +195,33 @@ final class Servers
         $statements[] = "DELETE FROM mysql.proxies_priv WHERE User = 'root' AND Host = '%'";
         $statements[] = 'FLUSH PRIVILEGES';
         foreach ($statements as $statement) {
-            $native->exec($statement);
+            (new Tables())->execute($native, $statement);
         }
     }
 
     /**
-     * Answers the rows of a query as lists of strings, or none when the release lacks the table it reads.
+     * Reads a supported fixture interface; absence must be selected by the caller's release contract.
      *
      * @return list<list<string>>
+     * @throws RuntimeException When a fixture query fails or returns an invalid row
      */
     public function rows(PDO $native, string $sql): array
     {
         try {
             $statement = $native->query($sql);
-        } catch (PDOException) {
-            return [];
+        } catch (PDOException $failure) {
+            throw new RuntimeException('Cannot read a differential fixture: ' . $sql, 0, $failure);
+        }
+        if ($statement === false) {
+            throw new RuntimeException('Cannot read a differential fixture: ' . $sql . ': ' . json_encode($native->errorInfo()));
         }
         $rows = [];
-        foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_NUM) as $row) {
+        foreach ($statement->fetchAll(PDO::FETCH_NUM) as $row) {
+            if (!is_array($row)) {
+                throw new RuntimeException('The differential fixture returned an invalid row.');
+            }
             $values = [];
-            foreach (is_array($row) ? $row : [] as $value) {
+            foreach ($row as $value) {
                 $values[] = is_scalar($value) ? (string) $value : '';
             }
             $rows[] = $values;

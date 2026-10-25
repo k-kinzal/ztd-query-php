@@ -755,6 +755,32 @@ and the remaining environment contracts. Goal C still requires replacement of th
 Operation/Facts publication and dual execution lifecycle. No statement-specific
 counterexample has been repaired as part of this boundary migration.
 
+Restoration now discovers objects independently on the connection being restored.
+Failed catalog reads and failed cleanup statements abort the input. A postcondition
+checks the catalog, spatial definitions, global variables, grants and the tested
+account before another input can run. Versioned probes select supported catalog
+interfaces explicitly. Initial general tablespaces are preserved, including the
+native dictionary space; an absent initial space is an error. This does not yet
+establish restoration of every state domain listed above.
+
+Each ordinary campaign owns a fresh reference container, as lifecycle observations
+already do. A contaminated fixture cannot be reused by a later campaign or another
+test. An explicitly configured external DSN remains the caller's disposable fixture.
+
+Account restoration replays the original CREATE USER definition through the
+independent administrator after removing owned schema objects. The previous
+CREATE-to-ALTER text substitution was not equivalent: ALTER USER with an
+authentication plugin but no credential expires the password under MySQL's
+documented rules. This was a harness defect, not a semantic counterexample.
+
+The restoration and observation-state mechanism tests pass together: nine tests,
+29 assertions. The changed files pass PHPStan, formatting and PHP 8.1 compatibility.
+With the stronger initial-state check, the supplied 8.4.7 BEGIN replay exposes a
+missing `mysql` general tablespace in MemoryDB. The earlier one-input success
+above predates that check and is not current acceptance evidence. The missing
+catalog state remains visible for the coherent model migration; it has not been
+excluded from comparison or patched as an isolated SQL case.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

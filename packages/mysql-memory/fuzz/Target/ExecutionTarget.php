@@ -115,17 +115,13 @@ final class ExecutionTarget
         $this->nativeObservation = null;
         $guard = $this->guard();
         $this->repair($guard);
-        $this->baseline?->restore($guard, true);
+        $this->baseline?->restore($guard);
         $first = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql, $mode);
         $expected = $first['comparable'];
         $this->nativeObservation = $this->json($first['raw']);
-        $this->repair($guard);
-        $this->baseline?->restore($guard, true);
         $second = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql, $mode);
         $again = $second['comparable'];
         $observations = ['native' => $first['raw'], 'repeated' => $second['raw']];
-        $this->repair($guard);
-        $this->baseline?->restore($guard, true);
         $library = new LibraryErrors();
         $files = new TemporaryFiles();
         $normalized = $library->comparable($expected, $this->version);
@@ -140,16 +136,10 @@ final class ExecutionTarget
             return new Comparison(true, contracts: $contracts, referenceDifference: $this->describe($expected, $again), observations: $observations);
         }
         $this->repair($this->memoryGuard());
-        $this->baseline?->restore($this->memoryGuard(), false);
-        try {
-            $memory = $this->run($this->memory, 'root', '', $sql, $mode);
-            $observations['memory'] = $memory['raw'];
-            $actual = $files->comparable($library->comparable($memory['comparable'], $this->version), $this->version);
-        } finally {
-            $this->server?->assertNoInternalFailure();
-            $this->repair($this->memoryGuard());
-            $this->baseline?->restore($this->memoryGuard(), false);
-        }
+        $this->baseline?->restore($this->memoryGuard());
+        $memory = $this->run($this->memory, 'root', '', $sql, $mode);
+        $observations['memory'] = $memory['raw'];
+        $actual = $files->comparable($library->comparable($memory['comparable'], $this->version), $this->version);
         if ($expected === $actual) {
             return new Comparison(false, contracts: $contracts, observations: $observations);
         }
@@ -270,6 +260,31 @@ final class ExecutionTarget
     {
         $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
         $pdo = $this->connect($dsn, $user, $password, $clock);
+        try {
+            $record = $this->observe($pdo, $dsn, $sql, $mode);
+            return ['raw' => $record['raw'], 'comparable' => $clock?->comparable($record['comparable']) ?? $record['comparable']];
+        } finally {
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+            $pdo->exec('ROLLBACK');
+            $pdo->exec('KILL CONNECTION_ID()');
+            $pdo = null;
+            gc_collect_cycles();
+            if ($dsn === $this->memory) {
+                $this->server?->assertNoInternalFailure();
+            }
+            $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+            $this->repair($guard);
+            $this->baseline?->restore($guard);
+        }
+    }
+
+    /**
+     * Captures raw results and the comparison copy before the owning run restores its fixture.
+     *
+     * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
+     */
+    public function observe(PDO $pdo, string $dsn, string $sql, string $mode): array
+    {
         if ($mode !== '') {
             (new Tables())->execute($pdo, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')');
         }
@@ -317,18 +332,7 @@ final class ExecutionTarget
         $raw['tables'] = $observation['tables'];
         $raw['definitions'] = $observation['definitions'];
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
-        $pdo->exec('ROLLBACK');
-        $pdo->exec('KILL CONNECTION_ID()');
-        $pdo = null;
-        gc_collect_cycles();
-        if ($this->baseline !== null) {
-            $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
-            $this->repair($guard);
-            $this->baseline->restore($guard, $dsn === $this->native);
-        }
-
-        return ['raw' => $raw, 'comparable' => $clock?->comparable($observation) ?? $observation];
+        return ['raw' => $raw, 'comparable' => $observation];
     }
 
     /**
@@ -341,10 +345,7 @@ final class ExecutionTarget
         try {
             $foundRows = defined('Pdo\\Mysql::ATTR_FOUND_ROWS') ? constant('Pdo\\Mysql::ATTR_FOUND_ROWS') : PDO::MYSQL_ATTR_FOUND_ROWS;
             $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $this->emulate, $foundRows => $this->foundRows]);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
-            $pdo->exec('ALTER SCHEMA `' . self::DATABASE . '` READ ONLY = 0');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $pdo->exec('DROP DATABASE IF EXISTS `' . self::DATABASE . '`');
+            (new Tables())->remove($pdo, self::DATABASE, $this->version);
             $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
             $pdo->exec('USE `' . self::DATABASE . '`');
             foreach ((new Tables())->statements() as $statement) {

@@ -11,13 +11,14 @@ use RuntimeException;
 /**
  * Restores the disposable servers between observations, including state outside the fixture database.
  *
- * Cleanup discovered on MySQL is retained and also applied to mysql-memory, whose system catalogs
- * need not implement the introspection queries used by the harness. No generated statement is excluded.
+ * Each server's own catalog determines its cleanup. A reference-only inventory
+ * would miss objects created erroneously by mysql-memory. Catalog reads and
+ * restoration are checked; no generated statement is excluded.
  */
 final class Baseline
 {
     /**
-     * @var array<string, true> The inverse statements discovered on the reference server
+     * @var array<string, true> The inverse statements discovered on the connection being restored
      */
     public array $cleanup = [];
 
@@ -27,7 +28,7 @@ final class Baseline
     public array $globals = [];
 
     /**
-     * The statement restoring the original account authentication and options.
+     * The original account's CREATE statement, preserving authentication and options.
      */
     public readonly ?string $account;
 
@@ -47,6 +48,11 @@ final class Baseline
     public readonly SpatialBaseline $spatial;
 
     /**
+     * @var list<string> General tablespaces installed before generated input, including the MySQL dictionary
+     */
+    public readonly array $tablespaces;
+
+    /**
      * Captures the original global variables and authentication string without generating a new password salt.
      *
      * @throws RuntimeException When the initial spatial catalog cannot be captured
@@ -54,13 +60,14 @@ final class Baseline
     public function __construct(PDO $native, public readonly string $version)
     {
         $this->spatial = new SpatialBaseline($native, $version);
+        $this->tablespaces = $this->generalTablespaces($native);
         $server = new Servers();
         [$user, $host] = explode('@', $server->rows($native, 'SELECT CURRENT_USER()')[0][0], 2);
         $this->identity = $native->quote($user) . '@' . $native->quote($host);
         $this->grants = array_column($server->rows($native, 'SHOW GRANTS FOR CURRENT_USER'), 0);
         $this->globals = $server->globals($native, $version);
-        $account = (new Servers())->rows($native, 'SHOW CREATE USER CURRENT_USER');
-        $this->account = $account === [] ? null : (string) preg_replace('/\ACREATE USER /', 'ALTER USER ', $account[0][1] ?? $account[0][0]);
+        $account = str_starts_with($version, '5.6.') ? [] : (new Servers())->rows($native, 'SHOW CREATE USER CURRENT_USER');
+        $this->account = $account === [] ? null : $account[0][1] ?? $account[0][0];
     }
 
     /**
@@ -69,14 +76,13 @@ final class Baseline
      *
      * @throws RuntimeException When the original account, grants or global variables cannot be restored
      */
-    public function restore(PDO $connection, bool $native): void
+    public function restore(PDO $connection): void
     {
-        if ($native) {
-            $this->discover($connection);
-        }
+        $this->discover($connection);
         $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+        (new Tables())->remove($connection, ExecutionTarget::DATABASE, $this->version);
         foreach ($this->cleanup as $statement => $_) {
-            $connection->exec($statement);
+            (new Tables())->execute($connection, $statement);
         }
         $this->spatial->restore($connection);
         /**
@@ -84,14 +90,17 @@ final class Baseline
          * Reload after deletion so both observations start without the stale cache entry.
          */
         (new Tables())->execute($connection, 'FLUSH PRIVILEGES');
-        $connection->exec('REVOKE ALL PRIVILEGES, GRANT OPTION FROM ' . $this->identity);
+        if ($this->account !== null) {
+            /** ALTER USER without a credential expires the password; replay the original CREATE instead. */
+            (new Tables())->execute($connection, 'DROP USER ' . $this->identity);
+            (new Tables())->execute($connection, $this->account);
+        } else {
+            (new Tables())->execute($connection, 'REVOKE ALL PRIVILEGES, GRANT OPTION FROM ' . $this->identity);
+        }
         foreach ($this->grants as $grant) {
             if ($connection->exec($grant) === false) {
                 throw new RuntimeException('Cannot restore reference grants: ' . json_encode($connection->errorInfo()));
             }
-        }
-        if ($this->account !== null && $connection->exec($this->account) === false) {
-            throw new RuntimeException('Cannot restore the reference account: ' . json_encode($connection->errorInfo()));
         }
         foreach ((new Servers())->globals($connection, $this->version) as $name => $value) {
             if (array_key_exists($name, $this->globals) && $this->globals[$name] !== $value) {
@@ -102,6 +111,42 @@ final class Baseline
                 if ($connection->exec('SET GLOBAL ' . $this->identifier($name) . ' = ' . $literal) === false) {
                     throw new RuntimeException('Cannot restore the global variable ' . $name . ': ' . json_encode($connection->errorInfo()));
                 }
+            }
+        }
+        $this->assertRestored($connection);
+    }
+
+    /**
+     * Verifies the observed catalog, grants, account and globals before another input can run.
+     *
+     * @throws RuntimeException When any part of the initial fixture remains different
+     */
+    public function assertRestored(PDO $connection): void
+    {
+        $this->discover($connection);
+        if ($this->cleanup !== [] || $this->spatial->changed !== []) {
+            throw new RuntimeException('The differential catalog was not restored.');
+        }
+        $server = new Servers();
+        $globals = $server->globals($connection, $this->version);
+        $expected = $this->globals;
+        ksort($globals);
+        ksort($expected);
+        if ($globals !== $expected) {
+            throw new RuntimeException('The differential global variables were not restored.');
+        }
+        $grants = array_column($server->rows($connection, 'SHOW GRANTS FOR ' . $this->identity), 0);
+        $expectedGrants = $this->grants;
+        sort($grants);
+        sort($expectedGrants);
+        if ($grants !== $expectedGrants) {
+            throw new RuntimeException('The differential grants were not restored.');
+        }
+        if ($this->account !== null) {
+            $account = $server->rows($connection, 'SHOW CREATE USER ' . $this->identity);
+            $definition = $account[0][1] ?? $account[0][0] ?? null;
+            if ($definition !== $this->account) {
+                throw new RuntimeException('The differential account was not restored.');
             }
         }
     }
@@ -137,9 +182,12 @@ final class Baseline
 
     /**
      * Records inverse statements for all generated catalog objects, including replication channels.
+     *
+     * @throws RuntimeException When an original fixture tablespace is missing
      */
     public function discover(PDO $native): void
     {
+        $this->cleanup = [];
         $this->spatial->discover($native);
         $server = new Servers();
         foreach ($server->rows($native, 'SHOW DATABASES') as [$name]) {
@@ -161,21 +209,41 @@ final class Baseline
                 $this->cleanup['REVOKE PROXY ON ' . $native->quote($proxiedUser) . '@' . $native->quote($proxiedHost) . ' FROM ' . $identity] = true;
             }
         }
-        foreach ($server->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
+        foreach (str_starts_with($this->version, '5.') ? [] : $server->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
             if (!in_array($name, ['SYS_default', 'USR_default'], true)) {
                 $this->cleanup['DROP RESOURCE GROUP ' . $this->identifier($name) . ' FORCE'] = true;
             }
         }
-        foreach ($server->rows($native, "SELECT NAME FROM information_schema.INNODB_TABLESPACES WHERE SPACE_TYPE = 'General'") as [$name]) {
+        $tablespaces = $this->generalTablespaces($native);
+        if (array_diff($this->tablespaces, $tablespaces) !== []) {
+            throw new RuntimeException('Original fixture tablespaces are missing: ' . implode(', ', array_diff($this->tablespaces, $tablespaces)));
+        }
+        foreach (array_diff($tablespaces, $this->tablespaces) as $name) {
             $this->cleanup['DROP TABLESPACE ' . $this->identifier($name)] = true;
         }
-        foreach (['performance_schema.replication_connection_configuration', 'mysql.slave_master_info', 'mysql.slave_relay_log_info'] as $table) {
-            if ($server->rows($native, 'SELECT CHANNEL_NAME FROM ' . $table) !== []) {
-                $command = str_starts_with($this->version, '5.') ? 'SLAVE' : 'REPLICA';
-                $this->cleanup['STOP ' . $command] = true;
-                $this->cleanup['RESET ' . $command . ' ALL'] = true;
-            }
+        $command = str_starts_with($this->version, '5.') ? 'SLAVE' : 'REPLICA';
+        if ($server->rows($native, 'SHOW ' . $command . ' STATUS') !== []) {
+            $this->cleanup['STOP ' . $command] = true;
+            $this->cleanup['RESET ' . $command . ' ALL'] = true;
         }
+    }
+
+    /**
+     * Reads the general tablespace inventory exposed by the selected release.
+     *
+     * MySQL 5.6 has no general tablespaces. MySQL 5.7 exposes INNODB_SYS_TABLESPACES;
+     * later releases expose INNODB_TABLESPACES, including the reserved mysql space.
+     * Source: https://dev.mysql.com/doc/mysql-infoschema-excerpt/5.7/en/information-schema-innodb-sys-tablespaces-table.html.
+     *
+     * @return list<string>
+     */
+    public function generalTablespaces(PDO $connection): array
+    {
+        if (str_starts_with($this->version, '5.6.')) {
+            return [];
+        }
+        $table = str_starts_with($this->version, '5.7.') ? 'INNODB_SYS_TABLESPACES' : 'INNODB_TABLESPACES';
+        return array_column((new Servers())->rows($connection, "SELECT NAME FROM information_schema.{$table} WHERE SPACE_TYPE = 'General'"), 0);
     }
 
     /**

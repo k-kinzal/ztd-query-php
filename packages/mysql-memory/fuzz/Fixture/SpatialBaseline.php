@@ -12,8 +12,8 @@ use RuntimeException;
  * Restores spatial reference definitions between independent differential inputs.
  *
  * Initial catalog data is fixture state. Every generated CREATE or DROP still runs
- * and its diagnostics are compared. Repair DDL is discovered on the reference and
- * applied to both servers; a failed repair aborts the campaign.
+ * and its diagnostics are compared. Each server is inspected independently;
+ * a failed read or repair aborts the campaign.
  */
 final class SpatialBaseline
 {
@@ -28,7 +28,7 @@ final class SpatialBaseline
     public array $signatures = [];
 
     /**
-     * @var array<int, true> Systems changed by earlier observations on the reference
+     * @var array<int, true> Systems changed on the connection being restored
      */
     public array $changed = [];
 
@@ -81,12 +81,13 @@ final class SpatialBaseline
     }
 
     /**
-     * Discovers creations, replacements and removals, retaining repairs for the memory observation.
+     * Discovers creations, replacements and removals on the connection being restored.
      *
      * @throws RuntimeException When catalog inspection fails
      */
     public function discover(PDO $native): void
     {
+        $this->changed = [];
         if (version_compare($this->version, '8.0.0', '<')) {
             return;
         }
@@ -99,7 +100,7 @@ final class SpatialBaseline
     }
 
     /**
-     * Applies the same retained repair to either server, checking every DDL result.
+     * Restores the discovered differences to the captured fixture, checking every DDL result.
      *
      * Removed fixture tables cannot keep an SRS in use during restoration. All changed
      * systems are dropped before any is recreated, so exchanged names do not collide.
