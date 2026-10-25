@@ -30,12 +30,18 @@ final class Observer
         try {
             $statement = $pdo->query($sql);
             if ($statement === false) {
-                return ['error' => 'query returned false'];
+                $error = $pdo->errorInfo();
+                $observation['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
+            } else {
+                do {
+                    $observation['results'][] = $this->result($pdo, $statement, $ordered);
+                } while ($statement->nextRowset());
+                if ($statement->errorCode() !== '00000') {
+                    $error = $statement->errorInfo();
+                    $observation['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
+                }
+                $statement->closeCursor();
             }
-            do {
-                $observation['results'][] = $this->result($pdo, $statement, $ordered);
-            } while ($statement->nextRowset());
-            $statement->closeCursor();
         } catch (PDOException $failure) {
             $observation['error'] = [$failure->errorInfo[1] ?? null, $failure->errorInfo[0] ?? null, $failure->errorInfo[2] ?? $failure->getMessage()];
         }
@@ -48,6 +54,7 @@ final class Observer
      * Records the current result before advancing to the next one, which can change the connection's last insert id.
      *
      * @return array<string, mixed>
+     * @throws RuntimeException When result metadata cannot be observed
      */
     public function result(PDO $pdo, PDOStatement $statement, bool $ordered): array
     {
@@ -57,7 +64,10 @@ final class Observer
         $columns = [];
         for ($i = 0; $i < $statement->columnCount(); $i++) {
             $meta = $statement->getColumnMeta($i);
-            $columns[] = $meta === false ? null : [$meta['name'], $meta['table'] ?? '', $meta['native_type'] ?? '', $meta['len'], $meta['precision'], $meta['flags']];
+            if ($meta === false) {
+                throw new RuntimeException('Cannot read observed result metadata for column ' . $i . '.');
+            }
+            $columns[] = [$meta['name'], $meta['table'] ?? '', $meta['native_type'] ?? '', $meta['len'], $meta['precision'], $meta['flags']];
         }
         $rows = $statement->fetchAll(PDO::FETCH_NUM);
 
@@ -88,18 +98,21 @@ final class Observer
     /**
      * Answers the warnings of the last statement.
      *
-     * @return array<mixed>|string
+     * @return array<mixed>
+     * @throws RuntimeException When conditions cannot be read; matching read failures are not agreement
      */
-    public function warnings(PDO $pdo): array|string
+    public function warnings(PDO $pdo): array
     {
         $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $statement = $pdo->query('SHOW WARNINGS');
-
-            return $statement === false ? 'none' : $statement->fetchAll(PDO::FETCH_NUM);
+            if ($statement === false) {
+                throw new RuntimeException('Cannot read observed conditions: ' . json_encode($pdo->errorInfo()));
+            }
+            return $statement->fetchAll(PDO::FETCH_NUM);
         } catch (PDOException $failure) {
-            return 'SHOW WARNINGS failed: ' . $failure->getMessage();
+            throw new RuntimeException('Cannot read observed conditions.', 0, $failure);
         } finally {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }

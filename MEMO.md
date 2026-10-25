@@ -781,6 +781,12 @@ above predates that check and is not current acceptance evidence. The missing
 catalog state remains visible for the coherent model migration; it has not been
 excluded from comparison or patched as an isolated SQL case.
 
+The observer also fails on unreadable result metadata or conditions. It preserves
+the full SQL diagnostic when PDO uses silent error mode, including a later
+result-set error. The expanded observation-state suite passes nine tests and
+29 assertions, covering both PDO error modes. A fresh owned-container replay
+still fails on the missing initial dictionary tablespace, with status one.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

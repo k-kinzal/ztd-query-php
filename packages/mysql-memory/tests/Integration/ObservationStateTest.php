@@ -100,4 +100,45 @@ final class ObservationStateTest extends TestCase
         yield 'text protocol' => [true];
         yield 'native prepared protocol' => [false];
     }
+
+    #[DataProvider('providerErrorModes')]
+    public function testSqlErrorsRetainTheirDiagnosticsInEveryDriverErrorMode(int $mode): void
+    {
+        $server = MemoryDatabase::start('8.4.7');
+        try {
+            $pdo = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => $mode]);
+            $observation = (new Observer())->observe($pdo, 'USE absent_fixture', true);
+
+            self::assertSame([1049, '42000', "Unknown database 'absent_fixture'"], $observation['error']);
+            self::assertSame([['Error', 1049, "Unknown database 'absent_fixture'"]], $observation['warnings']);
+            $server->assertNoInternalFailure();
+        } finally {
+            $server->stop();
+        }
+    }
+
+    #[DataProvider('providerErrorModes')]
+    public function testAConditionReadFailureCannotBeComparedAsAnOrdinaryResult(int $mode): void
+    {
+        $server = MemoryDatabase::start('8.4.7');
+        try {
+            $pdo = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => $mode]);
+            $server->stop();
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Cannot read observed conditions');
+
+            (new Observer())->warnings($pdo);
+        } finally {
+            $server->stop();
+        }
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerErrorModes(): iterable
+    {
+        yield 'exceptions' => [PDO::ERRMODE_EXCEPTION];
+        yield 'silent driver errors' => [PDO::ERRMODE_SILENT];
+    }
 }
