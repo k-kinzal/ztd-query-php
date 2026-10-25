@@ -99,7 +99,7 @@
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    {</span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$sql</span>);</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> === <span class="tok-id">false</span>) {</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">RuntimeException</span>(<span class="tok-str">&#039;A differential fixture statement failed.&#039;</span>);</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">RuntimeException</span>(<span class="tok-str">&#039;A differential fixture statement failed: &#039;</span> . <span class="tok-id">json_encode</span>(<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">errorInfo</span>()));</span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        }</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-var">$statement</span>-&gt;<span class="tok-id">closeCursor</span>();</span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    }</span>
