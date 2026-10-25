@@ -25,7 +25,9 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  # A superseded PR run must not consume the aggregate check's waiting budget.
+  # The latest head still replays every supplied seed and completes its full search.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   COMPOSER_NO_INTERACTION: '1'
