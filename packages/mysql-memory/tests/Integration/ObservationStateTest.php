@@ -141,4 +141,44 @@ final class ObservationStateTest extends TestCase
         yield 'exceptions' => [PDO::ERRMODE_EXCEPTION];
         yield 'silent driver errors' => [PDO::ERRMODE_SILENT];
     }
+
+    public function testEqualCompletionPacketsCannotHideTransactionEffects(): void
+    {
+        $server = MemoryDatabase::start('8.4.7');
+        try {
+            $target = new ExecutionTarget($server->dsn(), 'root', '', $server->dsn(), server: $server);
+            $idle = $target->run($server->dsn(), 'root', '', 'DO 0');
+            $begin = $target->run($server->dsn(), 'root', '', 'BEGIN');
+
+            self::assertSame($idle['raw']['results'], $begin['raw']['results']);
+            self::assertIsArray($idle['raw']['session']);
+            self::assertIsArray($begin['raw']['session']);
+            self::assertFalse($idle['raw']['session']['transaction']);
+            self::assertTrue($begin['raw']['session']['transaction']);
+            $server->assertNoInternalFailure();
+        } finally {
+            $server->stop();
+        }
+    }
+
+    public function testGlobalEffectsAreCapturedBeforeRepair(): void
+    {
+        $server = MemoryDatabase::start('8.4.7');
+        try {
+            $target = new ExecutionTarget($server->dsn(), 'root', '', $server->dsn(), server: $server);
+            $result = $target->run($server->dsn(), 'root', '', 'SET GLOBAL read_only = ON');
+            self::assertIsArray($result['raw']['globals']);
+            self::assertIsArray($result['comparable']['globals']);
+            self::assertSame('ON', $result['raw']['globals']['read_only']);
+            self::assertSame('ON', $result['comparable']['globals']['read_only']);
+
+            $connection = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $readOnly = $connection->query('SELECT @@GLOBAL.read_only');
+            self::assertNotFalse($readOnly);
+            self::assertSame(0, $readOnly->fetchColumn());
+            $server->assertNoInternalFailure();
+        } finally {
+            $server->stop();
+        }
+    }
 }

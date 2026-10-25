@@ -787,6 +787,18 @@ result-set error. The expanded observation-state suite passes nine tests and
 29 assertions, covering both PDO error modes. A fresh owned-container replay
 still fails on the missing initial dictionary tablespace, with status one.
 
+The execution observation now retains transaction status from the driver before
+issuing state probes, the selected database, complete exposed session variables,
+and globals read through the independent administrator. Raw session identity
+values remain in the evidence; only values validated by the existing independent
+identity contract are replaced in the comparison copy. Global maps compare by
+name, not incidental enumeration order. Tests demonstrate that equal completion
+packets do not conceal BEGIN's transaction effect and that read_only is observed
+before repair turns it off. These two checks pass with 11 assertions; both existing
+text/prepared profile checks also pass (two cases, 14 assertions). Changed-file
+PHPStan, formatting and PHP 8.1 compatibility checks pass. This does not yet cover
+user variables, transaction visibility scenarios or every catalog domain.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

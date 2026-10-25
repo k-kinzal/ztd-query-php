@@ -6,12 +6,14 @@ namespace Fuzz\Target;
 
 use Error;
 use Fuzz\Fixture\Baseline;
+use Fuzz\Fixture\Servers;
 use Fuzz\Fixture\Tables;
 use Fuzz\Observation\Comparison;
 use Fuzz\Observation\LibraryErrors;
 use Fuzz\Observation\Observer;
 use Fuzz\Observation\Process;
 use Fuzz\Observation\RandomPasswords;
+use Fuzz\Observation\SessionState;
 use Fuzz\Observation\StatementIdentities;
 use Fuzz\Observation\Status;
 use Fuzz\Observation\TableTimes;
@@ -315,6 +317,13 @@ final class ExecutionTarget
             $this->server?->assertNoInternalFailure();
         }
         $raw = $observation;
+        $state = (new SessionState())->capture($pdo, $this->version);
+        $raw['session'] = $state['raw'];
+        $observation['session'] = $state['comparable'];
+        $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+        $observation['globals'] = (new Servers())->globals($guard, $this->version);
+        $raw['globals'] = $observation['globals'];
+        ksort($observation['globals']);
         if (!$ordered && isset($observation['results']) && is_array($observation['results'])) {
             foreach ($observation['results'] as $index => $result) {
                 if (is_array($result) && isset($result['rows']) && is_array($result['rows'])) {
