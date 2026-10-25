@@ -374,12 +374,14 @@ Construction follows these rules throughout the model:
   implement a SQL rule remains an implementation exception.
 
 Binding has a typed-input operation distinct from SQL parsing. It takes the
-statement's written operands and captured lexical/name interpretation, a current
-declaration snapshot and parameter type inputs, and returns a new concrete
-statement. It never changes the existing immutable value. This operation serves
-catalog invalidation and parameter-dependent preparation without routing through
-`Facade::analyze()` or rendered SQL. Runtime consumers may call this narrow
-binding contract during preparation; plans and commands consume its result.
+statement's written operands, a selected binding profile, a declaration snapshot
+and parameter type inputs, and returns a new concrete statement or an explicit
+SQL binding refusal. It never changes the existing immutable value. The reason
+for binding determines which interpretation inputs are retained and which are
+refreshed, as specified below. This operation serves catalog invalidation and
+parameter-dependent preparation without routing through `Facade::analyze()` or
+rendered SQL. Runtime consumers may call this narrow binding contract during
+preparation; plans and commands consume its result.
 
 For direct PBT, construction already supplies the local semantic values. A
 generated dependent sequence supplies consistent declarations and references.
@@ -387,6 +389,69 @@ The executor still checks their current catalog validity and applies the same
 documented rebinding conditions as analyzed values. It does not automatically
 re-analyze every generated value to repair an incomplete model. Properties must
 also exercise stale bindings and missing inputs as explicit scenarios.
+
+### Rebinding must preserve the written SQL alternatives
+
+Ordinary execution and automatic repreparation are different operations. Keeping
+an expression's initial interpretation forever is insufficient. On a fresh
+Testcontainers MySQL 8.4.7, both SQL PREPARE and native PDO preparation of
+`SELECT *, "a", 1||2 FROM t` under an empty sql_mode return `[7, 9, 7, "12"]`
+after adding a second column with default 9 and switching to
+`ANSI_QUOTES,PIPES_AS_CONCAT`. The original database supplies the table even
+after `USE` changes; the new modes turn the quoted string into a column use and
+the disjunction into concatenation. Com_stmt_reprepare increments for each
+protocol. The bounded investigation is recorded in
+`mysql-memory/build/verification/reprepare-native.log`; it is design evidence,
+not native fuzz acceptance or evidence for other releases.
+
+The [8.4 manual](https://dev.mysql.com/doc/refman/8.4/en/statement-caching.html)
+instead describes retaining the original mode. The observed prepared-statement
+behavior and the [8.4.7 implementation](https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_prepare.cc)
+agree that the preparation database is restored before rebuilding, without a
+corresponding restoration of sql_mode in Prepared_statement::reprepare. Do not
+use the manual's general statement to override the versioned server observation,
+or generalize the prepared-statement result to stored routines, which have their
+own creation context.
+
+The model and binder therefore have these additional responsibilities throughout
+the SQL families:
+
+- Retain written alternatives which can change interpretation: string/name
+  delimiters, literal encoding and escape units, symbolic versus word operators,
+  explicit grouping, mode-sensitive type names and function-call forms. A decoded
+  string plus its initial type is not enough, nor is replacing `||` with OR.
+  These are fields of the corresponding SQL values, not an original SQL string,
+  parser node, free-form fragment or second token stream attached to the root.
+- A quoted segment owns its delimiter and typed content units: ordinary content,
+  an escape with its defined character meaning, or a doubled delimiter. Its
+  decoded value follows from those units and the selected lexical interpretation;
+  contradictory supplied values are rejected. Generated segments have the same
+  representation, even when they have no source. Raw fragments for later SQL
+  parsing are not an alternative to these invariants.
+- Reinterpretation operates on those SQL alternatives directly. For example, a
+  double-quoted segment can bind as a column use under ANSI_QUOTES; a symbolic
+  pipe operator can bind as disjunction or concatenation. Operator regrouping
+  uses typed operator precedence and explicit grouping boundaries. It cannot
+  render text and call a parser to recover the lost distinctions.
+- The binding reason is explicit: initial binding, parameter-type refresh,
+  metadata invalidation or routine invocation. Its versioned rules select the
+  database, lexical interpretation, client encoding and parameter constraints.
+  An ordinary prepared execution retains its interpreted operands. Metadata
+  invalidation uses the server's applicable reinterpretation rules, while
+  preserving the preparation database; routine creation settings are separate.
+- Build a replacement atomically. An invalid interpretation produces the SQL
+  refusal at the owning element and does not overwrite the existing prepared
+  value or its dependency list. A later execution can retry after the relevant
+  input changes. A missing rebinding rule is an implementation failure.
+
+Exact Compact reconstruction alone cannot establish this contract: a formatter
+may canonicalize two spellings which repreparation distinguishes. The generated
+execution properties must compose preparation, metadata changes, setting changes
+and execution while preserving their relationships during shrinking. Native
+execution comparison must exercise those same observable sequences. The existing
+PreparedCache source-reanalysis path and its example regression demonstrate the
+needed behavior, but do not satisfy the typed-input boundary. Replacing that path
+before retaining these distinctions would silently weaken the model.
 
 ### One execution lifecycle
 
