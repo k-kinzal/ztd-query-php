@@ -94,7 +94,7 @@ there is no required property class or `MODEL` constant for each semantic type.
 
 The PHPStan rules in `rules` require a corresponding, instantiable `Eris\Generator<T>`
 for every public semantic value type discovered in SQL Semantics and its MySQL
-package, including model interfaces, immutable records and enums. Generator names mirror their semantic type:
+package, including model interfaces, ordinary public model records and enums. The check does not depend on a runtime entry class or on a model using the Snapshot trait. Generator names mirror their semantic type:
 `SqlSemantics\Platform\MySql\Statement\Account\AlterUser` requires
 `Tests\Generator\MySql\Statement\Account\AlterUserGenerator` generating `AlterUser`.
 Core types use the `Tests\Generator\Semantics` prefix. Generic constructor sampling
@@ -131,11 +131,18 @@ and stored data. A shrinking regression verifies that the declaration and write
 remain related as Eris reduces a counterexample. These properties currently cover
 small statement forms; most statement families still use the legacy operation API.
 
-The remaining properties still use the previous constructor-sampling implementation
-and need migration. Its callers of the removed `OperationGenerator::sample()` and
-`from()` API are not compatible with the Eris generator, so the full property suite
-and static checks are not yet passing. The generator rules also report missing,
-incorrectly typed and unused generators that still need implementation or migration.
+The property suite currently exercises the stated CREATE TABLE, INSERT and interval
+behaviors. It does not cover every statement family. The old constructor sampler
+and its instance-only properties have been removed. Missing generators remain
+errors in the complete PHPStan check; deleting those properties does not satisfy
+model coverage. Interface generators must compose their concrete alternatives,
+so the incomplete statement/expression interface aliases have also been removed.
+
+The generator-coverage integration tests run PHPStan without a MemoryDB Instance
+class and with no generators at all. They check missing record/interface/enum
+generators, wrong Eris result types, abstract generators and unmatched generator
+names. The separate usage tests check configured roots and disconnected cycles.
+These validate the static rules, not SQL execution coverage.
 
 ```sh
 composer lint

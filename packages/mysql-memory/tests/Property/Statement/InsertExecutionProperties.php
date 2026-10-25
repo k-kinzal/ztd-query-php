@@ -17,7 +17,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement;
-use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;
+use Tests\Generator\MySql\Statement\Dml\Insert\InsertStatementGenerator;
 
 /**
  * Executes generated INSERT values at the same boundary used by analyzed SQL.
@@ -35,7 +35,7 @@ final class InsertExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesAbsentTableIsAnSqlError(GrammarRelease $release): void
     {
-        $this->forAll(new AnalyzedStatementGenerator($release))->withMaxSize(10)->then(static function (InsertStatement $statement) use ($release): void {
+        $this->forAll(new InsertStatementGenerator($release))->withMaxSize(10)->then(static function (InsertStatement $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
                 (new Execution($session))->statement($statement);
@@ -71,7 +71,7 @@ final class InsertExecutionProperties extends TestCase
         }, \Eris\Generators::associative([
             'create' => new \Tests\Generator\Semantics\Statement\OperationGenerator($release),
             'comparison' => new \Tests\Generator\Semantics\Statement\Identifier\ComparisonGenerator(),
-            'values' => new \Tests\Generator\MySql\Statement\Dml\Insert\ValuesClauseGenerator(new \Tests\Generator\Semantics\Statement\ExpressionGenerator($collation, \Eris\Generators::map(static fn (int $number): string => (string) $number, \Eris\Generators::int()))),
+            'values' => new \Tests\Generator\MySql\Statement\Dml\Insert\ValuesClauseGenerator(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator($collation, \Eris\Generators::map(static fn (int $number): string => (string) $number, \Eris\Generators::int()), \Eris\Generators::oneOf(\Eris\Generators::constant(null), new \Tests\Generator\Semantics\Statement\Source\SpanGenerator()))),
         ]));
         $this->forAll($sequences)->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
             [$create, $insert] = $sequence;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command;
 
-use JsonException;
 use MySqlMemory\Command\Access\HandlerCommand;
 use MySqlMemory\Command\Access\ImportTableCommand;
 use MySqlMemory\Command\Access\LoadDataCommand;
@@ -61,6 +60,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use Rules\SemanticCatalogue;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
@@ -71,7 +71,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Script;
-use Tests\Generator\Catalogue;
 
 #[CoversClass(Dispatcher::class)]
 #[Small]
@@ -290,12 +289,13 @@ final class DispatcherTest extends TestCase
 
     /**
      * @return iterable<class-string, array{class-string}>
-     * @throws JsonException When a semantic inventory is invalid
      */
     public static function providerDispatchStatements(): iterable
     {
-        foreach ((new Catalogue())->implementations(Statement::class) as $class) {
-            yield $class => [$class];
+        foreach (array_keys((new SemanticCatalogue())->generators()) as $class) {
+            if (class_exists($class) && is_a($class, Statement::class, true)) {
+                yield $class => [$class];
+            }
         }
     }
 

@@ -24,11 +24,12 @@ final class SpanGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Independently shrinks the range start and width.
+     * Uses Eris's size-bounded endpoints and shrinks them toward zero.
+     * Ordering the endpoints also prevents the range end from overflowing.
      */
     public function __construct()
     {
-        $this->delegate = Generators::map(static fn (array $data): Span => new Span($data['offset'], $data['length']), Generators::associative(['offset' => Generators::choose(0, 1000), 'length' => Generators::choose(0, 1000)]));
+        $this->delegate = Generators::map(static fn (array $data): Span => new Span(min($data['start'], $data['end']), max($data['start'], $data['end']) - min($data['start'], $data['end'])), Generators::associative(['start' => Generators::nat(), 'end' => Generators::nat()]));
     }
 
     /**

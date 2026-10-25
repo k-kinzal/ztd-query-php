@@ -27,6 +27,18 @@ final class SemanticCatalogue
     private ?array $values = null;
 
     /**
+     * @var array<string, array{file: string, line: int}>
+     */
+    private array $locations = [];
+
+    /**
+     * @param array<string, array{string, string}>|null $sources Source directories with their model and generator namespace prefixes; null selects the installed semantic packages
+     */
+    public function __construct(private readonly ?array $sources = null)
+    {
+    }
+
+    /**
      * @return array<string, string> Semantic value classes and their required generator classes
      * @throws RuntimeException When a dependency's source cannot be read or loaded
      */
@@ -36,8 +48,11 @@ final class SemanticCatalogue
             return $this->values;
         }
         $generators = [];
-        foreach (['sql-semantics' => ['SqlSemantics\\', 'Tests\\Generator\\Semantics\\'], 'sql-semantics-mysql' => ['SqlSemantics\\Platform\\MySql\\', 'Tests\\Generator\\MySql\\']] as $package => [$source, $target]) {
-            $directory = dirname(__DIR__) . '/vendor/k-kinzal/' . $package . '/src/';
+        $sources = $this->sources ?? [
+            dirname(__DIR__) . '/vendor/k-kinzal/sql-semantics/src' => ['SqlSemantics\\', 'Tests\\Generator\\Semantics\\'],
+            dirname(__DIR__) . '/vendor/k-kinzal/sql-semantics-mysql/src' => ['SqlSemantics\\Platform\\MySql\\', 'Tests\\Generator\\MySql\\'],
+        ];
+        foreach ($sources as $directory => [$source, $target]) {
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
                 if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
                     continue;
@@ -55,11 +70,12 @@ final class SemanticCatalogue
                     continue;
                 }
                 $class = $value->namespacedName->toString();
-                if (!class_exists($class) && !interface_exists($class)) {
-                    throw new RuntimeException('Cannot load semantic value ' . $class);
+                if (!str_starts_with($class, $source)) {
+                    throw new RuntimeException('Semantic source declares a type outside its namespace: ' . $class);
                 }
                 $generator = $target . substr($class, strlen($source)) . 'Generator';
                 $generators[$class] = $generator;
+                $this->locations[$class] = ['file' => $file->getPathname(), 'line' => $value->getStartLine()];
             }
         }
         ksort($generators);
@@ -67,7 +83,9 @@ final class SemanticCatalogue
     }
 
     /**
-     * The value domain includes public interfaces, enums, Snapshot records and readonly context records.
+     * The value domain includes public statement records independently of traits,
+     * public interfaces/enums and readonly contract records. Services outside the
+     * model namespaces do not become values merely by having public constructors.
      */
     public function isValue(Node\Stmt\ClassLike $node): bool
     {
@@ -77,14 +95,9 @@ final class SemanticCatalogue
         if (!$node instanceof Node\Stmt\Class_) {
             return false;
         }
-        foreach ($node->stmts as $statement) {
-            if ($statement instanceof Node\Stmt\TraitUse) {
-                foreach ($statement->traits as $trait) {
-                    if ($trait->toString() === 'SqlSemantics\\Statement\\Snapshot') {
-                        return true;
-                    }
-                }
-            }
+        $name = $node->namespacedName?->toString() ?? '';
+        if (str_starts_with($name, 'SqlSemantics\\Statement\\') || str_starts_with($name, 'SqlSemantics\\Platform\\MySql\\Statement\\')) {
+            return true;
         }
         $contract = str_starts_with($node->namespacedName?->toString() ?? '', 'SqlSemantics\\Contract\\')
             || in_array('SqlSemantics\\Contract\\Mode', array_map(static fn (Node\Name $name): string => $name->toString(), $node->implements), true);
@@ -101,5 +114,17 @@ final class SemanticCatalogue
             }
         }
         return false;
+    }
+
+    /**
+     * Identifies the declaration which requires a generator, even if no generator exists.
+     *
+     * @return array{file: string, line: int}
+     * @throws RuntimeException When the name is outside the semantic inventory
+     */
+    public function location(string $model): array
+    {
+        $this->generators();
+        return $this->locations[$model] ?? throw new RuntimeException('Unknown semantic model: ' . $model);
     }
 }

@@ -35,7 +35,7 @@ final class InsertShrinkingTest extends TestCase
             return [$create, new InsertStatement(new \SqlSemantics\Contract\LanguageProfile($release), $target, $values, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'))];
         }, \Eris\Generators::associative([
             'create' => new \Tests\Generator\Semantics\Statement\OperationGenerator($release),
-            'values' => new \Tests\Generator\MySql\Statement\Dml\Insert\ValuesClauseGenerator(new \Tests\Generator\Semantics\Statement\ExpressionGenerator($collation, \Eris\Generators::map(static fn (int $number): string => (string) $number, \Eris\Generators::int()))),
+            'values' => new \Tests\Generator\MySql\Statement\Dml\Insert\ValuesClauseGenerator(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator($collation, \Eris\Generators::map(static fn (int $number): string => (string) $number, \Eris\Generators::int()), \Eris\Generators::oneOf(\Eris\Generators::constant(null), new \Tests\Generator\Semantics\Statement\Source\SpanGenerator()))),
         ]));
         $random = new \Eris\Random\RandomRange(new \Eris\Random\MtRandSource());
         $random->seed(20261025);

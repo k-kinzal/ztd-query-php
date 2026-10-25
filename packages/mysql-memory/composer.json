@@ -139,7 +139,10 @@
             "@deptrac"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "phpstan": "phpstan analyse --memory-limit=1G",
+        "phpstan": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpstan analyse --memory-limit=1G"
+        ],
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit,property --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:property": "phpunit --testsuite property",

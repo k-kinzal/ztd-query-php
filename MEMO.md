@@ -16,7 +16,7 @@ For work with this many statements, clauses, types, and version differences, the
 
 The mechanism itself must remain simple in operation. Use `sql-faker`'s fuzz approach as a reference: the input generation, operation under test, comparison or assertion, and failure must be easy to follow. The three checks below should expose these steps directly, using the existing tools. The size of the SQL space does not justify a private framework or an expanding collection of special verification paths.
 
-First make the three checks work end to end for a small concrete part of the model. Then expand the SQL types, generators, and supported versions through those same verification paths. Each addition must be exercised by the applicable properties, and failures must remain visible as counterexamples. Do not accumulate a broad implementation and postpone checking whether its verification actually tests the intended boundaries.
+Design the complete verification structure and the model/executor contracts before making further statement-specific corrections. This order supersedes the earlier instruction to start with one small concrete example. A working INSERT path beside an unchanged Operation-based system does not establish the architecture. The inventory, ownership of meaning, execution boundary, generation strategy and acceptance procedure must cover the whole supported SQL domain. Implement those structural changes together; use the three checks to expose remaining behavior defects only after their boundaries are sound.
 
 Keep the verification procedure consistent while preserving the distinct meanings and invariants of the SQL types it checks. A shared property is not a reason to force different SQL concepts into a shared semantic representation. Simplicity means being able to see what is generated, what consumes it, what is asserted, and why a failure is reported.
 
@@ -142,7 +142,7 @@ The `InsertStatement`, `InsertValues`, and `ValuesClause` examples discussed so 
 
 Checking VALUES row widths alone is insufficient. The structure must also expose the information associated with its values, their SQL types, their references, and their sources. The proposed `Expression` interface with type, nullability, and source accessors is also only an incomplete illustration, not a finalized contract.
 
-The next concrete example must show the complete path from the statement to the relevant semantic information, how its invariants are enforced, how SQL is reconstructed, and how the executor consumes it. Establish that example before spreading an incomplete design across the package.
+The whole-system design below must show the path from statements to their semantic information, enforced invariants, reconstruction and execution. An INSERT example can test that design, but cannot determine the architecture for the remaining SQL families.
 
 ## Generators and properties are separate concerns
 
@@ -194,83 +194,491 @@ The generator coverage, generated-value execution, and real-server fuzz comparis
 
 This explicitly requested root `MEMO.md` records the work; it does not reintroduce a `mysql-memory/docs` directory.
 
-## Current state and next work
+## Architecture decision (2026-10-25)
 
-The current implementation does not yet meet this design. In the working tree at the time of this memo:
+The user has changed the implementation order: design and repair the whole
+verification structure before resuming individual SQL fixes. This section
+supersedes the earlier INSERT-first plan. Work stays in this worktree and branch,
+`feat/mysql-memory`, and is delivered through PR #665.
 
-- [Semantics::analyze()](packages/sql-semantics/src/Facade/Semantics.php) still returns the concrete [Operation](packages/sql-semantics/src/Statement/Operation.php) aggregate, which owns the analysis context, statement, facts, and source map.
-- The current [OperationGenerator](packages/mysql-memory/tests/Generator/Semantics/Statement/OperationGenerator.php) composes only CREATE TABLE statements and wraps them in that aggregate.
-- [ColumnNameProperties](packages/mysql-memory/tests/Property/MySql/Statement/Name/ColumnNameProperties.php) executes that CREATE TABLE composition. Its class name does not describe the actual property boundary.
-- Generator-coverage and unused-class rule changes exist in the working tree, but they do not establish completion of the semantic redesign or execution properties.
-- The recent INSERT and Expression examples are discussion examples only. They are not evidence of an implemented, complete replacement.
+### Findings at the start of the redesign
 
-The implementation order is to establish the following paths for one concrete example before expanding coverage:
+The following are structural failures, not a backlog of SQL counterexamples:
 
-1. Establish one concrete INSERT semantic model, following the MySQL grammar, with its actual types, references, source information, and invariants visible throughout the structure. Resolve the incomplete parts of the example before replicating it.
-2. Integrate that model with analysis and SQL reconstruction so that analysis returns the concrete statement through the result interface. Exercise the Compact round-trip property through the existing fuzz approach. Replace the rejected aggregate as the migration proceeds, rather than preserving it behind renamed wrappers.
-3. Implement the corresponding generators using Eris's generation, composition, and shrinking mechanisms, including dependent state generation. Keep generator coverage and unused-class checks aligned with the actual model.
-4. Make MySQL Memory derive any plans and subsequent execution from the generated semantic values, without AST or SQL-text fallback, and check the example's execution properties.
-5. Run the SQL Faker comparison against matching real MySQL containers. Investigate mismatches, retaining only the specifically justified treatment of environment-dependent values.
-6. Extend the statement forms, semantic types, generators, and version-specific behavior through these established checks. Keep their verification paths simple and their properties intact as coverage grows.
-7. Complete the supported-version work, required seed replay, seedless 15-minute fuzz run, PBT, and ordinary package checks. Report actual results and remaining counterexamples.
+- `Semantics::analyze()` declares `AnalyzedStatement`, but MySQL's
+  `Platform::publish()` publishes only a narrow INSERT form without Operation.
+  Other statements retain the context, Facts and source map aggregate.
+- `Execution::statement()` dispatches Operation through the old lifecycle and
+  concrete INSERT through a separate lifecycle. Access checks, diagnostics,
+  preparation, transactions and counters can therefore differ by representation.
+- Of 1,099 files under `mysql-memory/tests/Property`, 1,096 reference the rejected
+  Samples/Construction machinery. They mostly assert that a sampled constructor
+  produced an instance. Their file and assertion counts do not measure execution.
+  The three actual Eris property classes are limited demonstrations, with
+  Operation still used for CREATE TABLE, SELECT and INSERT prerequisites. The
+  root generator named AnalyzedStatementGenerator chooses only INSERT.
+- Generator coverage is discovered independently, but absence is reported only
+  when PHPStan visits `MySqlMemory\Instance`. That trigger is unrelated to the
+  model inventory. Discovery also depends on Snapshot usage, so a new ordinary
+  model class can escape the intended inventory.
+- Command, Evaluation and several other runtime layers are permitted to use the
+  parser and semantic front end in the current Deptrac configuration. Prefix
+  parsing and reads of `Session::text` are distributed through preparation and
+  execution. The desired boundary is not enforced by the current dependency graph.
+- The execution target compares driver results and table rows, but those rows
+  alone do not describe schema, account, routine or session-state changes. Its
+  order detection is a regular expression over SQL. Environment-specific
+  observers must be reviewed against a precise field-level comparison contract.
+- CI does not run the same complete acceptance matrix for the two fuzz targets.
+  The memory workflow defaults to one release; the semantic workflow is a
+  main-branch mutation campaign, not the required per-profile replay and separate
+  empty-corpus budget. Missing profile directories can be silently skipped.
 
-The work is complete only when these mechanisms exercise the intended boundaries and provide the required passing evidence. A collection of constructors, files named `Properties`, a successful render alone, or suppressed execution differences is not that result.
+The previous local results are retained below as history. None closes these
+structural failures. The uncommitted default-conversion experiment was saved as
+an ignored patch under `mysql-memory/build/insert-foundation/` and removed from
+the active changes; no new execution behavior from it is claimed.
 
-## Implementation plan and acceptance ledger
+### One model and two producers
 
-Work continues in this worktree on `feat/mysql-memory`, through PR #665. The existing
-uncommitted generator and rule changes are inputs to this work, not evidence of
-completion. None of the milestones below is complete yet.
+```text
+SQL input -> parser/lowering -> binding -----------------+
+                                                        |
+Eris generators -> composed semantic values -------------+-> concrete Statement
+                                                              |          |
+                                                              |          +-> renderer
+                                                              +-> execution
+                                                                  -> reply and state
 
-1. **Establish the INSERT boundary.** Start with a VALUES insertion of character
-   literals into declared integer columns. An analyzed statement exposes its
-   insertion target, explicit or implicit destination columns, VALUES rows,
-   modifiers and optional source locations. A destination reference identifies
-   its table and column declaration; the expression keeps its own character type,
-   collation and nullability. Missing declarations are explicit unresolved
-   references. Constructor checks cover list membership, row widths and ownership
-   of resolved columns, without confusing conversion errors with invalid model
-   construction. INSERT and REPLACE have distinct statement types.
-2. **Publish and render concrete statements.** Analysis returns an interface with
-   concrete SQL statement implementations. Binding uses the analysis environment
-   as input only. Local expression and reference information is retained in the
-   corresponding values; neither an analysis environment nor a root facts/source
-   index is the published result. Rendering traverses these values. The existing
-   PHPFuzzer target compares both SQL strings with the same Compact formatter and
-   parser settings; it must report differences even when reanalysis produces
-   equal structures. Migrate other statements after the first complete path,
-   removing the old Operation API and its consumers as that migration proceeds.
-3. **Execute the same values.** The session's execution entry point consumes the
-   published statement interface. Planning may translate those semantic fields
-   into execution data, but must not parse SQL or obtain missing information from
-   an AST. Check both absent-state SQL errors and successful inserts after a
-   generated CREATE TABLE, including conversion, affected rows and stored data.
-4. **Compose Eris generators.** Per-type generators delegate to Eris. Compose
-   prerequisites and writes before `then()`; a shared generated input must rebuild
-   both sides together when shrinking. Check shrinking with an intentionally
-   failing property so broken relationships and nontermination are observable.
-   Group properties by execution behavior and maintain the independent generator
-   coverage and configurable unused-class checks.
-5. **Compare the first path with MySQL.** Feed equivalent setup and SQL to the
-   existing PHPFuzzer execution target and matching Testcontainers release. Keep
-   result metadata, rows, completion data, errors, warnings and resulting state in
-   the comparison. Fix counterexamples in their responsible layer.
-6. **Expand through the established paths.** Migrate the remaining SQL statements,
-   nested semantic types, generators and consumers. Exercise release-dependent
-   grammar, types, resolution and execution on 5.6.51, 5.7.44, 8.0.44, 8.1.0,
-   8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0. Do not mark constructor sampling,
-   interface-only generators or unsupported execution as successful coverage.
-7. **Record acceptance evidence and deliver.** Run ordinary package checks and
-   PBT, replay all supplied applicable SQL Faker grammar seeds, and run each
-   required target from an empty corpus for 900 seconds. Record the exact source
-   revision, release, settings, seed inventory, execution count, duration and
-   remaining findings. Update PR #665 to describe the resulting implementation
-   and only the evidence actually obtained.
+SQL Faker -> the same SQL + equivalent setup -> real MySQL -> observation
+                                             -> MemoryDB -> observation
+```
 
-The first model deliberately has a small execution surface. Other existing paths
-remain migration work, not silently excluded acceptance criteria. The final
-acceptance still requires every item above and the requirements in this memo.
+The analysis result contract is an interface. Its implementations are concrete
+SQL statements, with no public Operation replacement containing an inner
+statement and analysis indexes. `AnalyzedStatement` is the current interface
+name; changing the name is not a migration criterion. INSERT and REPLACE remain
+distinct statements. SELECT, CREATE, ALTER, transaction control and stored-program
+instructions retain their own SQL alternatives rather than a common payload bag.
 
+Analysis may use AST nodes, environments, symbol tables and indexes internally.
+It constructs an immutable public graph with the resulting meaning on its SQL
+elements. These temporary analysis objects do not escape in the result. Direct
+generators construct that same graph without invoking analysis or rendering.
+
+| Semantic element | Retained meaning | Analysis-only or execution-only input |
+| --- | --- | --- |
+| Statement | Concrete command, clauses, release/lexical interpretation, optional span | Full analysis environment and parser root are discarded |
+| Expression | Operands, resolved or explicitly dependent type, collation, nullability, optional span | Parameter values and row values arrive during execution |
+| Relation/column use | Written name, scope/alias role, declared identity or explicit missing/ambiguous resolution | Catalog search is an analysis input; current object existence is execution state |
+| Destination | Bound table/column identity and destination type, independently of the source expression | Conversion and constraint checks occur during writes |
+| Definition | Written declaration operands, effective column/key information and intrinsic problems at their owning elements | Installation changes the runtime dictionary only after validation |
+| Query | Projection names/types, sources, scope/correlation, ordering, grouping, windows and set-operation structure | A plan contains execution operators, never missing SQL meaning |
+| Stored program | Declaration scope, instructions, handlers, cursors and typed expression bodies | Invocation frames and handler state are runtime data |
+| Source location | Optional byte offset and length on the relevant element | No source text lookup by renderer, planner or executor |
+
+A syntactically possible SQL request is not necessarily an installable declaration.
+Constructors reject malformed representations (wrong element kinds, impossible
+ownership, invalid structural alternatives). A grammar-valid request which MySQL
+rejects must still have reconstructable typed operands and its intrinsic problem.
+Catalog-dependent refusal remains an execution condition. This distinction is
+applied across families, not by adding an untyped fallback for each failing seed.
+In particular, differing VALUES widths can be a SQL request error and must not
+make a grammar-valid request impossible to represent.
+
+Condition ownership and condition order are separate concerns. A local element
+owns its intrinsic condition; the statement's preparation rules determine when
+it is emitted for the selected release. Planning can derive an ordered sequence
+of conditions from these fields. Source offsets may locate diagnostics, but cannot
+be the sole source of precedence because generated values have no source text.
+
+### Replace the information owners, not just the root name
+
+The migration of the current `Statement/Fact` records has the following ownership
+rules. It must not copy a Facts instance onto each node, introduce an untyped
+attributes array, or retain identity-keyed semantic lookups in a renamed root.
+
+| Current information | Public owner after migration | Consumer |
+| --- | --- | --- |
+| `ScalarFact::type`, `nullability` | The corresponding expression; inferred type is distinct from an assignment destination's type | Expression compiler and result metadata |
+| `ScalarFact::resolution` | The name/parameter/alias expression's explicit reference alternative | Name access and parameter binding |
+| `ScalarFact::replacement` | Retire the generic replacement pointer; preserve the written expression and its SQL-specific interpretation, and derive executable simplification during planning | Renderer retains written operands; compiler uses their typed interpretation |
+| `RelationFact::table`, `shape` | The table occurrence and its exposed output slots; join null-extension belongs to join output, not the base declaration | Relation planning and writes |
+| `QueryFact::projection`, `shape`, `nameComparison` | The query's ordered output projection and name-lookup rules | Query planning and public output lookup |
+| `QueryFact::aggregates` | Aggregate expressions identify their owning query scope; the planner derives each scope's evaluation work | Grouping and correlated evaluation |
+| `Facts::references` | Each write target carries its table occurrence reference | Multi-table UPDATE/DELETE |
+| `Facts::declarations` | Each definition exposes the declaration it can provide, including why a refused request cannot provide one | Later analysis and dictionary installation |
+| `Facts::output` | The row-producing statement exposes its result shape; CALL retains its multiple-result semantics | Protocol metadata and result handling |
+| Diagnostics, warnings and warning subjects/instructions | The relevant clause, expression or stored instruction, with explicit preparation/execution phase | The common lifecycle emits them in SQL-defined order |
+| `SourceMap` | Optional spans on the corresponding elements | Error locations and tooling only |
+| Context profile, charset and mode interpretation | Language profile on the statement and the interpreted literal/operator/name fields where needed | Rendering, type evaluation and binding validation |
+
+References cannot point indiscriminately back to complete statement nodes.
+For example, the current `CommonTable::definition` points to a CTE body, and
+`ResolvedColumn::relation` points to a relation occurrence. Adding local facts to
+those objects would introduce construction cycles for recursive CTEs.
+
+Use immutable SQL declaration identities for query scopes, relation occurrences,
+CTE headings, output slots and routine-local declarations. These are shared
+leaves of the graph, not a second semantic registry. A column use identifies its
+declared column or output slot and relation occurrence; a correlated use also
+identifies the enclosing scope. A CTE reference identifies the CTE heading with
+its exposed column types, while its definition owns the body. The binder solves
+recursive CTE types under the selected dialect's rules using private work data,
+then freezes the heading and publishes references to it. Forward references with
+unresolved inputs retain explicit dependent types. No public constructor needs a
+mutable pointer filled in later.
+
+Scope and occurrence identities have SQL meaning: two aliases of the same base
+table are different occurrences. They are not hashes of SQL or process-global
+object IDs. Containing query/program constructors validate that each reference
+has a reachable owner and a compatible slot. Eris composes the owner and its
+uses together; shrinking recreates them together. Runtime maps may bind those
+already meaningful identities to row slots or frames, but cannot add semantic
+information missing from the public values.
+
+Name resolution must preserve both written operands and their interpretation.
+A prepared unqualified table name retains its definition-time database binding;
+catalog invalidation may change the declaration/type snapshot, but must not
+silently resolve it against a later `USE`. Parameters retain marker identity and
+their explicit unresolved/type constraints; execution supplies values. Session
+variables read by an expression remain runtime reads. Literal charset and
+operator interpretation are analysis-time meaning. The entire session settings
+object is not a substitute for distinguishing these responsibilities.
+
+### Construction and binding contracts
+
+Local ownership alone is insufficient if callers can supply contradictory facts.
+Construction follows these rules throughout the model:
+
+- Literal values derive their types/nullability from their literal kind and
+  explicit encoding/collation interpretation. A caller cannot separately declare
+  a string literal to be an integer expression.
+- A resolved name derives its type and nullability from its exposed slot. The
+  reference identifies both the relation occurrence and the declaration; an
+  outer join can change the slot's nullability without changing the declaration.
+- Operators and calls use their typed operands and relevant dialect settings to
+  derive the result, or validate a binder-supplied result against those same
+  rules. Pure type rules may be shared with analysis; they cannot read an AST,
+  source text, a global Facts registry or current database rows.
+- A statement/clause validates element kinds, ownership and alternative choices.
+  Grammar-valid SQL refusals remain typed request conditions, rather than PHP
+  construction failures. Installed declarations have stronger invariants than
+  the requests which attempt to create them.
+- Missing catalog/parameter inputs have named dependency alternatives. Unknown
+  is not a universal escape type for unsupported implementation. Failure to
+  implement a SQL rule remains an implementation exception.
+
+Binding has a typed-input operation distinct from SQL parsing. It takes the
+statement's written operands and captured lexical/name interpretation, a current
+declaration snapshot and parameter type inputs, and returns a new concrete
+statement. It never changes the existing immutable value. This operation serves
+catalog invalidation and parameter-dependent preparation without routing through
+`Facade::analyze()` or rendered SQL. Runtime consumers may call this narrow
+binding contract during preparation; plans and commands consume its result.
+
+For direct PBT, construction already supplies the local semantic values. A
+generated dependent sequence supplies consistent declarations and references.
+The executor still checks their current catalog validity and applies the same
+documented rebinding conditions as analyzed values. It does not automatically
+re-analyze every generated value to repair an incomplete model. Properties must
+also exercise stale bindings and missing inputs as explicit scenarios.
+
+### One execution lifecycle
+
+All producers enter `Execution::statement(AnalyzedStatement, parameters)`.
+The lifecycle owns release validation, statement counters, diagnostic-area
+selection, preparation, access/catalog checks, condition emission, journaling,
+execution and final result/error handling. Statement semantics select their
+required phases and ordering: DDL implicit commits, diagnostic inspection, CALL
+and contained routine instructions cannot all use an unconditional transaction
+wrapper. These are SQL distinctions, never branches on legacy versus migrated
+representation. An execution failure unwinds temporary state in `finally`;
+ordinary SQL errors apply their statement/transaction rollback semantics.
+
+Commands accept concrete statement values (or a common statement interface which
+they narrow), not Operation. Query planning reads expression types, resolutions
+and output shape directly. Dictionary, transactions, locks, privileges and
+parameters are legitimate execution inputs; they cannot supply omitted syntax.
+An unimplemented command or broken invariant is an implementation failure, never
+success through a generic ER_NOT_SUPPORTED_YET fallback.
+
+SQL input handling is a separate boundary responsible for protocol SQL text,
+splitting and syntax-error excerpts. It calls analysis and then the same execution
+entry used by PBT. It must not run a second semantic interpretation of prefixes
+which changes the meaning of an already published statement. Parsed semantic
+conditions belong to analysis, not duplicated parser walks inside commands.
+
+Prepared execution stores the concrete semantic statement, parameter slots and
+catalog dependencies. Rebinding after catalog invalidation uses typed operands
+and fresh catalog inputs; it is not a rendered-SQL fallback inside execution.
+SQL PREPARE legitimately evaluates SQL-valued application data and sends that new
+input through the SQL input boundary. This is distinct from reparsing an existing
+statement to recover information its model omitted.
+
+The runtime dependency direction is:
+
+```text
+Protocol/server -> SQL input -> analysis
+Protocol/server -> execution -> commands/plans -> evaluation/storage/dictionary
+                                  ^
+                            semantic values
+```
+
+Runtime consumers cannot depend on Parser, Lowering, Facade, Facts, SourceMap or
+AnalysisContext. Analysis utilities can keep transient indexes internally while
+being migrated. The shared interface change also requires updates to PostgreSQL,
+SQLite and downstream ZTD consumers; retaining Operation in the shared result
+contract for them is not completion of its removal. No PHP version bump is part
+of this work.
+
+### Existing implementation responsibilities
+
+Paths below are relative to `packages/`. This is the removal/replacement map for
+the structural migration, rather than permission to keep parallel APIs.
+
+| Current owner | Required change | Exit condition |
+| --- | --- | --- |
+| `sql-semantics/src/Facade/Semantics.php`, `Validation/Publication.php`, `Statement/Operation.php` | Publish concrete statements through the result interface; keep construction/binding indexes private to analysis | No published Operation, context, Facts or source map; construction does not render/reparse to discover meaning |
+| `sql-semantics-mysql/src/Platform.php`, `Lowering/`, `Rules/` | Lower syntax and bind local semantic values for every grammar-dispatched family | No INSERT-only publication route or default Operation route |
+| `sql-semantics*/src/Statement/` | Apply the ownership and identity contracts above; preserve grammar-valid refused requests | Every executable fact is reachable through the corresponding element, including missing-input alternatives |
+| `mysql-memory/src/Session/Session.php`, `Session/Parse/`, `Hint/` | Separate SQL input parsing from typed execution; move semantic prefix/tree inspection into analysis | Input text is available for input handling and diagnostic excerpts, never for completing a published statement |
+| `mysql-memory/src/Session/Execution.php`, `Session/Problem/`, `Session/Access/` | Implement one lifecycle with explicit SQL-specific phases and local condition ownership | Analyzed and generated instances of the same statement execute the same phases |
+| `mysql-memory/src/Command/Command.php`, `Command/Dispatcher.php`, `Command/*` | Consume concrete SQL statements and legitimate runtime services | No command receives Operation/Facts or interprets AST/text |
+| `mysql-memory/src/Plan/Planner.php`, `Evaluation/Compile/Compiler.php` | Read query shape, expression types and references locally; derive execution operators | No external fact lookup and no fallback conversion from rendered SQL |
+| `mysql-memory/src/Command/Prepared/`, `Session/Statement/Binding.php`, `Program/` | Store typed operands, lexical interpretation and dependencies; rebind from typed inputs | Text/prepared/stored execution shares the same lifecycle and preserves declaration identity |
+| `mysql-memory/src/Server/Client.php`, `Server/MemoryDatabase.php` | Keep the wire-protocol SQL reply distinct from internal failure reporting | An internal exception cannot become a matching native SQL error in fuzz/PBT |
+| `mysql-memory/tests/Generator/`, `tests/Property/`, `rules/` | Compose the same public values with Eris; enforce existence and use independently | All public model generators exist, are reachable from real properties, and shrink while preserving their dependencies |
+| `mysql-memory/fuzz/Target/`, `fuzz/Observation/`, `fuzz/Fixture/` | Observe state families, retain raw evidence, and check fixture restoration | Deterministic content is compared; an unobserved effect or failed reset cannot count as agreement |
+| Both packages' Composer fuzz commands and `.github/workflows/*fuzz.yml` | Use the same profiles, failure policy and separate replay/search budgets | Local/CI success means completed checks, not merely exit status zero |
+
+This migration changes public semantic values across all three dialect packages
+and downstream ZTD consumers. Update their call sites and examples in the same
+branch. Internal lowering can be migrated family by family for implementation
+logistics, but do not publish a completed API or count that family as accepted
+while the old root or lifecycle remains part of its execution.
+
+`mysql-memory/deptrac.yaml` is human-owned and currently permits several forbidden
+dependencies. Its passing result cannot establish the target boundary. The
+required final rules remove Parser/FrontEnd access from runtime consumers and
+separate the SQL input boundary from Session execution. Prepare that exact change
+for the owner once the namespace migration is concrete; do not edit the protected
+file or introduce another private dependency-checking script to bypass it.
+
+### Coverage follows SQL families, not test file counts
+
+The existing grammar dispatch provides the family inventory. Definition is a
+routing category, not an extra semantic statement family. Each row below uses
+all three checks; shared expression/type/reference generators feed every row.
+
+| Family | State and semantic dependencies | Execution properties and observations |
+| --- | --- | --- |
+| Query | Sources, CTEs, scopes, joins, expressions, windows, set operations | Output metadata and rows, correlation, grouping, ordering and absent references |
+| DML | Query/VALUES inputs, destinations, assignments, conflicts, parameters | Conversion, affected rows, identities, constraints, resulting rows and rollback; INSERT/REPLACE are distinct |
+| Table definition/change | Types, columns, defaults, generated expressions, keys, partitions, storage | Created/altered declarations, prerequisite-dependent writes, atomic failure, implicit commits |
+| Database/view | Database names, defaults, view queries and dependencies | Catalog changes, name resolution and later reads/writes |
+| Routine/event/trigger | Declaration scopes, bodies, handlers, cursors and scheduling | Invocation effects, condition handling, control flow and event/trigger state |
+| Account/resource group | Accounts, roles, grants and resource declarations | Authentication/privilege state, dependent operations and specific absent-state errors |
+| Transaction/locking | Transaction modes, savepoints, XA identifiers and locks | Visibility, commit/rollback, lock ownership and diagnostics |
+| Server/maintenance/storage | Variables, instance operations, tablespaces and engine options | Session/global/catalog effects and lifecycle; physical fields follow explicit contracts |
+| Replication | Channels, log positions, filters and replica state | Channel/configuration changes, missing prerequisites and version-specific conditions |
+| Utility | SHOW, EXPLAIN, HELP, SET and diagnostics | Result shape/types, deterministic contents and session state |
+
+Per-type generators mirror the model namespaces. An interface generator composes
+its concrete variants; it cannot silently stand for one implementation. A release
+is an input selected before generation, not discovered by rendering candidates
+until a profile accepts one. Recursive generators bound size through Eris while
+retaining each recursive alternative. Constructor constraints are satisfied by
+composition, not an independent retrying constructor interpreter.
+
+Properties are organized by the behaviors in the table. A property's input is
+fully constructed before `then()`. A dependent sequence is an Eris composition
+which builds prerequisites and dependents together. Shrinking reconstructs that
+relationship; the callback creates the execution session, executes the generated
+statements and asserts their effects. An absent-state property checks a specific
+SQL error. Any other exception fails. Namespaces, `#[Test]` and method names are
+conventions, not evidence that these behaviors were exercised.
+
+Generator existence/type coverage and configured class reachability remain two
+independent PHPStan checks. Model discovery comes from the model source tree,
+not an allowlist of implemented generators or presence of a convenient runtime
+class. Ordinary model records must not need a Snapshot trait to be counted.
+Runtime execution evidence remains the job of Eris and the two fuzz targets.
+
+### The three executable checks
+
+| Check | Entry and assertion | Failure that must stay visible |
+| --- | --- | --- |
+| Reconstruction | Existing PHP-Fuzzer target; SQL Faker -> analyze -> typed render; exact same-profile Compact comparison | Refused grammar-valid requests, missing operands, changed spelling, exceptions and timeouts |
+| Generated execution | PHPUnit/Eris; concrete values -> the public analysis-result execution boundary | Invalid generated structure, broken shrinking, wrong SQL error, wrong effect, unsupported executor or source fallback |
+| Native execution | Existing PHP-Fuzzer target; identical SQL/setup/settings -> Testcontainers and MemoryDB | Metadata/row/completion/error/condition/state differences, unstable reference outside defined contracts and implementation failures |
+
+The native observer records raw observations before any environment treatment.
+It compares result metadata, rows, affected rows, insert identities, errors and
+ordered conditions. State comparison includes the affected schema definitions,
+rows and relevant session/catalog state, not only table contents. Isolation/reset
+must restore equivalent initial state; a reset failure is a finding. Native
+results must not be copied into MemoryDB to make the outcome agree.
+
+SQL ordering must come from statement structure, not a regex matching text inside
+comments, literals or nested queries. Unordered results are multisets retaining
+duplicates. An environment contract identifies an exact field and checks its
+shape/type/range; it cannot remove a statement, result set or diagnostic. A second
+native observation detects unaccounted instability and fails rather than silently
+omitting that input. Driver-visible SQL errors cannot conceal an internal MemoryDB
+exception: the test server must expose those failures to the target separately.
+
+The observation contract is selected independently of MemoryDB's successful
+analysis, using the official grammar structure of the input. It cannot assume
+that the semantic model under test has already classified every effect correctly.
+Only an outer result ORDER BY orders that result; nested clauses do not. Ties and
+unordered LIMIT results can remain nondeterministic: repeated native disagreement
+is an unresolved finding, not a skipped input or proof of an emulator defect.
+
+| Effect domain | Observation before restoring the fixture |
+| --- | --- |
+| Rows and schema | Rows with duplicates, table/view definitions, columns, defaults, keys, constraints and dependent object definitions |
+| Session and transactions | Selected database, relevant variable changes, diagnostics/completion captured before observer queries, and visibility through a separate connection where the scenario requires it |
+| Accounts and grants | Created/altered identities, roles, privilege changes and relevant connection outcomes; generated secrets receive only their specific contract |
+| Routines, events and triggers | Definition and attributes plus effects of generated dependent invocation; installation alone does not prove execution |
+| Replication and server configuration | Channel/configuration/lifecycle effects visible through the applicable release's interfaces |
+| Environment-specific output | Exact field selectors with retained raw values and validated types/ranges/relationships; deterministic neighbors remain exact |
+
+State probes run after the primary result and conditions have been captured.
+They use a separate observer connection when they would perturb the state being
+measured. A state-read error is evidence, not an empty snapshot. A failed
+restoration abandons that owned fixture and fails the run; later inputs cannot
+inherit it. Lifecycle inputs use owned disposable servers with startup and
+statement budgets distinguished explicitly.
+
+Direct execution propagates implementation exceptions. At the process boundary,
+the server records an internal failure separately from the protocol reply, with
+the current request identity. The observer checks that channel even if PDO
+received an ordinary error packet. Legitimate MySQL errors arise only from
+modeled SQL conditions. In particular, `ImplementationGap` and an unknown compiler
+case cannot be converted to ER_NOT_SUPPORTED_YET as a general fallback.
+
+Tests of these mechanisms are normal unit/integration tests: a removed generator
+must fail coverage; wrong generic type must fail; a disconnected generator graph
+must fail usage; an intentional Eris assertion must shrink without losing the
+prerequisite; altered rendered/observed content must fail the corresponding target.
+These tests validate the mechanisms. They do not replace grammar or execution
+coverage and do not require a new private framework or a Diff suite.
+
+### Acceptance matrix and evidence
+
+Both fuzz targets use the same nine releases: 5.6.51, 5.7.44, 8.0.44, 8.1.0,
+8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0. For each release, replay the complete
+default SQL Faker corpus. Also replay every
+supplied supplement under its recorded settings: HIGH_NOT_PRECEDENCE,
+PIPES_AS_CONCAT and identified diagnostic grammar. These supplements are not
+independently complete grammar corpora; the current supplier ships them for
+8.4.7. The supplier's profile inventory determines
+applicability. An expected missing directory or an empty seed set is a failure,
+not a successful skip. Replay must establish the applicable grammar coverage;
+counting files or matching exit code zero is insufficient.
+
+Run a separate 900-second search from an empty corpus for each target and
+applicable release/profile. Keep text and native prepared driver coverage
+explicit; neither stands in for the other. SQL modes not supplied as Faker
+profiles, such as strict conversion modes, are explicit analysis/execution
+settings in the semantic properties and relevant version regressions. Do not
+claim a full power-set of all session settings from those named profiles.
+
+Local runs and CI call the same package targets. PHP-Fuzzer's corpus-crash output
+must fail the gate even when its process exits zero. A search passes only after
+its completion marker proves the budget was reached with no finding. Evidence
+records revision, release, grammar/profile, driver mode, corpus identity/coverage,
+seed, trial/input count and duration. Temporary probe scripts and focused passing
+subsets are investigation aids, never acceptance substitutes.
+
+### Work goals and order
+
+- [x] **A. Whole-system design and inventory.** Review this architecture against
+  every family above; identify the existing owners, boundary violations and
+  removal/replacement responsibilities. No further SQL-specific fixes while
+  the design still relies on an undefined fallback or unmodeled execution input.
+- [ ] **B. Honest verification structure.** Remove constructor-sampling properties
+  and their private machinery; keep the independent missing-generator failures.
+  Test the two static rules independently of runtime entry files. Align the
+  ordinary package commands, CI matrix, failure handling and observation contracts.
+  Existing genuine Eris properties remain limited evidence, not completion.
+- [ ] **C. Coherent model and execution migration.** Apply the contracts across
+  statement families and shared expression/reference/definition types. Remove
+  Operation from published results and commands, make the lifecycle common, and
+  move parser/text-dependent meaning into analysis. Generate the public model
+  directly and connect every family's behavior properties. This is a structural
+  migration, not a sequence of isolated green SQL examples.
+- [ ] **D. Behavioral correction and acceptance.** Only after A-C are structurally
+  established, investigate the exposed SQL counterexamples through the three
+  standard checks. Complete all ordinary checks, full applicable seed replay and
+  the recorded seedless matrix; then make the PR ready for review.
+
+A design document alone does not close B or C. A smaller test count after deleting
+fake properties does not improve coverage. Passing targeted checks while full
+checks fail does not close D. These distinctions must remain explicit in reports.
+
+### Structural checkpoint
+
+The whole-system design, ownership contracts, family inventory and replacement
+responsibilities above establish goal A. Goals B-D remain open. The changes at
+this checkpoint do not add statement-specific execution behavior.
+
+The rejected constructor sampler and 1,096 properties which called it have been
+removed. Three actual execution property classes remain. The misleading
+AnalyzedStatement/Expression generator aliases have also been removed: an
+interface generator which produces only the first migrated concrete type is not
+coverage of that interface's domain. Existing Operation-based generators and
+their uses are still transitional and do not establish the new execution boundary.
+
+Generator coverage now runs as a global PHPStan collected-data rule. It inventories
+public model source independently of runtime entry classes, generator declarations
+and Snapshot usage. A collector for analyzed files ensures the rule also runs
+when there are no generators at all. Missing generators are reported at the model
+declaration. Generator type/instantiability checks and the separate configured
+class-usage rule remain ordinary PHPStan checks, with no baseline hiding failures.
+The normal Composer PHPStan command disables Composer's 300-second process timeout
+so the full package analysis can finish and report its findings.
+
+The shrinking mechanism test exposed a size-control defect: source positions used
+`choose(0, 1000)`, whose linear shrink could exhaust PHPUnit's 60-second limit.
+Span generation now uses Eris's size-bounded natural endpoints, ordered to preserve
+the nonnegative, non-overflowing range invariant. The execution counterexample
+still shrinks to two zero-valued rows with the declaration relationship intact;
+the time limit and assertion were not weakened.
+
+Verification results are recorded here separately from acceptance. In particular,
+this checkpoint does not establish a corrected native observer, unified execution
+lifecycle, complete generator inventory or successful full fuzz matrix.
+
+Checks on PHP 8.5.8 / PHPUnit 10.5.64:
+
+- Generator-coverage integration: 9 tests, 18 assertions. The separate configured
+  class-usage integration passed all 32 cases, including disconnected cycles.
+- The retained execution property suite passed 36 tests and 29,728 assertions
+  with `ERIS_SEED=20261025`. After correcting source-span size control, the
+  affected INSERT properties passed again: 18 tests, 15,496 assertions.
+- The real execution/shrinking regression passed: 1 test, 483 assertions in
+  8.3 seconds. Its earlier 60-second timeout remains a failed intermediate run,
+  not successful shrink evidence.
+- Legacy statement dispatch inventory: 184 tests, 184 assertions. This verifies
+  the existing dispatch map, not removal of the Operation-based lifecycle.
+- Composer manifest validation, strict autoload, changed-file formatting and
+  PHP 8.1 compatibility checks passed.
+- The normal complete PHPStan command finished and failed with 2,984 diagnostics:
+  1,144 missing generators and 1,840 remaining type/API errors. No errors were
+  reported in the changed rules, retained generators, coverage integration or
+  INSERT execution/shrinking tests. Legacy dispatch tests still report old
+  Operation assumptions. No errors were suppressed or converted to a baseline.
+
+The normal targets and test commands produced these results; logs are under the
+ignored `mysql-memory/build/insert-foundation/` directory. No new corpus or
+900-second fuzz acceptance result is claimed at this checkpoint.
+
+## Historical investigation results
+
+The following checkpoints predate the whole-system redesign. They preserve
+observations and counterexamples, but their sequence is no longer the work plan.
 
 ### First INSERT checkpoint (2026-10-25)
 
