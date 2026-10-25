@@ -18,16 +18,17 @@ final class RunnableProperty
      */
     public function accepts(ClassReflection $class): bool
     {
-        if ($class->isAbstract() || !$class->hasNativeMethod('satisfiesPublicValueInvariants')) {
+        if ($class->isAbstract()) {
             return false;
         }
-        $method = $class->getNativeMethod('satisfiesPublicValueInvariants');
-        if (!$method->isPublic() || $method->isStatic()) {
-            return false;
-        }
-        foreach ($method->getAttributes() as $attribute) {
-            if ($attribute->getName() === 'PHPUnit\\Framework\\Attributes\\Test') {
-                return true;
+        foreach ($class->getNativeReflection()->getMethods() as $method) {
+            if ($method->getDeclaringClass()->getName() !== $class->getName() || !str_starts_with($method->getName(), 'satisfies') || !$method->isPublic() || $method->isStatic()) {
+                continue;
+            }
+            foreach ($method->getAttributes() as $attribute) {
+                if ($attribute->getName() === 'PHPUnit\\Framework\\Attributes\\Test') {
+                    return true;
+                }
             }
         }
         return false;

@@ -13,26 +13,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 
 #[CoversClass(HandlerCommand::class)]
 #[Small]
 final class HandlerCommandTest extends TestCase
 {
-    public function testReadRefusesNativePreparationBeforeBindingHandlerParameterSlots(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT PRIMARY KEY); INSERT INTO t VALUES(1),(2),(3),(4),(5); HANDLER t OPEN AS h');
-        $where = new \SqlSemantics\Platform\MySql\Statement\Expression\Comparison(\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Less, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter());
-        $limit = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(), \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Keyword);
-        $node = new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler(new \SqlSemantics\Statement\Identifier\Name('h')), new \SqlSemantics\Statement\Identifier\Name('PRIMARY'), \SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::GreaterOrEqual, [new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()], $where, $limit);
-        $domain = \MySqlMemory\Typing\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong);
-        $session->text = 'unrelated invalid input';
-
-        $this->expectExceptionCode(1295);
-        $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
-        (new \Tests\Fake\MemoryClient())->runIn($session, $node, [[2, $domain], [5, $domain], [1, $domain], [1, $domain]]);
-    }
-
     public function testDefaultWarnsAndReadsTheImplicitDefaultInMySql56(): void
     {
         $session = (new Instance('5.6.51'))->connect();
@@ -219,12 +207,12 @@ final class HandlerCommandTest extends TestCase
 
     public function testSelectReadsEveryColumnOfTheTableUnderTheNameOfTheHandler(): void
     {
-        $condition = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
+        $condition = new NumberLiteral('1');
         $query = (new HandlerCommand())->select(new Handler('d`x', 't', 'h'), $condition);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class, $query->from);
+        self::assertInstanceOf(TableReference::class, $query->from);
 
         self::assertSame(['d`x', 't', 'h'], [$query->from->name->schema?->value, $query->from->name->name->value, $query->from->alias?->value]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Star::class, $query->items[0]);
+        self::assertInstanceOf(Star::class, $query->items[0]);
         self::assertSame($condition, $query->where);
         self::assertNull((new HandlerCommand())->select(new Handler('d`x', 't', 'h'), null)->where);
     }

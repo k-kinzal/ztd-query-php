@@ -64,6 +64,22 @@ final class SelectionsTest extends TestCase
         $session->query('WITH c AS (VALUES ROW(CHAR(ROW(missing, 2)))) SELECT * FROM c');
     }
 
+    public function testValuesRejectsDefaultBeforeTheFollowingRetainedRow(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery([
+            new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest()]),
+            new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow([new Row([new NumberLiteral('1'), new NumberLiteral('2')])]),
+        ]);
+        $context = $session->semantics()->context([], true);
+        $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($query, $context);
+        $derivation->query($query, $derivation->environment());
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3943);
+        (new \MySqlMemory\Program\Expression\QueryUse())->plan(new \MySqlMemory\Session\Resolution\QueryPreparation($query, $derivation->facts(), $context->profile), $session);
+    }
+
     public function testBoundRejectsQualifyBeforeProjectionWidthWithoutReadingInputText(): void
     {
         $session = (new Instance('8.4.7'))->connect();

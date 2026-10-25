@@ -123,10 +123,10 @@ final class Selections
             }
             foreach ($row->values as $value) {
                 if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest) {
-                    $planner->compiler->compile($value, $scope);
-                } else {
-                    $this->operand($value, $planner->compiler, $scope);
+                    throw \MySqlMemory\Error\Family\QueryError::ValuesDefault->error();
                 }
+                $this->operand($value, $planner->compiler, $scope);
+
             }
         }
         throw new LogicException('Deferred VALUES must retain a preparation condition.');

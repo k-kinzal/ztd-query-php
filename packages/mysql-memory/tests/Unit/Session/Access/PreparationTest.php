@@ -217,6 +217,7 @@ final class PreparationTest extends TestCase
         self::assertSame(4, $session->variables->read('div_precision_increment'));
         self::assertSame([], $session->diagnostics->conditions);
     }
+
     #[\PHPUnit\Framework\Attributes\TestWith(['HANDLER missing OPEN'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['HANDLER missing READ FIRST'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['HANDLER missing CLOSE'])]
@@ -227,6 +228,7 @@ final class PreparationTest extends TestCase
         $this->expectExceptionCode(1295);
         (new Preparation())->check($operation, $session);
     }
+
     public function testCheckResolvesLegacyIndexDatabaseBeforeParserPlugin(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -234,6 +236,7 @@ final class PreparationTest extends TestCase
         $this->expectExceptionCode(1046);
         (new Preparation())->check($operation, $session);
     }
+
     public function testCheckResolvesLegacyLoadDatabaseBeforeCharset(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -242,4 +245,35 @@ final class PreparationTest extends TestCase
         (new Preparation())->check($operation, $session);
     }
 
+    public function testCheckRejectsPreparingPurgeLogs(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter());
+        $parameters = [['2024-01-01 00:00:00', \MySqlMemory\Typing\Domain::string(19, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]];
+        $operation = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement, $parameters);
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1295);
+        (new Preparation())->check($operation, $session);
+    }
+
+    public function testCheckRefusesHandlerParametersBeforeNativeExecution(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT PRIMARY KEY); INSERT INTO t VALUES(1),(2),(3),(4),(5); HANDLER t OPEN AS h');
+        $where = new \SqlSemantics\Platform\MySql\Statement\Expression\Comparison(\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Less, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter());
+        $limit = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(), \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Keyword);
+        $node = new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler(new \SqlSemantics\Statement\Identifier\Name('h')), new \SqlSemantics\Statement\Identifier\Name('PRIMARY'), \SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::GreaterOrEqual, [new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()], $where, $limit);
+        $domain = \MySqlMemory\Typing\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong);
+        $session->text = 'unrelated invalid input';
+        $this->expectExceptionCode(1295);
+        $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
+        $statement1 = (new \Tests\Generator\Embedding())->statement($node);
+        $parameters1 = [[2, $domain], [5, $domain], [1, $domain], [1, $domain]];
+        $session->activity->begin();
+        \MySqlMemory\Session\State\StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        $operation1 = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement1, $parameters1, new \SqlSemantics\Contract\LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new \Tests\Generator\Bindings())->parameters($statement1)));
+        (new Preparation())->check($operation1, $session);
+    }
 }

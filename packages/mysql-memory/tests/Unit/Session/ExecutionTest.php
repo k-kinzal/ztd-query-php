@@ -4,23 +4,66 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use MySqlMemory\Command\Account\GrantCommand;
 use MySqlMemory\Command\Dispatcher;
+use MySqlMemory\Command\QueryCommand;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Hint\Hints;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Grantee;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(Execution::class)]
 #[Small]
 final class ExecutionTest extends TestCase
 {
+    public function testPerformRetainsASignalWithoutReadingRequestText(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'this is not SQL';
+        $statement = new Signal(new SqlState(new Text('45000')));
+        $operation = (new Binding())->operation($session, $statement);
+        try {
+            (new Execution($session))->perform($operation, (new Dispatcher())->command($statement));
+            self::fail('SIGNAL must raise its declared SQL condition.');
+        } catch (SqlError $error) {
+            self::assertSame(1644, $error->getCode());
+            self::assertSame('45000', $error->sqlState());
+            self::assertSame('Unhandled user-defined exception condition', $error->getMessage());
+            self::assertSame('this is not SQL', $session->text);
+        }
+    }
+
     public function testReadingChecksLegacyDatabaseBeforeDefinitionConditions(): void
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('CREATE TABLE t(a INT) CHARACTER SET missing');
 
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode(1046);
         (new Execution($session))->reading($operation, true);
     }
@@ -31,10 +74,10 @@ final class ExecutionTest extends TestCase
         $answers = $session->run("SELECT JSON_EXTRACT(v,'$') FROM (SELECT '1' AS v UNION ALL SELECT 'invalid') AS t");
 
         self::assertCount(2, $answers);
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $answers[0]);
+        self::assertInstanceOf(ResultSet::class, $answers[0]);
         self::assertFalse($answers[0]->complete);
         self::assertSame([['1']], $answers[0]->rows);
-        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $answers[1]);
+        self::assertInstanceOf(SqlError::class, $answers[1]);
         self::assertNull($session->running->partial);
     }
 
@@ -43,7 +86,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect();
         $session->query('CREATE TABLE d.t(a INT) START TRANSACTION');
 
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode(3977);
         $session->query('SELECT 1');
     }
@@ -79,7 +122,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SELECT /*+ FOO */ SQL_NO_CACHE 1');
         $operation = $session->analyze('SELECT /*+ MAX_EXECUTION_TIME(1) MAX_EXECUTION_TIME(2) */ 1');
-        $hints = (new \MySqlMemory\Hint\Hints())->apply($operation->statement, $session);
+        $hints = (new Hints())->apply($operation->statement, $session);
 
         (new Execution($session))->run($operation, (new Dispatcher())->command($operation->statement), $hints);
 
@@ -93,9 +136,10 @@ final class ExecutionTest extends TestCase
 
         $reply = (new Execution($session))->perform($operation, (new Dispatcher())->command($operation->statement));
 
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $reply);
+        self::assertInstanceOf(ResultSet::class, $reply);
         self::assertSame([[['0']], 'ON'], [$reply->rows, $session->variables->read('unique_checks')]);
     }
+
     public function testRunRefusesAWriteOfAReadOnlyTransactionBeforeItsProblems(): void
     {
         $session = (new Instance())->connect();
@@ -103,7 +147,7 @@ final class ExecutionTest extends TestCase
         $replies = $session->run('INSERT INTO nosuch.t VALUES (1)');
         $error = $replies[0] ?? null;
 
-        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $error);
+        self::assertInstanceOf(SqlError::class, $error);
         self::assertSame(1792, $error->getCode());
     }
 
@@ -124,7 +168,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $reply = $session->run('SELECT BINARY CAST(1 AT LOCAL AS SIGNED), BINARY 2')[0];
 
-        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertInstanceOf(SqlError::class, $reply);
         self::assertSame([1235, 1287], array_column($session->diagnostics->conditions, 1));
     }
 
@@ -143,7 +187,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT ('a' COLLATE nope) COLLATE nope2");
 
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode(1273);
         $this->expectExceptionMessage("Unknown collation: 'nope'");
 
@@ -158,8 +202,8 @@ final class ExecutionTest extends TestCase
         $modern = (new Instance('5.7.44'))->connect();
 
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'abc'"]], $legacy->diagnostics->conditions);
-        self::assertTrue((new Execution($legacy))->retains($legacy->analyze('SELECT 1')->statement, new \MySqlMemory\Command\QueryCommand()));
-        self::assertFalse((new Execution($modern))->retains($modern->analyze('SELECT 1')->statement, new \MySqlMemory\Command\QueryCommand()));
+        self::assertTrue((new Execution($legacy))->retains($legacy->analyze('SELECT 1')->statement, new QueryCommand()));
+        self::assertFalse((new Execution($modern))->retains($modern->analyze('SELECT 1')->statement, new QueryCommand()));
     }
 
     public function testRetainsKeepsTheDiagnosticsAcrossTheTransactionStatementsOf56(): void
@@ -169,7 +213,7 @@ final class ExecutionTest extends TestCase
         $session->query('SET TRANSACTION READ WRITE; BEGIN; SAVEPOINT a; COMMIT');
         $warnings = $session->query('SHOW WARNINGS')[0];
 
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $warnings);
+        self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Error', '1146', "Table 'nosuch.t' doesn't exist"]], $warnings->rows);
     }
 
@@ -182,8 +226,8 @@ final class ExecutionTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $cleared = $session->query('SHOW WARNINGS')[0];
 
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $kept);
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $cleared);
+        self::assertInstanceOf(ResultSet::class, $kept);
+        self::assertInstanceOf(ResultSet::class, $cleared);
         self::assertSame([['Note', '1008', "Can't drop database 'nosuch'; database doesn't exist"]], $kept->rows);
         self::assertSame([], $cleared->rows);
     }
@@ -197,8 +241,8 @@ final class ExecutionTest extends TestCase
         $count = $session->query('SHOW COUNT(*) WARNINGS')[0];
         $read = $session->query('SELECT @@warning_count')[0];
 
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $count);
-        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $read);
+        self::assertInstanceOf(ResultSet::class, $count);
+        self::assertInstanceOf(ResultSet::class, $read);
         self::assertSame([2, [['3']], [['3']]], [$kept, $count->rows, $read->rows]);
     }
 
@@ -247,11 +291,12 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->variables->rowCount = 3;
-        $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+        $error = QueryError::NoDatabase->error();
 
         self::assertSame([$error], (new Execution($session))->failed($error));
         self::assertSame([-1, [['Error', 1046, 'No database selected']]], [$session->variables->rowCount, $session->diagnostics->conditions]);
     }
+
     public function testRetainsClearsLegacyDiagnosticsWhenADerivedTableIsOpened(): void
     {
         $session = (new Instance('5.6.51'))->connect();
@@ -268,8 +313,41 @@ final class ExecutionTest extends TestCase
     public function testRetainsIncludesTheImplicitCurrentDatabaseGrantLevel(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $grant = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
-        self::assertTrue((new Execution($session))->retains($grant, new \MySqlMemory\Command\Account\GrantCommand()));
+        $grant = new GrantPrivileges([new AllPrivileges()], ObjectKind::Table, new CurrentDatabaseLevel(), [new Grantee(new CurrentUser())]);
+        self::assertTrue((new Execution($session))->retains($grant, new GrantCommand()));
     }
 
+    public function testPerformBindsValuesWithoutImposingProtocolPreparation(): void
+    {
+        $node = new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(new Parameter());
+        $parameters = [['2024-01-01 00:00:00', Domain::string(19, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]];
+        $session1 = (new Instance('8.4.7'))->connect();
+        $statement1 = (new Embedding())->statement($node);
+        $parameters1 = $parameters;
+        $session1->activity->begin();
+        StatementCounters::received($session1);
+        $session1->hinted = [];
+        $session1->dots = [];
+        $operation1 = (new Binding())->operation($session1, $statement1, $parameters1, new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1));
+    }
+
+    public function testPerformBindsNullParametersInsideTypedParentExpressions(): void
+    {
+        $query = new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat(\SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat::Date, new Parameter(':format'))), new SelectExpression(new Concatenation(new Parameter(), new Parameter())), new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression(null, [new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch(new NumberLiteral('1'), new Parameter())]))]);
+        $bindings = array_fill(0, (new Bindings())->count($query), [null, Domain::null()]);
+        $session3 = (new Instance('8.4.7'))->connect();
+        $session3->variables->session['sql_mode'] = 'PIPES_AS_CONCAT';
+        $statement3 = (new Embedding())->statement($query);
+        $parameters3 = $bindings;
+        $session3->activity->begin();
+        StatementCounters::received($session3);
+        $session3->hinted = [];
+        $session3->dots = [];
+        $operation3 = (new Binding())->operation($session3, $statement3, $parameters3, new LanguageProfile($session3->semantics()->profile()->grammar, $session3->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
+        $reply = (new Execution($session3))->perform($operation3, (new Dispatcher())->command($operation3->statement), $parameters3);
+        self::assertCount(4, $bindings);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[null, null, null]], $reply->rows);
+    }
 }

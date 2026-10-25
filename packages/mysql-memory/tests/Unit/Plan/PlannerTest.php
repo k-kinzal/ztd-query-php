@@ -302,6 +302,7 @@ final class PlannerTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $derived);
         self::assertSame([[['1'], ['2.5'], ['x']], [['1'], ['2.5'], ['x']], [['1.0'], ['2.5'], ['x']]], [$nested->rows, $parenthesized->rows, $derived->rows]);
     }
+
     public function testSetRetainsLegacyTemporaryColumnNamesAndFlags(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -309,6 +310,20 @@ final class PlannerTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame('n', $result->columns[0]->originalName);
         self::assertSame(32769, $result->columns[0]->flags);
+    }
+
+    public function testValuesRejectsDefaultInAReadContext(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $query = new ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest()])]);
+        $context = $session->semantics()->context([], true);
+        $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($query, $context);
+        $derivation->query($query, $derivation->environment());
+        $evaluation = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($query, $derivation->facts(), $session->settings(), new Connection($session->variables, $evaluation), $session->instance->dictionary);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3943);
+        $planner->values($query, null);
     }
 
 }

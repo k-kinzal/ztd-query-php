@@ -4,13 +4,23 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session\Parse\Entry\Json;
 
+use MySqlMemory\Command\Dispatcher;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
+use MySqlMemory\Session\Execution;
 use MySqlMemory\Session\Parse\Entry\Json\AttributeInput;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(AttributeInput::class)]
 #[Medium]
@@ -37,12 +47,25 @@ final class AttributeInputTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = $session->semantics()->analyze("CREATE TABLE t(a INT SECONDARY_ENGINE_ATTRIBUTE '', b INT SECONDARY_ENGINE_ATTRIBUTE 'null', KEY(a) SECONDARY_ENGINE_ATTRIBUTE '[]') SECONDARY_ENGINE_ATTRIBUTE '1'")->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
+        self::assertInstanceOf(CreateTable::class, $statement);
         $session->query('CREATE DATABASE placement');
         $session->query('USE placement');
         $session->text = 'unrelated invalid input';
-        $result = (new \Tests\Fake\MemoryClient())->observe($session, $statement);
-        self::assertArrayNotHasKey('error', $result);
+        $statement1 = (new Embedding())->statement($statement);
+        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+        } catch (SqlError $executionError) {
+            $result1 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $result = $result1;
+        self::assertNotInstanceOf(SqlError::class, $result);
         self::assertSame('unrelated invalid input', $session->text);
     }
 }

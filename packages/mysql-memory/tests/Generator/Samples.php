@@ -6,6 +6,7 @@ namespace Tests\Generator;
 
 use InvalidArgumentException;
 use JsonException;
+use LogicException;
 
 /**
  * Replays independently seeded constructor samples for a selected public semantic type.
@@ -34,17 +35,18 @@ final class Samples
     }
 
     /**
-     * @param class-string $class
-     * @param non-negative-int|null $sampleIndex One PHPUnit dataset, or null for the complete sequence
-     * @return iterable<object>
+     * @template T of object
+     * @param class-string<T> $class
+     * @param non-negative-int $sample One reproducible trial
+     * @return T
      * @throws JsonException When a dependency inventory cannot be read
+     * @throws LogicException When a type-specific generator violates its declared contract
      * @throws InvalidArgumentException When the sample count is not positive
      */
-    public function of(string $class, ?int $sampleIndex = null): iterable
+    public function sample(string $class, int $sample): object
     {
         $seed = getenv('MYSQL_MEMORY_PBT_SEED');
         $seed = $seed === false ? 'all-model-roots' : $seed;
-        $samples = $sampleIndex === null ? $this->count() : $sampleIndex + 1;
         $catalogue = new Catalogue();
         if (self::$metadataClass !== $class) {
             self::$metadataClass = $class;
@@ -53,11 +55,16 @@ final class Samples
         $metadata = self::$metadata ??= new Metadata();
         $roots = $catalogue->roots();
         $index = array_search($class, $roots, true);
-        for ($sample = $sampleIndex ?? 0; $sample < $samples; $sample++) {
-            $choices = new Choices($index === false ? $seed . ':' . $class . ':' . $sample : $seed . ':' . ($index + $sample * count($roots)));
-            $choices->one($roots);
-            $generator = str_replace(['SqlSemantics\\Platform\\MySql\\', 'SqlSemantics\\'], ['Tests\\Generator\\MySql\\', 'Tests\\Generator\\Semantics\\'], $class);
-            yield is_a($generator, Inhabitant::class, true) ? (new $generator())->sample($choices) : (new Construction($choices, $catalogue, $metadata))->object($class, 6);
+        $choices = new Choices($index === false ? $seed . ':' . $class . ':' . $sample : $seed . ':' . ($index + $sample * count($roots)));
+        $choices->one($roots);
+        $generator = str_replace(['SqlSemantics\\Platform\\MySql\\', 'SqlSemantics\\'], ['Tests\\Generator\\MySql\\', 'Tests\\Generator\\Semantics\\'], $class) . 'Generator';
+        if (class_exists($generator) && !is_a($generator, Inhabitant::class, true)) {
+            throw new LogicException($generator . ' must implement ' . Inhabitant::class . '.');
         }
+        $value = is_a($generator, Inhabitant::class, true) ? (new $generator())->sample($choices) : (new Construction($choices, $catalogue, $metadata))->object($class, 6);
+        if (!$value instanceof $class) {
+            throw new LogicException($generator . ' did not generate ' . $class . '.');
+        }
+        return $value;
     }
 }

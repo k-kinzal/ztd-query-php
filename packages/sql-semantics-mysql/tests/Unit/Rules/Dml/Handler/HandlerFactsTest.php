@@ -17,8 +17,11 @@ final class HandlerFactsTest extends TestCase
 {
     public function testFunctionsReportsNestedStoredCallsBeforeRelationResolution(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (1) WHERE ABS(d.f())');
-        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet));
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ABS(d.f())');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
+        (new HandlerFacts())->functions([$operation->statement->query], $derivation);
+        $problems = array_values(array_filter($derivation->facts()->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet));
 
         self::assertCount(1, $problems);
         self::assertSame('stored functions in HANDLER ... READ', $problems[0]->feature);

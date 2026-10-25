@@ -304,6 +304,9 @@ final class Planner
             }
             $compiled = [];
             foreach ($row->values as $position => $value) {
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest) {
+                    throw QueryError::ValuesDefault->error();
+                }
                 $evaluable = $this->compiler->compile($value, $scope);
                 $compiled[] = $evaluable;
                 $columns[$position][] = $evaluable->domain();

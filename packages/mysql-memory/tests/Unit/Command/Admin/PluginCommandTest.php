@@ -5,12 +5,22 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Admin;
 
 use MySqlMemory\Command\Admin\PluginCommand;
+use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(PluginCommand::class)]
 #[Small]
@@ -145,12 +155,25 @@ final class PluginCommandTest extends TestCase
     public function testExecutePreservesLegacyBuiltinWarningsBeforeTheMissingPluginError(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $node = new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin(new \SqlSemantics\Statement\Identifier\Name('mysql_old_password'));
+        $node = new UninstallPlugin(new Name('mysql_old_password'));
         $session->text = 'unrelated invalid input';
-        $result = (new \Tests\Fake\MemoryClient())->observe($session, $node);
-
-        self::assertSame([1305, '42000', 'PLUGIN mysql_old_password does not exist'], $result['error'] ?? null);
-        self::assertSame([['Warning', '1619', 'Built-in plugins cannot be deleted'], ['Error', '1305', 'PLUGIN mysql_old_password does not exist']], $result['warnings']);
+        $statement1 = (new Embedding())->statement($node);
+        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+        } catch (SqlError $executionError) {
+            $result1 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $warnings1 = array_map(static fn (array $condition): array => [$condition[0], (string) $condition[1], $condition[2]], $session->diagnostics->conditions);
+        $result = $result1;
+        self::assertSame([1305, '42000', 'PLUGIN mysql_old_password does not exist'], $result instanceof SqlError ? [$result->getCode(), $result->sqlState(), $result->getMessage()] : null);
+        self::assertSame([['Warning', '1619', 'Built-in plugins cannot be deleted'], ['Error', '1305', 'PLUGIN mysql_old_password does not exist']], $warnings1);
     }
 
     public function testExecuteCannotUninstallAMissingPlugin(): void

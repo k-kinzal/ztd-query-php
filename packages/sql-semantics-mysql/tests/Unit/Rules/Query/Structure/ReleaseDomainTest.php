@@ -23,6 +23,13 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ReleaseDomainTest extends TestCase
 {
+    public function testOfKeepsHandlerCallsInTheirNativeReleases(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('X'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new NumberLiteral('1'))]);
+        $read = new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler(new Name('h')), \SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::First, $call);
+        self::assertSame(3, (new ReleaseDomain())->of($read));
+    }
+
     public function testOfKeepsRetainedPartitionSubqueriesInLegacyDefinitions(): void
     {
         $query = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new Select([], [new SelectExpression(new NumberLiteral('1'))]));

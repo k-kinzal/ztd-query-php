@@ -4,12 +4,26 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command\Replication;
 
+use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Command\Replication\SourceChange;
+use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
+use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(SourceChange::class)]
 #[Small]
@@ -126,7 +140,7 @@ final class SourceChangeTest extends TestCase
     {
         $session = (new Instance('8.4.7', ['gtid_mode' => 'ON']))->connect();
         $session->query('CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=LOCAL');
-        self::assertSame([['Note', 4017, \MySqlMemory\Error\Family\AdministrationError::AnonymousAssignmentTopology->message()]], $session->diagnostics->conditions);
+        self::assertSame([['Note', 4017, AdministrationError::AnonymousAssignmentTopology->message()]], $session->diagnostics->conditions);
 
         $session->query('CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=OFF');
         self::assertSame([], $session->diagnostics->conditions);
@@ -161,18 +175,28 @@ final class SourceChangeTest extends TestCase
 
     public function testCheckRetainsEarlierSettingsWhenTheFinalCompressionValueFails(): void
     {
-        $option = \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption::class;
-        $kind = \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::class;
-        $vocabulary = \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current;
-        $text = \SqlSemantics\Platform\MySql\Statement\Literal\Text::class;
-        $statement = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource($vocabulary, [
-            new $option($vocabulary, $kind::Host, new $text('local')),
-            new $option($vocabulary, $kind::CompressionAlgorithms, new $text(str_repeat('x', 129))),
-        ]);
+        $option = SourceOption::class;
+        $kind = SourceOptionKind::class;
+        $vocabulary = Terminology::Current;
+        $text = Text::class;
+        $statement = new ChangeReplicationSource($vocabulary, [new $option($vocabulary, $kind::Host, new $text('local')), new $option($vocabulary, $kind::CompressionAlgorithms, new $text(str_repeat('x', 129)))]);
         $session = (new Instance())->connect();
         $session->text = 'unrelated request label';
-        $result = (new \Tests\Fake\MemoryClient())->observe($session, $statement);
-        self::assertSame([4037, 'HY000', "Value too long setting SOURCE_COMPRESSION_ALGORITHMS option to a 129 chars long string for channel ''."], $result['error'] ?? null);
+        $statement1 = (new Embedding())->statement($statement);
+        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+        } catch (SqlError $executionError) {
+            $result1 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $result = $result1;
+        self::assertSame([4037, 'HY000', "Value too long setting SOURCE_COMPRESSION_ALGORITHMS option to a 129 chars long string for channel ''."], $result instanceof SqlError ? [$result->getCode(), $result->sqlState(), $result->getMessage()] : null);
         self::assertSame('local', $session->instance->registry->replication->host);
         self::assertSame('unrelated request label', $session->text);
     }

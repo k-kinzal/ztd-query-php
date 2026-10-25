@@ -6,12 +6,25 @@ namespace Tests\Unit\Command\Account;
 
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Account\SetPasswordCommand;
+use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Account\Password;
+use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
+use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(SetPasswordCommand::class)]
 #[Small]
@@ -23,7 +36,7 @@ final class SetPasswordCommandTest extends TestCase
         $account = $session->instance->accounts->find(new Identity('root', '%'));
         self::assertNotNull($account);
         $original = $account->hash;
-        $item = new \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment(new \SqlSemantics\Platform\MySql\Statement\Account\Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('after'), \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::Password));
+        $item = new PasswordAssignment(new Password(new Text('after'), PasswordFunction::Password));
         $apply = (new SetPasswordCommand())->assignment($item, $session);
 
         self::assertSame($original, $account->hash);
@@ -117,6 +130,7 @@ final class SetPasswordCommandTest extends TestCase
 
         $session->query("SET PASSWORD FOR u = 'z'");
     }
+
     public function testExecuteUsesTheSessionRandomPasswordLength(): void
     {
         $session = (new Instance())->connect();
@@ -134,16 +148,28 @@ final class SetPasswordCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query("SET PASSWORD='old'");
-        $statement = new \SqlSemantics\Platform\MySql\Statement\Account\SetPassword(null, new \SqlSemantics\Platform\MySql\Statement\Account\Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text(str_repeat('a', 257))), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('wrong'), true);
+        $statement = new SetPassword(null, new Password(new Text(str_repeat('a', 257))), new Text('wrong'), true);
         $session->text = 'unrelated input';
-        $result = (new \Tests\Fake\MemoryClient())->observe($session, $statement);
-        self::assertArrayHasKey('error', $result);
-        self::assertSame([1396, 'HY000', "Operation SET PASSWORD failed for 'root'@'%'"], $result['error'] ?? null);
+        $statement1 = (new Embedding())->statement($statement);
+        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+        } catch (SqlError $executionError) {
+            $result1 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $result = $result1;
+        self::assertInstanceOf(SqlError::class, $result);
+        self::assertSame([1396, 'HY000', "Operation SET PASSWORD failed for 'root'@'%'"], [$result->getCode(), $result->sqlState(), $result->getMessage()]);
         $account = $session->instance->accounts->find(new Identity('root', '%'));
         self::assertNotNull($account);
         self::assertSame('old', $account->password);
         self::assertNull($account->secondary);
         self::assertSame('unrelated input', $session->text);
     }
-
 }

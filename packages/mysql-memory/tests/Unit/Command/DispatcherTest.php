@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command;
 
+use JsonException;
 use MySqlMemory\Command\Access\HandlerCommand;
 use MySqlMemory\Command\Access\ImportTableCommand;
 use MySqlMemory\Command\Access\LoadDataCommand;
@@ -18,6 +19,16 @@ use MySqlMemory\Command\Account\RoleCommand;
 use MySqlMemory\Command\Account\SetPasswordCommand;
 use MySqlMemory\Command\Account\ShowCreateUserCommand;
 use MySqlMemory\Command\Account\ShowGrantsCommand;
+use MySqlMemory\Command\Admin\FlushCommand;
+use MySqlMemory\Command\Admin\ForeignServerCommand;
+use MySqlMemory\Command\Admin\InstanceCommand;
+use MySqlMemory\Command\Admin\LogfileGroupCommand;
+use MySqlMemory\Command\Admin\PersistCommand;
+use MySqlMemory\Command\Admin\PluginCommand;
+use MySqlMemory\Command\Admin\RegistrationCommand;
+use MySqlMemory\Command\Admin\ResourceGroupCommand;
+use MySqlMemory\Command\Admin\SpatialReferenceCommand;
+use MySqlMemory\Command\Admin\TablespaceCommand;
 use MySqlMemory\Command\DatabaseCommand;
 use MySqlMemory\Command\Definition\AlterTableCommand;
 use MySqlMemory\Command\Definition\CreateTableCommand;
@@ -27,11 +38,17 @@ use MySqlMemory\Command\Definition\DropTableCommand;
 use MySqlMemory\Command\Definition\RenameTableCommand;
 use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Command\DoCommand;
+use MySqlMemory\Command\EmptyCommand;
 use MySqlMemory\Command\Maintenance\AdministrationCommand;
 use MySqlMemory\Command\Maintenance\ChecksumCommand;
 use MySqlMemory\Command\QueryCommand;
+use MySqlMemory\Command\Replication\BinaryLogCommand;
+use MySqlMemory\Command\Replication\ReplicaCommand;
+use MySqlMemory\Command\Replication\ReplicationShowCommand;
 use MySqlMemory\Command\SetCommand;
 use MySqlMemory\Command\ShowTablesCommand;
+use MySqlMemory\Command\Transaction\SavepointCommand;
+use MySqlMemory\Command\Transaction\XaCommand;
 use MySqlMemory\Command\TransactionCommand;
 use MySqlMemory\Command\View\ViewWriteCommand;
 use MySqlMemory\Command\WarningsCommand;
@@ -41,8 +58,20 @@ use MySqlMemory\Command\Write\MultipleChangeCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Dml\Update;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
+use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Statement\Script;
+use Tests\Generator\Catalogue;
 
 #[CoversClass(Dispatcher::class)]
 #[Small]
@@ -165,7 +194,7 @@ final class DispatcherTest extends TestCase
     public function testCommandRefusesAStatementNoCommandExecutes(): void
     {
         $session = (new Instance())->connect();
-        $statement = new \SqlSemantics\Statement\Script([$session->analyze('SELECT 1')->statement, $session->analyze('SELECT 2')->statement]);
+        $statement = new Script([$session->analyze('SELECT 1')->statement, $session->analyze('SELECT 2')->statement]);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
@@ -176,7 +205,7 @@ final class DispatcherTest extends TestCase
 
     public function testCommandCompletesAnEmptySemanticScript(): void
     {
-        self::assertInstanceOf(\MySqlMemory\Command\EmptyCommand::class, (new Dispatcher())->command(new \SqlSemantics\Statement\Script([])));
+        self::assertInstanceOf(EmptyCommand::class, (new Dispatcher())->command(new Script([])));
     }
 
     public function testCommandChoosesTheCommandsOfServerAdministration(): void
@@ -186,21 +215,21 @@ final class DispatcherTest extends TestCase
 
         self::assertSame(
             [
-                \MySqlMemory\Command\Transaction\SavepointCommand::class,
-                \MySqlMemory\Command\Transaction\XaCommand::class,
-                \MySqlMemory\Command\Admin\ResourceGroupCommand::class,
-                \MySqlMemory\Command\Admin\ForeignServerCommand::class,
-                \MySqlMemory\Command\Admin\PluginCommand::class,
-                \MySqlMemory\Command\Admin\TablespaceCommand::class,
-                \MySqlMemory\Command\Admin\LogfileGroupCommand::class,
-                \MySqlMemory\Command\Admin\SpatialReferenceCommand::class,
-                \MySqlMemory\Command\Admin\InstanceCommand::class,
-                \MySqlMemory\Command\Admin\FlushCommand::class,
-                \MySqlMemory\Command\Admin\RegistrationCommand::class,
-                \MySqlMemory\Command\Admin\PersistCommand::class,
-                \MySqlMemory\Command\Replication\ReplicaCommand::class,
-                \MySqlMemory\Command\Replication\BinaryLogCommand::class,
-                \MySqlMemory\Command\Replication\ReplicationShowCommand::class,
+                SavepointCommand::class,
+                XaCommand::class,
+                ResourceGroupCommand::class,
+                ForeignServerCommand::class,
+                PluginCommand::class,
+                TablespaceCommand::class,
+                LogfileGroupCommand::class,
+                SpatialReferenceCommand::class,
+                InstanceCommand::class,
+                FlushCommand::class,
+                RegistrationCommand::class,
+                PersistCommand::class,
+                ReplicaCommand::class,
+                BinaryLogCommand::class,
+                ReplicationShowCommand::class,
             ],
             [
                 $dispatcher->command($session->analyze('SAVEPOINT s')->statement)::class,
@@ -224,7 +253,7 @@ final class DispatcherTest extends TestCase
 
     public function testHandlesTellsWhetherAProgramDeclaresAHandler(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame([true, false], [
             Dispatcher::handles($semantics->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET @x = 1; END; END')->statement),
@@ -234,7 +263,7 @@ final class DispatcherTest extends TestCase
 
     public function testProgramTellsWhetherAStatementCreatesAStoredProgram(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame([true, false], [Dispatcher::program($semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x = 1')->statement), Dispatcher::program($semantics->analyze('SELECT 1')->statement)]);
     }
@@ -257,5 +286,27 @@ final class DispatcherTest extends TestCase
         $session->query('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION SET @x = 1; END');
 
         self::assertSame([['Warning', 1365, 'Division by 0']], $session->diagnostics->conditions);
+    }
+
+    /**
+     * @return iterable<class-string, array{class-string}>
+     * @throws JsonException When a semantic inventory is invalid
+     */
+    public static function providerDispatchStatements(): iterable
+    {
+        foreach ((new Catalogue())->implementations(Statement::class) as $class) {
+            yield $class => [$class];
+        }
+    }
+
+    /**
+     * @param class-string $class The concrete statement type
+     */
+    #[DataProvider('providerDispatchStatements')]
+    public function testCommandEveryStatementHasAnExplicitCommandRoute(string $class): void
+    {
+        $specialized = in_array($class, [InsertRows::class, InsertSet::class, InsertQuery::class, Update::class, Delete::class, Resignal::class], true);
+        $command = Dispatcher::COMMANDS[$class] ?? null;
+        self::assertTrue($specialized || $command !== null, 'No command consumes ' . $class);
     }
 }

@@ -26,8 +26,8 @@
         <testsuite name="property">
             <directory suffix="Properties.php">tests/Property</directory>
         </testsuite>
-        <testsuite name="e2e">
-            <directory>tests/E2E</directory>
+        <testsuite name="integration">
+            <directory>tests/Integration</directory>
         </testsuite>
         <testsuite name="doctest">
             <file>vendor/k-kinzal/php-ai-toolkit/src/Doctest/DoctestSuite.php</file>

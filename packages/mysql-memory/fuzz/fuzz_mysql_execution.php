@@ -12,10 +12,8 @@
 
 declare(strict_types=1);
 
-use Fuzz\Target\Lifecycle;
-use Fuzz\Target\Seed;
-use Fuzz\Target\SeedCorpus;
-use Fuzz\Target\Servers;
+use Fuzz\Fixture\Servers;
+use Fuzz\Generator\MySql;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Plan\GenerationPlan;
 
@@ -32,7 +30,7 @@ if ($duration === false) {
 }
 $mode = (new Servers())->environment('SQLFAKER_SQL_MODE', '');
 $grammar = 'mysql-' . (new Servers())->environment('MYSQL_VERSION', Container\MySqlRelease::DEFAULT);
-$corpus = new SeedCorpus($grammar, $mode, getenv('SQLFAKER_DIAGNOSTICS') === '1');
+$corpus = new MySql($grammar, $mode, getenv('SQLFAKER_DIAGNOSTICS') === '1');
 $provider = $corpus->provider;
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule($corpus->root)->requiringNonEmpty();
@@ -50,12 +48,7 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $co
     static $inputs = 0;
     $started ??= hrtime(true);
     $generated = $provider->generate((new BytePlanCompiler())->compile($input, $planner, $constraints));
-    $sql = (new Seed('', $input, $generated, $mode))->executionSql();
-    $comparison = Lifecycle::handles($generated) ? (new Lifecycle())->compare($generated, $target->version, $mode) : $target->compare($sql);
-    if ($comparison->difference !== null || $comparison->volatile) {
-        $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
-        throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference));
-    }
+    $target->verify($generated, $input, $mode);
     $inputs++;
     $elapsed = (hrtime(true) - $started) / 1_000_000_000;
     if ($duration !== null && $elapsed >= $duration) {

@@ -89,11 +89,27 @@ Its semantic validation has three parts:
 
 PBT classes live under `tests/Property`, use `*Properties` names, and expose
 `satisfies*` test methods. `tests/Generator` supplies their values independently of
-`fuzz`. The PHPStan rules in `rules` require a corresponding property class for every
+`fuzz`. Type-specific generators and properties mirror the same semantic namespace:
+`SqlSemantics\Platform\MySql\Statement\Account\AlterUser` maps to
+`tests/Generator/MySql/Statement/Account/AlterUserGenerator.php` (when a specialized
+generator is needed) and `tests/Property/MySql/Statement/Account/AlterUserProperties.php`.
+The core package uses the `Semantics` prefix on both sides. Types without a specialized
+generator use `Construction`, which samples their declared constructor arguments.
+Semantic counterexample regressions live beside their corresponding properties.
+Tests of MemoryDB classes live under `tests/Unit`; generators do not create
+mysql-memory implementation types.
+The PHPStan rules in `rules` require a corresponding property class for every
 public immutable value class and enum discovered in SQL Semantics and its MySQL
-package. Operation, statement and scalar properties execute the original generated objects;
+package. Specialized generators must follow the same namespace mapping, use the
+`Generator` suffix, and declare the corresponding semantic return type.
+Operation, statement and scalar properties execute the original generated objects;
 operation execution retains the generated facts without rebinding the statement.
-Component and analysis-result properties exercise their public constructor invariants.
+Query properties use MemoryDB's query preparation, planning and row iteration;
+INSERT-only VALUES clauses use an INSERT fixture retaining the generated query.
+Facts and scalar, query, and relation facts retain their owning generated operation,
+which is passed unchanged to MemoryDB. Other component properties check construction;
+their presence in the PHPStan inventory check does not establish standalone execution
+for each component type.
 Each model property generates ten samples by default. The sample count and seed
 can be changed through `MYSQL_MEMORY_PBT_SAMPLES` and `MYSQL_MEMORY_PBT_SEED`.
 

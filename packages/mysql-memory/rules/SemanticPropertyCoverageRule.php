@@ -11,9 +11,10 @@ use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPUnit\Framework\TestCase;
+use Tests\Generator\Inhabitant;
 
 /**
- * Requires a runnable property class for every public value in both semantic packages.
+ * Requires semantic property coverage and matching specialized generator names and types.
  *
  * @implements Rule<InClassNode>
  * @visibility Rules
@@ -36,14 +37,28 @@ final class SemanticPropertyCoverageRule implements Rule
     }
 
     /**
-     * Runs once for the engine entry point, so removing a property does not remove the check.
+     * Checks specialized generators and runs the property inventory at the engine entry point.
+     * Removing a property therefore cannot remove the coverage check itself.
      *
      * @param InClassNode $node
      * @return list<IdentifierRuleError>
      */
     public function processNode(\PhpParser\Node $node, Scope $scope): array
     {
-        if ($node->getClassReflection()->getName() !== 'MySqlMemory\\Instance') {
+        $declaration = $node->getClassReflection();
+        foreach (['Tests\\Generator\\MySql\\' => 'SqlSemantics\\Platform\\MySql\\', 'Tests\\Generator\\Semantics\\' => 'SqlSemantics\\'] as $prefix => $modelPrefix) {
+            $name = $declaration->getName();
+            if (!str_starts_with($name, $prefix)) {
+                continue;
+            }
+            $model = $modelPrefix . substr($name, strlen($prefix), -strlen('Generator'));
+            if (!str_ends_with($name, 'Generator') || !$this->reflection->hasClass($model) || !$declaration->implementsInterface(Inhabitant::class)) {
+                return [RuleErrorBuilder::message($name . ' must mirror a semantic type with a Generator suffix and implement ' . Inhabitant::class . '.')->identifier('mysqlMemory.invalidGenerator')->build()];
+            }
+            $returns = $declaration->getNativeMethod('sample')->getOnlyVariant()->getReturnType()->getObjectClassNames();
+            return $returns === [$model] ? [] : [RuleErrorBuilder::message($name . '::sample() must return ' . $model . '.')->identifier('mysqlMemory.generatorReturn')->build()];
+        }
+        if ($declaration->getName() !== 'MySqlMemory\\Instance') {
             return [];
         }
         $errors = [];
@@ -55,7 +70,7 @@ final class SemanticPropertyCoverageRule implements Rule
             $class = $this->reflection->getClass($property);
             $subjects = $class->hasConstant('MODEL') ? $class->getConstant('MODEL')->getValueType()->getConstantStrings() : [];
             if (!$class->isSubclassOf(TestCase::class) || count($subjects) !== 1 || $subjects[0]->getValue() !== $value || !(new RunnableProperty())->accepts($class)) {
-                $errors[] = RuleErrorBuilder::message($property . ' must test ' . $value . ' with satisfiesPublicValueInvariants().')->identifier('mysqlMemory.invalidProperty')->build();
+                $errors[] = RuleErrorBuilder::message($property . ' must test ' . $value . ' with a public satisfies* method marked #[Test].')->identifier('mysqlMemory.invalidProperty')->build();
             }
         }
         return $errors;

@@ -13,6 +13,7 @@ use PDOException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 #[CoversClass(MemoryDatabase::class)]
 #[Medium]
@@ -63,6 +64,7 @@ final class MemoryDatabaseTest extends TestCase
         $this->expectException(PDOException::class);
         $client->query('SELECT 1');
     }
+
     public function testStartPreservesThePlatformPriorityCapability(): void
     {
         $server = MemoryDatabase::start('8.4.7', resourcePriorities: false);
@@ -220,5 +222,12 @@ final class MemoryDatabaseTest extends TestCase
         self::assertSame([['id' => 2, 'name' => 'ink', 'price' => '3.25']], $selected);
         self::assertSame(2, $updated);
         self::assertSame([['2.50'], ['4.25'], ['0.75']], $priced);
+    }
+
+    public function testStartRejectsAnUnknownReleaseBeforeOpeningAConnection(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unsupported MySQL release: 8.4.999');
+        MemoryDatabase::start('8.4.999');
     }
 }

@@ -36,8 +36,8 @@ final class ShowTablesCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(database: new \SqlSemantics\Statement\Identifier\Name('other'));
-        $headings = (new ShowTablesCommand())->headings((new \Tests\Fake\MemoryClient())->operation($session, $statement, []), $session);
-
+        $statement1 = (new \Tests\Generator\Embedding())->statement($statement);
+        $headings = (new ShowTablesCommand())->headings((new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement1, [], new \SqlSemantics\Contract\LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new \Tests\Generator\Bindings())->parameters($statement1))), $session);
         self::assertCount(1, $headings);
         self::assertSame('Tables_in_other', $headings[0]->name);
         self::assertSame('tables', $headings[0]->originalTable);
@@ -156,6 +156,7 @@ final class ShowTablesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $read2);
         self::assertSame([['time_zone'], ['time_zone_leap_second'], ['time_zone_name'], ['time_zone_transition'], ['time_zone_transition_type']], $read2->rows);
     }
+
     public function testExecutePreservesMySql57FullTableMetadata(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -166,5 +167,4 @@ final class ShowTablesCommandTest extends TestCase
         self::assertSame(['TABLE_NAMES', 'TABLE_NAMES'], array_map(static fn ($column): string => $column->table, $result->columns));
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, $result->columns[1]->type);
     }
-
 }

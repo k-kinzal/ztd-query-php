@@ -4,28 +4,45 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Command\Program;
 
+use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Command\Program\TriggerCommand;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\Trigger;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
+use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
+use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
+use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(TriggerCommand::class)]
 #[Small]
 final class TriggerCommandTest extends TestCase
 {
-    #[\PHPUnit\Framework\Attributes\TestWith(['5.6.51', 1146])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['5.7.44', 1146])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['8.4.7', 1049])]
+    #[TestWith(['5.6.51', 1146])]
+    #[TestWith(['5.7.44', 1146])]
+    #[TestWith(['8.4.7', 1049])]
     public function testTargetPreservesTheVersionedMissingSchemaCondition(string $release, int $code): void
     {
         $session = (new Instance($release))->connect();
-        $create = new CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('tr'), new \SqlSemantics\Statement\Identifier\Name('x')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Update, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block([], []));
+        $create = new CreateTrigger(new QualifiedName(new Name('tr'), new Name('x')), TriggerTime::Before, TriggerEvent::Update, new TriggerTable(new QualifiedName(new Name('t'))), new Block([], []));
         $session->text = 'unrelated invalid input';
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode($code);
         (new TriggerCommand())->target($create, $session);
     }
@@ -35,8 +52,8 @@ final class TriggerCommandTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
         $session->text = 'unrelated invalid input';
-        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('tr'));
-        $table = new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $name = new QualifiedName(new Name('tr'));
+        $table = new TriggerTable(new QualifiedName(new Name('t')));
         $resolved = (new TriggerCommand())->relation($name, $table, $session);
         self::assertSame(['d', 't'], array_slice($resolved, 0, 2));
         self::assertSame($session->instance->dictionary->schema('d'), $resolved[2]);
@@ -149,5 +166,91 @@ final class TriggerCommandTest extends TestCase
         $this->expectExceptionMessage("Referenced trigger 'nope' for the given action time and event type does not exist.");
 
         (new TriggerCommand())->position($statement, new Schema('d'), 't');
+    }
+
+    /**
+     * @return iterable<string, array{string, TriggerTime, TriggerEvent}>
+     */
+    public static function providerTriggerStateHistories(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+            foreach (TriggerTime::cases() as $time) {
+                foreach (TriggerEvent::cases() as $event) {
+                    yield $release . ':' . $time->value . ':' . $event->value => [$release, $time, $event];
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerTriggerStateHistories')]
+    public function testExecuteOneDefinitionSurvivesTheDatabaseAndPopulatedTableTransitions(string $release, TriggerTime $time, TriggerEvent $event): void
+    {
+        $create = new CreateTrigger(new QualifiedName(new Name('tr'), new Name('x')), $time, $event, new TriggerTable(new QualifiedName(new Name('t'))), new Block([], []));
+        $session = (new Instance($release))->connect();
+        $session->text = 'unrelated invalid input';
+        $statement1 = (new Embedding())->statement($create);
+        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+        } catch (SqlError $executionError) {
+            $result1 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $absent = $result1;
+        self::assertSame(str_starts_with($release, '5.') ? 1146 : 1049, ($absent instanceof SqlError ? [$absent->getCode(), $absent->sqlState(), $absent->getMessage()] : null)[0] ?? null);
+        $session->query('CREATE DATABASE x');
+        $session->text = 'unrelated invalid input';
+        $statement2 = (new Embedding())->statement($create);
+        $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), $parameters2);
+        } catch (SqlError $executionError) {
+            $result2 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $missing = $result2;
+        self::assertSame(1146, ($missing instanceof SqlError ? [$missing->getCode(), $missing->sqlState(), $missing->getMessage()] : null)[0] ?? null);
+        $session->query('CREATE TABLE x.t(a INT); INSERT INTO x.t VALUES(1),(2)');
+        $session->text = 'unrelated invalid input';
+        $statement3 = (new Embedding())->statement($create);
+        $parameters3 = array_fill(0, (new Bindings())->count($statement3), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation3 = (new Binding())->operation($session, $statement3, $parameters3, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
+            $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3->statement), $parameters3);
+        } catch (SqlError $executionError) {
+            $result3 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        self::assertNotInstanceOf(SqlError::class, $result3);
+        $statement4 = (new Embedding())->statement($create);
+        $parameters4 = array_fill(0, (new Bindings())->count($statement4), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation4 = (new Binding())->operation($session, $statement4, $parameters4, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement4)));
+            $result4 = (new Execution($session))->perform($operation4, (new Dispatcher())->command($operation4->statement), $parameters4);
+        } catch (SqlError $executionError) {
+            $result4 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $duplicate = $result4;
+        self::assertSame($release === '5.6.51' ? 1235 : 1359, ($duplicate instanceof SqlError ? [$duplicate->getCode(), $duplicate->sqlState(), $duplicate->getMessage()] : null)[0] ?? null);
+        self::assertSame('unrelated invalid input', $session->text);
     }
 }

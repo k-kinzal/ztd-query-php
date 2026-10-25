@@ -28,8 +28,8 @@ use SqlSemantics\Statement\Operation;
  * INFORMATION_SCHEMA.ENGINES lists them. SHOW ENGINE names
  * an engine, by its name or an alias, or ALL; an engine the server does not have or has
  * disabled is ER_UNKNOWN_STORAGE_ENGINE, named as written. The status, mutexes and logs an
- * engine reports describe the running server, its threads, waits and files; the emulator has
- * none of them, so it reports no row.
+ * engine reports describe the running server. InnoDB reports its transaction system;
+ * Performance Schema reports the selected release's instrumentation metrics.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-engines.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-engine.html.
  *
@@ -57,7 +57,8 @@ final class ShowEnginesCommand implements Command
         if ($statement instanceof ShowEngineCatalog) {
             return (new Listing($this->catalogHeadings()))->sent(\MySqlMemory\System\Server\ServerTables::of($session->settings()->release())->engines, $context);
         }
-        if ($statement->engine !== null && ServerCatalog::shared()->engine($statement->engine->value) === null) {
+        $engine = $statement->engine === null ? null : ServerCatalog::of($session->instance->version)->engine($statement->engine->value);
+        if ($statement->engine !== null && $engine === null) {
             throw SchemaError::UnknownStorageEngine->error($statement->engine->value);
         }
         $headings = [
@@ -66,7 +67,16 @@ final class ShowEnginesCommand implements Command
             Heading::text('Status', Field::VarString, 10, ColumnFlag::NotNull->value, 31),
         ];
 
-        return (new Listing($headings))->sent([], $context);
+        $rows = [];
+        if ($statement instanceof ShowEngineStatus) {
+            if ($engine === null || $engine === 'InnoDB') {
+                $rows[] = ['InnoDB', '', (new \MySqlMemory\System\Performance\InnoDbMonitor())->report($session->instance)];
+            }
+            if ($engine === null || $engine === 'PERFORMANCE_SCHEMA' || $engine === 'performance_schema') {
+                $rows = [...$rows, ...(new \MySqlMemory\System\Performance\EngineMetrics())->rows($session->settings()->release())];
+            }
+        }
+        return (new Listing($headings))->sent($rows, $context);
     }
 
     /**

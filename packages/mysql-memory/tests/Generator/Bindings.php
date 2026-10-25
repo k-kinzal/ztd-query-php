@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Generator;
 
-use MySqlMemory\Typing\Domain;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
@@ -17,25 +16,27 @@ use SqlSemantics\Statement\Node;
 final class Bindings
 {
     /**
-     * @return list<array{null, Domain}> Explicit NULL inputs, including their resolved types
+     * @return non-negative-int The number of marker occurrences requiring values
      */
-    public function nulls(Node $node): array
+    public function count(Node $node): int
     {
-        $values = [];
+        $count = 0;
         $pending = [$node];
         while ($pending !== []) {
             $value = array_pop($pending);
             if (is_array($value)) {
                 array_push($pending, ...array_values($value));
             } elseif ($value instanceof Parameter) {
-                $values[] = [null, Domain::null()];
+                $count++;
             } elseif ($value instanceof Node) {
                 array_push($pending, ...array_values(get_object_vars($value)));
             }
         }
 
-        return $values;
-    }    /**
+        return $count;
+    }
+
+    /**
      * Selects the marker extension from the structure, before any execution.
      */
     public function parameters(Node $node): ParameterStyle

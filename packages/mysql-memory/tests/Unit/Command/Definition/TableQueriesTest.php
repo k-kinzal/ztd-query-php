@@ -5,20 +5,38 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Definition;
 
 use MySqlMemory\Command\Definition\TableQueries;
+use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Plan\ColumnOrigin;
+use MySqlMemory\Plan\Path\Source\SingleRow;
+use MySqlMemory\Plan\QueryPlan;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\TableQuery;
+use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(TableQueries::class)]
 #[Small]
@@ -44,27 +62,62 @@ final class TableQueriesTest extends TestCase
     public function testCreateReusesTheSameSemanticQueryAcrossCatalogAndLexicalChanges(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
-        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [
-            new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['a\\b']), new \SqlSemantics\Statement\Identifier\Name('v')),
-            new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1e2'), new \SqlSemantics\Statement\Identifier\Name('n')),
-        ]);
-        $definition = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('kept')), query: new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery($query));
+        $query = new Select([], [new SelectExpression(new StringLiteral(['a\b']), new Name('v')), new SelectExpression(new NumberLiteral('1e2'), new Name('n'))]);
+        $definition = new CreateTable(new QualifiedName(new Name('kept')), query: new TableQuery($query));
         $session->text = 'not an SQL definition';
-        $first = (new \Tests\Fake\MemoryClient())->observe($session, $definition);
+        $statement1 = (new Embedding())->statement($definition);
+        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+        } catch (SqlError $executionError) {
+            $result1 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $first = $result1;
         $before = $session->query('SELECT * FROM kept')[0];
         $session->text = 'not an SQL definition';
-        $existing = (new \Tests\Fake\MemoryClient())->observe($session, $definition);
+        $statement2 = (new Embedding())->statement($definition);
+        $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), $parameters2);
+        } catch (SqlError $executionError) {
+            $result2 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $existing = $result2;
         $session->query("DROP TABLE kept; SET sql_mode='NO_BACKSLASH_ESCAPES'");
         $session->text = 'another unrelated label';
-        $again = (new \Tests\Fake\MemoryClient())->observe($session, $definition);
+        $statement3 = (new Embedding())->statement($definition);
+        $parameters3 = array_fill(0, (new Bindings())->count($statement3), [null, Domain::null()]);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        try {
+            $operation3 = (new Binding())->operation($session, $statement3, $parameters3, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
+            $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3->statement), $parameters3);
+        } catch (SqlError $executionError) {
+            $result3 = $executionError;
+            (new Execution($session))->failed($executionError);
+        }
+        $again = $result3;
         $after = $session->query('SELECT * FROM kept')[0];
-
-        self::assertArrayNotHasKey('error', $first);
-        self::assertSame(1050, $existing['error'][0] ?? null);
-        self::assertArrayNotHasKey('error', $again);
+        self::assertNotInstanceOf(SqlError::class, $first);
+        self::assertSame(1050, ($existing instanceof SqlError ? [$existing->getCode(), $existing->sqlState(), $existing->getMessage()] : null)[0] ?? null);
+        self::assertNotInstanceOf(SqlError::class, $again);
         self::assertInstanceOf(ResultSet::class, $before);
         self::assertInstanceOf(ResultSet::class, $after);
-        self::assertSame([['a\\b', '100']], $before->rows);
+        self::assertSame([['a\b', '100']], $before->rows);
         self::assertSame($before->rows, $after->rows);
         self::assertSame(3, $after->columns[1]->length);
     }
@@ -76,11 +129,11 @@ final class TableQueriesTest extends TestCase
         $session->text = 'unrelated input that is not SQL';
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $members = ['a\\b', "c'd"];
-        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::String, Field::Enum, 3, collation: Collation::known('utf8mb4_bin'), members: $members)], ['e']);
+        $plan = new QueryPlan(new SingleRow(), [new Domain(Kind::String, Field::Enum, 3, collation: Collation::known('utf8mb4_bin'), members: $members)], ['e']);
         $columns = (new TableQueries($session, $context, new Connection($session->variables, $context)))->elements($plan, []);
         $type = $columns[0]->specification->dataType();
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Enumeration::class, $type);
+        self::assertInstanceOf(Enumeration::class, $type);
         self::assertSame($members, array_map(static fn ($member): string => $member->bytes(), $type->members));
         self::assertSame('unrelated input that is not SQL', $session->text);
     }
@@ -115,13 +168,12 @@ final class TableQueriesTest extends TestCase
         self::assertSame([0], $definition->partitioning->read);
     }
 
-
     public function testReportedLengthsRetainsComputedWidthsOnlyForUndeclaredColumns(): void
     {
         $session = (new Instance('8.4.7'))->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
-        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED)], ['X', 'y', 'wide']);
+        $plan = new QueryPlan(new SingleRow(), [new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED)], ['X', 'y', 'wide']);
         $query = $session->analyze('SELECT 1e2 AS X, 1e2 AS y, ABS(1e2) AS wide')->facts->output;
         self::assertNotNull($query);
 
@@ -197,7 +249,7 @@ final class TableQueriesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::Integer, Field::LongLong, 2, 0, false, null, false), new Domain(Kind::Null, Field::Null)], ['a', 'n']);
+        $plan = new QueryPlan(new SingleRow(), [new Domain(Kind::Integer, Field::LongLong, 2, 0, false, null, false), new Domain(Kind::Null, Field::Null)], ['a', 'n']);
 
         $elements = (new TableQueries($session, $context, new Connection($session->variables, $context)))->elements($plan, ['a' => true]);
 
@@ -214,12 +266,6 @@ final class TableQueriesTest extends TestCase
 
         self::assertSame('c', $element?->name->column->value);
     }
-
-
-
-
-
-
 
     public function testFillStoresAValueOutsideTheRangeWithAWarningOutsideAStrictMode(): void
     {

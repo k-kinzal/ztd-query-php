@@ -28,6 +28,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading an index seek of a handler
  *     $read = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h READ idx >= (1, 2) LIMIT 3');
  *     [$read->statement->comparison, count($read->statement->values), $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::GreaterOrEqual, 2, 'HANDLER h READ idx >= (1, 2) LIMIT 3']
+ * @example Refusing a stored function in an index key
+ *     $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('f'));
+ *     new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler(new \SqlSemantics\Statement\Identifier\Name('h')), new \SqlSemantics\Statement\Identifier\Name('i'), \SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::Equal, [$call]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class HandlerIndexSeek implements Statement
 {

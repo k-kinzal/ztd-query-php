@@ -75,4 +75,26 @@ final class HandlerOperandsTest extends TestCase
 
         self::assertSame($moment, (new H\HandlerScan(new H\OpenHandler(new Name('h')), H\ScanDirection::First, $moment))->where);
     }
+
+    public function testCheckRejectsStoredCallsEvenInAnUnreachablePredicateBranch(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('f'), schema: new Name('d'));
+        $predicate = new CaseExpression(null, [new CaseBranch(new NumberLiteral('0'), $call)], new NumberLiteral('1'));
+        $this->expectExceptionMessage('A HANDLER read requires a native interpretation of every function call.');
+        new H\HandlerIndexRead(new H\OpenHandler(new Name('h')), new Name('i'), H\IndexDirection::First, $predicate);
+    }
+
+    public function testReleasesKeepsOnlyTheNativeInterpretationOfALegacyFunction(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('X'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new NumberLiteral('1'))]);
+        self::assertSame(3, (new HandlerOperands())->releases([$call]));
+        self::assertSame(511, (new HandlerOperands())->releases([new NumberLiteral('1')]));
+    }
+
+    public function testCheckCannotCombineAStoredSignatureWithANativeOnlyPosition(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('x'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new NumberLiteral('2'))]);
+        $this->expectExceptionMessage('Native signatures and grammar operands must share a supported language interpretation.');
+        new H\HandlerIndexSeek(new H\OpenHandler(new Name('h')), new Name('i'), H\KeyComparison::Equal, [$call]);
+    }
 }

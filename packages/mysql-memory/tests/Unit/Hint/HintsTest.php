@@ -4,12 +4,29 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Hint;
 
+use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Hint\Hints;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Execution;
+use MySqlMemory\Session\State\StatementCounters;
+use MySqlMemory\Session\Statement\Binding;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteralKind;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use Tests\Generator\Bindings;
+use Tests\Generator\Embedding;
 
 #[CoversClass(Hints::class)]
 #[Small]
@@ -59,7 +76,7 @@ final class HintsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
-        $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], hints: [new \SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint('div_precision_increment', new \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral(\SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteralKind::Integer, '10'))]));
+        $query = new QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))], hints: [new VariableHint('div_precision_increment', new HintLiteral(HintLiteralKind::Integer, '10'))]));
         $application = (new Hints())->typingValue($query, $session);
 
         self::assertSame(10, $session->variables->read('div_precision_increment'));
@@ -179,5 +196,39 @@ final class HintsTest extends TestCase
         $session->analyze('SELECT /*+ BKA(t) */ 1');
 
         self::assertSame([true, true], [$plain, (new Hints())->hinted($session)]);
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerTypedHintsPrecisions(): iterable
+    {
+        foreach (['8.0.44', '8.4.7', '9.1.0'] as $release) {
+            foreach ([0, 1, 4, 10, 30] as $precision) {
+                yield $release . ':' . $precision => [$release, $precision];
+            }
+        }
+    }
+
+    #[DataProvider('providerTypedHintsPrecisions')]
+    public function testTypingValueOperationAndExecutionHonorTypedHintsBeforeDerivingDomains(string $release, int $precision): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->text = 'unrelated invalid input';
+        $query = new QueryRoot(new Select([], [new SelectExpression(new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('3')))], hints: [new VariableHint('div_precision_increment', new HintLiteral(HintLiteralKind::Integer, (string) $precision))]));
+        $statement1 = (new Embedding())->statement($query);
+        $operation = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+        $statement2 = (new Embedding())->statement($query);
+        $session->activity->begin();
+        StatementCounters::received($session);
+        $session->hinted = [];
+        $session->dots = [];
+        $operation2 = (new Binding())->operation($session, $statement2, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+        $reply = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), []);
+        self::assertSame($query, $operation->statement);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([[$precision === 0 ? '0' : '0.' . str_repeat('3', $precision)]], $reply->rows);
+        self::assertSame($precision, $reply->columns[0]->decimals);
+        self::assertSame(4, $session->variables->read('div_precision_increment'));
     }
 }

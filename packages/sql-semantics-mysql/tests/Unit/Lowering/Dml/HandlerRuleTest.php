@@ -60,4 +60,18 @@ final class HandlerRuleTest extends TestCase
             self::assertNotNull($failure->problem->where);
         }
     }
+
+    public function testFunctionsRefusesStoredCallsBeforePublishingReads(): void
+    {
+        foreach (['HANDLER h READ FIRST WHERE ABS(d.f())', 'HANDLER h READ i FIRST WHERE f()', 'HANDLER h READ i = (f())'] as $sql) {
+            try {
+                (new Semantics(Dialect::MySql))->analyze($sql);
+                self::fail('A stored-function handler read cannot be published.');
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, $failure->problem);
+                self::assertSame('stored functions in HANDLER ... READ', $failure->problem->feature);
+                self::assertFalse($failure->aborts);
+            }
+        }
+    }
 }
