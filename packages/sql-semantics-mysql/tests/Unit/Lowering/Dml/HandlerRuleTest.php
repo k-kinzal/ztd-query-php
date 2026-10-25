@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Dml;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -61,17 +62,26 @@ final class HandlerRuleTest extends TestCase
         }
     }
 
-    public function testFunctionsRefusesStoredCallsBeforePublishingReads(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerStoredReads(): iterable
     {
-        foreach (['HANDLER h READ FIRST WHERE ABS(d.f())', 'HANDLER h READ i FIRST WHERE f()', 'HANDLER h READ i = (f())'] as $sql) {
-            try {
-                (new Semantics(Dialect::MySql))->analyze($sql);
-                self::fail('A stored-function handler read cannot be published.');
-            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, $failure->problem);
-                self::assertSame('stored functions in HANDLER ... READ', $failure->problem->feature);
-                self::assertFalse($failure->aborts);
-            }
+        yield 'scan' => ['HANDLER h READ FIRST WHERE ABS(d.f())'];
+        yield 'index read' => ['HANDLER h READ i FIRST WHERE f()'];
+        yield 'index seek' => ['HANDLER h READ i = (f())'];
+    }
+
+    #[DataProvider('providerStoredReads')]
+    public function testStoredRetainsCompleteReadsBeforePublishingStatements(string $sql): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('A stored-function handler read cannot be published.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead::class, $failure->problem);
+            self::assertSame('h', $failure->problem->handler->name->value);
+            self::assertFalse($failure->aborts);
         }
     }
 }

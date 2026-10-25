@@ -52,9 +52,6 @@ final class ReleaseDomain
     public function of(object $value): int
     {
         return match (true) {
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek => (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->releases([$value]),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod, $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod, $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->releases($value->expression),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($value->kind, $value->parts, $value->algorithm, $value->options) ? 3 : self::ALL,
             $value instanceof LanguageProfile => $this->bit($value->grammar),
@@ -65,6 +62,19 @@ final class ReleaseDomain
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->qualify !== null => 480,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample => 448,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal => $this->ordering($value),
+            default => $this->handler($value),
+        };
+    }
+
+    /**
+     * Restricts handler reads to releases where every call has a native interpretation.
+     */
+    public function handler(object $value): int
+    {
+        return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek => (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->releases([$value]),
             default => self::ALL,
         };
     }

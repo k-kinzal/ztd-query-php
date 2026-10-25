@@ -16,16 +16,16 @@ use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A complete HANDLER read with a non-scalar key or predicate operand.
+ * A complete HANDLER read with a non-scalar operand or a stored-function interpretation.
  *
- * Handler and index identities remain available before operand preparation.
+ * Handler, index, function and LIMIT dependencies remain available before operand preparation.
  * Refused expressions are not published as ordinary scalar values.
  *
  * @visibility public
  * @example Describing a refused handler predicate
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     $read = new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler(new \SqlSemantics\Statement\Identifier\Name('h')), \SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::First, where: $row);
- *     $read->message() // => 'A HANDLER read retains a non-scalar operand.'
+ *     $read->message() // => 'A HANDLER read retains a refused operand.'
  */
 final class RefusedRead implements Diagnostic
 {
@@ -54,7 +54,8 @@ final class RefusedRead implements Diagnostic
         $this->values = $accepted;
         Check::input(($mode instanceof ScanDirection) === ($index === null), 'An indexed handler read names its index.');
         Check::input(($mode instanceof KeyComparison) === ($values !== []), 'A handler key comparison has at least one value; other reads have none.');
-        Check::input($where instanceof RowOperand || $where instanceof DeferredOperand || array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [], 'A refused handler read retains a non-scalar key or predicate operand.');
+        $calls = (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->releases([...$this->values, ...($where === null ? [] : [$where])]);
+        Check::input($where instanceof RowOperand || $where instanceof DeferredOperand || array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || $calls !== \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain::ALL, 'A refused handler read retains a non-scalar operand or a stored function.');
     }
 
     /**
@@ -62,6 +63,6 @@ final class RefusedRead implements Diagnostic
      */
     public function message(): string
     {
-        return 'A HANDLER read retains a non-scalar operand.';
+        return 'A HANDLER read retains a refused operand.';
     }
 }

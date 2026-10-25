@@ -22,7 +22,7 @@ final class RefusedReadTest extends TestCase
         $read = new H\RefusedRead(new H\OpenHandler(new Name('h')), H\ScanDirection::First, where: $row);
         self::assertSame($row, $read->where);
         self::assertSame('h', $read->handler->name->value);
-        self::assertSame('A HANDLER read retains a non-scalar operand.', $read->message());
+        self::assertSame('A HANDLER read retains a refused operand.', $read->message());
     }
 
     public function testMessageRequiresAnIndexModeWithoutAnIndex(): void
@@ -39,7 +39,17 @@ final class RefusedReadTest extends TestCase
 
     public function testMessageRequiresAnOrdinaryReadWithoutARetainedCondition(): void
     {
-        $this->expectExceptionMessage('A refused handler read retains a non-scalar key or predicate operand.');
+        $this->expectExceptionMessage('A refused handler read retains a non-scalar operand or a stored function.');
         new H\RefusedRead(new H\OpenHandler(new Name('h')), H\KeyComparison::Equal, new Name('i'), [new NumberLiteral('1')]);
+    }
+
+    public function testMessageRetainsStoredCallsAndLimitByIdentity(): void
+    {
+        $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new Name('f'));
+        $limit = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new NumberLiteral('2'));
+        $read = new H\RefusedRead(new H\OpenHandler(new Name('h')), H\ScanDirection::Next, where: $call, limit: $limit);
+        self::assertSame($call, $read->where);
+        self::assertSame($limit, $read->limit);
+        self::assertSame('A HANDLER read retains a refused operand.', $read->message());
     }
 }

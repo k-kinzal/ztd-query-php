@@ -121,8 +121,7 @@ final class HandlerRule
             $kind = $this->lowering->form($kind->node(0));
         }
         if (isset(self::SCANS[$kind->signature])) {
-            $this->functions($condition === null ? [] : [$condition], $end);
-            if ($condition instanceof RowOperand || $condition instanceof DeferredOperand) {
+            if ($condition instanceof RowOperand || $condition instanceof DeferredOperand || $this->stored($condition === null ? [] : [$condition])) {
                 throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead($handler, self::SCANS[$kind->signature], where: $condition, limit: $rows), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
             }
             return new HandlerScan($handler, self::SCANS[$kind->signature], $condition, $rows);
@@ -147,8 +146,7 @@ final class HandlerRule
     {
         $name = $this->lowering->names->identifier($index);
         if ($seek === null && isset(self::DIRECTIONS[$function->signature])) {
-            $this->functions($where === null ? [] : [$where], $end);
-            if ($where instanceof RowOperand || $where instanceof DeferredOperand) {
+            if ($where instanceof RowOperand || $where instanceof DeferredOperand || $this->stored($where === null ? [] : [$where])) {
                 throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead($handler, self::DIRECTIONS[$function->signature], $name, where: $where, limit: $limit), $end, false);
             }
             return new HandlerIndexRead($handler, $name, self::DIRECTIONS[$function->signature], $where, $limit);
@@ -165,8 +163,7 @@ final class HandlerRule
             $value = $this->lowering->form($item);
             $operands[] = $value->signature === 'expr_or_default: expr' ? $this->lowering->expressions->operand($value->node(0)) : (new ValueRule($this->lowering))->value($item);
         }
-        $this->functions([...$operands, ...($where === null ? [] : [$where])], $end);
-        if ($where instanceof RowOperand || $where instanceof DeferredOperand || array_filter($operands, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== []) {
+        if ($where instanceof RowOperand || $where instanceof DeferredOperand || array_filter($operands, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || $this->stored([...$operands, ...($where === null ? [] : [$where])])) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead($handler, $comparison, $name, $operands, $where, $limit), $end, false);
         }
         $ordinary = [];
@@ -178,17 +175,14 @@ final class HandlerRule
     }
 
     /**
-     * Refuses stored calls before publishing an ordinary read, preserving the typed SQL diagnostic.
+     * Identifies stored calls whose complete read must remain a typed refusal.
      *
      * @param list<\SqlSemantics\Statement\Node> $operands The complete key and predicate operands
-     * @throws \SqlSemantics\Construction\RejectedInput When this release resolves a call as a stored function
      */
-    public function functions(array $operands, int $end): void
+    public function stored(array $operands): bool
     {
         $releases = (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->releases($operands);
         $bit = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain())->bit($this->lowering->profile->grammar);
-        if (($releases & $bit) === 0) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('stored functions in HANDLER ... READ'), $end, false);
-        }
+        return ($releases & $bit) === 0;
     }
 }
