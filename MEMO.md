@@ -819,6 +819,30 @@ does not close B: temporary objects, user variables, locking effects and the
 remaining environment contracts still need their corresponding observation
 boundaries. No semantic implementation was changed to make these probes pass.
 
+The combined observation mechanism suite passed 167 tests and 211 assertions at
+`c3d6a3b1ac3`. A native 8.4.7 BEGIN replay with the expanded catalog observation
+then exposed an inconsistent restoration prestate: recreating the tested account
+advanced `mysql.user.password_last_changed`. Restoration now captures that instant,
+replays the original account under that timestamp, and checks the credential age
+as well as the CREATE definition. It does not remove the timestamp from comparison.
+The subsequent native observations agree and reach the previously recorded missing
+MemoryDB dictionary tablespace; the target still exits one.
+
+The new credential-age regression additionally exposes a MemoryDB behavior defect:
+`SET timestamp = 1600000000; ALTER USER CURRENT_USER IDENTIFIED BY 'fixture'`
+records the wall clock instead of the specified instant. This regression remains
+failing for the later coherent execution migration; no account-specific executor
+patch is included. The earlier combined passing count therefore does not describe
+the current complete mechanism suite.
+
+The latest complete PHPStan run reports 2,999 diagnostics: 1,144 missing
+generators and 1,855 other errors. The additional exception-contract findings
+remain visible after restoring throw-type checking. There are no diagnostics in
+the observer, restoration sources or their new tests. Changed-file analysis,
+formatting and PHP 8.1 compatibility pass. The current restoration suite has
+five tests and nine assertions, with the credential-age regression above as its
+one failure; it is not a passing acceptance check.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

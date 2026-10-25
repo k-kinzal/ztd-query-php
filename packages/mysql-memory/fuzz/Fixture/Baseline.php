@@ -38,6 +38,16 @@ final class Baseline
     public readonly string $identity;
 
     /**
+     * @var array{string, string} The account name and host used by catalog predicates
+     */
+    public readonly array $principal;
+
+    /**
+     * The original credential-change instant, absent on 5.6 or for an external authentication plugin.
+     */
+    public readonly ?int $passwordChanged;
+
+    /**
      * @var list<string> The original grants of the account under test
      */
     public readonly array $grants;
@@ -63,11 +73,13 @@ final class Baseline
         $this->tablespaces = $this->generalTablespaces($native);
         $server = new Servers();
         [$user, $host] = explode('@', $server->rows($native, 'SELECT CURRENT_USER()')[0][0], 2);
+        $this->principal = [$user, $host];
         $this->identity = $native->quote($user) . '@' . $native->quote($host);
         $this->grants = array_column($server->rows($native, 'SHOW GRANTS FOR CURRENT_USER'), 0);
         $this->globals = $server->globals($native, $version);
         $account = str_starts_with($version, '5.6.') ? [] : (new Servers())->rows($native, 'SHOW CREATE USER CURRENT_USER');
         $this->account = $account === [] ? null : $account[0][1] ?? $account[0][0];
+        $this->passwordChanged = $this->passwordChanged($native);
     }
 
     /**
@@ -92,8 +104,13 @@ final class Baseline
         (new Tables())->execute($connection, 'FLUSH PRIVILEGES');
         if ($this->account !== null) {
             /** ALTER USER without a credential expires the password; replay the original CREATE instead. */
-            (new Tables())->execute($connection, 'DROP USER ' . $this->identity);
-            (new Tables())->execute($connection, $this->account);
+            (new Tables())->execute($connection, 'SET timestamp = ' . ($this->passwordChanged ?? 0));
+            try {
+                (new Tables())->execute($connection, 'DROP USER ' . $this->identity);
+                (new Tables())->execute($connection, $this->account);
+            } finally {
+                (new Tables())->execute($connection, 'SET timestamp = 0');
+            }
         } else {
             (new Tables())->execute($connection, 'REVOKE ALL PRIVILEGES, GRANT OPTION FROM ' . $this->identity);
         }
@@ -148,7 +165,34 @@ final class Baseline
             if ($definition !== $this->account) {
                 throw new RuntimeException('The differential account was not restored.');
             }
+            if ($this->passwordChanged($connection) !== $this->passwordChanged) {
+                throw new RuntimeException('The differential credential-change instant was not restored.');
+            }
         }
+    }
+
+    /**
+     * Reads the credential age separately from SHOW CREATE USER, which does not include it.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/grant-tables.html.
+     *
+     * @throws RuntimeException When credential age is unreadable or outside the timestamp domain
+     */
+    public function passwordChanged(PDO $connection): ?int
+    {
+        if (str_starts_with($this->version, '5.6.')) {
+            return null;
+        }
+        $statement = $connection->query('SELECT UNIX_TIMESTAMP(password_last_changed) FROM mysql.user WHERE User = ' . $connection->quote($this->principal[0]) . ' AND Host = ' . $connection->quote($this->principal[1]));
+        $instant = $statement === false ? false : $statement->fetchColumn();
+        if ($instant === null) {
+            return null;
+        }
+        $seconds = filter_var($instant, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        if ($instant === false || $seconds === false) {
+            throw new RuntimeException('Cannot read the differential credential-change instant.');
+        }
+        return $seconds;
     }
 
     /**
