@@ -976,6 +976,7 @@
         "columns": "?array",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "resolution": "SqlSemantics\\Statement\\Reference\\Table\\TableResolution",
+        "resolvedName": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertedRow": {

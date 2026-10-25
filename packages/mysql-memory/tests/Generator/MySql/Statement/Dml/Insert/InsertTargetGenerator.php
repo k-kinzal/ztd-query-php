@@ -26,11 +26,11 @@ final class InsertTargetGenerator implements ErisGenerator
     /**
      * Generates a destination against the supplied definition, or an absent table.
      */
-    public function __construct(?\SqlSemantics\Statement\Declaration\Table $table = null)
+    public function __construct(?\SqlSemantics\Statement\Declaration\Table $table = null, ?\SqlSemantics\Statement\Identifier\Name $declarationSchema = null)
     {
         if ($table !== null) {
             $resolution = new \SqlSemantics\Statement\Reference\Table\DeclaredTable($table);
-            $this->delegate = Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Dml\Insert\DestinationColumn $column): InsertTarget => new InsertTarget($table->name, $resolution, [$column]), new DestinationColumnGenerator($resolution));
+            $this->delegate = Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Dml\Insert\DestinationColumn $column): InsertTarget => new InsertTarget($table->name, $resolution, [$column], declarationSchema: $declarationSchema), new DestinationColumnGenerator($resolution));
             return;
         }
         $this->delegate = Generators::map(static function (int $id): InsertTarget {

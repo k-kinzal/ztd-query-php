@@ -45,7 +45,14 @@ final class PreparedCache
         }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
             $resolution = $operation->target->resolution;
-            $tables = $resolution instanceof DeclaredTable ? [[$resolution->table->name->schema->value ?? $session->variables->database, $resolution->table->name->name->value, $resolution->table]] : [];
+            $tables = [];
+            if ($resolution instanceof DeclaredTable) {
+                $name = $operation->target->resolvedName;
+                if ($name === null || $name->schema === null) {
+                    throw new LogicException('A resolved insertion target identifies its declaration schema.');
+                }
+                $tables = [[$name->schema->value, $name->name->value, $resolution->table]];
+            }
             return new self(PreparedStatement::capture($operation, $session), $tables);
         }
         if (!$operation instanceof Operation) {

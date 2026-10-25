@@ -85,9 +85,11 @@ final class Publication
             }
             $rows[] = $values;
         }
+        $schema = $resolution instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable ? ($resolution->table->name->schema ?? $context->declarationSchema) : null;
+        $comparison = $schema !== null && $context->folded($schema->value) ? \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive : $context->relationNames;
         return new InsertStatement(
             $context->profile,
-            new InsertTarget($statement->into->table->name, $resolution, $columns, $this->span($statement->into->table, $sources)),
+            new InsertTarget($statement->into->table->name, $resolution, $columns, $this->span($statement->into->table, $sources), $schema, $comparison),
             new ValuesClause($rows, $statement->valuesSource, $statement->keyword),
             Settings::of($context)->client,
             $this->span($statement, $sources),

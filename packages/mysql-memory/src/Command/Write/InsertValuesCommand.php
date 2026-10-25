@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as ResolvedDomain;
 use SqlSemantics\Statement\Fact\Facts;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -47,7 +46,7 @@ final class InsertValuesCommand
         /**
          * The row writer's planner receives semantic values; it performs no analysis here.
          */
-        $into = new InsertInto(false, null, false, new WriteTarget($target->name));
+        $into = new InsertInto(false, null, false, new WriteTarget($target->resolvedName ?? $target->name));
         $rows = [];
         $values = [];
         foreach ($statement->values->rows as $row) {
@@ -88,15 +87,14 @@ final class InsertValuesCommand
     public function prepare(InsertStatement $statement, Session $session): array
     {
         $target = $statement->target;
-        $resolution = $target->resolution;
-        $schema = $resolution instanceof DeclaredTable ? $resolution->table->name->schema?->value : null;
-        $schema ??= $target->name->schema->value ?? $session->variables->database;
+        $name = $target->resolvedName ?? $target->name;
+        $schema = $name->schema->value ?? $session->variables->database;
         if ($schema === '') {
             throw QueryError::NoDatabase->error();
         }
-        $table = $session->instance->dictionary->table($schema, $target->name->name->value);
+        $table = $session->instance->dictionary->table($schema, $name->name->value);
         if ($table === null) {
-            throw QueryError::NoSuchTable->error($schema, $target->name->name->value);
+            throw QueryError::NoSuchTable->error($schema, $name->name->value);
         }
         $positions = [];
         if ($target->columns === null || $target->columns === []) {

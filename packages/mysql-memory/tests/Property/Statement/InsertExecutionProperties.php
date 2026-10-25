@@ -58,16 +58,19 @@ final class InsertExecutionProperties extends TestCase
         $sequences = \Eris\Generators::map(static function (array $data) use ($release): array {
             $create = $data['create'];
             $values = $data['values'];
-            if (!$create instanceof \SqlSemantics\Statement\Operation || !$values instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClause) {
+            $comparison = $data['comparison'];
+            if (!$create instanceof \SqlSemantics\Statement\Operation || !$values instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClause || !$comparison instanceof \SqlSemantics\Statement\Identifier\Comparison) {
                 throw new LogicException('The sequence requires a generated CREATE TABLE and VALUES clause.');
             }
             $table = $create->declarations()[0];
             $resolution = new \SqlSemantics\Statement\Reference\Table\DeclaredTable($table);
             $column = $table->columns[0];
-            $target = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertTarget($table->name, $resolution, [new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\DestinationColumn($column->name, $resolution, $column)]);
+            $written = $comparison === \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive ? new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name(strtoupper($table->name->name->value)), $table->name->schema) : $table->name;
+            $target = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertTarget($written, $resolution, [new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\DestinationColumn($column->name, $resolution, $column)], declarationSchema: $create->context->declarationSchema, comparison: $comparison);
             return [$create, new InsertStatement(new \SqlSemantics\Contract\LanguageProfile($release), $target, $values, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'))];
         }, \Eris\Generators::associative([
             'create' => new \Tests\Generator\Semantics\Statement\OperationGenerator($release),
+            'comparison' => new \Tests\Generator\Semantics\Statement\Identifier\ComparisonGenerator(),
             'values' => new \Tests\Generator\MySql\Statement\Dml\Insert\ValuesClauseGenerator(new \Tests\Generator\Semantics\Statement\ExpressionGenerator($collation, \Eris\Generators::map(static fn (int $number): string => (string) $number, \Eris\Generators::int()))),
         ]));
         $this->forAll($sequences)->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
@@ -79,7 +82,8 @@ final class InsertExecutionProperties extends TestCase
             $execution = new Execution($session);
             $execution->statement($create);
             $reply = $execution->statement($insert);
-            $table = $session->instance->dictionary->table($database, $insert->target->name->name->value);
+            self::assertNotNull($insert->target->resolvedName);
+            $table = $session->instance->dictionary->table($database, $insert->target->resolvedName->name->value);
             self::assertNotNull($table);
             $expected = [];
             foreach ($insert->values->rows as $row) {

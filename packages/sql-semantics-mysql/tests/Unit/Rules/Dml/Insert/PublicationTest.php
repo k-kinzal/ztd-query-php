@@ -59,4 +59,33 @@ final class PublicationTest extends TestCase
         self::assertNotNull($span);
         self::assertSame(['offset' => 12, 'length' => 4], get_object_vars($span));
     }
+    public function testPublishRetainsTheEffectiveSchemaOfAnUnqualifiedDeclaration(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '8.4.7');
+        $declared = $semantics->analyze('CREATE TABLE target (amount INT)')->declarations()[0];
+        $unqualified = new \SqlSemantics\Statement\Declaration\Table(new QualifiedName(new Name('target')), $declared->profile, $declared->columns);
+        $context = new \SqlSemantics\Contract\AnalysisContext($semantics->profile(), [new Name('other')], [$unqualified], declarationSchema: new Name('pbt'));
+        $insert = $semantics->analyze("INSERT pbt.target (amount) VALUES ('42')", $context);
+        self::assertInstanceOf(InsertStatement::class, $insert);
+        self::assertSame('pbt', $insert->target->resolvedName?->schema?->value);
+        self::assertSame('target', $insert->target->resolvedName->name->value);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $insert->target->resolution);
+        self::assertSame($unqualified, $insert->target->resolution->table);
+        self::assertSame("INSERT pbt.target (amount) VALUES ('42')", $insert->toString());
+    }
+
+    public function testPublishKeepsWrittenCaseSeparateFromAResolvedIdentity(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '8.4.7');
+        $declaration = $semantics->analyze('CREATE TABLE pbt.target (amount INT)')->declarations()[0];
+        $context = new \SqlSemantics\Contract\AnalysisContext($semantics->profile(), [new Name('pbt')], [$declaration], relationNames: \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive, columnNames: \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive);
+        $insert = $semantics->analyze("INSERT PBT.TARGET (AMOUNT) VALUES ('42')", $context);
+        self::assertInstanceOf(InsertStatement::class, $insert);
+        self::assertSame('PBT', $insert->target->name->schema?->value);
+        self::assertSame('TARGET', $insert->target->name->name->value);
+        self::assertSame('pbt', $insert->target->resolvedName?->schema?->value);
+        self::assertSame('target', $insert->target->resolvedName->name->value);
+        self::assertSame("INSERT PBT.TARGET (AMOUNT) VALUES ('42')", $insert->toString());
+    }
+
 }

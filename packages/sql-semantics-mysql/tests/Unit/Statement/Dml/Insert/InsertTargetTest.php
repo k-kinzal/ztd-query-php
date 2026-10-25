@@ -38,7 +38,7 @@ final class InsertTargetTest extends TestCase
     {
         $table = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT)')->declarations()[0];
         $this->expectExceptionMessage('An insertion target names its resolved table.');
-        new InsertTarget(new QualifiedName(new Name('other')), new DeclaredTable($table));
+        new InsertTarget(new QualifiedName(new Name('other')), new DeclaredTable($table), declarationSchema: new Name('pbt'));
     }
 
     public function testRenderDistinguishesAnOmittedAndEmptyColumnList(): void
@@ -52,4 +52,11 @@ final class InsertTargetTest extends TestCase
         self::assertSame('db.t', (new Lexical())->join($omitted->pieces()));
         self::assertSame('db.t ()', (new Lexical())->join($empty->pieces()));
     }
+    public function testRejectsAnUnqualifiedResolutionWithoutItsDeclarationSchema(): void
+    {
+        $table = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT)')->declarations()[0];
+        $this->expectExceptionMessage('A resolved insertion target identifies its declaration schema.');
+        new InsertTarget(new QualifiedName(new Name('t')), new DeclaredTable($table));
+    }
+
 }

@@ -402,3 +402,23 @@ assertions, using four ParaTest workers with a 1 GiB PHP memory limit. The initi
 was not counted as a result. Retained-field schema checks pass for all 1,048 MySQL
 value definitions. This completes the ordinary unit regression check for this
 checkpoint, not the complete redesign or generator/static/fuzz acceptance.
+
+
+### Bound INSERT identity (2026-10-25)
+
+An INSERT target now retains its fully qualified declaration name independently
+of the written name. Publication applies the analysis context's name comparison
+and assigned declaration schema, then discards those inputs. Execution, read-only
+access checks and prepared-statement invalidation use the bound identity, so a
+later USE cannot redirect a resolved write. The generated execution property also
+varies case-sensitive and ASCII-insensitive bindings while preserving the same
+generated table and column identities through shrinking.
+
+The updated execution properties, shrinking and preparation regressions pass
+32 tests / 42,949 assertions with ERIS_SEED=20261025. An additional direct-execution
+regression verifies that an invalid second integer row rolls back the first row
+without reading the request label (1 test / 5 assertions). Publication and target
+invariant tests pass 9 / 34. Targeted static analysis and the 1,048-definition
+schema check pass. The six-input INSERT corpus again passes exact round-trip and
+native prepared execution on MySQL 8.4.7. These remain focused checks; the full
+migration, generator coverage and corpus/seedless gates are still outstanding.

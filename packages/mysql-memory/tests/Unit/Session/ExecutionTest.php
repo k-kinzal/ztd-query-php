@@ -41,6 +41,27 @@ use Tests\Generator\Embedding;
 #[Small]
 final class ExecutionTest extends TestCase
 {
+    public function testStatementRollsBackEarlierRowsWhenAConcreteInsertFailsConversion(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
+        $session->query("SET sql_mode='STRICT_ALL_TABLES'; CREATE TABLE target (amount INT)");
+        $insert = $session->analyze("INSERT target VALUES ('42'), ('invalid')");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement::class, $insert);
+        $session->text = 'an execution label, not SQL';
+
+        try {
+            (new Execution($session))->statement($insert);
+            self::fail('Strict integer conversion must reject the second row.');
+        } catch (SqlError $error) {
+            self::assertSame(1366, $error->getCode());
+        }
+
+        $table = $session->instance->dictionary->table('pbt', 'target');
+        self::assertNotNull($table);
+        self::assertSame([], $table->data->rows);
+        self::assertSame('an execution label, not SQL', $session->text);
+    }
+
     public function testPerformRetainsASignalWithoutReadingRequestText(): void
     {
         $session = (new Instance())->connect();

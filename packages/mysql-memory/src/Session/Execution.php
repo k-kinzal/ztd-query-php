@@ -55,7 +55,7 @@ final class Execution
         $session->variables->setByFunction = false;
         $session->interrupted = false;
         State\StatementCounters::command($session, 'Com_insert');
-        (new \MySqlMemory\Concurrency\Access())->writes([$statement->target->name], $session);
+        (new \MySqlMemory\Concurrency\Access())->writes([$statement->target->resolvedName ?? $statement->target->name], $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $session->transaction->statements->begin(true);
         $session->instance->dictionary->temporaries = $session->temporaries;

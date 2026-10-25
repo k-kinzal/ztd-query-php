@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Insert;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -32,17 +34,31 @@ final class InsertTarget implements Node
     public readonly ?array $columns;
 
     /**
+     * The fully qualified declaration identity, absent for unresolved destinations.
+     * The written name remains independent of this binding.
+     */
+    public readonly ?QualifiedName $resolvedName;
+
+    /**
+     * @param Name|null $declarationSchema The schema assigned to an unqualified declaration
+     * @param Comparison $comparison The name comparison used for this binding
      * @param list<DestinationColumn>|null $columns The optional written destination list
      */
-    public function __construct(public readonly QualifiedName $name, public readonly TableResolution $resolution, ?array $columns = null, public readonly ?Span $source = null)
+    public function __construct(public readonly QualifiedName $name, public readonly TableResolution $resolution, ?array $columns = null, public readonly ?Span $source = null, ?Name $declarationSchema = null, Comparison $comparison = Comparison::Sensitive)
     {
+        Check::input($name->catalog === null, 'An INSERT table name has at most a database qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, DestinationColumn::class, 'INSERT destinations are column references.');
         foreach ($this->columns ?? [] as $column) {
             Check::input($column->table === $resolution, 'Every destination refers to this insertion target.');
         }
         if ($resolution instanceof DeclaredTable) {
-            Check::input($name->name->value === $resolution->table->name->name->value, 'An insertion target names its resolved table.');
-            Check::input($name->schema === null || $name->schema->value === $resolution->table->name->schema?->value, 'A qualified insertion target names its resolved schema.');
+            $schema = $resolution->table->name->schema ?? $declarationSchema;
+            Check::input($schema !== null, 'A resolved insertion target identifies its declaration schema.');
+            Check::input($comparison->equal($name->name->value, $resolution->table->name->name->value), 'An insertion target names its resolved table.');
+            Check::input($name->schema === null || $comparison->equal($name->schema->value, $schema->value), 'A qualified insertion target names its resolved schema.');
+            $this->resolvedName = new QualifiedName($resolution->table->name->name, $schema);
+        } else {
+            $this->resolvedName = null;
         }
     }
 

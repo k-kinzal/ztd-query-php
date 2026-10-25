@@ -31,7 +31,7 @@ final class InsertShrinkingTest extends TestCase
             $table = $create->declarations()[0];
             $resolution = new \SqlSemantics\Statement\Reference\Table\DeclaredTable($table);
             $column = $table->columns[0];
-            $target = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertTarget($table->name, $resolution, [new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\DestinationColumn($column->name, $resolution, $column)]);
+            $target = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertTarget($table->name, $resolution, [new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\DestinationColumn($column->name, $resolution, $column)], declarationSchema: $create->context->declarationSchema);
             return [$create, new InsertStatement(new \SqlSemantics\Contract\LanguageProfile($release), $target, $values, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'))];
         }, \Eris\Generators::associative([
             'create' => new \Tests\Generator\Semantics\Statement\OperationGenerator($release),
