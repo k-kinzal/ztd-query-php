@@ -36,16 +36,13 @@ final class Reader
      *
      * @throws SqlError When the statement does not parse or the parser refuses it
      * @throws Definition\DeferredPreparation When prepared input retains an execution-time definition condition
+     * @throws Definition\CompletedTemplate When the legacy input path executes a conditional definition
      */
     public function read(string $statement, bool $prepared, Session $session): Node
     {
         $semantics = $session->semantics();
         $tree = $this->tree($statement, $prepared, $session);
-        try {
-            $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->enclosures($tree, $semantics->profile()) ?? (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
-        } catch (AnalysisException $failure) {
-            throw $this->refusal($tree, $failure, $statement, $session->variables->database, $session);
-        }
+        $rejection = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->enclosures($tree, $semantics->profile()) ?? (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->rejected($tree, $semantics->profile());
         if (!$prepared) {
             $listed = $session->settings()->release() === GrammarRelease::MySql5651 ? (new Clashes())->listed($tree, $session->variables->database) : null;
             if ($listed !== null) {

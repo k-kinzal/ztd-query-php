@@ -211,6 +211,10 @@ The following are structural failures, not a backlog of SQL counterexamples:
 - `Execution::statement()` dispatches Operation through the old lifecycle and
   concrete INSERT through a separate lifecycle. Access checks, diagnostics,
   preparation, transactions and counters can therefore differ by representation.
+- `Session::analyze()` can reach a conditional-definition execution path through
+  `Session/Parse/Reader` and throw `CompletedTemplate` carrying an executed reply.
+  Moving that exception into an annotation does not establish read-only analysis:
+  the definition's typed conditions and effects must enter the common lifecycle.
 - Of 1,099 files under `mysql-memory/tests/Property`, 1,096 reference the rejected
   Samples/Construction machinery. They mostly assert that a sampled constructor
   produced an instance. Their file and assertion counts do not measure execution.
@@ -594,6 +598,13 @@ subsets are investigation aids, never acceptance substitutes.
 
 ### Work goals and order
 
+The goal is fulfillment of every requirement in this memo and a review-ready
+PR #665, not completion of a planning or cleanup checkpoint. Work continues on
+the existing `feat/mysql-memory` branch until the model/execution migration and
+all acceptance checks below are complete. The earlier tool-managed goal's
+INSERT-first ordering is superseded by this whole-system order; its unfinished
+status must not be changed to complete merely to replace that description.
+
 - [x] **A. Whole-system design and inventory.** Review this architecture against
   every family above; identify the existing owners, boundary violations and
   removal/replacement responsibilities. No further SQL-specific fixes while
@@ -674,6 +685,75 @@ Checks on PHP 8.5.8 / PHPUnit 10.5.64:
 The normal targets and test commands produced these results; logs are under the
 ignored `mysql-memory/build/insert-foundation/` directory. No new corpus or
 900-second fuzz acceptance result is claimed at this checkpoint.
+
+### Verification boundary migration
+
+The ordinary fuzz targets now count attempted and successfully checked inputs.
+An unfinished input, including a caught counterexample or timeout, makes the
+process fail even when PHP-Fuzzer returns zero. A zero-input run fails too.
+Successful replay reports its verified input count; CI requires it to match the
+copied corpus. The per-input alarm is canceled before shutdown cleanup; the final
+status check runs after registered container/coverage cleanup. The duration marker
+remains separate from the replay count. Fatal PHP errors retain their failing
+status and leave PHP-Fuzzer's subsequent input-preservation handler reachable.
+
+MemoryDB no longer translates arbitrary client exceptions, missing semantic
+rules or missing evaluators into ordinary SQL errors. The child process reports
+internal failures over its process pipe before closing clients. The parent keeps
+that failure sticky and exposes `assertNoInternalFailure()` to the observer.
+Legitimate SQL errors and intentional SQL SHUTDOWN retain their own behavior.
+
+The native target now sets the lexical profile during setup, independently of the
+tested SQL and the driver's text/prepared mode. Result ordering follows the
+official grammar's outer SELECT, including the different 5.x UNION forms. Other
+commands retain their result order until a specific contract establishes that
+reordering is valid. Raw results are retained before multiset sorting or
+environment contracts. Failure reports include lossless serialized raw evidence,
+so invalid UTF-8 bytes cannot disappear through JSON formatting. Table/schema/view
+definitions accompany rows; a missing database is distinct from a failed state
+read. These changes still do not cover every state domain in the table above.
+
+One MySQL fuzz workflow now describes both reconstruction and execution over all
+nine releases and the three supplied 8.4.7 supplements. Text and native prepared
+execution have separate jobs: 36 target/profile combinations. SQL Faker's existing
+seed checker establishes grammar coverage first. Each combination replays its
+own nonempty corpus and then uses a distinct empty directory for its 900-second
+search. Missing directories/manifests fail. Artifacts retain the revision, corpus
+hashes, supplier manifest, logs and counterexamples. This is an executable matrix,
+not evidence that all its jobs pass. Both targets record their mutation seed and
+accept `PHP_FUZZER_SEED`; SQL Faker's diagnostic provider now uses the constructor's
+named coverage/start-symbol arguments rather than the obsolete positional call.
+
+Mechanism checks on PHP 8.5.8:
+
+- Process/client/compiler boundary tests: 111 tests, 298 assertions passed.
+- Grammar ordering and duplicate/type-preserving multiset checks: 148 tests,
+  150 assertions passed across the nine releases.
+- Observation state and text/prepared profile checks: five tests passed; they
+  distinguish unchanged rows from changed defaults, absent from unreadable state,
+  and raw order from comparison order.
+- The combined observation mechanism suite passed 153 tests and 171 assertions.
+- Both ordinary PHP-Fuzzer targets returned zero with `Verified 1 inputs.` for
+  the supplied BEGIN seed. Reconstruction's SRID counterexample and execution's
+  CHECK-versus-existing-table counterexample returned status one. These focused
+  inputs validate the gate; they are not corpus acceptance.
+- A deliberately one-second execution-target timeout also exited with status one
+  and retained the failing input in PHP-Fuzzer's output; this validates timeout
+  handling, not SQL behavior or the normal sixty-second input budget.
+- The complete 8.4.7 execution corpus attempt stopped at `column_attribute-16.txt`
+  with the CHECK-versus-existing-table mismatch. The corresponding reconstruction
+  attempt stopped at `column_attribute-15.txt`. Neither run passes acceptance.
+- The changed PHP files pass focused PHPStan checks. The MySQL and existing
+  semantic fuzz workflows pass actionlint. Full-package errors recorded above
+  remain open and unsuppressed.
+- The complete supplied diagnostic supplement now reaches reconstruction and
+  fails on `real_ulong_num-4.txt` with an integer-domain refusal. The previous
+  provider argument error no longer prevents that check from running.
+
+Goal B remains open for complete state-domain observation, restoration verification
+and the remaining environment contracts. Goal C still requires replacement of the
+Operation/Facts publication and dual execution lifecycle. No statement-specific
+counterexample has been repaired as part of this boundary migration.
 
 ## Historical investigation results
 

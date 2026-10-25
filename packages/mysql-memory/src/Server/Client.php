@@ -16,7 +16,6 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
-use Throwable;
 
 /**
  * One client connection: the handshake, then the commands of the client/server protocol, each answered from a session.
@@ -112,8 +111,6 @@ final class Client
                 $this->packet($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message()));
 
                 return false;
-            } catch (Throwable $failure) {
-                $this->packet($this->messages->error(1105, 'HY000', 'mysql-memory internal error: ' . $failure::class . ': ' . $failure->getMessage()));
             }
         }
 

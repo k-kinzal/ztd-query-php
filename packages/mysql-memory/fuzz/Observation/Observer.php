@@ -7,6 +7,7 @@ namespace Fuzz\Observation;
 use PDO;
 use PDOException;
 use PDOStatement;
+use RuntimeException;
 
 /**
  * Runs one statement through PDO and records the results, errors and warnings exposed by the driver.
@@ -108,24 +109,79 @@ final class Observer
      * Answers the rows of every table of a database, each table sorted as a multiset.
      *
      * @return array<string, mixed>
+     * @throws RuntimeException When table state cannot be read
      */
     public function tables(PDO $pdo, string $database): array
     {
         $tables = [];
         try {
-            $names = $pdo->query('SHOW TABLES FROM `' . $database . '`');
-            foreach ($names === false ? [] : $names->fetchAll(PDO::FETCH_COLUMN) as $name) {
+            $names = $pdo->query('SHOW TABLES FROM ' . $this->identifier($database));
+            if ($names === false) {
+                throw new RuntimeException('Cannot enumerate observed tables: ' . json_encode($pdo->errorInfo()));
+            }
+            foreach ($names->fetchAll(PDO::FETCH_COLUMN) as $name) {
                 if (!is_string($name)) {
-                    continue;
+                    throw new RuntimeException('The table inventory returned an invalid identifier.');
                 }
-                $rows = $pdo->query('SELECT * FROM `' . $database . '`.`' . $name . '`');
-                $tables[$name] = $rows === false ? null : $this->bag($rows->fetchAll(PDO::FETCH_NUM));
+                $rows = $pdo->query('SELECT * FROM ' . $this->identifier($database) . '.' . $this->identifier($name));
+                if ($rows === false) {
+                    throw new RuntimeException('Cannot read observed table ' . $name . ': ' . json_encode($pdo->errorInfo()));
+                }
+                $tables[$name] = $this->bag($rows->fetchAll(PDO::FETCH_NUM));
             }
         } catch (PDOException $failure) {
-            $tables['error'] = $failure->getMessage();
+            if (($failure->errorInfo[1] ?? null) !== 1049) {
+                throw new RuntimeException('Cannot read observed table state.', 0, $failure);
+            }
+            // DROP DATABASE is an observable state, distinct from an unreadable catalog.
+            return [];
         }
         ksort($tables);
 
         return $tables;
+    }
+
+    /**
+     * Records schema, table and view definitions, including defaults, keys and constraints.
+     *
+     * @return array<string, mixed>|null Null means the observed database was dropped
+     * @throws RuntimeException When a definition cannot be read
+     */
+    public function definitions(PDO $pdo, string $database): ?array
+    {
+        try {
+            $schema = $pdo->query('SHOW CREATE DATABASE ' . $this->identifier($database));
+            $names = $pdo->query('SHOW TABLES FROM ' . $this->identifier($database));
+            if ($schema === false || $names === false) {
+                throw new RuntimeException('Cannot enumerate observed definitions: ' . json_encode($pdo->errorInfo()));
+            }
+            $definitions = ['database' => $schema->fetchAll(PDO::FETCH_NUM), 'relations' => []];
+            foreach ($names->fetchAll(PDO::FETCH_COLUMN) as $name) {
+                if (!is_string($name)) {
+                    throw new RuntimeException('The definition inventory returned an invalid identifier.');
+                }
+                $definition = $pdo->query('SHOW CREATE TABLE ' . $this->identifier($database) . '.' . $this->identifier($name));
+                if ($definition === false) {
+                    throw new RuntimeException('Cannot read observed definition ' . $name . ': ' . json_encode($pdo->errorInfo()));
+                }
+                $definitions['relations'][$name] = $definition->fetchAll(PDO::FETCH_NUM);
+            }
+        } catch (PDOException $failure) {
+            if (($failure->errorInfo[1] ?? null) === 1049) {
+                return null;
+            }
+            throw new RuntimeException('Cannot read observed definitions.', 0, $failure);
+        }
+        ksort($definitions['relations']);
+
+        return $definitions;
+    }
+
+    /**
+     * Quotes a name read from a catalog, including embedded identifier quotes.
+     */
+    public function identifier(string $name): string
+    {
+        return '`' . str_replace('`', '``', $name) . '`';
     }
 }

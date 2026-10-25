@@ -20,6 +20,9 @@ use JsonException;
 use PDO;
 use PDOException;
 use RuntimeException;
+use SqlParser\Lexer\SourceException;
+use SqlParser\MySql\MySqlParser;
+use SqlParser\MySql\SqlMode;
 
 /**
  * Runs one statement on a MySQL server and on mysql-memory, from the same fixture, and requires every observation to be equal.
@@ -53,6 +56,9 @@ final class ExecutionTarget
      * The account the statements run as on the MySQL server, read before any statement ran.
      */
     private ?string $account = null;
+
+    /** @var array<string, MySqlParser> Official grammar parsers for the exercised lexical profiles */
+    private array $parsers = [];
 
     /**
      * @param string $native The PDO DSN of the MySQL server, without a database
@@ -89,13 +95,12 @@ final class ExecutionTarget
      */
     public function verify(string $sql, string $input, string $mode = ''): void
     {
-        $executionSql = $mode === '' ? $sql : "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, '" . str_replace("'", "''", $mode) . "'); " . $sql;
         $comparison = \Fuzz\Execution\Lifecycle::handles($sql)
-            ? (new \Fuzz\Execution\Lifecycle())->compare($sql, $this->version, $mode)
-            : $this->compare($executionSql);
+            ? (new \Fuzz\Execution\Lifecycle())->compare($sql, $this->version, $mode, $this->emulate)
+            : $this->compare($sql, $mode);
         if ($comparison->difference !== null || $comparison->volatile) {
             $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
-            throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL: {$executionSql}\n" . ($comparison->difference ?? $comparison->referenceDifference));
+            throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL mode: {$mode}\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference) . "\nRaw observations (base64 serialized): " . base64_encode(serialize($comparison->observations)));
         }
     }
 
@@ -103,7 +108,7 @@ final class ExecutionTarget
      * Compares one statement, distinguishing an unstable reference observation from an equal one.
      * Repairs the emulator after observing it too, so later clients cannot inherit expired credentials or server restrictions.
      */
-    public function compare(string $sql): Comparison
+    public function compare(string $sql, string $mode = ''): Comparison
     {
         $this->previousInput = $this->input;
         $this->input = $sql;
@@ -111,11 +116,14 @@ final class ExecutionTarget
         $guard = $this->guard();
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
-        $expected = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
-        $this->nativeObservation = $this->json($expected);
+        $first = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql, $mode);
+        $expected = $first['comparable'];
+        $this->nativeObservation = $this->json($first['raw']);
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
-        $again = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
+        $second = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql, $mode);
+        $again = $second['comparable'];
+        $observations = ['native' => $first['raw'], 'repeated' => $second['raw']];
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
         $library = new LibraryErrors();
@@ -129,20 +137,23 @@ final class ExecutionTarget
         $expected = $fileNormalized;
         $again = $files->comparable($library->comparable($again, $this->version), $this->version);
         if ($expected !== $again) {
-            return new Comparison(true, contracts: $contracts, referenceDifference: $this->describe($expected, $again));
+            return new Comparison(true, contracts: $contracts, referenceDifference: $this->describe($expected, $again), observations: $observations);
         }
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
         try {
-            $actual = $files->comparable($library->comparable($this->run($this->memory, 'root', '', $sql), $this->version), $this->version);
+            $memory = $this->run($this->memory, 'root', '', $sql, $mode);
+            $observations['memory'] = $memory['raw'];
+            $actual = $files->comparable($library->comparable($memory['comparable'], $this->version), $this->version);
         } finally {
+            $this->server?->assertNoInternalFailure();
             $this->repair($this->memoryGuard());
             $this->baseline?->restore($this->memoryGuard(), false);
         }
         if ($expected === $actual) {
-            return new Comparison(false, contracts: $contracts);
+            return new Comparison(false, contracts: $contracts, observations: $observations);
         }
-        return new Comparison(false, $this->describe($expected, $actual), $contracts);
+        return new Comparison(false, $this->describe($expected, $actual), $contracts, observations: $observations);
     }
 
     /**
@@ -197,7 +208,7 @@ final class ExecutionTarget
         $quoted = $guard->quote($user) . '@' . $guard->quote($host);
         $password = $guard->quote($this->nativePassword);
         foreach ($this->repairs($quoted, $password) as $statement) {
-            $guard->exec($statement);
+            (new Tables())->execute($guard, $statement);
         }
     }
 
@@ -253,12 +264,15 @@ final class ExecutionTarget
      * can otherwise retain the connection and its server locks until garbage collection.
      * Isolated runs restore their original configuration before returning, including direct callers.
      *
-     * @return array<string, mixed>
+     * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
      */
-    public function run(string $dsn, string $user, string $password, string $sql): array
+    public function run(string $dsn, string $user, string $password, string $sql, string $mode = ''): array
     {
         $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
         $pdo = $this->connect($dsn, $user, $password, $clock);
+        if ($mode !== '') {
+            (new Tables())->execute($pdo, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')');
+        }
         if ($this->baseline !== null) {
             Baseline::mutexes($pdo, $this->version);
         }
@@ -274,13 +288,34 @@ final class ExecutionTarget
         }
         $status = Status\Listing::handles($sql) ? Status\Listing::capture($pdo, $sql) : null;
         $observer = new Observer();
-        $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
-        $observation = $observer->observe($pdo, $sql, $ordered);
+        $parser = $this->parsers[$mode] ??= new MySqlParser('mysql-' . $this->version, SqlMode::fromString($mode));
+        try {
+            $ordered = (new \Fuzz\Observation\ResultOrder())->ordered($parser->parse($sql));
+        } catch (SourceException) {
+            // A grammar refusal is still executed and compared; it cannot justify reordering a result.
+            $ordered = true;
+        }
+        $observation = $observer->observe($pdo, $sql, true);
+        if ($dsn === $this->memory) {
+            $this->server?->assertNoInternalFailure();
+        }
+        $raw = $observation;
+        if (!$ordered && isset($observation['results']) && is_array($observation['results'])) {
+            foreach ($observation['results'] as $index => $result) {
+                if (is_array($result) && isset($result['rows']) && is_array($result['rows'])) {
+                    $result['rows'] = $observer->bag($result['rows']);
+                    $observation['results'][$index] = $result;
+                }
+            }
+        }
         $observation = $identities?->comparable($pdo, $observation) ?? $observation;
         $observation = $processes?->comparable($pdo, $observation) ?? $observation;
         $observation = $status?->comparable($observation) ?? $observation;
         $observation = (new \Fuzz\Observation\EngineReports())->comparable($sql, $observation);
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
+        $observation['definitions'] = $observer->definitions($pdo, self::DATABASE);
+        $raw['tables'] = $observation['tables'];
+        $raw['definitions'] = $observation['definitions'];
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
         $pdo->exec('ROLLBACK');
@@ -293,7 +328,7 @@ final class ExecutionTarget
             $this->baseline->restore($guard, $dsn === $this->native);
         }
 
-        return $clock?->comparable($observation) ?? $observation;
+        return ['raw' => $raw, 'comparable' => $clock?->comparable($observation) ?? $observation];
     }
 
     /**
@@ -304,7 +339,7 @@ final class ExecutionTarget
     public function connect(string $dsn, string $user, string $password, ?TableTimes $clock = null): PDO
     {
         try {
-            $foundRows = class_exists(\Pdo\Mysql::class) ? \Pdo\Mysql::ATTR_FOUND_ROWS : PDO::MYSQL_ATTR_FOUND_ROWS;
+            $foundRows = defined('Pdo\\Mysql::ATTR_FOUND_ROWS') ? constant('Pdo\\Mysql::ATTR_FOUND_ROWS') : PDO::MYSQL_ATTR_FOUND_ROWS;
             $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $this->emulate, $foundRows => $this->foundRows]);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
             $pdo->exec('ALTER SCHEMA `' . self::DATABASE . '` READ ONLY = 0');

@@ -1,4 +1,4 @@
-name: Fuzz (mysql-memory)
+name: Fuzz (MySQL semantic verification)
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - '.github/workflows/mysql-memory-fuzz.yml'
       - 'packages/mysql-memory/**'
       - 'packages/sql-parser/**'
+      - 'packages/sql-formatter/**'
       - 'packages/sql-semantics/**'
       - 'packages/sql-semantics-mysql/**'
       - 'packages/sql-faker/**'
@@ -13,158 +14,147 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      mysql_version:
-        description: MySQL release whose supplied seeds and execution property are checked
-        required: true
-        default: '8.4.7'
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # A superseded PR run must not consume the aggregate check's waiting budget.
-  # The latest head still replays every supplied seed and completes its full search.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   COMPOSER_NO_INTERACTION: '1'
-  MYSQL_VERSION: ${{ inputs.mysql_version || '8.4.7' }}
 
 jobs:
-  fuzz:
-    name: SQL execution / MySQL
+  seeds:
+    name: Grammar coverage / MySQL ${{ matrix.version }}
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    permissions:
-      contents: read
-      issues: write
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0']
     defaults:
       run:
-        working-directory: packages/mysql-memory
+        working-directory: packages/sql-faker
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.5'
-          extensions: bcmath, intl, mbstring, pdo, pdo_mysql, mysqli, dom, filter, hash, iconv, json, libxml, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
-
-      - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
-
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
         with:
-          working-directory: packages/mysql-memory
+          working-directory: packages/sql-faker
           dependency-versions: locked
           composer-options: --prefer-dist
           require-lock-file: true
-
-      - name: Check runtime platform requirements
-        run: composer check-platform-reqs --no-dev
-
-      - name: Replay the supplied SQL Faker seeds with PHP-Fuzzer
+      - name: Verify the supplier's grammar coverage
+        env:
+          MYSQL_VERSION: ${{ matrix.version }}
         run: |
           set -euo pipefail
           mkdir -p build/fuzz
-          seeds="../sql-faker/seeds/mysql/mysql-$MYSQL_VERSION"
-          test -d "$seeds"
-          for profile in default HIGH_NOT_PRECEDENCE PIPES_AS_CONCAT diagnostics; do
-            mode=''
-            diagnostics=0
-            case "$profile" in
-              default) source="$seeds" ;;
-              diagnostics) source="$seeds/diagnostics"; diagnostics=1 ;;
-              *) source="$seeds/modes/$profile"; mode="$profile" ;;
-            esac
-            if [ ! -d "$source" ]; then continue; fi
-            corpus="build/fuzz/seeds-$profile"
-            mkdir -p "$corpus"
-            cp "$source/"*.txt "$corpus/"
-            SQLFAKER_SQL_MODE="$mode" SQLFAKER_DIAGNOSTICS="$diagnostics" \
-              php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz \
-              fuzz/fuzz_mysql_execution.php "$corpus/" --max-runs=0 --timeout=60 \
-              2>&1 | tee "build/fuzz/seeds-$profile.log"
-            if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in |^PARSE ERROR|^INSTRUMENTATION BROKEN' "build/fuzz/seeds-$profile.log"; then
-              exit 1
-            fi
-          done
+          php bin/seeds.php check --tag "mysql-$MYSQL_VERSION" 2>&1 | tee build/fuzz/coverage.log
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: mysql-grammar-coverage-${{ matrix.version }}
+          path: packages/sql-faker/build/fuzz/coverage.log
+          if-no-files-found: error
 
-      - name: Search for counterexamples for fifteen minutes without seeds
-        env:
-          MYSQL_MEMORY_FUZZ_SECONDS: '900'
+  fuzz:
+    needs: seeds
+    name: ${{ matrix.target.name }} / ${{ matrix.profile.version }} / ${{ matrix.profile.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { name: reconstruction, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php, emulate: '1' }
+          - { name: execution-text, package: mysql-memory, script: fuzz_mysql_execution.php, emulate: '1' }
+          - { name: execution-prepared, package: mysql-memory, script: fuzz_mysql_execution.php, emulate: '0' }
+        # Default corpora are complete; supplements follow the supplier's profile inventory.
+        profile:
+          - { version: '5.6.51', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '5.7.44', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '8.0.44', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '8.1.0', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '8.2.0', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '8.3.0', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '8.4.7', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '9.0.1', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '9.1.0', name: default, suffix: '', mode: '', diagnostics: '0' }
+          - { version: '8.4.7', name: HIGH_NOT_PRECEDENCE, suffix: '/modes/HIGH_NOT_PRECEDENCE', mode: HIGH_NOT_PRECEDENCE, diagnostics: '0' }
+          - { version: '8.4.7', name: PIPES_AS_CONCAT, suffix: '/modes/PIPES_AS_CONCAT', mode: PIPES_AS_CONCAT, diagnostics: '0' }
+          - { version: '8.4.7', name: diagnostics, suffix: '/diagnostics', mode: '', diagnostics: '1' }
+    env:
+      MYSQL_VERSION: ${{ matrix.profile.version }}
+      SQLFAKER_SQL_MODE: ${{ matrix.profile.mode }}
+      SQLFAKER_DIAGNOSTICS: ${{ matrix.profile.diagnostics }}
+      MYSQL_MEMORY_EMULATE: ${{ matrix.target.emulate }}
+      FUZZ_SCRIPT: ${{ matrix.target.script }}
+      SEED_SUFFIX: ${{ matrix.profile.suffix }}
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.target.package }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          extensions: bcmath, intl, mbstring, pdo_mysql, mysqli, pcntl
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/${{ matrix.target.package }}
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check runtime platform requirements
+        run: composer check-platform-reqs --no-dev
+      - name: Replay every seed in this profile
         run: |
           set -euo pipefail
-          corpus=$(mktemp -d)
+          source="../sql-faker/seeds/mysql/mysql-$MYSQL_VERSION$SEED_SUFFIX"
+          test -d "$source"
+          test -f "$source.json"
+          mkdir -p build/fuzz/replay
+          cp "$source/"*.txt build/fuzz/replay/
+          cp "$source.json" build/fuzz/manifest.json
+          git rev-parse HEAD > build/fuzz/revision.txt
+          sha256sum build/fuzz/replay/*.txt > build/fuzz/corpus.sha256
+          count=$(find build/fuzz/replay -type f -name '*.txt' | wc -l | tr -d ' ')
+          test "$count" -gt 0
           php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz \
-            fuzz/fuzz_mysql_execution.php "$corpus/" --len-control-factor=1 --timeout=60 \
-            2>&1 | tee build/fuzz/mysql.log
-          grep -Eq '^Completed [1-9][0-9]* matching inputs in ' build/fuzz/mysql.log
-          if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in |^PARSE ERROR|^INSTRUMENTATION BROKEN' build/fuzz/mysql.log; then
-            exit 1
-          fi
-
-      - name: Open an issue for a finding
-        if: always() && github.ref == 'refs/heads/main'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+            "fuzz/$FUZZ_SCRIPT" build/fuzz/replay/ --max-runs=0 --timeout=60 \
+            2>&1 | tee build/fuzz/replay.log
+          grep -Fx "Verified $count inputs." build/fuzz/replay.log
+          if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in |^PARSE ERROR|^INSTRUMENTATION BROKEN' build/fuzz/replay.log; then exit 1; fi
+      - name: Search for fifteen minutes from an empty corpus
         env:
-          FUZZ_TARGET: mysql
-          FUZZ_SCRIPT: fuzz/fuzz_mysql_execution.php
-          MYSQL_VERSION: ${{ env.MYSQL_VERSION }}
-        with:
-          script: |
-            const fs = require('node:fs');
-            const path = require('node:path');
-            const crypto = require('node:crypto');
-            const target = process.env.FUZZ_TARGET;
-            const script = process.env.FUZZ_SCRIPT;
-            const root = path.resolve('packages/mysql-memory');
-            const logPath = path.join(root, `build/fuzz/${target}.log`);
-            if (!fs.existsSync(logPath)) return;
-            const log = fs.readFileSync(logPath, 'utf8');
-            const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
-            if (!finding) return;
-            const input = fs.readFileSync(path.resolve(root, finding[1]));
-            const hash = crypto.createHash('sha256').update(input).digest('hex');
-            const marker = `<!-- mysql-memory-fuzz:${target}:${hash} -->`;
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
-              ...context.repo, state: 'open', per_page: 100
-            });
-            if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
-            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const body = [
-              marker,
-              `PHP-Fuzzer found a statement on which mysql-memory and MySQL ${process.env.MYSQL_VERSION} differ, in the ${target} target.`,
-              `Commit: ${context.sha}`,
-              `Workflow and input artifact: ${run} (mysql-memory-fuzz-${target})`,
-              'Run from packages/mysql-memory after extracting the artifact:',
-              '```sh',
-              `MYSQL_VERSION=${process.env.MYSQL_VERSION} php -d memory_limit=-1 vendor/bin/php-fuzzer run-single ${script} '${path.relative(root, path.resolve(root, finding[1]))}' --timeout=60`,
-              '```',
-              `Input SHA-256: ${hash}`,
-              '<details><summary>PHP-Fuzzer output</summary>',
-              '', '```text', log.slice(-45000), '```', '</details>'
-            ].join('\n\n');
-            await github.rest.issues.create({
-              ...context.repo,
-              title: `[mysql-memory fuzz] ${target}: ${hash.slice(0, 12)}`,
-              body
-            });
-
-      - name: Upload PHP-Fuzzer counterexamples and output
+          MYSQL_MEMORY_FUZZ_SECONDS: '900'
+          SQL_SEMANTICS_FUZZ_SECONDS: '900'
+        run: |
+          set -euo pipefail
+          mkdir build/fuzz/seedless
+          php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz \
+            "fuzz/$FUZZ_SCRIPT" build/fuzz/seedless/ --len-control-factor=1 --timeout=60 \
+            2>&1 | tee build/fuzz/seedless.log
+          grep -Eq '^Completed [1-9][0-9]* matching inputs in ' build/fuzz/seedless.log
+          if grep -Eq '(^|CORPUS )(CRASH|TIMEOUT) in |^PARSE ERROR|^INSTRUMENTATION BROKEN' build/fuzz/seedless.log; then exit 1; fi
+      - name: Retain evidence and counterexamples for this exact matrix cell
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: mysql-memory-fuzz-mysql
+          name: mysql-fuzz-${{ matrix.target.name }}-${{ matrix.profile.version }}-${{ matrix.profile.name }}
           path: |
-            packages/mysql-memory/crash-*
-            packages/mysql-memory/timeout-*
-            packages/mysql-memory/build/fuzz/
-          if-no-files-found: ignore
+            packages/${{ matrix.target.package }}/crash-*
+            packages/${{ matrix.target.package }}/timeout-*
+            packages/${{ matrix.target.package }}/build/fuzz/
+            packages/${{ matrix.target.package }}/fuzz/coverage/mysql/
+          if-no-files-found: error
           retention-days: 14

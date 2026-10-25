@@ -14,7 +14,6 @@ use MySqlMemory\Result\Reply;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
@@ -317,6 +316,7 @@ final class Session
      *
      * @throws SqlError When the statement does not parse or does not resolve
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
+     * @throws Parse\Definition\CompletedTemplate When the legacy input path executes a conditional definition
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): \SqlSemantics\Statement\AnalyzedStatement
@@ -342,8 +342,6 @@ final class Session
                 $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($bindings, unboundParameters: $prepared && $parameters === [] ? array_keys($bindings) : [])));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 throw $reader->operand($failure, $tree, $statement, $this);
-            } catch (ImplementationGap $gap) {
-                throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
             } catch (AnalysisException $error) {
                 throw $reader->refusal($tree, $error, $statement, $database, $this);
             } finally {

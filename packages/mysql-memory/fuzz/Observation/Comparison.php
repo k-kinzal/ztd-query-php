@@ -14,8 +14,9 @@ final class Comparison
      * @param list<string> $contracts Validated nondeterministic fields whose allowed values were compared
      * @param string|null $difference The complete difference, or null when there is none to report
      * @param string|null $referenceDifference The difference between the two native observations, when volatile
+     * @param array<string, array<string, mixed>> $observations Raw observations before environment contracts or row ordering
      */
-    public function __construct(public readonly bool $volatile, public readonly ?string $difference = null, public readonly array $contracts = [], public readonly ?string $referenceDifference = null)
+    public function __construct(public readonly bool $volatile, public readonly ?string $difference = null, public readonly array $contracts = [], public readonly ?string $referenceDifference = null, public readonly array $observations = [])
     {
     }
 }

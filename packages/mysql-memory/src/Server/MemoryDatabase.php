@@ -23,14 +23,22 @@ use SqlSemantics\Contract\GrammarRelease;
  */
 final class MemoryDatabase
 {
+    private ?string $failure = null;
+
+    private bool $exited = false;
+
+    private readonly Failures $failures;
+
     /**
      * @param resource $process The child process
+     * @param resource $messages The process readiness and failure channel, separate from SQL replies
      * @param string $host The host the server listens on
      * @param int $port The port the server listens on
      * @param string $version The selected MySQL release
      */
-    private function __construct(private $process, public readonly string $host, public readonly int $port, public readonly string $version)
+    private function __construct(private $process, private $messages, public readonly string $host, public readonly int $port, public readonly string $version)
     {
+        $this->failures = new Failures($messages);
     }
 
     /**
@@ -70,10 +78,37 @@ final class MemoryDatabase
         $line = fgets($pipes[1]);
         if ($line === false || preg_match('/\Aready tcp:\/\/([^:]+):([0-9]+)/', $line, $match) !== 1) {
             proc_terminate($process);
+            proc_close($process);
+            fclose($pipes[1]);
             throw new RuntimeException('The server process did not start: ' . (string) $line);
         }
 
-        return new self($process, $match[1], (int) $match[2], $version);
+        stream_set_blocking($pipes[1], false);
+        return new self($process, $pipes[1], $match[1], (int) $match[2], $version);
+    }
+
+    /**
+     * Fails when the server encountered an implementation error, independently of a client's SQL reply.
+     * A deliberate SQL SHUTDOWN exits normally and is not an internal failure.
+     *
+     * @throws RuntimeException When the child reports a failure or exits unsuccessfully
+     */
+    public function assertNoInternalFailure(): void
+    {
+        if ($this->failure !== null) {
+            throw new RuntimeException($this->failure);
+        }
+        if (is_resource($this->messages)) {
+            $this->failures->assertNone();
+        }
+        if (!$this->exited && is_resource($this->process)) {
+            $status = proc_get_status($this->process);
+            $this->exited = !$status['running'];
+            if ($this->exited && $status['exitcode'] !== 0) {
+                $this->failure = 'mysql-memory process failed with exit status ' . $status['exitcode'];
+                throw new RuntimeException($this->failure);
+            }
+        }
     }
 
     /**
@@ -92,6 +127,9 @@ final class MemoryDatabase
         if (is_resource($this->process)) {
             proc_terminate($this->process, 9);
             proc_close($this->process);
+        }
+        if (is_resource($this->messages)) {
+            fclose($this->messages);
         }
     }
 

@@ -70,6 +70,11 @@ at the same time; they have separate listeners and state.
 The default root account has an empty password. Optional startup arguments supply
 initial databases, global variable values, and server capabilities. SQL errors are
 reported through the connected driver's usual exceptions and result APIs.
+An internal implementation failure terminates the server rather than becoming
+an SQL error. Call `assertNoInternalFailure()` while retaining the database object
+to distinguish that failure from a driver-visible disconnect or SQL refusal.
+The failure remains visible on later checks. An intentional SQL `SHUTDOWN` is not
+an internal failure.
 `Instance`, sessions, protocol classes, and execution results are internal APIs.
 There is no command-line tool.
 
@@ -154,6 +159,44 @@ MYSQL_VERSION=8.4.7 composer fuzz:mysql
 `fuzz/fuzz_mysql_execution.php` is the single SQL execution target. It accepts SQL
 Faker's supplied grammar seeds, including SQL-mode and diagnostic profiles.
 `MYSQL_MEMORY_FUZZ_SECONDS=900` bounds a search from an empty corpus after startup.
-The CI workflow replays the supplied seeds and then runs that fifteen-minute search.
+The MySQL semantic verification workflow runs reconstruction and execution over
+all nine releases, plus the supplied 8.4.7 mode and diagnostic supplements. Text
+and native prepared execution use separate jobs. Each job replays its supplied
+profile and then runs the fifteen-minute search from a different empty directory.
 Differences, crashes, timeouts, and unstable reference observations fail the check.
 The selected seeds and duration establish only the cases explored by that run.
+
+To reproduce one default-profile replay with the ordinary tools:
+
+```sh
+# Run SQL Faker's existing coverage check from its package first.
+cd ../sql-faker
+php bin/seeds.php check --tag mysql-8.4.7
+cd ../mysql-memory
+corpus=$(mktemp -d)
+cp ../sql-faker/seeds/mysql/mysql-8.4.7/*.txt "$corpus/"
+MYSQL_VERSION=8.4.7 MYSQL_MEMORY_EMULATE=0 php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_execution.php "$corpus/" --max-runs=0 --timeout=60
+```
+
+Use a fresh replay directory and copy only the selected profile's `.txt` files.
+Mode supplements require their matching `SQLFAKER_SQL_MODE`; diagnostic seeds
+require `SQLFAKER_DIAGNOSTICS=1`. `MYSQL_MEMORY_EMULATE=0` selects native prepared
+execution, and `1` selects text execution. Profile setup is not concatenated to
+the statement under test. A successful replay prints `Verified N inputs.`;
+require `N` to equal the number of copied files. Missing or empty corpora cannot
+establish a passing replay.
+
+The observer retains raw protocol results and compares deterministic metadata,
+rows, completion information, errors, warnings, table contents and definitions.
+SELECT rows retain order when the outer query has an ordering clause; otherwise
+they are compared as multisets, preserving duplicates and value types.
+Other result-producing commands retain order. Raw observations in counterexample
+reports are base64-encoded PHP serialization, preserving binary values as well
+as types. State-read failures are failures of the check. Coverage of account,
+routine, replication and session effects is still incomplete; these runs do not
+yet establish equivalence for every state change.
+
+Each target records its release, lexical profile and mutation seed. Set
+`PHP_FUZZER_SEED` to reproduce PHP-Fuzzer's random sequence on the same revision
+and corpus. The retained input bytes are the direct way to replay a finding with
+`vendor/bin/php-fuzzer run-single`.

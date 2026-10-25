@@ -40,7 +40,7 @@ final class Lifecycle
      * @throws JsonException When an observation cannot be serialized
      * @throws RuntimeException When the native fixture cannot serve SQL within its startup budget
      */
-    public function compare(string $sql, string $version, string $mode = ''): Comparison
+    public function compare(string $sql, string $version, string $mode = '', bool $emulate = true): Comparison
     {
         $definition = new DisposableMySql($version);
         $port = filter_var(getenv('MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
@@ -52,6 +52,7 @@ final class Lifecycle
             $endpoint = $container->getData(Endpoint::class);
             $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
             $native = $this->reconnect($dsn, $endpoint->username, $endpoint->password, true) ?? throw new RuntimeException('The native lifecycle fixture did not become ready within thirty seconds.');
+            $native->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
             $globals = [];
             foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
                 $globals[strtolower($name)] = $value;
@@ -59,10 +60,14 @@ final class Lifecycle
             $server = MemoryDatabase::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version), resourceProcessors: (new Servers())->resourceProcessors($native, $version), timeZones: (new Servers())->timeZones($native));
             try {
                 $expected = $this->observe($native, $dsn, $endpoint->username, $endpoint->password, $sql, $mode);
-                $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+                $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $emulate]);
                 $actual = $this->observe($memory, $server->dsn(), 'root', '', $sql, $mode);
             } finally {
-                $server->stop();
+                try {
+                    $server->assertNoInternalFailure();
+                } finally {
+                    $server->stop();
+                }
             }
         } finally {
             $container->stop();

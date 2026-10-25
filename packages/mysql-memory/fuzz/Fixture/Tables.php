@@ -59,7 +59,7 @@ final class Tables
     {
         $statement = $pdo->query($sql);
         if ($statement === false) {
-            throw new RuntimeException('A differential fixture statement failed.');
+            throw new RuntimeException('A differential fixture statement failed: ' . json_encode($pdo->errorInfo()));
         }
         $statement->closeCursor();
     }

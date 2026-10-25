@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use LogicException;
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\Family\QueryError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Family\Calls;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Evaluation\Compile\Family\Dates;
@@ -21,7 +21,6 @@ use MySqlMemory\Plan\Window\Resolution;
 use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Quietness;
-use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Extract;
@@ -94,8 +93,8 @@ use SqlSemantics\Statement\Type\NullOnly;
  * Compiles the expressions of a bound statement into evaluables: the resolving step of the server, done for each node once.
  *
  * Each node is read with the facts SQL Semantics derived for it: the column a name resolves to,
- * the select item an alias names. An expression form the emulator does not evaluate is refused
- * with ER_NOT_SUPPORTED_YET.
+ * the select item an alias names. A missing evaluator is an implementation failure,
+ * distinct from the SQL errors raised by modeled expressions.
  *
  * @visibility MySqlMemory
  */
@@ -212,6 +211,7 @@ final class Compiler
      * Compiles an expression in the scope of its query block.
      *
      * @throws \MySqlMemory\Error\SqlError When the expression is refused
+     * @throws LogicException When the semantic value has no evaluator
      */
     public function compile(Operand $node, Scope $scope): Evaluable
     {
@@ -239,7 +239,7 @@ final class Compiler
             throw (new \MySqlMemory\Program\Expression\RowUse())->error($node);
         }
         if (!$node instanceof Scalar) {
-            throw StatementError::NotSupportedYet->error('value ' . (new ReflectionClass($node))->getShortName());
+            throw new LogicException('No value evaluator for ' . $node::class);
         }
 
         $replacement = $this->facts->covers($node) ? $this->facts->scalar($node)->replacement : null;
@@ -270,11 +270,11 @@ final class Compiler
     /**
      * Answers the type SQL Semantics resolved for a node.
      *
-     * @throws \MySqlMemory\Error\SqlError When SQL Semantics resolved only the class of its type
+     * @throws LogicException When the semantic value has no executable resolved type
      */
     public function domain(Operand $node): Domain
     {
-        return $this->resolved($node) ?? throw StatementError::NotSupportedYet->error('the type of ' . (new ReflectionClass($node))->getShortName());
+        return $this->resolved($node) ?? throw new LogicException('No executable type for ' . $node::class);
     }
 
     /**
@@ -338,7 +338,8 @@ final class Compiler
     /**
      * Compiles a node by its form, before it is given the type SQL Semantics resolved for it.
      *
-     * @throws \MySqlMemory\Error\SqlError When the form is one the emulator does not evaluate, or is not valid where it is written
+     * @throws \MySqlMemory\Error\SqlError When the expression is not valid where it is written
+     * @throws LogicException When the expression has no evaluator
      */
     public function dispatch(Scalar $node, Scope $scope): Evaluable
     {
@@ -348,7 +349,7 @@ final class Compiler
             ?? $this->compileText($node, $scope)
             ?? $this->compileCall($node, $scope)
             ?? $this->compileSubquery($node, $scope)
-            ?? throw StatementError::NotSupportedYet->error('expression ' . (new ReflectionClass($node))->getShortName());
+            ?? throw new LogicException('No expression evaluator for ' . $node::class);
     }
 
     /**

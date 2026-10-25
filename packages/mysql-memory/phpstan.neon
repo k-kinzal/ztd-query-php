@@ -7,13 +7,10 @@ includes:
 parameters:
     unusedClasses:
         - 'Tests\Generator\*Generator'
-    exceptions:
-        # The session turns an ImplementationGap of SQL Semantics, which no method declares, into ER_NOT_SUPPORTED_YET.
-        reportUncheckedExceptionDeadCatch: false
     toolkit:
         visibilityExemptNamespacePrefixes: ['Tests', 'Fuzz', 'Rules']
         broadCatchAllowedPaths:
-            - src/Server/Client.php
+            - src/Server/Process.php
             - src/Session/Session.php
     phpVersion: 80100
     level: max

@@ -19,6 +19,34 @@ use RuntimeException;
 #[Medium]
 final class MemoryDatabaseTest extends TestCase
 {
+    public function testAssertNoInternalFailureAcceptsAnOrdinarySqlError(): void
+    {
+        $server = MemoryDatabase::start('8.4.7', ['shop']);
+        try {
+            $client = new PDO($server->dsn('shop'), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+            self::assertFalse($client->query('SELECT * FROM missing'));
+            self::assertSame(1146, $client->errorInfo()[1]);
+            $server->assertNoInternalFailure();
+            $result = $client->query('SELECT 1');
+            self::assertNotFalse($result);
+            self::assertSame(1, $result->fetchColumn());
+        } finally {
+            $server->stop();
+        }
+    }
+
+    public function testAssertNoInternalFailureAcceptsAnIntentionalSqlShutdown(): void
+    {
+        $server = MemoryDatabase::start('8.4.7');
+        try {
+            $client = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            self::assertSame(0, $client->exec('SHUTDOWN'));
+            $server->assertNoInternalFailure();
+        } finally {
+            $server->stop();
+        }
+    }
+
     public function testStartRunsAServerThatGreetsClients(): void
     {
         $server = MemoryDatabase::start('8.0.44');

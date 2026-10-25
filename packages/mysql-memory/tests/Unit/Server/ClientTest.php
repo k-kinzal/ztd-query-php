@@ -15,12 +15,27 @@ use MySqlMemory\Server\Client;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 #[CoversClass(Client::class)]
 #[Small]
 final class ClientTest extends TestCase
 {
+    public function testReceivePropagatesAnImplementationFailureInsteadOfSendingAnSqlError(): void
+    {
+        $failure = new RuntimeException('Intentional transport failure');
+        $attempts = 0;
+        $client = new Client(new Instance(), 7, static function (string $bytes) use ($failure, &$attempts): void {
+            if (++$attempts === 1) {
+                throw $failure;
+            }
+        });
+        $this->expectExceptionObject($failure);
+
+        $client->receive("\x26\x00\x00\x01" . "\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+    }
+
     public function testEndedReportsOnlyAReleasedAuthenticatedSession(): void
     {
         $client = new Client(new Instance(), 1, static function (string $bytes): void {

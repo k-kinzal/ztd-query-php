@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Server;
 
 use MySqlMemory\Instance;
+use RuntimeException;
+use Throwable;
 
 /**
  * Starts the library listener in the process owned by MemoryDatabase.
@@ -15,6 +17,8 @@ final class Process
 {
     /**
      * Receives the parent's private startup arguments and serves its selected release.
+     *
+     * @throws RuntimeException When the listener encounters an internal failure
      */
     public function serve(string $configuration): void
     {
@@ -26,6 +30,12 @@ final class Process
         $listener = new Listener(new Instance(...$options, help: $tables, timeZones: $timeZones), 'tcp://127.0.0.1:0');
         fwrite(STDOUT, 'ready ' . $listener->open() . "\n");
         fflush(STDOUT);
-        $listener->serve();
+        try {
+            $listener->serve();
+        } catch (Throwable $failure) {
+            // Report outside the SQL protocol before the failed process closes its clients.
+            (new Failures(STDOUT))->report($failure);
+            throw new RuntimeException('The mysql-memory process encountered an internal failure.', 0, $failure);
+        }
     }
 }
