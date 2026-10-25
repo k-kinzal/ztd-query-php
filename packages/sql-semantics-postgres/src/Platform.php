@@ -44,6 +44,14 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
+     * Publishes the existing representation until this dialect's statements are migrated.
+     */
+    public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
+    {
+        return new \SqlSemantics\Statement\Operation($context, $statement, $sources);
+    }
+
+    /**
      * @var array<string, SqlParser>
      */
     private array $parsers = [];

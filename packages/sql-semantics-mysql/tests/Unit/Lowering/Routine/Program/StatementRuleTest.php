@@ -132,7 +132,7 @@ final class StatementRuleTest extends TestCase
         self::assertInstanceOf(Block::class, $statement->body);
 
         self::assertSame([SetVariables::class, \SqlSemantics\Platform\MySql\Statement\QueryRoot::class, SetVariables::class], array_map(static fn (StatementNode $node): string => $node::class, $statement->body->statements));
-        self::assertSame('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN SET @a = 1; SELECT 2 INTO @b; SET `new`.a = 3; END', $operation->toString());
+        self::assertSame('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN SET @a = 1; SELECT 2 INTO @b; SET new.a = 3; END', $operation->toString());
         self::assertSame([], $operation->facts->diagnostics);
     }
 

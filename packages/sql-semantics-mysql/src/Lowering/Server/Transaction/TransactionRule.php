@@ -62,7 +62,7 @@ final class TransactionRule
     /**
      * The optional words that hold no operand.
      */
-    private const WORDS = ['opt_work:' => true, 'opt_work: WORK_SYM' => true, 'opt_savepoint:' => true, 'opt_savepoint: SAVEPOINT_SYM' => true];
+    private const WORDS = ['opt_work:' => false, 'opt_work: WORK_SYM' => true, 'opt_savepoint:' => false, 'opt_savepoint: SAVEPOINT_SYM' => true];
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
@@ -100,9 +100,7 @@ final class TransactionRule
      */
     public function begin(Node $work): Begin
     {
-        $this->word($work);
-
-        return new Begin();
+        return new Begin($this->word($work));
     }
 
     /**
@@ -142,14 +140,14 @@ final class TransactionRule
      */
     public function completion(Form $form, bool $commit): Commit|Rollback
     {
-        $this->word($form->node(1));
+        $work = $this->word($form->node(1));
         $chain = $this->choice($form->node(2));
         $release = $this->choice($form->node(3));
         if ($chain === true && $release === true) {
             throw new AnalysisException('Syntax error: AND CHAIN and RELEASE exclude each other.');
         }
 
-        return $commit ? new Commit($chain, $release) : new Rollback($chain, $release);
+        return $commit ? new Commit($chain, $release, $work) : new Rollback($chain, $release, $work);
     }
 
     /**
@@ -159,10 +157,7 @@ final class TransactionRule
      */
     public function rollbackTo(Form $form): RollbackToSavepoint
     {
-        $this->word($form->node(1));
-        $this->word($form->node(3));
-
-        return new RollbackToSavepoint($this->lowering->names->identifier($form->node(4)));
+        return new RollbackToSavepoint($this->lowering->names->identifier($form->node(4)), $this->word($form->node(1)), $this->word($form->node(3)));
     }
 
     /**
@@ -181,15 +176,16 @@ final class TransactionRule
     }
 
     /**
-     * Confirms an optional word that holds no operand: a node of `opt_work` or `opt_savepoint`.
+     * Retains the presence of an optional word: a node of `opt_work` or `opt_savepoint`.
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function word(Node $word): void
+    public function word(Node $word): bool
     {
         $form = $this->lowering->form($word);
-        if (!isset(self::WORDS[$form->signature])) {
+        if (!array_key_exists($form->signature, self::WORDS)) {
             throw ImplementationGap::production($form);
         }
+        return self::WORDS[$form->signature];
     }
 }

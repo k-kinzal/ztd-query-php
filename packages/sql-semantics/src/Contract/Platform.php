@@ -23,6 +23,11 @@ use SqlSemantics\Statement\Statement;
 interface Platform
 {
     /**
+     * Publishes a concrete analyzed statement from temporary binding inputs.
+     */
+    public function publish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement;
+
+    /**
      * Fixes the language profile of a release, session mode and parameter style.
      *
      * @throws InvalidArgumentException When the release is not shipped, the mode belongs to another database, or the installed grammar artifacts differ from the pinned ones

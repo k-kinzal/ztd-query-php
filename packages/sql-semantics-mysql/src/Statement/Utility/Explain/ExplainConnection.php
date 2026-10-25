@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('18446744073709551616')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the connection
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = JSON FOR CONNECTION 42');
- *     [$explain->statement->connection->text, $explain->field(0)->name?->value, $explain->toString()] // => ['42', 'EXPLAIN', 'EXPLAIN FORMAT = `JSON` FOR CONNECTION 42']
+ *     [$explain->statement->connection->text, $explain->field(0)->name?->value, $explain->toString()] // => ['42', 'EXPLAIN', 'EXPLAIN FORMAT = JSON FOR CONNECTION 42']
  */
 final class ExplainConnection implements Statement
 {

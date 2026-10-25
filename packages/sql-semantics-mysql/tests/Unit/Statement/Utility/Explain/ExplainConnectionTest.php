@@ -27,7 +27,7 @@ final class ExplainConnectionTest extends TestCase
 
     public function testRenderWritesTheConnection(): void
     {
-        self::assertSame('EXPLAIN FORMAT = `json` FOR CONNECTION 7', (new Semantics(Dialect::MySql))->analyze('explain format = json for connection 7')->toString());
+        self::assertSame('EXPLAIN FORMAT = json FOR CONNECTION 7', (new Semantics(Dialect::MySql))->analyze('explain format = json for connection 7')->toString());
     }
 
     public function testDeriveStatementRejectsAnOversizedDecimalConnection(): void

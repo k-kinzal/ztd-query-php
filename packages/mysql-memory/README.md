@@ -83,40 +83,64 @@ Conversion rules still come from PHP's time-zone database.
 MySQL Memory uses the repository's ordinary unit tests and static checks.
 Its semantic validation has three parts:
 
-1. Generate public semantic values from constructor types and invariants.
-2. Consume generated executable roots directly in MemoryDB with PHPUnit PBT.
+1. Reconstruct SQL Faker input from semantic values and require exact Compact SQL equality.
+2. Compose semantic values with Eris, execute them directly in MemoryDB, and shrink failures.
 3. Compare SQL Faker statements on MemoryDB and Testcontainers MySQL with PHP-Fuzzer.
 
 PBT classes live under `tests/Property`, use `*Properties` names, and expose
-`satisfies*` test methods. `tests/Generator` supplies their values independently of
-`fuzz`. Type-specific generators and properties mirror the same semantic namespace:
-`SqlSemantics\Platform\MySql\Statement\Account\AlterUser` maps to
-`tests/Generator/MySql/Statement/Account/AlterUserGenerator.php` (when a specialized
-generator is needed) and `tests/Property/MySql/Statement/Account/AlterUserProperties.php`.
-The core package uses the `Semantics` prefix on both sides. Types without a specialized
-generator use `Construction`, which samples their declared constructor arguments.
-Semantic counterexample regressions live beside their corresponding properties.
-Tests of MemoryDB classes live under `tests/Unit`; generators do not create
-mysql-memory implementation types.
-The PHPStan rules in `rules` require a corresponding property class for every
-public immutable value class and enum discovered in SQL Semantics and its MySQL
-package. Specialized generators must follow the same namespace mapping, use the
-`Generator` suffix, and declare the corresponding semantic return type.
-Operation, statement and scalar properties execute the original generated objects;
-operation execution retains the generated facts without rebinding the statement.
-Query properties use MemoryDB's query preparation, planning and row iteration;
-INSERT-only VALUES clauses use an INSERT fixture retaining the generated query.
-Facts and scalar, query, and relation facts retain their owning generated operation,
-which is passed unchanged to MemoryDB. Other component properties check construction;
-their presence in the PHPStan inventory check does not establish standalone execution
-for each component type.
-Each model property generates ten samples by default. The sample count and seed
-can be changed through `MYSQL_MEMORY_PBT_SAMPLES` and `MYSQL_MEMORY_PBT_SEED`.
+`satisfies*` test methods. Their grouping follows the properties being checked;
+there is no required property class or `MODEL` constant for each semantic type.
+`tests/Generator` supplies semantic values independently of `fuzz`.
+
+The PHPStan rules in `rules` require a corresponding, instantiable `Eris\Generator<T>`
+for every public semantic value type discovered in SQL Semantics and its MySQL
+package, including model interfaces, immutable records and enums. Generator names mirror their semantic type:
+`SqlSemantics\Platform\MySql\Statement\Account\AlterUser` requires
+`Tests\Generator\MySql\Statement\Account\AlterUserGenerator` generating `AlterUser`.
+Core types use the `Tests\Generator\Semantics` prefix. Generic constructor sampling
+does not satisfy this requirement.
+
+The unused-class rule selects classes through `parameters.unusedClasses` in
+`phpstan.neon`, using fully qualified names or `*` patterns. The package checks
+`Tests\Generator\*Generator`. A selected class must be referenced from outside
+the selection, directly or through other selected classes. Self references and
+disconnected cycles do not count. References include construction, member access,
+class-name constants, native type declarations, inheritance, traits and attributes.
+Imports, PHPDoc-only names and unresolved dynamic names do not count.
+Run PHPStan over all relevant directories; isolated file analysis skips the check.
+This checks class usage, independently of constructor declarations and Eris; it
+does not establish execution in a property or runtime coverage. Tests of MemoryDB
+classes live under `tests/Unit`; generators do not create mysql-memory implementation
+types.
+
+`CreateTableExecutionProperties` uses `forAll(new OperationGenerator($release))`.
+`OperationGenerator` composes `CreateTableGenerator` and `ColumnNameGenerator`,
+all implementing `Eris\Generator`. It publishes the generated single-column CREATE
+TABLE statement in a matching analysis context. `then` executes that operation in
+MemoryDB and checks the stored column name. Shrinking rebuilds the statement,
+context and facts together; structurally unchanged statements end the shrink.
+This first example covers valid column-definition names, not every operation or
+column-name context. Each MySQL release gets 100 trials by default; `ERIS_SEED`
+reproduces the generated inputs.
+
+`InsertExecutionProperties` exercises character-literal VALUES directly as concrete
+`InsertStatement` values. It distinguishes an absent-table SQL error from an
+implementation failure, then composes a generated CREATE TABLE and dependent
+INSERT before the assertion callback. The latter checks conversion, affected rows,
+and stored data. A shrinking regression verifies that the declaration and write
+remain related as Eris reduces a counterexample. These properties currently cover
+small statement forms; most statement families still use the legacy operation API.
+
+The remaining properties still use the previous constructor-sampling implementation
+and need migration. Its callers of the removed `OperationGenerator::sample()` and
+`from()` API are not compatible with the Eris generator, so the full property suite
+and static checks are not yet passing. The generator rules also report missing,
+incorrectly typed and unused generators that still need implementation or migration.
 
 ```sh
 composer lint
 composer test
-MYSQL_MEMORY_PBT_SAMPLES=10 MYSQL_MEMORY_PBT_SEED=example composer test:property
+ERIS_SEED=20261025 vendor/bin/phpunit --testsuite property --filter CreateTableExecutionProperties
 MYSQL_VERSION=8.4.7 composer fuzz:mysql
 ```
 

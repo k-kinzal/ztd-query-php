@@ -54,7 +54,7 @@ final class ExplainTest extends TestCase
     public function testRenderWritesTheOptions(): void
     {
         self::assertSame('EXPLAIN EXTENDED SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('desc extended select 1')->toString());
-        self::assertSame('EXPLAIN FORMAT = `JSON` INTO @v SELECT 1', (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze('explain format = JSON into @v select 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = JSON INTO @v SELECT 1', (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze('explain format = JSON into @v select 1')->toString());
     }
 
     public function testRefusesAModifierWithOptions(): void

@@ -33,13 +33,13 @@ final class ExplainRuleTest extends TestCase
 
     public function testLegacyLowersTheModifiersAndTheFormat(): void
     {
-        self::assertSame('EXPLAIN FORMAT = `json` FOR CONNECTION 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('explain format = json for connection 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = json FOR CONNECTION 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('explain format = json for connection 1')->toString());
         self::assertSame('EXPLAIN PARTITIONS INSERT INTO t VALUES (1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('explain partitions insert into t values (1)')->toString());
     }
 
     public function testModernLowersTheOptions(): void
     {
-        self::assertSame('EXPLAIN ANALYZE FORMAT = `json` INTO @v FOR DATABASE db SELECT 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('explain analyze format=json into @v for database db select 1')->toString());
+        self::assertSame('EXPLAIN ANALYZE FORMAT = json INTO @v FOR DATABASE db SELECT 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('explain analyze format=json into @v for database db select 1')->toString());
     }
 
     public function testModernRefusesConnectionAnalysisBeforePublishingAStatement(): void

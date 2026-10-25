@@ -27,7 +27,7 @@ final class OptionRuleTest extends TestCase
 
     public function testIntoLowersTheVariable(): void
     {
-        self::assertSame('EXPLAIN FORMAT = `json` INTO @x SELECT 1', (new Semantics(Dialect::MySql))->analyze('explain format = json into @x select 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = json INTO @x SELECT 1', (new Semantics(Dialect::MySql))->analyze('explain format = json into @x select 1')->toString());
     }
 
     public function testDatabaseLowersTheDatabase(): void
@@ -37,7 +37,7 @@ final class OptionRuleTest extends TestCase
     public function testEmptyIntoRetainsTheIgnoredDestinationInTheIntermediateReleases(): void
     {
         self::assertSame("EXPLAIN INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("EXPLAIN INTO @'' SELECT 1")->toString());
-        self::assertSame("EXPLAIN FORMAT = `JSON` INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("EXPLAIN FORMAT=JSON INTO @'' SELECT 1")->toString());
+        self::assertSame("EXPLAIN FORMAT = JSON INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("EXPLAIN FORMAT=JSON INTO @'' SELECT 1")->toString());
     }
 
     public function testDatabaseNameRefusesAnOversizedOperandAsANameDiagnostic(): void

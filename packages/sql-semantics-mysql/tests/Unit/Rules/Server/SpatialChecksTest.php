@@ -44,11 +44,15 @@ final class SpatialChecksTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerIntrinsicDeclarations')]
-    public function testDeclarationRefusesIntrinsicContradictionsBeforePublishingAStatement(string $sql, string $message): void
+    public function testDeclarationRetainsItsFirstIntrinsicProblem(string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        $statement = $operation->statement;
+        self::assertTrue($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference);
+        self::assertNotNull($statement->problem);
+        self::assertStringContainsString($message, $statement->problem->message());
+        self::assertSame($statement->problem->message(), $operation->facts->diagnostics[0]->message());
     }
 
     public function testIdentifierChecksTheModifiableRange(): void

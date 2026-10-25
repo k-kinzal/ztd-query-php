@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Validation;
 
 use ReflectionClass;
+use ReflectionNamedType;
 use ReflectionProperty;
+use SqlSemantics\Statement\Source\Span;
 use UnitEnum;
 
 /**
@@ -13,6 +15,11 @@ use UnitEnum;
  *
  * Two structures correspond when they have the same classes, the same scalar
  * values and enum cases, and lists of the same length and order, recursively.
+ * Source spans are locations rather than operands: formatting changes their byte offsets,
+ * and directly constructed values have no original source. Only properties explicitly
+ * typed as Span are excluded. Explicit SQL spelling choices remain comparison
+ * operands. A generated name whose quote choice is unspecified corresponds to
+ * the concrete choice made by its codec; two explicit choices must agree.
  * This is a comparison of actual operands, not of a fingerprint or of text.
  *
  * @visibility SqlSemantics
@@ -57,6 +64,9 @@ final class Equivalence
                 return $path . ' (' . $a::class . ' against ' . $b::class . ')';
             }
             foreach ($this->members($a) as $property) {
+                if ($a instanceof \SqlSemantics\Statement\Identifier\Name && $b instanceof \SqlSemantics\Statement\Identifier\Name && $property->getName() === 'quote' && ($a->quote === null || $b->quote === null)) {
+                    continue;
+                }
                 $lefts[] = $property->getValue($a);
                 $rights[] = $property->getValue($b);
                 $paths[] = $path . '->' . $property->getName();
@@ -73,7 +83,10 @@ final class Equivalence
      */
     public function members(object $value): array
     {
-        return $this->properties[$value::class] ??= (new ReflectionClass($value))->getProperties();
+        return $this->properties[$value::class] ??= array_values(array_filter((new ReflectionClass($value))->getProperties(), static function (ReflectionProperty $property): bool {
+            $type = $property->getType();
+            return !$type instanceof ReflectionNamedType || $type->getName() !== Span::class;
+        }));
     }
 
     /**

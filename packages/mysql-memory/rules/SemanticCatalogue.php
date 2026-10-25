@@ -15,20 +15,28 @@ use RuntimeException;
 use SplFileInfo;
 
 /**
- * Discovers public immutable semantic values from source, independently of the PBT inventory.
+ * Discovers public semantic value types from source, independently of the generator inventory.
  *
  * @visibility Rules
  */
 final class SemanticCatalogue
 {
     /**
-     * @return array<class-string, class-string> Semantic value classes and their required property classes
+     * @var array<string, string>|null
+     */
+    private ?array $values = null;
+
+    /**
+     * @return array<string, string> Semantic value classes and their required generator classes
      * @throws RuntimeException When a dependency's source cannot be read or loaded
      */
-    public function properties(): array
+    public function generators(): array
     {
-        $properties = [];
-        foreach (['sql-semantics' => ['SqlSemantics\\', 'Tests\\Property\\Semantics\\'], 'sql-semantics-mysql' => ['SqlSemantics\\Platform\\MySql\\', 'Tests\\Property\\MySql\\']] as $package => [$source, $target]) {
+        if ($this->values !== null) {
+            return $this->values;
+        }
+        $generators = [];
+        foreach (['sql-semantics' => ['SqlSemantics\\', 'Tests\\Generator\\Semantics\\'], 'sql-semantics-mysql' => ['SqlSemantics\\Platform\\MySql\\', 'Tests\\Generator\\MySql\\']] as $package => [$source, $target]) {
             $directory = dirname(__DIR__) . '/vendor/k-kinzal/' . $package . '/src/';
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
                 if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
@@ -47,27 +55,26 @@ final class SemanticCatalogue
                     continue;
                 }
                 $class = $value->namespacedName->toString();
-                if (!class_exists($class)) {
+                if (!class_exists($class) && !interface_exists($class)) {
                     throw new RuntimeException('Cannot load semantic value ' . $class);
                 }
-                /** @var class-string $property The PSR-4 class required by the naming contract */
-                $property = $target . substr($class, strlen($source)) . 'Properties';
-                $properties[$class] = $property;
+                $generator = $target . substr($class, strlen($source)) . 'Generator';
+                $generators[$class] = $generator;
             }
         }
-        ksort($properties);
-        return $properties;
+        ksort($generators);
+        return $this->values = $generators;
     }
 
     /**
-     * The value domain consists of enums, Snapshot records and public readonly records.
+     * The value domain includes public interfaces, enums, Snapshot records and readonly context records.
      */
     public function isValue(Node\Stmt\ClassLike $node): bool
     {
-        if ($node instanceof Node\Stmt\Enum_) {
+        if ($node instanceof Node\Stmt\Enum_ || $node instanceof Node\Stmt\Interface_) {
             return true;
         }
-        if (!$node instanceof Node\Stmt\Class_ || $node->isAbstract()) {
+        if (!$node instanceof Node\Stmt\Class_) {
             return false;
         }
         foreach ($node->stmts as $statement) {

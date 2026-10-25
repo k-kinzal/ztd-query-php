@@ -17,7 +17,7 @@ final class RollbackToSavepointTest extends TestCase
 {
     public function testRenderWritesTheSavepoint(): void
     {
-        self::assertSame('ROLLBACK TO SAVEPOINT `s 1`', (new Semantics(Dialect::MySql))->analyze('rollback to `s 1`')->toString());
+        self::assertSame('ROLLBACK TO `s 1`', (new Semantics(Dialect::MySql))->analyze('rollback to `s 1`')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

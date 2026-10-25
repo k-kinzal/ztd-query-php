@@ -17,7 +17,7 @@ final class RollbackTest extends TestCase
 {
     public function testRenderWritesTheCompletionChoices(): void
     {
-        self::assertSame('ROLLBACK AND NO CHAIN RELEASE', (new Semantics(Dialect::MySql))->analyze('rollback work and no chain release')->toString());
+        self::assertSame('ROLLBACK WORK AND NO CHAIN RELEASE', (new Semantics(Dialect::MySql))->analyze('rollback work and no chain release')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

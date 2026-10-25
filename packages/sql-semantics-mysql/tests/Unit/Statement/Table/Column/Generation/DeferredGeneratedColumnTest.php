@@ -62,7 +62,7 @@ final class DeferredGeneratedColumnTest extends TestCase
         self::assertInstanceOf(DeferredGeneratedColumn::class, $column);
         self::assertInstanceOf(M\Type\Integral::class, $column->dataType());
         self::assertCount(2, $column->columnAttributes());
-        self::assertStringContainsString('AS (1 + (SELECT * FROM `source`)) STORED NOT NULL', $operation->toString());
+        self::assertStringContainsString('AS (1 + (SELECT * FROM source)) STORED NOT NULL', $operation->toString());
     }
     public function testRejectsAGenericStoredCallEvenWhenItsNameMatchesAKeyword(): void
     {

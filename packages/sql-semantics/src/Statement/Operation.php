@@ -38,7 +38,7 @@ use SqlSemantics\Validation\Publication;
  *     $other = new \SqlSemantics\Statement\Operation($query->context, $semantics->analyze('SELECT baz FROM bar')->statement);
  *     $other->toString() // => 'SELECT baz FROM bar'
  */
-final class Operation
+final class Operation implements AnalyzedStatement
 {
     use Snapshot;
 

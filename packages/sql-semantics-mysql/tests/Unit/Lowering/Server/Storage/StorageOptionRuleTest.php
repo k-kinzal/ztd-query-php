@@ -23,7 +23,7 @@ final class StorageOptionRuleTest extends TestCase
 
     public function testOptionLowersEveryOptionOf80(): void
     {
-        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' AUTOEXTEND_SIZE `4M` EXTENT_SIZE 1 NODEGROUP 2 FILE_BLOCK_SIZE 3 ENCRYPTION 'N' ENGINE_ATTRIBUTE '{}' NO_WAIT", (new Semantics(Dialect::MySql))->analyze("create tablespace ts add datafile 'f' autoextend_size 4M, extent_size 1 nodegroup 2 file_block_size 3 encryption 'N' engine_attribute '{}' no_wait")->toString());
+        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' AUTOEXTEND_SIZE 4M EXTENT_SIZE 1 NODEGROUP 2 FILE_BLOCK_SIZE 3 ENCRYPTION 'N' ENGINE_ATTRIBUTE '{}' NO_WAIT", (new Semantics(Dialect::MySql))->analyze("create tablespace ts add datafile 'f' autoextend_size 4M, extent_size 1 nodegroup 2 file_block_size 3 encryption 'N' engine_attribute '{}' no_wait")->toString());
     }
 
     public function testValueSkipsTheEqualsSign(): void

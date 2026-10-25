@@ -4,51 +4,86 @@ declare(strict_types=1);
 
 namespace Tests\Generator\Semantics\Statement;
 
-use JsonException;
-use LogicException;
+use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueOptions;
+use Eris\Generator\GeneratedValueSingle;
+use Eris\Generators;
+use Eris\Random\RandomRange;
+use InvalidArgumentException;
 use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Platform\MySql\Statement\Statement;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation as Model;
-use Tests\Generator\Bindings;
-use Tests\Generator\Catalogue;
-use Tests\Generator\Choices;
-use Tests\Generator\Construction;
-use Tests\Generator\Inhabitant;
-use Tests\Generator\Metadata;
-use Tests\Generator\Profiles;
+use SqlSemantics\Statement\Operation;
+use SqlSemantics\Validation\Equivalence;
+use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
+use Tests\Generator\MySql\Statement\Table\CreateTableGenerator;
 
 /**
- * An operation's context must use a language profile that admits its statement.
+ * Composes CREATE TABLE operations for generated column names in an empty database.
+ * This first composition does not yet cover other statement types.
+ *
+ * @implements ErisGenerator<Operation>
  */
-final class OperationGenerator implements Inhabitant
+final class OperationGenerator implements ErisGenerator
 {
     /**
-     * Derives an operation from a generated original statement in a compatible context.
-     *
-     * @throws JsonException When the semantic value inventory cannot be read
-     * @throws LogicException When the constructor sampler violates its requested type
+     * @var ErisGenerator<Operation>
      */
-    public function sample(Choices $choices): Model
+    private ErisGenerator $delegate;
+
+    /**
+     * @param ErisGenerator<CreateTable>|null $statements The statements to publish in a matching context
+     */
+    public function __construct(GrammarRelease $release, ?ErisGenerator $statements = null)
     {
-        $statement = (new Construction($choices, new Catalogue(), new Metadata()))->object(Statement::class, 6);
-        if (!$statement instanceof Statement) {
-            throw new LogicException('The operation generator requires a MySQL statement.');
-        }
-        return $this->from($statement, $choices);
+        $this->delegate = Generators::map(
+            static fn (CreateTable $statement): Operation => new Operation(
+                new AnalysisContext(
+                    new LanguageProfile($release),
+                    [$statement->name->schema ?? new Name('pbt')],
+                    session: new Settings(Collation::known('utf8mb4_unicode_ci'), client: Charset::known('utf8mb4')),
+                ),
+                $statement,
+            ),
+            $statements ?? new CreateTableGenerator(new ColumnNameGenerator($release)),
+        );
     }
 
     /**
-     * Publishes the generated structure once, with a closed empty schema and bound NULL parameters.
-     * The caller creates that same empty schema in MemoryDB and submits this operation unchanged.
+     * @param int $size The generation size chosen by Eris
+     * @return GeneratedValueSingle<Operation>
      */
-    public function from(Statement $statement, Choices $choices): Model
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
-        $profile = (new Profiles())->select($statement);
-        $defaults = Settings::defaults($profile->grammar);
-        $settings = new Settings($defaults->connection, userVariables: [], parameters: array_fill(0, (new Bindings())->count($statement), Domain::null()), client: $defaults->connection->charset, strict: false, explicitDefaultsForTimestamp: $defaults->explicitDefaultsForTimestamp, noZeroDate: false, noZeroInDate: false);
-        return new Model(new AnalysisContext($profile, [new Name($choices->one(['d', 'shop']))], session: $settings), $statement);
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * Rebuilds facts for each smaller statement; identical statements are not shrink candidates.
+     * Operation facts contain node identity indexes, so comparing rebuilt operations cannot detect this.
+     *
+     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @return GeneratedValue<Operation>
+     * @throws InvalidArgumentException When the value did not come from this generator
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        $operation = $element->unbox();
+        if (!$operation instanceof Operation) {
+            throw new InvalidArgumentException('Expected an operation generated from a statement.');
+        }
+        $candidates = [];
+        foreach ($this->delegate->shrink($element) as $candidate) {
+            if ((new Equivalence())->difference($operation->statement, $candidate->unbox()->statement) !== null) {
+                $candidates[] = $candidate;
+            }
+        }
+        return new GeneratedValueOptions($candidates);
     }
 }

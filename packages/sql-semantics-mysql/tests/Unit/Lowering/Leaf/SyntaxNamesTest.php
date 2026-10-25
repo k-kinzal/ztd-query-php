@@ -55,7 +55,7 @@ final class SyntaxNamesTest extends TestCase
     {
         $profile = new LanguageProfile(GrammarRelease::MySql847);
         $lowering = new Lowering((new Platform())->productions($profile), new Leaves(), $profile);
-        $text = new Node('ident_or_text', 0, [new Node('ident', 0, [new Node('IDENT_sys', 0, [new Token(0, 'IDENT', $name, 0)])])]);
+        $text = new Node('ident_or_text', 0, [new Node('ident', 0, [new Node('IDENT_sys', 0, [new Token(0, $name === '' ? 'IDENT_QUOTED' : 'IDENT', $name === '' ? '``' : $name, 0)])])]);
 
         self::assertEquals($expected, (new SyntaxNames())->completed(new Node($rule, 0, [$text]), $lowering));
     }

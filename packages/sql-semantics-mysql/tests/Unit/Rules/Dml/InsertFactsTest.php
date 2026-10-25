@@ -62,14 +62,22 @@ final class InsertFactsTest extends TestCase
 
         self::assertSame(["Column count doesn't match value count at row 2"], $messages('INSERT INTO t VALUES (1, 2), ()'));
         self::assertSame(["Column count doesn't match value count at row 2"], $messages('INSERT INTO t VALUES (), (1, 2)'));
-        self::assertSame([], $semantics->analyze('INSERT INTO t VALUES (), ()', $tables)->facts->diagnostics);
+        $empty = new InsertRows(new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(false, null, false, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t')))), [new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow([]), new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow([])]);
+        $derivation = new Derivation($semantics->context($tables));
+        $empty->deriveStatement($derivation);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testOpenReadsAnEmptyColumnListAsEveryColumn(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
-        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+        $messages = static function (string $sql) use ($semantics, $tables): array {
+            $statement = (new \SqlSemantics\Platform\MySql\Platform())->lower($semantics->parser()->parse($sql), $semantics->profile(), new \SqlSemantics\Lowering\Leaves())[0];
+            $derivation = new Derivation($semantics->context($tables));
+            $statement->deriveStatement($derivation);
+            return array_map(static fn ($diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics);
+        };
 
         self::assertSame([], $messages('INSERT INTO t () VALUES (1, 2)'));
         self::assertSame([], $messages('INSERT INTO t () VALUES ()'));
@@ -178,7 +186,12 @@ final class InsertFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE, f INT)')->declarations();
-        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+        $messages = static function (string $sql) use ($semantics, $tables): array {
+            $statement = (new \SqlSemantics\Platform\MySql\Platform())->lower($semantics->parser()->parse($sql), $semantics->profile(), new \SqlSemantics\Lowering\Leaves())[0];
+            $derivation = new Derivation($semantics->context($tables));
+            $statement->deriveStatement($derivation);
+            return array_map(static fn ($diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics);
+        };
 
         self::assertSame([], $messages('INSERT INTO v (a, e, f) VALUES (1, 2, 3)'));
         self::assertSame([], $messages('INSERT INTO v SET e = 3'));
@@ -285,7 +298,12 @@ final class InsertFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
-        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+        $messages = static function (string $sql) use ($semantics, $tables): array {
+            $statement = (new \SqlSemantics\Platform\MySql\Platform())->lower($semantics->parser()->parse($sql), $semantics->profile(), new \SqlSemantics\Lowering\Leaves())[0];
+            $derivation = new Derivation($semantics->context($tables));
+            $statement->deriveStatement($derivation);
+            return array_map(static fn ($diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics);
+        };
 
         self::assertSame(["Column count doesn't match value count at row 1"], $messages('INSERT INTO t SELECT 1'));
         self::assertSame([], $messages('INSERT INTO t SELECT 1, 2'));

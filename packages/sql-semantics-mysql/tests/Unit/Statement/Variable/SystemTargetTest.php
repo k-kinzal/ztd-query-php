@@ -43,7 +43,7 @@ final class SystemTargetTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SET @@PERSIST_ONLY.component.variable_name = DEFAULT');
 
-        self::assertSame('SET @@PERSIST_ONLY.`component`.variable_name = DEFAULT', $operation->toString());
+        self::assertSame('SET @@PERSIST_ONLY.component.variable_name = DEFAULT', $operation->toString());
     }
 
     public function testDeriveScalarLeavesReadDeprecationsToReadOccurrences(): void

@@ -27,11 +27,13 @@ final class DropSpatialReferenceTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testInputRefusesTheOriginalIntrinsicCounterexample(): void
+    public function testInputPreservesARequestForAnUnmodifiableIdentifier(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('SRID 0 cannot be modified');
-        (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 0');
+        $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 0');
+        self::assertSame('DROP SPATIAL REFERENCE SYSTEM 0', $operation->toString());
+        self::assertInstanceOf(DropSpatialReference::class, $operation->statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierZero, $operation->statement->problem?->rule);
+        self::assertSame($operation->statement->problem?->message(), $operation->facts->diagnostics[0]->message());
     }
     /**
      * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Literal\Numeral}>
@@ -51,10 +53,10 @@ final class DropSpatialReferenceTest extends TestCase
         new DropSpatialReference(false, $number);
     }
 
-    public function testIdentifierExcludesTheUnmodifiableValue(): void
+    public function testRequestRetainsTheUnmodifiableIdentifier(): void
     {
-        $this->expectExceptionMessage('A modifiable spatial reference identifier is between 1 and 4294967295.');
-        new DropSpatialReference(true, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'));
+        $statement = new DropSpatialReference(true, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierZero, $statement->problem?->rule);
     }
 
 }

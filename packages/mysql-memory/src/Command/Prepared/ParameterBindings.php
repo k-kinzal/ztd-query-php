@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Prepared;
 
+use LogicException;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -33,9 +34,24 @@ final class ParameterBindings
 
     /**
      * Captures initial marker types from the analyzed expression contexts.
+     *
+     * @throws LogicException When the statement has no preparation implementation
      */
-    public static function capture(Operation $operation): self
+    public static function capture(\SqlSemantics\Statement\AnalyzedStatement $operation): self
     {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+            foreach ($operation->values->rows as $row) {
+                foreach ($row as $expression) {
+                    if (!$expression instanceof \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral) {
+                        throw new LogicException('Parameter capture has not implemented ' . $expression::class);
+                    }
+                }
+            }
+            return new self([]);
+        }
+        if (!$operation instanceof Operation) {
+            throw new LogicException('No parameter capture for ' . $operation::class);
+        }
         return new self(array_map(static fn (array $entry): array => [Domain::of($entry[0], true), $entry[1]], \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation)));
     }
 

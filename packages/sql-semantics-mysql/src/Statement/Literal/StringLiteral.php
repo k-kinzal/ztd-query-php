@@ -12,13 +12,22 @@ use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Expression;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Source\Span;
+use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A character string literal: its decoded segments, its optional character set introducer, and whether it is a national string.
@@ -44,7 +53,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = 'x' \"y\"");
  *     [$query->statement->query->where->right->segments, $query->statement->query->where->right->value()] // => [['x', 'y'], 'xy']
  */
-final class StringLiteral implements LiteralExpression
+final class StringLiteral implements LiteralExpression, Expression
 {
     use Snapshot;
 
@@ -58,7 +67,7 @@ final class StringLiteral implements LiteralExpression
      * @param Name|null $introducer The introduced character set, in lower case
      * @param bool $national Whether the literal is written `N'...'`; excludes an introducer
      */
-    public function __construct(array $segments, public readonly ?Name $introducer = null, public readonly bool $national = false)
+    public function __construct(array $segments, public readonly ?Name $introducer = null, public readonly bool $national = false, public readonly ?Collation $collation = null, private readonly ?Span $location = null)
     {
         $list = [];
         foreach ($segments as $segment) {
@@ -68,7 +77,36 @@ final class StringLiteral implements LiteralExpression
         Check::input($list !== [] && array_is_list($segments), 'A string literal holds at least one segment.');
         Check::input($introducer === null || (!$national && (new Introducers())->known($introducer->value)), 'An introducer names a character set of the server in lower case and excludes the national form.');
         $this->segments = $list;
+        Check::input($collation === null || !$national || $collation->name === 'utf8mb3_general_ci', 'A national literal uses the national character set collation.');
+        Check::input($collation === null || $introducer === null || $collation->charset->name === ($introducer->value === 'utf8' ? 'utf8mb3' : $introducer->value), 'An introduced literal uses the named character set.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Answers the literal's character type, independently of any insertion destination.
+     */
+    public function dataType(): TypeFact
+    {
+        if ($this->collation === null) {
+            return new Dependent([new SessionState('the character set and collation of the string literal')]);
+        }
+        return new Known(Domain::string($this->collation->charset->length($this->value()), $this->collation, Field::VarString, Coercibility::Coercible));
+    }
+
+    /**
+     * A character literal never evaluates to NULL.
+     */
+    public function nullability(): Nullability
+    {
+        return Nullability::NotNull;
+    }
+
+    /**
+     * Answers this literal's original byte range, when it came from SQL.
+     */
+    public function source(): ?Span
+    {
+        return $this->location;
     }
 
     /**

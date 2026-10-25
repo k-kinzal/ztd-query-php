@@ -99,6 +99,9 @@ final class Statements
                 (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
                 $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
                 $columns = $this->columns($operation, $session, count($bindings->types));
+            } elseif ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+                (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
+                $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
             }
             $parameters = count($bindings->types);
         } catch (SqlError $error) {

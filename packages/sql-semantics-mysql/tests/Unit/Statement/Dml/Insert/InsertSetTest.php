@@ -41,7 +41,7 @@ final class InsertSetTest extends TestCase
 
     public function testRenderWritesTheAssignments(): void
     {
-        self::assertSame('REPLACE INTO t SET a = 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('replace t set a = 1')->toString());
+        self::assertSame('REPLACE t SET a = 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('replace t set a = 1')->toString());
     }
 
     public function testRenderRejectsAColumnList(): void

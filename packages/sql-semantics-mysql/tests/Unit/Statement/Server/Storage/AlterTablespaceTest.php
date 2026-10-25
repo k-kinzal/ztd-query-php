@@ -17,7 +17,7 @@ final class AlterTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('ALTER TABLESPACE ts INITIAL_SIZE `1M`', (new Semantics(Dialect::MySql))->analyze('alter tablespace ts initial_size 1M')->toString());
+        self::assertSame('ALTER TABLESPACE ts INITIAL_SIZE 1M', (new Semantics(Dialect::MySql))->analyze('alter tablespace ts initial_size 1M')->toString());
     }
 
     public function testDeriveStatementAcceptsAConsistentOptionList(): void

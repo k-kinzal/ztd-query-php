@@ -56,6 +56,19 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
+     * Publishes migrated INSERT values directly; other statement families await migration.
+     */
+    public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
+    {
+        $publication = new Rules\Dml\Insert\Publication();
+        if ($statement instanceof Statement\Dml\Insert\InsertRows && $publication->supports($statement)) {
+            [$facts] = (new \SqlSemantics\Validation\Publication())->establish($context, $statement, $sources);
+            return $publication->publish($statement, $context, $facts, $sources);
+        }
+        return new \SqlSemantics\Statement\Operation($context, $statement, $sources);
+    }
+
+    /**
      * @var array<string, SqlParser>
      */
     private array $parsers = [];

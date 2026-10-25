@@ -15,18 +15,25 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors SQLCOM_BEGIN with no start options. Rule: MYSQL-BEGIN-001. BEGIN
  * is the alias of START TRANSACTION that takes no characteristics; inside a
  * stored program the word starts a compound statement instead, which is a
- * different production. WORK is optional and not written. The statement
+ * different production. WORK is optional and retained as a spelling choice. The statement
  * names no relation and has no facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Starting a transaction with BEGIN WORK
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('BEGIN WORK')->toString() // => 'BEGIN'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('BEGIN WORK')->toString() // => 'BEGIN WORK'
  */
 final class Begin implements Statement
 {
     use Snapshot;
+
+    /**
+     * @param bool $work Whether the optional WORK keyword is written
+     */
+    public function __construct(public readonly bool $work = false)
+    {
+    }
 
     /**
      * Has nothing to derive: the request names no relation and no value.
@@ -41,5 +48,8 @@ final class Begin implements Statement
     public function render(Output $out): void
     {
         $out->keyword('BEGIN');
+        if ($this->work) {
+            $out->keyword('WORK');
+        }
     }
 }

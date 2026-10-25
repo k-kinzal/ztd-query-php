@@ -147,7 +147,15 @@ final class NameRule
         }
         $text = $form->token(0)->text;
 
-        return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->client));
+        $quote = match ($text[0] ?? '') {
+            '`' => \SqlSemantics\Statement\Identifier\NameQuote::Backtick,
+            '"' => \SqlSemantics\Statement\Identifier\NameQuote::DoubleQuote,
+            default => \SqlSemantics\Statement\Identifier\NameQuote::Bare,
+        };
+        $value = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->client);
+        $automatic = new Name($value);
+        $codec = new \SqlSemantics\Platform\MySql\Rendering\Codec($this->lowering->profile->grammar, $this->lowering->profile->lexical, $this->lowering->client);
+        return $codec->name($automatic, \SqlSemantics\Contract\NameUse::Identifier) === $text ? $automatic : new Name($value, $quote);
     }
 
     /**

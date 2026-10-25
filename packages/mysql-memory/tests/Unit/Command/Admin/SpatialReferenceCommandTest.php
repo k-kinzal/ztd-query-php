@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
+use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
 
 #[CoversClass(SpatialReferenceCommand::class)]
 #[Small]
@@ -178,4 +179,28 @@ final class SpatialReferenceCommandTest extends TestCase
 
         self::assertSame([['Warning', 3715, 'The SRID range [0, 32767] has been reserved for system use. SRSs in this range may be added, modified or removed without warning during upgrade.']], $session->diagnostics->conditions);
     }
+    public function testCreateRejectsAnIncompleteGeneratedRequestBeforeCatalogChanges(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $statement = new CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('500001'), [new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(SpatialAttributeKind::Definition, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('text'))]);
+        try {
+            (new SpatialReferenceCommand())->create($statement, $session);
+            self::fail('A missing NAME must prevent catalog creation.');
+        } catch (SqlError $error) {
+            self::assertSame(3708, $error->getCode());
+            self::assertSame('Missing mandatory attribute NAME.', $error->getMessage());
+            self::assertNull($instance->registry->spatialCatalog->name(500001));
+        }
+    }
+
+    public function testDropRejectsAGeneratedUnmodifiableIdentifier(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = new DropSpatialReference(true, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3714);
+        (new SpatialReferenceCommand())->drop($statement, $session);
+    }
+
 }

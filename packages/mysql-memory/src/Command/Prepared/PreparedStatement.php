@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Prepared;
 
+use LogicException;
 use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Result\Batch;
@@ -34,15 +35,23 @@ final class PreparedStatement
      *
      * @param string|null $engine The selected table engine, resolved during preparation
      */
-    public function __construct(public readonly Statement $statement, public readonly LanguageProfile $profile, public readonly Settings $literals, public readonly string $database, public readonly ?string $engine = null)
+    public function __construct(public readonly Statement|\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement $statement, public readonly LanguageProfile $profile, public readonly ?Settings $literals, public readonly string $database, public readonly ?string $engine = null)
     {
     }
 
     /**
      * Captures the definition without retaining the operation's source map or parser.
+     *
+     * @throws LogicException When the statement has no preparation implementation
      */
-    public static function capture(Operation $operation, Session $session): self
+    public static function capture(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): self
     {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+            return new self($operation, $operation->profile(), null, $session->variables->database);
+        }
+        if (!$operation instanceof Operation) {
+            throw new LogicException('No prepared statement implementation for ' . $operation::class);
+        }
         $engine = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && array_filter($operation->statement->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) !== [] ? (new \MySqlMemory\Command\Definition\StorageOptions())->engine($operation->statement, $session->variables) : null;
         return new self($operation->statement, $operation->profile(), Settings::of($operation->context), $session->variables->database, $engine);
     }
@@ -52,6 +61,7 @@ final class PreparedStatement
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @throws SqlError When the statement fails
+     * @throws LogicException When an unmigrated statement is missing its literal settings
      */
     public function execute(Session $session, string $label, array $parameters): Reply
     {
@@ -69,6 +79,12 @@ final class PreparedStatement
         $session->hinted = [];
         $session->dots = [];
         try {
+            if ($this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+                return (new Execution($session))->statement($this->statement, $parameters);
+            }
+            if ($this->literals === null) {
+                throw new LogicException('An unmigrated prepared statement requires its literal settings.');
+            }
             $operation = (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals);
             return (new Execution($session))->perform($operation, (new Dispatcher())->command($this->statement), $parameters);
         } finally {

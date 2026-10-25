@@ -13,8 +13,10 @@ use SqlSemantics\Statement\Identifier\Name;
 /**
  * Spells decoded names as MySQL identifiers of one grammar release.
  *
- * Rule: MYSQL-NAME-CODEC-001. A name made of ASCII letters, digits and
- * underscores that starts with a letter and is no keyword, function name or
+ * Rule: MYSQL-NAME-CODEC-001. A name with an explicit delimiter choice is
+ * reconstructed from its decoded value and that choice. When no choice is
+ * specified, a name made of ASCII letters, digits and
+ * underscores that starts with a letter or underscore and is no keyword, function name or
  * introducer of the release (MYSQL-KEYWORDS-001) is written bare. Every other
  * name is written in backticks with embedded backticks doubled. A backtick
  * word is an identifier under every sql_mode, at every identifier position,
@@ -50,14 +52,22 @@ final class Codec implements \SqlSemantics\Contract\StringCodec
     }
 
     /**
-     * Spells a decoded name; every position uses the same rule.
+     * Reconstructs an explicit delimiter choice, or chooses a valid spelling when unspecified.
      */
     public function name(Name $name, NameUse $use): string
     {
+        if ($name->quote !== null) {
+            $value = $this->spelling($name->value);
+            return match ($name->quote) {
+                \SqlSemantics\Statement\Identifier\NameQuote::Bare => $value,
+                \SqlSemantics\Statement\Identifier\NameQuote::Backtick => '`' . str_replace('`', '``', $value) . '`',
+                \SqlSemantics\Statement\Identifier\NameQuote::DoubleQuote => '"' . str_replace('"', '""', $value) . '"',
+            };
+        }
         if (str_contains($name->value, "\0") && ($use === NameUse::Alias || $use === NameUse::Label)) {
             return $this->quote($this->spelling($name->value));
         }
-        if (preg_match('/\A[A-Za-z][A-Za-z0-9_]*\z/', $name->value) === 1 && !$this->keywords->reserved($name->value)) {
+        if (preg_match('/\A[A-Za-z_][A-Za-z0-9_]*\z/', $name->value) === 1 && !$this->keywords->reserved($name->value)) {
             return $name->value;
         }
 

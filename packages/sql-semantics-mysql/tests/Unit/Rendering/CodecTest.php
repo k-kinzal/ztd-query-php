@@ -32,6 +32,9 @@ final class CodecTest extends TestCase
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Relation));
         self::assertSame('Order_Items2', $codec->name(new Name('Order_Items2'), NameUse::Column));
         self::assertSame('a', $codec->name(new Name('a'), NameUse::Alias));
+        self::assertSame('_sqlfaker_identifier', $codec->name(new Name('_sqlfaker_identifier'), NameUse::Relation));
+        self::assertSame('_x', $codec->name(new Name('_x'), NameUse::Column));
+        self::assertSame('_', $codec->name(new Name('_'), NameUse::Column));
     }
 
     public function testNameQuotesKeywordsFunctionNamesAndIntroducerLikeWords(): void
@@ -42,7 +45,6 @@ final class CodecTest extends TestCase
         self::assertSame('`ORDER`', $codec->name(new Name('ORDER'), NameUse::Relation));
         self::assertSame('`count`', $codec->name(new Name('count'), NameUse::Routine));
         self::assertSame('`action`', $codec->name(new Name('action'), NameUse::Column));
-        self::assertSame('`_x`', $codec->name(new Name('_x'), NameUse::Column));
         self::assertSame('`_utf8mb4`', $codec->name(new Name('_utf8mb4'), NameUse::Column));
     }
 
@@ -104,6 +106,14 @@ final class CodecTest extends TestCase
         $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
         $this->expectException(\SqlSemantics\Diagnostic\UnrepresentableName::class);
         $codec->spelling('猫');
+    }
+
+    public function testNameReconstructsAnExplicitDelimiterChoice(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('ANSI_QUOTES'));
+        self::assertSame('BINLOG', $codec->name(new Name('BINLOG', \SqlSemantics\Statement\Identifier\NameQuote::Bare), NameUse::Identifier));
+        self::assertSame('`ordinary`', $codec->name(new Name('ordinary', \SqlSemantics\Statement\Identifier\NameQuote::Backtick), NameUse::Identifier));
+        self::assertSame('"a""b"', $codec->name(new Name('a"b', \SqlSemantics\Statement\Identifier\NameQuote::DoubleQuote), NameUse::Identifier));
     }
 
 }

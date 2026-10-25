@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Prepared;
 
+use LogicException;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Statement\Declaration\Table;
@@ -34,11 +35,21 @@ final class PreparedCache
 
     /**
      * Retains a definition and the declarations its named relations resolved to.
+     *
+     * @throws LogicException When the statement has no preparation implementation
      */
-    public static function capture(Operation|PendingInstruction $operation, Session $session): self
+    public static function capture(\SqlSemantics\Statement\AnalyzedStatement|PendingInstruction $operation, Session $session): self
     {
         if ($operation instanceof PendingInstruction) {
             return new self($operation, []);
+        }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+            $resolution = $operation->target->resolution;
+            $tables = $resolution instanceof DeclaredTable ? [[$resolution->table->name->schema->value ?? $session->variables->database, $resolution->table->name->name->value, $resolution->table]] : [];
+            return new self(PreparedStatement::capture($operation, $session), $tables);
+        }
+        if (!$operation instanceof Operation) {
+            throw new LogicException('No prepared cache capture for ' . $operation::class);
         }
         $tables = [];
         foreach ((new Walker())->find($operation->statement, NamedRelation::class) as $relation) {

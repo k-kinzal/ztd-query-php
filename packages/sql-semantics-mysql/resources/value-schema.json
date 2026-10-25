@@ -926,10 +926,17 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ColumnList": {
         "columns": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\DestinationColumn": {
+        "declaration": "?SqlSemantics\\Statement\\Declaration\\Column",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
+        "table": "SqlSemantics\\Statement\\Reference\\Table\\TableResolution"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto": {
         "columns": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ColumnList",
         "hints": "array",
         "ignore": "bool",
+        "intoWritten": "bool",
         "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertPriority",
         "replace": "bool",
         "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget"
@@ -946,14 +953,30 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertRows": {
         "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesKeyword",
         "onDuplicate": "array",
-        "rows": "array"
+        "rows": "array",
+        "valuesSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertSet": {
         "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
         "assignments": "array",
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
         "onDuplicate": "array"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertStatement": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "intoWritten": "bool",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
+        "target": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertTarget",
+        "values": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertTarget": {
+        "columns": "?array",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "resolution": "SqlSemantics\\Statement\\Reference\\Table\\TableResolution",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertedRow": {
         "values": "array"
@@ -962,11 +985,20 @@
         "columns": "array",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesClause": {
+        "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesKeyword",
+        "rows": "array",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesClauses": {
         "body": "SqlSemantics\\Statement\\Query",
         "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
         "orderBy": "array",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesKeyword": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions": {
         "bulk": "bool",
@@ -1541,7 +1573,9 @@
         "number": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral": {
+        "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Collation",
         "introducer": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "location": "?SqlSemantics\\Statement\\Source\\Span",
         "national": "bool",
         "segments": "array"
     },
@@ -3266,10 +3300,12 @@
         "attributes": "array",
         "ifNotExists": "bool",
         "orReplace": "bool",
+        "problem": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialProblem",
         "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\DropSpatialReference": {
         "ifExists": "bool",
+        "problem": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\SpatialProblem",
         "srid": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Spatial\\SpatialAttribute": {
@@ -3383,20 +3419,26 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "target": "SqlSemantics\\Statement\\Identifier\\Name"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Begin": [],
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Begin": {
+        "work": "bool"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Commit": {
         "chain": "?bool",
-        "release": "?bool"
+        "release": "?bool",
+        "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\ReleaseSavepoint": {
         "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Rollback": {
         "chain": "?bool",
-        "release": "?bool"
+        "release": "?bool",
+        "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\RollbackToSavepoint": {
-        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name",
+        "savepointWritten": "bool",
+        "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Savepoint": {
         "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"

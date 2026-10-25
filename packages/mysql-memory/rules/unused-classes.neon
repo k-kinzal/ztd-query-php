@@ -1,0 +1,19 @@
+parameters:
+    # Fully qualified names or patterns: * also matches namespace separators.
+    unusedClasses: []
+
+parametersSchema:
+    unusedClasses: listOf(string())
+
+services:
+    -
+        class: Rules\ClassDeclarationCollector
+        arguments:
+            classes: %unusedClasses%
+        tags: [phpstan.collector]
+    -
+        class: Rules\ClassUsageCollector
+        tags: [phpstan.collector]
+    -
+        class: Rules\UnusedClassRule
+        tags: [phpstan.rules.rule]

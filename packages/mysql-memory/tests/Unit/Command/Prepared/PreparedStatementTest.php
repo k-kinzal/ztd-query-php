@@ -16,6 +16,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparedStatementTest extends TestCase
 {
+    public function testExecuteMigratedInsertUsesValuesWithoutReadingItsLabel(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['pbt', 'other']))->connect(database: 'pbt');
+        $session->execute('CREATE TABLE t (a INT)');
+        $statement = $session->analyze("INSERT t VALUE ('42')", true);
+        $prepared = PreparedStatement::capture($statement, $session);
+        $session->execute('USE other');
+        $reply = $prepared->execute($session, 'not a SQL statement', []);
+        self::assertSame($statement, $prepared->statement);
+        self::assertNull($prepared->literals);
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(1, $reply->affectedRows);
+        $table = $session->instance->dictionary->table('pbt', 't');
+        self::assertNotNull($table);
+        self::assertSame([[42]], array_values($table->data->rows));
+        self::assertSame('other', $session->variables->database);
+    }
+
     public function testExecuteRetainsAnExplicitEngineButUsesTheCurrentImplicitDefault(): void
     {
         $session = (new Instance())->connect();

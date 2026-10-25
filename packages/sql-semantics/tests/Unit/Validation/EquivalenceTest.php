@@ -26,7 +26,11 @@ final class EquivalenceTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        $difference = (new Equivalence())->difference($semantics->analyze('select a, b from t where a > 1')->statement, $semantics->analyze('SELECT a, b FROM t WHERE a > 1')->statement);
+        $left = $semantics->analyze('select a, b from t where a > 1');
+        $right = $semantics->analyze('SELECT a, b FROM t WHERE a > 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $left);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $right);
+        $difference = (new Equivalence())->difference($left->statement, $right->statement);
 
         self::assertNull($difference);
     }
@@ -75,6 +79,18 @@ final class EquivalenceTest extends TestCase
         self::assertSame($members, $equivalence->members(new IntegerLiteral('2')));
     }
 
+    public function testDifferenceExcludesLocationsButKeepsLiteralValues(): void
+    {
+        $left = new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['42'], location: new \SqlSemantics\Statement\Source\Span(12, 4));
+        $moved = new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['42'], location: new \SqlSemantics\Statement\Source\Span(25, 4));
+        $generated = new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['42']);
+        $changed = new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['7']);
+
+        self::assertNull((new Equivalence())->difference($left, $moved));
+        self::assertNull((new Equivalence())->difference($left, $generated));
+        self::assertSame("statement->segments[0] ('42' against '7')", (new Equivalence())->difference($left, $changed));
+    }
+
     public function testDescribeSpellsScalarsAndEnumCases(): void
     {
         $equivalence = new Equivalence();
@@ -84,4 +100,13 @@ final class EquivalenceTest extends TestCase
         self::assertSame('3', $equivalence->describe(3));
         self::assertSame(Nullability::class . '::NotNull', $equivalence->describe(Nullability::NotNull));
     }
+    public function testDifferenceRetainsExplicitNameDelimiters(): void
+    {
+        $bare = new Name('BINLOG', \SqlSemantics\Statement\Identifier\NameQuote::Bare);
+        $quoted = new Name('BINLOG', \SqlSemantics\Statement\Identifier\NameQuote::Backtick);
+        self::assertNotNull((new Equivalence())->difference($bare, $quoted));
+        self::assertNull((new Equivalence())->difference(new Name('BINLOG'), $quoted));
+        self::assertNotNull((new Equivalence())->difference(new Name('other'), $quoted));
+    }
+
 }

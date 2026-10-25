@@ -123,7 +123,7 @@ final class Hints
      *
      * @throws \MySqlMemory\Error\SqlError When preparation rejects the operation
      */
-    public function prepare(\SqlSemantics\Statement\Operation $operation, Session $session): void
+    public function prepare(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): void
     {
         (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
     }

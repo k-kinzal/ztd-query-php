@@ -76,7 +76,23 @@ final class Access
         if (!$readOnly) {
             return;
         }
-        foreach ($this->written($operation) as $name) {
+        $this->writes($this->written($operation), $session);
+    }
+
+    /**
+     * Checks concrete write targets derived from a statement's semantic references.
+     *
+     * @param list<QualifiedName|null> $names The written table names
+     * @throws SqlError When a read-only transaction would write a nontemporary table
+     */
+    public function writes(array $names, Session $session): void
+    {
+        $transaction = $session->transaction;
+        $readOnly = $transaction->open ? $transaction->readOnly : ($transaction->nextReadOnly ?? $transaction->sessionReadOnly());
+        if (!$readOnly) {
+            return;
+        }
+        foreach ($names as $name) {
             $table = $name === null ? null : $session->instance->dictionary->table($name->schema->value ?? $session->variables->database, $name->name->value);
             if ($table === null || !$table->definition->temporary) {
                 throw TransactionError::ReadOnlyTransaction->error();

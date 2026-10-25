@@ -17,7 +17,7 @@ final class BeginTest extends TestCase
 {
     public function testRenderWritesBegin(): void
     {
-        self::assertSame('BEGIN', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
+        self::assertSame('BEGIN WORK', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

@@ -107,9 +107,9 @@ final class BlockTest extends TestCase
     public static function providerRenderWritesTheBlock(): iterable
     {
         yield 'an empty block' => ['mysql-9.1.0', 'create procedure p() begin end', 'CREATE PROCEDURE p() BEGIN END'];
-        yield 'a labeled block in 5.6' => ['mysql-5.6.51', 'create procedure p() work: begin declare a int; select a; end work', 'CREATE PROCEDURE p() `work`: BEGIN DECLARE a INT; SELECT a; END `work`'];
+        yield 'a labeled block in 5.6' => ['mysql-5.6.51', 'create procedure p() work: begin declare a int; select a; end work', 'CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work'];
         yield 'a label that is no keyword in 5.7' => ['mysql-5.7.44', 'create procedure p() w: begin end w', 'CREATE PROCEDURE p() w: BEGIN END w'];
-        yield 'a label without end label in 5.7' => ['mysql-5.7.44', 'create procedure p() work: begin select 1; select 2; end', 'CREATE PROCEDURE p() `work`: BEGIN SELECT 1; SELECT 2; END'];
+        yield 'a label without end label in 5.7' => ['mysql-5.7.44', 'create procedure p() work: begin select 1; select 2; end', 'CREATE PROCEDURE p() work: BEGIN SELECT 1; SELECT 2; END'];
         yield 'a cursor over a WITH query in 8.0' => ['mysql-8.0.44', 'create procedure p() begin declare c cursor for with q as (select 1 as a) select a from q; end', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR WITH q AS (SELECT 1 AS a) SELECT a FROM q; END'];
     }
 

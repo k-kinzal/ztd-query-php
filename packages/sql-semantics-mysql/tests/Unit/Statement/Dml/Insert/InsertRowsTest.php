@@ -39,7 +39,7 @@ final class InsertRowsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('INSERT INTO t VALUES (), ()', [$t]);
+        $operation = new \SqlSemantics\Statement\Operation($semantics->context([$t]), new InsertRows(new InsertInto(false, null, false, new WriteTarget(new QualifiedName(new Name('t')))), [new InsertedRow([]), new InsertedRow([])]));
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);
@@ -47,7 +47,7 @@ final class InsertRowsTest extends TestCase
 
     public function testRenderWritesValuesAndUpdates(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1), (2) ON DUPLICATE KEY UPDATE a = VALUES(a)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('insert into t value (1), (2) on duplicate key update a = values(a)')->toString());
+        self::assertSame('INSERT INTO t VALUE (1), (2) ON DUPLICATE KEY UPDATE a = VALUES(a)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('insert into t value (1), (2) on duplicate key update a = values(a)')->toString());
     }
 
     public function testRenderRejectsReplaceWithUpdates(): void

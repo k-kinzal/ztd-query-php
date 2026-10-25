@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Mirrors SQLCOM_ROLLBACK_TO_SAVEPOINT. Rule: MYSQL-ROLLBACK-TO-SAVEPOINT-001. The savepoint is a name of the
  * session's current transaction, which no declaration context holds; the
- * server compares savepoint names case-insensitively. WORK and the word SAVEPOINT are optional; WORK is not written. The statement
+ * server compares savepoint names case-insensitively. WORK and SAVEPOINT are optional; their presence is retained. The statement
  * names no relation and has no facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html.
  * Status: Implemented.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Naming the savepoint
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('rollback work to sp1');
- *     [$statement->toString(), $statement->statement->savepoint->value] // => ['ROLLBACK TO SAVEPOINT sp1', 'sp1']
+ *     [$statement->toString(), $statement->statement->savepoint->value] // => ['ROLLBACK WORK TO sp1', 'sp1']
  */
 final class RollbackToSavepoint implements Statement
 {
@@ -32,8 +32,10 @@ final class RollbackToSavepoint implements Statement
 
     /**
      * @param Name $savepoint The savepoint name
+     * @param bool $work Whether WORK is written
+     * @param bool $savepointWritten Whether SAVEPOINT is written
      */
-    public function __construct(public readonly Name $savepoint)
+    public function __construct(public readonly Name $savepoint, public readonly bool $work = false, public readonly bool $savepointWritten = true)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -50,6 +52,14 @@ final class RollbackToSavepoint implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('ROLLBACK', 'TO', 'SAVEPOINT')->name($this->savepoint, NameUse::Identifier);
+        $out->keyword('ROLLBACK');
+        if ($this->work) {
+            $out->keyword('WORK');
+        }
+        $out->keyword('TO');
+        if ($this->savepointWritten) {
+            $out->keyword('SAVEPOINT');
+        }
+        $out->name($this->savepoint, NameUse::Identifier);
     }
 }

@@ -29,7 +29,7 @@ final class RequestsTest extends TestCase
     public function testRenderRetainsBothIndexAndAlterationOptions(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE INDEX i USING BTREE ON d.t ((ROW(1,2)) DESC) COMMENT 'retained' ALGORITHM=INPLACE LOCK=NONE");
-        self::assertSame("CREATE PROCEDURE p() CREATE INDEX i USING BTREE ON d.t ((ROW(1, 2)) DESC) COMMENT 'retained' ALGORITHM = INPLACE LOCK = `NONE`", $operation->toString());
+        self::assertSame("CREATE PROCEDURE p() CREATE INDEX i USING BTREE ON d.t ((ROW(1, 2)) DESC) COMMENT 'retained' ALGORITHM = INPLACE LOCK = NONE", $operation->toString());
     }
 
 }

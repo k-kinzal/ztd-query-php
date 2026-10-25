@@ -17,7 +17,7 @@ final class TablespaceRuleTest extends TestCase
 {
     public function testStatementLowersCreateOf80(): void
     {
-        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' USE LOGFILE GROUP g ENGINE `ndb`", (new Semantics(Dialect::MySql))->analyze("create tablespace ts add datafile 'f' use logfile group g engine ndb")->toString());
+        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' USE LOGFILE GROUP g ENGINE ndb", (new Semantics(Dialect::MySql))->analyze("create tablespace ts add datafile 'f' use logfile group g engine ndb")->toString());
     }
 
     public function testChangeLowersTheAccessMode(): void

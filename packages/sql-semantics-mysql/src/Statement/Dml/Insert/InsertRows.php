@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the rows of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)");
- *     [count($insert->statement->rows), count($insert->statement->onDuplicate), $insert->toString()] // => [2, 1, "INSERT IGNORE INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)"]
+ *     [count($insert->statement->rows), count($insert->statement->onDuplicate), $insert->toString()] // => [2, 1, "INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)"]
  */
 final class InsertRows implements Explainable
 {
@@ -46,7 +46,7 @@ final class InsertRows implements Explainable
      * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When written widths contradict each other, there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
-    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [])
+    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ValuesKeyword $keyword = ValuesKeyword::Values, public readonly ?\SqlSemantics\Statement\Source\Span $valuesSource = null)
     {
         $this->rows = Check::listOf($rows, InsertedRow::class, 'VALUES holds at least one row.', 1);
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $this->rows) === null, 'INSERT rows agree with each other and any explicit column count.');
@@ -68,7 +68,7 @@ final class InsertRows implements Explainable
      */
     public function render(Output $out): void
     {
-        $out->node($this->into)->keyword('VALUES')->list($this->rows)->node($this->alias);
+        $out->node($this->into)->keyword($this->keyword->value)->list($this->rows)->node($this->alias);
         if ($this->onDuplicate !== []) {
             $out->keyword('ON', 'DUPLICATE', 'KEY', 'UPDATE')->list($this->onDuplicate);
         }

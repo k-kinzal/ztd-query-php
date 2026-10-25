@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Creating a log file group
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create logfile group lg add undofile 'u.log' undo_buffer_size = 8M engine = ndb");
- *     [$statement->toString(), $statement->statement->file->file->value] // => ["CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' UNDO_BUFFER_SIZE `8M` ENGINE `ndb`", 'u.log']
+ *     [$statement->toString(), $statement->statement->file->file->value] // => ["CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' UNDO_BUFFER_SIZE 8M ENGINE ndb", 'u.log']
  */
 final class CreateLogfileGroup implements Statement
 {

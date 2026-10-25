@@ -14,14 +14,17 @@ use PHPStan\Reflection\ClassReflection;
 final class RunnableProperty
 {
     /**
-     * A declaration counts only when PHPUnit can actually discover and run its property.
+     * A declaration counts only when PHPUnit can discover the property; an optional name selects one method.
      */
-    public function accepts(ClassReflection $class): bool
+    public function accepts(ClassReflection $class, ?string $methodName = null): bool
     {
         if ($class->isAbstract()) {
             return false;
         }
         foreach ($class->getNativeReflection()->getMethods() as $method) {
+            if ($methodName !== null && $method->getName() !== $methodName) {
+                continue;
+            }
             if ($method->getDeclaringClass()->getName() !== $class->getName() || !str_starts_with($method->getName(), 'satisfies') || !$method->isPublic() || $method->isStatic()) {
                 continue;
             }

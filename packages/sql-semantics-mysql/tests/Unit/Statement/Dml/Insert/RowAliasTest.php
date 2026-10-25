@@ -59,7 +59,7 @@ final class RowAliasTest extends TestCase
 
     public function testRenderWritesTheAliasAndColumns(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1) AS `new` (m) ON DUPLICATE KEY UPDATE a = m', (new Semantics(Dialect::MySql))->analyze('insert into t values (1) as new (m) on duplicate key update a = m')->toString());
+        self::assertSame('INSERT INTO t VALUES (1) AS new (m) ON DUPLICATE KEY UPDATE a = m', (new Semantics(Dialect::MySql))->analyze('insert into t values (1) as new (m) on duplicate key update a = m')->toString());
     }
 
     public function testDeriveRelationNamesAColumnNamedTwice(): void

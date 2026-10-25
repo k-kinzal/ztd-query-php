@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * or RELEASE, false when written with NO, and null when absent: an absent
  * choice takes the completion_type of the session, so an explicit NO is a
  * request of its own. AND CHAIN together with RELEASE is a syntax error of
- * the server and cannot be constructed. WORK is optional and not written.
+ * the server and cannot be constructed. WORK is optional and retained as a spelling choice.
  * The statement names no relation and has no facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
  * Status: Implemented.
@@ -36,9 +36,10 @@ final class Rollback implements Statement
     /**
      * @param bool|null $chain Whether AND CHAIN (true) or AND NO CHAIN (false) is written; null when absent
      * @param bool|null $release Whether RELEASE (true) or NO RELEASE (false) is written; null when absent
+     * @param bool $work Whether the optional WORK keyword is written
      * @throws InvalidConstruction When both AND CHAIN and RELEASE are requested
      */
-    public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null)
+    public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null, public readonly bool $work = false)
     {
         Check::input($chain !== true || $release !== true, 'AND CHAIN and RELEASE exclude each other.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -57,6 +58,9 @@ final class Rollback implements Statement
     public function render(Output $out): void
     {
         $out->keyword('ROLLBACK');
+        if ($this->work) {
+            $out->keyword('WORK');
+        }
         if ($this->chain !== null) {
             $out->keyword(...($this->chain ? ['AND', 'CHAIN'] : ['AND', 'NO', 'CHAIN']));
         }

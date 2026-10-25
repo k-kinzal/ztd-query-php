@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use LogicException;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
@@ -31,6 +32,44 @@ use WeakReference;
  */
 final class Execution
 {
+    /**
+     * Executes the published semantic statement without rendering or analyzing it.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound parameter values
+     * @throws SqlError When SQL execution fails
+     * @throws LogicException When a statement has no execution implementation
+     */
+    public function statement(\SqlSemantics\Statement\AnalyzedStatement $statement, array $parameters = []): Reply
+    {
+        if ($statement instanceof Operation) {
+            return $this->perform($statement, (new \MySqlMemory\Command\Dispatcher())->command($statement->statement), $parameters);
+        }
+        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+            throw new LogicException('No semantic statement executor for ' . $statement::class);
+        }
+        $session = $this->session;
+        if ($statement->profile()->grammar !== $session->settings()->release()) {
+            throw new LogicException('The statement and execution session must select the same MySQL release.');
+        }
+        $session->diagnostics->clear();
+        $session->variables->setByFunction = false;
+        $session->interrupted = false;
+        State\StatementCounters::command($session, 'Com_insert');
+        (new \MySqlMemory\Concurrency\Access())->writes([$statement->target->name], $session);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
+        $session->transaction->statements->begin(true);
+        $session->instance->dictionary->temporaries = $session->temporaries;
+        try {
+            $reply = (new \MySqlMemory\Command\Write\InsertValuesCommand())->execute($statement, $session, $context, new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, $session->program, WeakReference::create($session)));
+        } catch (SqlError $error) {
+            $session->transaction->statements->abort();
+            throw $error;
+        }
+        $session->transaction->statements->end(true);
+        $session->variables->rowCount = $reply->affectedRows;
+        return $reply;
+    }
+
     /**
      * @param Session $session The session that runs the statement
      */

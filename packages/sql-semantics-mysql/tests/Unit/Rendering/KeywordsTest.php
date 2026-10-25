@@ -47,11 +47,11 @@ final class KeywordsTest extends TestCase
         self::assertTrue($keywords->reserved('adddate'));
     }
 
-    public function testReservedIsTrueForWordsStartingWithAnUnderscore(): void
+    public function testReservedDistinguishesCharacterSetIntroducersFromOrdinaryNames(): void
     {
         self::assertTrue((new Keywords(GrammarRelease::MySql8044))->reserved('_utf8mb4'));
-        self::assertTrue((new Keywords(GrammarRelease::MySql8044))->reserved('_x'));
-        self::assertTrue((new Keywords(GrammarRelease::MySql5744))->reserved('_'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql8044))->reserved('_x'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql5744))->reserved('_'));
     }
 
     public function testReservedIsFalseForOrdinaryWords(): void

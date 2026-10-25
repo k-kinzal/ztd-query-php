@@ -106,7 +106,11 @@
         "name": "string"
     },
     "SqlSemantics\\Statement\\Identifier\\Name": {
+        "quote": "?SqlSemantics\\Statement\\Identifier\\NameQuote",
         "value": "string"
+    },
+    "SqlSemantics\\Statement\\Identifier\\NameQuote": {
+        "name": "string"
     },
     "SqlSemantics\\Statement\\Identifier\\QualifiedName": {
         "catalog": "?SqlSemantics\\Statement\\Identifier\\Name",
@@ -241,6 +245,10 @@
         "offset": "int",
         "subject": "SqlSemantics\\Statement\\Node|SqlSemantics\\Statement\\Identifier\\Name",
         "warning": "SqlSemantics\\Statement\\Fact\\Warning"
+    },
+    "SqlSemantics\\Statement\\Source\\Span": {
+        "length": "int",
+        "offset": "int"
     },
     "SqlSemantics\\Statement\\Spelling\\Layout": {
         "tokens": "array",

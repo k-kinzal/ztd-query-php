@@ -90,7 +90,7 @@ final class TableTimes
      */
     public function execute(PDO $pdo, string $sql): void
     {
-        $table = preg_match('/\A(CREATE TABLE|INSERT INTO) (t1|t2)\b/', $sql, $match) === 1 ? $match[2] : null;
+        $table = preg_match('/\A(CREATE TABLE|INSERT INTO) (t1|t2|_sqlfaker_identifier)\b/', $sql, $match) === 1 ? $match[2] : null;
         $before = $table === null ? null : $this->now($pdo);
         (new Tables())->execute($pdo, $sql);
         if ($table !== null && $before !== null) {
@@ -116,7 +116,7 @@ final class TableTimes
         $result = $results[0];
         $rows = $result['rows'] ?? null;
         $columns = $result['columns'] ?? null;
-        if (!is_array($rows) || count($rows) !== 2 || !is_array($columns) || !is_array($columns[12] ?? null) || array_slice($columns[12], 0, 3) !== ['Update_time', 'TABLES', 'DATETIME']) {
+        if (!is_array($rows) || count($rows) !== count(Tables::TABLES) || !is_array($columns) || !is_array($columns[12] ?? null) || array_slice($columns[12], 0, 3) !== ['Update_time', 'TABLES', 'DATETIME']) {
             return $observation;
         }
         if (str_starts_with($this->version, '5.') && (!is_array($columns[11] ?? null) || array_slice($columns[11], 0, 3) !== ['Create_time', 'TABLES', 'DATETIME'])) {

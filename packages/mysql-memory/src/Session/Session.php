@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
@@ -299,7 +298,6 @@ final class Session
         try {
             $operation = $this->analyze($statement, $prepared, $parameters);
             $this->hinted = $prepared ? [] : $this->hinted;
-            $command = (new Dispatcher())->command($operation->statement);
         } catch (Parse\Definition\CompletedTemplate $completed) {
             return $completed->reply;
         } catch (SqlError $error) {
@@ -309,7 +307,7 @@ final class Session
             throw (new CacheOptions())->reported($error, $statement, $this);
         }
 
-        return (new Execution($this))->perform($operation, $command, $parameters);
+        return (new Execution($this))->statement($operation, $parameters);
     }
 
     /**
@@ -321,7 +319,7 @@ final class Session
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
-    public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
+    public function analyze(string $statement, bool $prepared = false, array $parameters = []): \SqlSemantics\Statement\AnalyzedStatement
     {
         if ($prepared || $this->following === '') {
             $statement = (new Script\Trailing())->input($statement);
@@ -354,9 +352,9 @@ final class Session
             try {
                 (new Syntax(Charset::named((string) $this->variables->read('character_set_client'))))->debugOnly($tree, $statement);
             } catch (SqlError $error) {
-                throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
+                throw $operation instanceof Operation ? (new Parse\DebugRequest())->refusal($operation, $error, $this) : $error;
             }
-            if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
+            if ($operation instanceof Operation && (new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
                 (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
             }
 

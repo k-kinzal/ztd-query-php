@@ -32,6 +32,6 @@ final class ShowVariablesTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW GLOBAL VARIABLES WHERE `Value` IS NULL', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW GLOBAL VARIABLES WHERE Value IS NULL')->toString());
+        self::assertSame('SHOW GLOBAL VARIABLES WHERE Value IS NULL', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW GLOBAL VARIABLES WHERE Value IS NULL')->toString());
     }
 }

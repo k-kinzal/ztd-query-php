@@ -20,8 +20,8 @@ use SqlSemantics\Contract\Session;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Statement\AnalyzedStatement;
 use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Validation\LeafEmbedding;
 use SqlSemantics\Validation\Publication;
 use SqlSemantics\Validation\TokenCorrespondence;
@@ -115,7 +115,7 @@ final class Semantics
      * contributes the declarations it provides; it is not executed, and ALTER,
      * DROP and writes contribute nothing.
      *
-     * @param list<Table|Operation>|null $declarations The declarations, or null for an open context without any
+     * @param list<Table|AnalyzedStatement>|null $declarations The declarations, or null for an open context without any
      * @param bool $complete Whether a given list enumerates every relation
      * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the path fixed at construction
      * @param Session|null $session The session statements are resolved in, or null for a new session with the server defaults
@@ -127,7 +127,7 @@ final class Semantics
     {
         $tables = [];
         foreach ($declarations ?? [] as $declaration) {
-            if ($declaration instanceof Operation) {
+            if ($declaration instanceof AnalyzedStatement) {
                 Check::input($this->profile->sharesDeclarationsWith($declaration->profile()), 'A declaring operation must belong to the grammar release of the selected language profile.');
                 array_push($tables, ...$declaration->declarations());
             } else {
@@ -151,13 +151,13 @@ final class Semantics
      * rendered SQL was confirmed to carry the same significant tokens.
      *
      * @param string|Node $sql The SQL text, or the tree parser() produced for it
-     * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
+     * @param list<Table|AnalyzedStatement>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
      *
      * @throws \SqlSemantics\Construction\RejectedInput When an input operand violates a semantic constructor domain
      * @throws AnalysisException When the SQL is outside the selected grammar
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context belongs to another language profile
      */
-    public function analyze(string|Node $sql, array|AnalysisContext|null $context = null): Operation
+    public function analyze(string|Node $sql, array|AnalysisContext|null $context = null): AnalyzedStatement
     {
         $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
         Check::input($this->profile->compatibleWith($declarations->profile), 'The context must match the selected language profile.');
@@ -174,7 +174,7 @@ final class Semantics
         $leaves = new Leaves();
         $origins = new \SqlSemantics\Construction\Origins();
         $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves, $origins, $declarations->session));
-        $operation = new Operation($declarations, $statement, $origins->publish());
+        $operation = $this->platform->publish($declarations, $statement, $origins->publish());
 
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $this->platform->statementNamespace()]);
         $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
@@ -193,8 +193,8 @@ final class Semantics
      *
      * No statement is executed for the ones after it.
      *
-     * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Operation>
+     * @param list<Table|AnalyzedStatement>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
+     * @return list<AnalyzedStatement>
      *
      * @throws \SqlSemantics\Construction\RejectedInput When an input operand violates a semantic constructor domain
      * @throws AnalysisException When a statement is outside the selected grammar

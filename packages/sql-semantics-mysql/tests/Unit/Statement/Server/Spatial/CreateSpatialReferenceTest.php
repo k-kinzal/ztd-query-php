@@ -27,11 +27,13 @@ final class CreateSpatialReferenceTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
-    public function testInputRefusesTheOriginalIntrinsicCounterexample(): void
+    public function testInputPreservesARequestWithAMissingDefinition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Missing mandatory attribute DEFINITION');
-        (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
+        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'", $operation->toString());
+        self::assertInstanceOf(CreateSpatialReference::class, $operation->statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition, $operation->statement->problem?->attribute);
+        self::assertSame($operation->statement->problem?->message(), $operation->facts->diagnostics[0]->message());
     }
     /**
      * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Literal\Numeral}>
@@ -70,10 +72,12 @@ final class CreateSpatialReferenceTest extends TestCase
      * @param list<\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute> $attributes
      */
     #[DataProvider('providerContradictoryDeclarations')]
-    public function testDeclarationExcludesIntrinsicContradictions(string $srid, array $attributes): void
+    public function testRequestRetainsIntrinsicDeclarationProblems(string $srid, array $attributes): void
     {
-        $this->expectExceptionMessage('A spatial reference declaration has a modifiable identifier and complete, well-formed attributes.');
-        new CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($srid), $attributes);
+        $statement = new CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($srid), $attributes);
+        self::assertNotNull($statement->problem);
+        self::assertSame($attributes, $statement->attributes);
+        self::assertSame($srid, $statement->srid->text);
     }
 
 }

@@ -21,6 +21,18 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class PlatformTest extends TestCase
 {
+    public function testPublishReturnsAConcreteInsertWithItsOwnTypeInformation(): void
+    {
+        $platform = Platforms::of('mysql');
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $input = $platform->parser($profile)->parse("INSERT t VALUE ('42')");
+        $lowered = $platform->lower($input, $profile, new Leaves());
+        $statement = $platform->publish($platform->context($profile, null, [], false), $lowered[0], new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement::class, $statement);
+        self::assertSame("INSERT t VALUE ('42')", $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $statement->values->rows[0][0]->dataType());
+    }
+
     public function testProfileFixesTheDefaultReleaseOfTheDatabase(): void
     {
         $profile = Platforms::of('sqlite')->profile(null, null, ParameterStyle::Native);

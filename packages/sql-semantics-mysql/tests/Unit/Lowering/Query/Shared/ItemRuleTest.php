@@ -37,7 +37,7 @@ final class ItemRuleTest extends TestCase
 
     public function testAliasLowersNamesAndStrings(): void
     {
-        self::assertSame('SELECT a x, b AS y FROM t', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a \'x\', b as `y` from t')->toString());
+        self::assertSame('SELECT a x, b AS `y` FROM t', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a \'x\', b as `y` from t')->toString());
         self::assertSame('SELECT a AS x FROM t', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select a as \'x\' from t')->toString());
     }
 

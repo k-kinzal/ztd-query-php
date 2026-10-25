@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Access;
 
+use LogicException;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Hint\Hints;
 use MySqlMemory\Session\Execution;
@@ -27,9 +28,17 @@ final class Preparation
      * temporary SET_VAR values on both success and failure.
      *
      * @throws SqlError When preparation rejects the operation
+     * @throws LogicException When a statement has no preparation implementation
      */
-    public function check(Operation $operation, Session $session): void
+    public function check(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): void
     {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
+            (new \MySqlMemory\Command\Write\InsertValuesCommand())->prepare($operation, $session);
+            return;
+        }
+        if (!$operation instanceof Operation) {
+            throw new LogicException('No preparation implementation for ' . $operation::class);
+        }
         if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
             (new DefaultDatabase())->check($operation->statement, $session);
         }
@@ -220,7 +229,7 @@ final class Preparation
      *
      * @throws SqlError When splitting or semantic interpretation refuses the input
      */
-    public function read(string $sql, Session $session): Operation|\MySqlMemory\Command\Prepared\PendingInstruction
+    public function read(string $sql, Session $session): \SqlSemantics\Statement\AnalyzedStatement|\MySqlMemory\Command\Prepared\PendingInstruction
     {
         (new \MySqlMemory\Session\Parse\Preparation\EmptyPrepared())->check($sql, $session->semantics()->parser(), $session->resolution()->client, $session->settings()->legacy());
         try {

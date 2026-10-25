@@ -32,7 +32,7 @@ final class UnionRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
         self::assertInstanceOf(SetOperation::class, $operation->statement->body->source);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->body->source->right);
-        self::assertSame('CREATE PROCEDURE p() INSERT INTO target SELECT 1 UNION SELECT ROW(a, 2) FROM `source`', $operation->toString());
+        self::assertSame('CREATE PROCEDURE p() INSERT INTO target SELECT 1 UNION SELECT ROW(a, 2) FROM source', $operation->toString());
     }
 
     public function testStatementLiftsTheOrderingOfTheLastSelect(): void

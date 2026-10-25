@@ -11,7 +11,7 @@ use RuntimeException;
 use SplFileInfo;
 
 /**
- * Invalidates the coverage rule when dependency models or property declarations change.
+ * Invalidates the coverage rule when dependency models or generator declarations change.
  *
  * @visibility Rules
  */
@@ -22,18 +22,18 @@ final class SemanticCache implements ResultCacheMetaExtension
      */
     public function getKey(): string
     {
-        return 'mysql-memory-semantic-properties';
+        return 'mysql-memory-semantic-generators';
     }
 
     /**
      * Includes file names so additions and removals invalidate a previously successful run.
      *
-     * @throws RuntimeException When a model or property file cannot be hashed
+     * @throws RuntimeException When a model or generator file cannot be hashed
      */
     public function getHash(): string
     {
         $files = [];
-        foreach (['vendor/k-kinzal/sql-semantics/src', 'vendor/k-kinzal/sql-semantics-mysql/src', 'tests/Property'] as $directory) {
+        foreach (['vendor/k-kinzal/sql-semantics/src', 'vendor/k-kinzal/sql-semantics-mysql/src', 'tests/Generator'] as $directory) {
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__) . '/' . $directory)) as $file) {
                 if ($file instanceof SplFileInfo && $file->getExtension() === 'php') {
                     $hash = hash_file('sha256', $file->getPathname());

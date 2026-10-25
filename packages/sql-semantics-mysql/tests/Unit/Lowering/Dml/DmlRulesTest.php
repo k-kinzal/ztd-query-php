@@ -17,7 +17,7 @@ final class DmlRulesTest extends TestCase
 {
     public function testStatementLowersEveryStatementRule(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t values (1)')->toString());
+        self::assertSame('INSERT t VALUES (1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t values (1)')->toString());
         self::assertSame('UPDATE t SET a = 1', (new Semantics(Dialect::MySql))->analyze('update t set a = 1')->toString());
         self::assertSame('DELETE FROM t', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('delete from t')->toString());
         self::assertSame('DO 1', (new Semantics(Dialect::MySql))->analyze('do 1')->toString());
@@ -47,7 +47,7 @@ final class DmlRulesTest extends TestCase
 
     public function testRowValuesLowersValuesAndDefault(): void
     {
-        self::assertSame('CREATE PROCEDURE p() INSERT INTO t VALUES (1, DEFAULT), ()', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() insert t values (1, default), ()')->toString());
+        self::assertSame('CREATE PROCEDURE p() INSERT t VALUES (1, DEFAULT), ()', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() insert t values (1, default), ()')->toString());
         self::assertSame('CREATE PROCEDURE p() VALUES ROW(1), ROW()', (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() values row(1), row()')->toString());
     }
 

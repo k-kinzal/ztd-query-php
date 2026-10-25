@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a log file group
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop logfile group lg engine ndb");
- *     [$statement->toString(), $statement->statement->name->value] // => ["DROP LOGFILE GROUP lg ENGINE `ndb`", 'lg']
+ *     [$statement->toString(), $statement->statement->name->value] // => ["DROP LOGFILE GROUP lg ENGINE ndb", 'lg']
  */
 final class DropLogfileGroup implements Statement
 {

@@ -19,14 +19,14 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors the server's `PT_insert` with its `is_replace` flag: REPLACE
  * deletes a row that duplicates a unique key before it inserts the new one.
  * REPLACE takes no IGNORE and no HIGH_PRIORITY; the written table has no
- * correlation name. The keyword INTO is optional and always written. The
+ * correlation name. The presence of the optional INTO keyword is retained. The
  * hints of the comment written right after the verb are kept with it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html, https://dev.mysql.com/doc/refman/8.4/en/replace.html.
  *
  * @visibility public
  * @example Reading the head of a REPLACE
  *     $replace = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REPLACE LOW_PRIORITY t VALUES (1)');
- *     [$replace->statement->into->replace, $replace->statement->into->priority, $replace->toString()] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, 'REPLACE LOW_PRIORITY INTO t VALUES (1)']
+ *     [$replace->statement->into->replace, $replace->statement->into->priority, $replace->toString()] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, 'REPLACE LOW_PRIORITY t VALUES (1)']
  */
 final class InsertInto implements Node
 {
@@ -53,6 +53,7 @@ final class InsertInto implements Node
         public readonly WriteTarget $table,
         public readonly ?ColumnList $columns = null,
         array $hints = [],
+        public readonly bool $intoWritten = true,
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         Check::input(!$replace || (!$ignore && $priority !== InsertPriority::High), 'REPLACE takes neither IGNORE nor HIGH_PRIORITY.');
@@ -75,6 +76,9 @@ final class InsertInto implements Node
         if ($this->ignore) {
             $out->keyword('IGNORE');
         }
-        $out->keyword('INTO')->node($this->table)->node($this->columns);
+        if ($this->intoWritten) {
+            $out->keyword('INTO');
+        }
+        $out->node($this->table)->node($this->columns);
     }
 }

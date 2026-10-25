@@ -201,4 +201,27 @@ final class StringLiteralTest extends TestCase
         self::assertSame([Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("SELECT N'a'")->facts->warnings));
         self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT N'a'")->facts->warnings);
     }
+    public function testDataTypeDistinguishesBoundCollationFromMissingSessionState(): void
+    {
+        $unbound = new StringLiteral(['42']);
+        $bound = new StringLiteral(['42'], collation: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_unicode_ci'));
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Dependent::class, $unbound->dataType());
+        $type = $bound->dataType();
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, $type->descriptor->kind);
+        self::assertSame(2, $type->descriptor->length);
+    }
+
+    public function testNullabilityDoesNotDependOnTheInsertionDestination(): void
+    {
+        self::assertSame(Nullability::NotNull, (new StringLiteral(['']))->nullability());
+    }
+
+    public function testSourceIsOptionalForDirectlyGeneratedValues(): void
+    {
+        $span = new \SqlSemantics\Statement\Source\Span(12, 4);
+        self::assertNull((new StringLiteral(['42']))->source());
+        self::assertSame($span, (new StringLiteral(['42'], location: $span))->source());
+    }
 }

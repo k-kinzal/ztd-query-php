@@ -84,10 +84,14 @@ final class PreparedCommand implements Command
             $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
             return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
         }
-        if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {
+        if ($prepared instanceof Operation && ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate)) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }
-        (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($prepared->statement));
+        if ($prepared instanceof Operation) {
+            (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($prepared->statement));
+        } else {
+            $session->diagnostics->clear();
+        }
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         $bindings = ParameterBindings::capture($prepared);
         $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];

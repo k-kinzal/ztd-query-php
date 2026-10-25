@@ -46,16 +46,12 @@ final class SpatialRuleTest extends TestCase
         self::assertSame('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 9', (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 9')->toString());
     }
 
-    public function testDropRetainsTheOperationOfARangeRefusal(): void
+    public function testDropRetainsAnOutOfRangeRequest(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296');
-        } catch (\SqlSemantics\Construction\RejectedInput $error) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial::class, $error->problem);
-            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Drop, $error->problem->command);
-            return;
-        }
-        self::fail('An out-of-range identifier cannot form an ordinary DROP.');
+        $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296');
+        self::assertSame('DROP SPATIAL REFERENCE SYSTEM 4294967296', $operation->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference::class, $operation->statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange, $operation->statement->problem?->rule);
     }
 
 }

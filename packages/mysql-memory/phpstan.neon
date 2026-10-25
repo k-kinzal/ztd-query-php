@@ -1,9 +1,12 @@
 includes:
+    - rules/unused-classes.neon
     - vendor/phpstan/phpstan-strict-rules/rules.neon
     - vendor/k-kinzal/php-ai-toolkit/extension.neon
     - vendor/k-kinzal/php-ai-toolkit/rules.neon
 
 parameters:
+    unusedClasses:
+        - 'Tests\Generator\*Generator'
     exceptions:
         # The session turns an ImplementationGap of SQL Semantics, which no method declares, into ER_NOT_SUPPORTED_YET.
         reportUncheckedExceptionDeadCatch: false
@@ -20,7 +23,12 @@ parameters:
 
 services:
     -
-        class: Rules\SemanticPropertyCoverageRule
+        class: Rules\SemanticCatalogue
+    -
+        class: Rules\SemanticGeneratorCoverageRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Rules\PropertyRule
         tags: [phpstan.rules.rule]
     -
         class: Rules\SemanticCache

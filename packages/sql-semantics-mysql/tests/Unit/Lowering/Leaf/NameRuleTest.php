@@ -265,7 +265,8 @@ final class NameRuleTest extends TestCase
         $bare = $semantics->analyze('SELECT 1 AS full');
         $quoted = $semantics->analyze('SELECT 1 AS `full`');
 
-        self::assertSame($bare->toString(), $quoted->toString());
+        self::assertSame('SELECT 1 AS full', $bare->toString());
+        self::assertSame('SELECT 1 AS `full`', $quoted->toString());
         self::assertCount(1, $bare->facts->warnings);
         self::assertSame([], $quoted->facts->warnings);
         self::assertSame(16, $bare->sources->notices[0]->offset);
@@ -307,6 +308,15 @@ final class NameRuleTest extends TestCase
         $other = new \SqlSemantics\Statement\Operation($semantics->context(), $operation->statement);
         self::assertSame($operation->statement, $other->statement);
         self::assertSame("SELECT `Ã©`+1, ('é'), 1 AS 'Ã©\\0z'", $other->toString());
+    }
+
+    public function testIdentifierPreservesTheDelimiterChoiceOfKeywordsAndQuotedNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
+        self::assertSame("ALTER LOGFILE GROUP BINLOG ADD UNDOFILE 'text'", $semantics->analyze("ALTER LOGFILE GROUP BINLOG ADD UNDOFILE 'text'")->toString());
+        self::assertSame('SELECT `ordinary` FROM `target`', $semantics->analyze('SELECT `ordinary` FROM `target`')->toString());
+        $ansi = new Semantics(Dialect::MySql, 'mysql-8.4.7', new \SqlSemantics\Platform\MySql\Mode(ansiQuotes: true));
+        self::assertSame('SELECT "a""b" FROM "target"', $ansi->analyze('SELECT "a""b" FROM "target"')->toString());
     }
 
 }

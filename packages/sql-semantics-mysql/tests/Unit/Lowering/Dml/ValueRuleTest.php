@@ -17,7 +17,7 @@ final class ValueRuleTest extends TestCase
 {
     public function testRowLowersTheValues(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1, 2)', (new Semantics(Dialect::MySql))->analyze('insert t values (1, 2)')->toString());
+        self::assertSame('INSERT t VALUES (1, 2)', (new Semantics(Dialect::MySql))->analyze('insert t values (1, 2)')->toString());
     }
 
     public function testValueLowersDefault(): void
@@ -27,7 +27,7 @@ final class ValueRuleTest extends TestCase
 
     public function testAssignmentsLowersEveryAssignmentList(): void
     {
-        self::assertSame('INSERT INTO t SET a = 1, b = 2 ON DUPLICATE KEY UPDATE a = 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t set a = 1, b := 2 on duplicate key update a = 3')->toString());
+        self::assertSame('INSERT t SET a = 1, b = 2 ON DUPLICATE KEY UPDATE a = 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t set a = 1, b := 2 on duplicate key update a = 3')->toString());
     }
 
     public function testAssignmentLowersColumnAndValue(): void

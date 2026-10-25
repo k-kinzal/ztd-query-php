@@ -17,7 +17,7 @@ final class AlterLogfileGroupTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE `ndb`", (new Semantics(Dialect::MySql))->analyze("alter logfile group g add undofile 'f' engine ndb")->toString());
+        self::assertSame("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE ndb", (new Semantics(Dialect::MySql))->analyze("alter logfile group g add undofile 'f' engine ndb")->toString());
     }
 
     public function testDeriveStatementAcceptsAConsistentOptionList(): void

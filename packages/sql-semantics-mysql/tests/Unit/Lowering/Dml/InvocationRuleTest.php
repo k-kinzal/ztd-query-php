@@ -42,7 +42,7 @@ final class InvocationRuleTest extends TestCase
 
     public function testPreparedLowersPrepareExecuteAndDeallocate(): void
     {
-        self::assertSame('PREPARE s FROM @q', (new Semantics(Dialect::MySql))->analyze('prepare s from @`q`')->toString());
+        self::assertSame('PREPARE s FROM @`q`', (new Semantics(Dialect::MySql))->analyze('prepare s from @`q`')->toString());
         self::assertSame('DEALLOCATE PREPARE s', (new Semantics(Dialect::MySql))->analyze('deallocate prepare s')->toString());
     }
 

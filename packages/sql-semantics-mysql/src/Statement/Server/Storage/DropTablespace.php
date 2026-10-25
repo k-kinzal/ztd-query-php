@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop tablespace ts engine ndb");
- *     [$statement->toString(), $statement->statement->name->value] // => ["DROP TABLESPACE ts ENGINE `ndb`", 'ts']
+ *     [$statement->toString(), $statement->statement->name->value] // => ["DROP TABLESPACE ts ENGINE ndb", 'ts']
  */
 final class DropTablespace implements Statement
 {

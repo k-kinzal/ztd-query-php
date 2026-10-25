@@ -78,32 +78,21 @@ final class SpatialRule
     }
 
     /**
-     * Refuses intrinsic declaration constraints before publishing a CREATE value.
+     * Retains the complete CREATE request, including its intrinsic declaration problem.
      *
      * @param list<SpatialAttribute> $attributes The complete written attributes
-     * @throws \SqlSemantics\Construction\RejectedInput When a declaration cannot form a coherent statement
      */
     public function create(Form $form, bool $replace, bool $ifNotExists, \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $srid, array $attributes): CreateSpatialReference
     {
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks())->declaration($srid, $attributes);
-        if ($problem !== null) {
-            $command = $replace ? \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Replace : \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Create;
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial($command, $problem), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
         return new CreateSpatialReference($replace, $ifNotExists, $srid, $attributes);
     }
 
     /**
-     * Refuses unmodifiable identifiers before publishing a DROP value.
+     * Retains a DROP request and its intrinsic identifier problem.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the identifier is unmodifiable
      */
     public function drop(Form $form, bool $ifExists, \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $srid): DropSpatialReference
     {
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks())->identifier($srid);
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialCommand::Drop, $problem), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
         return new DropSpatialReference($ifExists, $srid);
     }
 

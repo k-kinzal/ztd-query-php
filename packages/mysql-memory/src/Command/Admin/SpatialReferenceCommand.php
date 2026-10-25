@@ -73,6 +73,9 @@ final class SpatialReferenceCommand implements Command
      */
     public function create(CreateSpatialReference $statement, Session $session): void
     {
+        if ($statement->problem !== null) {
+            throw (new Refusals())->spatial($statement->problem, $statement);
+        }
         $systems = $session->instance->registry->spatialCatalog;
         $srid = (int) (new Literals())->number($statement->srid);
         if (!$statement->orReplace && $systems->name($srid) !== null) {
@@ -135,6 +138,9 @@ final class SpatialReferenceCommand implements Command
      */
     public function drop(DropSpatialReference $statement, Session $session): void
     {
+        if ($statement->problem !== null) {
+            throw (new Refusals())->spatial($statement->problem, $statement);
+        }
         $systems = $session->instance->registry->spatialCatalog;
         $srid = (int) (new Literals())->number($statement->srid);
         if ($systems->name($srid) === null) {

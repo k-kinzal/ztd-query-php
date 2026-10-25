@@ -48,7 +48,7 @@ final class LoadRuleTest extends TestCase
 
         self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' COUNT 2 INTO TABLE t")->toString());
         self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' `COUNT` 2 INTO TABLE t")->toString());
-        self::assertSame("LOAD DATA URL 'f' `count` 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' count 2 INTO TABLE t")->toString());
+        self::assertSame("LOAD DATA URL 'f' count 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' count 2 INTO TABLE t")->toString());
     }
 
     public function testStatementLowersEveryGeneration(): void
@@ -87,7 +87,7 @@ final class LoadRuleTest extends TestCase
 
     public function testInputLowersTheSource(): void
     {
-        self::assertSame('LOAD DATA LOCAL URL \'u\' `count` 3 INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('load data local url \'u\' count 3 into table t')->toString());
+        self::assertSame('LOAD DATA LOCAL URL \'u\' count 3 INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('load data local url \'u\' count 3 into table t')->toString());
     }
 
     public function testTaggedLowersTheRowTag(): void

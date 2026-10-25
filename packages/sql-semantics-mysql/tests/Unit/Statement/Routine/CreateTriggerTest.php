@@ -137,17 +137,17 @@ final class CreateTriggerTest extends TestCase
         yield 'MySQL 5.7 order' => [
             'mysql-5.7.44',
             'create trigger tr before update on t for each row follows other set new.a = old.a',
-            'CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET `new`.a = old.a',
+            'CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET new.a = old.a',
         ];
         yield 'MySQL 8.0 IF NOT EXISTS' => [
             'mysql-8.0.44',
             'create trigger if not exists tr after delete on t for each row precedes o begin delete from u where c = old.a; end',
-            'CREATE TRIGGER IF NOT EXISTS tr AFTER DELETE ON t FOR EACH ROW PRECEDES o BEGIN DELETE FROM u WHERE c = `old`.a; END',
+            'CREATE TRIGGER IF NOT EXISTS tr AFTER DELETE ON t FOR EACH ROW PRECEDES o BEGIN DELETE FROM u WHERE c = old.a; END',
         ];
         yield 'MySQL 9.1 program body' => [
             'mysql-9.1.0',
             'create trigger tr before insert on t for each row begin declare v int default new.a; set new.b = v; end',
-            'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT `new`.a; SET `new`.b = v; END',
+            'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT new.a; SET new.b = v; END',
         ];
     }
 

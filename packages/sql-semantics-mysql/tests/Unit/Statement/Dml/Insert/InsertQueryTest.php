@@ -47,7 +47,7 @@ final class InsertQueryTest extends TestCase
     public function testRenderWritesTheSource(): void
     {
         self::assertSame('INSERT INTO t (SELECT 1 LIMIT 1) UNION SELECT 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('insert into t (select 1 limit 1) union select 2')->toString());
-        self::assertSame('INSERT INTO t TABLE u', (new Semantics(Dialect::MySql))->analyze('insert t table u')->toString());
+        self::assertSame('INSERT t TABLE u', (new Semantics(Dialect::MySql))->analyze('insert t table u')->toString());
     }
 
     public function testValuesSeesThroughParenthesesWithOrderByAndLimit(): void

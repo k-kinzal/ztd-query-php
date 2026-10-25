@@ -20,8 +20,8 @@ final class InsertIntoTest extends TestCase
 {
     public function testRenderWritesVerbModifiersAndTable(): void
     {
-        self::assertSame('INSERT HIGH_PRIORITY IGNORE INTO t PARTITION (p) (a) VALUES (1)', (new Semantics(Dialect::MySql))->analyze('insert high_priority ignore t partition (p) (a) values (1)')->toString());
-        self::assertSame('REPLACE DELAYED INTO t VALUES (1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('replace delayed t value (1)')->toString());
+        self::assertSame('INSERT HIGH_PRIORITY IGNORE t PARTITION (p) (a) VALUES (1)', (new Semantics(Dialect::MySql))->analyze('insert high_priority ignore t partition (p) (a) values (1)')->toString());
+        self::assertSame('REPLACE DELAYED t VALUE (1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('replace delayed t value (1)')->toString());
     }
 
     public function testRenderRejectsReplaceWithIgnore(): void
@@ -42,7 +42,7 @@ final class InsertIntoTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame("REPLACE /*+ SET_VAR(`sql_mode` = 'ANSI') */ INTO t SET a = 1", $semantics->analyze("REPLACE /*+ SET_VAR(sql_mode = 'ANSI') */ t SET a = 1")->toString());
+        self::assertSame("REPLACE /*+ SET_VAR(`sql_mode` = 'ANSI') */ t SET a = 1", $semantics->analyze("REPLACE /*+ SET_VAR(sql_mode = 'ANSI') */ t SET a = 1")->toString());
         self::assertSame('INSERT /*+ BKA(`t`) */ INTO t SELECT /*+ NO_BKA() */ 1', $semantics->analyze('INSERT /*+ BKA(t) */ INTO t SELECT /*+ NO_BKA() */ 1')->toString());
     }
 }
