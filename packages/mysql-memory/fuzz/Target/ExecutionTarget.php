@@ -8,6 +8,7 @@ use Error;
 use Fuzz\Fixture\Baseline;
 use Fuzz\Fixture\Servers;
 use Fuzz\Fixture\Tables;
+use Fuzz\Observation\CatalogState;
 use Fuzz\Observation\Comparison;
 use Fuzz\Observation\LibraryErrors;
 use Fuzz\Observation\Observer;
@@ -324,6 +325,9 @@ final class ExecutionTarget
         $observation['globals'] = (new Servers())->globals($guard, $this->version);
         $raw['globals'] = $observation['globals'];
         ksort($observation['globals']);
+        $catalog = (new CatalogState())->capture($guard, $this->version);
+        $raw['catalog'] = $catalog['raw'];
+        $observation['catalog'] = $catalog['comparable'];
         if (!$ordered && isset($observation['results']) && is_array($observation['results'])) {
             foreach ($observation['results'] as $index => $result) {
                 if (is_array($result) && isset($result['rows']) && is_array($result['rows'])) {

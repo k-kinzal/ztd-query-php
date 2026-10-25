@@ -799,6 +799,26 @@ text/prepared profile checks also pass (two cases, 14 assertions). Changed-file
 PHPStan, formatting and PHP 8.1 compatibility checks pass. This does not yet cover
 user variables, transaction visibility scenarios or every catalog domain.
 
+The independent catalog observation now includes account/privilege tables,
+routine/parameter/trigger/event definitions, plugin registrations, replication
+repositories and status, prepared XA transactions, tablespace declarations, and
+modern persisted settings, resource groups and spatial definitions. Versioned
+probes come from MySQL's public interfaces. Unclassified differences remain exact
+and fail, including environmental values without an established contract.
+Application databases outside `fz` retain definitions and committed base-table
+rows through the administrator connection. The executing connection's `fz` rows
+remain a separate observation, so uncommitted visibility is not collapsed.
+Views are recorded as definitions rather than executed during row collection.
+
+The catalog mechanism suite passes four tests and 13 assertions: outside-schema
+rows and duplicates, committed visibility, invalid-view definitions without body
+execution, and account/routine changes. The two transaction/global-effect target
+checks also pass with the expanded catalogs (11 assertions). Changed-file PHPStan,
+formatting and PHP 8.1 compatibility checks pass. This broadens observation but
+does not close B: temporary objects, user variables, locking effects and the
+remaining environment contracts still need their corresponding observation
+boundaries. No semantic implementation was changed to make these probes pass.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

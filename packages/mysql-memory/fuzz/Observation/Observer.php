@@ -119,7 +119,9 @@ final class Observer
     }
 
     /**
-     * Answers the rows of every table of a database, each table sorted as a multiset.
+     * Answers the rows of every base table, each sorted as a multiset.
+     * Views are observed as definitions; evaluating one can invoke a stored function
+     * and change the state being measured.
      *
      * @return array<string, mixed>
      * @throws RuntimeException When table state cannot be read
@@ -128,7 +130,7 @@ final class Observer
     {
         $tables = [];
         try {
-            $names = $pdo->query('SHOW TABLES FROM ' . $this->identifier($database));
+            $names = $pdo->query('SHOW FULL TABLES FROM ' . $this->identifier($database) . " WHERE Table_type = 'BASE TABLE'");
             if ($names === false) {
                 throw new RuntimeException('Cannot enumerate observed tables: ' . json_encode($pdo->errorInfo()));
             }

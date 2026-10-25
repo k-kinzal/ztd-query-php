@@ -194,10 +194,14 @@ Other result-producing commands retain order. Raw observations in counterexample
 reports are base64-encoded PHP serialization, preserving binary values as well
 as types. The target records transaction status, selected database, session
 variables and global settings before restoration. State-read failures are failures
-of the check. Each campaign owns a fresh reference container, and a failed reset
-cannot pass or contaminate a later campaign. Coverage of accounts, routines,
-replication, user variables and transaction visibility is still incomplete; these
-runs do not yet establish equivalence for every state change.
+of the check. Account/privilege catalogs, stored-program definitions, replication
+configuration, server catalog state and committed rows in other application
+databases are observed independently through the administrator connection.
+Views contribute definitions without evaluating their bodies during observation.
+Each campaign owns a fresh reference container, and a failed reset cannot pass
+or contaminate a later campaign. Temporary objects, user variables, locking effects
+and environment-specific catalog fields still need complete contracts; these runs
+do not yet establish equivalence for every state change.
 
 Each target records its release, lexical profile and mutation seed. Set
 `PHP_FUZZER_SEED` to reproduce PHP-Fuzzer's random sequence on the same revision
