@@ -198,7 +198,10 @@ Use a fresh replay directory and copy only the selected profile's `.txt` files.
 Mode supplements require their matching `SQLFAKER_SQL_MODE`; diagnostic seeds
 require `SQLFAKER_DIAGNOSTICS=1`. `MYSQL_MEMORY_EMULATE=0` selects native prepared
 execution, and `1` selects text execution. Profile setup is not concatenated to
-the statement under test. A successful replay prints `Verified N inputs.`;
+the statement under test. Common fixture SQL uses the text protocol on both
+servers; the selected input protocol is restored even when setup fails. Each
+native connection's advertised MySQL release must match the grammar before
+fixture cleanup or configuration import begins. A successful replay prints `Verified N inputs.`;
 require `N` to equal the number of copied files. Missing or empty corpora cannot
 establish a passing replay.
 
@@ -246,8 +249,15 @@ SQL refusals remain failures of readiness, not evidence that a server stopped.
 The observer retains primary results or full SQL errors, conditions for refused
 commands, and post-restart table rows, definitions and status. Partial lifecycle
 observations use the same failure reports as ordinary statements. Startup, probes
-and disposal remain inside the existing sixty-second input limit; the current
-8.4.7 lifecycle replay still exceeds that limit during native initialization.
+and disposal remain inside the existing sixty-second input limit. The pinned
+images include AMD64-only releases, which require CPU emulation on an ARM Docker
+host. A matching Docker host can be selected through the standard `DOCKER_HOST`
+setting. Record the host architecture and image identity with execution evidence;
+changing hosts does not establish additional SQL or profile coverage.
+Networks with restricted published ports can set
+`MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT` and `MYSQL_MEMORY_LIFECYCLE_REPEATED_PORT`
+to two distinct available ports on that Docker host. They must also differ from
+the ordinary campaign's optional `MYSQL_MEMORY_CONTAINER_PORT`.
 
 Temporary objects, MySQL 5.6 session inventories,
 row locks, advisory-lock recursion, contention and environment-specific catalog

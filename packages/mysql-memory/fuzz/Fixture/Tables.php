@@ -52,17 +52,25 @@ final class Tables
         ];
     }
     /**
-     * Runs setup SQL and consumes its result, including ANALYZE TABLE's status rows.
+     * Builds the common fixture through the text protocol and consumes its result.
+     * This includes ANALYZE TABLE's status rows. The selected input protocol is
+     * restored on success and failure; only the generated input tests preparation.
      *
      * @throws RuntimeException When a connection in silent mode refuses the setup statement
      */
     public function execute(PDO $pdo, string $sql): void
     {
-        $statement = $pdo->query($sql);
-        if ($statement === false) {
-            throw new RuntimeException('A differential fixture statement failed: ' . json_encode($pdo->errorInfo()));
+        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
+        try {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            $statement = $pdo->query($sql);
+            if ($statement === false) {
+                throw new RuntimeException('A differential fixture statement failed: ' . json_encode($pdo->errorInfo()));
+            }
+            $statement->closeCursor();
+        } finally {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
-        $statement->closeCursor();
     }
 
     /**

@@ -10,6 +10,7 @@ use Override;
 use RuntimeException;
 use Testcontainers\Containers\ContainerInstance;
 use Testcontainers\Containers\ReuseMode;
+use Testcontainers\Containers\StartupCheckStrategy\StartupCheckStrategy;
 use Testcontainers\Containers\WaitStrategy\WaitStrategy;
 
 /**
@@ -20,7 +21,12 @@ use Testcontainers\Containers\WaitStrategy\WaitStrategy;
 final class DisposableMySql extends MySqlContainer
 {
     /**
-     * A companion created during startup; the caller owns its cleanup even if this startup fails.
+     * The Docker instance acquired before startup checks or SQL readiness can fail.
+     */
+    public ?ContainerInstance $startedInstance = null;
+
+    /**
+     * A companion that reached SQL readiness; its earlier acquired instance is tracked on its definition.
      */
     public ?ContainerInstance $companionInstance = null;
 
@@ -50,6 +56,51 @@ final class DisposableMySql extends MySqlContainer
                 done
                 SH]);
         }
+    }
+
+    /**
+     * Stops an acquired instance immediately when startup fails. Exception traces
+     * can retain SDK instances, so destruction is not a sufficient cleanup boundary.
+     */
+    #[Override]
+    public function start(): ContainerInstance
+    {
+        $ready = false;
+        $this->startedInstance = null;
+        try {
+            $instance = parent::start();
+            $ready = true;
+            return $instance;
+        } finally {
+            if (!$ready) {
+                $this->dispose();
+            }
+        }
+    }
+
+    /**
+     * Releases acquired instances even when startup never reached SQL readiness.
+     * Companion cleanup is attempted even if stopping this instance fails.
+     */
+    public function dispose(): void
+    {
+        try {
+            $this->startedInstance?->stop();
+        } finally {
+            $this->companion?->dispose();
+        }
+    }
+
+    /**
+     * Acquires ownership before the first startup check without replacing that check.
+     *
+     * @param ContainerInstance $instance The Docker instance that has just started
+     */
+    #[Override]
+    protected function startupCheckStrategy($instance): ?StartupCheckStrategy
+    {
+        $this->startedInstance = $instance;
+        return parent::startupCheckStrategy($instance);
     }
 
     /**

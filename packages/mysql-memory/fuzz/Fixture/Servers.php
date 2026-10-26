@@ -50,6 +50,7 @@ final class Servers
             $password = $endpoint->password;
         }
         $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $this->assertVersion($native, $version);
         $this->clean($native, $version);
         $globals = $this->globals($native, $version);
         $identity = $native->query('SELECT USER()');
@@ -60,6 +61,21 @@ final class Servers
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
         return [new ExecutionTarget($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server, $reference), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Requires the connection's advertised release to match the selected grammar.
+     * Packaging suffixes do not change the release. Validate before modifying
+     * the native fixture or importing its configuration into the memory server.
+     *
+     * @throws RuntimeException When the reference release is unavailable or mismatched
+     */
+    public function assertVersion(PDO $connection, string $version): void
+    {
+        $actual = $connection->getAttribute(PDO::ATTR_SERVER_VERSION);
+        if (!is_string($actual) || explode('-', $actual, 2)[0] !== $version) {
+            throw new RuntimeException('The native MySQL release does not match the grammar: expected ' . $version . ', received ' . var_export($actual, true) . '.');
+        }
     }
 
     /**

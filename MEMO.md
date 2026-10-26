@@ -1331,9 +1331,96 @@ Evidence on PHP 8.5.8 / PHPUnit 10.5.64:
   tree and strict autoload checks pass. No protected configuration or timeout was
   changed.
 
-The remaining startup-budget problem, lifecycle state-domain coverage, ordinary
-observation/restoration gaps and model migration keep goals B-D open. Passing the
-mechanism tests does not establish complete server lifecycle equivalence.
+These earlier startup failures do not justify increasing the input budget. The
+following checkpoint separates the reference platform and fixture protocol from
+the generated operation. Lifecycle state-domain coverage, ordinary observation/
+restoration gaps and model migration still keep goals B-D open.
+
+### Reference platform and fixture input contracts
+
+The local Docker host is aarch64 with eight CPUs and approximately 8 GB of memory;
+the pinned 8.4.7 image is amd64. A separate x86_64 Docker host with 28 CPUs and
+approximately 47 GiB runs the same image identity,
+`sha256:5e274b0e244563921fe9b520f4a2dec301ffc4fc81164a362c6cb3dac60255a9`,
+without CPU emulation. The existing DOCKER_HOST setting selects it. No image,
+readiness check, test timeout or comparison was changed to obtain the native-host
+results. The 8.4.7 lifecycle mechanism then passes both cases / 22 assertions in
+38.971 seconds. This establishes bounded progress on a suitable execution host,
+not identical timing guarantees across different host resources.
+
+Reference startup now checks the PDO handshake release against the configured
+grammar before fixture cleanup or importing native configuration. Distribution
+suffixes are allowed after the exact major/minor/patch release; a mismatched or
+unreadable release fails. Both independent lifecycle references use this check.
+A process-isolated test gives the ordinary factory a mismatched reference and
+confirms that its sentinel account survives: rejecting the mismatch after cleanup
+would fail that test.
+
+The prepared-profile replay on the native host exposed a different boundary:
+fixed INSERT fixture data entered binary preparation before the generated input
+was reached, exceeding the sixty-second input budget in MemoryDB fixture setup.
+Common fixture SQL now uses the text protocol on both engines and restores the
+selected input protocol in a finally block. The generated input still uses the
+requested protocol. The mechanism test checks the actual Com_stmt_prepare counter:
+fixture creation/insertion does not prepare, while the following BEGIN does.
+Silent and exceptional setup failures both restore the selected protocol.
+
+Current evidence on PHP 8.5.8 / PHPUnit 10.5.64:
+
+- The new version/protocol mechanisms pass 11 cases / 29 assertions. The final
+  process-isolated factory test additionally passes 1 / 4. Changed-file PHPStan,
+  formatting and PHP 8.1 compatibility pass without rule changes.
+- The final unchanged PHP-Fuzzer entry point passes the two supplied 8.4.7
+  lifecycle seeds in both text and prepared modes, each printing
+  `Verified 2 inputs.` and exiting zero with seed 20261026 and timeout 60.
+  They are `simple_statement_or_begin-0.txt` (RESTART) and
+  `simple_statement-125.txt` (SHUTDOWN), default lexical profile. These focused
+  replays are not full-corpus or 900-second seedless acceptance.
+- The first complete native lifecycle mechanism run covers 15 cases / 154
+  assertions, with one Docker startup error on 8.4.7 SHUTDOWN: the remote daemon
+  refuses host port 50143 before SQL execution. Fourteen cases pass, but the run
+  is not a pass. No exception is swallowed and no case is skipped.
+- A subsequent fixed-first-port run has 15 cases / 132 assertions and three
+  startup errors. A refused companion port exposes another ownership gap: the
+  already-started first instance remains referenced by an SDK exception, so its
+  destructor does not release the port before later tests. The following two
+  cases consequently find the fixed first port occupied. This run is not a pass.
+- The broader fixture/failure/transition regression has 27 cases / 105 assertions
+  with one failure: credential-age restoration still observes wall-clock time
+  instead of the requested SET timestamp value. This existing restoration
+  counterexample remains an open gate, not a passing regression run.
+
+DisposableMySql now captures the Docker instance before the SDK's first startup
+check, and owns explicit disposal of its instance and companion. Failed startup
+disposes that ownership tree before propagating the error; exception lifetime
+cannot delay cleanup. Lifecycle's outer finally also closes acquired instances
+when Testcontainers has not returned a ready server, marking disposal only after
+cleanup succeeds. A native mechanism test injects a companion startup-check
+failure through the SDK's interface and requires both acquired instances to be
+stopped; the final test passes 1 / 7 in 3.555 seconds. The 8.4.7 success regression
+still passes 2 / 22 in 49.345 seconds after
+the cleanup change. Windows daemon port exclusions remain an independent startup
+constraint; they are not SQL mismatches or permission to suppress a failing run.
+The second lifecycle server now has the same optional fixed-port configuration as
+the first (`MYSQL_MEMORY_LIFECYCLE_REPEATED_PORT`). This permits two available
+ports to be selected on a restricted Docker host without modifying its system
+reservations, choosing another database image or changing a timeout.
+
+The final native lifecycle matrix passes all 15 cases / 165 assertions in
+195.414 seconds on the same AMD64 host, with first/repeated ports 34067/34068 and
+PHPUnit order seed 1792993871. It covers SHUTDOWN on 5.7.44 through 9.1.0 and
+RESTART on 8.0.44 through 9.1.0, including the pinned unsupervised images' SQL
+refusals. MySQL 5.6 has neither SQL statement and remains covered by classification
+tests rather than a nonexistent lifecycle command. Every case uses two native
+references and one memory observation. This closes the bounded lifecycle
+mechanism run; it does not close full grammar, state-domain or profile acceptance.
+Final changed-file static/format/compatibility checks, the size/tree guards and
+strict autoload checks pass. Protected configurations remain unchanged.
+
+Platform suitability and fixture protocol are explicit execution inputs. These
+changes do not resolve the missing dictionary tablespace, Performance Schema
+instrumentation/owner inventory, other state domains, or the model/generator
+migration. Goals B-D remain open.
 
 ## Historical investigation results
 

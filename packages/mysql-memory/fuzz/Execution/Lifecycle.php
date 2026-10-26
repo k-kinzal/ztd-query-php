@@ -48,7 +48,10 @@ final class Lifecycle
         $memory->phase = 'pending';
         $this->observations = [$first, $repeated, $memory];
         $companion = new DisposableMySql($version);
-        $companion->withPortStrategy(new \Testcontainers\Containers\PortStrategy\RandomPortStrategy());
+        $companionPort = filter_var(getenv('MYSQL_MEMORY_LIFECYCLE_REPEATED_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+        $companion->withPortStrategy(is_int($companionPort)
+            ? new \Testcontainers\Containers\PortStrategy\StaticPortStrategy($companionPort)
+            : new \Testcontainers\Containers\PortStrategy\RandomPortStrategy());
         $definition = new DisposableMySql($version, $companion);
         $port = filter_var(getenv('MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
         if (is_int($port)) {
@@ -56,18 +59,20 @@ final class Lifecycle
         }
         try {
             $container = Testcontainers::run($definition);
-            try {
-                $second = $definition->companionInstance ?? throw new RuntimeException('The repeated native lifecycle fixture did not start.');
-                $first->phase = $repeated->phase = 'fixture ready';
-                return $this->compareReady($container->getData(Endpoint::class), $second->getData(Endpoint::class), $definition->supervised(), $action, $version, $emulate, $first, $repeated, $memory);
-            } finally {
-                $container->stop();
-                $first->cleanup = 'disposed';
-            }
+            $second = $definition->companionInstance ?? throw new RuntimeException('The repeated native lifecycle fixture did not start.');
+            $first->phase = $repeated->phase = 'fixture ready';
+            return $this->compareReady($container->getData(Endpoint::class), $second->getData(Endpoint::class), $definition->supervised(), $action, $version, $emulate, $first, $repeated, $memory);
         } finally {
-            if ($definition->companionInstance !== null) {
-                $definition->companionInstance->stop();
-                $repeated->cleanup = 'disposed';
+            try {
+                if ($definition->startedInstance !== null) {
+                    $definition->dispose();
+                    $first->cleanup = 'disposed';
+                }
+            } finally {
+                if ($companion->startedInstance !== null) {
+                    $companion->dispose();
+                    $repeated->cleanup = 'disposed';
+                }
             }
         }
     }
@@ -80,7 +85,7 @@ final class Lifecycle
     public function compareReady(Endpoint $firstEndpoint, Endpoint $secondEndpoint, bool $supervised, LifecycleAction $action, string $version, bool $emulate, Record $first, Record $repeated, Record $memory): Comparison
     {
         $first->phase = 'fixture capabilities';
-        $native = $this->connection($firstEndpoint, $emulate);
+        $native = $this->connection($firstEndpoint, $emulate, $version);
         $fixtures = new Servers();
         $globals = $fixtures->globals($native, $version);
         $priorities = $fixtures->resourcePriorities($native, $version);
@@ -88,7 +93,7 @@ final class Lifecycle
         $zones = $fixtures->timeZones($native);
         $expected = $this->observe($native, $firstEndpoint->dsn(), $firstEndpoint->username, $firstEndpoint->password, $action, $first);
         $native = null;
-        $again = $this->observe($this->connection($secondEndpoint, $emulate), $secondEndpoint->dsn(), $secondEndpoint->username, $secondEndpoint->password, $action, $repeated);
+        $again = $this->observe($this->connection($secondEndpoint, $emulate, $version), $secondEndpoint->dsn(), $secondEndpoint->username, $secondEndpoint->password, $action, $repeated);
         $observations = ['native' => $first->raw, 'repeated' => $repeated->raw];
         if ($expected !== $again) {
             return new Comparison(true, referenceDifference: 'lifecycle reference: ' . var_export([$expected, $again], true), observations: $observations);
@@ -113,11 +118,12 @@ final class Lifecycle
     /**
      * Opens the observed connection after the repository's container readiness check.
      *
-     * @throws RuntimeException When the supposedly ready fixture cannot serve SQL
+     * @throws RuntimeException When the fixture cannot serve SQL or advertises another release
      */
-    public function connection(Endpoint $endpoint, bool $emulate): PDO
+    public function connection(Endpoint $endpoint, bool $emulate, string $version): PDO
     {
         $connection = (new LifecycleTransition())->connect($endpoint->dsn(), $endpoint->username, $endpoint->password, false) ?? throw new RuntimeException('The native lifecycle fixture is not SQL-ready.');
+        (new Servers())->assertVersion($connection, $version);
         $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         return $connection;
     }
