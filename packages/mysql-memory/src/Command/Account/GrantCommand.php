@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
@@ -65,9 +64,7 @@ final class GrantCommand implements Command
         assert($operation instanceof Operation);
         $statement = $operation->statement;
         $session->transaction->commit();
-        if ($statement instanceof GrantRoles) {
-            $this->roles($statement, $operation, $session);
-        } elseif ($statement instanceof GrantProxy) {
+        if ($statement instanceof GrantProxy) {
             (new Proxies())->grant($statement, $session);
         } else {
             assert($statement instanceof GrantPrivileges);
@@ -297,16 +294,4 @@ final class GrantCommand implements Command
         }
     }
 
-    /**
-     * Grants roles.
-     *
-     * @throws SqlError When an account or a role does not exist, or a grant would make a loop
-     */
-    public function roles(GrantRoles $statement, Operation $operation, Session $session): void
-    {
-        $grants = new Role\Grants();
-        $grants->header($statement, $session);
-        (new Levels($session->settings()->release()))->parsed($operation, $session);
-        $grants->apply($statement, $session);
-    }
 }

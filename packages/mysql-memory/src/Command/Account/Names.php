@@ -67,6 +67,24 @@ final class Names
     }
 
     /**
+     * Reads account operands in written order without looking up account state.
+     *
+     * @param list<Account> $accounts The written account operands
+     * @param bool $notices Whether reading notices should be emitted
+     */
+    public function read(array $accounts, Session $session, bool $notices = true): void
+    {
+        foreach ($accounts as $account) {
+            if ($notices && $account instanceof AccountName) {
+                foreach ($account->warnings($this->release) as $warning) {
+                    $session->diagnostics->warning($warning->code(), $warning->message());
+                }
+            }
+            $this->check([$account]);
+        }
+    }
+
+    /**
      * Tells whether a statement is executed by an account command, which raises the problems of the statement itself, in the order of the server.
      */
     public static function owns(Statement $statement): bool

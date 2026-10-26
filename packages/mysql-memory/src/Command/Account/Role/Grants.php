@@ -12,7 +12,6 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles;
 
 /**
  * Resolves and applies role edges, preserving account lookup and rollback order.
@@ -22,20 +21,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRol
 final class Grants
 {
     /**
-     * Checks account name domains before preparation, without requiring accounts.
-     */
-    public function header(GrantRoles|DeferredGrantRoles $statement, Session $session): void
-    {
-        $listed = array_map(static fn (GrantedRole $role): AccountName => $role->role, $statement->roles);
-        (new Names($session->settings()->release()))->check([...$listed, ...$statement->users]);
-    }
-
-    /**
      * Applies the complete role/recipient lists atomically at invocation.
      *
      * @throws SqlError When a recipient, role or edge is refused
      */
-    public function apply(GrantRoles|DeferredGrantRoles $statement, Session $session): void
+    public function apply(GrantRoles $statement, Session $session): void
     {
         $names = new Names($session->settings()->release());
         $listed = array_map(static fn (GrantedRole $role): AccountName => $role->role, $statement->roles);

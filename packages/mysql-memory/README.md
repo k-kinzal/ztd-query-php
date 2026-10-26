@@ -157,8 +157,18 @@ retains the same concrete value and does not build alternative interpretations
 for metadata invalidation. Changing table definitions therefore cannot rebind a
 prepared savepoint name or transaction characteristic.
 
-The property suite currently exercises the stated CREATE TABLE, INSERT, transaction
-and interval behaviors. It does not cover every statement family. The old constructor sampler
+`AccountRenameExecutionProperties` and `RoleExecutionProperties` execute concrete
+account requests without source SQL. They check ordinary SQL refusals when
+prerequisite accounts are absent, then generate related statements together:
+dependent renames, and role definitions followed by prepared grants. The role
+sequence checks retained admin options, cyclic-grant refusal and atomic state
+restoration. Generation and shrinking construct the statements before execution;
+the assertion callbacks do not render or analyze them. Account analysis retains
+the request without changing accounts, role edges or transaction state. These
+checks do not yet establish read-only analysis for every statement family.
+
+The property suite currently exercises the stated CREATE TABLE, INSERT, transaction,
+account and interval behaviors. It does not cover every statement family. The old constructor sampler
 and its instance-only properties have been removed. Missing generators remain
 errors in the complete PHPStan check; deleting those properties does not satisfy
 model coverage. Interface generators must compose their concrete alternatives,

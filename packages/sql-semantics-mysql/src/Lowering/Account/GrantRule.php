@@ -72,9 +72,9 @@ final class GrantRule
     }
 
     /**
-     * Preserves the entire account list when ordinary role-grant invariants fail.
+     * Preserves the entire role grant, including intrinsic account contradictions.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the account operands contradict GRANT
+     * @throws \SqlSemantics\Construction\RejectedInput When a privilege occupies a role position
      */
     public function roles(Form $form): GrantRoles
     {
@@ -82,11 +82,9 @@ final class GrantRule
         $roles = $this->privileges->roles($form->node(1), $end);
         $users = $this->lowering->users->accounts($form->node(3));
         $admin = $this->admin($form->node(4));
-        if ((new \SqlSemantics\Platform\MySql\Rules\Account\Privilege\RoleGrants())->contradictory($roles, $users)) {
-            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles($roles, $users, $admin);
-            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), $end, false);
-        }
-        return new GrantRoles($roles, $users, $admin);
+        $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node);
+        $source = $range === null ? null : new \SqlSemantics\Statement\Source\Span($range[0], $range[1] - $range[0]);
+        return new GrantRoles($roles, $users, $admin, $this->lowering->profile, $this->lowering->client, $source);
     }
 
     /**

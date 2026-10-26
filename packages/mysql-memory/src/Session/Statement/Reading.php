@@ -32,5 +32,11 @@ final class Reading
         if ($statement instanceof RenameUser) {
             (new RenameUserCommand())->prepare($statement, $session, $notices);
         }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole) {
+            (new \MySqlMemory\Command\Account\Role\CreateRoleCommand())->prepare($statement, $session, $notices);
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
+            (new \MySqlMemory\Command\Account\Role\GrantRolesCommand())->prepare($statement, $session, $notices);
+        }
     }
 }

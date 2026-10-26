@@ -13,7 +13,6 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole;
 use WeakMap;
 
 /**
@@ -24,14 +23,14 @@ use WeakMap;
 final class Definitions
 {
     /**
-     * Interprets a complete ordinary or deferred account definition.
+     * Interprets a complete account request, including intrinsic contradictions.
      */
-    public function execute(CreateRole|DeferredCreateRole $statement, Session $session, Context $context): Reply
+    public function execute(CreateRole $statement, Session $session, Context $context): Reply
     {
         $names = new Names($session->settings()->release());
         $names->check($statement->roles);
         $roles = array_map(static fn ($role): Identity => $names->identity($role, $session), $statement->roles);
-        return $this->create($roles, $statement->ifNotExists, $session, $context, $statement instanceof CreateRole ? $statement : null);
+        return $this->create($roles, $statement->ifNotExists, $session, $context, $statement->problem === null ? $statement : null);
     }
 
     /**

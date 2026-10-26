@@ -23,6 +23,16 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class NamesTest extends TestCase
 {
+    public function testReadEmitsOperandWarningsOnlyOnInitialReading(): void
+    {
+        $session = (new Instance())->connect();
+        $names = [new AccountName(new Name('full', \SqlSemantics\Statement\Identifier\NameQuote::Bare)), new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser()];
+        (new Names())->read($names, $session);
+        self::assertSame([4119], array_column($session->diagnostics->conditions, 1));
+        (new Names())->read($names, $session, false);
+        self::assertSame([4119], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testOwnsTheAccountStatements(): void
     {
         self::assertTrue(Names::owns(new ShowGrants()));

@@ -62,19 +62,15 @@ final class RoleRule
     }
 
     /**
-     * Separates ordinary definitions from retained invocation-time conditions.
-     *
-     * @throws \SqlSemantics\Construction\RejectedInput When the account definition is contradictory
+     * Preserves the complete role request and its intrinsic account condition.
      */
     public function create(Form $form): CreateRole
     {
         $roles = $this->roles($form->node(3));
         $conditional = $this->lowering->options->present($form->node(2));
-        if ((new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($conditional, $roles) !== null) {
-            $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole($conditional, $roles);
-            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
-        return new CreateRole($conditional, $roles);
+        $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node);
+        $source = $range === null ? null : new \SqlSemantics\Statement\Source\Span($range[0], $range[1] - $range[0]);
+        return new CreateRole($conditional, $roles, $this->lowering->profile, $this->lowering->client, $source);
     }
 
     /**

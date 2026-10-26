@@ -17,20 +17,20 @@ final class GrantRuleTest extends TestCase
 {
     public function testRolesRetainsEveryAccountWhenTheOrdinaryGrantDomainIsContradicted(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze("GRANT a, '' TO b, CURRENT_USER WITH ADMIN OPTION");
-            self::fail('An anonymous role cannot inhabit an ordinary grant.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles::class, $failure->problem);
-            self::assertCount(2, $failure->problem->request->roles);
-            self::assertCount(2, $failure->problem->request->users);
-            self::assertTrue($failure->problem->request->withAdminOption);
-        }
+        $statement = (new Semantics(Dialect::MySql))->analyze("GRANT a, '' TO b, CURRENT_USER WITH ADMIN OPTION");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles::class, $statement);
+        self::assertNotNull($statement->problem);
+        self::assertCount(2, $statement->roles);
+        self::assertCount(2, $statement->users);
+        self::assertTrue($statement->withAdminOption);
+        self::assertSame($statement->users, $statement->problem->users);
     }
 
     public function testRequestKeepsTheProgramOnlyInterpretation(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON d.t TO u AS CURRENT_USER')->statement;
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON d.t TO u AS CURRENT_USER');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        $create = $operation->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs::class, $create->body);
     }

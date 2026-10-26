@@ -17,7 +17,6 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
@@ -60,9 +59,6 @@ final class CreateUserCommand implements Command
         $statement = $operation->statement;
         $session->transaction->commit();
         $names = new Names($session->settings()->release());
-        if ($statement instanceof CreateRole) {
-            return (new Role\Definitions())->execute($statement, $session, $context);
-        }
         assert($statement instanceof CreateUser);
         $names->check([...$names->users($statement->users), ...$statement->defaultRoles]);
         $release = $session->settings()->release();
@@ -319,15 +315,4 @@ final class CreateUserCommand implements Command
         return $generated;
     }
 
-    /**
-     * Creates roles.
-     *
-     * @param list<Identity> $roles
-     *
-     * @throws SqlError When a role exists or is anonymous
-     */
-    public function roles(array $roles, bool $ifNotExists, Session $session, Context $context): Reply
-    {
-        return (new Role\Definitions())->create($roles, $ifNotExists, $session, $context);
-    }
 }

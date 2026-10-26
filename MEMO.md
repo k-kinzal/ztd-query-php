@@ -2135,3 +2135,70 @@ still touches shared dictionary selection and view caches. The missing native
 catalog providers, complete generator coverage, Operation/Facts migration and
 full corpus/900-second acceptance remain open. The 5.6 reconstruction failure
 is retained; neither its seed nor the comparison is weakened.
+
+### Role requests use the common analysis and execution boundary (2026-10-26)
+
+CREATE ROLE and role GRANT now publish concrete statements with ordered operands,
+language profile, client encoding, optional source span and an intrinsic condition
+when applicable. Anonymous and duplicate role definitions and explicit self-grants
+remain reconstructible requests. Account existence, conditional skips, recipient
+lookup and role cycles are evaluated against the catalog during execution.
+
+The two deferred role statement types and the RoleCreationInput, RoleGrantInput,
+RoleCreationUse, RoleGrantUse and PendingRoleGrant routes have been removed.
+Text, prepared, stored and generated requests enter Execution::statement through
+the same role commands. Initial operand notices use the shared account-reading
+phase; prepared and stored replay retain domain checks without repeating notices.
+CREATE ROLE remains unsupported by the prepared protocol. GRANT can be prepared
+before its accounts exist and executed after their creation. Role commands live
+with the existing role execution code, rather than increasing the account
+command directory beyond its configured limit.
+
+Five per-type generators compose complete role requests, their operands and their
+intrinsic conditions through Eris. The role properties execute requests without
+prerequisites and distinguish the expected SQL refusals from implementation
+failures. A dependent property constructs a conditional CREATE ROLE and three
+related grants before its callback. Preparation precedes account creation; the
+sequence checks successful installation, admin-option retention, cyclic-grant
+refusal, atomic edge restoration and repeated conditional creation. Eris shrinks
+the generated account operands through the map that constructs the whole sequence;
+no callback repairs or reanalyzes a statement.
+
+Scoped evidence on PHP 8.5.8:
+
+- The final generated, analysis-boundary, stored and prepared run passes 61 tests /
+  29,118 assertions. Its 21 Eris cases use 100 trials each and seed 20261026 across
+  8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0. Analysis preserves account
+  state, role edges, the open transaction and statement counters. Execution uses
+  opaque labels with no source SQL and leaves balanced statement scopes.
+- Account commands, dispatch, initial reading, preparation and direct/prepared
+  role scenarios pass 475 / 920. An earlier run failed on an obsolete
+  Operation-only role-preparation assertion and encountered one timeout failure
+  and two risky tests at the existing one-second limit. The test now checks the
+  concrete protocol boundary; the final run passes without changing time limits.
+- Final prepared role checks, including COM_STMT_PREPARE/COM_STMT_EXECUTE, pass
+  5 / 20. They verify zero marker/result metadata, deferred account lookup,
+  successful execution after account creation and one-time reading notices.
+- Semantic account models, lowering, rules and stored-program restrictions pass
+  489 / 883; the five changed role examples pass 5 / 5.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. Strict
+  autoload reports 8,634 memory classes and 8,576 semantic classes. Source LOC
+  and tree gates pass for both packages; the schema check covers 1,049 semantic
+  value definitions. The initial tree check rejected two extra account-command
+  files; the role commands and their tests now use the existing Role directories.
+  The unused role-header wrapper is removed; its remaining atomic-grant test
+  passes 1 / 4 and the changed source/test pass PHPStan and compatibility checks.
+- The ordinary reconstruction target passes all 39 supplied grammar seeds whose
+  indexed SQL is CREATE ROLE or a role GRANT, on each of the seven releases
+  above: 273 inputs total. Seed files are copied without modification. The
+  selected scope, default lexical settings, seed 20261026, max-runs 0 and
+  per-input timeout 60 are recorded with the replay. This is not full corpus or
+  empty-corpus acceptance.
+
+This removes the remaining alternate role-request execution routes. Conditional
+CREATE/ALTER TABLE still use the legacy CompletedTemplate path, and analysis still
+touches shared dictionary selection and view caches. The previously recorded
+missing native mysql.password_history provider, catalog completeness failures,
+5.6 account-name reconstruction refusal, incomplete model/generator migration,
+state observation and full corpus/900-second matrix remain unresolved. Goals B-D
+remain open; these scoped role checks do not close whole-system acceptance.

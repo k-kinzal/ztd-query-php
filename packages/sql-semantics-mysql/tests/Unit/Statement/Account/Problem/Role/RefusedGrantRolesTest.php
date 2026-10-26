@@ -15,9 +15,8 @@ final class RefusedGrantRolesTest extends TestCase
 {
     public function testMessageDescribesTheFixedAccountDomain(): void
     {
-        $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT r TO r')->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredGrantRoles::class, $create->body);
-        self::assertSame('GRANT cannot use anonymous accounts or grant an explicit account to itself.', $create->body->problem()->message());
+        $roles = [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('')))];
+        $users = [new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser()];
+        self::assertSame('GRANT cannot use anonymous accounts or grant an explicit account to itself.', (new RefusedGrantRoles($roles, $users))->message());
     }
 }

@@ -2,28 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Program\Account;
+namespace Tests\Integration;
 
-use MySqlMemory\Program\Account\RoleGrantUse;
-use PHPUnit\Framework\Attributes\CoversClass;
+use MySqlMemory\Session\Execution;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Identifier\Name;
 
-#[CoversClass(RoleGrantUse::class)]
+#[CoversNothing]
 #[Medium]
-final class RoleGrantUseTest extends TestCase
+final class GeneratedRoleCreationExecutionTest extends TestCase
 {
     public function testRunCommitsBeforeRefusingTheCompleteRoleListWithoutReadingInputText(): void
     {
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT); START TRANSACTION; INSERT INTO t VALUES(1)');
         $session->text = 'unrelated invalid input';
-        $request = new M\Routine\Program\Write\DeferredGrantRoles([new M\Account\Privilege\Item\GrantedRole(new M\Name\AccountName(new Name('')))], [new M\Name\CurrentUser()]);
+        $request = new M\Account\CreateRole(false, [new M\Name\AccountName(new Name('r')), new M\Name\AccountName(new Name(''))]);
         try {
-            $this->expectExceptionCode(3524);
-            (new RoleGrantUse())->run($request, $session);
+            $this->expectExceptionCode(1396);
+            (new Execution($session))->statement($request);
         } finally {
             self::assertSame('unrelated invalid input', $session->text);
             $session->query('ROLLBACK');

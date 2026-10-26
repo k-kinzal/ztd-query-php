@@ -84,8 +84,10 @@ final class CreateUserCommandTest extends TestCase
     public function testRecipientChecksAttributesForNewAccounts(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze("CREATE USER x ATTRIBUTE 'bad'")->statement;
-        assert($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateUser);
+        $operation = $session->analyze("CREATE USER x ATTRIBUTE 'bad'");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\CreateUser::class, $statement);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3982);
         (new CreateUserCommand())->recipient($statement, Identity::of('x', null), false, $session);
@@ -228,20 +230,6 @@ final class CreateUserCommandTest extends TestCase
         self::assertSame([8, ['Warning', '1366', "Incorrect string value: '\\xC3\\xA9x' for column 'Host' at row 1"]], [count($warnings->rows), $warnings->rows[0]]);
     }
 
-    public function testRolesWarnsDuringLookupEvenWhenTheRoleAlreadyExists(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query("CREATE ROLE IF NOT EXISTS 'r'@'猫'");
-        $created = $session->query('SHOW WARNINGS')[0];
-        $session->query("CREATE ROLE IF NOT EXISTS 'r'@'猫'");
-        $existing = $session->query('SHOW WARNINGS')[0];
-
-        self::assertInstanceOf(ResultSet::class, $created);
-        self::assertInstanceOf(ResultSet::class, $existing);
-        self::assertCount(9, $created->rows);
-        self::assertSame(['1366', '3163'], array_column($existing->rows, 1));
-    }
-
     public function testAbsentRefusesAnAccountNamedTwice(): void
     {
         $session = (new Instance())->connect();
@@ -273,39 +261,6 @@ final class CreateUserCommandTest extends TestCase
         $created = $session->query('SHOW CREATE USER u')[0];
         self::assertInstanceOf(ResultSet::class, $created);
         self::assertSame("CREATE USER `u`@`%` IDENTIFIED WITH 'caching_sha2_password' REQUIRE SSL WITH MAX_USER_CONNECTIONS 3 PASSWORD EXPIRE INTERVAL 5 DAY ACCOUNT LOCK PASSWORD HISTORY DEFAULT PASSWORD REUSE INTERVAL DEFAULT PASSWORD REQUIRE CURRENT DEFAULT ATTRIBUTE '{\"comment\": \"c\"}'", $created->rows[0][0]);
-    }
-
-    public function testRolesCreatesLockedRoles(): void
-    {
-        $session = (new Instance())->connect();
-
-        $session->query('CREATE ROLE r');
-
-        $created = $session->query('SHOW CREATE USER r')[0];
-        self::assertInstanceOf(ResultSet::class, $created);
-        self::assertSame("CREATE USER `r`@`%` IDENTIFIED WITH 'caching_sha2_password' REQUIRE NONE PASSWORD EXPIRE ACCOUNT LOCK PASSWORD HISTORY DEFAULT PASSWORD REUSE INTERVAL DEFAULT PASSWORD REQUIRE CURRENT DEFAULT", $created->rows[0][0]);
-    }
-
-    public function testRolesRefusesTheAnonymousUser(): void
-    {
-        $session = (new Instance())->connect();
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1396);
-        $this->expectExceptionMessage('Operation CREATE ROLE failed for anonymous user');
-
-        $session->query("CREATE ROLE ''");
-    }
-
-    public function testRolesNotesARoleNamedTwiceIfNotExists(): void
-    {
-        $session = (new Instance())->connect();
-
-        $session->query('CREATE ROLE IF NOT EXISTS r, r');
-
-        $warnings = $session->query('SHOW WARNINGS')[0];
-        self::assertInstanceOf(ResultSet::class, $warnings);
-        self::assertSame([['Note', '3163', "Authorization ID 'r'@'%' already exists."]], $warnings->rows);
     }
 
     public function testLegacyFollowsARefusedHashWithTheFailureOfMySql56(): void

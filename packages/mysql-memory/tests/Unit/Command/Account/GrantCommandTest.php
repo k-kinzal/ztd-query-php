@@ -132,65 +132,6 @@ final class GrantCommandTest extends TestCase
         ], $warnings->rows);
     }
 
-    public function testRolesRefusesALoop(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE ROLE r1');
-        $session->query('CREATE USER v');
-        $session->query('GRANT r1 TO v');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(4027);
-        $this->expectExceptionMessage('User account `r1`@`%` is directly or indirectly granted to the role `v`@`%`. The GRANT would create a loop');
-
-        $session->query('GRANT v TO r1');
-    }
-
-    public function testRolesLooksUpRolesForEachRecipientBeforeAdvancing(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE USER u');
-        $this->expectException(SqlError::class);
-        $this->expectExceptionMessage('Unknown authorization ID `missing_role`@`%`');
-
-        $session->query('GRANT missing_role TO u, missing_user');
-    }
-
-    public function testRolesRestoresEarlierGrantsAfterALaterRecipientFailure(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE USER u');
-        $session->query('CREATE ROLE r');
-
-        $session->run('GRANT r TO u, missing_user');
-
-        self::assertSame([], $session->instance->accounts->roles(new Identity('u', '%')));
-        self::assertSame([['Error', 3523, 'Unknown authorization ID `missing_user`@`%`']], $session->diagnostics->conditions);
-    }
-
-    public function testRolesRestoresEarlierRolesAfterALaterRoleFailure(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE USER u');
-        $session->query('CREATE ROLE r');
-
-        $session->run('GRANT r, missing_role TO u');
-
-        self::assertSame([], $session->instance->accounts->roles(new Identity('u', '%')));
-        self::assertSame([['Error', 3523, 'Unknown authorization ID `missing_role`@`%`']], $session->diagnostics->conditions);
-    }
-
-    public function testRolesRefusesAMissingAccountFirst(): void
-    {
-        $session = (new Instance())->connect();
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(3523);
-        $this->expectExceptionMessage('Unknown authorization ID `nobody`@`%`');
-
-        $session->query('GRANT rx TO nobody');
-    }
-
     public function testAccountsCreatesTheAccountsGrantNamesInMySql56(): void
     {
         $session = (new Instance('5.6.51'))->connect();
@@ -232,7 +173,9 @@ final class GrantCommandTest extends TestCase
     public function testIdentitiesKeepRoutineGrantsOutsideHostResolutionWarnings(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->semantics()->analyze("GRANT EXECUTE ON PROCEDURE d.p TO a@'猫'")->statement;
+        $operation = $session->semantics()->analyze("GRANT EXECUTE ON PROCEDURE d.p TO a@'猫'");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        $statement = $operation->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
         $identities = (new GrantCommand())->identities($statement, 'PROCEDURE', $session);
 

@@ -75,8 +75,17 @@ $begin->toString(); // => 'BEGIN WORK'
 Concrete values can also be constructed directly with a matching `LanguageProfile`.
 Constructors enforce structural alternatives and release-dependent XA identifier
 limits. Rendering uses the retained operands and profile. This API migration also
-includes the documented concrete `InsertStatement` form; other statement families
+includes the documented concrete `InsertStatement` form and the account statements
+`RenameUser`, `CreateRole` and `Privilege\GrantRoles`. Other statement families
 still return `Operation` and expose their structure through `statement`.
+
+These account statements retain their ordered operands even when the request has
+an intrinsic contradiction, such as creating the same role twice or granting a
+role to itself. Their nullable `problem` describes that condition; construction
+does not require an account catalog. Catalog-dependent conditions, including
+whether `IF NOT EXISTS` skips an existing account, belong to execution. The same
+concrete account types appear in stored-procedure bodies. There are no separate
+deferred role-creation, role-grant or account-rename types.
 
 A SELECT, TABLE, VALUES or set-operation statement has a `Statement\QueryRoot`
 root. Its `query` property holds the query body (`Statement\Query\Select`, for

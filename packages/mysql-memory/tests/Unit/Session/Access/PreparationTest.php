@@ -45,6 +45,7 @@ final class PreparationTest extends TestCase
         $session = (new Instance('5.7.44'))->connect();
         $session->query("SET @document='broken'");
         $operation = $session->analyze("SELECT JSON_EXTRACT(@document, '$') IS NULL");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $session->text = 'unrelated invalid input';
         $this->expectExceptionCode(3141);
 
@@ -145,16 +146,24 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql, true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1295);
         (new Preparation())->definitions($operation, $session);
     }
 
-    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE ROLE r'])]
+    public function testProtocolRefusesConcreteRoleCreationBeforeAccountMutation(): void
+    {
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Account\CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r'))]);
+        $this->expectExceptionCode(1295);
+        (new Preparation())->protocol($statement);
+    }
+
     #[\PHPUnit\Framework\Attributes\TestWith(['DROP ROLE r'])]
     public function testDefinitionsRefusesRoleDefinitionPreparationBeforeAccountMutation(string $sql): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql, true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1295);
         (new Preparation())->definitions($operation, $session);
     }
@@ -164,6 +173,7 @@ final class PreparationTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect();
         $session->query('USE d');
         $operation = $session->analyze('CREATE EVENT e ON SCHEDULE AT CAST(1 AS SIGNED ARRAY) DO SELECT 1', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1295);
 
         (new Preparation())->definitions($operation, $session);
@@ -174,6 +184,7 @@ final class PreparationTest extends TestCase
         $session = (new Instance('9.1.0', [], ['d']))->connect();
         $session->query('USE d');
         $operation = $session->analyze('CREATE EVENT e ON SCHEDULE AT ? DO SELECT ?', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(6413);
         $this->expectExceptionMessage('Dynamic parameters can only be used in DML statements.');
 
@@ -184,6 +195,7 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('DROP PROCEDURE IF EXISTS p', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1046);
 
         (new Preparation())->check($operation, $session);
@@ -193,6 +205,7 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('CREATE FUNCTION missing.f() RETURNS INT RETURN 1', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         $this->expectExceptionCode(1295);
         (new Preparation())->program($operation, $session);
@@ -211,6 +224,7 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT /*+ SET_VAR(div_precision_increment=10) */ ?/3', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         (new Preparation())->check($operation, $session);
 
@@ -225,6 +239,7 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql, true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1295);
         (new Preparation())->check($operation, $session);
     }
@@ -233,6 +248,7 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t(a) WITH PARSER missing', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1046);
         (new Preparation())->check($operation, $session);
     }
@@ -241,6 +257,7 @@ final class PreparationTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=1", true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $this->expectExceptionCode(1046);
         (new Preparation())->check($operation, $session);
     }

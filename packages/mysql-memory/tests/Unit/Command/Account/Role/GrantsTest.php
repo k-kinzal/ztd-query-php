@@ -13,12 +13,6 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class GrantsTest extends TestCase
 {
-    public function testHeaderDoesNotResolveRecipientsDuringPreparation(): void
-    {
-        $session = (new \MySqlMemory\Instance())->connect();
-        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $session->query("PREPARE s FROM 'GRANT r TO r'")[0]);
-    }
-
     public function testApplyRollsBackEarlierRoleEdgesWhenALaterRoleIsAnonymous(): void
     {
         $session = (new \MySqlMemory\Instance())->connect();

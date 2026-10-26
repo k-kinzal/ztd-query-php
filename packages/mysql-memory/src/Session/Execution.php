@@ -154,7 +154,7 @@ final class Execution
             (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         } elseif ($operation instanceof InsertStatement) {
             (new \MySqlMemory\Concurrency\Access())->writes([$operation->target->resolvedName ?? $operation->target->name], $session);
-        } elseif ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
+        } elseif ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
             (new \MySqlMemory\Concurrency\Access())->definition($session);
         } elseif (!$operation instanceof TransactionStatement) {
             throw new LogicException('No semantic preparation for ' . $operation::class);

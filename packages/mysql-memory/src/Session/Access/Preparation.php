@@ -36,7 +36,7 @@ final class Preparation
             (new \MySqlMemory\Command\Write\InsertValuesCommand())->prepare($operation, $session);
             return;
         }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
             (new \MySqlMemory\Session\Statement\Reading())->read($operation, $session);
             $this->protocol($operation);
             return;
@@ -88,7 +88,7 @@ final class Preparation
      */
     public function protocol(\SqlSemantics\Statement\Statement $statement): void
     {
-        if (in_array($statement::class, [\SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRecover::class], true)) {
+        if (in_array($statement::class, [\SqlSemantics\Platform\MySql\Statement\Account\CreateRole::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback::class, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRecover::class], true)) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
@@ -171,7 +171,7 @@ final class Preparation
         $dropEvent = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && $statement->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event;
         $event = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent || $dropEvent;
         $modern = in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true);
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\DropRole || ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && !$dropEvent) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference || ($event && !$modern)) {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\DropRole || ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram && !$dropEvent) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference || ($event && !$modern)) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         if ($event && \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation) !== []) {

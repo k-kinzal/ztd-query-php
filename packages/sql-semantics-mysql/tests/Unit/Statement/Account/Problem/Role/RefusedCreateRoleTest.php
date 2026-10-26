@@ -15,7 +15,7 @@ final class RefusedCreateRoleTest extends TestCase
 {
     public function testMessageDescribesTheFixedAccountDomain(): void
     {
-        $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(''))]);
-        self::assertSame('CREATE ROLE cannot define an anonymous account.', (new RefusedCreateRole($request))->message());
+        $roles = [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(''))];
+        self::assertSame('CREATE ROLE cannot define an anonymous account.', (new RefusedCreateRole(false, $roles))->message());
     }
 }

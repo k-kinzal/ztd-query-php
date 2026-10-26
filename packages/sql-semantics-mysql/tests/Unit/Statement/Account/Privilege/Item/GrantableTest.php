@@ -22,11 +22,12 @@ final class GrantableTest extends TestCase
     {
         $grant = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT, BACKUP_ADMIN ON *.* TO u');
 
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $grant);
         self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
         self::assertContainsOnlyInstancesOf(Grantable::class, $grant->statement->privileges);
         self::assertInstanceOf(StaticPrivilege::class, $grant->statement->privileges[0]);
         self::assertInstanceOf(DynamicPrivilege::class, $grant->statement->privileges[1]);
-        $roles = (new Semantics(Dialect::MySql))->analyze('GRANT r@h TO u')->statement;
+        $roles = (new Semantics(Dialect::MySql))->analyze('GRANT r@h TO u');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles::class, $roles);
         self::assertContainsOnlyInstancesOf(Grantable::class, $roles->roles);
         self::assertContainsOnlyInstancesOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege::class, $grant->statement->privileges);

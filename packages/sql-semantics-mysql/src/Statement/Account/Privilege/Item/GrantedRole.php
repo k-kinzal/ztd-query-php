@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a granted role
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT reader TO u')->statement->roles[0]->role->user->value // => 'reader'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT reader TO u')->roles[0]->role->user->value // => 'reader'
  */
 final class GrantedRole implements Grantable
 {

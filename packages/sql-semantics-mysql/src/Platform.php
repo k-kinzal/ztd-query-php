@@ -56,7 +56,7 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Publishes concrete INSERT, transaction and RENAME USER statements; other families await migration.
+     * Publishes concrete INSERT, transaction and migrated account statements; other families await migration.
      */
     public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
     {

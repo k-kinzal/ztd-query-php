@@ -154,7 +154,7 @@ final class DispatcherTest extends TestCase
         $dispatcher = new Dispatcher();
 
         self::assertSame(
-            [CreateUserCommand::class, CreateUserCommand::class, DropUserCommand::class, DropUserCommand::class, AlterUserCommand::class, RenameUserCommand::class, SetPasswordCommand::class, GrantCommand::class, GrantCommand::class, GrantCommand::class, RevokeCommand::class, RevokeCommand::class, RevokeCommand::class, RevokeCommand::class, RoleCommand::class, RoleCommand::class, RoleCommand::class, ShowGrantsCommand::class, ShowCreateUserCommand::class],
+            [CreateUserCommand::class, \MySqlMemory\Command\Account\Role\CreateRoleCommand::class, DropUserCommand::class, DropUserCommand::class, AlterUserCommand::class, RenameUserCommand::class, SetPasswordCommand::class, GrantCommand::class, \MySqlMemory\Command\Account\Role\GrantRolesCommand::class, GrantCommand::class, RevokeCommand::class, RevokeCommand::class, RevokeCommand::class, RevokeCommand::class, RoleCommand::class, RoleCommand::class, RoleCommand::class, ShowGrantsCommand::class, ShowCreateUserCommand::class],
             [
                 $dispatcher->command($node($session->analyze('CREATE USER u')))::class,
                 $dispatcher->command($node($session->analyze('CREATE ROLE r')))::class,

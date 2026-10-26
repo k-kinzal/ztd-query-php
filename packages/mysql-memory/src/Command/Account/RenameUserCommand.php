@@ -66,14 +66,7 @@ final class RenameUserCommand implements Command
     {
         $names = new Names($session->settings()->release());
         foreach ($statement->renamings as $renaming) {
-            foreach ([$renaming->from, $renaming->to] as $account) {
-                if ($notices && $account instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
-                    foreach ($account->warnings($statement->profile->grammar) as $warning) {
-                        $session->diagnostics->warning($warning->code(), $warning->message());
-                    }
-                }
-                $names->check([$account]);
-            }
+            $names->read([$renaming->from, $renaming->to], $session, $notices);
         }
     }
 

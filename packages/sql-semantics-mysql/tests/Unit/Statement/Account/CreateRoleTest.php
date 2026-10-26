@@ -20,21 +20,26 @@ final class CreateRoleTest extends TestCase
         self::assertSame('CREATE ROLE IF NOT EXISTS ``', (new Semantics(Dialect::MySql))->analyze("CREATE ROLE IF NOT EXISTS ''")->toString());
     }
 
-    public function testRenderRequiresANamedRole(): void
+    public function testRenderRetainsAnAnonymousRoleCondition(): void
     {
-        $this->expectExceptionMessage('CREATE ROLE cannot define an anonymous account.');
-        new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(" \t"))]);
+        $statement = new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(" \t"))]);
+        self::assertNotNull($statement->problem);
+        self::assertSame('CREATE ROLE cannot define an anonymous account.', $statement->problem->message());
     }
 
-    public function testDeriveStatementRecordsNoFact(): void
+    public function testDeriveStatementPublishesAConcreteRequest(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE ROLE r')->facts->diagnostics);
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE ROLE r');
+        self::assertInstanceOf(CreateRole::class, $statement);
+        self::assertNull($statement->problem);
+        self::assertNotNull($statement->source);
     }
 
-    public function testRenderRejectsDuplicateAccountIdentitiesBeforeOperationConstruction(): void
+    public function testRenderRetainsDuplicateAccountIdentitiesWithACondition(): void
     {
-        $this->expectExceptionMessage('CREATE ROLE cannot unconditionally define the same account twice.');
-        new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r')), new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r'))]);
+        $statement = new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r')), new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r'))]);
+        self::assertNotNull($statement->problem);
+        self::assertSame('CREATE ROLE cannot unconditionally define the same account twice.', $statement->problem->message());
     }
 
     public function testRenderKeepsConditionalDuplicates(): void
@@ -45,5 +50,57 @@ final class CreateRoleTest extends TestCase
     public function testRenderWritesTheRoles(): void
     {
         self::assertSame('CREATE ROLE IF NOT EXISTS r1, r2@h', (new Semantics(Dialect::MySql))->analyze('create role if not exists r1, r2@h')->toString());
+    }
+    public function testDeriveProgramKeepsAnUnreachedDefinition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE ROLE r, ''");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(CreateRole::class, $operation->statement->body);
+    }
+
+    public function testRenderPreservesTheCompleteDefinition(): void
+    {
+        self::assertSame('CREATE PROCEDURE p() CREATE ROLE r, ``@h', (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE ROLE r, ''@h")->toString());
+    }
+
+    public function testProblemKeepsItsOriginalRequest(): void
+    {
+        $request = new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(''))]);
+        self::assertNotNull($request->problem);
+        self::assertSame($request->roles, $request->problem->roles);
+    }
+
+    public function testRenderRetainsDuplicateAccountsInAStoredDefinition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE ROLE r, r');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(CreateRole::class, $operation->statement->body);
+        self::assertCount(2, $operation->statement->body->roles);
+        self::assertNotNull($operation->statement->body->problem);
+        self::assertSame('CREATE ROLE cannot unconditionally define the same account twice.', $operation->statement->body->problem->message());
+        self::assertSame('CREATE PROCEDURE p() CREATE ROLE r, r', $operation->toString());
+    }
+
+    public function testRenderAcceptsAConsistentDefinitionWithoutACondition(): void
+    {
+        $request = new CreateRole(false, [new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('r'))]);
+        self::assertNull($request->problem);
+    }
+    public function testToStringReconstructsTheCompleteRequest(): void
+    {
+        self::assertSame('CREATE ROLE r', (new Semantics(Dialect::MySql))->analyze('CREATE ROLE r')->toString());
+    }
+
+    public function testProfileRetainsTheSelectedLanguage(): void
+    {
+        self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql8044, (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('CREATE ROLE r')->profile()->grammar);
+    }
+
+    public function testDeclarationsDoesNotDeclareAccountsAsTables(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE ROLE r')->declarations());
     }
 }
