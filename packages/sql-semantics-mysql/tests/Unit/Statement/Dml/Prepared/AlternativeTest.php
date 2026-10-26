@@ -27,8 +27,10 @@ final class AlternativeTest extends TestCase
         $second = new Parameter();
         $statement = new QueryRoot(new Select([], [new SelectExpression($first), new SelectExpression($second)]));
         $profile = new Interpretation(new LanguageProfile(GrammarRelease::MySql847), Charset::known('utf8mb4'));
-        $alternative = new Alternative($profile, $statement);
+        $sources = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($first, 7, 1), new \SqlSemantics\Statement\Source\Origin($second, 10, 1)]);
+        $alternative = new Alternative($profile, $statement, $sources);
         self::assertSame([$first, $second], $alternative->parameters);
         self::assertSame($statement, $alternative->statement);
+        self::assertSame($sources, $alternative->sources);
     }
 }

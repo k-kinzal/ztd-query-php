@@ -20,6 +20,9 @@ use UnitEnum;
  * typed as Span are excluded. Explicit SQL spelling choices remain comparison
  * operands. A generated name whose quote choice is unspecified corresponds to
  * the concrete choice made by its codec; two explicit choices must agree.
+ * Exact comparison also preserves object sharing: equal-looking occurrences or
+ * declarations cannot replace references to the same occurrence or declaration.
+ * Several roots may be compared together to retain references between them.
  * This is a comparison of actual operands, not of a fingerprint or of text.
  *
  * @visibility SqlSemantics
@@ -41,12 +44,17 @@ final class Equivalence
      *
      * Exact comparison also checks source locations and unspecified quote choices;
      * use it before sharing values, where reconstruction equivalence is insufficient.
+     * Related roots must be supplied together, such as a statement and its origins.
+     *
+     * @param object|array<array-key, object> $left The first graph or its related roots
+     * @param object|array<array-key, object> $right The second graph or its related roots
      */
-    public function difference(object $left, object $right, bool $exact = false): ?string
+    public function difference(object|array $left, object|array $right, bool $exact = false): ?string
     {
         $lefts = [$left];
         $rights = [$right];
         $paths = ['statement'];
+        $references = new ReferencePairs();
         while ($paths !== []) {
             $a = array_pop($lefts);
             $b = array_pop($rights);
@@ -70,6 +78,12 @@ final class Equivalence
             }
             if ($a::class !== $b::class) {
                 return $path . ' (' . $a::class . ' against ' . $b::class . ')';
+            }
+            if ($exact && !$references->accept($a, $b)) {
+                return $path . ' (different reference sharing)';
+            }
+            if ($references->seen($a, $b)) {
+                continue;
             }
             foreach ($this->comparedMembers($a, $b, $exact) as $property) {
                 $lefts[] = $property->getValue($a);

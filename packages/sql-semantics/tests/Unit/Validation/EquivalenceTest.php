@@ -20,9 +20,57 @@ use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Validation\Equivalence;
 
 #[CoversClass(Equivalence::class)]
+#[CoversClass(\SqlSemantics\Validation\ReferencePairs::class)]
 #[Medium]
 final class EquivalenceTest extends TestCase
 {
+    public function testExactComparisonDistinguishesSharedFromEqualLookingOccurrences(): void
+    {
+        $shared = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $comparison = new Equivalence();
+
+        self::assertNull($comparison->difference([$shared, $shared], [$first, $second]));
+        self::assertNotNull($comparison->difference([$shared, $shared], [$first, $second], true));
+        self::assertNotNull($comparison->difference([$first, $second], [$shared, $shared], true));
+        self::assertNull($comparison->difference([$shared, $shared], [$first, $first], true));
+    }
+
+    public function testExactComparisonRetainsBindingsBetweenRelatedRoots(): void
+    {
+        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $otherFirst = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $otherSecond = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $left = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($first), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($second)]));
+        $right = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($otherFirst), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($otherSecond)]));
+        $origins = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($first, 7, 1), new \SqlSemantics\Statement\Source\Origin($second, 10, 1)]);
+        $correct = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($otherFirst, 7, 1), new \SqlSemantics\Statement\Source\Origin($otherSecond, 10, 1)]);
+        $swapped = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($otherSecond, 7, 1), new \SqlSemantics\Statement\Source\Origin($otherFirst, 10, 1)]);
+        $comparison = new Equivalence();
+
+        self::assertNull($comparison->difference($left, $right, true));
+        self::assertNull($comparison->difference($origins, $swapped, true));
+        self::assertNull($comparison->difference(['structure' => $left, 'sources' => $origins], ['structure' => $right, 'sources' => $correct], true));
+        self::assertNotNull($comparison->difference(['structure' => $left, 'sources' => $origins], ['structure' => $right, 'sources' => $swapped], true));
+    }
+
+    public function testExactComparisonPreservesTheReferencedRelationAndSlot(): void
+    {
+        $relation = new \SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')));
+        $other = new \SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')));
+        $unrelated = new \SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')));
+        $slot = new \SqlSemantics\Statement\Shape\OutputSlot(new Name('a'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer), Nullability::NotNull);
+        $otherSlot = new \SqlSemantics\Statement\Shape\OutputSlot(new Name('a'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer), Nullability::NotNull);
+        $left = ['relation' => $relation, 'slot' => $slot, 'reference' => new \SqlSemantics\Statement\Reference\Column\ResolvedColumn($relation, $slot)];
+        $right = ['relation' => $other, 'slot' => $otherSlot, 'reference' => new \SqlSemantics\Statement\Reference\Column\ResolvedColumn($other, $otherSlot)];
+        $wrong = ['relation' => $other, 'slot' => $otherSlot, 'reference' => new \SqlSemantics\Statement\Reference\Column\ResolvedColumn($unrelated, $otherSlot)];
+
+        self::assertNull((new Equivalence())->difference($left, $right, true));
+        self::assertNotNull((new Equivalence())->difference($left, $wrong, true));
+    }
+
     public function testComparedMembersIncludesUnspecifiedQuoteChoicesOnlyWhenExact(): void
     {
         $comparison = new Equivalence();

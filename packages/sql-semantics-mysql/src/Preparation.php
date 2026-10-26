@@ -51,7 +51,7 @@ final class Preparation
             $candidate = $this->alternative($sql, $interpretation, $platform, $parser);
             $shared = null;
             foreach (array_reverse($distinct) as $known) {
-                if ($equivalence->difference($known->statement, $candidate->statement, true) === null && $equivalence->difference($known->sources, $candidate->sources, true) === null) {
+                if ($equivalence->difference(['structure' => $known->statement, 'sources' => $known->sources], ['structure' => $candidate->statement, 'sources' => $candidate->sources], true) === null) {
                     $shared = $known;
                     break;
                 }

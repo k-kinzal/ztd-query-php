@@ -1154,10 +1154,13 @@ This is an intermediate C migration, not completion of the binding contract:
 Focused execution checks pass four cases and 28 assertions: clause-boundary
 reinterpretation, active-only dependencies, syntax and binding refusal retry,
 and preservation of SQL PREPARE parameter domains after a failed refresh. A
-genuine Eris property constructs complete star-selection preparation definitions
-and executes dependent CREATE TABLE / prepare / ALTER TABLE / execute sequences.
-Its 100 trials pass 1,000 assertions with `ERIS_SEED=20261026`; this covers the
-stated 8.4.7 family, not all preparation statements or native sequence agreement.
+initial Eris property constructed complete star-selection preparation definitions
+but created the prerequisite and modifying DDL inside its assertion callback.
+Its 100 trials and 1,000 assertions with `ERIS_SEED=20261026` were execution
+evidence for that 8.4.7 family, not proof that the complete dependent sequence
+was generated and shrunk together. The correction below moves that construction
+into generator composition. Neither run establishes all preparation statements
+or native sequence agreement.
 The legacy short cache regression still exceeds its one-second limit. The
 complete-preparation PHPDoc example also exceeded its ten-second limit; the
 other ten selected examples pass. Neither timeout is suppressed or counted as
@@ -1185,6 +1188,51 @@ pass across the four affected packages. Their tree, size and dependency guards
 pass without configuration changes. The reviewed schema check covers 1,052 MySQL
 semantic value definitions. These targeted results do not supersede the last
 failing complete PHPStan run or establish corpus/seedless acceptance.
+
+### Reference identity at the preparation boundary
+
+Exact comparison now checks the sharing of object references as well as their
+field values. Two equal-looking relation occurrences, parameter markers or
+declarations cannot substitute for one shared identity. The pairing is local to
+one comparison; no process identifier is published in a semantic value. Ordinary
+reconstruction correspondence still compares values and spelling choices under
+its existing source-location policy.
+
+Preparation compares the retained statement and its sources as related roots of
+one graph. Comparing those roots separately loses their cross-references: two
+equal-looking parameter occurrences can exchange their origins while both
+separate comparisons report equality. The new regression demonstrates that case
+and requires the combined comparison to reject it. Graph traversal also avoids
+repeating already visited object pairs.
+
+An Alternative now rejects origins and spelling notices belonging to another
+statement, sources attached to a syntax refusal, and repeated parameter identity
+across written positions. Source-free values still use the existing immutable
+audit cache; ownership checks require a complete object listing whenever origins
+or notices are present. These checks do not establish that arbitrary alternatives
+represent the same written SQL under every profile. That cross-interpretation
+contract and local semantic ownership remain unfinished.
+
+The Eris preparation property now generates CREATE TABLE, the complete prepared
+definition and ALTER TABLE together with `map(tuple(...))`. The mapping retains
+one table-name identity across all three values and rebuilds the sequence when
+Eris shrinks the suffixes. The assertion callback only sets up the runtime,
+binds and executes the generated values, and checks their state and output; it
+does not construct or repair semantic statement inputs. The remaining legacy
+binding/Publication path is still an open C requirement. This limited property
+does not satisfy the missing per-type generator inventory.
+
+Validation passes 50 core validation tests / 103 assertions, 12 preparation-model
+tests / 23 assertions, four preparation compiler tests / 23 assertions and nine
+selected preparation examples. The revised Eris sequence passes 100 trials /
+1,600 assertions with `ERIS_SEED=20261026`, under the unchanged sixty-second
+limit. Changed-file PHPStan, formatting and PHP 8.1 checks pass; strict autoload,
+tree, size and dependency guards pass for the two changed semantic packages.
+The prepared execution regressions pass five cases / 33 assertions, including
+binary preparation and failed-refresh retry. The cache unit suite still reports
+one test exceeding its unchanged one-second limit (four cases / ten assertions,
+one risky test); that suite is not a pass. No corpus or 900-second acceptance
+success is inferred from these targeted checks.
 
 ## Historical investigation results
 

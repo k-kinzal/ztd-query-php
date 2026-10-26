@@ -54,25 +54,33 @@ final class PreparedDefinitionExecutionProperties extends TestCase
     #[Test]
     public function satisfiesInvalidationExpandsTheGeneratedStarAgainstTheChangedTable(): void
     {
-        $definitions = Generators::map(static function (int $suffix): Definition {
+        $sequences = Generators::map(static function (array $suffixes): array {
+            [$tableSuffix, $columnSuffix] = $suffixes;
             $profiles = Interpretation::all(GrammarRelease::MySql847, ParameterStyle::Native);
-            $table = new QualifiedName(new Name('target_' . $suffix));
+            $table = new QualifiedName(new Name('target_' . $tableSuffix));
             $statement = new QueryRoot(new Select([], [new Star()], new TableReference($table)));
             $alternatives = array_map(static fn (Interpretation $profile): Alternative => new Alternative($profile, $statement), $profiles);
-            return new Definition($profiles[0], new Name('pbt'), $alternatives);
-        }, Generators::nat());
+            $first = new ColumnDefinition(new ColumnName(new Name('original')), new OrdinaryColumn(new Integral(IntegralKind::Int)));
+            $added = new ColumnDefinition(new ColumnName(new Name('added_' . $columnSuffix)), new OrdinaryColumn(new Integral(IntegralKind::Int)));
+            return [new CreateTable($table, [$first]), new Definition($profiles[0], new Name('pbt'), $alternatives), new AlterTable($table, [new AddColumn($added)])];
+        }, Generators::tuple(Generators::nat(), Generators::nat()));
 
-        $this->forAll($definitions, Generators::nat())->then(static function (Definition $input, int $suffix): void {
+        $this->forAll($sequences)->then(static function (array $sequence): void {
+            [$create, $input, $alter] = $sequence;
+            self::assertInstanceOf(CreateTable::class, $create);
+            self::assertInstanceOf(Definition::class, $input);
+            self::assertInstanceOf(AlterTable::class, $alter);
+            self::assertInstanceOf(AddColumn::class, $alter->commands[0]);
             $initial = $input->select($input->initial);
             self::assertInstanceOf(QueryRoot::class, $initial->statement);
             self::assertInstanceOf(Select::class, $initial->statement->query);
             self::assertInstanceOf(TableReference::class, $initial->statement->query->from);
-            $table = $initial->statement->query->from->name;
+            self::assertSame($create->name, $initial->statement->query->from->name);
+            self::assertSame($create->name, $alter->table);
             $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
             $binding = new Binding();
             $execution = new Execution($session);
-            $first = new ColumnDefinition(new ColumnName(new Name('original')), new OrdinaryColumn(new Integral(IntegralKind::Int)));
-            $execution->statement($binding->statement($session, new CreateTable($table, [$first])));
+            $execution->statement($binding->statement($session, $create));
             $bound = $binding->statement($session, $initial->statement, profile: $initial->interpretation->language);
             $cache = PreparedCache::capture($bound, $session, $input);
             $parameters = ParameterBindings::capture($bound);
@@ -80,14 +88,13 @@ final class PreparedDefinitionExecutionProperties extends TestCase
             self::assertInstanceOf(ResultSet::class, $before);
             self::assertCount(1, $before->columns);
 
-            $added = new ColumnDefinition(new ColumnName(new Name('added_' . $suffix)), new OrdinaryColumn(new Integral(IntegralKind::Int)));
-            $execution->statement($binding->statement($session, new AlterTable($table, [new AddColumn($added)])));
+            $execution->statement($binding->statement($session, $alter));
             self::assertTrue($cache->changed($session));
             $cache->refresh($session, $parameters, []);
             $after = $cache->definition->execute($session, 'generated preparation', []);
             self::assertInstanceOf(ResultSet::class, $after);
             self::assertCount(2, $after->columns);
-            self::assertSame('added_' . $suffix, $after->columns[1]->name);
+            self::assertSame($alter->commands[0]->column->name->column->value, $after->columns[1]->name);
             self::assertFalse($cache->changed($session));
         });
     }
