@@ -32,6 +32,11 @@ final class Equivalence
     private array $properties = [];
 
     /**
+     * @var array<class-string, list<ReflectionProperty>>
+     */
+    private array $exactProperties = [];
+
+    /**
      * Answers the path of the first difference, or null when the structures correspond.
      *
      * Exact comparison also checks source locations and unspecified quote choices;
@@ -83,7 +88,7 @@ final class Equivalence
      */
     public function comparedMembers(object $left, object $right, bool $exact): array
     {
-        $members = $exact ? (new ReflectionClass($left))->getProperties() : $this->members($left);
+        $members = $exact ? ($this->exactProperties[$left::class] ??= (new ReflectionClass($left))->getProperties()) : $this->members($left);
         if (!$exact && $left instanceof \SqlSemantics\Statement\Identifier\Name && $right instanceof \SqlSemantics\Statement\Identifier\Name && ($left->quote === null || $right->quote === null)) {
             return array_values(array_filter($members, static fn (ReflectionProperty $property): bool => $property->getName() !== 'quote'));
         }

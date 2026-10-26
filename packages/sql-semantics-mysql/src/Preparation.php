@@ -50,7 +50,7 @@ final class Preparation
         foreach (Interpretation::all($initial->language->grammar, $initial->language->parameters) as $interpretation) {
             $candidate = $this->alternative($sql, $interpretation, $platform, $parser);
             $shared = null;
-            foreach ($distinct as $known) {
+            foreach (array_reverse($distinct) as $known) {
                 if ($equivalence->difference($known->statement, $candidate->statement, true) === null && $equivalence->difference($known->sources, $candidate->sources, true) === null) {
                     $shared = $known;
                     break;
