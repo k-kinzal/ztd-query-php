@@ -95,7 +95,7 @@
 <span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Platform</span> <span class="tok-kw">implements</span> <span class="tok-id">\SqlSemantics\Contract\Platform</span></span>
 <span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>{</span>
 <span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     * Publishes concrete INSERT and transaction statements; other families await migration.</span></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     * Publishes concrete INSERT, transaction and RENAME USER statements; other families await migration.</span></span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">publish</span>(<span class="tok-id">AnalysisContext</span> <span class="tok-var">$context</span>, <span class="tok-id">\SqlSemantics\Statement\Statement</span> <span class="tok-var">$statement</span>, <span class="tok-id">\SqlSemantics\Statement\Source\SourceMap</span> <span class="tok-var">$sources</span>): <span class="tok-id">\SqlSemantics\Statement\AnalyzedStatement</span></span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    {</span>
