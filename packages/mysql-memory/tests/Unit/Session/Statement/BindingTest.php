@@ -21,7 +21,9 @@ final class BindingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $statement = $session->analyze('SELECT * FROM t')->statement;
+        $analyzed = $session->analyze('SELECT * FROM t');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $analyzed);
+        $statement = $analyzed->statement;
         $session->query('ALTER TABLE t ADD b INT');
         $session->text = 'unrelated invalid source';
 
@@ -46,5 +48,29 @@ final class BindingTest extends TestCase
 
         self::assertSame([Kind::Null, Field::VarString], [$null->kind, $null->field]);
         self::assertSame([Kind::Decimal, 2], [$numeric->kind, $numeric->decimals]);
+    }
+
+    public function testStatementPublishesConcreteInsertValuesAgainstCurrentDeclarations(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $parsed = (new \SqlSemantics\Platform\MySql\Platform())->lower($session->semantics()->parser()->parse("INSERT INTO t VALUES ('42')"), $session->semantics()->profile(), new \SqlSemantics\Lowering\Leaves());
+        $bound = (new Binding())->statement($session, $parsed[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement::class, $bound);
+        self::assertSame('d', $bound->target->resolvedName?->schema?->value);
+        $reply = (new \MySqlMemory\Session\Execution($session))->statement($bound);
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(1, $reply->affectedRows);
+    }
+
+    public function testContextRetainsTheCurrentDatabaseAndParameterDomains(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $parameter = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $statement = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($parameter)]));
+        $context = (new Binding())->context($session, $statement, [[42, Domain::integer()]], null, null);
+        self::assertSame('d', $context->declarationSchema->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::class, $context->session);
+        self::assertSame(Kind::Integer, $context->session->parameters[0]->kind);
     }
 }

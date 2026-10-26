@@ -508,9 +508,10 @@ set catalog, with the server's client-encoding restrictions applied; for example
 Session modes such as REAL_AS_FLOAT and strict conversion modes are separate
 typed-binding or execution inputs, not additional lexer branches. Syntax-refusal
 alternatives and deduplication of identical semantic values must be explicit.
-The current statement
-types, generated preparation definitions and native sequence observation do not
-yet implement it. C cannot close by substituting the existing ordinary Binding
+The complete contract is still unimplemented. The preparation boundary checkpoint
+below captures the finite interpretation domain, but local statement ownership,
+generated cross-interpretation relationships and native sequence observation
+remain open. C cannot close by substituting the existing ordinary Binding
 operation for PreparedCache's reanalysis call.
 
 ### One execution lifecycle
@@ -1002,6 +1003,80 @@ multi-query ErrorsTest exceeds its one-second limit. An isolated retry also
 times out; neither run counts as a complete pass. Changed-file PHPStan, formatting,
 PHP 8.1 compatibility, the package size/tree guards and Deptrac pass. Protected
 configuration and the timeout limit are unchanged.
+
+### Typed preparation input boundary
+
+SQL PREPARE and COM_STMT_PREPARE now capture a `Definition` at the original
+input boundary. It contains an `Alternative` for every `Interpretation`: the
+32 lexer configurations and every client encoding allowed by the release's
+catalog. The 8.4.7 domain contains 1,184 alternatives (37 client encodings).
+Each alternative owns a semantic statement or a bounded `SyntaxRefusal`, optional
+source locations, and parameter occurrences in written order. No parser node,
+input buffer, AnalysisContext or Facts registry is retained in the definition.
+The constructor rejects missing or duplicate interpretation keys. Only actual
+parser refusals become SyntaxRefusal; lowering gaps and constructor failures
+are not relabeled as syntax errors of an inactive alternative.
+
+The compiler reads all interpretations. Exact value comparison, including source
+locations and quote choices, shares identical results after lowering. Lexical
+parser views share loaded grammar artifacts without mutating the original
+parser. Completed full value-graph audits can be reused by later validation-only
+calls; full listings still traverse and report every object. Caches remain in
+the validator, outside semantic values. These are production input-boundary
+operations, not a private verifier.
+
+`PreparedCache::refresh` no longer accepts SQL text or calls Session::analyze.
+It selects a retained alternative, binds it in the preparation database against
+current declarations, prepares it and replaces the active value and dependencies
+only after those steps succeed. Only the active interpretation's declarations
+invalidate the cache. Both protocols stage parameter-domain changes until
+repreparation succeeds. A failed syntax or name interpretation leaves the previous
+cache available for retry. A directly constructed cache without a complete
+preparation definition fails explicitly if metadata invalidates it; it has no
+source fallback.
+
+This is an intermediate C migration, not completion of the binding contract:
+
+- Most alternatives are still legacy statement structures. Binding publishes
+  through the dialect boundary, but downstream Operation/Publication still
+  derives external Facts and reparses rendered SQL. That remaining parser path
+  must be removed with the local semantic ownership migration.
+- Deferred preparation instructions still use their old path. Legitimate
+  grammar-valid semantic refusals in inactive interpretations need complete
+  owning values; the compiler currently exposes their lowering failures.
+- Domain completeness does not prove that arbitrarily constructed alternatives
+  share one written form. Delimiter/escape ownership and parameter identities
+  across lexical boundary changes, including changed marker counts, remain
+  unfinished. The new values do not close their missing-generator requirements.
+- Exhaustive initial compilation is too slow for existing short-running tests.
+  Parser reuse bounds memory, but lowering still processes every interpretation.
+  Optimization must preserve complete interpretation coverage and the immutable
+  model boundary; no profile sampling, source fallback or timeout increase is
+  acceptable.
+
+Focused execution checks pass four cases and 28 assertions: clause-boundary
+reinterpretation, active-only dependencies, syntax and binding refusal retry,
+and preservation of SQL PREPARE parameter domains after a failed refresh. A
+genuine Eris property constructs complete star-selection preparation definitions
+and executes dependent CREATE TABLE / prepare / ALTER TABLE / execute sequences.
+Its 100 trials pass 1,000 assertions with `ERIS_SEED=20261026`; this covers the
+stated 8.4.7 family, not all preparation statements or native sequence agreement.
+The legacy short cache regression still exceeds its one-second limit. The
+complete-preparation PHPDoc example also exceeded its ten-second limit; the
+other ten selected examples pass. Neither timeout is suppressed or counted as
+passing acceptance. The additional binary-protocol preparation regression also
+exceeds its 60-second limit before its first assertion, so that path has no new
+passing execution evidence at this checkpoint. The four new model types have explicit retained-field
+schemas; the independent missing-generator gate remains in force.
+
+The final semantic preparation/model subset passes 16 tests / 45 assertions.
+Parser lexical-view regressions pass 14 / 36; exact comparison and immutable-graph
+validation pass 23 / 49. Binding and the session input adapter pass 5 / 18.
+Changed-file PHPStan, formatting, PHP 8.1 compatibility and strict autoload checks
+pass across the four affected packages. Their tree, size and dependency guards
+pass without configuration changes. The reviewed schema check covers 1,052 MySQL
+semantic value definitions. These targeted results do not supersede the last
+failing complete PHPStan run or establish corpus/seedless acceptance.
 
 ## Historical investigation results
 

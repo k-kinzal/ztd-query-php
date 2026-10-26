@@ -53,7 +53,9 @@ final class MySqlParser implements ReductionParser
 
     private readonly ParseTable $table;
 
-    private readonly MySqlLexer $lexer;
+    private MySqlLexer $lexer;
+
+    private readonly KeywordTable $keywords;
 
     /**
      * Loads the parser of one release.
@@ -70,7 +72,21 @@ final class MySqlParser implements ReductionParser
     {
         $this->version = MySqlVersion::resolve($version, $registry);
         $this->table = (new TableFile())->load($this->version->release->tablePath);
-        $this->lexer = new MySqlLexer(KeywordTable::load($this->version->release->keywordPath), $this->version, $mode, parameters: $parameters, clientCharset: $clientCharset);
+        $this->keywords = KeywordTable::load($this->version->release->keywordPath);
+        $this->lexer = new MySqlLexer($this->keywords, $this->version, $mode, parameters: $parameters, clientCharset: $clientCharset);
+    }
+
+    /**
+     * Creates an independent lexical view over this parser's loaded grammar.
+     *
+     * The grammar and keyword tables are shared; neither this parser nor its
+     * lexer changes. Enumerating input interpretations need not reload artifacts.
+     */
+    public function withSettings(SqlMode $mode, ParameterSyntax $parameters = ParameterSyntax::Native, ?string $clientCharset = null): self
+    {
+        $parser = clone $this;
+        $parser->lexer = new MySqlLexer($this->keywords, $this->version, $mode, parameters: $parameters, clientCharset: $clientCharset);
+        return $parser;
     }
 
     /**

@@ -53,6 +53,19 @@ use SqlParser\Parser\SyntaxException;
 #[Small]
 final class MySqlParserTest extends TestCase
 {
+    public function testWithSettingsKeepsLexicalViewsIndependent(): void
+    {
+        $original = new MySqlParser('mysql-8.4.7');
+        $quoted = $original->withSettings(new SqlMode(ansiQuotes: true, pipesAsConcat: true));
+        $sql = 'SELECT "a", 1||2';
+        self::assertSame('TEXT_STRING', $original->tokenize($sql)[1]->name);
+        self::assertSame('IDENT_QUOTED', $quoted->tokenize($sql)[1]->name);
+        self::assertSame('TEXT_STRING', $original->tokenize($sql)[1]->name);
+        self::assertSame($original->version(), $quoted->version());
+        self::assertSame($sql, $original->parse($sql)->toString());
+        self::assertSame($sql, $quoted->parse($sql)->toString());
+    }
+
     public function testVersion(): void
     {
         self::assertSame('mysql-8.4.7', (new MySqlParser())->version());

@@ -104,6 +104,7 @@ final class Statements
                 $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
             }
             $parameters = count($bindings->types);
+            $input = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
@@ -117,7 +118,7 @@ final class Statements
         if ($session->preparation->triggerResourceLoads !== $loads) {
             $this->triggerLoad = [$id, (int) $session->variables->read('statement_id')];
         }
-        $this->prepared[$id] = [$sql, $parameters, [], [], $bindings, \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session)];
+        $this->prepared[$id] = [$sql, $parameters, [], [], $bindings, \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session, $input)];
         return $this->metadata($id, $columns, $parameters);
     }
 
@@ -188,14 +189,16 @@ final class Statements
             $values[$index] = (new Binary())->text($data, Field::Blob, $collation);
         }
         $this->prepared[$id] = [$sql, $count, $types, [], $derived, $definition];
-        if (version_compare($session->instance->version, '8.0.22', '>=') && $derived->changed($values)) {
+        $candidate = new \MySqlMemory\Command\Prepared\ParameterBindings($derived->types);
+        if (version_compare($session->instance->version, '8.0.22', '>=') && $candidate->changed($values)) {
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         }
         $previous = $session->preparation->domains;
-        $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $derived->domains() : [];
+        $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $candidate->domains() : [];
         try {
-            $definition->refresh($session, $sql, $derived, $values);
+            $definition->refresh($session, $candidate, $values);
+            $derived->types = $candidate->types;
             $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $derived->domains() : [];
             $answers = $definition->definition->run($session, $sql, $values);
         } catch (SqlError $error) {

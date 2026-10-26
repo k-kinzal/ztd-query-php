@@ -7,6 +7,7 @@ namespace Tests\Unit\Validation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
@@ -22,6 +23,31 @@ use SqlSemantics\Validation\Equivalence;
 #[Medium]
 final class EquivalenceTest extends TestCase
 {
+    public function testComparedMembersIncludesUnspecifiedQuoteChoicesOnlyWhenExact(): void
+    {
+        $comparison = new Equivalence();
+        $generated = new Name('a');
+        $quoted = new Name('a', \SqlSemantics\Statement\Identifier\NameQuote::Backtick);
+        $exact = array_map(static fn (ReflectionProperty $property): string => $property->getName(), $comparison->comparedMembers($generated, $quoted, true));
+        $corresponding = array_map(static fn (ReflectionProperty $property): string => $property->getName(), $comparison->comparedMembers($generated, $quoted, false));
+        self::assertContains('quote', $exact);
+        self::assertNotContains('quote', $corresponding);
+    }
+
+    public function testDifferenceCanRequireExactLocationsAndQuoteChoicesBeforeSharing(): void
+    {
+        $comparison = new Equivalence();
+        $left = new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['42'], location: new \SqlSemantics\Statement\Source\Span(12, 4));
+        $moved = new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['42'], location: new \SqlSemantics\Statement\Source\Span(25, 4));
+        self::assertNull($comparison->difference($left, $moved));
+        self::assertNotNull($comparison->difference($left, $moved, true));
+        $generated = new Name('a');
+        $quoted = new Name('a', \SqlSemantics\Statement\Identifier\NameQuote::Backtick);
+        self::assertNull($comparison->difference($generated, $quoted));
+        self::assertNotNull($comparison->difference($generated, $quoted, true));
+        self::assertNull($comparison->difference($quoted, new Name('a', \SqlSemantics\Statement\Identifier\NameQuote::Backtick), true));
+    }
+
     public function testDifferenceIsNullForTwoAnalysesOfTheSameRequest(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

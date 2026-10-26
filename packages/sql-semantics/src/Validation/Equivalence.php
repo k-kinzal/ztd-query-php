@@ -33,8 +33,11 @@ final class Equivalence
 
     /**
      * Answers the path of the first difference, or null when the structures correspond.
+     *
+     * Exact comparison also checks source locations and unspecified quote choices;
+     * use it before sharing values, where reconstruction equivalence is insufficient.
      */
-    public function difference(object $left, object $right): ?string
+    public function difference(object $left, object $right, bool $exact = false): ?string
     {
         $lefts = [$left];
         $rights = [$right];
@@ -63,10 +66,7 @@ final class Equivalence
             if ($a::class !== $b::class) {
                 return $path . ' (' . $a::class . ' against ' . $b::class . ')';
             }
-            foreach ($this->members($a) as $property) {
-                if ($a instanceof \SqlSemantics\Statement\Identifier\Name && $b instanceof \SqlSemantics\Statement\Identifier\Name && $property->getName() === 'quote' && ($a->quote === null || $b->quote === null)) {
-                    continue;
-                }
+            foreach ($this->comparedMembers($a, $b, $exact) as $property) {
                 $lefts[] = $property->getValue($a);
                 $rights[] = $property->getValue($b);
                 $paths[] = $path . '->' . $property->getName();
@@ -74,6 +74,20 @@ final class Equivalence
         }
 
         return null;
+    }
+
+    /**
+     * Selects fields for reconstruction correspondence or exact immutable sharing.
+     *
+     * @return list<ReflectionProperty>
+     */
+    public function comparedMembers(object $left, object $right, bool $exact): array
+    {
+        $members = $exact ? (new ReflectionClass($left))->getProperties() : $this->members($left);
+        if (!$exact && $left instanceof \SqlSemantics\Statement\Identifier\Name && $right instanceof \SqlSemantics\Statement\Identifier\Name && ($left->quote === null || $right->quote === null)) {
+            return array_values(array_filter($members, static fn (ReflectionProperty $property): bool => $property->getName() !== 'quote'));
+        }
+        return $members;
     }
 
     /**

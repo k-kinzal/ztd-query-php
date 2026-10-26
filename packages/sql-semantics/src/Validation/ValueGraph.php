@@ -52,7 +52,7 @@ final class ValueGraph
     public function objects(object $root, bool $reuse = false): array
     {
         $domain = implode("\0", $this->namespaces);
-        if ($reuse && !isset(self::$audited[$domain])) {
+        if (!isset(self::$audited[$domain])) {
             /** @var WeakMap<object, true> $cache */
             $cache = new WeakMap();
             self::$audited[$domain] = $cache;
@@ -85,10 +85,8 @@ final class ValueGraph
             }
         }
 
-        if ($verified !== null) {
-            foreach ($objects as $object) {
-                $verified[$object] = true;
-            }
+        foreach ($objects as $object) {
+            self::$audited[$domain][$object] = true;
         }
 
         return $objects;

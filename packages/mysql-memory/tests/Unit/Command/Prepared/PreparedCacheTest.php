@@ -21,6 +21,7 @@ final class PreparedCacheTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); CREATE TABLE u(b INT)');
         $operation = $session->analyze('SELECT a FROM t', true);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $cache = PreparedCache::capture($operation, $session);
 
@@ -61,15 +62,17 @@ final class PreparedCacheTest extends TestCase
         $session->query("SET sql_mode=''; CREATE DATABASE a; CREATE DATABASE b; USE a; CREATE TABLE t(a INT); INSERT INTO t VALUES (7)");
         $sql = 'SELECT *, "a", 1||2 FROM t';
         $operation = $session->analyze($sql, true);
-        $cache = PreparedCache::capture($operation, $session);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        $input = (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
+        $cache = PreparedCache::capture($operation, $session, $input);
         $types = ParameterBindings::capture($operation);
-        $cache->refresh($session, 'unrelated invalid source', $types, []);
+        $cache->refresh($session, $types, []);
 
         self::assertInstanceOf(\MySqlMemory\Command\Prepared\PreparedStatement::class, $cache->definition);
         self::assertSame($operation->statement, $cache->definition->statement);
 
         $session->query("ALTER TABLE t ADD b INT DEFAULT 9; USE b; SET sql_mode='ANSI_QUOTES,PIPES_AS_CONCAT'");
-        $cache->refresh($session, $sql, $types, []);
+        $cache->refresh($session, $types, []);
         $result = $cache->definition->execute($session, 'unrelated invalid source', []);
 
         self::assertInstanceOf(\MySqlMemory\Command\Prepared\PreparedStatement::class, $cache->definition);

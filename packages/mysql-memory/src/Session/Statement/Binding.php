@@ -7,10 +7,13 @@ namespace MySqlMemory\Session\Statement;
 use MySqlMemory\Hint\Hints;
 use MySqlMemory\Session\Resolution;
 use MySqlMemory\Session\Session;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Statement\AnalyzedStatement;
 use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Source\SourceMap;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,6 +33,26 @@ final class Binding
      */
     public function operation(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null): Operation
     {
+        return new Operation($this->context($session, $statement, $parameters, $profile, $literals), $statement);
+    }
+
+    /**
+     * Publishes a bound statement through the dialect's concrete-statement boundary.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     */
+    public function statement(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null, SourceMap $sources = new SourceMap()): AnalyzedStatement
+    {
+        return Platforms::of('mysql')->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, $sources);
+    }
+
+    /**
+     * Captures the declaration and parameter inputs while typing hints apply.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     */
+    public function context(Session $session, Statement $statement, array $parameters, ?LanguageProfile $profile, ?Settings $literals): AnalysisContext
+    {
         $typing = (new Hints())->typingValue($statement, $session);
         try {
             $session->instance->dictionary->temporaries = $session->temporaries;
@@ -37,7 +60,7 @@ final class Binding
             $profile ??= $session->semantics()->profile();
             $database = $session->variables->database;
             $context = Platforms::of('mysql')->context($profile, $database === '' ? null : [$database], $session->instance->dictionary->declarations(), true);
-            return new Operation($context->withSession($session->resolution($this->parameters($session, $parameters), $literals)), $statement);
+            return $context->withSession($session->resolution($this->parameters($session, $parameters), $literals));
         } finally {
             $typing->restore($session);
         }

@@ -1081,16 +1081,36 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDeleteForm": {
         "name": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Alternative": {
+        "interpretation": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Interpretation",
+        "parameters": "array",
+        "sources": "SqlSemantics\\Statement\\Source\\SourceMap",
+        "statement": "SqlSemantics\\Statement\\Statement|SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\SyntaxRefusal"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Deallocate": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Definition": {
+        "alternatives": "array",
+        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "initial": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Interpretation"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Execute": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "variables": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Interpretation": {
+        "client": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "language": "SqlSemantics\\Contract\\LanguageProfile"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Prepare": {
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "source": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\SyntaxRefusal": {
+        "line": "int",
+        "near": "string",
+        "offset": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Delete\\RefusedDelete": {
         "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"

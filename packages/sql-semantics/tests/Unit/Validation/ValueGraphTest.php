@@ -31,6 +31,15 @@ use WeakReference;
 #[Small]
 final class ValueGraphTest extends TestCase
 {
+    public function testObjectsCanReuseACompletedFullTraversalWithoutChangingLaterListings(): void
+    {
+        $name = new Name('prepared');
+        $graph = new ValueGraph(['SqlSemantics\\Statement\\']);
+        self::assertSame([$name], $graph->objects($name));
+        self::assertSame([], $graph->objects($name, true));
+        self::assertSame([$name], $graph->objects($name));
+    }
+
     public function testObjectsListsEveryReachableObjectOnce(): void
     {
         $name = new Name('a');
