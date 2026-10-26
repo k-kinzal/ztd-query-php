@@ -9,6 +9,7 @@ namespace Fuzz\Observation\Status;
  * Names, presence, column metadata, SQL counters, configuration switches and unknown variables stay exact.
  * Both engines use the same validators; an empty value is legal only for explicitly optional text fields.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html.
+ * Buffer-load states: https://dev.mysql.com/doc/refman/8.0/en/innodb-preload-buffer-pool.html.
  */
 final class Environment
 {
@@ -117,7 +118,7 @@ final class Environment
             'tls-versions' => $value === '' || preg_match('/\ATLSv1(?:\.[0-3])?(?:,TLSv1(?:\.[0-3])?)*\z/', $value) === 1,
             'listen-address' => $value === '' || $value === '*' || filter_var($value, FILTER_VALIDATE_IP) !== false,
             'tls-library' => $value === '' || preg_match('/\A(?:OpenSSL|LibreSSL|wolfSSL) [0-9]+\.[0-9]+\.[0-9]+[a-z]?(?: [A-Za-z0-9 -]+)?\z/', $value) === 1,
-            'buffer-load' => $value === '' || preg_match('/\ABuffer pool\(s\) load completed at [0-9]{6} [ 0-2][0-9]:[0-5][0-9]:[0-5][0-9]\z/', $value) === 1,
+            'buffer-load' => $value === 'not started' || preg_match('/\ABuffer pool\(s\) load completed at [0-9]{6} [ 0-2][0-9]:[0-5][0-9]:[0-5][0-9]\z/', $value) === 1,
             default => false,
         };
         return $valid ? '<environment:' . $domain . '>' : null;

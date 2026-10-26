@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Fuzz\Observation\Process;
 
+use Fuzz\Fixture\Tables;
 use Fuzz\Observation\Observer;
+use Fuzz\Observation\OwnerThread;
+use Fuzz\Observation\Record;
 use PDO;
 use RuntimeException;
 
@@ -64,29 +67,29 @@ final class Listing
      *
      * @throws RuntimeException When the server refuses the fixture's scheduler setup
      */
-    public static function prepare(PDO $pdo): void
+    public static function prepare(PDO $pdo, ?Record $record = null): void
     {
-        $setting = $pdo->query('SELECT @@GLOBAL.event_scheduler');
-        if ($setting === false || $setting->fetchColumn() !== 'ON') {
+        $rows = (new Observer())->rows($pdo, 'SELECT @@GLOBAL.event_scheduler', $record);
+        if (count($rows) !== 1 || !is_array($rows[0]) || count($rows[0]) !== 1 || !in_array($rows[0][0] ?? null, ['ON', 'OFF', 'DISABLED'], true)) {
+            throw new RuntimeException('Cannot read the fixture event-scheduler setting.');
+        }
+        if ($rows[0][0] !== 'ON') {
             return;
         }
         foreach (['SET GLOBAL event_scheduler=OFF', 'DO SLEEP(0.1)', 'SET GLOBAL event_scheduler=ON', 'DO SLEEP(0.1)'] as $sql) {
-            if ($pdo->exec($sql) === false) {
-                throw new RuntimeException('Cannot prepare the event daemon for an isolated process listing.');
-            }
+            (new Tables())->execute($pdo, $sql);
         }
     }
 
     /**
      * Captures the two connection identities and the initial full process snapshot.
      */
-    public static function capture(PDO $pdo, PDO $guard): ?self
+    public static function capture(PDO $pdo, PDO $guard, ?Record $record = null): self
     {
-        $statement = $guard->query('SELECT CONNECTION_ID()');
-        $identity = $statement === false ? false : $statement->fetchColumn();
-        $before = Sample::read($pdo);
+        $identity = (new OwnerThread())->connection($guard, $record);
+        $before = Sample::read($pdo, $record);
 
-        return is_int($identity) && $before !== null ? new self($before, $identity) : null;
+        return new self($before, $identity);
     }
 
     /**
@@ -95,11 +98,9 @@ final class Listing
      * @param array<string, mixed> $observation
      * @return array<string, mixed>
      */
-    public function comparable(PDO $pdo, array $observation): array
+    public function comparable(PDO $pdo, array $observation, ?Record $record = null): array
     {
-        $after = Sample::read($pdo);
-
-        return $after === null ? $observation : $this->validated($observation, $after);
+        return $this->validated($observation, Sample::read($pdo, $record));
     }
 
     /**

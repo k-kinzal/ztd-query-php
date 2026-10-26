@@ -1626,6 +1626,76 @@ reads still need the same audit, alongside complete state-domain coverage and th
 Operation/Facts/runtime-analysis migration. These bounded mechanisms do not
 replace the full supplier corpus or the 900-second acceptance matrix.
 
+### Required environment samples and measured transport
+
+Process-list identities, clocks and scheduler state, status inventories,
+random-password settings and credentials, and fixture table clocks now use the
+same required-probe boundary as other state reads. A failed or malformed sample
+cannot silently disable a comparison contract. Each sample is attached to the
+input record before execution; later failures retain earlier evidence. Empty
+primary credentials are valid sampled account state, not an absent contract.
+Password replacement and discard observations also retain their SQL and results.
+
+The PDO observer makes text versus native preparation explicit. Preparation
+refusals and execution refusals remain ordinary SQL outcomes in both PDO error
+modes. Independent status transport measurements bracket execution after
+preparation and before cursor closure, statement destruction and SHOW WARNINGS.
+The baseline and input measurements retain raw counters in their respective
+records. Comparison uses measured traffic rather than predicting requests from
+the input SQL length, so additional probes and preparation traffic are included.
+
+mysqlnd's raw counters require two source-defined accounting corrections.
+Its send loop counts one extra four-byte header per command; its packet-statistic
+lookup additionally charges successful prepare replies to bytes_sent (16 bytes
+plus one packet). Traffic retains the raw byte/command/preparation counters and
+subtracts those contributions when checking received bytes. These definitions
+were inspected in PHP 8.1 and 8.5's mysqlnd
+[protocol frame codec](https://github.com/php/php-src/blob/PHP-8.5/ext/mysqlnd/mysqlnd_protocol_frame_codec.c),
+[wire protocol](https://github.com/php/php-src/blob/PHP-8.5/ext/mysqlnd/mysqlnd_wireprotocol.c)
+and packet enumeration. Missing statistics or incomplete/decreasing measurements
+fail the check. No tolerance is added to the measured byte equality.
+
+The native matrix also exposed a rejected documented buffer-load state:
+MySQL 5.6 returns `not started`. That state is now recognized; an empty or unknown
+load state is still rejected, and unclassified status names retain exact values.
+The process-list mechanism fixture uses the same pinned timestamp as ordinary
+fuzz inputs, which is a prerequisite of its current-query clock contract.
+
+Verification on PHP 8.5.8 / PHPUnit 10.5.64, using the pinned AMD64 MySQL images:
+
+- Required-sample failure cases and existing probe regressions pass 60 tests /
+  468 assertions, covering PDO exception/silent modes and text/prepared inputs.
+- Status mechanisms pass 37 / 724 in 298.361 seconds, with order seed
+  1793004241. All nine releases exercise both protocols and both status scopes,
+  including an intervening probe with a large reply. Tests retain all metadata,
+  rows and conditions and reject incorrect byte counts. The additional domain
+  case distinguishes `not started` from missing and unknown states. The first
+  complete matrix failed four 5.6 cases on that state; no cases were removed.
+- Native 8.4.7 process/clock/password sampling passes 6 / 56. Native preparation
+  and execution refusals pass 4 / 68 across both protocols and PDO error modes.
+  An empty primary credential remains a sample, and the native refusal of an
+  invalid retained-password change remains an unchanged SQL outcome.
+- Failure/evidence regressions pass 19 / 130 in 101.373 seconds. An initial
+  command without the explicit Docker host/port settings left its native setup
+  case over the unchanged 60-second limit; that run remains unaccepted. The final
+  run uses the configured remote endpoint and port 34068.
+- The ordinary 8.4.7 execution PHP-Fuzzer target verifies the two supplied
+  lifecycle seeds in both protocols, with default lexical settings, seed
+  20261026 and timeout 60. Prepared BEGIN replay still exits one on the missing
+  mysql.password_history provider. Its failure report retains two completed and
+  restored native observations, each with 66 completed probes, and memory's
+  initial-restoration/server-integrity failure with no invented state.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. Strict
+  autoload finds 8,624 classes; tree and size checks pass without configuration
+  changes. These scoped checks do not establish complete package acceptance.
+
+Goals B-D remain open. Remaining fixture-restoration reads still need the same
+audit, including account fallbacks and credential-time evidence. Complete state-domain
+observation, the Operation/Facts/runtime-analysis migration, missing generators,
+system-catalog implementations and the full acceptance matrix remain required.
+These observation mechanisms do not establish completion of the semantic model
+or SQL behavior.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

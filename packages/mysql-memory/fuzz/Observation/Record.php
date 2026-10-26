@@ -40,6 +40,11 @@ final class Record
     public array $probes = [];
 
     /**
+     * @var array<string, mixed> Independent client measurements used by comparison contracts, outside SQL result state
+     */
+    public array $measurements = [];
+
+    /**
      * Identifies the engine and exact input whose partial observations are retained.
      */
     public function __construct(public readonly string $engine, public readonly string $sql, public readonly string $mode)

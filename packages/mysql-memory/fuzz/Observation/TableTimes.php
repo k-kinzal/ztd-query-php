@@ -74,10 +74,10 @@ final class TableTimes
      *
      * @throws RuntimeException When the server does not return a second-resolution SQL datetime
      */
-    public function now(PDO $pdo): string
+    public function now(PDO $pdo, ?Record $record = null): string
     {
-        $statement = $pdo->query('SELECT SYSDATE()');
-        $value = $statement === false ? false : $statement->fetchColumn();
+        $rows = (new Observer())->rows($pdo, 'SELECT SYSDATE()', $record);
+        $value = count($rows) === 1 && is_array($rows[0]) && count($rows[0]) === 1 ? $rows[0][0] : null;
         if (!is_string($value) || preg_match('/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/', $value) !== 1) {
             throw new RuntimeException('Cannot sample the fixture commit clock.');
         }
@@ -88,13 +88,13 @@ final class TableTimes
     /**
      * Executes fixture SQL, sampling immediately before and after each table's CREATE and INSERT.
      */
-    public function execute(PDO $pdo, string $sql): void
+    public function execute(PDO $pdo, string $sql, ?Record $record = null): void
     {
         $table = preg_match('/\A(CREATE TABLE|INSERT INTO) (t1|t2|_sqlfaker_identifier)\b/', $sql, $match) === 1 ? $match[2] : null;
-        $before = $table === null ? null : $this->now($pdo);
+        $before = $table === null ? null : $this->now($pdo, $record);
         (new Tables())->execute($pdo, $sql);
         if ($table !== null && $before !== null) {
-            $interval = [$before, $this->now($pdo)];
+            $interval = [$before, $this->now($pdo, $record)];
             if ($match[1] === 'CREATE TABLE') {
                 $this->creations[$table] = $interval;
             } else {

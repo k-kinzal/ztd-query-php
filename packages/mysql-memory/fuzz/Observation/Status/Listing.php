@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Fuzz\Observation\Status;
 
 use Fuzz\Observation\Observer;
+use Fuzz\Observation\Record;
+use Fuzz\Observation\Traffic;
 use PDO;
 
 /**
  * Compares every row of a complete status listing under independent baselines.
  * Session command totals stay exact; global totals retain their SQL-history delta.
- * Traffic is checked against mysqlnd's independently measured reply bytes and the
- * actual query packet size. Only named environmental values use domain validation.
+ * Traffic is checked against mysqlnd's independent execution-boundary measurements.
+ * Only named environmental values use domain validation.
  * Columns, row identities, conditions and all unclassified values remain exact.
  */
 final class Listing
@@ -23,10 +25,9 @@ final class Listing
 
     /**
      * @param Snapshot $before Independently observed state before the target
-     * @param string $sql The complete listing submitted by the generator
      * @param bool $global Whether the target asks for global command counters
      */
-    public function __construct(public readonly Snapshot $before, public readonly string $sql, public readonly bool $global)
+    public function __construct(public readonly Snapshot $before, public readonly bool $global, public readonly Traffic $traffic = new Traffic())
     {
     }
 
@@ -41,11 +42,9 @@ final class Listing
     /**
      * Captures the independent counter and transport baselines.
      */
-    public static function capture(PDO $pdo, string $sql): ?self
+    public static function capture(PDO $pdo, string $sql, ?Record $record = null): self
     {
-        $before = Snapshot::capture($pdo);
-
-        return $before === null ? null : new self($before, $sql, preg_match('/\bGLOBAL\b/i', $sql) === 1);
+        return new self(Snapshot::capture($pdo, $record), preg_match('/\bGLOBAL\b/i', $sql) === 1);
     }
 
     /**
@@ -71,7 +70,7 @@ final class Listing
         $policy = new Policy();
         $comparable = [];
         foreach ($values as $name => $value) {
-            $quantity = $policy->value($name, $value, $this->global, $this->before, $this->sql, microtime(true) - $this->before->instant);
+            $quantity = $policy->value($name, $value, $this->global, $this->before, $this->traffic, microtime(true) - $this->before->instant);
             if ($quantity === null) {
                 return $observation;
             }

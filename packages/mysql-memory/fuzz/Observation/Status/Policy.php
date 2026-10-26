@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fuzz\Observation\Status;
 
+use Fuzz\Observation\Traffic;
+
 /**
  * Explicit comparison rules for isolated, complete SHOW STATUS observations.
  * Command counters retain SQL history. Named environmental quantities use independently validated value domains.
@@ -42,7 +44,7 @@ final class Policy
     /**
      * Returns a validated quantity, or null to retain the entire raw observation.
      */
-    public function value(string $name, string $value, bool $global, Snapshot $before, string $sql, float $elapsed): ?string
+    public function value(string $name, string $value, bool $global, Snapshot $before, Traffic $traffic, float $elapsed): ?string
     {
         $kind = $this->kind($name, $global);
         if ($kind === 'exact') {
@@ -65,7 +67,7 @@ final class Policy
             return bccomp($seconds, (string) (int) ceil($elapsed + 1)) <= 0 ? '<bounded-elapsed-time>' : null;
         }
         if ($kind === 'wire') {
-            $bytes = $name === 'Bytes_sent' ? ($global ? $before->globalBytes : $before->sessionBytes) : (string) (strlen($sql) + 5 + ($global ? strlen('SHOW SESSION STATUS') + 5 : 0));
+            $bytes = $traffic->since($global ? $before->globalTraffic : $before->sessionTraffic, $name === 'Bytes_sent');
 
             return ctype_digit($bytes) && bccomp($difference, $bytes) === 0 ? '<measured-wire-bytes>' : null;
         }

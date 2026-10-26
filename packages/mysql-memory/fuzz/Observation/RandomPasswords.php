@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Observation;
 
 use PDO;
+use RuntimeException;
 
 /**
  * Validates a random primary password returned for the current account.
@@ -46,18 +47,21 @@ final class RandomPasswords
 
     /**
      * Samples the account and length independently of the generated result.
+     *
+     * @throws RuntimeException When the required account or password-length sample cannot be read
      */
-    public static function capture(PDO $pdo, bool $retain = false): ?self
+    public static function capture(PDO $pdo, bool $retain = false, ?Record $record = null): self
     {
-        $statement = $pdo->query('SELECT @@generated_random_password_length, CURRENT_USER()');
-        $row = $statement === false ? false : $statement->fetch(PDO::FETCH_NUM);
-        $statement = null;
-        $retention = $retain ? Password\Retention::capture($pdo) : null;
-        if ($retain && $retention === null) {
-            return null;
+        $rows = (new Observer())->rows($pdo, 'SELECT @@generated_random_password_length, CURRENT_USER()', $record);
+        $row = count($rows) === 1 ? $rows[0] : null;
+        if (!is_array($row) || count($row) !== 2 || !is_string($row[1] ?? null) || $row[1] === '') {
+            throw new RuntimeException('Cannot sample the random-password account and configured length.');
         }
-
-        return is_array($row) && is_numeric($row[0] ?? null) && is_string($row[1] ?? null) ? new self((int) $row[0], $row[1], $retention) : null;
+        $length = filter_var($row[0], FILTER_VALIDATE_INT, ['options' => ['min_range' => 5, 'max_range' => 255]]);
+        if (!is_int($length)) {
+            throw new RuntimeException('The sampled random-password length is outside its documented domain.');
+        }
+        return new self($length, $row[1], $retain ? Password\Retention::capture($pdo, $record) : null);
     }
 
     /**
@@ -94,15 +98,17 @@ final class RandomPasswords
      * Requires rejection of a wrong current password and acceptance of the returned password.
      * The accepted update keeps the same primary password; original observations are already recorded.
      */
-    public function verifies(PDO $pdo, string $password): bool
+    public function verifies(PDO $pdo, string $password, ?Record $record = null): bool
     {
         $observer = new Observer();
         $prefix = 'SET PASSWORD = ' . $pdo->quote($password) . ' REPLACE ';
-        $wrong = $observer->observe($pdo, $prefix . $pdo->quote($password . '!'), false);
+        $wrongSql = $prefix . $pdo->quote($password . '!');
+        $wrong = $observer->observe($pdo, $wrongSql, false, $record?->probe($wrongSql));
         if (($wrong['error'] ?? null) !== [3891, 'HY000', 'Incorrect current password. Specify the correct password which has to be replaced.']) {
             return false;
         }
-        $right = $observer->observe($pdo, $prefix . $pdo->quote($password), false);
+        $rightSql = $prefix . $pdo->quote($password);
+        $right = $observer->observe($pdo, $rightSql, false, $record?->probe($rightSql));
 
         return $right === ['results' => [['affected' => 0, 'lastInsertId' => '0']], 'warnings' => []];
     }
@@ -111,14 +117,16 @@ final class RandomPasswords
      * @param array<string, mixed> $observation The complete original observation
      * @return array<string, mixed> Only a validated password is replaced by the recorded contract
      */
-    public function comparable(PDO $pdo, array $observation): array
+    public function comparable(PDO $pdo, array $observation, ?Record $record = null): array
     {
-        $password = $this->password($observation);
-        if ($password === null || ($this->retention !== null && !$this->retention->retained($pdo)) || !$this->verifies($pdo, $password) || ($this->retention !== null && !$this->retention->discarded($pdo))) {
+        $results = $observation['results'] ?? null;
+        if (!is_array($results) || !is_array($results[0] ?? null) || !is_array($results[0]['rows'] ?? null) || !is_array($results[0]['rows'][0] ?? null)) {
             return $observation;
         }
-        $results = $observation['results'];
-        assert(is_array($results) && is_array($results[0]) && is_array($results[0]['rows']) && is_array($results[0]['rows'][0]));
+        $password = $this->password($observation);
+        if ($password === null || ($this->retention !== null && !$this->retention->retained($pdo, $record)) || !$this->verifies($pdo, $password, $record) || ($this->retention !== null && !$this->retention->discarded($pdo, $record))) {
+            return $observation;
+        }
         $results[0]['rows'][0][2] = '{' . self::CONTRACT . '}';
         $observation['results'] = $results;
         $observation['contracts'] = $this->retention === null ? [self::CONTRACT] : [self::CONTRACT, Password\Retention::CONTRACT];

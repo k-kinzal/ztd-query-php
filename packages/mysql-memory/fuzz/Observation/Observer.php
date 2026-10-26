@@ -25,7 +25,7 @@ final class Observer
      * @return array<string, mixed>
      * @throws RuntimeException When result metadata or conditions cannot be read
      */
-    public function observe(PDO $pdo, string $sql, bool $ordered, ?Record $record = null): array
+    public function observe(PDO $pdo, string $sql, bool $ordered, ?Record $record = null, ?Traffic $traffic = null): array
     {
         $observation = ['results' => []];
         if ($record !== null) {
@@ -33,21 +33,37 @@ final class Observer
             $record->raw = $observation;
         }
         try {
-            $statement = $pdo->query($sql);
-            if ($statement === false) {
-                $error = $pdo->errorInfo();
-                $observation['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
-            } else {
-                do {
-                    $observation['results'][] = $this->result($pdo, $statement, $ordered);
-                    if ($record !== null) {
-                        $record->raw = $observation;
+            try {
+                $executed = true;
+                if ($pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES) === true) {
+                    $traffic?->ready($record);
+                    $statement = $pdo->query($sql);
+                } else {
+                    $statement = $pdo->prepare($sql);
+                    if ($statement !== false) {
+                        $traffic?->ready($record);
+                        $executed = $statement->execute();
                     }
-                } while ($statement->nextRowset());
-                if ($statement->errorCode() !== '00000') {
-                    $error = $statement->errorInfo();
-                    $observation['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
                 }
+                if ($statement === false || !$executed) {
+                    $error = $statement === false ? $pdo->errorInfo() : $statement->errorInfo();
+                    $observation['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
+                } else {
+                    do {
+                        $observation['results'][] = $this->result($pdo, $statement, $ordered);
+                        if ($record !== null) {
+                            $record->raw = $observation;
+                        }
+                    } while ($statement->nextRowset());
+                    if ($statement->errorCode() !== '00000') {
+                        $error = $statement->errorInfo();
+                        $observation['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
+                    }
+                }
+            } finally {
+                $traffic?->complete($record);
+            }
+            if ($statement !== false) {
                 $statement->closeCursor();
             }
         } catch (PDOException $failure) {
@@ -74,13 +90,13 @@ final class Observer
      * @return array<string, mixed>
      * @throws RuntimeException When the probe or its conditions cannot be read
      */
-    public function probe(PDO $pdo, string $sql, ?Record $owner = null): array
+    public function probe(PDO $pdo, string $sql, ?Record $owner = null, ?Traffic $traffic = null): array
     {
         $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         $record = $owner?->probe($sql) ?? new Record('probe', $sql, '');
         try {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-            $observation = $this->observe($pdo, $sql, true, $record);
+            $observation = $this->observe($pdo, $sql, true, $record, $traffic);
             $record->phase = 'state validation';
             if (isset($observation['error'])) {
                 throw new RuntimeException('The state probe returned a SQL error.');
@@ -101,9 +117,9 @@ final class Observer
      * @return array<mixed>
      * @throws RuntimeException When the state read cannot provide one row set
      */
-    public function rows(PDO $pdo, string $sql, ?Record $owner = null): array
+    public function rows(PDO $pdo, string $sql, ?Record $owner = null, ?Traffic $traffic = null): array
     {
-        return $this->rowset($this->probe($pdo, $sql, $owner));
+        return $this->rowset($this->probe($pdo, $sql, $owner, $traffic));
     }
 
     /**

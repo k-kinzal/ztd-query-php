@@ -250,6 +250,13 @@ Post-input catalog, schema and session probes are attached to that input's recor
 before they run. A failed composite snapshot retains earlier catalog reads, definitions,
 rows and conditions, together with the failing probe's SQL and phase. Probe
 evidence stays separate from the primary outcome and the comparison copy.
+Process, status, random-password and table-clock comparison contracts also require
+successful independent samples. Missing samples fail observation; an empty password
+is retained as an account state. Status traffic is measured around execution,
+after native preparation and before cursor cleanup or condition reads. Raw mysqlnd
+counters are retained separately, including the command counts needed to correct
+its accounting according to the driver implementation. Running this fuzz target
+requires `mysqli` with mysqlnd statistics enabled, as well as `pdo_mysql` and Docker.
 The independent process failure channel is checked even when initial restoration
 fails before an input connection exists, and after restoration itself. An internal
 failure invalidates any earlier restoration success and prevents fixture reuse.

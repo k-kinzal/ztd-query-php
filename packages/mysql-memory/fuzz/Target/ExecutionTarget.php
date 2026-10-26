@@ -309,7 +309,7 @@ final class ExecutionTarget
             $connection = (new OwnerThread())->connection($pdo, $record);
             $record->phase = 'fixture setup';
             $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
-            $this->prepare($pdo, $clock);
+            $this->prepare($pdo, $clock, $record);
             $observation = $this->observe($pdo, $dsn, $sql, $mode, $record);
             $record->phase = 'comparison contracts';
             $result = ['raw' => $observation['raw'], 'comparable' => $clock?->comparable($observation['comparable']) ?? $observation['comparable']];
@@ -409,17 +409,17 @@ final class ExecutionTarget
             $owner = (new OwnerThread())->connection($pdo, $record);
             (new MetadataLocks())->prepare($guard, $owner);
         }
-        $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
+        $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1, $record) : null;
         $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo, $this->version, $record) : null;
         if (Process\Listing::handles($sql)) {
-            Process\Listing::prepare($pdo);
+            Process\Listing::prepare($pdo, $record);
         }
-        $processes = Process\Listing::handles($sql) ? Process\Listing::capture($pdo, $dsn === $this->native ? $this->guard() : $this->memoryGuard()) : null;
+        $processes = Process\Listing::handles($sql) ? Process\Listing::capture($pdo, $guard, $record) : null;
         if (Status\Listing::handles($sql)) {
             /** Reset the connection maximum to current clients on both servers before capturing status. */
             (new Tables())->execute($pdo, 'FLUSH STATUS');
         }
-        $status = Status\Listing::handles($sql) ? Status\Listing::capture($pdo, $sql) : null;
+        $status = Status\Listing::handles($sql) ? Status\Listing::capture($pdo, $sql, $record) : null;
         $observer = new Observer();
         $parser = $this->parsers[$mode] ??= new MySqlParser('mysql-' . $this->version, SqlMode::fromString($mode));
         try {
@@ -428,7 +428,7 @@ final class ExecutionTarget
             // A grammar refusal is still executed and compared; it cannot justify reordering a result.
             $ordered = true;
         }
-        $observation = $observer->observe($pdo, $sql, true, $record);
+        $observation = $observer->observe($pdo, $sql, true, $record, $status?->traffic);
         if ($dsn === $this->memory) {
             $this->server?->assertNoInternalFailure();
         }
@@ -467,7 +467,7 @@ final class ExecutionTarget
             }
         }
         $observation = $identities?->comparable($pdo, $observation, $record) ?? $observation;
-        $observation = $processes?->comparable($pdo, $observation) ?? $observation;
+        $observation = $processes?->comparable($pdo, $observation, $record) ?? $observation;
         $observation = $status?->comparable($observation) ?? $observation;
         $observation = (new \Fuzz\Observation\EngineReports())->comparable($sql, $observation);
         $record->phase = 'owner-visible tables';
@@ -477,7 +477,7 @@ final class ExecutionTarget
         $observation['definitions'] = $observer->definitions($pdo, self::DATABASE, $record);
         $raw['definitions'] = $observation['definitions'];
         $record->phase = 'password contracts';
-        $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
+        $observation = $passwords?->comparable($pdo, $observation, $record) ?? $observation;
         return ['raw' => $raw, 'comparable' => $observation];
     }
 
@@ -501,7 +501,7 @@ final class ExecutionTarget
     /**
      * Prepares the same table fixture before the generated input, on an owned connection.
      */
-    public function prepare(PDO $pdo, ?TableTimes $clock = null): void
+    public function prepare(PDO $pdo, ?TableTimes $clock = null, ?Record $record = null): void
     {
         (new Tables())->remove($pdo, self::DATABASE, $this->version);
         $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
@@ -510,7 +510,7 @@ final class ExecutionTarget
             if ($clock === null) {
                 (new Tables())->execute($pdo, $statement);
             } else {
-                $clock->execute($pdo, $statement);
+                $clock->execute($pdo, $statement, $record);
             }
         }
         $this->baseline?->logs($pdo);
