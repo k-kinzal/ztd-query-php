@@ -971,6 +971,49 @@ formatting and PHP 8.1 compatibility pass. The current restoration suite has
 five tests and nine assertions, with the credential-age regression above as its
 one failure; it is not a passing acceptance check.
 
+### Session-owned variable observation
+
+The native target now discovers user variables independently through the 5.7+
+Performance Schema, using the administrator to resolve exactly one owning thread.
+A missing or unreadable owner cannot turn into an empty successful snapshot.
+The inventory preserves unconverted bytes and NULL. Reads of the discovered names
+on their owning connection also retain result metadata, character sets, collations
+and coercibility, distinguishing numeric values from equal-looking strings.
+Names are not inferred from MemoryDB analysis or limited to identifiers written
+in the tested SQL. Variables created by stored or dynamically executed SQL are
+therefore included when the server exposes them in that session's inventory.
+
+These probes run after primary results, conditions and session settings have been
+captured. They use text execution and temporarily select UTF-8 client decoding for
+the catalog's identifier names, while retaining the connection/result collations
+and value bytes. The original client setting and PDO execution mode are restored
+even on failure. The comparison sorts inventory rows and named observations;
+raw observations retain their original order. Thread identities are lookup keys,
+not variable values normalized into agreement.
+
+MySQL 5.6 has no corresponding inventory and remains an explicit observation
+gap. This does not close B: temporary objects, locking effects, environment
+contracts and the earlier restoration findings remain open. Adding this observer
+does not implement the missing Performance Schema providers in MemoryDB or prove
+that the complete differential target passes.
+
+The ordinary target's focused transaction observation now fails explicitly on
+MemoryDB's missing owning-thread row, rather than comparing two empty user-variable
+inventories. The ordinary 8.4.7 BEGIN replay still fails earlier, when restoration
+detects the missing `mysql` tablespace; it exits one. Neither failure is excluded
+from comparison or converted into a successful SQL result.
+
+Native mechanism tests pass all eight releases from 5.7.44 through 9.1.0:
+eight cases and 144 assertions. They cover ownership across connections, NULL,
+16 KiB binary values, quoted and non-ASCII names under a Latin-1 client, numeric
+versus text values, changed collation, stable repeated snapshots, transaction
+preservation, restored client/protocol settings and refusal of an absent owner.
+PDO statements and connections are released before stopping each owned container;
+the final complete matrix passes with the existing sixty-second test limit.
+Changed-file PHPStan, formatting, PHP 8.1 compatibility, strict autoload, Composer
+validation and package size/tree/dependency guards pass. These are observation
+mechanism checks, not full SQL or fuzz acceptance.
+
 ### Shared execution lifetime
 
 `Session/Statement/Lifecycle` now owns diagnostic initialization, the active table
@@ -1068,6 +1111,17 @@ passing acceptance. The additional binary-protocol preparation regression also
 exceeds its 60-second limit before its first assertion, so that path has no new
 passing execution evidence at this checkpoint. The four new model types have explicit retained-field
 schemas; the independent missing-generator gate remains in force.
+
+Profiling the existing preparation closure test identified lowering as the largest
+measured branch. Exact comparison now reuses class reflection metadata and tries
+recently lowered structures first, without omitting any interpretation or audit.
+The ordinary closure regression passes one case/eight assertions; comparison
+tests pass 11/27. Its observed run changed from 28.135 to 26.525 seconds, which is
+not a performance guarantee or a solution to exhaustive lowering cost. On the
+current code, the binary preparation regression passes 1/5 and the complete-input
+PHPDoc example passes 1/1. The short cache regression still exceeds its unchanged
+one-second limit, with one assertion before the timeout. Full preparation
+performance acceptance remains open.
 
 The final semantic preparation/model subset passes 16 tests / 45 assertions.
 Parser lexical-view regressions pass 14 / 36; exact comparison and immutable-graph

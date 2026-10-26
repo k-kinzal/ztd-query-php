@@ -198,10 +198,16 @@ of the check. Account/privilege catalogs, stored-program definitions, replicatio
 configuration, server catalog state and committed rows in other application
 databases are observed independently through the administrator connection.
 Views contribute definitions without evaluating their bodies during observation.
+On MySQL 5.7 and later, an independent administrator discovers the tested session's
+user variables through Performance Schema. The observation retains their stored
+bytes and reads their result metadata, character sets, collations and coercibility
+on the owning connection. An unavailable owner or inventory fails the check;
+it cannot become an empty variable snapshot. The native observation mechanism
+tests require Docker and start the pinned Testcontainers releases.
 Each campaign owns a fresh reference container, and a failed reset cannot pass
-or contaminate a later campaign. Temporary objects, user variables, locking effects
-and environment-specific catalog fields still need complete contracts; these runs
-do not yet establish equivalence for every state change.
+or contaminate a later campaign. Temporary objects, MySQL 5.6 user variables,
+locking effects and environment-specific catalog fields still need complete
+contracts; these runs do not yet establish equivalence for every state change.
 
 Each target records its release, lexical profile and mutation seed. Set
 `PHP_FUZZER_SEED` to reproduce PHP-Fuzzer's random sequence on the same revision

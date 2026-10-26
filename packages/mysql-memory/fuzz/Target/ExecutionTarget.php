@@ -322,6 +322,11 @@ final class ExecutionTarget
         $raw['session'] = $state['raw'];
         $observation['session'] = $state['comparable'];
         $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+        if (!str_starts_with($this->version, '5.6.')) {
+            $userVariables = (new \Fuzz\Observation\UserVariables())->capture($pdo, $guard);
+            $raw['session']['userVariables'] = $userVariables['raw'];
+            $observation['session']['userVariables'] = $userVariables['comparable'];
+        }
         $observation['globals'] = (new Servers())->globals($guard, $this->version);
         $raw['globals'] = $observation['globals'];
         ksort($observation['globals']);
