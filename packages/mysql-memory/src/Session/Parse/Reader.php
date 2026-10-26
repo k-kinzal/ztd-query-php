@@ -234,9 +234,6 @@ final class Reader
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate) {
             return (new Definition\UpdateInput())->refused($failure, $statement, $session);
         }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser) {
-            return (new Definition\RenameInput())->refused($failure, $statement, $session);
-        }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles) {
             return (new Definition\RoleGrantInput())->refused($failure, $statement, $session);
         }

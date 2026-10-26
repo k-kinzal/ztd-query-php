@@ -36,8 +36,8 @@ final class Preparation
             (new \MySqlMemory\Command\Write\InsertValuesCommand())->prepare($operation, $session);
             return;
         }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
-            (new \MySqlMemory\Session\Statement\TransactionNotices())->read($operation, $session);
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
+            (new \MySqlMemory\Session\Statement\Reading())->read($operation, $session);
             $this->protocol($operation);
             return;
         }

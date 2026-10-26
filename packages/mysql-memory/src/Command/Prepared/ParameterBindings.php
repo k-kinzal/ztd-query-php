@@ -49,7 +49,7 @@ final class ParameterBindings
             }
             return new self([]);
         }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
             return new self([]);
         }
         if (!$operation instanceof Operation) {

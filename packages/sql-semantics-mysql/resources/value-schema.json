@@ -260,10 +260,14 @@
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\User\\RefusedRenameUser": {
-        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRenameUser"
+        "renamings": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\RenameUser": {
-        "renamings": "array"
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "problem": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\User\\RefusedRenameUser",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "renamings": "array",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\AlterResourceGroup": {
         "cpus": "array",
@@ -2997,9 +3001,6 @@
         "targets": "array",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRenameUser": {
-        "renamings": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRevokePrivileges": {
         "ifExists": "bool",

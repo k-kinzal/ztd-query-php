@@ -45,7 +45,7 @@ final class PreparedStatement
      */
     public static function capture(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): self
     {
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
             return new self($operation, $operation->profile(), null, $session->variables->database);
         }
         if (!$operation instanceof Operation) {
@@ -78,7 +78,7 @@ final class PreparedStatement
         $session->hinted = [];
         $session->dots = [];
         try {
-            if ($this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+            if ($this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
                 return (new Execution($session))->statement($this->statement, $parameters);
             }
             if ($this->literals === null) {

@@ -2069,3 +2069,69 @@ Scoped evidence on PHP 8.5.8:
 Goals B-D remain open. Fixture evidence does not supply missing catalog providers,
 complete state-domain observation, finish the semantic/execution migration or
 establish the full corpus and separate 900-second acceptance matrix.
+
+### Ordered account requests cross the analysis boundary (2026-10-26)
+
+RENAME USER now publishes its concrete statement with the selected language,
+client encoding, optional statement span and ordered account operands. An
+intrinsically contradictory rename list has a typed condition on that same
+statement. It no longer requires a second deferred statement type or execution
+inside Reader. The retained-field schema removes DeferredRenameUser and records
+the concrete statement's fields and its condition's ordered pairs.
+
+Text input, prepared execution, stored-program instructions and source-free
+generated requests now pass these account requests to Execution::statement.
+The separate RenameInput, PendingRenameUser and RenameUse execution routes have
+been removed. Account names supply their reading notices from their written
+operands; initial condition checks are shared by preparation and execution,
+while replay retains domain checks without repeating the reading notices.
+Catalog lookup, privilege checks, implicit commit and release-specific partial
+effects remain execution responsibilities. Prepared renames have no table
+dependencies and cannot be invalidated by table metadata changes, so they retain
+their selected interpretation without building unused reprepare alternatives.
+
+The Eris account, account-name, current-user, rename-pair, contradiction and
+statement generators compose and shrink through Eris. One property executes
+requests without prerequisite accounts and admits only the applicable SQL
+refusal, rather than catching implementation failures. A second composes two
+dependent renames before the assertion callback, prepares the second before its
+source exists, and checks that execution preserves privileges and restores the
+original identity. Both properties use opaque request labels and no source SQL.
+
+Scoped evidence on PHP 8.5.8:
+
+- Generated execution and dependent preparation on all nine releases, analysis
+  purity for ordered rename contradictions, stored CALL execution, direct
+  commands and read-only checks pass 58 tests / 20,938 assertions. Eris seed
+  20261026 drives the 18 property cases with 100 trials each.
+- Shared initial-reading and prepared/direct execution checks pass 11 / 32.
+  Final preparation/initial-reading checks pass 39 / 58; prepared account
+  scenarios, including reading-warning suppression at EXECUTE, pass 4 / 13.
+  The account lowering/rule tests pass 441 / 757; final concrete-statement and
+  account-operand checks pass 19 / 54, and their examples pass 6 / 6. Existing
+  SQL workflow assertions remain integration checks; direct command unit tests
+  construct their account prerequisites without repeating SQL setup.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass after the
+  initial-condition extraction. Strict autoload reports 8,631 memory classes
+  and 8,580 MySQL semantic classes. The source LOC and tree gates pass for both
+  packages; the retained-field check covers 1,051 MySQL semantic value definitions.
+- A broader shared-boundary run reports 286 tests / 433 assertions and exits
+  one with 14 risky tests at the existing one-second limit: twelve prepared
+  server cases, one stored-condition case and one spatial-preparation notice
+  case. That run is not a passing regression claim. The time limits and protected
+  test/static-analysis configurations are unchanged.
+- The ordinary reconstruction target replays the unmodified rename-0 and
+  rename_list-1 supplied grammar seeds on all nine releases, using default
+  lexical settings, seed 20261026, max-runs 0 and timeout 60. Eight releases pass
+  both inputs. MySQL 5.6.51 exits one on rename_list-1: the grammar seed's
+  _sqlfaker_identifier exceeds the 16-character user-name limit, and lowering
+  still rejects that operand instead of publishing a reconstructible condition.
+  Its input is 0b0000001e000100000001000000000000000000000000000000000000.
+
+This closes the execution-during-analysis route for contradictory ordered
+renames, not the complete account-name domain or Session::analyze as a whole.
+Conditional table and role requests still use alternate routes, and analysis
+still touches shared dictionary selection and view caches. The missing native
+catalog providers, complete generator coverage, Operation/Facts migration and
+full corpus/900-second acceptance remain open. The 5.6 reconstruction failure
+is retained; neither its seed nor the comparison is weakened.

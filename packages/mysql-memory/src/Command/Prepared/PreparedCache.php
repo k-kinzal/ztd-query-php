@@ -58,7 +58,7 @@ final class PreparedCache
             }
             return new self(PreparedStatement::capture($operation, $session), $tables, $input);
         }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
             return new self(PreparedStatement::capture($operation, $session), [], $input);
         }
         if (!$operation instanceof Operation) {

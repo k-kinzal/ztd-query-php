@@ -41,7 +41,7 @@ final class StatementRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('rename user a to b, c to d');
 
-        self::assertInstanceOf(RenameUser::class, $operation->statement);
+        self::assertInstanceOf(RenameUser::class, $operation);
         self::assertSame('RENAME USER a TO b, c TO d', $operation->toString());
     }
 

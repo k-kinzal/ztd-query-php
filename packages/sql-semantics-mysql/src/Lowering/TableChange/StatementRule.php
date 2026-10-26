@@ -159,7 +159,10 @@ final class StatementRule
             $this->lowering->options->skip($form->node(2));
         }
 
-        return $this->lowering->accounts->renameUsers($form->node(count($form->node->children) - 1));
+        $statement = $this->lowering->accounts->renameUsers($form->node(count($form->node->children) - 1));
+        $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node);
+        $source = $range === null ? null : new \SqlSemantics\Statement\Source\Span($range[0], $range[1] - $range[0]);
+        return new \SqlSemantics\Platform\MySql\Statement\Account\RenameUser($statement->renamings, $statement->profile, $statement->client, $source);
     }
 
     /**

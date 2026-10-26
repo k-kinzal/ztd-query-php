@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Account;
 
+use LogicException;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AccountError;
@@ -14,7 +15,6 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Account\RenameUser;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes RENAME USER.
@@ -45,20 +45,42 @@ final class RenameUserCommand implements Command
 
     /**
      * Renames the accounts.
+     *
+     * @throws LogicException When dispatch supplies another semantic command
      */
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
-        assert($statement instanceof RenameUser);
-        return $this->apply($statement, $session, $context);
+        if (!$operation instanceof RenameUser) {
+            throw new LogicException('RENAME USER requires its concrete semantic statement.');
+        }
+        return $this->apply($operation, $session, $context);
+    }
+
+    /**
+     * Checks name domains without reading or changing the account catalog.
+     *
+     * @param bool $notices Whether this is the initial reading rather than a replay
+     */
+    public function prepare(RenameUser $statement, Session $session, bool $notices = true): void
+    {
+        $names = new Names($session->settings()->release());
+        foreach ($statement->renamings as $renaming) {
+            foreach ([$renaming->from, $renaming->to] as $account) {
+                if ($notices && $account instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
+                    foreach ($account->warnings($statement->profile->grammar) as $warning) {
+                        $session->diagnostics->warning($warning->code(), $warning->message());
+                    }
+                }
+                $names->check([$account]);
+            }
+        }
     }
 
     /**
      * Applies a complete ordered identity request, including partial legacy effects.
      */
-    public function apply(RenameUser|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRenameUser $statement, Session $session, Context $context): Reply
+    public function apply(RenameUser $statement, Session $session, Context $context): Reply
     {
         $session->transaction->commit();
         $names = new Names($session->settings()->release());

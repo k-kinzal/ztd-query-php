@@ -93,7 +93,7 @@ final class PreparedCommand implements Command
         (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         $bindings = ParameterBindings::capture($prepared);
-        $input = $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session);
+        $input = $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session);
         $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session, $input)];
 
         return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');

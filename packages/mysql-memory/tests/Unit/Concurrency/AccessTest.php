@@ -59,7 +59,7 @@ final class AccessTest extends TestCase
         self::assertSame([['1']], $result->rows);
     }
 
-    public function testCheckRefusesAStatementThatCommitsInAReadOnlySession(): void
+    public function testDefinitionRefusesAStatementThatCommitsInAReadOnlySession(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT); SET SESSION TRANSACTION READ ONLY');
@@ -86,10 +86,13 @@ final class AccessTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
         $access = new Access();
-        $insert = $session->analyze('INSERT INTO d.t VALUES (1)');
+        $delete = $session->analyze('DELETE FROM d.t');
         $update = $session->analyze('UPDATE t JOIN u ON t.a = u.a SET t.a = 1');
         $select = $session->analyze('SELECT 1');
 
-        self::assertSame([['t'], [null], []], [array_map(static fn ($name): ?string => $name?->name->value, $access->written($insert)), $access->written($update), $access->written($select)]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $delete);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $update);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $select);
+        self::assertSame([['t'], [null], []], [array_map(static fn ($name): ?string => $name?->name->value, $access->written($delete)), $access->written($update), $access->written($select)]);
     }
 }

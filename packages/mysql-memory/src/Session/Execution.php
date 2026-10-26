@@ -79,7 +79,7 @@ final class Execution
      */
     public function perform(AnalyzedStatement $operation, Command $command, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
-        if ($operation instanceof Operation && $operation->statement instanceof TransactionStatement) {
+        if ($operation instanceof Operation && $operation->statement instanceof AnalyzedStatement) {
             $operation = $operation->statement;
         }
         if ($operation->profile()->grammar !== $this->session->settings()->release()) {
@@ -129,9 +129,7 @@ final class Execution
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
         $late = $operation instanceof Operation ? $this->reading($operation, $read) : [];
-        if ($operation instanceof TransactionStatement && $read && !$session->replayed) {
-            (new Statement\TransactionNotices())->read($operation, $session);
-        }
+        (new Statement\Reading())->read($operation, $session, $read && !$session->replayed);
         State\StatementCounters::evaluated($node, $session);
         $this->access($node, $context);
         if ($operation instanceof Operation) {
@@ -156,6 +154,8 @@ final class Execution
             (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         } elseif ($operation instanceof InsertStatement) {
             (new \MySqlMemory\Concurrency\Access())->writes([$operation->target->resolvedName ?? $operation->target->name], $session);
+        } elseif ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
+            (new \MySqlMemory\Concurrency\Access())->definition($session);
         } elseif (!$operation instanceof TransactionStatement) {
             throw new LogicException('No semantic preparation for ' . $operation::class);
         }

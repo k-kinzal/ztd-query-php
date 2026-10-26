@@ -18,11 +18,9 @@ final class WriteUse
     /**
      * Runs the template's preparation and preserves a conditional CREATE completion.
      */
-    public function prepare(W\DeferredRenameUser|W\DeferredGrantRoles|W\DeferredCreateRole|W\DeferredUpdate|W\DeferredRevokePrivileges|W\Index\DeferredCreateIndex|W\DeferredAlterTable|W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredCreateTable $statement, Session $session): void
+    public function prepare(W\DeferredGrantRoles|W\DeferredCreateRole|W\DeferredUpdate|W\DeferredRevokePrivileges|W\Index\DeferredCreateIndex|W\DeferredAlterTable|W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredCreateTable $statement, Session $session): void
     {
-        if ($statement instanceof W\DeferredRenameUser) {
-            (new \MySqlMemory\Program\Account\RenameUse())->run($statement, $session);
-        } elseif ($statement instanceof W\DeferredGrantRoles) {
+        if ($statement instanceof W\DeferredGrantRoles) {
             (new \MySqlMemory\Program\Account\RoleGrantUse())->run($statement, $session);
         } elseif ($statement instanceof W\DeferredCreateRole) {
             (new \MySqlMemory\Program\Account\RoleCreationUse())->run($statement, $session);

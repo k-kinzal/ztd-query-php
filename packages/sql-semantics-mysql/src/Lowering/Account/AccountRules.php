@@ -82,7 +82,7 @@ final class AccountRules
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function renameUsers(Node $list): Statement
+    public function renameUsers(Node $list): \SqlSemantics\Platform\MySql\Statement\Account\RenameUser
     {
         return (new UserStatementRule($this->lowering))->rename($list);
     }

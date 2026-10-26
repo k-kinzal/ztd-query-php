@@ -15,7 +15,7 @@ final class RefusedRenameUserTest extends TestCase
 {
     public function testMessageDescribesTheFixedAccountDomain(): void
     {
-        $request = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredRenameUser([new \SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser(), new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
-        self::assertSame('RENAME USER requires consistent source and destination identities throughout its ordered pairs.', (new RefusedRenameUser($request))->message());
+        $pair = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser(), new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser());
+        self::assertSame('RENAME USER requires consistent source and destination identities throughout its ordered pairs.', (new RefusedRenameUser([$pair]))->message());
     }
 }

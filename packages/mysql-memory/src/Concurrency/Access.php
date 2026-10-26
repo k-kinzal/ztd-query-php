@@ -67,16 +67,25 @@ final class Access
             return;
         }
         if (in_array($statement::class, self::DEFINITIONS, true) || $this->writesLocked($statement)) {
-            if ($transaction->sessionReadOnly()) {
-                throw TransactionError::ReadOnlyTransaction->error();
-            }
-
+            $this->definition($session);
             return;
         }
         if (!$readOnly) {
             return;
         }
         $this->writes($this->written($operation), $session);
+    }
+
+    /**
+     * Checks a statement whose implicit commit ends the current transaction before its write.
+     *
+     * @throws SqlError When the session itself prohibits writes
+     */
+    public function definition(Session $session): void
+    {
+        if ($session->transaction->sessionReadOnly()) {
+            throw TransactionError::ReadOnlyTransaction->error();
+        }
     }
 
     /**

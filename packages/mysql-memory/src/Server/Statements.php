@@ -105,7 +105,7 @@ final class Statements
                 }
             }
             $parameters = count($bindings->types);
-            $input = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
+            $input = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);

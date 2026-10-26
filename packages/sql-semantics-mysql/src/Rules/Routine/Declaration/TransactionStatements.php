@@ -41,7 +41,7 @@ final class TransactionStatements
             M\Server\Storage\AlterTablespaceDatafile::class, M\Server\Storage\AlterTablespaceAccess::class, M\Server\Storage\RenameTablespace::class,
             M\Server\Storage\CreateUndoTablespace::class, M\Server\Storage\AlterUndoTablespace::class, M\Server\Storage\DropUndoTablespace::class,
             M\Server\Storage\CreateLogfileGroup::class, M\Server\Storage\AlterLogfileGroup::class, M\Server\Storage\DropLogfileGroup::class,
-            M\Account\CreateUser::class, M\Account\AlterUser::class, M\Account\DropUser::class, M\Account\RenameUser::class, M\Routine\Program\Write\DeferredRenameUser::class,
+            M\Account\CreateUser::class, M\Account\AlterUser::class, M\Account\DropUser::class, M\Account\RenameUser::class,
             M\Account\CreateRole::class, M\Routine\Program\Write\DeferredCreateRole::class, M\Account\DropRole::class,
             M\Server\ForeignServer\CreateServer::class, M\Server\ForeignServer\AlterServer::class, M\Server\ForeignServer\DropServer::class,
             M\Server\Instance\AlterInstance::class,

@@ -43,8 +43,8 @@ final class Binding
      */
     public function statement(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null, SourceMap $sources = new SourceMap()): AnalyzedStatement
     {
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
-            \SqlSemantics\Diagnostic\Check::input($profile === null || $statement->profile()->compatibleWith($profile), 'Transaction control retains its selected language when reused.');
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser) {
+            \SqlSemantics\Diagnostic\Check::input($profile === null || $statement->profile()->compatibleWith($profile), 'A catalog-independent statement retains its selected language when reused.');
             return $statement;
         }
         return Platforms::of('mysql')->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, $sources);

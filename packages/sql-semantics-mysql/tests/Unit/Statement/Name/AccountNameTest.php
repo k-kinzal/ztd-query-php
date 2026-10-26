@@ -23,6 +23,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class AccountNameTest extends TestCase
 {
+    public function testWarningsBelongToTheWrittenUserAndHostOperands(): void
+    {
+        $account = new AccountName(new Name('full', \SqlSemantics\Statement\Identifier\NameQuote::Bare), new Name('FULL', \SqlSemantics\Statement\Identifier\NameQuote::Bare));
+        self::assertSame([4119, 4119], array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation $warning): int => $warning->code(), $account->warnings(GrammarRelease::MySql847)));
+        self::assertSame([], $account->warnings(GrammarRelease::MySql5744));
+        self::assertSame([], (new AccountName(new Name('full', \SqlSemantics\Statement\Identifier\NameQuote::Backtick)))->warnings(GrammarRelease::MySql847));
+    }
+
     public function testUsernameRemovesOnlySurroundingAsciiWhitespace(): void
     {
         $account = new AccountName(new Name(" \t\n\r\v\fbo b\f\v\r\n\t "));

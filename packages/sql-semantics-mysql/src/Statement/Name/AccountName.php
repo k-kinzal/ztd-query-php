@@ -67,6 +67,23 @@ final class AccountName implements Account
     }
 
     /**
+     * Answers the reading notices owned by the written user and host operands.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation>
+     */
+    public function warnings(\SqlSemantics\Contract\GrammarRelease $release): array
+    {
+        $warnings = [];
+        foreach ([$this->user, $this->host] as $name) {
+            $warning = $name === null ? null : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::unqualifiedName($name, $release);
+            if ($warning !== null) {
+                $warnings[] = $warning;
+            }
+        }
+        return $warnings;
+    }
+
+    /**
      * Writes the user part and, joined by `@` without spaces, the host part.
      */
     public function render(Output $out): void
