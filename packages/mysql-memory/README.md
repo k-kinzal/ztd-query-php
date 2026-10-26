@@ -226,7 +226,15 @@ input, and missing owners, disabled instrumentation or lost records fail the
 check. The native observation mechanism tests require Docker and start the
 pinned Testcontainers releases.
 Each campaign owns a fresh reference container, and a failed reset cannot pass
-or contaminate a later campaign. Temporary objects, MySQL 5.6 session inventories,
+or contaminate a later campaign. An incomplete restoration makes its target
+unusable: subsequent verification, comparison and execution calls refuse further
+input. Setup runs inside the same connection lifetime as observation, so a failed
+setup also releases its connection. The administrator terminates that captured
+connection and confirms its disappearance before restoring catalog objects.
+Failure reports retain completed result sets and state observations, including
+binary values, together with separate observation and cleanup phases. A cleanup
+failure cannot turn an earlier observation failure into a successful comparison.
+Temporary objects, MySQL 5.6 session inventories,
 row locks, advisory-lock recursion, contention and environment-specific catalog
 fields still need complete contracts; these runs do not yet establish equivalence
 for every state change.

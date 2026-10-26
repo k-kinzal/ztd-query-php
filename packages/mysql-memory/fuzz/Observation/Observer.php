@@ -23,10 +23,15 @@ final class Observer
      * Answers the observation of a statement on a connection.
      *
      * @return array<string, mixed>
+     * @throws RuntimeException When result metadata or conditions cannot be read
      */
-    public function observe(PDO $pdo, string $sql, bool $ordered): array
+    public function observe(PDO $pdo, string $sql, bool $ordered, ?Record $record = null): array
     {
         $observation = ['results' => []];
+        if ($record !== null) {
+            $record->phase = 'statement';
+            $record->raw = $observation;
+        }
         try {
             $statement = $pdo->query($sql);
             if ($statement === false) {
@@ -35,6 +40,9 @@ final class Observer
             } else {
                 do {
                     $observation['results'][] = $this->result($pdo, $statement, $ordered);
+                    if ($record !== null) {
+                        $record->raw = $observation;
+                    }
                 } while ($statement->nextRowset());
                 if ($statement->errorCode() !== '00000') {
                     $error = $statement->errorInfo();
@@ -45,7 +53,14 @@ final class Observer
         } catch (PDOException $failure) {
             $observation['error'] = [$failure->errorInfo[1] ?? null, $failure->errorInfo[0] ?? null, $failure->errorInfo[2] ?? $failure->getMessage()];
         }
+        if ($record !== null) {
+            $record->phase = 'conditions';
+            $record->raw = $observation;
+        }
         $observation['warnings'] = $this->warnings($pdo);
+        if ($record !== null) {
+            $record->raw = $observation;
+        }
 
         return $observation;
     }

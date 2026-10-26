@@ -16,6 +16,7 @@ use Fuzz\Observation\Observer;
 use Fuzz\Observation\OwnerThread;
 use Fuzz\Observation\Process;
 use Fuzz\Observation\RandomPasswords;
+use Fuzz\Observation\Record;
 use Fuzz\Observation\SessionState;
 use Fuzz\Observation\StatementIdentities;
 use Fuzz\Observation\Status;
@@ -53,9 +54,11 @@ final class ExecutionTarget
     private ?string $previousInput = null;
 
     /**
-     * The JSON of the first native observation, retained if the repeated run cannot prepare its fixture.
+     * @var list<Record> Raw, possibly incomplete observations of the current input
      */
-    private ?string $nativeObservation = null;
+    public array $observations = [];
+
+    private bool $usable = true;
 
     /**
      * The account the statements run as on the MySQL server, read before any statement ran.
@@ -97,33 +100,43 @@ final class ExecutionTarget
      *
      * @throws JsonException When a lifecycle observation cannot be serialized
      * @throws Error When the reference is unstable or the two servers disagree
+     * @throws RuntimeException When an observation, fixture restoration or reuse check fails
      */
     public function verify(string $sql, string $input, string $mode = ''): void
     {
-        $comparison = \Fuzz\Execution\Lifecycle::handles($sql)
-            ? (new \Fuzz\Execution\Lifecycle())->compare($sql, $this->version, $mode, $this->emulate)
-            : $this->compare($sql, $mode);
-        if ($comparison->difference !== null || $comparison->volatile) {
-            $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
-            throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL mode: {$mode}\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference) . "\nRaw observations (base64 serialized): " . base64_encode(serialize($comparison->observations)));
+        $this->assertUsable();
+        $this->observations = [];
+        $verified = false;
+        try {
+            $comparison = \Fuzz\Execution\Lifecycle::handles($sql)
+                ? (new \Fuzz\Execution\Lifecycle())->compare($sql, $this->version, $mode, $this->emulate)
+                : $this->compare($sql, $mode);
+            if ($comparison->difference !== null || $comparison->volatile) {
+                $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
+                throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL mode: {$mode}\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference) . "\nRaw observations (base64 serialized): " . base64_encode(serialize($comparison->observations)));
+            }
+            $verified = true;
+        } finally {
+            if (!$verified) {
+                fwrite(STDERR, "\nExecution failure evidence (base64 serialized): " . base64_encode(serialize(['input' => $input, 'sql' => $sql, 'mode' => $mode, 'version' => $this->version, 'driver' => $this->emulate ? 'text' : 'prepared', 'foundRows' => $this->foundRows, 'observations' => $this->observations])) . "\n");
+            }
         }
     }
 
     /**
      * Compares one statement, distinguishing an unstable reference observation from an equal one.
      * Repairs the emulator after observing it too, so later clients cannot inherit expired credentials or server restrictions.
+     *
+     * @throws RuntimeException When an observation or fixture restoration fails
      */
     public function compare(string $sql, string $mode = ''): Comparison
     {
+        $this->assertUsable();
+        $this->observations = [];
         $this->previousInput = $this->input;
         $this->input = $sql;
-        $this->nativeObservation = null;
-        $guard = $this->guard();
-        $this->repair($guard);
-        $this->baseline?->restore($guard);
         $first = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql, $mode);
         $expected = $first['comparable'];
-        $this->nativeObservation = $this->json($first['raw']);
         $second = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql, $mode);
         $again = $second['comparable'];
         $observations = ['native' => $first['raw'], 'repeated' => $second['raw']];
@@ -140,8 +153,6 @@ final class ExecutionTarget
         if ($expected !== $again) {
             return new Comparison(true, contracts: $contracts, referenceDifference: $this->describe($expected, $again), observations: $observations);
         }
-        $this->repair($this->memoryGuard());
-        $this->baseline?->restore($this->memoryGuard());
         $memory = $this->run($this->memory, 'root', '', $sql, $mode);
         $observations['memory'] = $memory['raw'];
         $actual = $files->comparable($library->comparable($memory['comparable'], $this->version), $this->version);
@@ -260,26 +271,79 @@ final class ExecutionTarget
      * Isolated runs restore their original configuration before returning, including direct callers.
      *
      * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
+     * @throws RuntimeException When setup, observation or restoration fails
      */
     public function run(string $dsn, string $user, string $password, string $sql, string $mode = ''): array
     {
-        $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
-        $pdo = $this->connect($dsn, $user, $password, $clock);
+        $this->assertUsable();
+        $record = new Record($dsn === $this->native ? 'native' : 'memory', $sql, $mode);
+        $this->observations[] = $record;
+        $pdo = null;
+        $connection = null;
         try {
-            $record = $this->observe($pdo, $dsn, $sql, $mode);
-            return ['raw' => $record['raw'], 'comparable' => $clock?->comparable($record['comparable']) ?? $record['comparable']];
-        } finally {
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
-            $pdo->exec('ROLLBACK');
-            $pdo->exec('KILL CONNECTION_ID()');
-            $pdo = null;
-            gc_collect_cycles();
-            if ($dsn === $this->memory) {
-                $this->server?->assertNoInternalFailure();
-            }
             $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
             $this->repair($guard);
             $this->baseline?->restore($guard);
+            $record->phase = 'connection';
+            $pdo = $this->connect($dsn, $user, $password);
+            $connection = (new OwnerThread())->connection($pdo);
+            $record->phase = 'fixture setup';
+            $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
+            $this->prepare($pdo, $clock);
+            $observation = $this->observe($pdo, $dsn, $sql, $mode, $record);
+            $record->phase = 'comparison contracts';
+            $result = ['raw' => $observation['raw'], 'comparable' => $clock?->comparable($observation['comparable']) ?? $observation['comparable']];
+            $record->phase = 'complete';
+            return $result;
+        } finally {
+            try {
+                if ($connection !== null) {
+                    $this->restore($dsn, $connection, $record);
+                }
+            } finally {
+                $pdo = null;
+                gc_collect_cycles();
+                if (!$record->restored) {
+                    $this->usable = false;
+                }
+            }
+        }
+    }
+
+    /**
+     * Ends an input's session before restoring the server's requested baseline.
+     *
+     * @param positive-int $connection The identity captured before fixture setup
+     * @throws RuntimeException When termination, integrity or fixture restoration fails
+     */
+    public function restore(string $dsn, int $connection, Record $record): void
+    {
+        $record->cleanup = 'disconnect';
+        $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+        try {
+            (new \Fuzz\Fixture\Connections())->release($guard, $connection);
+            $record->cleanup = 'server integrity';
+        } finally {
+            if ($dsn === $this->memory) {
+                $this->server?->assertNoInternalFailure();
+            }
+        }
+        $record->cleanup = 'fixture restoration';
+        $this->repair($guard);
+        $this->baseline?->restore($guard);
+        $record->restored = true;
+        $record->cleanup = 'complete';
+    }
+
+    /**
+     * Refuses any further input after an incomplete fixture restoration.
+     *
+     * @throws RuntimeException When a fresh target and owned fixture are required
+     */
+    public function assertUsable(): void
+    {
+        if (!$this->usable) {
+            throw new RuntimeException('The differential fixture is unusable after an incomplete restoration; start a new target.');
         }
     }
 
@@ -288,8 +352,10 @@ final class ExecutionTarget
      *
      * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
      */
-    public function observe(PDO $pdo, string $dsn, string $sql, string $mode): array
+    public function observe(PDO $pdo, string $dsn, string $sql, string $mode, ?Record $record = null): array
     {
+        $record ??= new Record($dsn === $this->native ? 'native' : 'memory', $sql, $mode);
+        $record->phase = 'observation setup';
         if ($mode !== '') {
             (new Tables())->execute($pdo, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')');
         }
@@ -321,30 +387,36 @@ final class ExecutionTarget
             // A grammar refusal is still executed and compared; it cannot justify reordering a result.
             $ordered = true;
         }
-        $observation = $observer->observe($pdo, $sql, true);
+        $observation = $observer->observe($pdo, $sql, true, $record);
         if ($dsn === $this->memory) {
             $this->server?->assertNoInternalFailure();
         }
-        $raw = $observation;
+        $raw = &$record->raw;
         if ($owner !== null) {
+            $record->phase = 'metadata locks';
             $locks = (new MetadataLocks())->capture($guard, $owner, $this->version);
             $raw['metadataLocks'] = $locks['raw'];
             $observation['metadataLocks'] = $locks['comparable'];
         }
+        $record->phase = 'session state';
         $state = (new SessionState())->capture($pdo, $this->version);
         $raw['session'] = $state['raw'];
         $observation['session'] = $state['comparable'];
         if (!str_starts_with($this->version, '5.6.')) {
+            $record->phase = 'user variables';
             $userVariables = (new \Fuzz\Observation\UserVariables())->capture($pdo, $guard);
             $raw['session']['userVariables'] = $userVariables['raw'];
             $observation['session']['userVariables'] = $userVariables['comparable'];
         }
+        $record->phase = 'global variables';
         $observation['globals'] = (new Servers())->globals($guard, $this->version);
         $raw['globals'] = $observation['globals'];
         ksort($observation['globals']);
+        $record->phase = 'catalog state';
         $catalog = (new CatalogState())->capture($guard, $this->version);
         $raw['catalog'] = $catalog['raw'];
         $observation['catalog'] = $catalog['comparable'];
+        $record->phase = 'comparison contracts';
         if (!$ordered && isset($observation['results']) && is_array($observation['results'])) {
             foreach ($observation['results'] as $index => $result) {
                 if (is_array($result) && isset($result['rows']) && is_array($result['rows'])) {
@@ -357,39 +429,50 @@ final class ExecutionTarget
         $observation = $processes?->comparable($pdo, $observation) ?? $observation;
         $observation = $status?->comparable($observation) ?? $observation;
         $observation = (new \Fuzz\Observation\EngineReports())->comparable($sql, $observation);
+        $record->phase = 'owner-visible tables';
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
-        $observation['definitions'] = $observer->definitions($pdo, self::DATABASE);
         $raw['tables'] = $observation['tables'];
+        $record->phase = 'owner-visible definitions';
+        $observation['definitions'] = $observer->definitions($pdo, self::DATABASE);
         $raw['definitions'] = $observation['definitions'];
+        $record->phase = 'password contracts';
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
         return ['raw' => $raw, 'comparable' => $observation];
     }
 
     /**
-     * Connects to a server and prepares the fixture database, writable again if a statement made it read-only.
+     * Opens a connection whose lifetime is owned by run(), including failed setup.
      *
      * @throws RuntimeException When the fixture cannot be prepared; the input remains a failed observation
      */
-    public function connect(string $dsn, string $user, string $password, ?TableTimes $clock = null): PDO
+    public function connect(string $dsn, string $user, string $password): PDO
     {
         try {
             $foundRows = defined('Pdo\\Mysql::ATTR_FOUND_ROWS') ? constant('Pdo\\Mysql::ATTR_FOUND_ROWS') : PDO::MYSQL_ATTR_FOUND_ROWS;
             $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $this->emulate, $foundRows => $this->foundRows]);
-            (new Tables())->remove($pdo, self::DATABASE, $this->version);
-            $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
-            $pdo->exec('USE `' . self::DATABASE . '`');
-            foreach ((new Tables())->statements() as $statement) {
-                if ($clock === null) {
-                    (new Tables())->execute($pdo, $statement);
-                } else {
-                    $clock->execute($pdo, $statement);
-                }
-            }
-            $this->baseline?->logs($pdo);
+
         } catch (PDOException $failure) {
-            throw new RuntimeException("Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\nFirst native observation: " . ($this->nativeObservation ?? 'null') . "\n", 0, $failure);
+            throw new RuntimeException("Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\n", 0, $failure);
         }
 
         return $pdo;
     }
+    /**
+     * Prepares the same table fixture before the generated input, on an owned connection.
+     */
+    public function prepare(PDO $pdo, ?TableTimes $clock = null): void
+    {
+        (new Tables())->remove($pdo, self::DATABASE, $this->version);
+        $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
+        $pdo->exec('USE `' . self::DATABASE . '`');
+        foreach ((new Tables())->statements() as $statement) {
+            if ($clock === null) {
+                (new Tables())->execute($pdo, $statement);
+            } else {
+                $clock->execute($pdo, $statement);
+            }
+        }
+        $this->baseline?->logs($pdo);
+    }
+
 }

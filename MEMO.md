@@ -1234,6 +1234,58 @@ one test exceeding its unchanged one-second limit (four cases / ten assertions,
 one risky test); that suite is not a pass. No corpus or 900-second acceptance
 success is inferred from these targeted checks.
 
+### Failed observations and fixture ownership
+
+The ordinary execution target now owns each input connection from authentication
+through fixture setup, observation and restoration. Initial restoration also
+belongs to that per-engine attempt; a failure before execution retains the same
+input identity as a later probe failure. Previously setup happened outside the
+connection's `finally`, and a restoration exception could prevent the caller from
+receiving the completed observation.
+
+Each attempt retains completed primary result sets before reading conditions and
+completed state domains before later probes. Failure reporting serializes those
+raw values losslessly, along with the exact input, version, SQL mode and separate
+observation/cleanup phases. Exceptions still propagate; nested cleanup failures
+retain their original exception chain. A restored fixture is not evidence that
+its observation succeeded, and a completed observation cannot excuse failed
+restoration. Failure reporting uses the existing PHP-Fuzzer target, not another
+runner or comparison framework.
+
+The independent administrator terminates only the connection identity captured
+before fixture setup. Since MySQL KILL does not wait for thread cleanup, the
+target confirms disappearance through PROCESSLIST within a bounded five-second
+wait before catalog restoration. That wait is inside the ordinary input timeout;
+an unreadable inventory or a remaining connection fails. A failed initial reset,
+unidentified connection, disconnection, integrity check or restoration makes the
+target permanently unusable. Later verify/compare/run calls refuse input before
+opening another session or clearing the retained evidence. A new campaign must
+own a fresh fixture. These mechanisms do not remove the known initial-catalog,
+credential-age, state-observation or model gaps keeping goals B-D open.
+
+Verification of this boundary on PHP 8.5.8:
+
+- The connection-release mechanism passes nine native cases / 72 assertions,
+  covering 5.6.51 through 9.1.0. It checks that the owner disappears, uncommitted
+  writes are rolled back, named locks become available to a peer, and an already
+  disconnected owner is accepted in both PDO error modes.
+- Failure-path regressions pass four cases / 36 assertions: binary results
+  survive a failed condition read; an initial restoration failure forbids reuse;
+  a native restricted-account setup failure releases its connection; and a probe
+  plus cleanup failure retain the primary result and both exception causes.
+- The broader observation regression run has 163 cases / 178 assertions, three
+  errors and one risky test. MemoryDB still refuses the required Performance
+  Schema instrumentation update, and the prepared-profile case exceeds its
+  ordinary sixty-second limit. This run is not a passing acceptance check.
+- The ordinary text-protocol PHP-Fuzzer BEGIN replay on 8.4.7 with seed 20261026
+  exits one at the unchanged missing `mysql` tablespace. Decoding the emitted
+  evidence confirms two complete/restored native observations and one memory
+  attempt at initial restoration, with no falsely completed memory observation.
+  Input hex: `000000000100000000`. This validates failure evidence, not SQL
+  equivalence or corpus acceptance.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. The package
+  tree and strict autoload checks pass; the full acceptance gates remain open.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve
