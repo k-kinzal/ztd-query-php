@@ -84,46 +84,47 @@
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param \SqlSemantics\Construction\Origins|null $origins The optional recorder for original input locations</span></span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param Session|null $session Session settings needed to interpret input operands</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @return list&lt;Statement&gt;</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     * @throws \SqlSemantics\Construction\RejectedInput When an operand is outside a semantic constructor domain</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     * @param bool $canonicalNames Whether identifier bytes use the model encoding while session settings remain attached to the resulting values</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     * @return list&lt;Statement&gt;</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     * @throws \SqlSemantics\Construction\RejectedInput When an operand is outside a semantic constructor domain</span></span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">42</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Node</span> <span class="tok-var">$tree</span>, <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, <span class="tok-id">Leaves</span> <span class="tok-var">$leaves</span>): <span class="tok-kw">array</span>;</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Node</span> <span class="tok-var">$tree</span>, <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, <span class="tok-id">Leaves</span> <span class="tok-var">$leaves</span>, ?<span class="tok-id">\SqlSemantics\Construction\Origins</span> <span class="tok-var">$origins</span> = <span class="tok-id">null</span>, ?<span class="tok-id">Session</span> <span class="tok-var">$session</span> = <span class="tok-id">null</span>): <span class="tok-kw">array</span>;</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     * Answers the grammar productions of a profile&#039;s release.</span></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">productions</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">Productions</span>;</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a></span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Node</span> <span class="tok-var">$tree</span>, <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, <span class="tok-id">Leaves</span> <span class="tok-var">$leaves</span>, ?<span class="tok-id">\SqlSemantics\Construction\Origins</span> <span class="tok-var">$origins</span> = <span class="tok-id">null</span>, ?<span class="tok-id">Session</span> <span class="tok-var">$session</span> = <span class="tok-id">null</span>, <span class="tok-id">bool</span> <span class="tok-var">$canonicalNames</span> = <span class="tok-id">false</span>): <span class="tok-kw">array</span>;</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a></span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     * Answers the grammar productions of a profile&#039;s release.</span></span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">productions</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">Productions</span>;</span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a></span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">50</span><span class="tok-com">     * Answers the name codec of a profile.</span></span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * Answers the name codec of a profile and its optional session character set.</span></span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     * Answers the name codec of a profile and its optional session character set.</span></span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">52</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">codec</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">Codec</span>;</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">codec</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, ?<span class="tok-id">Session</span> <span class="tok-var">$session</span> = <span class="tok-id">null</span>): <span class="tok-id">Codec</span>;</span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a></span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a><span class="tok-com">     * Answers the token comparison keys of a profile.</span></span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">leafKeys</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">LeafKeys</span>;</span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a></span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a><span class="tok-com">     * Creates the declaration context of a profile with the name rules of the database.</span></span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a><span class="tok-com">     * @param list&lt;string&gt;|null $searchPath The schemas an unqualified relation name is searched in, or null for the default of the database</span></span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a><span class="tok-com">     * @param list&lt;Table&gt; $tables The relation declarations</span></span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a><span class="tok-com">     * @param bool $complete Whether the declarations enumerate every relation</span></span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a><span class="tok-com">     * @throws InvalidArgumentException When the database cannot search the path</span></span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">context</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, ?<span class="tok-kw">array</span> <span class="tok-var">$searchPath</span>, <span class="tok-kw">array</span> <span class="tok-var">$tables</span>, <span class="tok-id">bool</span> <span class="tok-var">$complete</span>): <span class="tok-id">AnalysisContext</span>;</span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a></span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a><span class="tok-com">     * Answers the namespace of the concrete statement values of this database.</span></span>
-<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">statementNamespace</span>(): <span class="tok-id">string</span>;</span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>}</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">codec</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, ?<span class="tok-id">Session</span> <span class="tok-var">$session</span> = <span class="tok-id">null</span>): <span class="tok-id">Codec</span>;</span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a></span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a><span class="tok-com">     * Answers the token comparison keys of a profile.</span></span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">leafKeys</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">LeafKeys</span>;</span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a></span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a><span class="tok-com">     * Creates the declaration context of a profile with the name rules of the database.</span></span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a><span class="tok-com">     * @param list&lt;string&gt;|null $searchPath The schemas an unqualified relation name is searched in, or null for the default of the database</span></span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a><span class="tok-com">     * @param list&lt;Table&gt; $tables The relation declarations</span></span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     * @param bool $complete Whether the declarations enumerate every relation</span></span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a><span class="tok-com">     * @throws InvalidArgumentException When the database cannot search the path</span></span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">context</span>(<span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>, ?<span class="tok-kw">array</span> <span class="tok-var">$searchPath</span>, <span class="tok-kw">array</span> <span class="tok-var">$tables</span>, <span class="tok-id">bool</span> <span class="tok-var">$complete</span>): <span class="tok-id">AnalysisContext</span>;</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a><span class="tok-com">     * Answers the namespace of the concrete statement values of this database.</span></span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">statementNamespace</span>(): <span class="tok-id">string</span>;</span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>}</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

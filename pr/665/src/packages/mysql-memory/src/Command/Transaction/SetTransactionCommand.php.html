@@ -58,99 +58,97 @@
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel</span>;</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Set\SetTransaction</span>;</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Variable\VariableScope</span>;</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operation</span>;</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * Executes SET TRANSACTION: the isolation level and access mode of the next transaction, of the session or of the server.</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * Without GLOBAL or SESSION the characteristics apply to the next transaction only, and setting</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * them while a transaction is active is ER_CANT_CHANGE_TX_CHARACTERISTICS; SET</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @@transaction_isolation and SET @@transaction_read_only, written without a scope, do the same.</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * SESSION sets transaction_isolation and transaction_read_only of the session, which the</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * transactions that start later take, and GLOBAL those of the server, which sessions that connect</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * later take; both are allowed inside a transaction, which keeps its own characteristics. Before</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> * MySQL 8.0 the variables are tx_isolation and tx_read_only, which 5.7 keeps beside the new names</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> * (verified on live 5.6.51, 5.7.44 and 8.4.7 servers).</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/set-transaction.html.</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SetTransactionCommand</span> <span class="tok-kw">implements</span> <span class="tok-id">Command</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>{</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * Answers true.</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clearsDiagnostics</span>(): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * Sets the characteristics.</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @throws SqlError When the characteristics of the next transaction are set while a transaction is active</span></span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">execute</span>(<span class="tok-id">Operation</span> <span class="tok-var">$operation</span>, <span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>, <span class="tok-id">Connection</span> <span class="tok-var">$connection</span>): <span class="tok-id">Reply</span></span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    {</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$operation</span>-&gt;<span class="tok-id">statement</span>;</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-id">assert</span>(<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SetTransaction</span>);</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">characteristics</span> <span class="tok-kw">as</span> <span class="tok-var">$characteristic</span>) {</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-var">$isolation</span> = <span class="tok-var">$characteristic</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IsolationLevel</span>;</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-var">$value</span> = <span class="tok-var">$isolation</span> ? <span class="tok-id">Isolation</span>::<span class="tok-id">of</span>(<span class="tok-var">$characteristic</span>)-&gt;<span class="tok-id">value</span> : (<span class="tok-var">$characteristic</span> === <span class="tok-id">AccessMode</span>::<span class="tok-kw">ReadOnly</span> ? <span class="tok-str">&#039;ON&#039;</span> : <span class="tok-str">&#039;OFF&#039;</span>);</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-kw">if</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">scope</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">next</span>(<span class="tok-var">$session</span>, <span class="tok-var">$isolation</span> ? <span class="tok-str">&#039;transaction_isolation&#039;</span> : <span class="tok-str">&#039;transaction_read_only&#039;</span>, <span class="tok-var">$value</span>);</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            } <span class="tok-kw">else</span> {</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">store</span>(<span class="tok-var">$session</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">scope</span>, <span class="tok-var">$isolation</span> ? <span class="tok-str">&#039;transaction_isolation&#039;</span> : <span class="tok-str">&#039;transaction_read_only&#039;</span>, <span class="tok-var">$value</span>);</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>            }</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        }</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a></span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Completion</span>(<span class="tok-num">0</span>, <span class="tok-num">0</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>());</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    }</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a></span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     * Gives the next transaction of the session a characteristic, as transaction_isolation or transaction_read_only names it.</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * Executes SET TRANSACTION: the isolation level and access mode of the next transaction, of the session or of the server.</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * Without GLOBAL or SESSION the characteristics apply to the next transaction only, and setting</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * them while a transaction is active is ER_CANT_CHANGE_TX_CHARACTERISTICS; SET</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @@transaction_isolation and SET @@transaction_read_only, written without a scope, do the same.</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * SESSION sets transaction_isolation and transaction_read_only of the session, which the</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * transactions that start later take, and GLOBAL those of the server, which sessions that connect</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * later take; both are allowed inside a transaction, which keeps its own characteristics. Before</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * MySQL 8.0 the variables are tx_isolation and tx_read_only, which 5.7 keeps beside the new names</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> * (verified on live 5.6.51, 5.7.44 and 8.4.7 servers).</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/set-transaction.html.</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SetTransactionCommand</span> <span class="tok-kw">implements</span> <span class="tok-id">Command</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>{</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * Answers true.</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clearsDiagnostics</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    {</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    }</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     * Sets the characteristics.</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * @throws SqlError When the characteristics of the next transaction are set while a transaction is active</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">execute</span>(<span class="tok-id">\SqlSemantics\Statement\AnalyzedStatement</span> <span class="tok-var">$statement</span>, <span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>, <span class="tok-id">Connection</span> <span class="tok-var">$connection</span>): <span class="tok-id">Reply</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    {</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-id">assert</span>(<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SetTransaction</span>);</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">characteristics</span> <span class="tok-kw">as</span> <span class="tok-var">$characteristic</span>) {</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-var">$isolation</span> = <span class="tok-var">$characteristic</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IsolationLevel</span>;</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-var">$value</span> = <span class="tok-var">$isolation</span> ? <span class="tok-id">Isolation</span>::<span class="tok-id">of</span>(<span class="tok-var">$characteristic</span>)-&gt;<span class="tok-id">value</span> : (<span class="tok-var">$characteristic</span> === <span class="tok-id">AccessMode</span>::<span class="tok-kw">ReadOnly</span> ? <span class="tok-str">&#039;ON&#039;</span> : <span class="tok-str">&#039;OFF&#039;</span>);</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-kw">if</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">scope</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">next</span>(<span class="tok-var">$session</span>, <span class="tok-var">$isolation</span> ? <span class="tok-str">&#039;transaction_isolation&#039;</span> : <span class="tok-str">&#039;transaction_read_only&#039;</span>, <span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            } <span class="tok-kw">else</span> {</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">store</span>(<span class="tok-var">$session</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">scope</span>, <span class="tok-var">$isolation</span> ? <span class="tok-str">&#039;transaction_isolation&#039;</span> : <span class="tok-str">&#039;transaction_read_only&#039;</span>, <span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            }</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        }</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Completion</span>(<span class="tok-num">0</span>, <span class="tok-num">0</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>());</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-com">     * Gives the next transaction of the session a characteristic, as transaction_isolation or transaction_read_only names it.</span></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     * @param string $value The isolation level as the variable holds it, or ON or OFF</span></span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     * @param string $value The isolation level as the variable holds it, or ON or OFF</span></span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * @throws SqlError When a transaction is active</span></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">next</span>(<span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">string</span> <span class="tok-var">$value</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    {</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        <span class="tok-var">$transaction</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">transaction</span>;</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-kw">if</span> (<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">active</span>()) {</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>            <span class="tok-kw">throw</span> <span class="tok-id">TransactionError</span>::<span class="tok-id">CharacteristicInTransaction</span>-&gt;<span class="tok-id">error</span>();</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        }</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-kw">if</span> (<span class="tok-id">str_ends_with</span>(<span class="tok-var">$name</span>, <span class="tok-str">&#039;isolation&#039;</span>)) {</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>            <span class="tok-var">$transaction</span>-&gt;<span class="tok-id">nextIsolation</span> = <span class="tok-id">Isolation</span>::<span class="tok-id">named</span>(<span class="tok-var">$value</span>) ?? <span class="tok-id">Isolation</span>::<span class="tok-id">RepeatableRead</span>;</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        } <span class="tok-kw">else</span> {</span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>            <span class="tok-var">$transaction</span>-&gt;<span class="tok-id">nextReadOnly</span> = <span class="tok-var">$value</span> === <span class="tok-str">&#039;ON&#039;</span>;</span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        }</span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    }</span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a></span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     * Sets a characteristic of the session or the server, under the names the release gives it.</span></span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     * @param string $value The isolation level as the variable holds it, or ON or OFF</span></span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">store</span>(<span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">VariableScope</span> <span class="tok-var">$scope</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">string</span> <span class="tok-var">$value</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>    {</span>
-<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        <span class="tok-var">$suffix</span> = <span class="tok-id">str_ends_with</span>(<span class="tok-var">$name</span>, <span class="tok-str">&#039;isolation&#039;</span>) ? <span class="tok-str">&#039;isolation&#039;</span> : <span class="tok-str">&#039;read_only&#039;</span>;</span>
-<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        <span class="tok-kw">foreach</span> ([<span class="tok-str">&#039;transaction_&#039;</span> . <span class="tok-var">$suffix</span>, <span class="tok-str">&#039;tx_&#039;</span> . <span class="tok-var">$suffix</span>] <span class="tok-kw">as</span> <span class="tok-var">$alias</span>) {</span>
-<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>            <span class="tok-var">$definition</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$alias</span>);</span>
-<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>            <span class="tok-kw">if</span> (<span class="tok-var">$definition</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>                <span class="tok-kw">continue</span>;</span>
-<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>            }</span>
-<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>            <span class="tok-kw">if</span> (<span class="tok-var">$scope</span> === <span class="tok-id">VariableScope</span>::<span class="tok-id">Session</span>) {</span>
-<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>                <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">set</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$value</span>);</span>
-<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            } <span class="tok-kw">else</span> {</span>
-<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>                <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">globals</span>-&gt;<span class="tok-id">set</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$value</span>);</span>
-<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>            }</span>
-<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>        }</span>
-<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a>    }</span>
-<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>}</span>
-<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     * @throws SqlError When a transaction is active</span></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">next</span>(<span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">string</span> <span class="tok-var">$value</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    {</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-var">$transaction</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">transaction</span>;</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-kw">if</span> (<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">active</span>()) {</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>            <span class="tok-kw">throw</span> <span class="tok-id">TransactionError</span>::<span class="tok-id">CharacteristicInTransaction</span>-&gt;<span class="tok-id">error</span>();</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        }</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-kw">if</span> (<span class="tok-id">str_ends_with</span>(<span class="tok-var">$name</span>, <span class="tok-str">&#039;isolation&#039;</span>)) {</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>            <span class="tok-var">$transaction</span>-&gt;<span class="tok-id">nextIsolation</span> = <span class="tok-id">Isolation</span>::<span class="tok-id">named</span>(<span class="tok-var">$value</span>) ?? <span class="tok-id">Isolation</span>::<span class="tok-id">RepeatableRead</span>;</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        } <span class="tok-kw">else</span> {</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>            <span class="tok-var">$transaction</span>-&gt;<span class="tok-id">nextReadOnly</span> = <span class="tok-var">$value</span> === <span class="tok-str">&#039;ON&#039;</span>;</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        }</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    }</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a></span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * Sets a characteristic of the session or the server, under the names the release gives it.</span></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     * @param string $value The isolation level as the variable holds it, or ON or OFF</span></span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">store</span>(<span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">VariableScope</span> <span class="tok-var">$scope</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">string</span> <span class="tok-var">$value</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    {</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        <span class="tok-var">$suffix</span> = <span class="tok-id">str_ends_with</span>(<span class="tok-var">$name</span>, <span class="tok-str">&#039;isolation&#039;</span>) ? <span class="tok-str">&#039;isolation&#039;</span> : <span class="tok-str">&#039;read_only&#039;</span>;</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-kw">foreach</span> ([<span class="tok-str">&#039;transaction_&#039;</span> . <span class="tok-var">$suffix</span>, <span class="tok-str">&#039;tx_&#039;</span> . <span class="tok-var">$suffix</span>] <span class="tok-kw">as</span> <span class="tok-var">$alias</span>) {</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>            <span class="tok-var">$definition</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$alias</span>);</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>            <span class="tok-kw">if</span> (<span class="tok-var">$definition</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>            }</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>            <span class="tok-kw">if</span> (<span class="tok-var">$scope</span> === <span class="tok-id">VariableScope</span>::<span class="tok-id">Session</span>) {</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>                <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">set</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>            } <span class="tok-kw">else</span> {</span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>                <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">globals</span>-&gt;<span class="tok-id">set</span>(<span class="tok-var">$definition</span>, <span class="tok-var">$value</span>);</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>            }</span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>        }</span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>    }</span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a>}</span>
+<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
