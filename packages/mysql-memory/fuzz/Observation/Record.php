@@ -35,7 +35,7 @@ final class Record
     public array $raw = [];
 
     /**
-     * @var list<Record> State reads, attached before execution so failed composite snapshots retain earlier evidence
+     * @var list<Record> Fixture commands, state reads and initialization records, attached before execution to retain partial evidence
      */
     public array $probes = [];
 
@@ -52,7 +52,7 @@ final class Record
     }
 
     /**
-     * Owns a state read independently of the primary result and comparison copy.
+     * Owns a fixture command or state read independently of the primary result and comparison copy.
      */
     public function probe(string $sql): self
     {

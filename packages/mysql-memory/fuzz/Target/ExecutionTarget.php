@@ -61,8 +61,10 @@ final class ExecutionTarget
 
     /**
      * The account the statements run as on the MySQL server, read before any statement ran.
+     *
+     * @var array{string, non-empty-string}|null
      */
-    private ?string $account = null;
+    private ?array $account = null;
 
     /** @var array<string, MySqlParser> Official grammar parsers for the exercised lexical profiles */
     private array $parsers = [];
@@ -78,6 +80,7 @@ final class ExecutionTarget
      * @param bool $foundRows Whether the clients request CLIENT_FOUND_ROWS
      * @param \MySqlMemory\Server\MemoryDatabase|null $server The emulator process retained for the lifetime of this target
      * @param \Testcontainers\Containers\ContainerInstance|null $reference The owned reference container, or null for an external server
+     * @param Record|null $startup The retained initialization evidence for owned server setup
      */
     public function __construct(
         public readonly string $native,
@@ -91,6 +94,7 @@ final class ExecutionTarget
         public readonly ?Baseline $baseline = null,
         public readonly ?\MySqlMemory\Server\MemoryDatabase $server = null,
         public readonly ?\Testcontainers\Containers\ContainerInstance $reference = null,
+        public readonly ?Record $startup = null,
     ) {
     }
 
@@ -124,7 +128,7 @@ final class ExecutionTarget
             $verified = true;
         } finally {
             if (!$verified) {
-                fwrite(STDERR, "\nExecution failure evidence (base64 serialized): " . base64_encode(serialize(['input' => $input, 'sql' => $sql, 'mode' => $mode, 'version' => $this->version, 'driver' => $this->emulate ? 'text' : 'prepared', 'foundRows' => $this->foundRows, 'observations' => $this->observations])) . "\n");
+                fwrite(STDERR, "\nExecution failure evidence (base64 serialized): " . base64_encode(serialize(['input' => $input, 'sql' => $sql, 'mode' => $mode, 'version' => $this->version, 'driver' => $this->emulate ? 'text' : 'prepared', 'foundRows' => $this->foundRows, 'startup' => $this->startup, 'observations' => $this->observations])) . "\n");
             }
         }
     }
@@ -203,13 +207,11 @@ final class ExecutionTarget
     /**
      * Answers the connection that repairs the MySQL server after a statement, opened once before any statement runs, as the guard account.
      */
-    public function guard(): PDO
+    public function guard(?Record $record = null): PDO
     {
         if ($this->guard === null) {
             $statements = new PDO($this->native, $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
-            $account = $statements->query('SELECT CURRENT_USER()');
-            $current = $account === false ? '' : $account->fetchColumn();
-            $this->account = is_string($current) && $current !== '' ? $current : $this->nativeUser . '@%';
+            $this->account = (new Servers())->principal($statements, $record);
             $this->guard = new PDO($this->native, $this->guardUser ?? $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
         }
 
@@ -226,15 +228,20 @@ final class ExecutionTarget
 
     /**
      * Restores what a statement may have changed for the account and the server: the account the guard authenticated as, its password, TLS requirement, resource limits and privileges, and the global modes that refuse connections or writes.
+     *
+     * @throws RuntimeException When the authenticated account is unavailable or a repair fails
      */
-    public function repair(PDO $guard): void
+    public function repair(PDO $guard, ?Record $record = null): void
     {
-        $this->guard();
-        [$user, $host] = explode('@', $this->account ?? $this->nativeUser . '@%', 2) + [1 => '%'];
+        $this->guard($record);
+        if ($this->account === null) {
+            throw new RuntimeException('The authenticated fixture account has not been captured.');
+        }
+        [$user, $host] = $this->account;
         $quoted = $guard->quote($user) . '@' . $guard->quote($host);
         $password = $guard->quote($this->nativePassword);
         foreach ($this->repairs($quoted, $password) as $statement) {
-            (new Tables())->execute($guard, $statement);
+            (new Tables())->execute($guard, $statement, $record);
         }
     }
 
@@ -301,9 +308,9 @@ final class ExecutionTarget
         $pdo = null;
         $connection = null;
         try {
-            $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
-            $this->repair($guard);
-            $this->baseline?->restore($guard);
+            $guard = $dsn === $this->native ? $this->guard($record) : $this->memoryGuard();
+            $this->repair($guard, $record);
+            $this->baseline?->restore($guard, $record);
             $record->phase = 'connection';
             $pdo = $this->connect($dsn, $user, $password);
             $connection = (new OwnerThread())->connection($pdo, $record);
@@ -344,11 +351,11 @@ final class ExecutionTarget
     {
         $record->cleanup = 'disconnect';
         try {
-            $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
-            (new \Fuzz\Fixture\Connections())->release($guard, $connection);
+            $guard = $dsn === $this->native ? $this->guard($record) : $this->memoryGuard();
+            (new \Fuzz\Fixture\Connections())->release($guard, $connection, $record);
             $record->cleanup = 'fixture restoration';
-            $this->repair($guard);
-            $this->baseline?->restore($guard);
+            $this->repair($guard, $record);
+            $this->baseline?->restore($guard, $record);
         } finally {
             $this->integrity($dsn, $record);
         }
@@ -398,16 +405,16 @@ final class ExecutionTarget
         $record ??= new Record($dsn === $this->native ? 'native' : 'memory', $sql, $mode);
         $record->phase = 'observation setup';
         if ($mode !== '') {
-            (new Tables())->execute($pdo, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')');
+            (new Tables())->execute($pdo, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')', $record);
         }
         if ($this->baseline !== null) {
-            Baseline::mutexes($pdo, $this->version);
+            Baseline::mutexes($pdo, $this->version, $record);
         }
-        $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+        $guard = $dsn === $this->native ? $this->guard($record) : $this->memoryGuard();
         $owner = null;
         if (!str_starts_with($this->version, '5.6.')) {
             $owner = (new OwnerThread())->connection($pdo, $record);
-            (new MetadataLocks())->prepare($guard, $owner);
+            (new MetadataLocks())->prepare($guard, $owner, $record);
         }
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1, $record) : null;
         $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo, $this->version, $record) : null;
@@ -417,7 +424,7 @@ final class ExecutionTarget
         $processes = Process\Listing::handles($sql) ? Process\Listing::capture($pdo, $guard, $record) : null;
         if (Status\Listing::handles($sql)) {
             /** Reset the connection maximum to current clients on both servers before capturing status. */
-            (new Tables())->execute($pdo, 'FLUSH STATUS');
+            (new Tables())->execute($pdo, 'FLUSH STATUS', $record);
         }
         $status = Status\Listing::handles($sql) ? Status\Listing::capture($pdo, $sql, $record) : null;
         $observer = new Observer();
@@ -503,17 +510,17 @@ final class ExecutionTarget
      */
     public function prepare(PDO $pdo, ?TableTimes $clock = null, ?Record $record = null): void
     {
-        (new Tables())->remove($pdo, self::DATABASE, $this->version);
-        $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
-        $pdo->exec('USE `' . self::DATABASE . '`');
+        (new Tables())->remove($pdo, self::DATABASE, $this->version, $record);
+        (new Tables())->execute($pdo, 'CREATE DATABASE `' . self::DATABASE . '`', $record);
+        (new Tables())->execute($pdo, 'USE `' . self::DATABASE . '`', $record);
         foreach ((new Tables())->statements() as $statement) {
             if ($clock === null) {
-                (new Tables())->execute($pdo, $statement);
+                (new Tables())->execute($pdo, $statement, $record);
             } else {
                 $clock->execute($pdo, $statement, $record);
             }
         }
-        $this->baseline?->logs($pdo);
+        $this->baseline?->logs($pdo, $record);
     }
 
 }

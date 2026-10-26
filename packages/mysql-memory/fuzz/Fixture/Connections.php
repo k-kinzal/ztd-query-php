@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Fuzz\Fixture;
 
+use Fuzz\Observation\Observer;
+use Fuzz\Observation\Record;
 use PDO;
-use PDOException;
 use RuntimeException;
 
 /**
@@ -25,25 +26,27 @@ final class Connections
      * @param positive-int $connection The identity captured before fixture setup
      * @throws RuntimeException When the connection cannot be terminated or its absence confirmed
      */
-    public function release(PDO $administrator, int $connection): void
+    public function release(PDO $administrator, int $connection, ?Record $record = null): void
     {
         try {
-            if ($administrator->exec('KILL CONNECTION ' . $connection) === false && ($administrator->errorInfo()[1] ?? null) !== 1094) {
-                throw new RuntimeException('Cannot terminate the differential input connection: ' . json_encode($administrator->errorInfo()));
-            }
-        } catch (PDOException $failure) {
-            if (($failure->errorInfo[1] ?? null) !== 1094) {
-                throw new RuntimeException('Cannot terminate the differential input connection.', 0, $failure);
-            }
+            $result = (new Tables())->observe($administrator, 'KILL CONNECTION ' . $connection, $record);
+        } catch (RuntimeException $failure) {
+            throw new RuntimeException('Cannot terminate the differential input connection.', 0, $failure);
+        }
+        $error = $result['error'] ?? null;
+        if ($error !== null && (!is_array($error) || ($error[0] ?? null) !== 1094)) {
+            throw new RuntimeException('Cannot terminate the differential input connection: ' . json_encode($error));
         }
         $deadline = hrtime(true) + 5_000_000_000;
         do {
-            $remaining = $administrator->query('SELECT ID FROM information_schema.PROCESSLIST WHERE ID = ' . $connection);
-            if ($remaining === false) {
-                throw new RuntimeException('Cannot confirm the differential input connection was terminated: ' . json_encode($administrator->errorInfo()));
-            }
-            if ($remaining->fetchAll(PDO::FETCH_COLUMN) === [] && hrtime(true) <= $deadline) {
+            $remaining = (new Observer())->rows($administrator, 'SELECT ID FROM information_schema.PROCESSLIST WHERE ID = ' . $connection, $record);
+            if ($remaining === [] && hrtime(true) <= $deadline) {
                 return;
+            }
+            foreach ($remaining as $row) {
+                if (!is_array($row) || count($row) !== 1 || ($row[0] ?? null) !== $connection) {
+                    throw new RuntimeException('The connection-termination probe returned an invalid identity.');
+                }
             }
             usleep(10000);
         } while (hrtime(true) < $deadline);

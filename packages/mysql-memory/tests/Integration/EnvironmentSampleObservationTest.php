@@ -54,7 +54,9 @@ final class EnvironmentSampleObservationTest extends TestCase
             self::assertArrayHasKey('t1', $clock->intervals);
             self::assertTrue($clock->contains('t1', $clock->creations['t1'][0], true));
             self::assertTrue($clock->contains('t1', $clock->intervals['t1'][1]));
-            self::assertCount(10, $record->probes);
+            self::assertCount(12, $record->probes);
+            self::assertSame('CREATE TABLE t1 (id INT)', $record->probes[7]->sql);
+            self::assertSame('INSERT INTO t1 VALUES (1)', $record->probes[10]->sql);
             self::assertSame($raw, $record->raw);
             self::assertSame($emulate, $connection->getAttribute(PDO::ATTR_EMULATE_PREPARES));
         } finally {

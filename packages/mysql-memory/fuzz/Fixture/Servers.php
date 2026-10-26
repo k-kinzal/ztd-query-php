@@ -7,10 +7,11 @@ namespace Fuzz\Fixture;
 use Container\Endpoint;
 use Container\MySqlRelease;
 use Fuzz\Container\DisposableMySql;
+use Fuzz\Observation\Observer;
+use Fuzz\Observation\Record;
 use Fuzz\Target\ExecutionTarget;
 use MySqlMemory\Server\MemoryDatabase;
 use PDO;
-use PDOException;
 use RuntimeException;
 use Testcontainers\Testcontainers;
 
@@ -33,34 +34,75 @@ final class Servers
      * Starts both servers and answers the differential target over them, and the grammar of the release.
      *
      * @return array{ExecutionTarget, string, MemoryDatabase}
+     * @throws RuntimeException When initialization fails, retaining its observations after disposing owned servers
      */
     public function start(bool $emulate = true, bool $isolate = false): array
     {
         $version = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : MySqlRelease::DEFAULT;
         $dsn = getenv('MYSQL_MEMORY_NATIVE_DSN');
         $reference = null;
-        if ($dsn !== false && $dsn !== '') {
-            $user = $this->environment('MYSQL_MEMORY_NATIVE_USER', 'root');
-            $password = $this->environment('MYSQL_MEMORY_NATIVE_PASSWORD', 'root');
-        } else {
-            $reference = Testcontainers::run($this->reference($version));
-            $endpoint = $reference->getData(Endpoint::class);
-            $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
-            $user = $endpoint->username;
-            $password = $endpoint->password;
+        $server = null;
+        $record = new Record('startup', '', '');
+        $record->phase = 'native startup';
+        try {
+            try {
+                if ($dsn !== false && $dsn !== '') {
+                    $user = $this->environment('MYSQL_MEMORY_NATIVE_USER', 'root');
+                    $password = $this->environment('MYSQL_MEMORY_NATIVE_PASSWORD', 'root');
+                } else {
+                    $reference = Testcontainers::run($this->reference($version));
+                    $endpoint = $reference->getData(Endpoint::class);
+                    $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
+                    $user = $endpoint->username;
+                    $password = $endpoint->password;
+                }
+                $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+                $this->assertVersion($native, $version);
+                $record->phase = 'native initialization';
+                $initial = new Record('native', '', '');
+                $record->probes[] = $initial;
+                $this->clean($native, $version, $initial);
+                $globals = $this->globals($native, $version, $initial);
+                $peer = $this->peer($native, $initial);
+                $routines = $this->routineTimestamps($native, $initial);
+                $priorities = $this->resourcePriorities($native, $version, $initial);
+                $processors = $this->resourceProcessors($native, $version, $initial);
+                $help = $this->help($native, $initial);
+                $zones = $this->timeZones($native, $initial);
+                $this->guard($native, $version, $password, $initial);
+                $baseline = $isolate ? new Baseline($native, $version, $initial) : null;
+                $initial->phase = 'complete';
+                $record->phase = 'memory startup';
+                $server = MemoryDatabase::start($version, [], $globals, $peer, routineTimestamps: $routines, resourcePriorities: $priorities, resourceProcessors: $processors, help: $help, timeZones: $zones);
+                $record->phase = 'memory initialization';
+                $memory = new Record('memory', '', '');
+                $record->probes[] = $memory;
+                $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password, $memory);
+                $server->assertNoInternalFailure();
+                $memory->phase = 'complete';
+                $target = new ExecutionTarget($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $baseline, $server, $reference, $record);
+                $record->phase = 'complete';
+                $record->cleanup = 'ownership transferred';
+                return [$target, 'mysql-' . $version, $server];
+            } finally {
+                if ($record->phase !== 'complete') {
+                    try {
+                        $record->cleanup = 'memory server';
+                        try {
+                            $server?->assertNoInternalFailure();
+                        } finally {
+                            $server?->stop();
+                        }
+                    } finally {
+                        $record->cleanup = 'native server';
+                        $reference?->stop();
+                    }
+                    $record->cleanup = 'complete';
+                }
+            }
+        } catch (RuntimeException $failure) {
+            throw new RuntimeException('Differential fixture initialization failed: ' . $failure->getMessage() . "\nEvidence (base64 serialized): " . base64_encode(serialize($record)), 0, $failure);
         }
-        $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $this->assertVersion($native, $version);
-        $this->clean($native, $version);
-        $globals = $this->globals($native, $version);
-        $identity = $native->query('SELECT USER()');
-        $account = $identity === false ? '' : $identity->fetchColumn();
-        $account = is_string($account) ? $account : '';
-        $server = MemoryDatabase::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native), resourcePriorities: $this->resourcePriorities($native, $version), resourceProcessors: $this->resourceProcessors($native, $version), help: $this->help($native), timeZones: $this->timeZones($native));
-        $this->guard($native, $version, $password);
-        $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
-
-        return [new ExecutionTarget($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server, $reference), 'mysql-' . $version, $server];
     }
 
     /**
@@ -96,12 +138,20 @@ final class Servers
      * Conversion and temporal arithmetic still execute independently in the two engines.
      *
      * @return list<array{string, int, bool}>
+     * @throws RuntimeException When a time-zone identity or setting is invalid
      */
-    public function timeZones(PDO $native): array
+    public function timeZones(PDO $native, ?Record $record = null): array
     {
         $zones = [];
-        foreach ($this->rows($native, 'SELECT n.Name, n.Time_zone_id, z.Use_leap_seconds FROM mysql.time_zone_name n JOIN mysql.time_zone z USING (Time_zone_id) ORDER BY n.Time_zone_id') as [$name, $id, $leaps]) {
-            $zones[] = [$name, (int) $id, $leaps === 'Y'];
+        foreach ($this->rows($native, 'SELECT n.Name, n.Time_zone_id, z.Use_leap_seconds FROM mysql.time_zone_name n JOIN mysql.time_zone z USING (Time_zone_id) ORDER BY n.Time_zone_id', $record) as $row) {
+            if (count($row) !== 3 || $row[0] === '' || !ctype_digit($row[1]) || !in_array($row[2], ['Y', 'N'], true)) {
+                throw new RuntimeException('The time-zone fixture contains a malformed name, identity or leap-second setting.');
+            }
+            $id = filter_var($row[1], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if (!is_int($id)) {
+                throw new RuntimeException('The time-zone fixture identity is outside the positive integer domain.');
+            }
+            $zones[] = [$row[0], $id, $row[2] === 'Y'];
         }
         return $zones;
     }
@@ -114,13 +164,13 @@ final class Servers
      * Text is read as UTF-8 bytes independently of the initial client character set.
      * @return array<string, list<list<string>>>
      */
-    public function help(PDO $native): array
+    public function help(PDO $native, ?Record $record = null): array
     {
         return [
-            'topics' => $this->rows($native, 'SELECT help_topic_id, CAST(CONVERT(name USING utf8mb4) AS BINARY), help_category_id, CAST(CONVERT(description USING utf8mb4) AS BINARY), CAST(CONVERT(example USING utf8mb4) AS BINARY) FROM mysql.help_topic'),
-            'categories' => $this->rows($native, 'SELECT help_category_id, CAST(CONVERT(name USING utf8mb4) AS BINARY), parent_category_id FROM mysql.help_category'),
-            'keywords' => $this->rows($native, 'SELECT help_keyword_id, CAST(CONVERT(name USING utf8mb4) AS BINARY) FROM mysql.help_keyword'),
-            'relations' => $this->rows($native, 'SELECT help_topic_id, help_keyword_id FROM mysql.help_relation'),
+            'topics' => $this->rows($native, 'SELECT help_topic_id, CAST(CONVERT(name USING utf8mb4) AS BINARY), help_category_id, CAST(CONVERT(description USING utf8mb4) AS BINARY), CAST(CONVERT(example USING utf8mb4) AS BINARY) FROM mysql.help_topic', $record),
+            'categories' => $this->rows($native, 'SELECT help_category_id, CAST(CONVERT(name USING utf8mb4) AS BINARY), parent_category_id FROM mysql.help_category', $record),
+            'keywords' => $this->rows($native, 'SELECT help_keyword_id, CAST(CONVERT(name USING utf8mb4) AS BINARY) FROM mysql.help_keyword', $record),
+            'relations' => $this->rows($native, 'SELECT help_topic_id, help_keyword_id FROM mysql.help_relation', $record),
         ];
     }
 
@@ -130,13 +180,13 @@ final class Servers
      * @return array<string, string|null>
      * @throws RuntimeException When the initial configuration cannot be read completely
      */
-    public function globals(PDO $native, string $version, ?\Fuzz\Observation\Record $record = null): array
+    public function globals(PDO $native, string $version, ?Record $record = null): array
     {
         $globals = [];
         $empty = [];
-        $observer = new \Fuzz\Observation\Observer();
+        $observer = new Observer();
         foreach ($observer->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables', $record) as $row) {
-            if (!is_array($row) || count($row) !== 2 || !is_string($row[0] ?? null) || (!is_string($row[1]) && $row[1] !== null)) {
+            if (!is_array($row) || count($row) !== 2 || !is_string($row[0] ?? null) || $row[0] === '' || array_key_exists(strtolower($row[0]), $globals) || (!is_string($row[1]) && $row[1] !== null)) {
                 throw new RuntimeException('The global variable inventory returned an invalid row.');
             }
             [$name, $value] = $row;
@@ -145,15 +195,18 @@ final class Servers
                 $empty[] = strtolower($name);
             }
         }
+        if ($globals === []) {
+            throw new RuntimeException('The global variable inventory is empty.');
+        }
         if ($empty !== []) {
             $rows = $observer->rows($native, 'SELECT ' . implode(', ', array_map(static fn (string $name): string => '@@GLOBAL.`' . str_replace('`', '``', $name) . '`', $empty)), $record);
             $values = count($rows) === 1 ? $rows[0] : null;
             if (!is_array($values) || count($values) !== count($empty)) {
                 throw new RuntimeException('Cannot distinguish NULL global fixture variables from empty strings.');
             }
-            foreach ($empty as $position => $name) {
+            foreach ($empty as $position => $emptyName) {
                 if ($values[$position] === null) {
-                    $globals[$name] = null;
+                    $globals[$emptyName] = null;
                 }
             }
         }
@@ -169,7 +222,7 @@ final class Servers
      * created on both servers, so that both list the same accounts. PROXY on CURRENT_USER stores
      * the empty wildcard mapping, allowing the guard to remove generated PROXY grants too.
      */
-    public function guard(PDO $connection, string $version, string $password): void
+    public function guard(PDO $connection, string $version, string $password, ?Record $record = null): void
     {
         $account = "'" . self::GUARD . "'@'%'";
         $quoted = $connection->quote($password);
@@ -178,7 +231,7 @@ final class Servers
             : ["CREATE USER IF NOT EXISTS {$account} IDENTIFIED BY {$quoted}", "GRANT ALL ON *.* TO {$account} WITH GRANT OPTION"];
         $statements[] = "GRANT PROXY ON CURRENT_USER TO {$account} WITH GRANT OPTION";
         foreach ($statements as $statement) {
-            (new Tables())->execute($connection, $statement);
+            (new Tables())->execute($connection, $statement, $record);
         }
     }
 
@@ -192,63 +245,102 @@ final class Servers
      * The root@% fixture starts without PROXY grants too; image-specific initial proxy grants
      * otherwise require privileges that the repair account does not hold.
      */
-    public function clean(PDO $native, string $version = MySqlRelease::DEFAULT): void
+    public function clean(PDO $native, string $version = MySqlRelease::DEFAULT, ?Record $record = null): void
     {
         $statements = [];
-        foreach ($this->rows($native, 'SELECT User, Host FROM mysql.user') as [$name, $host]) {
+        foreach ($this->rows($native, 'SELECT User, Host FROM mysql.user', $record) as [$name, $host]) {
             if (!in_array($name, ['root', self::GUARD, 'healthchecker', 'mysql.infoschema', 'mysql.session', 'mysql.sys'], true)) {
                 $statements[] = (str_starts_with($version, '5.6.') ? 'DROP USER ' : 'DROP USER IF EXISTS ') . $native->quote($name) . '@' . $native->quote($host);
             }
         }
-        foreach ($this->rows($native, 'SELECT Server_name FROM mysql.servers') as [$name]) {
+        foreach ($this->rows($native, 'SELECT Server_name FROM mysql.servers', $record) as [$name]) {
             $statements[] = 'DROP SERVER IF EXISTS `' . str_replace('`', '``', $name) . '`';
         }
-        foreach (str_starts_with($version, '5.') ? [] : $this->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
+        foreach (str_starts_with($version, '5.') ? [] : $this->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS', $record) as [$name]) {
             if (!in_array($name, ['SYS_default', 'USR_default'], true)) {
                 $statements[] = 'DROP RESOURCE GROUP `' . str_replace('`', '``', $name) . '` FORCE';
             }
         }
         foreach (['db' => 'Db', 'tables_priv' => 'Db', 'columns_priv' => 'Db', 'procs_priv' => 'Db'] as $table => $column) {
-            if ($this->rows($native, "SELECT 1 FROM mysql.{$table} WHERE User = 'root'") !== []) {
+            if ($this->rows($native, "SELECT 1 FROM mysql.{$table} WHERE User = 'root'", $record) !== []) {
                 $statements[] = "DELETE FROM mysql.{$table} WHERE User = 'root'";
             }
         }
         $statements[] = "DELETE FROM mysql.proxies_priv WHERE User = 'root' AND Host = '%'";
         $statements[] = 'FLUSH PRIVILEGES';
         foreach ($statements as $statement) {
-            (new Tables())->execute($native, $statement);
+            (new Tables())->execute($native, $statement, $record);
         }
     }
 
     /**
-     * Reads a supported fixture interface; absence must be selected by the caller's release contract.
+     * Reads a non-null textual fixture interface, retaining the unconverted driver evidence.
+     * Integer identifiers are rendered as decimal strings; NULL and other value types are rejected.
      *
      * @return list<list<string>>
      * @throws RuntimeException When a fixture query fails or returns an invalid row
      */
-    public function rows(PDO $native, string $sql): array
+    public function rows(PDO $native, string $sql, ?Record $record = null): array
     {
         try {
-            $statement = $native->query($sql);
-        } catch (PDOException $failure) {
+            $observed = (new Observer())->rows($native, $sql, $record);
+        } catch (RuntimeException $failure) {
             throw new RuntimeException('Cannot read a differential fixture: ' . $sql, 0, $failure);
         }
-        if ($statement === false) {
-            throw new RuntimeException('Cannot read a differential fixture: ' . $sql . ': ' . json_encode($native->errorInfo()));
-        }
         $rows = [];
-        foreach ($statement->fetchAll(PDO::FETCH_NUM) as $row) {
-            if (!is_array($row)) {
+        foreach ($observed as $row) {
+            if (!is_array($row) || !array_is_list($row) || $row === []) {
                 throw new RuntimeException('The differential fixture returned an invalid row.');
             }
             $values = [];
             foreach ($row as $value) {
-                $values[] = is_scalar($value) ? (string) $value : '';
+                if (!is_string($value) && !is_int($value)) {
+                    throw new RuntimeException('The differential fixture requires a non-null text or integer cell: ' . $sql);
+                }
+                $values[] = (string) $value;
             }
             $rows[] = $values;
         }
 
         return $rows;
+    }
+
+    /**
+     * Reads the authenticated account without inferring its host from connection settings.
+     * User names can contain @; the final separator precedes the matched host.
+     *
+     * @return array{string, non-empty-string}
+     * @throws RuntimeException When the authenticated account cannot be read unambiguously
+     */
+    public function principal(PDO $connection, ?Record $record = null): array
+    {
+        $rows = $this->rows($connection, 'SELECT CURRENT_USER()', $record);
+        $value = count($rows) === 1 && count($rows[0]) === 1 ? $rows[0][0] : '';
+        $separator = strrpos($value, '@');
+        if ($separator === false || $separator === strlen($value) - 1) {
+            throw new RuntimeException('Cannot read the authenticated fixture account and matched host.');
+        }
+        $host = substr($value, $separator + 1);
+        if ($host === '') {
+            throw new RuntimeException('The authenticated fixture account has no host.');
+        }
+        return [substr($value, 0, $separator), $host];
+    }
+
+    /**
+     * Reads the client's observed peer host independently of its matched grant-table host.
+     *
+     * @throws RuntimeException When USER() does not expose one client host
+     */
+    public function peer(PDO $connection, ?Record $record = null): string
+    {
+        $rows = $this->rows($connection, 'SELECT USER()', $record);
+        $value = count($rows) === 1 && count($rows[0]) === 1 ? $rows[0][0] : '';
+        $separator = strrpos($value, '@');
+        if ($separator === false || $separator === strlen($value) - 1) {
+            throw new RuntimeException('Cannot read the fixture client host.');
+        }
+        return substr($value, $separator + 1);
     }
 
     /**
@@ -268,12 +360,21 @@ final class Servers
      * identify which independently installed entry receives each initial timestamp pair.
      *
      * @return array<string, array{int, int}>
+     * @throws RuntimeException When an installation timestamp cannot be captured without loss
      */
-    public function routineTimestamps(PDO $native): array
+    public function routineTimestamps(PDO $native, ?Record $record = null): array
     {
         $timestamps = [];
-        foreach ($this->rows($native, "SELECT CONCAT(ROUTINE_TYPE, ':', ROUTINE_NAME), UNIX_TIMESTAMP(CREATED), UNIX_TIMESTAMP(LAST_ALTERED) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='sys'") as [$key, $created, $modified]) {
-            $timestamps[$key] = [(int) $created, (int) $modified];
+        foreach ($this->rows($native, "SELECT CONCAT(ROUTINE_TYPE, ':', ROUTINE_NAME), UNIX_TIMESTAMP(CREATED), UNIX_TIMESTAMP(LAST_ALTERED) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='sys'", $record) as $row) {
+            if (count($row) !== 3 || $row[0] === '' || array_key_exists($row[0], $timestamps)) {
+                throw new RuntimeException('The routine timestamp fixture contains an invalid or duplicate identity.');
+            }
+            $created = filter_var($row[1], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            $modified = filter_var($row[2], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            if (!is_int($created) || !is_int($modified)) {
+                throw new RuntimeException('The routine timestamp fixture contains an invalid instant.');
+            }
+            $timestamps[$row[0]] = [$created, $modified];
         }
 
         return $timestamps;
@@ -284,23 +385,23 @@ final class Servers
      * The probe is independent of generated SQL and leaves no resource group behind.
      * @throws RuntimeException When the server returns an unexpected priority value
      */
-    public function resourcePriorities(PDO $native, string $version): bool
+    public function resourcePriorities(PDO $native, string $version, ?Record $record = null): bool
     {
         if (str_starts_with($version, '5.')) {
             return true;
         }
         $name = 'memory_priority_' . bin2hex(random_bytes(8));
-        $native->exec('CREATE RESOURCE GROUP ' . $name . ' TYPE USER THREAD_PRIORITY 1');
+        (new Tables())->execute($native, 'CREATE RESOURCE GROUP ' . $name . ' TYPE USER THREAD_PRIORITY 1', $record);
         try {
-            $result = $native->query("SELECT THREAD_PRIORITY FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = '" . $name . "'");
-            $priority = $result === false ? false : $result->fetchColumn();
-            if (!in_array($priority, [0, 1, '0', '1'], true)) {
+            $rows = $this->rows($native, "SELECT THREAD_PRIORITY FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = '" . $name . "'", $record);
+            $priority = count($rows) === 1 && count($rows[0]) === 1 ? $rows[0][0] : null;
+            if (!in_array($priority, ['0', '1'], true)) {
                 throw new RuntimeException('The resource-group priority probe returned no supported capability value.');
             }
 
-            return $priority === 1 || $priority === '1';
+            return $priority === '1';
         } finally {
-            $native->exec('DROP RESOURCE GROUP ' . $name);
+            (new Tables())->execute($native, 'DROP RESOURCE GROUP ' . $name, $record);
         }
     }
 
@@ -311,13 +412,13 @@ final class Servers
      * @return positive-int
      * @throws RuntimeException When the native default group does not describe a contiguous CPU domain
      */
-    public function resourceProcessors(PDO $native, string $version): int
+    public function resourceProcessors(PDO $native, string $version, ?Record $record = null): int
     {
         if (str_starts_with($version, '5.')) {
             return 8;
         }
-        $result = $native->query("SELECT VCPU_IDS FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = 'USR_default'");
-        $cpus = $result === false ? false : $result->fetchColumn();
+        $rows = $this->rows($native, "SELECT VCPU_IDS FROM information_schema.RESOURCE_GROUPS WHERE RESOURCE_GROUP_NAME = 'USR_default'", $record);
+        $cpus = count($rows) === 1 && count($rows[0]) === 1 ? $rows[0][0] : null;
         if (!is_string($cpus) || preg_match('/\A0(?:-([0-9]+))?\z/', $cpus, $match) !== 1) {
             throw new RuntimeException('The default resource group did not expose a contiguous processor domain.');
         }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Fuzz\Fixture\Tables;
+use Fuzz\Observation\Record;
 use MySqlMemory\Server\MemoryDatabase;
 use PDO;
-use PDOException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
@@ -60,12 +60,19 @@ final class FixtureProtocolTest extends TestCase
         $server = MemoryDatabase::start('8.4.7');
         try {
             $connection = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => $mode, PDO::ATTR_EMULATE_PREPARES => false]);
+            $record = new Record('memory', '', '');
             try {
                 $this->expectException($exception);
 
-                (new Tables())->execute($connection, 'USE absent_fixture');
+                (new Tables())->execute($connection, 'USE absent_fixture', $record);
             } finally {
                 self::assertFalse((bool) $connection->getAttribute(PDO::ATTR_EMULATE_PREPARES));
+                self::assertSame($mode, $connection->getAttribute(PDO::ATTR_ERRMODE));
+                self::assertCount(1, $record->probes);
+                self::assertSame('USE absent_fixture', $record->probes[0]->sql);
+                self::assertIsArray($record->probes[0]->raw['error']);
+                self::assertSame(1049, $record->probes[0]->raw['error'][0]);
+                self::assertArrayHasKey('warnings', $record->probes[0]->raw);
             }
         } finally {
             $server->stop();
@@ -77,7 +84,7 @@ final class FixtureProtocolTest extends TestCase
      */
     public static function providerErrorModes(): iterable
     {
-        yield 'exceptions' => [PDO::ERRMODE_EXCEPTION, PDOException::class];
+        yield 'exceptions' => [PDO::ERRMODE_EXCEPTION, RuntimeException::class];
         yield 'silent' => [PDO::ERRMODE_SILENT, RuntimeException::class];
     }
 }

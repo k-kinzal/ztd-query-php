@@ -92,7 +92,7 @@ final class TableTimes
     {
         $table = preg_match('/\A(CREATE TABLE|INSERT INTO) (t1|t2|_sqlfaker_identifier)\b/', $sql, $match) === 1 ? $match[2] : null;
         $before = $table === null ? null : $this->now($pdo, $record);
-        (new Tables())->execute($pdo, $sql);
+        (new Tables())->execute($pdo, $sql, $record);
         if ($table !== null && $before !== null) {
             $interval = [$before, $this->now($pdo, $record)];
             if ($match[1] === 'CREATE TABLE') {

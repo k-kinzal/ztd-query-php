@@ -87,10 +87,10 @@ final class Lifecycle
         $first->phase = 'fixture capabilities';
         $native = $this->connection($firstEndpoint, $emulate, $version);
         $fixtures = new Servers();
-        $globals = $fixtures->globals($native, $version);
-        $priorities = $fixtures->resourcePriorities($native, $version);
-        $processors = $fixtures->resourceProcessors($native, $version);
-        $zones = $fixtures->timeZones($native);
+        $globals = $fixtures->globals($native, $version, $first);
+        $priorities = $fixtures->resourcePriorities($native, $version, $first);
+        $processors = $fixtures->resourceProcessors($native, $version, $first);
+        $zones = $fixtures->timeZones($native, $first);
         $expected = $this->observe($native, $firstEndpoint->dsn(), $firstEndpoint->username, $firstEndpoint->password, $action, $first);
         $native = null;
         $again = $this->observe($this->connection($secondEndpoint, $emulate, $version), $secondEndpoint->dsn(), $secondEndpoint->username, $secondEndpoint->password, $action, $repeated);
@@ -138,13 +138,13 @@ final class Lifecycle
     public function observe(PDO $owner, string $dsn, string $user, string $password, LifecycleAction $action, Record $record): array
     {
         $record->phase = 'fixture setup';
-        (new Tables())->execute($owner, 'CREATE DATABASE fz');
-        (new Tables())->execute($owner, 'USE fz');
+        (new Tables())->execute($owner, 'CREATE DATABASE fz', $record);
+        (new Tables())->execute($owner, 'USE fz', $record);
         foreach ((new Tables())->statements() as $statement) {
-            (new Tables())->execute($owner, $statement);
+            (new Tables())->execute($owner, $statement, $record);
         }
         if ($record->mode !== '') {
-            (new Tables())->execute($owner, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $owner->quote($record->mode) . ')');
+            (new Tables())->execute($owner, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $owner->quote($record->mode) . ')', $record);
         }
         $record->phase = 'statement';
         $this->primary($owner, $record);

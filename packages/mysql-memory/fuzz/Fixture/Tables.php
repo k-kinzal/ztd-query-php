@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Fuzz\Fixture;
 
+use Fuzz\Observation\Observer;
+use Fuzz\Observation\Record;
 use PDO;
-use PDOException;
 use RuntimeException;
 
 /**
@@ -58,16 +59,31 @@ final class Tables
      *
      * @throws RuntimeException When a connection in silent mode refuses the setup statement
      */
-    public function execute(PDO $pdo, string $sql): void
+    public function execute(PDO $pdo, string $sql, ?Record $record = null): void
+    {
+        $result = $this->observe($pdo, $sql, $record);
+        if (isset($result['error'])) {
+            throw new RuntimeException('A differential fixture statement failed: ' . $sql . ': ' . json_encode($result['error']));
+        }
+    }
+
+    /**
+     * Retains a fixture command's complete outcome before its caller checks allowed SQL conditions.
+     *
+     * @return array<string, mixed>
+     * @throws RuntimeException When result metadata or statement conditions cannot be observed
+     */
+    public function observe(PDO $pdo, string $sql, ?Record $owner = null): array
     {
         $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
+        $record = $owner?->probe($sql);
         try {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-            $statement = $pdo->query($sql);
-            if ($statement === false) {
-                throw new RuntimeException('A differential fixture statement failed: ' . json_encode($pdo->errorInfo()));
+            $result = (new Observer())->observe($pdo, $sql, true, $record);
+            if ($record !== null) {
+                $record->phase = 'complete';
             }
-            $statement->closeCursor();
+            return $result;
         } finally {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
@@ -81,22 +97,17 @@ final class Tables
      *
      * @throws RuntimeException When the database cannot be made writable or removed
      */
-    public function remove(PDO $pdo, string $database, string $version): void
+    public function remove(PDO $pdo, string $database, string $version, ?Record $record = null): void
     {
         $name = '`' . str_replace('`', '``', $database) . '`';
         if (!str_starts_with($version, '5.')) {
-            try {
-                $reset = $pdo->exec('ALTER SCHEMA ' . $name . ' READ ONLY = 0');
-                if ($reset === false && !in_array($pdo->errorInfo()[1] ?? null, [1049, 3503], true)) {
-                    throw new RuntimeException('Cannot make the fixture database writable: ' . json_encode($pdo->errorInfo()));
-                }
-            } catch (PDOException $failure) {
-                if (!in_array($failure->errorInfo[1] ?? null, [1049, 3503], true)) {
-                    throw new RuntimeException('Cannot make the fixture database writable.', 0, $failure);
-                }
+            $reset = $this->observe($pdo, 'ALTER SCHEMA ' . $name . ' READ ONLY = 0', $record);
+            $error = $reset['error'] ?? null;
+            if ($error !== null && (!is_array($error) || !in_array($error[0] ?? null, [1049, 3503], true))) {
+                throw new RuntimeException('Cannot make the fixture database writable: ' . json_encode($error));
             }
         }
-        $this->execute($pdo, 'DROP DATABASE IF EXISTS ' . $name);
+        $this->execute($pdo, 'DROP DATABASE IF EXISTS ' . $name, $record);
     }
 
 }

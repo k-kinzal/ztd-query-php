@@ -25,10 +25,10 @@ final class MetadataLocks
      * instrument afterwards cannot recover locks that were not recorded.
      * @phpstan-impure
      */
-    public function prepare(PDO $administrator, int $connection): void
+    public function prepare(PDO $administrator, int $connection, ?Record $record = null): void
     {
-        (new Tables())->execute($administrator, "UPDATE performance_schema.setup_instruments SET ENABLED='YES' WHERE NAME='wait/lock/metadata/sql/mdl'");
-        $this->verify($administrator, (new OwnerThread())->resolve($administrator, $connection));
+        (new Tables())->execute($administrator, "UPDATE performance_schema.setup_instruments SET ENABLED='YES' WHERE NAME='wait/lock/metadata/sql/mdl'", $record);
+        $this->verify($administrator, (new OwnerThread())->resolve($administrator, $connection, $record), $record);
     }
 
     /**
