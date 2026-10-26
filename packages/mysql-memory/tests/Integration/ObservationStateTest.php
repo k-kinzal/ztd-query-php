@@ -37,11 +37,12 @@ final class ObservationStateTest extends TestCase
         }
     }
 
-    public function testADroppedDatabaseDiffersFromAnEmptyDatabase(): void
+    #[DataProvider('providerErrorModes')]
+    public function testADroppedDatabaseDiffersFromAnEmptyDatabase(int $mode): void
     {
         $server = MemoryDatabase::start('8.4.7', ['shop']);
         try {
-            $pdo = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $pdo = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => $mode]);
             $observer = new Observer();
             self::assertNotNull($observer->definitions($pdo, 'shop'));
             $pdo->exec('DROP DATABASE shop');

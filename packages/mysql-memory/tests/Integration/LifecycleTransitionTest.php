@@ -78,7 +78,7 @@ final class LifecycleTransitionTest extends TestCase
     }
 
     #[DataProvider('providerErrorModes')]
-    public function testSqlRefusalsRetainTheirConditionsInBothPdoErrorModes(int $mode): void
+    public function testSqlRefusalsRetainConditionsAndPostStatementStateInBothPdoErrorModes(int $mode): void
     {
         $server = MemoryDatabase::start('8.4.7', supervised: false);
         try {
@@ -88,10 +88,17 @@ final class LifecycleTransitionTest extends TestCase
 
             self::assertIsArray($result['error']);
             self::assertSame([3707, 'HY000', 'Restart server failed (mysqld is not managed by supervisor process).'], $result['error']);
-            /** Preserve the entire condition area; this mechanism check does not establish native agreement. */
-            $conditions = $owner->query('SHOW WARNINGS');
-            self::assertNotFalse($conditions);
-            self::assertSame($conditions->fetchAll(PDO::FETCH_NUM), $result['warnings']);
+            self::assertSame([
+                ['Error', 3707, 'Restart server failed (mysqld is not managed by supervisor process).'],
+                ['Error', 3707, 'Restart server failed (Restart server failed).'],
+            ], $result['warnings']);
+            self::assertIsArray($result['tables']);
+            self::assertSame([[10]], $result['tables']['_sqlfaker_identifier']);
+            self::assertIsArray($result['definitions']);
+            self::assertIsArray($result['definitions']['relations']);
+            self::assertCount(3, $result['definitions']['relations']);
+            self::assertIsArray($result['status']);
+            self::assertArrayNotHasKey('error', $result['status']);
             self::assertArrayNotHasKey('disconnected', $result);
             self::assertSame('complete', $record->phase);
             $server->assertNoInternalFailure();

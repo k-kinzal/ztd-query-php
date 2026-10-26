@@ -45,10 +45,7 @@ final class MetadataLocks
         $this->verify($administrator, $thread);
         $columns = 'OBJECT_TYPE, OBJECT_SCHEMA, OBJECT_NAME, ' . (str_starts_with($version, '5.7.') ? '' : 'COLUMN_NAME, ') . 'LOCK_TYPE, LOCK_DURATION, LOCK_STATUS';
         $observer = new Observer();
-        $raw = $observer->observe($administrator, 'SELECT ' . $columns . ' FROM performance_schema.metadata_locks WHERE OWNER_THREAD_ID = ' . $thread, true);
-        if (isset($raw['error'])) {
-            throw new RuntimeException('Cannot read observed metadata locks: ' . json_encode($raw['error']));
-        }
+        $raw = $observer->probe($administrator, 'SELECT ' . $columns . ' FROM performance_schema.metadata_locks WHERE OWNER_THREAD_ID = ' . $thread);
         $results = $raw['results'];
         if (!is_array($results) || count($results) !== 1 || !is_array($results[0]) || !is_array($results[0]['rows'] ?? null)) {
             throw new RuntimeException('The observed metadata locks did not return one row set.');

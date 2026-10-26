@@ -66,6 +66,38 @@ final class Observer
     }
 
     /**
+     * Requires a successful state read, retaining failed probes as lossless evidence.
+     *
+     * Fixed observer SQL uses the text protocol independently of the generated input.
+     * Matching SQL errors from two probes cannot establish equality of unread state.
+     *
+     * @return array<string, mixed>
+     * @throws RuntimeException When the probe or its conditions cannot be read
+     */
+    public function probe(PDO $pdo, string $sql): array
+    {
+        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
+        $record = new Record('probe', $sql, '');
+        try {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            $observation = $this->observe($pdo, $sql, true, $record);
+            $record->phase = 'state validation';
+            if (isset($observation['error'])) {
+                throw new RuntimeException('The state probe returned a SQL error.');
+            }
+            $results = $observation['results'];
+            if (!is_array($results) || count($results) !== 1 || !is_array($results[0]) || !is_array($results[0]['rows'] ?? null)) {
+                throw new RuntimeException('The state probe did not return one row set.');
+            }
+            return $observation;
+        } catch (RuntimeException $failure) {
+            throw new RuntimeException('Cannot read observed state: ' . $sql . '; base64 serialized probe: ' . base64_encode(serialize($record)), 0, $failure);
+        } finally {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
+        }
+    }
+
+    /**
      * Records the current result before advancing to the next one, which can change the connection's last insert id.
      *
      * @return array<string, mixed>
@@ -144,9 +176,21 @@ final class Observer
     public function tables(PDO $pdo, string $database): array
     {
         $tables = [];
+        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
-            $names = $pdo->query('SHOW FULL TABLES FROM ' . $this->identifier($database) . " WHERE Table_type = 'BASE TABLE'");
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            try {
+                $names = $pdo->query('SHOW FULL TABLES FROM ' . $this->identifier($database) . " WHERE Table_type = 'BASE TABLE'");
+            } catch (PDOException $failure) {
+                if (($failure->errorInfo[1] ?? null) === 1049) {
+                    return [];
+                }
+                throw $failure;
+            }
             if ($names === false) {
+                if (($pdo->errorInfo()[1] ?? null) === 1049) {
+                    return [];
+                }
                 throw new RuntimeException('Cannot enumerate observed tables: ' . json_encode($pdo->errorInfo()));
             }
             foreach ($names->fetchAll(PDO::FETCH_COLUMN) as $name) {
@@ -160,11 +204,10 @@ final class Observer
                 $tables[$name] = $this->bag($rows->fetchAll(PDO::FETCH_NUM));
             }
         } catch (PDOException $failure) {
-            if (($failure->errorInfo[1] ?? null) !== 1049) {
-                throw new RuntimeException('Cannot read observed table state.', 0, $failure);
-            }
-            // DROP DATABASE is an observable state, distinct from an unreadable catalog.
-            return [];
+            // Only an absent initial inventory establishes DROP DATABASE, not a later read failure.
+            throw new RuntimeException('Cannot read observed table state.', 0, $failure);
+        } finally {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
         ksort($tables);
 
@@ -179,13 +222,28 @@ final class Observer
      */
     public function definitions(PDO $pdo, string $database): ?array
     {
+        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
-            $schema = $pdo->query('SHOW CREATE DATABASE ' . $this->identifier($database));
-            $names = $pdo->query('SHOW TABLES FROM ' . $this->identifier($database));
-            if ($schema === false || $names === false) {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            try {
+                $schema = $pdo->query('SHOW CREATE DATABASE ' . $this->identifier($database));
+            } catch (PDOException $failure) {
+                if (($failure->errorInfo[1] ?? null) === 1049) {
+                    return null;
+                }
+                throw $failure;
+            }
+            if ($schema === false) {
+                if (($pdo->errorInfo()[1] ?? null) === 1049) {
+                    return null;
+                }
                 throw new RuntimeException('Cannot enumerate observed definitions: ' . json_encode($pdo->errorInfo()));
             }
             $definitions = ['database' => $schema->fetchAll(PDO::FETCH_NUM), 'relations' => []];
+            $names = $pdo->query('SHOW TABLES FROM ' . $this->identifier($database));
+            if ($names === false) {
+                throw new RuntimeException('Cannot enumerate observed definitions: ' . json_encode($pdo->errorInfo()));
+            }
             foreach ($names->fetchAll(PDO::FETCH_COLUMN) as $name) {
                 if (!is_string($name)) {
                     throw new RuntimeException('The definition inventory returned an invalid identifier.');
@@ -197,10 +255,9 @@ final class Observer
                 $definitions['relations'][$name] = $definition->fetchAll(PDO::FETCH_NUM);
             }
         } catch (PDOException $failure) {
-            if (($failure->errorInfo[1] ?? null) === 1049) {
-                return null;
-            }
             throw new RuntimeException('Cannot read observed definitions.', 0, $failure);
+        } finally {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
         ksort($definitions['relations']);
 

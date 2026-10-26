@@ -213,7 +213,11 @@ Other result-producing commands retain order. Raw observations in counterexample
 reports are base64-encoded PHP serialization, preserving binary values as well
 as types. The target records transaction status, selected database, session
 variables and global settings before restoration. State-read failures are failures
-of the check. Account/privilege catalogs, stored-program definitions, replication
+of the check, even if both engines refuse the same probe. Fixed state probes use
+the text protocol and restore the generated input's selected protocol afterwards.
+Only the initial database inventory can establish that a database is absent;
+failed later reads cannot become an empty snapshot.
+Account/privilege catalogs, stored-program definitions, replication
 configuration, server catalog state and committed rows in other application
 databases are observed independently through the administrator connection.
 Views contribute definitions without evaluating their bodies during observation.
@@ -246,8 +250,9 @@ within ten seconds; RESTART must then become SQL-ready within thirty seconds.
 Exceeding either deadline fails observation, even if both implementations time out.
 A shutdown-in-progress response is distinct from completed disconnection. Other
 SQL refusals remain failures of readiness, not evidence that a server stopped.
-The observer retains primary results or full SQL errors, conditions for refused
-commands, and post-restart table rows, definitions and status. Partial lifecycle
+The observer retains primary results or full SQL errors and conditions for refused
+commands. Table rows, definitions and status are captured both after restart and
+after a refused command, before cleanup. Partial lifecycle
 observations use the same failure reports as ordinary statements. Startup, probes
 and disposal remain inside the existing sixty-second input limit. The pinned
 images include AMD64-only releases, which require CPU emulation on an ARM Docker

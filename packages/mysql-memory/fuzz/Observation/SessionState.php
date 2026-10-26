@@ -26,18 +26,17 @@ final class SessionState
      */
     public function capture(PDO $connection, string $version): array
     {
+        $emulate = $connection->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
             $transaction = $connection->inTransaction();
+            $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $statement = $connection->query('SELECT DATABASE()');
             $database = $statement === false ? false : $statement->fetchColumn();
             if ($database !== null && !is_string($database)) {
                 throw new RuntimeException('Cannot read the observed session database.');
             }
             $identities = StatementIdentities::capture($connection, $version);
-            $variables = (new Observer())->observe($connection, 'SHOW SESSION VARIABLES', true);
-            if (isset($variables['error'])) {
-                throw new RuntimeException('Cannot read observed session variables: ' . json_encode($variables['error']));
-            }
+            $variables = (new Observer())->probe($connection, 'SHOW SESSION VARIABLES');
             $raw = ['transaction' => $transaction, 'database' => $database, 'variables' => $variables];
             $comparable = $raw;
             $comparable['variables'] = $identities?->comparable($connection, $variables) ?? $variables;
@@ -45,6 +44,8 @@ final class SessionState
             return ['raw' => $raw, 'comparable' => $comparable];
         } catch (PDOException $failure) {
             throw new RuntimeException('Cannot read observed session state.', 0, $failure);
+        } finally {
+            $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
     }
 }

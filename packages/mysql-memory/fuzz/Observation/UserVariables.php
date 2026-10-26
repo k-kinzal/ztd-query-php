@@ -105,10 +105,7 @@ final class UserVariables
         $values = [];
         foreach ($inventory as [$name]) {
             $variable = '@' . $observer->identifier($name);
-            $value = $observer->observe($connection, 'SELECT ' . $variable . ' AS `value`, CHARSET(' . $variable . ') AS `character_set`, COLLATION(' . $variable . ') AS `collation_name`, COERCIBILITY(' . $variable . ') AS `coercibility`', true);
-            if (isset($value['error'])) {
-                throw new RuntimeException('Cannot read observed user variable ' . bin2hex($name) . ': ' . json_encode($value['error']));
-            }
+            $value = $observer->probe($connection, 'SELECT ' . $variable . ' AS `value`, CHARSET(' . $variable . ') AS `character_set`, COLLATION(' . $variable . ') AS `collation_name`, COERCIBILITY(' . $variable . ') AS `coercibility`');
             $values[$name] = $value;
         }
         return $values;

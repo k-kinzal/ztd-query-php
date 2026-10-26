@@ -1422,6 +1422,51 @@ changes do not resolve the missing dictionary tablespace, Performance Schema
 instrumentation/owner inventory, other state domains, or the model/generator
 migration. Goals B-D remain open.
 
+### Required state reads and refused-command effects
+
+State reads now share an explicit boundary with the ordinary PDO observer.
+Primary SQL errors remain comparison outcomes; a failed state probe aborts the
+check, even if both engines would return the same error. Probes must return one
+row set and retain their SQL, phase, earlier binary results and conditions in
+lossless failure evidence. Catalog, session-variable, metadata-lock, user-variable
+and lifecycle-status observations use this boundary. The lifecycle counter must
+also contain the expected name and a decimal value; an empty result cannot
+establish the counter's state.
+
+Refused lifecycle commands now capture table rows, definitions and status after
+retaining their original conditions. The error path therefore cannot agree solely
+because its error packets match while those state domains differ. Successful
+restart uses the same state reads. Fixed result, schema and session probes use
+text protocol and restore the input's selected protocol in finally blocks.
+Com_stmt_prepare regressions check that these reads do not prepare statements;
+transaction status is retained before session queries.
+
+An absent initial database inventory remains an observable dropped database in
+both PDO error modes. Error 1049 from a subsequent table or definition read is a
+failed observation, not permission to discard an incomplete snapshot. This also
+prevents a later successful query from replacing a silent-mode schema error.
+
+Scoped verification on PHP 8.5.8 / PHPUnit 10.5.64:
+
+- Probe/transition mechanisms pass 23 tests / 155 assertions. Additional session
+  protocol/transaction cases pass 4 / 28. Both PDO error modes and both selected
+  input protocols are covered, including binary evidence from a failed probe.
+- Database absence/error handling passes 8 / 18; catalog regressions pass 4 / 13.
+- Native 8.4.7 user-variable and metadata-lock inventories pass 2 / 54.
+- The native lifecycle matrix passes 15 / 165 in 230.926 seconds, with order seed
+  1792995261 and ports 34067/34068 on the same AMD64 host. This includes state
+  observation after the unsupervised images refuse RESTART.
+- The unchanged PHP-Fuzzer entry point replays the two supplied 8.4.7 lifecycle
+  seeds in both text and prepared modes. Each reports `Verified 2 inputs.` and
+  exits zero with default lexical settings, seed 20261026 and timeout 60.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. These are
+  mechanism checks, not full-package or full-corpus acceptance. Size, tree and
+  strict autoload checks also pass; protected configurations are unchanged.
+
+Complete state-domain coverage, restoration, the model migration and the full
+acceptance matrix remain open. No SQL-specific counterexample is suppressed by
+these observer changes.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

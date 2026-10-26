@@ -29,10 +29,7 @@ final class CatalogState
         $raw = [];
         $comparable = [];
         foreach ($this->queries($version) as $name => $sql) {
-            $observation = $observer->observe($connection, $sql, true);
-            if (isset($observation['error'])) {
-                throw new RuntimeException('Cannot read observed catalog ' . $name . ': ' . json_encode($observation['error']));
-            }
+            $observation = $observer->probe($connection, $sql);
             $raw[$name] = $observation;
             $results = $observation['results'];
             if (!is_array($results) || count($results) !== 1 || !is_array($results[0]) || !is_array($results[0]['rows'] ?? null)) {

@@ -21,7 +21,7 @@ use Testcontainers\Testcontainers;
  * Compares lifecycle commands against two independently initialized native servers.
  *
  * Each observation owns a disposable server. Primary outcomes, transitions and
- * post-restart rows/definitions remain raw evidence even if a later probe fails.
+ * post-statement rows/definitions remain raw evidence even if a later probe fails.
  * Container readiness, connection termination and restart have distinct phases;
  * the surrounding PHP-Fuzzer input timeout still bounds the entire comparison.
  */
@@ -151,15 +151,22 @@ final class Lifecycle
         if (isset($record->raw['error'])) {
             $record->phase = 'conditions';
             $record->raw['warnings'] = (new Observer())->warnings($owner);
+            $after = $owner;
         } else {
-            $again = (new LifecycleTransition())->await($owner, $dsn, $user, $password, $action, $record);
-            if ($again !== null) {
-                $record->phase = 'post-restart tables';
-                $record->raw['tables'] = (new Observer())->tables($again, 'fz');
-                $record->phase = 'post-restart definitions';
-                $record->raw['definitions'] = (new Observer())->definitions($again, 'fz');
-                $record->phase = 'post-restart status';
-                $record->raw['status'] = (new Observer())->observe($again, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'", true);
+            $after = (new LifecycleTransition())->await($owner, $dsn, $user, $password, $action, $record);
+        }
+        if ($after !== null) {
+            $record->phase = 'post-statement tables';
+            $record->raw['tables'] = (new Observer())->tables($after, 'fz');
+            $record->phase = 'post-statement definitions';
+            $record->raw['definitions'] = (new Observer())->definitions($after, 'fz');
+            $record->phase = 'post-statement status';
+            $record->raw['status'] = (new Observer())->probe($after, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'");
+            $results = $record->raw['status']['results'];
+            $rows = is_array($results) && is_array($results[0] ?? null) ? ($results[0]['rows'] ?? null) : null;
+            if (!is_array($rows) || count($rows) !== 1 || !is_array($rows[0]) || count($rows[0]) !== 2
+                || ($rows[0][0] ?? null) !== 'Aborted_clients' || !is_string($rows[0][1] ?? null) || !ctype_digit($rows[0][1])) {
+                throw new RuntimeException('Cannot read the lifecycle Aborted_clients counter.');
             }
         }
         $record->phase = 'complete';
