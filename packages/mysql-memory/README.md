@@ -75,6 +75,11 @@ an SQL error. Call `assertNoInternalFailure()` while retaining the database obje
 to distinguish that failure from a driver-visible disconnect or SQL refusal.
 The failure remains visible on later checks. An intentional SQL `SHUTDOWN` is not
 an internal failure.
+System-table declarations describe result metadata separately from row execution.
+Reading rows without an implemented provider is an internal failure; it does not
+return an empty table. Unimplemented system-table mutations likewise fail
+internally instead of returning a fabricated SQL refusal. Queries that do not
+request rows, such as a zero-limit metadata query, can still use the declaration.
 `Instance`, sessions, protocol classes, and execution results are internal APIs.
 There is no command-line tool.
 
@@ -241,6 +246,9 @@ connection and confirms its disappearance before restoring catalog objects.
 Failure reports retain completed result sets and state observations, including
 binary values, together with separate observation and cleanup phases. A cleanup
 failure cannot turn an earlier observation failure into a successful comparison.
+The independent process failure channel is checked even when initial restoration
+fails before an input connection exists, and after restoration itself. An internal
+failure invalidates any earlier restoration success and prevents fixture reuse.
 
 Top-level SHUTDOWN and RESTART use disposable servers, selected through the
 official grammar rather than text matching. Two independently initialized native

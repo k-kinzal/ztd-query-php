@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\System;
 
+use LogicException;
 use MySqlMemory\Error\Family\AccountError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
@@ -31,10 +31,9 @@ use SqlSemantics\Statement\Node;
  *
  * INFORMATION_SCHEMA holds views the server computes: creating, changing, dropping or locking a
  * table in it, or writing one, is denied for the database (ER_DBACCESS_DENIED_ERROR). The
- * tables of the Performance Schema refuse a write with ER_TABLEACCESS_DENIED_ERROR naming the
- * command. The emulator computes the tables of the mysql database from its accounts and
- * dictionary, and does not support writing them or changing their definition (verified on a
- * live 8.4.7 server).
+ * other system schemas require command- and table-specific mutation semantics. An
+ * unimplemented mutation fails internally instead of inventing a privilege denial
+ * or an ER_NOT_SUPPORTED_YET result that could match the native server by accident.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-schema-introduction.html,
  * https://dev.mysql.com/doc/refman/8.4/en/performance-schema-table-characteristics.html.
  *
@@ -45,7 +44,8 @@ final class Guard
     /**
      * Refuses a statement that creates, changes or locks a system table.
      *
-     * @throws SqlError When the statement targets a table of a system database
+     * @throws SqlError When the statement attempts to change INFORMATION_SCHEMA
+     * @throws LogicException When system-table mutation semantics are not implemented
      */
     public function check(Node $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
     {
@@ -63,16 +63,14 @@ final class Guard
         }
         foreach ($written as $name) {
             $table = $system->find($this->schema($name, $session), $name->name->value);
-            if ($table !== null && $table->schema === 'performance_schema') {
-                throw AccountError::TableAccessDenied->error($this->verb($statement), $session->user, $session->host, $table->name);
-            }
             if ($table !== null) {
-                throw StatementError::NotSupportedYet->error('writing a table of the mysql database');
+                throw new LogicException('No system table ' . $this->verb($statement) . ' implementation for ' . $table->schema . '.' . $table->name . ' on mysql-' . $session->instance->version . '.');
             }
         }
         foreach ($defined as $name) {
-            if ($system->find($this->schema($name, $session), $name->name->value) !== null) {
-                throw StatementError::NotSupportedYet->error('changing a system table');
+            $table = $system->find($this->schema($name, $session), $name->name->value);
+            if ($table !== null) {
+                throw new LogicException('No system table definition or lock implementation for ' . $table->schema . '.' . $table->name . ' on mysql-' . $session->instance->version . '.');
             }
         }
     }

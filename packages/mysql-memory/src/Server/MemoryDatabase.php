@@ -65,7 +65,8 @@ final class MemoryDatabase
         }
         $options = ['version' => $version, 'databases' => $databases, 'globals' => $globals, 'clientHost' => $clientHost, 'supervised' => $supervised, 'routineTimestamps' => $routineTimestamps, 'resourcePriorities' => $resourcePriorities, 'resourceProcessors' => $resourceProcessors];
         $autoload = is_file(dirname(__DIR__, 2) . '/vendor/autoload.php') ? dirname(__DIR__, 2) . '/vendor/autoload.php' : dirname(__DIR__, 4) . '/autoload.php';
-        $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', '-r', 'require $argv[1]; (new \\MySqlMemory\\Server\\Process())->serve($argv[2]);', $autoload, serialize($options)];
+        /** PHP diagnostics must not enter the readiness and failure protocol on stdout. */
+        $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', '-d', 'display_errors=stderr', '-r', 'require $argv[1]; (new \\MySqlMemory\\Server\\Process())->serve($argv[2]);', $autoload, serialize($options)];
         $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => STDERR], $pipes);
         if (!is_resource($process)) {
             throw new RuntimeException('The server process could not be started.');

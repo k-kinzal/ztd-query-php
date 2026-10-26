@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\System;
 
+use LogicException;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\StoredTable;
@@ -26,10 +27,11 @@ use SqlSemantics\Statement\Declaration\Table;
  *
  * Each table has the columns of the emulated release, typed as a result of the release reports
  * them. Its rows are computed from the dictionary, the accounts, the variables and the sessions
- * of the server each time a statement reads it; a table without a source of rows here is read
- * empty. In MySQL 8.0 and later INFORMATION_SCHEMA is a set of views over the data dictionary,
- * so a column of one is named as the view names it, and one the view computes rather than reads
- * names no database in a result; in 5.6 and 5.7 its tables are temporary tables.
+ * of the server each time a statement reads it. A missing row provider is an implementation
+ * failure, not evidence that a table is empty. In MySQL 8.0 and later INFORMATION_SCHEMA is a
+ * set of views over the data dictionary. A column of one is named as the view names it;
+ * one the view computes rather than reads names no database in a result. In 5.6 and 5.7
+ * its tables are temporary tables.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-schema.html,
  * https://dev.mysql.com/doc/refman/8.4/en/data-dictionary-information-schema.html.
  *
@@ -38,7 +40,8 @@ use SqlSemantics\Statement\Declaration\Table;
 final class SystemSchemas
 {
     /**
-     * The sources of the rows of the tables that have them, by `database.name`, the name of an INFORMATION_SCHEMA table in lower case.
+     * Implemented row providers by `database.name`, with INFORMATION_SCHEMA table names in lower case.
+     * A declaration without an entry can describe result metadata, but cannot supply rows.
      */
     public const SOURCES = [
         'information_schema.schemata' => Schema\Schemata::class,
@@ -181,6 +184,7 @@ final class SystemSchemas
      * (verified on live 8.0.44 and 8.4.7 servers).
      *
      * @throws \MySqlMemory\Error\SqlError When the release refuses to read the table
+     * @throws LogicException When no provider implements the requested table's rows
      */
     public function read(SystemTable $table, Connection $connection): StoredTable
     {
@@ -207,12 +211,14 @@ final class SystemSchemas
      * @return list<array<string, int|float|string|null>>
      *
      * @throws \MySqlMemory\Error\SqlError When the release refuses to read the table
+     * @throws LogicException When no provider implements the requested table's rows
      */
     public function rows(SystemTable $table, Connection $connection): array
     {
-        $source = self::SOURCES[SystemTables::key($table->schema, $table->name)] ?? null;
+        $name = SystemTables::key($table->schema, $table->name);
+        $source = self::SOURCES[$name] ?? throw new LogicException('No system table row provider for ' . $name . ' on ' . $this->release->value . '.');
 
-        return $source === null ? [] : (new $source())->rows(new Reading($this->instance, $connection, $table, $this->release));
+        return (new $source())->rows(new Reading($this->instance, $connection, $table, $this->release));
     }
 
     /**

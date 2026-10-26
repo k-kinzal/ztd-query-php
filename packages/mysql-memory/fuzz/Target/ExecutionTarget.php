@@ -321,10 +321,14 @@ final class ExecutionTarget
                     $this->restore($dsn, $connection, $record);
                 }
             } finally {
-                $pdo = null;
-                gc_collect_cycles();
-                if (!$record->restored) {
-                    $this->usable = false;
+                try {
+                    $this->integrity($dsn, $record);
+                } finally {
+                    $pdo = null;
+                    gc_collect_cycles();
+                    if (!$record->restored) {
+                        $this->usable = false;
+                    }
                 }
             }
         }
@@ -339,20 +343,37 @@ final class ExecutionTarget
     public function restore(string $dsn, int $connection, Record $record): void
     {
         $record->cleanup = 'disconnect';
-        $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
         try {
+            $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
             (new \Fuzz\Fixture\Connections())->release($guard, $connection);
-            $record->cleanup = 'server integrity';
+            $record->cleanup = 'fixture restoration';
+            $this->repair($guard);
+            $this->baseline?->restore($guard);
         } finally {
-            if ($dsn === $this->memory) {
-                $this->server?->assertNoInternalFailure();
-            }
+            $this->integrity($dsn, $record);
         }
-        $record->cleanup = 'fixture restoration';
-        $this->repair($guard);
-        $this->baseline?->restore($guard);
         $record->restored = true;
         $record->cleanup = 'complete';
+    }
+
+    /**
+     * Checks the independent failure channel after every attempt, including failures before connection setup.
+     * A process failure invalidates an otherwise completed restoration and retains its cleanup phase.
+     *
+     * @throws RuntimeException When the emulator has reported an implementation failure
+     */
+    public function integrity(string $dsn, Record $record): void
+    {
+        if ($dsn !== $this->memory) {
+            return;
+        }
+        $cleanup = $record->cleanup;
+        $restored = $record->restored;
+        $record->cleanup = 'server integrity';
+        $record->restored = false;
+        $this->server?->assertNoInternalFailure();
+        $record->cleanup = $cleanup;
+        $record->restored = $restored;
     }
 
     /**

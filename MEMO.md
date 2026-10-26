@@ -1467,6 +1467,91 @@ Complete state-domain coverage, restoration, the model migration and the full
 acceptance matrix remain open. No SQL-specific counterexample is suppressed by
 these observer changes.
 
+### System-catalog execution completeness
+
+The initial-restoration failure exposed a broader execution fallback:
+SystemSchemas returned an empty row set for every declared table without a row
+provider. Guard also represented unimplemented system-table mutations as SQL
+privilege errors or ER_NOT_SUPPORTED_YET. Those responses could agree with a
+native result while the corresponding state or mutation was never implemented.
+
+Declarations and executable state now have separate responsibilities. The full
+release catalog continues to supply column metadata for binding and preparation.
+An actual row read requires a registered SystemRows implementation; absence raises
+an internal LogicException. Metadata access and execution that requests no rows
+remain possible without materialization. An implemented provider can return an
+empty inventory computed from its own state, and subsequent mutations change that
+inventory. Missing system-table mutation semantics also fail internally rather
+than fabricating a SQL condition. The modeled INFORMATION_SCHEMA access denial
+remains a SQL error. This is a structural boundary, not implementation of the
+missing tables or permission to exclude them from generated inputs.
+
+Ordinary SystemSchemas unit tests now compare every release's independently
+declared table inventory with registered row providers and validate the provider
+interface. They do not depend on which tables a fuzz entry point happens to read.
+The completeness check currently fails on all nine releases:
+
+| Release | Declared tables without row providers |
+| --- | ---: |
+| 5.6.51 | 104 |
+| 5.7.44 | 137 |
+| 8.0.44 | 181 |
+| 8.1.0 | 182 |
+| 8.2.0 | 182 |
+| 8.3.0 | 182 |
+| 8.4.7 | 182 |
+| 9.0.1 | 185 |
+| 9.1.0 | 185 |
+
+These failures remain in the normal suite. Registration alone will not prove
+correct rows or mutation effects; the native comparison and generated execution
+still establish those behaviors. Tests that expected the old empty fallback or
+blanket privilege refusal were removed. Mechanism tests verify the declared
+process-failure channel rather than treating an in-process programmer error as
+successful SQL behavior. Existing protected rules and configurations are unchanged.
+
+ExecutionTarget now checks the independent process-failure channel for the whole
+attempt, including initial restoration before acquiring an input connection and
+failures during later restoration. The observation phase remains intact; a
+reported internal error marks cleanup as server integrity, invalidates restored
+state and permanently refuses target reuse. The earlier transport/restoration
+exception remains in the exception chain. Thus a missing catalog implementation
+cannot be reported solely as a disconnected database connection.
+
+The child process sends PHP diagnostics to stderr explicitly. Its stdout remains
+the readiness and bounded failure protocol; a fatal-error stack cannot be appended
+to the protocol message by the host's display_errors setting. Diagnostics remain
+visible. A process-boundary regression checks the exact failure message, the
+retained original exception, the incomplete observation and refusal of target reuse.
+
+Verification for this boundary (2026-10-26):
+
+- The complete System unit directory runs 209 tests / 471 assertions and fails
+  the nine catalog-completeness cases above. There are no risky tests in that run;
+  it is not a passing suite.
+- Catalog metadata and process/observation failure regressions pass 20 tests /
+  107 assertions. After separating PHP diagnostics from the protocol, the final
+  process-boundary subset passes 7 tests / 35 assertions in 20.864 seconds.
+- The broader process/server run completes 26 tests / 86 assertions with two
+  risky tests: the existing PDO and mysqli prepared-execution tests exceed their
+  unchanged ten-second limits. That run is not accepted as a pass.
+- The ordinary 8.4.7 execution PHP-Fuzzer entry point, on the same pinned AMD64
+  native image with default lexical settings, text protocol, seed 20261026 and
+  timeout 60, replays the supplied BEGIN seed and exits one. Both native
+  observations complete and restore successfully. Memory fails during initial
+  restoration on the missing mysql.password_history row provider; its record
+  retains phase `initial restoration`, cleanup `server integrity`, restored
+  `false`, and no fabricated raw observations. This precedes the previously
+  recorded missing-tablespace failure, which remains unresolved.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. Package
+  dependency, size, tree and strict autoload checks pass. These scoped results
+  do not establish full-package static or behavioral acceptance.
+
+Goals B-D remain open. The catalog inventory now exposes implementation gaps
+independently of fuzz selection; it neither implements those tables nor replaces
+the required whole-model generation, complete state observation/restoration and
+full grammar/profile acceptance.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

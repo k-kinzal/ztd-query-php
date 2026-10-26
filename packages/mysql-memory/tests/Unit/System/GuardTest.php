@@ -25,14 +25,6 @@ final class GuardTest extends TestCase
         $s->query('CREATE TABLE information_schema.x (a INT)');
     }
 
-    public function testCheckDeniesWritingAPerformanceSchemaTable(): void
-    {
-        $s = (new Instance())->connect();
-
-        $this->expectExceptionMessage("DELETE command denied to user 'root'@'localhost' for table 'global_variables'");
-        $s->query('DELETE FROM performance_schema.global_variables');
-    }
-
     public function testCheckLetsAQueryReadASystemTable(): void
     {
         $s = (new Instance())->connect();
@@ -48,8 +40,13 @@ final class GuardTest extends TestCase
     {
         $s = (new Instance())->connect();
         $s->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
-        $operations = [$s->analyze('INSERT INTO t VALUES (1)'), $s->analyze('UPDATE t JOIN u ON t.a=u.a SET t.a=1'), $s->analyze('CREATE TABLE v(a INT)')];
-        self::assertSame([['t'], ['t'], []], array_map(static fn (\SqlSemantics\Statement\Operation $operation): array => array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($operation->statement, $operation->facts)), $operations));
+        $insert = $s->analyze('INSERT INTO t VALUES (1)');
+        $update = $s->analyze('UPDATE t JOIN u ON t.a=u.a SET t.a=1');
+        $create = $s->analyze('CREATE TABLE v(a INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $insert);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $update);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
+        self::assertSame([['t'], ['t'], []], array_map(static fn (\SqlSemantics\Statement\Operation $operation): array => array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($operation->statement, $operation->facts)), [$insert, $update, $create]));
     }
 
     public function testCheckAllowsASystemTableToSupplyAJoinedUpdateInput(): void
@@ -73,8 +70,15 @@ final class GuardTest extends TestCase
     public function testDefinedAnswersTheTablesCreatedChangedRenamedOrLocked(): void
     {
         $s = (new Instance())->connect();
-
-        self::assertSame([['t'], ['a', 'b'], ['t'], []], [array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($s->analyze('CREATE TABLE t (a INT)')->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($s->analyze('RENAME TABLE a TO b')->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($s->analyze('LOCK TABLES t READ')->statement)), (new Guard())->defined($s->analyze('SELECT 1')->statement)]);
+        $create = $s->analyze('CREATE TABLE t (a INT)');
+        $rename = $s->analyze('RENAME TABLE a TO b');
+        $lock = $s->analyze('LOCK TABLES t READ');
+        $select = $s->analyze('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $rename);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $lock);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $select);
+        self::assertSame([['t'], ['a', 'b'], ['t'], []], [array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($create->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($rename->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($lock->statement)), (new Guard())->defined($select->statement)]);
     }
 
     public function testSchemaAnswersTheDatabaseOfAName(): void
@@ -87,7 +91,10 @@ final class GuardTest extends TestCase
     public function testVerbAnswersTheCommandAWriteIsDeniedAs(): void
     {
         $s = (new Instance())->connect();
-
-        self::assertSame(['UPDATE', 'INSERT'], [(new Guard())->verb($s->analyze('UPDATE t SET a = 1')->statement), (new Guard())->verb($s->analyze('INSERT INTO t VALUES (1)')->statement)]);
+        $update = $s->analyze('UPDATE t SET a = 1');
+        $insert = $s->analyze('INSERT INTO t VALUES (1)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $update);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $insert);
+        self::assertSame(['UPDATE', 'INSERT'], [(new Guard())->verb($update->statement), (new Guard())->verb($insert->statement)]);
     }
 }

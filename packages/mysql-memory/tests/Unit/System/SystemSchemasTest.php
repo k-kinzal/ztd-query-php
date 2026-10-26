@@ -9,12 +9,16 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\System\Reading;
+use MySqlMemory\System\SystemRows;
 use MySqlMemory\System\SystemSchemas;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 #[CoversClass(SystemSchemas::class)]
@@ -72,23 +76,25 @@ final class SystemSchemasTest extends TestCase
         self::assertSame(['def', 'd', 'utf8mb4', 'utf8mb4_0900_ai_ci', null, 'NO'], $system->read($table, $reading->connection)->data->rows[1]);
     }
 
-    public function testRowsAnswersNoRowForATableWithoutASource(): void
-    {
-        $s = (new Instance())->connect();
-        $s->query('CREATE DATABASE d');
-        $s->query('USE d');
-        $system = $s->instance->dictionary->system;
-        self::assertNotNull($system);
-        $reading = new Reading($s->instance, new Connection($s->variables, new Context($s->modes(), $s->diagnostics, $s->variables, 0.0), 'root', 'localhost', $s->id), $system->catalog->tables[0], GrammarRelease::MySql847);
-        $table = $system->find('performance_schema', 'threads');
-        self::assertNotNull($table);
-
-        self::assertSame([], $system->rows($table, $reading->connection));
-    }
-
     public function testHeldHoldsAValueAsTheDomainSays(): void
     {
         self::assertSame([3, 1.5, '7', null], [SystemSchemas::held('3', Domain::integer()), SystemSchemas::held(1.5, Domain::double()), SystemSchemas::held(7, Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'))), SystemSchemas::held(null, Domain::integer())]);
+    }
+
+    #[DataProvider('providerReleases')]
+    public function testRowsReflectTheCurrentStateOfAnImplementedProvider(GrammarRelease $release): void
+    {
+        $session = (new Instance(substr($release->value, 6)))->connect();
+        $system = $session->instance->dictionary->system;
+        self::assertNotNull($system);
+        $table = $system->find('mysql', 'servers');
+        self::assertNotNull($table);
+        $connection = new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0), 'root', 'localhost', $session->id);
+        self::assertSame([], $system->rows($table, $connection));
+
+        $session->query("CREATE SERVER remote_fixture FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'localhost', DATABASE 'shop')");
+
+        self::assertSame(['remote_fixture'], array_column($system->rows($table, $connection), 'Server_name'));
     }
 
     public function testOriginAnswersTheColumnAResultReports(): void
@@ -145,6 +151,43 @@ final class SystemSchemasTest extends TestCase
         $stored->materialize();
         self::assertNotEmpty($stored->data->rows);
         self::assertSame(1, $session->instance->registry->status->read('Deprecated_use_i_s_processlist_count'));
+    }
+
+    #[DataProvider('providerReleases')]
+    public function testEveryDeclaredSystemTableHasAnExecutableRowProvider(GrammarRelease $release): void
+    {
+        $tables = array_map(static fn (SystemTable $table): string => SystemTables::key($table->schema, $table->name), SystemTables::of($release)->tables);
+        $missing = array_values(array_diff($tables, array_keys(SystemSchemas::SOURCES)));
+
+        self::assertSame([], $missing, $release->value . ' has ' . count($missing) . ' declared system tables without row providers.');
+    }
+
+    #[DataProvider('providerSources')]
+    public function testRegisteredSourcesImplementTheRowContract(string $source): void
+    {
+        self::assertTrue(is_subclass_of($source, SystemRows::class), $source . ' must implement ' . SystemRows::class . '.');
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if (str_starts_with($release->value, 'mysql-')) {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{class-string<SystemRows>}>
+     */
+    public static function providerSources(): iterable
+    {
+        foreach (array_unique(SystemSchemas::SOURCES) as $source) {
+            yield $source => [$source];
+        }
     }
 
 }
