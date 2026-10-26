@@ -35,9 +35,25 @@ final class Record
     public array $raw = [];
 
     /**
+     * @var list<Record> State reads, attached before execution so failed composite snapshots retain earlier evidence
+     */
+    public array $probes = [];
+
+    /**
      * Identifies the engine and exact input whose partial observations are retained.
      */
     public function __construct(public readonly string $engine, public readonly string $sql, public readonly string $mode)
     {
+    }
+
+    /**
+     * Owns a state read independently of the primary result and comparison copy.
+     */
+    public function probe(string $sql): self
+    {
+        $probe = new self('probe', $sql, $this->mode);
+        $probe->phase = 'statement';
+        $this->probes[] = $probe;
+        return $probe;
     }
 }

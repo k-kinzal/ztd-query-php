@@ -6,6 +6,7 @@ namespace Tests\Integration;
 
 use Container\Endpoint;
 use Fuzz\Container\DisposableMySql;
+use Fuzz\Observation\Record;
 use Fuzz\Observation\UserVariables;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -35,7 +36,10 @@ final class UserVariableObservationTest extends TestCase
             $owner->exec("SET SESSION character_set_client='latin1'");
             $owner->exec('BEGIN');
             $owner->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-            $captured = $observer->capture($owner, $administrator);
+            $record = new Record('native', 'BEGIN', '');
+            $captured = $observer->capture($owner, $administrator, $record);
+            self::assertStringContainsString(str_repeat("\x00\xFF", 8192), serialize($record->probes));
+            self::assertSame('complete', $record->probes[count($record->probes) - 1]->phase);
             self::assertTrue($owner->inTransaction());
             self::assertFalse($owner->getAttribute(PDO::ATTR_EMULATE_PREPARES));
             $owner->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);

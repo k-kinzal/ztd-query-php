@@ -24,22 +24,33 @@ final class SessionState
      * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
      * @throws RuntimeException When the session state cannot be observed
      */
-    public function capture(PDO $connection, string $version): array
+    public function capture(PDO $connection, string $version, ?Record $record = null): array
     {
         $emulate = $connection->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
             $transaction = $connection->inTransaction();
+            $raw = ['transaction' => $transaction];
+            if ($record !== null) {
+                $record->raw['session'] = $raw;
+            }
             $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-            $statement = $connection->query('SELECT DATABASE()');
-            $database = $statement === false ? false : $statement->fetchColumn();
-            if ($database !== null && !is_string($database)) {
+            $observer = new Observer();
+            $databases = $observer->rows($connection, 'SELECT DATABASE()', $record);
+            if (count($databases) !== 1 || !is_array($databases[0]) || count($databases[0]) !== 1 || (!is_string($databases[0][0]) && $databases[0][0] !== null)) {
                 throw new RuntimeException('Cannot read the observed session database.');
             }
-            $identities = StatementIdentities::capture($connection, $version);
-            $variables = (new Observer())->probe($connection, 'SHOW SESSION VARIABLES');
-            $raw = ['transaction' => $transaction, 'database' => $database, 'variables' => $variables];
+            $raw['database'] = $databases[0][0];
+            if ($record !== null) {
+                $record->raw['session'] = $raw;
+            }
+            $identities = StatementIdentities::capture($connection, $version, $record);
+            $variables = $observer->probe($connection, 'SHOW SESSION VARIABLES', $record);
+            $raw['variables'] = $variables;
+            if ($record !== null) {
+                $record->raw['session'] = $raw;
+            }
             $comparable = $raw;
-            $comparable['variables'] = $identities?->comparable($connection, $variables) ?? $variables;
+            $comparable['variables'] = $identities->comparable($connection, $variables, $record);
 
             return ['raw' => $raw, 'comparable' => $comparable];
         } catch (PDOException $failure) {

@@ -32,21 +32,21 @@ final class UserVariables
      * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
      * @throws RuntimeException When the owner, inventory or any known variable cannot be read
      */
-    public function capture(PDO $connection, PDO $administrator): array
+    public function capture(PDO $connection, PDO $administrator, ?Record $record = null): array
     {
         $emulate = $connection->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         $client = null;
         try {
             $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-            $statement = $connection->query('SELECT CONNECTION_ID(), @@character_set_client');
-            $owner = $statement === false ? false : $statement->fetch(PDO::FETCH_NUM);
+            $rows = (new Observer())->rows($connection, 'SELECT CONNECTION_ID(), @@character_set_client', $record);
+            $owner = count($rows) === 1 ? $rows[0] : null;
             if (!is_array($owner) || !is_int($owner[0] ?? null) || $owner[0] < 1 || !is_string($owner[1] ?? null)) {
                 throw new RuntimeException('Cannot identify the observed user-variable owner.');
             }
-            $inventory = $this->inventory($administrator, $owner[0]);
+            $inventory = $this->inventory($administrator, $owner[0], $record);
             $client = $owner[1];
             (new Tables())->execute($connection, "SET SESSION character_set_client = 'utf8mb4'");
-            $values = $this->values($connection, $inventory);
+            $values = $this->values($connection, $inventory, $record);
             $raw = ['inventory' => $inventory, 'values' => $values];
             $comparable = $raw;
             $comparable['inventory'] = (new Observer())->bag($inventory);
@@ -72,16 +72,13 @@ final class UserVariables
      * @return list<array{string, string|null}> Names in system UTF-8 and unconverted stored values
      * @throws RuntimeException When the thread or variable inventory cannot be read
      */
-    public function inventory(PDO $administrator, int $connection): array
+    public function inventory(PDO $administrator, int $connection, ?Record $record = null): array
     {
-        $thread = (new OwnerThread())->resolve($administrator, $connection);
-        $statement = $administrator->query('SELECT CAST(VARIABLE_NAME AS BINARY), VARIABLE_VALUE FROM performance_schema.user_variables_by_thread WHERE THREAD_ID = ' . $thread);
-        if ($statement === false) {
-            throw new RuntimeException('Cannot read the observed user-variable inventory.');
-        }
+        $thread = (new OwnerThread())->resolve($administrator, $connection, $record);
+        $inventory = (new Observer())->rows($administrator, 'SELECT CAST(VARIABLE_NAME AS BINARY), VARIABLE_VALUE FROM performance_schema.user_variables_by_thread WHERE THREAD_ID = ' . $thread, $record);
         $rows = [];
         $seen = [];
-        foreach ($statement->fetchAll(PDO::FETCH_NUM) as $row) {
+        foreach ($inventory as $row) {
             if (!is_array($row) || count($row) !== 2 || !is_string($row[0]) || (!is_string($row[1]) && $row[1] !== null) || isset($seen[$row[0]])) {
                 throw new RuntimeException('The observed user-variable inventory is malformed.');
             }
@@ -99,13 +96,13 @@ final class UserVariables
      * @return array<array-key, array<string, mixed>> Complete observations by variable name
      * @throws RuntimeException When a known variable cannot be read
      */
-    public function values(PDO $connection, array $inventory): array
+    public function values(PDO $connection, array $inventory, ?Record $record = null): array
     {
         $observer = new Observer();
         $values = [];
         foreach ($inventory as [$name]) {
             $variable = '@' . $observer->identifier($name);
-            $value = $observer->probe($connection, 'SELECT ' . $variable . ' AS `value`, CHARSET(' . $variable . ') AS `character_set`, COLLATION(' . $variable . ') AS `collation_name`, COERCIBILITY(' . $variable . ') AS `coercibility`');
+            $value = $observer->probe($connection, 'SELECT ' . $variable . ' AS `value`, CHARSET(' . $variable . ') AS `character_set`, COLLATION(' . $variable . ') AS `collation_name`, COERCIBILITY(' . $variable . ') AS `coercibility`', $record);
             $values[$name] = $value;
         }
         return $values;

@@ -29,11 +29,14 @@ final class ObservationProbeTest extends TestCase
             (new Tables())->execute($connection, 'BEGIN');
             $observer = new Observer();
             $before = $observer->probe($connection, "SHOW SESSION STATUS LIKE 'Com_stmt_prepare'");
-            $state = (new SessionState())->capture($connection, '8.4.7');
+            $record = new Record('memory', 'BEGIN', '');
+            $state = (new SessionState())->capture($connection, '8.4.7', $record);
 
             self::assertTrue($state['raw']['transaction']);
             self::assertSame('shop', $state['raw']['database']);
             self::assertArrayHasKey('variables', $state['raw']);
+            self::assertSame($state['raw'], $record->raw['session']);
+            self::assertSame(['SELECT DATABASE()', 'SELECT @@statement_id, CONNECTION_ID()', 'SHOW SESSION VARIABLES', 'SELECT @@statement_id'], array_column($record->probes, 'sql'));
             self::assertSame($before, $observer->probe($connection, "SHOW SESSION STATUS LIKE 'Com_stmt_prepare'"));
             self::assertTrue($connection->inTransaction());
             self::assertSame($emulate, $connection->getAttribute(PDO::ATTR_EMULATE_PREPARES));

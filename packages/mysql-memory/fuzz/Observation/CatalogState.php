@@ -23,13 +23,13 @@ final class CatalogState
      * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
      * @throws RuntimeException When an observed catalog cannot be read
      */
-    public function capture(PDO $connection, string $version): array
+    public function capture(PDO $connection, string $version, ?Record $record = null): array
     {
         $observer = new Observer();
         $raw = [];
         $comparable = [];
         foreach ($this->queries($version) as $name => $sql) {
-            $observation = $observer->probe($connection, $sql);
+            $observation = $observer->probe($connection, $sql, $record);
             $raw[$name] = $observation;
             $results = $observation['results'];
             if (!is_array($results) || count($results) !== 1 || !is_array($results[0]) || !is_array($results[0]['rows'] ?? null)) {
@@ -39,7 +39,7 @@ final class CatalogState
             $observation['results'] = $results;
             $comparable[$name] = $observation;
         }
-        $databases = $this->databases($connection);
+        $databases = $this->databases($connection, $record);
         $raw['databases'] = $databases;
         $comparable['databases'] = $databases;
 
@@ -53,20 +53,18 @@ final class CatalogState
      * @return array<string, array{definitions: array<string, mixed>|null, rows: array<string, mixed>}>
      * @throws RuntimeException When the database inventory cannot be read
      */
-    public function databases(PDO $connection): array
+    public function databases(PDO $connection, ?Record $record = null): array
     {
-        $inventory = $connection->query('SHOW DATABASES');
-        if ($inventory === false) {
-            throw new RuntimeException('Cannot enumerate observed databases: ' . json_encode($connection->errorInfo()));
-        }
         $observer = new Observer();
+        $inventory = $observer->rows($connection, 'SHOW DATABASES', $record);
         $databases = [];
-        foreach ($inventory->fetchAll(PDO::FETCH_COLUMN) as $name) {
-            if (!is_string($name)) {
+        foreach ($inventory as $row) {
+            if (!is_array($row) || !is_string($row[0] ?? null)) {
                 throw new RuntimeException('The database inventory returned an invalid identifier.');
             }
+            $name = $row[0];
             if (!in_array($name, ['information_schema', 'performance_schema', 'mysql', 'sys'], true)) {
-                $databases[$name] = ['definitions' => $observer->definitions($connection, $name), 'rows' => $observer->tables($connection, $name)];
+                $databases[$name] = ['definitions' => $observer->definitions($connection, $name, $record), 'rows' => $observer->tables($connection, $name, $record)];
             }
         }
         ksort($databases);

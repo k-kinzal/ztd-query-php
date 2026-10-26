@@ -130,19 +130,24 @@ final class Servers
      * @return array<string, string|null>
      * @throws RuntimeException When the initial configuration cannot be read completely
      */
-    public function globals(PDO $native, string $version): array
+    public function globals(PDO $native, string $version, ?\Fuzz\Observation\Record $record = null): array
     {
         $globals = [];
         $empty = [];
-        foreach ($this->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables') as [$name, $value]) {
+        $observer = new \Fuzz\Observation\Observer();
+        foreach ($observer->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables', $record) as $row) {
+            if (!is_array($row) || count($row) !== 2 || !is_string($row[0] ?? null) || (!is_string($row[1]) && $row[1] !== null)) {
+                throw new RuntimeException('The global variable inventory returned an invalid row.');
+            }
+            [$name, $value] = $row;
             $globals[strtolower($name)] = $value;
             if ($value === '') {
                 $empty[] = strtolower($name);
             }
         }
         if ($empty !== []) {
-            $read = $native->query('SELECT ' . implode(', ', array_map(static fn (string $name): string => '@@GLOBAL.`' . str_replace('`', '``', $name) . '`', $empty)));
-            $values = $read === false ? false : $read->fetch(PDO::FETCH_NUM);
+            $rows = $observer->rows($native, 'SELECT ' . implode(', ', array_map(static fn (string $name): string => '@@GLOBAL.`' . str_replace('`', '``', $name) . '`', $empty)), $record);
+            $values = count($rows) === 1 ? $rows[0] : null;
             if (!is_array($values) || count($values) !== count($empty)) {
                 throw new RuntimeException('Cannot distinguish NULL global fixture variables from empty strings.');
             }

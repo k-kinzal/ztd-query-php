@@ -157,11 +157,11 @@ final class Lifecycle
         }
         if ($after !== null) {
             $record->phase = 'post-statement tables';
-            $record->raw['tables'] = (new Observer())->tables($after, 'fz');
+            $record->raw['tables'] = (new Observer())->tables($after, 'fz', $record);
             $record->phase = 'post-statement definitions';
-            $record->raw['definitions'] = (new Observer())->definitions($after, 'fz');
+            $record->raw['definitions'] = (new Observer())->definitions($after, 'fz', $record);
             $record->phase = 'post-statement status';
-            $record->raw['status'] = (new Observer())->probe($after, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'");
+            $record->raw['status'] = (new Observer())->probe($after, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'", $record);
             $results = $record->raw['status']['results'];
             $rows = is_array($results) && is_array($results[0] ?? null) ? ($results[0]['rows'] ?? null) : null;
             if (!is_array($rows) || count($rows) !== 1 || !is_array($rows[0]) || count($rows[0]) !== 2

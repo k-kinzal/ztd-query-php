@@ -19,14 +19,13 @@ final class OwnerThread
      * @return positive-int
      * @throws RuntimeException When the connection identity cannot be read
      */
-    public function connection(PDO $owner): int
+    public function connection(PDO $owner, ?Record $record = null): int
     {
-        $statement = $owner->query('SELECT CONNECTION_ID()');
-        $connection = $statement === false ? false : $statement->fetchColumn();
-        if (!is_int($connection) || $connection < 1) {
+        $rows = (new Observer())->rows($owner, 'SELECT CONNECTION_ID()', $record);
+        if (count($rows) !== 1 || !is_array($rows[0]) || !is_int($rows[0][0] ?? null) || $rows[0][0] < 1) {
             throw new RuntimeException('Cannot identify the observed connection.');
         }
-        return $connection;
+        return $rows[0][0];
     }
 
     /**
@@ -36,13 +35,12 @@ final class OwnerThread
      * @return positive-int
      * @throws RuntimeException When the connection has no unique owning thread
      */
-    public function resolve(PDO $administrator, int $connection): int
+    public function resolve(PDO $administrator, int $connection, ?Record $record = null): int
     {
-        $statement = $administrator->query('SELECT THREAD_ID FROM performance_schema.threads WHERE PROCESSLIST_ID = ' . $connection);
-        $threads = $statement === false ? [] : $statement->fetchAll(PDO::FETCH_COLUMN);
-        if (count($threads) !== 1 || !is_int($threads[0]) || $threads[0] < 1) {
+        $threads = (new Observer())->rows($administrator, 'SELECT THREAD_ID FROM performance_schema.threads WHERE PROCESSLIST_ID = ' . $connection, $record);
+        if (count($threads) !== 1 || !is_array($threads[0]) || !is_int($threads[0][0] ?? null) || $threads[0][0] < 1) {
             throw new RuntimeException('Cannot identify exactly one observed owning thread.');
         }
-        return $threads[0];
+        return $threads[0][0];
     }
 }

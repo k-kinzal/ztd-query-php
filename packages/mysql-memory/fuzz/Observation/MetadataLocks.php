@@ -39,13 +39,13 @@ final class MetadataLocks
      * @return array{raw: array<string, mixed>, comparable: array<string, mixed>}
      * @throws RuntimeException When ownership, instrumentation or the inventory cannot be read
      */
-    public function capture(PDO $administrator, int $connection, string $version): array
+    public function capture(PDO $administrator, int $connection, string $version, ?Record $record = null): array
     {
-        $thread = (new OwnerThread())->resolve($administrator, $connection);
-        $this->verify($administrator, $thread);
+        $thread = (new OwnerThread())->resolve($administrator, $connection, $record);
+        $this->verify($administrator, $thread, $record);
         $columns = 'OBJECT_TYPE, OBJECT_SCHEMA, OBJECT_NAME, ' . (str_starts_with($version, '5.7.') ? '' : 'COLUMN_NAME, ') . 'LOCK_TYPE, LOCK_DURATION, LOCK_STATUS';
         $observer = new Observer();
-        $raw = $observer->probe($administrator, 'SELECT ' . $columns . ' FROM performance_schema.metadata_locks WHERE OWNER_THREAD_ID = ' . $thread);
+        $raw = $observer->probe($administrator, 'SELECT ' . $columns . ' FROM performance_schema.metadata_locks WHERE OWNER_THREAD_ID = ' . $thread, $record);
         $results = $raw['results'];
         if (!is_array($results) || count($results) !== 1 || !is_array($results[0]) || !is_array($results[0]['rows'] ?? null)) {
             throw new RuntimeException('The observed metadata locks did not return one row set.');
@@ -53,7 +53,7 @@ final class MetadataLocks
         $results[0]['rows'] = $observer->bag($results[0]['rows']);
         $comparable = $raw;
         $comparable['results'] = $results;
-        $this->verify($administrator, $thread);
+        $this->verify($administrator, $thread, $record);
         return ['raw' => $raw, 'comparable' => $comparable];
     }
 
@@ -64,21 +64,20 @@ final class MetadataLocks
      * @phpstan-impure
      * @throws RuntimeException When the metadata lock inventory cannot be trusted
      */
-    public function verify(PDO $administrator, int $thread): void
+    public function verify(PDO $administrator, int $thread, ?Record $record = null): void
     {
         $queries = [
-            "SELECT ENABLED FROM performance_schema.setup_instruments WHERE NAME='wait/lock/metadata/sql/mdl'" => ['YES'],
-            "SELECT ENABLED FROM performance_schema.setup_consumers WHERE NAME IN ('global_instrumentation', 'thread_instrumentation') ORDER BY NAME" => ['YES', 'YES'],
-            'SELECT INSTRUMENTED FROM performance_schema.threads WHERE THREAD_ID = ' . $thread => ['YES'],
+            "SELECT ENABLED FROM performance_schema.setup_instruments WHERE NAME='wait/lock/metadata/sql/mdl'" => [['YES']],
+            "SELECT ENABLED FROM performance_schema.setup_consumers WHERE NAME IN ('global_instrumentation', 'thread_instrumentation') ORDER BY NAME" => [['YES'], ['YES']],
+            'SELECT INSTRUMENTED FROM performance_schema.threads WHERE THREAD_ID = ' . $thread => [['YES']],
         ];
+        $observer = new Observer();
         foreach ($queries as $sql => $expected) {
-            $statement = $administrator->query($sql);
-            if ($statement === false || $statement->fetchAll(PDO::FETCH_COLUMN) !== $expected) {
+            if ($observer->rows($administrator, $sql, $record) !== $expected) {
                 throw new RuntimeException('Metadata lock instrumentation is missing or disabled.');
             }
         }
-        $statement = $administrator->query("SHOW GLOBAL STATUS LIKE 'Performance_schema_metadata_lock_lost'");
-        if ($statement === false || $statement->fetchAll(PDO::FETCH_COLUMN, 1) !== ['0']) {
+        if ($observer->rows($administrator, "SHOW GLOBAL STATUS LIKE 'Performance_schema_metadata_lock_lost'", $record) !== [['Performance_schema_metadata_lock_lost', '0']]) {
             throw new RuntimeException('Metadata lock instrumentation has lost records or its loss counter is unreadable.');
         }
     }

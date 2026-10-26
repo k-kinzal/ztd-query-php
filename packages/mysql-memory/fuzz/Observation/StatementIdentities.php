@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Observation;
 
 use PDO;
+use RuntimeException;
 
 /**
  * Validates independently allocated identities in a plain SHOW VARIABLES result.
@@ -47,18 +48,24 @@ final class StatementIdentities
 
     /**
      * Samples the lower statement bound and connection identity before the target statement.
+     *
+     * @throws RuntimeException When the identity sample is unreadable or malformed
      */
-    public static function capture(PDO $pdo, string $version): ?self
+    public static function capture(PDO $pdo, string $version, ?Record $record = null): self
     {
+        $observer = new Observer();
         if (str_starts_with($version, '5.')) {
-            $statement = $pdo->query('SELECT CONNECTION_ID()');
-            $connection = $statement === false ? false : $statement->fetchColumn();
-            return is_int($connection) ? new self(null, $connection, str_starts_with($version, '5.6.') ? 'VARIABLES' : 'session_variables') : null;
+            $rows = $observer->rows($pdo, 'SELECT CONNECTION_ID()', $record);
+            if (count($rows) !== 1 || !is_array($rows[0]) || !is_int($rows[0][0] ?? null)) {
+                throw new RuntimeException('Cannot sample the observed connection identity.');
+            }
+            return new self(null, $rows[0][0], str_starts_with($version, '5.6.') ? 'VARIABLES' : 'session_variables');
         }
-        $statement = $pdo->query('SELECT @@statement_id, CONNECTION_ID()');
-        $row = $statement === false ? false : $statement->fetch(PDO::FETCH_NUM);
-
-        return is_array($row) && is_int($row[0] ?? null) && is_int($row[1] ?? null) ? new self($row[0], $row[1]) : null;
+        $rows = $observer->rows($pdo, 'SELECT @@statement_id, CONNECTION_ID()', $record);
+        if (count($rows) !== 1 || !is_array($rows[0]) || !is_int($rows[0][0] ?? null) || !is_int($rows[0][1] ?? null)) {
+            throw new RuntimeException('Cannot sample the observed statement and connection identities.');
+        }
+        return new self($rows[0][0], $rows[0][1]);
     }
 
     /**
@@ -66,16 +73,18 @@ final class StatementIdentities
      *
      * @param array<string, mixed> $observation
      * @return array<string, mixed>
+     * @throws RuntimeException When the upper identity bound is unreadable or malformed
      */
-    public function comparable(PDO $pdo, array $observation): array
+    public function comparable(PDO $pdo, array $observation, ?Record $record = null): array
     {
         if ($this->before === null) {
             return $this->validated($observation, 0);
         }
-        $statement = $pdo->query('SELECT @@statement_id');
-        $after = $statement === false ? false : $statement->fetchColumn();
-
-        return is_int($after) ? $this->validated($observation, $after) : $observation;
+        $rows = (new Observer())->rows($pdo, 'SELECT @@statement_id', $record);
+        if (count($rows) !== 1 || !is_array($rows[0]) || !is_int($rows[0][0] ?? null)) {
+            throw new RuntimeException('Cannot sample the observed statement identity upper bound.');
+        }
+        return $this->validated($observation, $rows[0][0]);
     }
 
     /**

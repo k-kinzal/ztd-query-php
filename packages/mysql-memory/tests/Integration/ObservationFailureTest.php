@@ -128,7 +128,7 @@ final class ObservationFailureTest extends TestCase
 
             self::assertNotNull($failure);
             self::assertNotNull($failure->getPrevious());
-            self::assertStringContainsString('Cannot read a differential fixture: SHOW GLOBAL VARIABLES', (string) $failure);
+            self::assertStringContainsString('Cannot read observed state: SHOW GLOBAL VARIABLES', (string) $failure);
             self::assertStringContainsString('Cannot terminate the differential input connection', $failure->getMessage());
             self::assertCount(1, $target->observations);
             $record = $target->observations[0];
@@ -138,6 +138,10 @@ final class ObservationFailureTest extends TestCase
             self::assertSame([['affected' => 0, 'lastInsertId' => '0']], $record->raw['results']);
             self::assertSame([], $record->raw['warnings']);
             self::assertArrayHasKey('session', $record->raw);
+            $probes = array_column($record->probes, null, 'sql');
+            self::assertSame('complete', $probes['SHOW SESSION VARIABLES']->phase);
+            self::assertSame('conditions', $probes['SHOW GLOBAL VARIABLES']->phase);
+            self::assertArrayHasKey('error', $probes['SHOW GLOBAL VARIABLES']->raw);
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('unusable after an incomplete restoration');
 

@@ -306,7 +306,7 @@ final class ExecutionTarget
             $this->baseline?->restore($guard);
             $record->phase = 'connection';
             $pdo = $this->connect($dsn, $user, $password);
-            $connection = (new OwnerThread())->connection($pdo);
+            $connection = (new OwnerThread())->connection($pdo, $record);
             $record->phase = 'fixture setup';
             $clock = TableTimes::handles($sql, $this->version) ? new TableTimes($this->version) : null;
             $this->prepare($pdo, $clock);
@@ -406,11 +406,11 @@ final class ExecutionTarget
         $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
         $owner = null;
         if (!str_starts_with($this->version, '5.6.')) {
-            $owner = (new OwnerThread())->connection($pdo);
+            $owner = (new OwnerThread())->connection($pdo, $record);
             (new MetadataLocks())->prepare($guard, $owner);
         }
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
-        $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo, $this->version) : null;
+        $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo, $this->version, $record) : null;
         if (Process\Listing::handles($sql)) {
             Process\Listing::prepare($pdo);
         }
@@ -435,26 +435,26 @@ final class ExecutionTarget
         $raw = &$record->raw;
         if ($owner !== null) {
             $record->phase = 'metadata locks';
-            $locks = (new MetadataLocks())->capture($guard, $owner, $this->version);
+            $locks = (new MetadataLocks())->capture($guard, $owner, $this->version, $record);
             $raw['metadataLocks'] = $locks['raw'];
             $observation['metadataLocks'] = $locks['comparable'];
         }
         $record->phase = 'session state';
-        $state = (new SessionState())->capture($pdo, $this->version);
+        $state = (new SessionState())->capture($pdo, $this->version, $record);
         $raw['session'] = $state['raw'];
         $observation['session'] = $state['comparable'];
         if (!str_starts_with($this->version, '5.6.')) {
             $record->phase = 'user variables';
-            $userVariables = (new \Fuzz\Observation\UserVariables())->capture($pdo, $guard);
+            $userVariables = (new \Fuzz\Observation\UserVariables())->capture($pdo, $guard, $record);
             $raw['session']['userVariables'] = $userVariables['raw'];
             $observation['session']['userVariables'] = $userVariables['comparable'];
         }
         $record->phase = 'global variables';
-        $observation['globals'] = (new Servers())->globals($guard, $this->version);
+        $observation['globals'] = (new Servers())->globals($guard, $this->version, $record);
         $raw['globals'] = $observation['globals'];
         ksort($observation['globals']);
         $record->phase = 'catalog state';
-        $catalog = (new CatalogState())->capture($guard, $this->version);
+        $catalog = (new CatalogState())->capture($guard, $this->version, $record);
         $raw['catalog'] = $catalog['raw'];
         $observation['catalog'] = $catalog['comparable'];
         $record->phase = 'comparison contracts';
@@ -466,15 +466,15 @@ final class ExecutionTarget
                 }
             }
         }
-        $observation = $identities?->comparable($pdo, $observation) ?? $observation;
+        $observation = $identities?->comparable($pdo, $observation, $record) ?? $observation;
         $observation = $processes?->comparable($pdo, $observation) ?? $observation;
         $observation = $status?->comparable($observation) ?? $observation;
         $observation = (new \Fuzz\Observation\EngineReports())->comparable($sql, $observation);
         $record->phase = 'owner-visible tables';
-        $observation['tables'] = $observer->tables($pdo, self::DATABASE);
+        $observation['tables'] = $observer->tables($pdo, self::DATABASE, $record);
         $raw['tables'] = $observation['tables'];
         $record->phase = 'owner-visible definitions';
-        $observation['definitions'] = $observer->definitions($pdo, self::DATABASE);
+        $observation['definitions'] = $observer->definitions($pdo, self::DATABASE, $record);
         $raw['definitions'] = $observation['definitions'];
         $record->phase = 'password contracts';
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;

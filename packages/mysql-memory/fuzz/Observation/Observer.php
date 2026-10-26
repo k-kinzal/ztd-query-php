@@ -74,10 +74,10 @@ final class Observer
      * @return array<string, mixed>
      * @throws RuntimeException When the probe or its conditions cannot be read
      */
-    public function probe(PDO $pdo, string $sql): array
+    public function probe(PDO $pdo, string $sql, ?Record $owner = null): array
     {
         $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
-        $record = new Record('probe', $sql, '');
+        $record = $owner?->probe($sql) ?? new Record('probe', $sql, '');
         try {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $observation = $this->observe($pdo, $sql, true, $record);
@@ -85,16 +85,41 @@ final class Observer
             if (isset($observation['error'])) {
                 throw new RuntimeException('The state probe returned a SQL error.');
             }
-            $results = $observation['results'];
-            if (!is_array($results) || count($results) !== 1 || !is_array($results[0]) || !is_array($results[0]['rows'] ?? null)) {
-                throw new RuntimeException('The state probe did not return one row set.');
-            }
+            $this->rowset($observation);
+            $record->phase = 'complete';
             return $observation;
         } catch (RuntimeException $failure) {
-            throw new RuntimeException('Cannot read observed state: ' . $sql . '; base64 serialized probe: ' . base64_encode(serialize($record)), 0, $failure);
+            throw new ProbeFailure($record, $failure);
         } finally {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
+    }
+
+    /**
+     * Reads required state rows while keeping metadata and conditions in the owning record.
+     *
+     * @return array<mixed>
+     * @throws RuntimeException When the state read cannot provide one row set
+     */
+    public function rows(PDO $pdo, string $sql, ?Record $owner = null): array
+    {
+        return $this->rowset($this->probe($pdo, $sql, $owner));
+    }
+
+    /**
+     * Requires one row set before a state reader interprets its contents.
+     *
+     * @param array<string, mixed> $observation The complete driver observation
+     * @return array<mixed>
+     * @throws RuntimeException When the state read did not return one row set
+     */
+    public function rowset(array $observation): array
+    {
+        $results = $observation['results'] ?? null;
+        if (!is_array($results) || count($results) !== 1 || !is_array($results[0] ?? null) || !is_array($results[0]['rows'] ?? null)) {
+            throw new RuntimeException('The state probe did not return one row set.');
+        }
+        return $results[0]['rows'];
     }
 
     /**
@@ -173,41 +198,28 @@ final class Observer
      * @return array<string, mixed>
      * @throws RuntimeException When table state cannot be read
      */
-    public function tables(PDO $pdo, string $database): array
+    public function tables(PDO $pdo, string $database, ?Record $owner = null): array
     {
         $tables = [];
-        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
-            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             try {
-                $names = $pdo->query('SHOW FULL TABLES FROM ' . $this->identifier($database) . " WHERE Table_type = 'BASE TABLE'");
-            } catch (PDOException $failure) {
-                if (($failure->errorInfo[1] ?? null) === 1049) {
+                $names = $this->rows($pdo, 'SHOW FULL TABLES FROM ' . $this->identifier($database) . " WHERE Table_type = 'BASE TABLE'", $owner);
+            } catch (ProbeFailure $failure) {
+                if ($failure->absentDatabase()) {
                     return [];
                 }
                 throw $failure;
             }
-            if ($names === false) {
-                if (($pdo->errorInfo()[1] ?? null) === 1049) {
-                    return [];
-                }
-                throw new RuntimeException('Cannot enumerate observed tables: ' . json_encode($pdo->errorInfo()));
-            }
-            foreach ($names->fetchAll(PDO::FETCH_COLUMN) as $name) {
-                if (!is_string($name)) {
+            foreach ($names as $row) {
+                if (!is_array($row) || !is_string($row[0] ?? null)) {
                     throw new RuntimeException('The table inventory returned an invalid identifier.');
                 }
-                $rows = $pdo->query('SELECT * FROM ' . $this->identifier($database) . '.' . $this->identifier($name));
-                if ($rows === false) {
-                    throw new RuntimeException('Cannot read observed table ' . $name . ': ' . json_encode($pdo->errorInfo()));
-                }
-                $tables[$name] = $this->bag($rows->fetchAll(PDO::FETCH_NUM));
+                $name = $row[0];
+                $tables[$name] = $this->bag($this->rows($pdo, 'SELECT * FROM ' . $this->identifier($database) . '.' . $this->identifier($name), $owner));
             }
-        } catch (PDOException $failure) {
+        } catch (RuntimeException $failure) {
             // Only an absent initial inventory establishes DROP DATABASE, not a later read failure.
             throw new RuntimeException('Cannot read observed table state.', 0, $failure);
-        } finally {
-            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
         ksort($tables);
 
@@ -220,44 +232,28 @@ final class Observer
      * @return array<string, mixed>|null Null means the observed database was dropped
      * @throws RuntimeException When a definition cannot be read
      */
-    public function definitions(PDO $pdo, string $database): ?array
+    public function definitions(PDO $pdo, string $database, ?Record $owner = null): ?array
     {
-        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
-            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             try {
-                $schema = $pdo->query('SHOW CREATE DATABASE ' . $this->identifier($database));
-            } catch (PDOException $failure) {
-                if (($failure->errorInfo[1] ?? null) === 1049) {
+                $schema = $this->rows($pdo, 'SHOW CREATE DATABASE ' . $this->identifier($database), $owner);
+            } catch (ProbeFailure $failure) {
+                if ($failure->absentDatabase()) {
                     return null;
                 }
                 throw $failure;
             }
-            if ($schema === false) {
-                if (($pdo->errorInfo()[1] ?? null) === 1049) {
-                    return null;
-                }
-                throw new RuntimeException('Cannot enumerate observed definitions: ' . json_encode($pdo->errorInfo()));
-            }
-            $definitions = ['database' => $schema->fetchAll(PDO::FETCH_NUM), 'relations' => []];
-            $names = $pdo->query('SHOW TABLES FROM ' . $this->identifier($database));
-            if ($names === false) {
-                throw new RuntimeException('Cannot enumerate observed definitions: ' . json_encode($pdo->errorInfo()));
-            }
-            foreach ($names->fetchAll(PDO::FETCH_COLUMN) as $name) {
-                if (!is_string($name)) {
+            $definitions = ['database' => $schema, 'relations' => []];
+            $names = $this->rows($pdo, 'SHOW TABLES FROM ' . $this->identifier($database), $owner);
+            foreach ($names as $row) {
+                if (!is_array($row) || !is_string($row[0] ?? null)) {
                     throw new RuntimeException('The definition inventory returned an invalid identifier.');
                 }
-                $definition = $pdo->query('SHOW CREATE TABLE ' . $this->identifier($database) . '.' . $this->identifier($name));
-                if ($definition === false) {
-                    throw new RuntimeException('Cannot read observed definition ' . $name . ': ' . json_encode($pdo->errorInfo()));
-                }
-                $definitions['relations'][$name] = $definition->fetchAll(PDO::FETCH_NUM);
+                $name = $row[0];
+                $definitions['relations'][$name] = $this->rows($pdo, 'SHOW CREATE TABLE ' . $this->identifier($database) . '.' . $this->identifier($name), $owner);
             }
-        } catch (PDOException $failure) {
+        } catch (RuntimeException $failure) {
             throw new RuntimeException('Cannot read observed definitions.', 0, $failure);
-        } finally {
-            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
         ksort($definitions['relations']);
 

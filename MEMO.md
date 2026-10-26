@@ -1552,6 +1552,80 @@ independently of fuzz selection; it neither implements those tables nor replaces
 the required whole-model generation, complete state observation/restoration and
 full grammar/profile acceptance.
 
+### Partial state evidence and required identity reads
+
+Composite state readers previously returned their evidence only after every
+query succeeded. A later catalog or table read could therefore discard earlier
+results even though the outer observation correctly failed. These state readers
+now attach each read to the existing Record before execution. Each child record retains its exact
+SQL, result metadata, unsorted rows, conditions and progress independently of the
+primary result and comparison copy. ExecutionTarget's existing binary-safe failure
+report serializes the complete record, including these child observations.
+
+Catalog inventories, application database definitions and rows, session state,
+global variables, user-variable inventories and values, metadata-lock reads and
+their instrumentation checks use the same required-probe boundary. Lifecycle
+post-command observations retain the same evidence. Session transaction status is
+saved before issuing probes, and each following value is retained as it is read.
+ProbeFailure exposes its record directly as well as in the ordinary serialized
+error report. Only error 1049 from an initial database inventory whose conditions
+were successfully read establishes an absent database; later read failures and
+incomplete condition reads still fail the observation.
+
+Connection/statement-identity samples now require successful reads and valid
+shapes. Previously a failed sample could silently disable its comparison contract.
+Such a failure now aborts observation. Raw identity values remain available, and
+only the existing independently validated identity fields receive comparison
+treatment. Fixed observer SQL continues to use text and restore the input's
+selected protocol and PDO error mode.
+
+The new mechanism tests use real MySQL for deliberate catalog/table privilege
+refusals. An initial memory-only attempt exposed a separate behavioral defect:
+an account with SELECT on shop.a and INSERT on shop.b could read shop.b, and an
+account with only USAGE reached mysql.user instead of receiving the native SELECT
+refusal. The catalog attempt then stopped at the missing mysql.slave_master_info
+provider. These are unresolved execution findings, not acceptable fault injection
+for testing the independent observer. They remain part of goal D; no privilege
+implementation was changed in this assurance-boundary work.
+
+Verification on PHP 8.5.8 / PHPUnit 10.5.64:
+
+- Required-probe and independent process-failure regressions pass 27 tests /
+  183 assertions. The three cleanup/evidence regressions pass 3 / 31, including
+  retained session probes when both a later global read and restoration fail.
+- Native user-variable and metadata-lock mechanisms cover all eight supported
+  releases from 5.7 through 9.1, alongside the new 8.4.7 refusal/evidence cases.
+  The combined run passes 32 tests / 600 assertions in 254.734 seconds on the
+  AMD64 Docker host. PDO exception/silent modes and text/prepared input settings
+  are exercised; no PHPUnit timeout was changed.
+- The broader local state/failure run remains red: 15 tests / 46 assertions with
+  four errors from the explicit missing performance_schema.setup_instruments
+  UPDATE implementation. These inputs and assertions remain unchanged.
+- The unchanged execution PHP-Fuzzer entry verifies the two supplied 8.4.7
+  lifecycle seeds in both text and prepared modes, exiting zero with `Verified
+  2 inputs.` Default lexical settings, seed 20261026 and timeout 60 are retained.
+  The ordinary BEGIN replay still exits one on the missing mysql.password_history
+  provider during initial memory restoration. Its decoded failure report retains
+  two completed/restored native observations with 66 completed probes each; the
+  memory record has no invented probes and retains phase `initial restoration`
+  and cleanup `server integrity`. The base64 evidence is 29,330,984 bytes. Inspecting that report
+  exceeded the separate decoder's default 128 MiB limit; a 1 GiB decoder completed
+  with a measured peak of 165,625,856 bytes. No fuzz or test limit was changed.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. Strict
+  autoload discovers 8,619 classes; the tree check passes with 2,167 files and
+  no violations. This does not establish complete package static acceptance.
+
+The first native failure-injection attempt selected the container's default test
+database while connecting restricted accounts and failed during authentication
+(eight errors, 18 tests / 110 assertions). The final tests connect without a
+default database so that actual read refusals exercise the observer. The earlier
+memory-only attempt's privilege discrepancies above remain unresolved.
+
+Goals B-D remain open. Other environment-contract sampling and fixture-restoration
+reads still need the same audit, alongside complete state-domain coverage and the
+Operation/Facts/runtime-analysis migration. These bounded mechanisms do not
+replace the full supplier corpus or the 900-second acceptance matrix.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

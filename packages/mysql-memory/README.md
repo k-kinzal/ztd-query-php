@@ -246,6 +246,10 @@ connection and confirms its disappearance before restoring catalog objects.
 Failure reports retain completed result sets and state observations, including
 binary values, together with separate observation and cleanup phases. A cleanup
 failure cannot turn an earlier observation failure into a successful comparison.
+Post-input catalog, schema and session probes are attached to that input's record
+before they run. A failed composite snapshot retains earlier catalog reads, definitions,
+rows and conditions, together with the failing probe's SQL and phase. Probe
+evidence stays separate from the primary outcome and the comparison copy.
 The independent process failure channel is checked even when initial restoration
 fails before an input connection exists, and after restoration itself. An internal
 failure invalidates any earlier restoration success and prevents fixture reuse.
