@@ -1286,6 +1286,55 @@ Verification of this boundary on PHP 8.5.8:
 - Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. The package
   tree and strict autoload checks pass; the full acceptance gates remain open.
 
+### Lifecycle observation boundary
+
+The disposable-server path now follows the ordinary comparison contract. An
+official-grammar classifier selects only top-level SHUTDOWN and RESTART, including
+comments and applicable version comments. Keywords in strings or nested stored
+definitions do not select this path. A grammar refusal still reaches ordinary
+execution rather than becoming a skipped input.
+
+Two independently initialized native servers must agree before comparing MemoryDB.
+Their cold initialization overlaps through Testcontainers' wait strategy, while
+retaining both ordinary SQL-readiness checks. Each observation has its own Record,
+with raw primary outcomes, transition state and completed post-restart rows,
+definitions and status. Startup and cleanup failures retain their phase; cleanup
+is marked disposed only after an acquired instance has been stopped. The target's
+existing binary-safe failure report includes the incomplete lifecycle records.
+
+Disconnection has a ten-second deadline, and restart readiness has a subsequent
+thirty-second deadline. Missing either transition throws instead of returning
+false values that two broken implementations could match. MySQL's 1053/08S01
+shutdown-in-progress response remains a pending transition until the old socket
+closes; unrelated SQL and authentication refusals cannot count as unavailable
+transport. Setup and primary execution preserve errors even in PDO silent mode.
+Refused commands retain their full conditions and do not pretend to shut down.
+
+Evidence on PHP 8.5.8 / PHPUnit 10.5.64:
+
+- Grammar classification and initial transition mechanisms pass 87 tests / 108
+  assertions across the nine grammar releases. The final transition subset,
+  including a connection-level SQL refusal, passes seven tests / 31 assertions.
+  These tests check failure handling, not agreement across all native releases.
+- The native 8.4.7 mechanism run passes SHUTDOWN (11 assertions), but RESTART
+  exceeds the unchanged sixty-second test limit. The combined two-case run is
+  not a pass. The full fifteen-case native lifecycle matrix remains unverified.
+- The unchanged text-protocol PHP-Fuzzer target, seed 20261026 and default 8.4.7
+  profile, fails the selected two-seed replay at RESTART
+  (`simple_statement_or_begin-0.txt`, input hex `000000000000020000`). Its
+  sixty-second input alarm fires during the companion's native SQL-readiness
+  check. The emitted records identify native container startup and pending memory
+  execution; no completed SQL observation is claimed. The other selected seed is
+  `simple_statement-125.txt` (SHUTDOWN). This is a failed focused replay, not full
+  corpus or seedless acceptance.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass. Package size,
+  tree and strict autoload checks pass. No protected configuration or timeout was
+  changed.
+
+The remaining startup-budget problem, lifecycle state-domain coverage, ordinary
+observation/restoration gaps and model migration keep goals B-D open. Passing the
+mechanism tests does not establish complete server lifecycle equivalence.
+
 ## Historical investigation results
 
 The following checkpoints predate the whole-system redesign. They preserve

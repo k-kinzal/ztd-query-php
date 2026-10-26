@@ -234,6 +234,21 @@ connection and confirms its disappearance before restoring catalog objects.
 Failure reports retain completed result sets and state observations, including
 binary values, together with separate observation and cleanup phases. A cleanup
 failure cannot turn an earlier observation failure into a successful comparison.
+
+Top-level SHUTDOWN and RESTART use disposable servers, selected through the
+official grammar rather than text matching. Two independently initialized native
+servers must agree before MemoryDB is compared. Both native initializations keep
+the ordinary SQL readiness check. A command must terminate its original connection
+within ten seconds; RESTART must then become SQL-ready within thirty seconds.
+Exceeding either deadline fails observation, even if both implementations time out.
+A shutdown-in-progress response is distinct from completed disconnection. Other
+SQL refusals remain failures of readiness, not evidence that a server stopped.
+The observer retains primary results or full SQL errors, conditions for refused
+commands, and post-restart table rows, definitions and status. Partial lifecycle
+observations use the same failure reports as ordinary statements. Startup, probes
+and disposal remain inside the existing sixty-second input limit; the current
+8.4.7 lifecycle replay still exceeds that limit during native initialization.
+
 Temporary objects, MySQL 5.6 session inventories,
 row locks, advisory-lock recursion, contention and environment-specific catalog
 fields still need complete contracts; these runs do not yet establish equivalence

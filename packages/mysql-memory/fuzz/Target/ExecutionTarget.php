@@ -22,7 +22,6 @@ use Fuzz\Observation\StatementIdentities;
 use Fuzz\Observation\Status;
 use Fuzz\Observation\TableTimes;
 use Fuzz\Observation\TemporaryFiles;
-use JsonException;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -98,7 +97,6 @@ final class ExecutionTarget
     /**
      * Requires matching results for one generated SQL input; every counterexample fails PHP-Fuzzer.
      *
-     * @throws JsonException When a lifecycle observation cannot be serialized
      * @throws Error When the reference is unstable or the two servers disagree
      * @throws RuntimeException When an observation, fixture restoration or reuse check fails
      */
@@ -108,9 +106,17 @@ final class ExecutionTarget
         $this->observations = [];
         $verified = false;
         try {
-            $comparison = \Fuzz\Execution\Lifecycle::handles($sql)
-                ? (new \Fuzz\Execution\Lifecycle())->compare($sql, $this->version, $mode, $this->emulate)
-                : $this->compare($sql, $mode);
+            $action = $this->lifecycleAction($sql, $mode);
+            if ($action === null) {
+                $comparison = $this->compare($sql, $mode);
+            } else {
+                $lifecycle = new \Fuzz\Execution\Lifecycle();
+                try {
+                    $comparison = $lifecycle->compare($sql, $action, $this->version, $mode, $this->emulate);
+                } finally {
+                    $this->observations = $lifecycle->observations;
+                }
+            }
             if ($comparison->difference !== null || $comparison->volatile) {
                 $message = $comparison->volatile ? 'MySQL reference observations are unstable.' : 'mysql-memory differs from MySQL.';
                 throw new Error($message . "\nInput (hex): " . bin2hex($input) . "\nSQL mode: {$mode}\nSQL: {$sql}\n" . ($comparison->difference ?? $comparison->referenceDifference) . "\nRaw observations (base64 serialized): " . base64_encode(serialize($comparison->observations)));
@@ -120,6 +126,20 @@ final class ExecutionTarget
             if (!$verified) {
                 fwrite(STDERR, "\nExecution failure evidence (base64 serialized): " . base64_encode(serialize(['input' => $input, 'sql' => $sql, 'mode' => $mode, 'version' => $this->version, 'driver' => $this->emulate ? 'text' : 'prepared', 'foundRows' => $this->foundRows, 'observations' => $this->observations])) . "\n");
             }
+        }
+    }
+
+    /**
+     * Selects the lifecycle boundary independently of the semantic implementation.
+     * A grammar refusal still reaches ordinary execution and comparison.
+     */
+    public function lifecycleAction(string $sql, string $mode = ''): ?\Fuzz\Execution\LifecycleAction
+    {
+        $parser = $this->parsers[$mode] ??= new MySqlParser('mysql-' . $this->version, SqlMode::fromString($mode));
+        try {
+            return \Fuzz\Execution\LifecycleAction::read($parser->parse($sql));
+        } catch (SourceException) {
+            return null;
         }
     }
 

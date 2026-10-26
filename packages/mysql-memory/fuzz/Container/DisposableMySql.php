@@ -8,7 +8,9 @@ use Container\MySqlContainer;
 use Container\MySqlRelease;
 use Override;
 use RuntimeException;
+use Testcontainers\Containers\ContainerInstance;
 use Testcontainers\Containers\ReuseMode;
+use Testcontainers\Containers\WaitStrategy\WaitStrategy;
 
 /**
  * A fresh Testcontainers database owned by one campaign or lifecycle observation.
@@ -18,11 +20,16 @@ use Testcontainers\Containers\ReuseMode;
 final class DisposableMySql extends MySqlContainer
 {
     /**
+     * A companion created during startup; the caller owns its cleanup even if this startup fails.
+     */
+    public ?ContainerInstance $companionInstance = null;
+
+    /**
      * Uses the repository's pinned image for the requested release.
      *
      * @throws RuntimeException When no pinned image exists for the requested release
      */
-    public function __construct(string $version)
+    public function __construct(string $version, private readonly ?self $companion = null)
     {
         $definition = MySqlRelease::container($version);
         parent::__construct((new $definition())->image());
@@ -43,6 +50,18 @@ final class DisposableMySql extends MySqlContainer
                 done
                 SH]);
         }
+    }
+
+    /**
+     * Runs both independent initializations together without skipping either SQL readiness check.
+     *
+     * @param ContainerInstance $instance The running first container
+     */
+    #[Override]
+    protected function waitStrategy($instance): WaitStrategy
+    {
+        $readiness = parent::waitStrategy($instance);
+        return $this->companion === null ? $readiness : new CompanionStartup($this, $this->companion, $readiness);
     }
 
     /**

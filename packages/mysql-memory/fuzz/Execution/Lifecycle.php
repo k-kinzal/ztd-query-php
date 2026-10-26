@@ -10,7 +10,7 @@ use Fuzz\Fixture\Servers;
 use Fuzz\Fixture\Tables;
 use Fuzz\Observation\Comparison;
 use Fuzz\Observation\Observer;
-use JsonException;
+use Fuzz\Observation\Record;
 use MySqlMemory\Server\MemoryDatabase;
 use PDO;
 use PDOException;
@@ -18,153 +18,166 @@ use RuntimeException;
 use Testcontainers\Testcontainers;
 
 /**
- * Compares SHUTDOWN and RESTART on disposable servers, retaining these inputs in the seed corpus.
+ * Compares lifecycle commands against two independently initialized native servers.
  *
- * Their completion, connection termination and ability to reconnect are observed. A successful
- * restart must preserve the fixture rows and reset aborted-client statistics. Post-statement SHOW WARNINGS cannot be observed
- * reliably on a connection the server is closing; errors still record their full diagnostics.
+ * Each observation owns a disposable server. Primary outcomes, transitions and
+ * post-restart rows/definitions remain raw evidence even if a later probe fails.
+ * Container readiness, connection termination and restart have distinct phases;
+ * the surrounding PHP-Fuzzer input timeout still bounds the entire comparison.
  */
 final class Lifecycle
 {
     /**
-     * Tells whether an input needs a disposable server instead of the shared differential fixture.
+     * @var list<Record> Completed and partial observations of the current input
      */
-    public static function handles(string $sql): bool
-    {
-        return preg_match('/\A\s*(?:SHUTDOWN|RESTART)\s*;?\s*\z/i', $sql) === 1;
-    }
+    public array $observations = [];
 
     /**
-     * Compares a lifecycle input, even when a regular campaign uses an externally supplied DSN.
+     * Runs the same input on two native fixtures before comparing the memory fixture.
+     * Independent native initialization proceeds concurrently through Testcontainers'
+     * ordinary SQL readiness checks, without changing the per-input alarm.
      *
-     * @throws JsonException When an observation cannot be serialized
-     * @throws RuntimeException When the native fixture cannot serve SQL within its startup budget
+     * @throws RuntimeException When startup, a transition or an observation fails
      */
-    public function compare(string $sql, string $version, string $mode = '', bool $emulate = true): Comparison
+    public function compare(string $sql, LifecycleAction $action, string $version, string $mode = '', bool $emulate = true): Comparison
     {
-        $definition = new DisposableMySql($version);
+        $first = new Record('native', $sql, $mode);
+        $repeated = new Record('native', $sql, $mode);
+        $memory = new Record('memory', $sql, $mode);
+        $first->phase = $repeated->phase = 'container startup';
+        $memory->phase = 'pending';
+        $this->observations = [$first, $repeated, $memory];
+        $companion = new DisposableMySql($version);
+        $companion->withPortStrategy(new \Testcontainers\Containers\PortStrategy\RandomPortStrategy());
+        $definition = new DisposableMySql($version, $companion);
         $port = filter_var(getenv('MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
         if (is_int($port)) {
             $definition->withPortStrategy(new \Testcontainers\Containers\PortStrategy\StaticPortStrategy($port));
         }
-        $container = Testcontainers::run($definition);
         try {
-            $endpoint = $container->getData(Endpoint::class);
-            $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
-            $native = $this->reconnect($dsn, $endpoint->username, $endpoint->password, true) ?? throw new RuntimeException('The native lifecycle fixture did not become ready within thirty seconds.');
-            $native->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
-            $globals = [];
-            foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
-                $globals[strtolower($name)] = $value;
-            }
-            $server = MemoryDatabase::start($version, [], $globals, supervised: $definition->supervised(), resourcePriorities: (new Servers())->resourcePriorities($native, $version), resourceProcessors: (new Servers())->resourceProcessors($native, $version), timeZones: (new Servers())->timeZones($native));
+            $container = Testcontainers::run($definition);
             try {
-                $expected = $this->observe($native, $dsn, $endpoint->username, $endpoint->password, $sql, $mode);
-                $memory = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $emulate]);
-                $actual = $this->observe($memory, $server->dsn(), 'root', '', $sql, $mode);
+                $second = $definition->companionInstance ?? throw new RuntimeException('The repeated native lifecycle fixture did not start.');
+                $first->phase = $repeated->phase = 'fixture ready';
+                return $this->compareReady($container->getData(Endpoint::class), $second->getData(Endpoint::class), $definition->supervised(), $action, $version, $emulate, $first, $repeated, $memory);
             } finally {
-                try {
-                    $server->assertNoInternalFailure();
-                } finally {
-                    $server->stop();
-                }
+                $container->stop();
+                $first->cleanup = 'disposed';
             }
         } finally {
-            $container->stop();
+            if ($definition->companionInstance !== null) {
+                $definition->companionInstance->stop();
+                $repeated->cleanup = 'disposed';
+            }
         }
-
-        return new Comparison(false, $expected === $actual ? null : "lifecycle\n  expected: " . json_encode($expected, JSON_THROW_ON_ERROR) . "\n  actual:   " . json_encode($actual, JSON_THROW_ON_ERROR));
     }
 
     /**
-     * Executes one lifecycle statement from the same fixture, then waits for its observable transition.
+     * Captures startup inputs before executing SQL, and requires a stable native reference.
+     *
+     * @throws RuntimeException When a ready fixture becomes unavailable or an observation fails
+     */
+    public function compareReady(Endpoint $firstEndpoint, Endpoint $secondEndpoint, bool $supervised, LifecycleAction $action, string $version, bool $emulate, Record $first, Record $repeated, Record $memory): Comparison
+    {
+        $first->phase = 'fixture capabilities';
+        $native = $this->connection($firstEndpoint, $emulate);
+        $fixtures = new Servers();
+        $globals = $fixtures->globals($native, $version);
+        $priorities = $fixtures->resourcePriorities($native, $version);
+        $processors = $fixtures->resourceProcessors($native, $version);
+        $zones = $fixtures->timeZones($native);
+        $expected = $this->observe($native, $firstEndpoint->dsn(), $firstEndpoint->username, $firstEndpoint->password, $action, $first);
+        $native = null;
+        $again = $this->observe($this->connection($secondEndpoint, $emulate), $secondEndpoint->dsn(), $secondEndpoint->username, $secondEndpoint->password, $action, $repeated);
+        $observations = ['native' => $first->raw, 'repeated' => $repeated->raw];
+        if ($expected !== $again) {
+            return new Comparison(true, referenceDifference: 'lifecycle reference: ' . var_export([$expected, $again], true), observations: $observations);
+        }
+        $memory->phase = 'server startup';
+        $server = MemoryDatabase::start($version, [], $globals, supervised: $supervised, resourcePriorities: $priorities, resourceProcessors: $processors, timeZones: $zones);
+        try {
+            $owner = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $emulate]);
+            $actual = $this->observe($owner, $server->dsn(), 'root', '', $action, $memory);
+            $observations['memory'] = $memory->raw;
+            return new Comparison(false, $expected === $actual ? null : 'lifecycle: ' . var_export([$expected, $actual], true), observations: $observations);
+        } finally {
+            try {
+                $server->assertNoInternalFailure();
+            } finally {
+                $server->stop();
+                $memory->cleanup = 'disposed';
+            }
+        }
+    }
+
+    /**
+     * Opens the observed connection after the repository's container readiness check.
+     *
+     * @throws RuntimeException When the supposedly ready fixture cannot serve SQL
+     */
+    public function connection(Endpoint $endpoint, bool $emulate): PDO
+    {
+        $connection = (new LifecycleTransition())->connect($endpoint->dsn(), $endpoint->username, $endpoint->password, false) ?? throw new RuntimeException('The native lifecycle fixture is not SQL-ready.');
+        $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
+        return $connection;
+    }
+
+    /**
+     * Executes one lifecycle statement and retains its outcome before observing the transition.
+     * Legitimate SQL refusals retain conditions and do not pretend to shut down.
      *
      * @return array<string, mixed>
+     * @throws RuntimeException When setup, conditions, transition or state cannot be observed
      */
-    public function observe(PDO $pdo, string $dsn, string $user, string $password, string $sql, string $mode = ''): array
+    public function observe(PDO $owner, string $dsn, string $user, string $password, LifecycleAction $action, Record $record): array
     {
-        $pdo->exec('CREATE DATABASE fz');
-        $pdo->exec('USE fz');
+        $record->phase = 'fixture setup';
+        (new Tables())->execute($owner, 'CREATE DATABASE fz');
+        (new Tables())->execute($owner, 'USE fz');
         foreach ((new Tables())->statements() as $statement) {
-            (new Tables())->execute($pdo, $statement);
+            (new Tables())->execute($owner, $statement);
         }
-        if ($mode !== '') {
-            $pdo->exec("SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $pdo->quote($mode) . ')');
+        if ($record->mode !== '') {
+            (new Tables())->execute($owner, "SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, " . $owner->quote($record->mode) . ')');
         }
-        $observer = new Observer();
+        $record->phase = 'statement';
+        $this->primary($owner, $record);
+        if (isset($record->raw['error'])) {
+            $record->phase = 'conditions';
+            $record->raw['warnings'] = (new Observer())->warnings($owner);
+        } else {
+            $again = (new LifecycleTransition())->await($owner, $dsn, $user, $password, $action, $record);
+            if ($again !== null) {
+                $record->phase = 'post-restart tables';
+                $record->raw['tables'] = (new Observer())->tables($again, 'fz');
+                $record->phase = 'post-restart definitions';
+                $record->raw['definitions'] = (new Observer())->definitions($again, 'fz');
+                $record->phase = 'post-restart status';
+                $record->raw['status'] = (new Observer())->observe($again, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'", true);
+            }
+        }
+        $record->phase = 'complete';
+        return $record->raw;
+    }
+
+    /**
+     * Records the primary completion or full SQL error in either PDO error mode.
+     *
+     * @throws RuntimeException When result metadata cannot be read
+     */
+    public function primary(PDO $owner, Record $record): void
+    {
         try {
-            $statement = $pdo->query($sql);
-            $result = $statement === false ? null : $observer->result($pdo, $statement, true);
-            if ($statement !== false) {
+            $statement = $owner->query($record->sql);
+            if ($statement === false) {
+                $error = $owner->errorInfo();
+                $record->raw['error'] = [$error[1] ?? null, $error[0], $error[2] ?? null];
+            } else {
+                $record->raw['result'] = (new Observer())->result($owner, $statement, true);
                 $statement->closeCursor();
             }
-        } catch (PDOException $error) {
-            return ['error' => $error->errorInfo, 'warnings' => $observer->warnings($pdo)];
-        }
-        $restart = str_starts_with(strtoupper(ltrim($sql)), 'RESTART');
-        [$disconnected, $again] = $this->transition($pdo, $dsn, $user, $password, $restart);
-
-        return ['result' => $result, 'disconnected' => $disconnected, 'reconnected' => $again !== null, 'tables' => $again === null ? null : $observer->tables($again, 'fz'), 'status' => $again === null ? null : $observer->observe($again, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'", true)];
-    }
-
-    /**
-     * Waits for the old connection to close and for shutdown to stop serving SQL.
-     * Both shutdown checks share the existing ten-second transition budget. Restart
-     * retains its separate thirty-second reconnection budget after disconnection.
-     *
-     * @return array{bool, PDO|null}
-     */
-    public function transition(PDO $pdo, string $dsn, string $user, string $password, bool $restart): array
-    {
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
-        $deadline = microtime(true) + 10;
-        $disconnected = false;
-        $again = null;
-        do {
-            $disconnected = $disconnected || $pdo->exec('DO 0') === false;
-            if ($disconnected) {
-                $again = $this->reconnect($dsn, $user, $password, $restart);
-                if ($restart || $again === null) {
-                    return [true, $again];
-                }
-            }
-            usleep(20000);
-        } while (microtime(true) < $deadline);
-
-        return [$disconnected, $again];
-    }
-
-    /**
-     * Attempts one usable SQL connection, or waits up to thirty seconds for startup or restart.
-     * Authentication alone can succeed while a server is shutting down.
-     */
-    public function reconnect(string $dsn, string $user, string $password, bool $wait): ?PDO
-    {
-        $deadline = microtime(true) + ($wait ? 30 : 0);
-        do {
-            try {
-                $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 1]);
-            } catch (PDOException) {
-                $pdo = null;
-            }
-            if ($pdo !== null && $this->ready($pdo)) {
-                return $pdo;
-            }
-            usleep(20000);
-        } while (microtime(true) < $deadline);
-
-        return null;
-    }
-
-    /**
-     * Confirms an authenticated connection can still execute SQL.
-     */
-    public function ready(PDO $pdo): bool
-    {
-        try {
-            return $pdo->exec('DO 0') !== false;
-        } catch (PDOException) {
-            return false;
+        } catch (PDOException $failure) {
+            $record->raw['error'] = [$failure->errorInfo[1] ?? null, $failure->errorInfo[0] ?? null, $failure->errorInfo[2] ?? $failure->getMessage()];
         }
     }
 }
