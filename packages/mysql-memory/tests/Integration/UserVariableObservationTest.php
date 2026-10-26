@@ -57,7 +57,7 @@ final class UserVariableObservationTest extends TestCase
             $owner->exec("SET @text_value = _utf8mb4'1' COLLATE utf8mb4_bin");
             self::assertNotSame($captured['comparable'], $observer->capture($owner, $administrator)['comparable']);
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('exactly one observed user-variable thread');
+            $this->expectExceptionMessage('exactly one observed owning thread');
             $observer->inventory($administrator, 0);
         } finally {
             $client = null;

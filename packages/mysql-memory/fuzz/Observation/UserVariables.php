@@ -74,12 +74,8 @@ final class UserVariables
      */
     public function inventory(PDO $administrator, int $connection): array
     {
-        $threads = $administrator->query('SELECT THREAD_ID FROM performance_schema.threads WHERE PROCESSLIST_ID = ' . $connection);
-        $owners = $threads === false ? [] : $threads->fetchAll(PDO::FETCH_COLUMN);
-        if (count($owners) !== 1 || !is_int($owners[0]) || $owners[0] < 1) {
-            throw new RuntimeException('Cannot identify exactly one observed user-variable thread.');
-        }
-        $statement = $administrator->query('SELECT CAST(VARIABLE_NAME AS BINARY), VARIABLE_VALUE FROM performance_schema.user_variables_by_thread WHERE THREAD_ID = ' . $owners[0]);
+        $thread = (new OwnerThread())->resolve($administrator, $connection);
+        $statement = $administrator->query('SELECT CAST(VARIABLE_NAME AS BINARY), VARIABLE_VALUE FROM performance_schema.user_variables_by_thread WHERE THREAD_ID = ' . $thread);
         if ($statement === false) {
             throw new RuntimeException('Cannot read the observed user-variable inventory.');
         }

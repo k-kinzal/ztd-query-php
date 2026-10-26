@@ -1014,6 +1014,60 @@ Changed-file PHPStan, formatting, PHP 8.1 compatibility, strict autoload, Compos
 validation and package size/tree/dependency guards pass. These are observation
 mechanism checks, not full SQL or fuzz acceptance.
 
+### Metadata lock observation and probe order
+
+The native target now requires metadata-lock instrumentation setup before each
+5.7+ input on both engines. It captures the connection identity before execution,
+then reads the owning thread through the independent administrator immediately
+after primary results and conditions. This read precedes session-variable,
+user-variable and catalog probes. Probe ordering is part of the observation
+contract: querying the owner can change the state that must be compared.
+
+The projection retains object kind, schema, name, column where supported, lock
+mode, duration and status, including metadata locks for named user locks. It
+retains raw row order, result metadata and conditions; only the comparison sorts
+rows as a multiset. Physical pointers, source-code positions and event numbers
+are not fields of this state projection. If the tested SQL itself selects those
+fields, its primary output remains subject to the normal comparison contract.
+An engine's independently generated catalog must supply its own lock state;
+native rows are not imported into MemoryDB.
+
+The owner must resolve to exactly one live thread. Instrument, global/thread
+consumer and owner-thread settings must be enabled before execution and on both
+sides of capture. The global lost-record counter must be readable and zero;
+enabling the instrument after an input or clearing the counter cannot establish
+that its held locks were recorded. The owner resolver is shared with user-variable
+observation, without coupling either inventory to SQL Semantics.
+
+This is a partial state projection, not complete lock equivalence. MySQL 5.6
+lacks this interface. Row locks, recursive advisory acquisition, waiting and
+deadlock behavior need peer execution scenarios. A native catalog alone does not
+prove those behaviors. An input that disables and re-enables instrumentation
+inside stored execution also requires an independent history contract; pre/post
+settings alone do not establish continuous observation. Temporary tables need an
+owner-visible namespace contract: persistent table catalogs cannot establish a
+complete temporary inventory. Administrator reads of application rows can block
+behind explicit table locks; the target must not unlock, commit or omit those
+reads merely to make a snapshot finish. These gaps keep B open.
+
+The native observation mechanism matrix passes sixteen cases and 464 assertions
+across the eight pinned releases from 5.7.44 through 9.1.0. It combines the
+user-variable regression with metadata-lock ownership, stable repeated snapshots,
+named locks still excluding a peer, transaction preservation, table locks,
+release/rollback observations and refusal of disabled instrumentation. This is
+mechanism evidence, not a differential acceptance pass. The ordinary transaction
+observation test now fails earlier because MemoryDB rejects UPDATE on
+`performance_schema.setup_instruments`; its missing owning-thread provider also
+remains unresolved. Neither failure is suppressed. Changed-file PHPStan,
+formatting, PHP 8.1 compatibility, strict autoload and the package size, tree and
+dependency guards pass.
+
+After placing assertions directly in the test method, the final 5.7.44/8.4.7
+checks pass two cases and 72 assertions. The normal text-protocol 8.4.7 BEGIN
+replay with seed 20261026 reaches both native observations, then still exits one
+on MemoryDB's missing `mysql` tablespace during restoration. This preserves the
+earlier finding; it is not excluded to obtain an apparent differential pass.
+
 ### Shared execution lifetime
 
 `Session/Statement/Lifecycle` now owns diagnostic initialization, the active table

@@ -11,7 +11,9 @@ use Fuzz\Fixture\Tables;
 use Fuzz\Observation\CatalogState;
 use Fuzz\Observation\Comparison;
 use Fuzz\Observation\LibraryErrors;
+use Fuzz\Observation\MetadataLocks;
 use Fuzz\Observation\Observer;
+use Fuzz\Observation\OwnerThread;
 use Fuzz\Observation\Process;
 use Fuzz\Observation\RandomPasswords;
 use Fuzz\Observation\SessionState;
@@ -294,6 +296,12 @@ final class ExecutionTarget
         if ($this->baseline !== null) {
             Baseline::mutexes($pdo, $this->version);
         }
+        $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+        $owner = null;
+        if (!str_starts_with($this->version, '5.6.')) {
+            $owner = (new OwnerThread())->connection($pdo);
+            (new MetadataLocks())->prepare($guard, $owner);
+        }
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
         $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo, $this->version) : null;
         if (Process\Listing::handles($sql)) {
@@ -318,10 +326,14 @@ final class ExecutionTarget
             $this->server?->assertNoInternalFailure();
         }
         $raw = $observation;
+        if ($owner !== null) {
+            $locks = (new MetadataLocks())->capture($guard, $owner, $this->version);
+            $raw['metadataLocks'] = $locks['raw'];
+            $observation['metadataLocks'] = $locks['comparable'];
+        }
         $state = (new SessionState())->capture($pdo, $this->version);
         $raw['session'] = $state['raw'];
         $observation['session'] = $state['comparable'];
-        $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
         if (!str_starts_with($this->version, '5.6.')) {
             $userVariables = (new \Fuzz\Observation\UserVariables())->capture($pdo, $guard);
             $raw['session']['userVariables'] = $userVariables['raw'];

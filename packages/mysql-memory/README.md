@@ -202,12 +202,18 @@ On MySQL 5.7 and later, an independent administrator discovers the tested sessio
 user variables through Performance Schema. The observation retains their stored
 bytes and reads their result metadata, character sets, collations and coercibility
 on the owning connection. An unavailable owner or inventory fails the check;
-it cannot become an empty variable snapshot. The native observation mechanism
-tests require Docker and start the pinned Testcontainers releases.
+it cannot become an empty variable snapshot. Metadata locks are read through the
+administrator immediately after primary results and conditions, before further
+owner queries can change them. Their object names, modes, durations and statuses
+are compared with duplicates preserved. Instrumentation is enabled before the
+input, and missing owners, disabled instrumentation or lost records fail the
+check. The native observation mechanism tests require Docker and start the
+pinned Testcontainers releases.
 Each campaign owns a fresh reference container, and a failed reset cannot pass
-or contaminate a later campaign. Temporary objects, MySQL 5.6 user variables,
-locking effects and environment-specific catalog fields still need complete
-contracts; these runs do not yet establish equivalence for every state change.
+or contaminate a later campaign. Temporary objects, MySQL 5.6 session inventories,
+row locks, advisory-lock recursion, contention and environment-specific catalog
+fields still need complete contracts; these runs do not yet establish equivalence
+for every state change.
 
 Each target records its release, lexical profile and mutation seed. Set
 `PHP_FUZZER_SEED` to reproduce PHP-Fuzzer's random sequence on the same revision
