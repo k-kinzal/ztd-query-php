@@ -29,7 +29,9 @@ use SqlSemantics\Statement\Statement;
  * against the context; every scalar, relation and query node must have received
  * a fact. (4) The pieces are joined to text. The
  * text uses the model name representation, independently of client encoding,
- * and is parsed under the same profile and lowered by the same rules. The
+ * and is parsed under the same profile and lowered by the same rules.
+ * Lowering keeps the selected session settings while decoding these canonical
+ * identifier bytes; external client encodability is checked by toString(). The
  * result must correspond operand by operand to the structure. Spelled regions
  * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
  * discards the candidate. Trusted: the parser, the lowering and derivation
@@ -82,7 +84,7 @@ final class Publication
         } catch (SourceException $error) {
             throw new InvariantViolation('The rendered SQL is outside the grammar: ' . $error->getMessage() . ' in: ' . $sql, 0, $error);
         }
-        $difference = (new Equivalence())->difference($statement, $this->root($platform->lower($tree, $context->profile, new Leaves())));
+        $difference = (new Equivalence())->difference($statement, $this->root($platform->lower($tree, $context->profile, new Leaves(), session: $context->session, canonicalNames: true)));
         Check::invariant($difference === null, 'The rendered SQL does not correspond to the statement at ' . $difference . ' in: ' . $sql);
 
         return [$facts, $sql];

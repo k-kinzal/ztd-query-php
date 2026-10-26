@@ -26,7 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes the XA statements: XA START, XA END, XA PREPARE, XA COMMIT, XA ROLLBACK and XA RECOVER.
@@ -60,9 +59,9 @@ final class XaCommand implements Command
      * Moves the XA transaction of the session, or a prepared branch, to its next state.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $statement, Session $session, Context $context, Connection $connection): Reply
     {
-        $statement = $operation->statement;
+        assert($statement instanceof XaStart || $statement instanceof XaEnd || $statement instanceof XaPrepare || $statement instanceof XaCommit || $statement instanceof XaRollback || $statement instanceof XaRecover);
         if ($statement instanceof XaRecover) {
             return $this->recover($statement, $session, $context);
         }
@@ -71,8 +70,7 @@ final class XaCommand implements Command
             $statement instanceof XaEnd => $this->end($statement, $session),
             $statement instanceof XaPrepare => $this->prepare($statement->xid, $session),
             $statement instanceof XaCommit => $this->finish($statement->xid, $session, true, $statement->onePhase),
-            $statement instanceof XaRollback => $this->finish($statement->xid, $session, false, false),
-            default => null,
+            default => $this->finish($statement->xid, $session, false, false),
         };
 
         return new Completion();

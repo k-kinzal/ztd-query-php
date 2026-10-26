@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Transaction;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -21,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * Lowers the XA transaction statements.
@@ -72,14 +74,16 @@ final class XaRule
      */
     public function statement(Form $form): Statement
     {
+        $range = (new SourceRanges())->span($form->node);
+        $source = $range === null ? null : new Span($range[0], $range[1] - $range[0]);
         return match ($form->signature) {
-            'xa: XA_SYM begin_or_start xid opt_join_or_resume' => $this->start($form),
-            'xa: XA_SYM END xid opt_suspend' => new XaEnd($this->xid($form->node(2)), $this->endOption($form->node(3))),
-            'xa: XA_SYM PREPARE_SYM xid' => new XaPrepare($this->xid($form->node(2))),
-            'xa: XA_SYM COMMIT_SYM xid opt_one_phase' => new XaCommit($this->xid($form->node(2)), $this->flag($form->node(3))),
-            'xa: XA_SYM ROLLBACK_SYM xid' => new XaRollback($this->xid($form->node(2))),
-            'xa: XA_SYM RECOVER_SYM' => new XaRecover(),
-            'xa: XA_SYM RECOVER_SYM opt_convert_xid' => new XaRecover($this->flag($form->node(2))),
+            'xa: XA_SYM begin_or_start xid opt_join_or_resume' => $this->start($form, $source),
+            'xa: XA_SYM END xid opt_suspend' => new XaEnd($this->xid($form->node(2)), $this->endOption($form->node(3)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
+            'xa: XA_SYM PREPARE_SYM xid' => new XaPrepare($this->xid($form->node(2)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
+            'xa: XA_SYM COMMIT_SYM xid opt_one_phase' => new XaCommit($this->xid($form->node(2)), $this->flag($form->node(3)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
+            'xa: XA_SYM ROLLBACK_SYM xid' => new XaRollback($this->xid($form->node(2)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
+            'xa: XA_SYM RECOVER_SYM' => new XaRecover(profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
+            'xa: XA_SYM RECOVER_SYM opt_convert_xid' => new XaRecover($this->flag($form->node(2)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -90,12 +94,12 @@ final class XaRule
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When an identifier part exceeds its limit
      */
-    public function start(Form $form): XaStart
+    public function start(Form $form, ?Span $source = null): XaStart
     {
         $this->flag($form->node(1));
         $option = $this->option($form->node(3));
 
-        return new XaStart($this->xid($form->node(2)), $option instanceof XaStartOption ? $option : null);
+        return new XaStart($this->xid($form->node(2)), $option instanceof XaStartOption ? $option : null, profile: $this->lowering->profile, client: $this->lowering->client, source: $source);
     }
 
     /**
@@ -164,7 +168,7 @@ final class XaRule
             default => throw ImplementationGap::production($form),
         };
         if (!$this->limits($transaction, $branch, $format)) {
-            $ranges = new \SqlSemantics\Construction\SourceRanges();
+            $ranges = new SourceRanges();
             $end = $ranges->span($xid)[1] ?? 0;
             $offset = $format === null ? $end : ($ranges->span($form->node(4))[0] ?? 0);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier($offset, $format === null), $end);

@@ -50,8 +50,9 @@ final class RoleCommand implements Command
      * Sets the roles.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $names = new Names($session->settings()->release());
         if ($statement instanceof SetRole) {

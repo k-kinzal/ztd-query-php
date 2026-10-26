@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * SET TRANSACTION: the isolation level and access mode of later transactions.
@@ -29,11 +34,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the characteristics
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE');
- *     [$set->statement->scope, $set->statement->characteristics, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode::ReadOnly, \SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel::Serializable], 'SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE']
+ *     [$set->scope, $set->characteristics, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode::ReadOnly, \SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel::Serializable], 'SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE']
  */
-final class SetTransaction implements Statement
+final class SetTransaction implements TransactionStatement
 {
     use Snapshot;
+    use TransactionSql;
 
     /**
      * @var non-empty-list<IsolationLevel|AccessMode> The characteristics in the order written
@@ -45,9 +51,13 @@ final class SetTransaction implements Statement
      * @param VariableScope|null $scope The scope keyword, or null for the next transaction only
      *
      * @throws InvalidConstruction When a characteristic is not an isolation level or an access mode
+     * @param LanguageProfile $profile The selected grammar and lexical interpretation; MySQL 8.4.7 by default
+     * @param Charset|null $client The client encoding used to reconstruct identifiers
+     * @param Span|null $source The optional original statement location
      */
-    public function __construct(array $characteristics, public readonly ?VariableScope $scope = null)
+    public function __construct(array $characteristics, public readonly ?VariableScope $scope = null, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
     {
+        Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         Check::input(array_is_list($characteristics) && $characteristics !== [] && count($characteristics) <= 2, 'SET TRANSACTION writes one or two characteristics.');
         $kinds = [];
         $written = [];

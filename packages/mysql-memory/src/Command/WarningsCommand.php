@@ -50,8 +50,9 @@ final class WarningsCommand implements Command
      * Answers the conditions, or their number for SHOW COUNT(*) WARNINGS and SHOW COUNT(*) ERRORS.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $bounded = $statement instanceof ShowWarnings || $statement instanceof ShowErrors ? $statement->limit : null;
         (new \MySqlMemory\Session\Problem\Reading())->limited($bounded, $session);

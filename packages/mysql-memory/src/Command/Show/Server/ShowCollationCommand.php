@@ -49,8 +49,9 @@ final class ShowCollationCommand implements Command
      * Lists the collations or the character sets.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ShowCollation || $statement instanceof ShowCharacterSet);
         $release = $session->settings()->release();

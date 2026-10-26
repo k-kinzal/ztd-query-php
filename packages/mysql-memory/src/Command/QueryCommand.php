@@ -58,8 +58,9 @@ final class QueryCommand implements Command
      * Plans and executes the query, answering its rows.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $root = $operation->statement;
         assert($root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot);
         $statement = $root->query;

@@ -48,8 +48,9 @@ final class ChecksumCommand implements Command
      * Answers the checksum of each table.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ChecksumTable);
         $database = $session->variables->database;

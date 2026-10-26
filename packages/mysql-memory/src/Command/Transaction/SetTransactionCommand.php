@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetTransaction;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SET TRANSACTION: the isolation level and access mode of the next transaction, of the session or of the server.
@@ -52,9 +51,8 @@ final class SetTransactionCommand implements Command
      * @throws SqlError When the characteristics of the next transaction are set while a transaction is active
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $statement, Session $session, Context $context, Connection $connection): Reply
     {
-        $statement = $operation->statement;
         assert($statement instanceof SetTransaction);
         foreach ($statement->characteristics as $characteristic) {
             $isolation = $characteristic instanceof IsolationLevel;

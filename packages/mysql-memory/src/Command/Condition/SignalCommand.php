@@ -79,10 +79,10 @@ final class SignalCommand implements Command
      * Raises the condition.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation && ($operation->statement instanceof Signal || $operation->statement instanceof Resignal));
         $statement = $operation->statement;
-        assert($statement instanceof Signal || $statement instanceof Resignal);
         if ($statement instanceof Signal) {
             $session->diagnostics->signalCount++;
         }
@@ -115,19 +115,7 @@ final class SignalCommand implements Command
             $this->reserveResignal($area, $context);
             $message ??= $area->failure?->getMessage() ?? ($area->conditions[count($area->conditions) - 1][2] ?? null);
         }
-        $class = substr($state, 0, 2);
-        $code = match ($class) {
-            '01' => ProgramError::SignalWarning,
-            '02' => ProgramError::SignalNotFound,
-            default => ProgramError::SignalException,
-        };
-        if ($class === '01') {
-            $context->diagnostics->signal($number ?? $code->value, $message ?? $code->message(), $signalled);
-
-            return new Completion(0, 0, $context->diagnostics->raised());
-        }
-
-        throw new SqlError($code, $message ?? $code->message(), null, [], $signalled, $number);
+        return (new SignalDelivery())->deliver($state, $message, $number, $signalled, $context->diagnostics);
     }
 
     /**

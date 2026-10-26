@@ -60,8 +60,9 @@ final class ResourceGroupCommand implements Command
      * Creates, alters, drops or assigns the group.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $groups = $session->instance->registry->resourceGroups;
         if ($statement instanceof SetResourceGroup) {

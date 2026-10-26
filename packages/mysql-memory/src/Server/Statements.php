@@ -94,17 +94,18 @@ final class Statements
             $operation = (new \MySqlMemory\Session\Access\Preparation())->read($sql, $session);
             $bindings = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction ? $operation->parameters() : new \MySqlMemory\Command\Prepared\ParameterBindings([]);
             $columns = [];
-            if ($operation instanceof \SqlSemantics\Statement\Operation) {
-                (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));
+            if ($operation instanceof \SqlSemantics\Statement\AnalyzedStatement) {
+                $node = $operation instanceof \SqlSemantics\Statement\Operation ? $operation->statement : $operation;
+                assert($node instanceof \SqlSemantics\Statement\Node);
+                (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($node));
                 (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
                 $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
-                $columns = $this->columns($operation, $session, count($bindings->types));
-            } elseif ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
-                (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
-                $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
+                if ($operation instanceof \SqlSemantics\Statement\Operation) {
+                    $columns = $this->columns($operation, $session, count($bindings->types));
+                }
             }
             $parameters = count($bindings->types);
-            $input = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
+            $input = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);

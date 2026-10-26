@@ -54,8 +54,9 @@ final class CreateTableLikeCommand implements Command
      * Creates the table.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $create = $operation->statement;
         assert($create instanceof CreateTableLike);
         $database = $session->variables->database;

@@ -223,8 +223,12 @@ final class Dispatcher
      *
      * @throws \MySqlMemory\Error\SqlError When no command executes the statement
      */
-    public function command(Statement $statement): Command
+    public function command(\SqlSemantics\Statement\Node $statement): Command
     {
+        if ($statement instanceof MySql\Dml\Insert\InsertStatement) {
+            return new Write\InsertValuesCommand();
+        }
+        assert($statement instanceof Statement);
         $command = self::COMMANDS[$statement::class] ?? null;
 
         return match (true) {

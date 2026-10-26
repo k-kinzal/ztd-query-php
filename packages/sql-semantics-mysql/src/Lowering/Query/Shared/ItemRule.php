@@ -184,7 +184,7 @@ final class ItemRule
         $name = $this->alias($alias);
         $naming = new ItemNaming($this->lowering->profile);
         $layout = $name === null && $naming->keeps($lowered) ? (new ItemLayout($this->lowering->profile->grammar))->of($expression, $naming->own($lowered) instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) : null;
-        $layout = $layout === null ? null : (new ItemLayout($this->lowering->profile->grammar))->names($layout, $lowered, $this->lowering->profile, $this->lowering->client);
+        $layout = $layout === null ? null : (new ItemLayout($this->lowering->profile->grammar))->names($layout, $lowered, $this->lowering->profile, $this->lowering->inputClient);
         if ($layout !== null && $layout->tokens[0]->gap === '' && $layout->text() === $naming->canonical($lowered)) {
             $layout = null;
         }

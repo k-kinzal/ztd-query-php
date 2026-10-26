@@ -73,8 +73,9 @@ final class EventCommand implements Command
      * Creates or changes the event.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof CreateEvent || $statement instanceof AlterEvent);
         $session->transaction->commit();

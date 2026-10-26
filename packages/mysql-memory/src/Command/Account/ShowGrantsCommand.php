@@ -52,8 +52,9 @@ final class ShowGrantsCommand implements Command
      * Lists the grants.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ShowGrants);
         $names = new Names($session->settings()->release());

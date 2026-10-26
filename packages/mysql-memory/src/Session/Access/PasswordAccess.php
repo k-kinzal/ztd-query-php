@@ -13,7 +13,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
 use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\Node;
 
 /**
  * Restricts a session whose password expired until that session changes its own credentials.
@@ -34,7 +34,7 @@ final class PasswordAccess
      *
      * @throws SqlError When the password must first be changed
      */
-    public function check(Statement $statement, Session $session): void
+    public function check(Node $statement, Session $session): void
     {
         if (!$session->passwordExpired) {
             return;

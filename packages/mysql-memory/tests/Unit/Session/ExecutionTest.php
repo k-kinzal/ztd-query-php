@@ -83,6 +83,7 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('CREATE TABLE t(a INT) CHARACTER SET missing');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1046);
@@ -119,6 +120,7 @@ final class ExecutionTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('INSERT INTO t VALUES (1), (2)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         (new Execution($session))->perform($operation, (new Dispatcher())->command($operation->statement));
 
@@ -143,6 +145,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SELECT /*+ FOO */ SQL_NO_CACHE 1');
         $operation = $session->analyze('SELECT /*+ MAX_EXECUTION_TIME(1) MAX_EXECUTION_TIME(2) */ 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $hints = (new Hints())->apply($operation->statement, $session);
 
         (new Execution($session))->run($operation, (new Dispatcher())->command($operation->statement), $hints);
@@ -154,6 +157,7 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT /*+ SET_VAR(unique_checks = OFF) */ @@unique_checks');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $reply = (new Execution($session))->perform($operation, (new Dispatcher())->command($operation->statement));
 
@@ -197,6 +201,7 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT BINARY 'a'");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
 
@@ -207,6 +212,7 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT ('a' COLLATE nope) COLLATE nope2");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1273);
@@ -223,8 +229,12 @@ final class ExecutionTest extends TestCase
         $modern = (new Instance('5.7.44'))->connect();
 
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'abc'"]], $legacy->diagnostics->conditions);
-        self::assertTrue((new Execution($legacy))->retains($legacy->analyze('SELECT 1')->statement, new QueryCommand()));
-        self::assertFalse((new Execution($modern))->retains($modern->analyze('SELECT 1')->statement, new QueryCommand()));
+        $legacyQuery = $legacy->analyze('SELECT 1');
+        $modernQuery = $modern->analyze('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $legacyQuery);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $modernQuery);
+        self::assertTrue((new Execution($legacy))->retains($legacyQuery->statement, new QueryCommand()));
+        self::assertFalse((new Execution($modern))->retains($modernQuery->statement, new QueryCommand()));
     }
 
     public function testRetainsKeepsTheDiagnosticsAcrossTheTransactionStatementsOf56(): void
@@ -274,8 +284,12 @@ final class ExecutionTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
 
-        self::assertTrue((new Execution($session))->undeclared($session->analyze('SELECT a FROM t INTO nosuch FOR UPDATE')));
-        self::assertFalse((new Execution($session))->undeclared($session->analyze('SELECT a FROM t INTO @a FOR UPDATE')));
+        $missing = $session->analyze('SELECT a FROM t INTO nosuch FOR UPDATE');
+        $present = $session->analyze('SELECT a FROM t INTO @a FOR UPDATE');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $missing);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $present);
+        self::assertTrue((new Execution($session))->undeclared($missing));
+        self::assertFalse((new Execution($session))->undeclared($present));
     }
 
     public function testRunEmptiesTheAreaBeforeAGetDiagnosticsThatNamesAnUndeclaredVariable(): void
@@ -292,6 +306,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SELECT 1 / 0');
         $operation = $session->analyze('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         (new Execution($session))->area($operation, (new Dispatcher())->command($operation->statement));
 

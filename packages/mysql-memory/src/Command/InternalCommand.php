@@ -46,8 +46,9 @@ final class InternalCommand implements Command
      * Reports the client protocol's rejection of the structure.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         throw $this->error($operation);
     }
 

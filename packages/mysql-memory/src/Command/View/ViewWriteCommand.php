@@ -58,8 +58,9 @@ final class ViewWriteCommand implements Command
      * Writes the table, or the base table of the view.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $target = self::viewTarget($operation);
         if ($target === null) {

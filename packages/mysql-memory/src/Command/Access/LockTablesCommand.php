@@ -44,8 +44,9 @@ final class LockTablesCommand implements Command
      * Locks or unlocks the tables.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         if ($statement instanceof UnlockTables) {
             if ($session->locks !== []) {

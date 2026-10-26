@@ -3448,42 +3448,72 @@
         "target": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Begin": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Commit": {
         "chain": "?bool",
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
         "release": "?bool",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\ReleaseSavepoint": {
-        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "nameWarning": "?SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecation",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Rollback": {
         "chain": "?bool",
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
         "release": "?bool",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\RollbackToSavepoint": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "nameWarning": "?SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecation",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
         "savepoint": "SqlSemantics\\Statement\\Identifier\\Name",
         "savepointWritten": "bool",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "work": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Savepoint": {
-        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "nameWarning": "?SqlSemantics\\Platform\\MySql\\Statement\\Notice\\Deprecation",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "savepoint": "SqlSemantics\\Statement\\Identifier\\Name",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\StartTransaction": {
-        "characteristics": "array"
+        "characteristics": "array",
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\TransactionCharacteristic": {
         "name": "string",
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaCommit": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "onePhase": "bool",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaEnd": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "option": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaEndOption",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaEndOption": {
@@ -3491,16 +3521,29 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaPrepare": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaRecover": {
-        "convertXid": "bool"
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "convertXid": "bool",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "shape": "SqlSemantics\\Statement\\Shape\\RowShape",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaRollback": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStart": {
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "option": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStartOption",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "source": "?SqlSemantics\\Statement\\Source\\Span",
         "xid": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\Xid"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStartOption": {
@@ -4202,7 +4245,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetTransaction": {
         "characteristics": "array",
-        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope"
+        "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
+        "source": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetVariables": {
         "items": "array"

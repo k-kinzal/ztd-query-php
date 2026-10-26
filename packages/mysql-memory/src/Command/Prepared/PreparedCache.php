@@ -58,6 +58,9 @@ final class PreparedCache
             }
             return new self(PreparedStatement::capture($operation, $session), $tables, $input);
         }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+            return new self(PreparedStatement::capture($operation, $session), [], $input);
+        }
         if (!$operation instanceof Operation) {
             throw new LogicException('No prepared cache capture for ' . $operation::class);
         }

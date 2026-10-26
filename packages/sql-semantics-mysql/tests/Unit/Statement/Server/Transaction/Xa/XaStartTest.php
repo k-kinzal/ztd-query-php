@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(XaStart::class)]
 #[Medium]
@@ -24,22 +23,35 @@ final class XaStartTest extends TestCase
         self::assertSame("XA START 'g' JOIN", (new Semantics(Dialect::MySql))->analyze("xa begin 'g' join")->toString());
     }
 
-    public function testDeriveStatementHasNoFacts(): void
+    public function testDeriveStatementPublishesTheConcreteTransaction(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("XA START 'g'");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertInstanceOf(XaStart::class, $operation);
+        self::assertSame([], $operation->declarations());
     }
 
-    public function testDeriveStatementRefusesAFormatAboveTheSignedRangeAfterMySql56(): void
+    public function testMySql56RetainsAnUnsignedFormatIdentifier(): void
     {
-        $statement = new XaStart(new Xid(new Text('a'), new Text('b'), new Numeral('9223372036854775808')));
-        $accepted = new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), $statement);
+        $profile = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->profile();
+        $statement = new XaStart(new Xid(new Text('a'), new Text('b'), new Numeral('9223372036854775808')), profile: $profile);
+        self::assertSame($profile, $statement->profile());
+        self::assertSame("XA START 'a', 'b', 9223372036854775808", $statement->toString());
+    }
 
-        self::assertSame($statement, $accepted->statement);
-        $this->expectExceptionMessage('A format identifier is at most 9223372036854775807 from MySQL 5.7 on.');
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame("XA START 'g'", (new XaStart(new Xid(new Text('g'))))->toString());
+    }
 
-        new Operation((new Semantics(Dialect::MySql))->context([]), new XaStart(new Xid(new Text('a'), new Text('b'), new Numeral('9223372036854775808'))));
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new XaStart(new Xid(new Text('g')), profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new XaStart(new Xid(new Text('g'))))->declarations());
     }
 }

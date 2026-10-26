@@ -30,16 +30,25 @@ use SqlSemantics\Statement\Type\Known;
  *
  * @visibility MySqlMemory
  */
-final class InsertValuesCommand
+final class InsertValuesCommand implements \MySqlMemory\Command\Command
 {
+    /**
+     * INSERT starts with an empty diagnostics area.
+     */
+    public function clearsDiagnostics(): bool
+    {
+        return true;
+    }
+
     /**
      * Inserts character values using their expression types before column conversion.
      *
      * @throws \MySqlMemory\Error\SqlError When database state or a value rejects the write
      * @throws LogicException When an expression has no implemented execution or resolved type
      */
-    public function execute(InsertStatement $statement, Session $session, Context $context, Connection $connection): Completion
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $statement, Session $session, Context $context, Connection $connection): Completion
     {
+        assert($statement instanceof InsertStatement);
         [$table, $positions] = $this->prepare($statement, $session);
         $target = $statement->target;
 

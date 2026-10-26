@@ -16,6 +16,11 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class InsertValuesCommandTest extends TestCase
 {
+    public function testClearsDiagnosticsStartsANewInsertArea(): void
+    {
+        self::assertTrue((new InsertValuesCommand())->clearsDiagnostics());
+    }
+
     public function testPrepareResolvesTheColumnsWithoutConvertingOrWritingValues(): void
     {
         $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');

@@ -36,6 +36,11 @@ final class Preparation
             (new \MySqlMemory\Command\Write\InsertValuesCommand())->prepare($operation, $session);
             return;
         }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+            (new \MySqlMemory\Session\Statement\TransactionNotices())->read($operation, $session);
+            $this->protocol($operation);
+            return;
+        }
         if (!$operation instanceof Operation) {
             throw new LogicException('No preparation implementation for ' . $operation::class);
         }

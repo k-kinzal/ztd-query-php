@@ -49,8 +49,9 @@ final class UpgradeDatabaseCommand implements Command
      * Moves the database and its table data to the upgraded name.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof UpgradeDatabaseName);
         $source = $this->source($statement->name->identifier()->value, $session);

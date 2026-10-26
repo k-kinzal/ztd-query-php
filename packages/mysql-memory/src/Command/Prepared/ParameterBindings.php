@@ -49,6 +49,9 @@ final class ParameterBindings
             }
             return new self([]);
         }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement) {
+            return new self([]);
+        }
         if (!$operation instanceof Operation) {
             throw new LogicException('No parameter capture for ' . $operation::class);
         }

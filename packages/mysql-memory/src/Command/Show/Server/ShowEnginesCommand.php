@@ -50,8 +50,9 @@ final class ShowEnginesCommand implements Command
      * Lists the engines, or what an engine reports.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ShowEngineCatalog || $statement instanceof ShowEngineLogs || $statement instanceof ShowEngineMutex || $statement instanceof ShowEngineStatus);
         if ($statement instanceof ShowEngineCatalog) {

@@ -55,8 +55,9 @@ final class MultipleChangeCommand implements Command
      * Updates or deletes the rows.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof Update || $statement instanceof MultipleDelete);
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
@@ -193,6 +194,7 @@ final class MultipleChangeCommand implements Command
      * @param array<int, int|null> $numbers
      * @param array<string, true> $done
      * @param array{int, string}|null $direct The occurrence updated while the join is read, and the name it is written under
+     * @throws \MySqlMemory\Error\SqlError When a row conversion or constraint rejects the update
      */
     public function apply(array $values, array $numbers, Scope $scope, array &$done, Session $session, Context $context, int $line, bool $ignore, ?array $direct = null): int
     {

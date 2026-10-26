@@ -44,10 +44,11 @@ interface Platform
      *
      * @param \SqlSemantics\Construction\Origins|null $origins The optional recorder for original input locations
      * @param Session|null $session Session settings needed to interpret input operands
+     * @param bool $canonicalNames Whether identifier bytes use the model encoding while session settings remain attached to the resulting values
      * @return list<Statement>
      * @throws \SqlSemantics\Construction\RejectedInput When an operand is outside a semantic constructor domain
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?Session $session = null): array;
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?Session $session = null, bool $canonicalNames = false): array;
 
     /**
      * Answers the grammar productions of a profile's release.

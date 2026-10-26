@@ -52,8 +52,9 @@ final class DropTableCommand implements Command
      * Drops or empties the tables.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $dictionary = $session->instance->dictionary;
         $database = $session->variables->database;

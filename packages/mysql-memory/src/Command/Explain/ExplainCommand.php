@@ -134,8 +134,9 @@ final class ExplainCommand implements Command
      * Explains the statement.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof Explain || $statement instanceof ExplainConnection);
         if ($statement instanceof ExplainConnection) {

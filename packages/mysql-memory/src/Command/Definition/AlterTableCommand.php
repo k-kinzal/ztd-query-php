@@ -74,10 +74,10 @@ final class AlterTableCommand implements Command
      * Changes the table.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation && ($operation->statement instanceof AlterTable || $operation->statement instanceof CreateIndex || $operation->statement instanceof DropIndex));
         $statement = $operation->statement;
-        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
         [$name, $commands] = $this->request($statement);
         $this->read($commands, $operation->facts, $session->settings()->legacy());
         $this->validation($commands);

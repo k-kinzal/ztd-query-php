@@ -46,8 +46,9 @@ final class ShowProcesslistCommand implements Command
      * Lists the sessions.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ShowProcesslist);
         $legacy = $session->settings()->legacy();

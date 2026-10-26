@@ -76,8 +76,9 @@ final class ReplicaCommand implements Command
      * Controls the replication of the server, as far as the emulated server has any.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof StartGroupReplication || $statement instanceof StopGroupReplication) {

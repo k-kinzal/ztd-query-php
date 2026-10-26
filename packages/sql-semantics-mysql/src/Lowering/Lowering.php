@@ -184,15 +184,22 @@ final class Lowering
     private array $hints = [];
 
     /**
+     * Identifier decoding uses the input encoding, independently of retained output settings.
+     */
+    public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $inputClient;
+
+    /**
+     * @param bool $canonicalNames Whether identifier bytes are already in the model encoding
      * @param bool $contextualized Whether native function signatures are bound in these operands
      * @param Productions $productions The productions of the grammar release
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
      * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
-     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The character set of identifier bytes in this input
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null $client The client character set retained for external SQL reconstruction
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $programName = null, public readonly bool $contextualized = true)
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins(), public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, public readonly ?\SqlSemantics\Statement\Identifier\QualifiedName $programName = null, public readonly bool $contextualized = true, public readonly bool $canonicalNames = false)
     {
+        $this->inputClient = $canonicalNames ? null : $client;
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);
         $this->numbers = new NumberRule($this);
@@ -219,7 +226,7 @@ final class Lowering
      */
     public function unprepared(): self
     {
-        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false);
+        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false, $this->canonicalNames);
         $lowering->hints = $this->hints;
         $lowering->columnTable = $this->columnTable;
         return $lowering;
@@ -342,7 +349,7 @@ final class Lowering
      */
     public function inProgram(?\SqlSemantics\Statement\Identifier\QualifiedName $name): self
     {
-        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName);
+        $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName, canonicalNames: $this->canonicalNames);
         $lowering->hints = $this->hints;
         return $lowering;
     }

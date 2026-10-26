@@ -50,8 +50,9 @@ final class InstanceCommand implements Command
      * Carries out the instance action, or refuses it as the server does.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown) {
             $session->instance->shutdown();

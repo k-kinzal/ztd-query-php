@@ -25,6 +25,29 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class PlatformTest extends TestCase
 {
+    public function testLowerCanonicalNamesRetainsClientSettingsWithoutDecodingThemTwice(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $client = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1');
+        $session = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), client: $client);
+        $tree = $platform->parser($profile)->parse('SAVEPOINT `café`');
+        $statements = $platform->lower($tree, $profile, new Leaves(), session: $session, canonicalNames: true);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint::class, $statements[0]);
+        self::assertSame('café', $statements[0]->savepoint->value);
+        self::assertSame($client, $statements[0]->client);
+        self::assertSame("SAVEPOINT `caf\xE9`", $statements[0]->toString());
+    }
+
+    public function testPublishRetainsAConcreteTransactionWithoutAnAnalysisAggregate(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin(true, profile: $semantics->profile());
+        $published = (new Platform())->publish($semantics->context([]), $statement, new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertSame($statement, $published);
+        self::assertSame('BEGIN WORK', $published->toString());
+    }
+
     public function testProfileFixesAShippedReleaseUnderAMode(): void
     {
         $platform = new Platform();

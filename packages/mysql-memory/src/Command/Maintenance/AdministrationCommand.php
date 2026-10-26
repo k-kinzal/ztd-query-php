@@ -78,8 +78,9 @@ final class AdministrationCommand implements Command
      * including histogram operations (verified on MySQL 5.6 through 9.1).
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof CheckTable || $statement instanceof OptimizeTable || $statement instanceof RepairTable || $statement instanceof AnalyzeTable || $statement instanceof CacheIndex || $statement instanceof LoadIndex);
         $histogram = $statement instanceof AnalyzeTable ? $statement->histogram : null;

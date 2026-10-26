@@ -60,8 +60,9 @@ final class GrantCommand implements Command
      * Grants the privileges or roles.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $session->transaction->commit();
         if ($statement instanceof GrantRoles) {

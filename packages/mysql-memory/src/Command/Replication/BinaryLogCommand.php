@@ -76,8 +76,9 @@ final class BinaryLogCommand implements Command
      * Purges the files, or refuses the events.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         $log = $session->instance->registry->binaryLog;
         $logging = BinaryLog::enabled($session);

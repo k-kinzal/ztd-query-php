@@ -77,7 +77,7 @@ final class Statements
     {
         $this->activation->sqlStatements++;
         \MySqlMemory\Session\State\StatementCounters::query($this->session);
-        $operation = $this->operation($statement);
+        $operation = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement ? $statement : $this->operation($statement);
         $reply = (new \MySqlMemory\Session\Execution($this->session))->statement($operation, [], false, $this->activation->contained);
         $results = array_values(array_filter($reply instanceof Batch ? $reply->replies : [$reply], static fn (Reply $reply): bool => $reply instanceof ResultSet));
         if ($results !== [] && $this->activation->contained

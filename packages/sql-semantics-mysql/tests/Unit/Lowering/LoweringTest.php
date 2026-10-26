@@ -81,6 +81,7 @@ final class LoweringTest extends TestCase
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SET ROLE NONE');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         self::assertInstanceOf(SetRole::class, $operation->statement);
         self::assertSame('SET ROLE NONE', $operation->toString());
@@ -90,13 +91,14 @@ final class LoweringTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('BEGIN');
 
-        self::assertInstanceOf(Begin::class, $operation->statement);
+        self::assertInstanceOf(Begin::class, $operation);
         self::assertSame('BEGIN', $operation->toString());
     }
 
     public function testDefinitionRoutesCreateAlterAndDrop(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
         self::assertSame('DROP TABLE t', $operation->toString());
@@ -105,6 +107,7 @@ final class LoweringTest extends TestCase
     public function testRoutedHandsAModernStatementToItsFamily(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DROP TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
         self::assertSame('DROP TABLE t', $operation->toString());
@@ -114,9 +117,15 @@ final class LoweringTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
 
-        self::assertInstanceOf(CreateTablespace::class, $semantics->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'")->statement);
-        self::assertInstanceOf(CreateDatabase::class, $semantics->analyze('CREATE DATABASE d')->statement);
-        self::assertInstanceOf(CreateDatabase::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE DATABASE d')->statement);
+        $tablespace = $semantics->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'");
+        $database = $semantics->analyze('CREATE DATABASE d');
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE DATABASE d');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $tablespace);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $database);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $legacy);
+        self::assertInstanceOf(CreateTablespace::class, $tablespace->statement);
+        self::assertInstanceOf(CreateDatabase::class, $database->statement);
+        self::assertInstanceOf(CreateDatabase::class, $legacy->statement);
     }
 
     public function testFormAnswersTheProductionOfANode(): void
@@ -145,12 +154,15 @@ final class LoweringTest extends TestCase
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
-        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $client = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1');
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile, client: $client, canonicalNames: true);
         $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('d'));
         $scoped = $lowering->inProgram($name);
         self::assertNull($lowering->programName);
         self::assertSame($name, $scoped->inProgram(null)->programName);
         self::assertSame($lowering->origins, $scoped->origins);
+        self::assertSame($client, $scoped->client);
+        self::assertNull($scoped->inputClient);
         self::assertSame($lowering->leaves, $scoped->leaves);
     }
 
@@ -158,11 +170,14 @@ final class LoweringTest extends TestCase
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
-        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $client = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1');
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile, client: $client, canonicalNames: true);
         $inactive = $lowering->unprepared();
         self::assertFalse($inactive->contextualized);
         self::assertSame($lowering->leaves, $inactive->leaves);
         self::assertSame($lowering->origins, $inactive->origins);
+        self::assertSame($client, $inactive->client);
+        self::assertNull($inactive->inputClient);
         self::assertTrue($lowering->contextualized);
     }
 

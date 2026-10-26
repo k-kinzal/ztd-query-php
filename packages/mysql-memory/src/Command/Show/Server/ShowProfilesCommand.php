@@ -54,8 +54,9 @@ final class ShowProfilesCommand implements Command
      * Lists the profiles, or the stages of one.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
         if ($statement instanceof ShowProfile && (!$session->replayed || $session->program !== null) && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {

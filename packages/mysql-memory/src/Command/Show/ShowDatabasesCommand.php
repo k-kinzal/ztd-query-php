@@ -39,8 +39,9 @@ final class ShowDatabasesCommand implements Command
      * Lists the databases.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof ShowDatabases);
         $names = array_map(static fn ($schema): string => $schema->name, array_values($session->instance->dictionary->schemas));

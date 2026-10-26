@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
-use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * `XA {START | BEGIN} xid [JOIN | RESUME]`: a request to start an XA transaction.
@@ -21,18 +27,26 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the request
  *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa begin 'g', 'b' resume");
- *     [$xa->toString(), $xa->statement->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume] // => ["XA START 'g', 'b' RESUME", true]
+ *     [$xa->toString(), $xa->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume] // => ["XA START 'g', 'b' RESUME", true]
+ * @example Refusing a format identifier outside the selected release
+ *     new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class XaStart implements Statement
+final class XaStart implements TransactionStatement
 {
     use Snapshot;
+    use TransactionSql;
 
     /**
      * @param Xid $xid The transaction identifier
      * @param XaStartOption|null $option JOIN or RESUME, when written
+     * @param LanguageProfile $profile The selected grammar and lexical interpretation; MySQL 8.4.7 by default
+     * @param Charset|null $client The client encoding used to reconstruct identifiers
+     * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly Xid $xid, public readonly ?XaStartOption $option = null)
+    public function __construct(public readonly Xid $xid, public readonly ?XaStartOption $option = null, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
     {
+        Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
+        (new Magnitudes())->identifier($xid, $profile->grammar);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

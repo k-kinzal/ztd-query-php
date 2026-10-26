@@ -30,7 +30,7 @@ final class SyntaxForeignStrings
     public function converted(Node $node, Lowering $lowering, array $tokens): array
     {
         if ($node->name === 'server_option' && $lowering->form($node)->node(1)->name === 'TEXT_STRING_sys') {
-            $decoded = (new NameEncoding())->decode($lowering->literals->bytes($lowering->form($node)->node(1)), $lowering->client);
+            $decoded = (new NameEncoding())->decode($lowering->literals->bytes($lowering->form($node)->node(1)), $lowering->inputClient);
         } elseif ($node->name === 'ident_or_text' && $this->name($node, $tokens)) {
             $decoded = $lowering->names->decoded($node)->value;
         } else {

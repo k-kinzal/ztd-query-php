@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MySqlMemory\Session\State;
 
 use SqlSemantics\Platform\MySql\Statement as MySql;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Maps executable statement models to their SQL command counters.
@@ -20,9 +19,10 @@ use SqlSemantics\Statement\Statement;
 final class StatementKind
 {
     /**
-     * @var array<class-string<Statement>, string>
+     * @var array<class-string<\SqlSemantics\Statement\Node>, string>
      */
     public const KINDS = [
+        MySql\Dml\Insert\InsertStatement::class => 'Com_insert',
         MySql\Dml\Delete::class => 'Com_delete',
         MySql\Dml\MultipleDelete::class => 'Com_delete_multi',
         MySql\Dml\Evaluation::class => 'Com_do',
@@ -157,7 +157,7 @@ final class StatementKind
     /**
      * Answers the counter of a supported statement kind.
      */
-    public static function of(Statement $statement): ?string
+    public static function of(\SqlSemantics\Statement\Node $statement): ?string
     {
         if ($statement instanceof MySql\Dml\Insert\InsertRows || $statement instanceof MySql\Dml\Insert\InsertSet || $statement instanceof MySql\Dml\Insert\InsertQuery) {
             return ($statement->into->replace ? 'Com_replace' : 'Com_insert') . ($statement instanceof MySql\Dml\Insert\InsertQuery ? '_select' : '');

@@ -55,8 +55,9 @@ final class AlterUserCommand implements Command
      * Changes the accounts.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         if ($statement instanceof ExpireUserPasswords) {
             return $this->expire($statement, $session, $context);

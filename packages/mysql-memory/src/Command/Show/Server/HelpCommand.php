@@ -38,8 +38,9 @@ final class HelpCommand implements Command
      * Searches the help tables.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         assert($operation->statement instanceof Help);
         return (new Search($session->instance->help))->find($operation->statement->topic->value, $context)->sent($context);
     }

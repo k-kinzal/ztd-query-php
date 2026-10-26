@@ -59,8 +59,9 @@ final class InsertCommand implements Command
      * Inserts the rows.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof InsertRows || $statement instanceof InsertSet || $statement instanceof InsertQuery);
         $into = $statement->into;

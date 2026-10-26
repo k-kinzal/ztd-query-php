@@ -36,8 +36,9 @@ final class EmptyCommand implements Command
      * Completes without changing data or session variables.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

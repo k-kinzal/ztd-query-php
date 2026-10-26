@@ -139,6 +139,7 @@ final class Variables
      * MySQL 5.6 gives a typed NULL the prepared operand collation; an untyped NULL,
      * and all NULL assignments from 5.7, retain the entry's preceding collation.
      * Verified through PDO in Testcontainers MySQL 5.6.51 and 5.7.44.
+     * @throws \MySqlMemory\Error\SqlError When a user variable name exceeds the server limit
      */
     public function assign(string $name, int|float|string|null $value, Domain $domain, ?Collation $preparedCollation = null): void
     {

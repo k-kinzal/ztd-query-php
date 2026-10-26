@@ -1,6 +1,6 @@
 # Rendering
 
-`Operation::toString()` answers SQL rendered from the statement structure. It never answers the analyzed text, and the model keeps no copy of it. The text is rendered and checked when the operation is constructed, then discarded. `toString()` renders the immutable structure again; the operation retains no SQL-string cache. Written text is kept in one place only, a [spelled region](#spelled-regions): the expression of a result column that the database names after its text.
+`AnalyzedStatement::toString()` answers SQL rendered from the statement structure, whether the result is a concrete statement or an `Operation`. It never answers the analyzed text, and the model keeps no copy of it. The text is rendered and checked when the operation is constructed, then discarded. `toString()` renders the immutable structure again; the operation retains no SQL-string cache. Written text is kept in one place only, a [spelled region](#spelled-regions): the expression of a result column that the database names after its text.
 
 ## How the text is produced
 
@@ -27,7 +27,7 @@ $semantics->analyze('SELECT 1 + (2 * 3)')->toString(); // => 'SELECT 1 + (2 * 3)
 
 The result is deterministic: the same structure always gives the same text. It is not a formatter; use [SQL Formatter](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-formatter/README.md) for layout.
 
-Only an operation has `toString()`. A part of a structure, such as an expression or a correlated subquery, is not a statement root, and its rendering would not be a safe SQL fragment for every position, so it is not offered.
+Standalone analyzed statement values implement `toString()`. A part of a structure, such as an expression or a correlated subquery, is not a statement root, and its rendering would not be a safe SQL fragment for every position, so it is not offered.
 
 ### Names
 

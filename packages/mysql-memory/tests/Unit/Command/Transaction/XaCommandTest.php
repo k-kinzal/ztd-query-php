@@ -182,7 +182,7 @@ final class XaCommandTest extends TestCase
 
     public function testPartsDefaultsTheFormatToOne(): void
     {
-        $statement = (new Instance())->connect()->analyze("XA START X'00ff', 'b'")->statement;
+        $statement = (new Instance())->connect()->analyze("XA START X'00ff', 'b'");
         self::assertInstanceOf(XaStart::class, $statement);
 
         self::assertSame([1, "\x00\xff", 'b'], (new XaCommand())->parts($statement->xid));
@@ -190,7 +190,7 @@ final class XaCommandTest extends TestCase
 
     public function testKeyIsThatOfThePreparedBranch(): void
     {
-        $statement = (new Instance())->connect()->analyze("XA START 'g', 'b', 5")->statement;
+        $statement = (new Instance())->connect()->analyze("XA START 'g', 'b', 5");
         self::assertInstanceOf(XaStart::class, $statement);
 
         self::assertSame(PreparedBranch::key(5, 'g', 'b'), (new XaCommand())->key($statement->xid));

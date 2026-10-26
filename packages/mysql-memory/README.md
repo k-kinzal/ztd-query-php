@@ -136,8 +136,24 @@ and stored data. A shrinking regression verifies that the declaration and write
 remain related as Eris reduces a counterexample. These properties currently cover
 small statement forms; most statement families still use the legacy operation API.
 
-The property suite currently exercises the stated CREATE TABLE, INSERT and interval
-behaviors. It does not cover every statement family. The old constructor sampler
+`TransactionExecutionProperties` generates all fourteen concrete transaction
+command alternatives. It also composes dependent savepoint and XA sequences before
+execution: each sequence shares its generated name or XID through shrinking.
+These properties check transaction state, access mode, isolation, prepared XA
+branches and balanced statement journals without parsing or rendering
+inside the assertion callback. Direct execution, SQL preparation, binary
+preparation and stored programs use the same command lifecycle as concrete INSERT
+and legacy operations. Syntax notices occur during reading/preparation, not again
+when a prepared value is executed. Existing families still using `Operation`
+remain explicit at their command boundaries.
+
+Transaction control has no schema dependencies or parameter markers. Preparation
+retains the same concrete value and does not build alternative interpretations
+for metadata invalidation. Changing table definitions therefore cannot rebind a
+prepared savepoint name or transaction characteristic.
+
+The property suite currently exercises the stated CREATE TABLE, INSERT, transaction
+and interval behaviors. It does not cover every statement family. The old constructor sampler
 and its instance-only properties have been removed. Missing generators remain
 errors in the complete PHPStan check; deleting those properties does not satisfy
 model coverage. Interface generators must compose their concrete alternatives,

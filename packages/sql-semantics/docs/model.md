@@ -1,6 +1,6 @@
 # Model
 
-`Semantics::analyze()` returns an `SqlSemantics\Statement\Operation`. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
+`Semantics::analyze()` returns `SqlSemantics\Statement\AnalyzedStatement`. The MySQL package returns concrete values for transaction control and its migrated INSERT form; its other families, PostgreSQL and SQLite currently return `Operation`. This page describes that Operation API. See the [MySQL package](../../sql-semantics-mysql/README.md#usage) for concrete operands, local conditions and source spans. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
 
 ## Operations
 
@@ -18,7 +18,7 @@ An operation is one analyzed root:
 | `shape()`, `fields()`, `field()`, `lookupField()` | The rows the statement returns, when it returns rows. |
 | `inputRelation()`, `singleNamedInput()` | The input relation of a statement that reads rows. |
 
-The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `analyze()` uses it too. All facts are established in the constructor; nothing is filled in later. An optional third argument supplies a `SourceMap`. Direct construction defaults to an empty map; source locations are never inherited implicitly from another operation.
+The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and publication uses it for statement families that retain this representation. All facts are established in the constructor; nothing is filled in later. An optional third argument supplies a `SourceMap`. Direct construction defaults to an empty map; source locations are never inherited implicitly from another operation.
 
 Input locations are separate from both the semantic structure and its rendering. An `Origin` holds the exact node occurrence, a byte `offset`, and a byte `length`, measured from the first through the last token. Comments and whitespace between those tokens remain within the range; empty synthetic tokens do not. Offsets refer to the input passed to the parser, including when `analyze()` receives an already parsed tree. Keep that input if you need to show the original text in a diagnostic. The MySQL lowering records statement, query, expression and data type ranges, including partition functions and bounds; rules without tracking may still return no origin.
 

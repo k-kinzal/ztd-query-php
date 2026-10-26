@@ -127,6 +127,7 @@ final class Invocation
      * @template T
      *
      * @param Closure(): T $run
+     * @param-immediately-invoked-callable $run
      * @param bool $preserveRowCount Whether the caller's row count survives the invocation
      * @param Activation|null $activation The reached SQL instructions for load-notice lifetime
      * @return T

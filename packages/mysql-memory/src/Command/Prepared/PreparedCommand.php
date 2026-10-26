@@ -50,8 +50,9 @@ final class PreparedCommand implements Command
      * Prepares, executes or forgets the statement.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         if ($statement instanceof Deallocate) {
             if (!isset($session->preparation->named[strtolower($statement->name->value)])) {
@@ -87,14 +88,12 @@ final class PreparedCommand implements Command
         if ($prepared instanceof Operation && ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate)) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }
-        if ($prepared instanceof Operation) {
-            (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($prepared->statement));
-        } else {
-            $session->diagnostics->clear();
-        }
+        $node = $prepared instanceof Operation ? $prepared->statement : $prepared;
+        assert($node instanceof \SqlSemantics\Statement\Node);
+        (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         $bindings = ParameterBindings::capture($prepared);
-        $input = (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session);
+        $input = $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session);
         $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session, $input)];
 
         return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');

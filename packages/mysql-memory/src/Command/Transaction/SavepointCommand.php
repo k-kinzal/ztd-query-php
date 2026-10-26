@@ -17,7 +17,6 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SAVEPOINT, ROLLBACK TO SAVEPOINT and RELEASE SAVEPOINT.
@@ -45,9 +44,9 @@ final class SavepointCommand implements Command
      * Sets, restores or deletes the savepoint.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $statement, Session $session, Context $context, Connection $connection): Reply
     {
-        $statement = $operation->statement;
+        assert($statement instanceof Savepoint || $statement instanceof RollbackToSavepoint || $statement instanceof ReleaseSavepoint);
         $transaction = $session->transaction;
         if (in_array($transaction->xa, [XaState::Idle, XaState::Prepared], true)) {
             throw StatementError::XaWrongState->error($transaction->xa->value);

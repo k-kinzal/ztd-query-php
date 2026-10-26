@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-sql--semantics-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics analyzes SQL of one database release into an immutable, typed semantic model. An analyzed statement is an `Operation`: the concrete structure of what the statement requests (its operation, operands and input relations), the facts derived for it against an explicit declaration context (name resolution, output fields, types, NULL facts and diagnostics), and SQL rendered from that structure. Before an operation is returned, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input.
+SQL Semantics analyzes SQL of one database release into an immutable, typed semantic model implementing `AnalyzedStatement`. MySQL transaction control and its migrated INSERT form return concrete statement values; the other families currently return `Operation`, which combines the statement structure with facts derived against an explicit declaration context. Each result reconstructs SQL from semantic values. Before publication, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input. See each dialect package for its concrete return types.
 
 The model is read-only. There is no API that edits an operation; another statement is analyzed from new SQL or built from explicit inputs, and it stands on its own. Analysis reads the grammar of the selected release and needs no database connection; it does not execute or simulate statements.
 
@@ -77,7 +77,7 @@ Each package provides its dialect: `SqlSemantics\Platform\MySql\Dialect::MySql`,
 
 ### Analyzing a statement
 
-`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into an `Operation`.
+`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into an `AnalyzedStatement`. The query examples below use the `Operation` API; transaction control and migrated MySQL INSERT values expose their operands directly.
 
 ```php
 use SqlSemantics\Facade\Semantics;

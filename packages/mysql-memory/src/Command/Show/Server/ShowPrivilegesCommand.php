@@ -39,8 +39,9 @@ final class ShowPrivilegesCommand implements Command
      * Lists the privileges.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         assert($operation->statement instanceof ShowPrivileges);
         $headings = [
             Heading::text('Privilege', Field::VarString, 10, ColumnFlag::NotNull->value, 31),

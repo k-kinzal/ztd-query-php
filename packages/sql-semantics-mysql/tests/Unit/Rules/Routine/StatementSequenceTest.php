@@ -25,9 +25,13 @@ final class StatementSequenceTest extends TestCase
     public function testMembersKeepsProgramStatementsAndSqlStatementsInOrder(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $procedure = $semantics->analyze('CREATE PROCEDURE p() BEGIN END')->statement;
+        $procedureOperation = $semantics->analyze('CREATE PROCEDURE p() BEGIN END');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $procedureOperation);
+        $procedure = $procedureOperation->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
-        $select = $semantics->analyze('SELECT 1')->statement;
+        $selectOperation = $semantics->analyze('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $selectOperation);
+        $select = $selectOperation->statement;
 
         self::assertSame([$procedure->body, $select], (new StatementSequence())->members([$procedure->body, $select], 1));
         self::assertSame([], (new StatementSequence())->members([]));
@@ -51,17 +55,21 @@ final class StatementSequenceTest extends TestCase
     {
         $this->expectExceptionMessage('A statement list holds statements.');
 
-        (new StatementSequence())->members(['first' => (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement]);
+        (new StatementSequence())->members(['first' => new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction()]);
     }
 
     public function testMemberAcceptsAProgramStatementAndAnSqlStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $procedure = $semantics->analyze('CREATE PROCEDURE p() BEGIN END')->statement;
+        $procedureOperation = $semantics->analyze('CREATE PROCEDURE p() BEGIN END');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $procedureOperation);
+        $procedure = $procedureOperation->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $block = $procedure->body;
         self::assertInstanceOf(Block::class, $block);
-        $select = $semantics->analyze('SELECT 1')->statement;
+        $selectOperation = $semantics->analyze('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $selectOperation);
+        $select = $selectOperation->statement;
 
         self::assertSame($block, (new StatementSequence())->member($block));
         self::assertSame($select, (new StatementSequence())->member($select));
@@ -78,7 +86,11 @@ final class StatementSequenceTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $out = new Output(new Codec(GrammarRelease::MySql910));
-        (new StatementSequence())->write($out, [$semantics->analyze('SELECT 1')->statement, $semantics->analyze('SET @a = 1')->statement]);
+        $select = $semantics->analyze('SELECT 1');
+        $set = $semantics->analyze('SET @a = 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $select);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $set);
+        (new StatementSequence())->write($out, [$select->statement, $set->statement]);
 
         self::assertSame('SELECT 1; SET @a = 1;', (new Lexical())->join($out->pieces()));
         self::assertSame('CREATE PROCEDURE p() BEGIN SELECT 1; BEGIN END; END', $semantics->analyze('create procedure p() begin select 1; begin end; end')->toString());
@@ -97,7 +109,8 @@ final class StatementSequenceTest extends TestCase
 
     public function testMemberRetainsStartTransaction(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('START TRANSACTION')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('START TRANSACTION');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction::class, $statement);
         self::assertSame($statement, (new StatementSequence())->member($statement));
     }
 

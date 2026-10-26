@@ -1452,3 +1452,103 @@ request. Input hex:
 `1600000000001a00000000000000000000000000000000000000000000000000030001000000000000000c00000000000000000000`.
 The complete corpus, seedless budgets and concrete-statement migrations remain
 open gates.
+
+
+### Concrete transaction control and common command execution (2026-10-26)
+
+Fourteen transaction statements now implement `AnalyzedStatement` directly:
+BEGIN, START TRANSACTION, COMMIT, ROLLBACK, the three savepoint operations, the
+six XA operations and SET TRANSACTION. Each owns its operands, selected language,
+optional client encoding and optional statement span. XA RECOVER owns its output
+shape. Savepoint statements own the release-dependent notice of an explicitly
+bare FULL name; direct construction and lowering establish the same condition.
+No Operation, Facts, source map or analysis context is retained on these roots.
+XA statement constructors check their release-dependent identifier limits.
+
+`Command::execute` now accepts the shared analyzed-statement interface. INSERT,
+transaction control and the remaining legacy operations enter one dispatch,
+diagnostics, access-check and statement-journal lifecycle. Unmigrated commands
+still explicitly require Operation; widening the interface is not completion of
+those commands' model migration. Reading/preparation emits intrinsic transaction
+notices before execution; prepared replay and stored-program invocation do not
+repeat syntax notices. SQL and binary preparation retain the concrete transaction
+value. These commands have no schema or parameter dependencies, so neither
+protocol builds unused metadata-invalidation alternatives for them. Removing
+that unnecessary work reduced the combined preparation/program regression from
+60-second timeouts to 2 tests / 21 assertions in 2.147 seconds, without changing
+the timeout or the interpretation domain required by dependent statements.
+
+Canonical reconstruction and client encoding remain separate. Publication lowers
+canonical identifier bytes while retaining the selected session's output client
+settings. The same distinction propagates into unprepared operands and stored
+program scopes. Directly constructed decoded names remain usable independently
+of whether an external client can encode them; `toString()` still reports
+UnrepresentableName for lossy external encoding. PostgreSQL and SQLite implement
+the same lowering contract and retain their existing Operation boundary.
+
+The transaction interface generator composes all fourteen concrete alternatives
+through ordinary Eris delegates. Further properties generate complete savepoint
+and XA sequences before their assertion callbacks and preserve shared names and
+XIDs during shrinking. The first property distinguishes SQL errors from internal
+failures and checks scope cleanup; the dependent sequences check transaction
+state, characteristics, savepoint lifetime and prepared XA registry contents.
+They do not prove the full domain of every operand or the other SQL families.
+
+Current verification evidence and open results:
+
+- Generated execution: 27 tests / 36,648 assertions, 2,700 trials across all nine
+  releases with ERIS_SEED=20261026. This includes optional XA format identifiers
+  and bare FULL savepoint names; no SQL is parsed or rendered in the callbacks.
+- Shared semantic unit suite: 604 tests / 1,273 assertions. The original test
+  requiring decoded names to remain valid independently of client encoding is
+  preserved and passes.
+- Transaction model, lowering and publication subset: 283 tests / 1,131 assertions
+  before the subsequent canonical-client distinction. The new client distinction
+  has its own Platform regression and the shared unit suite above.
+- The broader memory command/lifecycle run has 352 tests / 827 assertions and no
+  assertion failures, but an existing spatial-preparation test exceeds its
+  unchanged one-second limit. It is not an overall passing run. The SIGNAL
+  command and condition delivery regressions pass 22 tests / 40 assertions.
+- The full MySQL semantic unit confirmation passes 9,415 tests / 21,422 assertions.
+  Lowering, routine restriction and administrative derivation tests now assert
+  the concrete or transient derivation API at their actual boundaries.
+- Full MySQL PHPDoc confirmation passes 1,131 tests / 1,131 assertions in
+  28.290 seconds. The earlier concurrent run exceeded the unchanged ten-second
+  limit on the complete-preparation example; the confirmation ran without that
+  competing load and without changing the limit.
+- Changed-file PHPStan and formatting pass in all five affected packages.
+  Memory's final LOC, tree, dependency and strict autoload checks also pass.
+  PHP 8.1 compatibility passes for the four semantic packages. The memory check
+  still reports two hexadecimal-string fixtures at the unchanged assertions in
+  XaCommandTest; no compatibility rule or fixture assertion was suppressed.
+- Stateful native comparison covers all fourteen commands plus intervening writes
+  and reads, using the existing observer. The first nine-release run completed
+  420 assertions and exposed XA RECOVER data-column lengths on 5.6 and 5.7:
+  native 512/1032 bytes versus memory 128/258. Subsequent runs also hit ordinary
+  sixty-second test limits during native initialization; those are failed runs,
+  not evidence that the entire release matrix passes.
+- The unchanged round-trip PHP-Fuzzer target fails a 29-seed transaction-production
+  replay on 8.4.7 at xa-4.txt: `XA ROLLBACK 0x0f` becomes `XA ROLLBACK x'0f'`.
+  Input hex: `02000000000036000100000000`. This is missing spelling information
+  in the shared Text representation, not permission to normalize the comparison.
+- The matching native PHP-Fuzzer replay remains red at fixture restoration:
+  `Original fixture tablespaces are missing: mysql`. The existing observer and
+  fixture contract are not bypassed to obtain a passing transaction campaign.
+
+These are structural changes and bounded evidence. Goals B-D remain open:
+complete observation/restoration, remaining Operation/Facts and runtime-analysis
+migration, full operand/generator coverage, all ordinary gates, full profile
+corpus replay and the separate 900-second seedless matrix are still required.
+
+The final isolated 8.4.7 stateful comparison passes all 50 assertions in
+44.267 seconds, including the three bare-FULL savepoint notices. PostgreSQL and
+SQLite platform contract tests pass 11 / 21 and 12 / 31 respectively. The reviewed
+MySQL value schema checks all 1,052 definitions. These results do not close the
+native nine-release or fuzz failures recorded above.
+
+The complete MySQL semantic unit confirmation now passes: 9,415 tests / 21,422
+assertions with four ParaTest workers and 1 GiB per worker. The earlier worker
+failure used PHP's 128 MiB worker default and is not a completed run. No PHPUnit
+time limit or comparison was changed. The complete package PHPStan acceptance
+remains distinct from changed-file analysis; its previously recorded missing
+model generators and legacy type errors are still open.

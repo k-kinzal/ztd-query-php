@@ -38,6 +38,20 @@ final class Deprecation implements CodedWarning
     }
 
     /**
+     * Answers the syntax notice owned by an unqualified identifier operand.
+     * FULL is quoted when the codec chooses its spelling, so only an explicit
+     * bare name warns. Qualified components use a different lexical role.
+     * Source: https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-32.html.
+     */
+    public static function unqualifiedName(\SqlSemantics\Statement\Identifier\Name $name, \SqlSemantics\Contract\GrammarRelease $release): ?self
+    {
+        return $name->quote === \SqlSemantics\Statement\Identifier\NameQuote::Bare
+            && strcasecmp($name->value, 'FULL') === 0
+            && Deprecated::UnquotedFull->warnedIn($release)
+            ? new self(Deprecated::UnquotedFull) : null;
+    }
+
+    /**
      * Records the warning of a system variable the release deprecates, which names the variable and the one to use instead, if any.
      */
     public static function variable(string $name, Derivation $derivation): void

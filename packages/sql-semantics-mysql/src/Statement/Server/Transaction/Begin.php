@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * `BEGIN [WORK]`: a request to start a transaction without characteristics.
@@ -24,15 +29,20 @@ use SqlSemantics\Statement\Snapshot;
  * @example Starting a transaction with BEGIN WORK
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('BEGIN WORK')->toString() // => 'BEGIN WORK'
  */
-final class Begin implements Statement
+final class Begin implements TransactionStatement
 {
     use Snapshot;
+    use TransactionSql;
 
     /**
      * @param bool $work Whether the optional WORK keyword is written
+     * @param LanguageProfile $profile The selected grammar and lexical interpretation; MySQL 8.4.7 by default
+     * @param Charset|null $client The client encoding used to reconstruct identifiers
+     * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly bool $work = false)
+    public function __construct(public readonly bool $work = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
     {
+        Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
     }
 
     /**

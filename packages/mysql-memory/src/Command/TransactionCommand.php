@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes BEGIN, START TRANSACTION, COMMIT and ROLLBACK.
@@ -47,9 +46,9 @@ final class TransactionCommand implements Command
      * @throws \MySqlMemory\Error\SqlError When an XA transaction is active or idle
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $statement, Session $session, Context $context, Connection $connection): Reply
     {
-        $statement = $operation->statement;
+        assert($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin || $statement instanceof StartTransaction || $statement instanceof Commit || $statement instanceof Rollback);
         if ($statement instanceof Commit || $statement instanceof Rollback) {
             $this->end($statement, $session, $context);
 

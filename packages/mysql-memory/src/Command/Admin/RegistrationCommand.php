@@ -46,8 +46,9 @@ final class RegistrationCommand implements Command
      * Refuses the registration step, as the server does for an account without that factor.
      */
     #[Override]
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
+        assert($operation instanceof Operation);
         $statement = $operation->statement;
         if (!$statement instanceof AlterRegistration) {
             throw StatementError::NotSupportedYet->error('this registration statement');

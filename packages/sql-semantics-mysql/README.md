@@ -56,6 +56,28 @@ $semantics->analyze('SELECT missing FROM users', [$users])->facts->diagnostics[0
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
 
+`analyze()` returns the shared `AnalyzedStatement` interface. Transaction control
+returns its concrete class directly: `Begin`, `StartTransaction`, `Commit`,
+`Rollback`, the three savepoint commands, the six XA commands, or `SetTransaction`.
+These implement `Statement\Server\Transaction\TransactionStatement`; they retain
+their operands, selected language profile, optional client encoding and optional
+source span. They have no `statement`, `context`, `facts` or `sources` aggregate.
+`declarations()` returns an empty list. `XaRecover::$shape` describes its four
+result columns; a missing savepoint or XA branch is an execution condition.
+
+```php
+$begin = $semantics->analyze('BEGIN WORK');
+$begin instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin; // => true
+$begin->work; // => true
+$begin->toString(); // => 'BEGIN WORK'
+```
+
+Concrete values can also be constructed directly with a matching `LanguageProfile`.
+Constructors enforce structural alternatives and release-dependent XA identifier
+limits. Rendering uses the retained operands and profile. This API migration also
+includes the documented concrete `InsertStatement` form; other statement families
+still return `Operation` and expose their structure through `statement`.
+
 A SELECT, TABLE, VALUES or set-operation statement has a `Statement\QueryRoot`
 root. Its `query` property holds the query body (`Statement\Query\Select`, for
 example). Query bodies also appear directly in subqueries, INSERT sources and
@@ -456,7 +478,7 @@ $semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->
 
 `CREATE TABLE` columns, routine parameters and function return types share checks for numeric widths, precision and scale, and temporal fractional precision. Invalid sizes appear as `InvalidTypeSize` diagnostics; an accompanying `ParseFailure` records where the server stops reading, so an executor can preserve warning order. Parameter and return-type errors use an empty column name, as MySQL reports them. MySQL 5.6 accepts `BIT(0)`; later supported releases reject it.
 
-The original spelling of an unquoted `FULL` identifier produces warning 4119 in the supported MySQL 8.x and 9.x releases. Quoted names, string aliases and names lexed as parts of a qualified identifier do not produce that warning. The decoded name remains independent of this notice, which is retained in `Operation::$sources` and merged into `facts->warnings`.
+The original spelling of an unquoted `FULL` identifier produces warning 4119 in the supported MySQL 8.x and 9.x releases. Quoted names, string aliases and names lexed as parts of a qualified identifier do not produce that warning. Savepoint commands own this condition as `nameWarning`, computed from the name's explicit delimiter and selected release, including for directly constructed values. Other statement families retain the notice in `Operation::$sources` and merge it into `facts->warnings`.
 
 Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
 

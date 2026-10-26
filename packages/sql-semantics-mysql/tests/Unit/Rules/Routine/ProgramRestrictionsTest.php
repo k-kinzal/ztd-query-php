@@ -65,7 +65,9 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     /**
@@ -135,7 +137,9 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     /**
@@ -229,13 +233,15 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $release);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     #[DataProvider('providerAnywhereAnswersTheProblemOfTheStatement')]
     public function testAnywhereAnswersTheProblemOfTheStatement(string $sql, ?string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $analyzed = (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->anywhere($statement)?->message());
@@ -274,7 +280,8 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerFunctionAnswersTheProblemOfTheStatement')]
     public function testFunctionAnswersTheProblemOfTheStatement(string $sql, ProgramKind $kind, ?string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $analyzed = (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->function($statement, $kind)?->message());
@@ -308,7 +315,8 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerResultsTellsWhetherTheStatementReturnsRows')]
     public function testResultsTellsWhetherTheStatementReturnsRows(string $sql, bool $expected): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $analyzed = (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($expected, (new ProgramRestrictions())->results($statement));
@@ -341,7 +349,9 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerIntoTellsWhetherTheQueryWritesItsRows')]
     public function testIntoTellsWhetherTheQueryWritesItsRows(string $sql, bool $expected): void
     {
-        $query = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        $query = $operation->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
 
@@ -372,8 +382,12 @@ final class ProgramRestrictionsTest extends TestCase
     public function testFunctionRefusesViewDefinitionTransactionBoundaries(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $create = $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement;
-        $drop = $semantics->analyze('DROP VIEW v')->statement;
+        $createOperation = $semantics->analyze('CREATE VIEW v AS SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $createOperation);
+        $create = $createOperation->statement;
+        $dropOperation = $semantics->analyze('DROP VIEW v');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $dropOperation);
+        $drop = $dropOperation->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $create);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\DropView::class, $drop);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($create, ProgramKind::Function)?->rule);

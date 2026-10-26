@@ -78,24 +78,29 @@ final class DispatcherTest extends TestCase
 {
     public function testCommandChoosesTheCommandOfEachKindOfQueryAndWrite(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
         $dispatcher = new Dispatcher();
-        $insert = $dispatcher->command($session->analyze('INSERT INTO t VALUES (1)')->statement);
-        $update = $dispatcher->command($session->analyze('UPDATE t SET a = 1')->statement);
+        $insert = $dispatcher->command($node($session->analyze('INSERT INTO t VALUES (1)')));
+        $update = $dispatcher->command($node($session->analyze('UPDATE t SET a = 1')));
 
         self::assertSame(
             [QueryCommand::class, QueryCommand::class, ViewWriteCommand::class, ViewWriteCommand::class, ViewWriteCommand::class, ViewWriteCommand::class, ViewWriteCommand::class, MultipleChangeCommand::class, MultipleChangeCommand::class],
             [
-                $dispatcher->command($session->analyze('SELECT 1')->statement)::class,
-                $dispatcher->command($session->analyze('VALUES ROW(1)')->statement)::class,
+                $dispatcher->command($node($session->analyze('SELECT 1')))::class,
+                $dispatcher->command($node($session->analyze('VALUES ROW(1)')))::class,
                 $insert::class,
-                $dispatcher->command($session->analyze('INSERT INTO t SET a = 1')->statement)::class,
-                $dispatcher->command($session->analyze('INSERT INTO t SELECT 1')->statement)::class,
+                $dispatcher->command($node($session->analyze('INSERT INTO t SET a = 1')))::class,
+                $dispatcher->command($node($session->analyze('INSERT INTO t SELECT 1')))::class,
                 $update::class,
-                $dispatcher->command($session->analyze('DELETE FROM t')->statement)::class,
-                $dispatcher->command($session->analyze('UPDATE t, u SET t.a = 1')->statement)::class,
-                $dispatcher->command($session->analyze('DELETE t FROM t JOIN u')->statement)::class,
+                $dispatcher->command($node($session->analyze('DELETE FROM t')))::class,
+                $dispatcher->command($node($session->analyze('UPDATE t, u SET t.a = 1')))::class,
+                $dispatcher->command($node($session->analyze('DELETE t FROM t JOIN u')))::class,
             ],
         );
         self::assertInstanceOf(ViewWriteCommand::class, $insert);
@@ -105,6 +110,11 @@ final class DispatcherTest extends TestCase
 
     public function testCommandChoosesTheCommandOfEachKindOfDefinitionAndUtility(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $dispatcher = new Dispatcher();
@@ -112,60 +122,70 @@ final class DispatcherTest extends TestCase
         self::assertSame(
             [CreateTableCommand::class, DropTableCommand::class, DropTableCommand::class, DatabaseCommand::class, DatabaseCommand::class, DatabaseCommand::class, SetCommand::class, TransactionCommand::class, TransactionCommand::class, TransactionCommand::class, TransactionCommand::class, WarningsCommand::class, WarningsCommand::class, WarningsCommand::class, WarningsCommand::class, DoCommand::class, ShowTablesCommand::class],
             [
-                $dispatcher->command($session->analyze('CREATE TABLE v (a INT)')->statement)::class,
-                $dispatcher->command($session->analyze('DROP TABLE t')->statement)::class,
-                $dispatcher->command($session->analyze('TRUNCATE TABLE t')->statement)::class,
-                $dispatcher->command($session->analyze('CREATE DATABASE e')->statement)::class,
-                $dispatcher->command($session->analyze('DROP DATABASE d')->statement)::class,
-                $dispatcher->command($session->analyze('USE d')->statement)::class,
-                $dispatcher->command($session->analyze('SET @a = 1')->statement)::class,
-                $dispatcher->command($session->analyze('BEGIN')->statement)::class,
-                $dispatcher->command($session->analyze('START TRANSACTION')->statement)::class,
-                $dispatcher->command($session->analyze('COMMIT')->statement)::class,
-                $dispatcher->command($session->analyze('ROLLBACK')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW WARNINGS')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW ERRORS')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW COUNT(*) WARNINGS')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW COUNT(*) ERRORS')->statement)::class,
-                $dispatcher->command($session->analyze('DO 1')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW TABLES')->statement)::class,
+                $dispatcher->command($node($session->analyze('CREATE TABLE v (a INT)')))::class,
+                $dispatcher->command($node($session->analyze('DROP TABLE t')))::class,
+                $dispatcher->command($node($session->analyze('TRUNCATE TABLE t')))::class,
+                $dispatcher->command($node($session->analyze('CREATE DATABASE e')))::class,
+                $dispatcher->command($node($session->analyze('DROP DATABASE d')))::class,
+                $dispatcher->command($node($session->analyze('USE d')))::class,
+                $dispatcher->command($node($session->analyze('SET @a = 1')))::class,
+                $dispatcher->command($node($session->analyze('BEGIN')))::class,
+                $dispatcher->command($node($session->analyze('START TRANSACTION')))::class,
+                $dispatcher->command($node($session->analyze('COMMIT')))::class,
+                $dispatcher->command($node($session->analyze('ROLLBACK')))::class,
+                $dispatcher->command($node($session->analyze('SHOW WARNINGS')))::class,
+                $dispatcher->command($node($session->analyze('SHOW ERRORS')))::class,
+                $dispatcher->command($node($session->analyze('SHOW COUNT(*) WARNINGS')))::class,
+                $dispatcher->command($node($session->analyze('SHOW COUNT(*) ERRORS')))::class,
+                $dispatcher->command($node($session->analyze('DO 1')))::class,
+                $dispatcher->command($node($session->analyze('SHOW TABLES')))::class,
             ],
         );
     }
 
     public function testCommandChoosesTheCommandOfEachKindOfAccountStatement(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
         $dispatcher = new Dispatcher();
 
         self::assertSame(
             [CreateUserCommand::class, CreateUserCommand::class, DropUserCommand::class, DropUserCommand::class, AlterUserCommand::class, RenameUserCommand::class, SetPasswordCommand::class, GrantCommand::class, GrantCommand::class, GrantCommand::class, RevokeCommand::class, RevokeCommand::class, RevokeCommand::class, RevokeCommand::class, RoleCommand::class, RoleCommand::class, RoleCommand::class, ShowGrantsCommand::class, ShowCreateUserCommand::class],
             [
-                $dispatcher->command($session->analyze('CREATE USER u')->statement)::class,
-                $dispatcher->command($session->analyze('CREATE ROLE r')->statement)::class,
-                $dispatcher->command($session->analyze('DROP USER u')->statement)::class,
-                $dispatcher->command($session->analyze('DROP ROLE r')->statement)::class,
-                $dispatcher->command($session->analyze('ALTER USER u ACCOUNT LOCK')->statement)::class,
-                $dispatcher->command($session->analyze('RENAME USER u TO v')->statement)::class,
-                $dispatcher->command($session->analyze("SET PASSWORD = 'x'")->statement)::class,
-                $dispatcher->command($session->analyze('GRANT SELECT ON *.* TO u')->statement)::class,
-                $dispatcher->command($session->analyze('GRANT r TO u')->statement)::class,
-                $dispatcher->command($session->analyze('GRANT PROXY ON v TO u')->statement)::class,
-                $dispatcher->command($session->analyze('REVOKE SELECT ON *.* FROM u')->statement)::class,
-                $dispatcher->command($session->analyze('REVOKE r FROM u')->statement)::class,
-                $dispatcher->command($session->analyze('REVOKE PROXY ON v FROM u')->statement)::class,
-                $dispatcher->command($session->analyze('REVOKE ALL, GRANT OPTION FROM u')->statement)::class,
-                $dispatcher->command($session->analyze('SET ROLE NONE')->statement)::class,
-                $dispatcher->command($session->analyze('SET DEFAULT ROLE NONE TO u')->statement)::class,
-                $dispatcher->command($session->analyze('ALTER USER u DEFAULT ROLE NONE')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW GRANTS')->statement)::class,
-                $dispatcher->command($session->analyze('SHOW CREATE USER u')->statement)::class,
+                $dispatcher->command($node($session->analyze('CREATE USER u')))::class,
+                $dispatcher->command($node($session->analyze('CREATE ROLE r')))::class,
+                $dispatcher->command($node($session->analyze('DROP USER u')))::class,
+                $dispatcher->command($node($session->analyze('DROP ROLE r')))::class,
+                $dispatcher->command($node($session->analyze('ALTER USER u ACCOUNT LOCK')))::class,
+                $dispatcher->command($node($session->analyze('RENAME USER u TO v')))::class,
+                $dispatcher->command($node($session->analyze("SET PASSWORD = 'x'")))::class,
+                $dispatcher->command($node($session->analyze('GRANT SELECT ON *.* TO u')))::class,
+                $dispatcher->command($node($session->analyze('GRANT r TO u')))::class,
+                $dispatcher->command($node($session->analyze('GRANT PROXY ON v TO u')))::class,
+                $dispatcher->command($node($session->analyze('REVOKE SELECT ON *.* FROM u')))::class,
+                $dispatcher->command($node($session->analyze('REVOKE r FROM u')))::class,
+                $dispatcher->command($node($session->analyze('REVOKE PROXY ON v FROM u')))::class,
+                $dispatcher->command($node($session->analyze('REVOKE ALL, GRANT OPTION FROM u')))::class,
+                $dispatcher->command($node($session->analyze('SET ROLE NONE')))::class,
+                $dispatcher->command($node($session->analyze('SET DEFAULT ROLE NONE TO u')))::class,
+                $dispatcher->command($node($session->analyze('ALTER USER u DEFAULT ROLE NONE')))::class,
+                $dispatcher->command($node($session->analyze('SHOW GRANTS')))::class,
+                $dispatcher->command($node($session->analyze('SHOW CREATE USER u')))::class,
             ],
         );
     }
 
     public function testCommandChoosesTheCommandOfEachKindOfTableChangeMaintenanceAndAccess(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $dispatcher = new Dispatcher();
@@ -173,27 +193,32 @@ final class DispatcherTest extends TestCase
         self::assertSame(
             [AlterTableCommand::class, AlterTableCommand::class, AlterTableCommand::class, RenameTableCommand::class, CreateTableLikeCommand::class, AlterDatabaseCommand::class, AdministrationCommand::class, ChecksumCommand::class, LockTablesCommand::class, LockTablesCommand::class, HandlerCommand::class, LoadDataCommand::class, ImportTableCommand::class],
             [
-                $dispatcher->command($session->analyze('ALTER TABLE t ADD b INT')->statement)::class,
-                $dispatcher->command($session->analyze('CREATE INDEX i ON t (a)')->statement)::class,
-                $dispatcher->command($session->analyze('DROP INDEX i ON t')->statement)::class,
-                $dispatcher->command($session->analyze('RENAME TABLE t TO u')->statement)::class,
-                $dispatcher->command($session->analyze('CREATE TABLE u LIKE t')->statement)::class,
-                $dispatcher->command($session->analyze('ALTER DATABASE d CHARACTER SET latin1')->statement)::class,
-                $dispatcher->command($session->analyze('CHECK TABLE t')->statement)::class,
-                $dispatcher->command($session->analyze('CHECKSUM TABLE t')->statement)::class,
-                $dispatcher->command($session->analyze('LOCK TABLES t READ')->statement)::class,
-                $dispatcher->command($session->analyze('UNLOCK TABLES')->statement)::class,
-                $dispatcher->command($session->analyze('HANDLER t OPEN')->statement)::class,
-                $dispatcher->command($session->analyze("LOAD DATA INFILE 'x' INTO TABLE t")->statement)::class,
-                $dispatcher->command($session->analyze("IMPORT TABLE FROM 'x'")->statement)::class,
+                $dispatcher->command($node($session->analyze('ALTER TABLE t ADD b INT')))::class,
+                $dispatcher->command($node($session->analyze('CREATE INDEX i ON t (a)')))::class,
+                $dispatcher->command($node($session->analyze('DROP INDEX i ON t')))::class,
+                $dispatcher->command($node($session->analyze('RENAME TABLE t TO u')))::class,
+                $dispatcher->command($node($session->analyze('CREATE TABLE u LIKE t')))::class,
+                $dispatcher->command($node($session->analyze('ALTER DATABASE d CHARACTER SET latin1')))::class,
+                $dispatcher->command($node($session->analyze('CHECK TABLE t')))::class,
+                $dispatcher->command($node($session->analyze('CHECKSUM TABLE t')))::class,
+                $dispatcher->command($node($session->analyze('LOCK TABLES t READ')))::class,
+                $dispatcher->command($node($session->analyze('UNLOCK TABLES')))::class,
+                $dispatcher->command($node($session->analyze('HANDLER t OPEN')))::class,
+                $dispatcher->command($node($session->analyze("LOAD DATA INFILE 'x' INTO TABLE t")))::class,
+                $dispatcher->command($node($session->analyze("IMPORT TABLE FROM 'x'")))::class,
             ],
         );
     }
 
     public function testCommandRefusesAStatementNoCommandExecutes(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
-        $statement = new Script([$session->analyze('SELECT 1')->statement, $session->analyze('SELECT 2')->statement]);
+        $statement = new Script([$node($session->analyze('SELECT 1')), $node($session->analyze('SELECT 2'))]);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
@@ -209,6 +234,11 @@ final class DispatcherTest extends TestCase
 
     public function testCommandChoosesTheCommandsOfServerAdministration(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
         $dispatcher = new Dispatcher();
 
@@ -231,46 +261,61 @@ final class DispatcherTest extends TestCase
                 ReplicationShowCommand::class,
             ],
             [
-                $dispatcher->command($session->analyze('SAVEPOINT s')->statement)::class,
-                $dispatcher->command($session->analyze('XA RECOVER')->statement)::class,
-                $dispatcher->command($session->analyze('SET RESOURCE GROUP g')->statement)::class,
-                $dispatcher->command($session->analyze('DROP SERVER s')->statement)::class,
-                $dispatcher->command($session->analyze('UNINSTALL PLUGIN p')->statement)::class,
-                $dispatcher->command($session->analyze('DROP TABLESPACE t')->statement)::class,
-                $dispatcher->command($session->analyze('DROP LOGFILE GROUP g')->statement)::class,
-                $dispatcher->command($session->analyze('DROP SPATIAL REFERENCE SYSTEM 5')->statement)::class,
-                $dispatcher->command($session->analyze('UNLOCK INSTANCE')->statement)::class,
-                $dispatcher->command($session->analyze('FLUSH STATUS')->statement)::class,
-                $dispatcher->command($session->analyze('ALTER USER u 2 FACTOR UNREGISTER')->statement)::class,
-                $dispatcher->command($session->analyze('RESET PERSIST')->statement)::class,
-                $dispatcher->command($session->analyze('STOP REPLICA')->statement)::class,
-                $dispatcher->command($session->analyze("BINLOG 'x'")->statement)::class,
-                $dispatcher->command($session->analyze('SHOW BINARY LOGS')->statement)::class,
+                $dispatcher->command($node($session->analyze('SAVEPOINT s')))::class,
+                $dispatcher->command($node($session->analyze('XA RECOVER')))::class,
+                $dispatcher->command($node($session->analyze('SET RESOURCE GROUP g')))::class,
+                $dispatcher->command($node($session->analyze('DROP SERVER s')))::class,
+                $dispatcher->command($node($session->analyze('UNINSTALL PLUGIN p')))::class,
+                $dispatcher->command($node($session->analyze('DROP TABLESPACE t')))::class,
+                $dispatcher->command($node($session->analyze('DROP LOGFILE GROUP g')))::class,
+                $dispatcher->command($node($session->analyze('DROP SPATIAL REFERENCE SYSTEM 5')))::class,
+                $dispatcher->command($node($session->analyze('UNLOCK INSTANCE')))::class,
+                $dispatcher->command($node($session->analyze('FLUSH STATUS')))::class,
+                $dispatcher->command($node($session->analyze('ALTER USER u 2 FACTOR UNREGISTER')))::class,
+                $dispatcher->command($node($session->analyze('RESET PERSIST')))::class,
+                $dispatcher->command($node($session->analyze('STOP REPLICA')))::class,
+                $dispatcher->command($node($session->analyze("BINLOG 'x'")))::class,
+                $dispatcher->command($node($session->analyze('SHOW BINARY LOGS')))::class,
             ],
         );
     }
 
     public function testHandlesTellsWhetherAProgramDeclaresAHandler(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame([true, false], [
-            Dispatcher::handles($semantics->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET @x = 1; END; END')->statement),
-            Dispatcher::handles($semantics->analyze('CREATE PROCEDURE p() BEGIN SET @x = 1; END')->statement),
+            Dispatcher::handles($node($semantics->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET @x = 1; END; END'))),
+            Dispatcher::handles($node($semantics->analyze('CREATE PROCEDURE p() BEGIN SET @x = 1; END'))),
         ]);
     }
 
     public function testProgramTellsWhetherAStatementCreatesAStoredProgram(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([true, false], [Dispatcher::program($semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x = 1')->statement), Dispatcher::program($semantics->analyze('SELECT 1')->statement)]);
+        self::assertSame([true, false], [Dispatcher::program($node($semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x = 1'))), Dispatcher::program($node($semantics->analyze('SELECT 1')))]);
     }
 
     public function testHandlesKeepsDiagnosticsForANamedConditionDeclaration(): void
     {
+        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
+            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
+            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            return $statement;
+        };
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE PROCEDURE d.p() BEGIN BEGIN DECLARE c CONDITION FOR 1; END; END')->statement;
+        $statement = $node($session->analyze('CREATE PROCEDURE d.p() BEGIN BEGIN DECLARE c CONDITION FOR 1; END; END'));
 
         self::assertTrue(Dispatcher::handles($statement));
         self::assertFalse((new Dispatcher())->command($statement)->clearsDiagnostics());

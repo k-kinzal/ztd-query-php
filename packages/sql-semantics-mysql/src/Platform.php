@@ -56,10 +56,15 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Publishes migrated INSERT values directly; other statement families await migration.
+     * Publishes concrete INSERT and transaction statements; other families await migration.
      */
     public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
     {
+        if ($statement instanceof \SqlSemantics\Statement\AnalyzedStatement) {
+            \SqlSemantics\Diagnostic\Check::input($statement->profile()->compatibleWith($context->profile), 'A concrete statement retains its selected language.');
+            (new \SqlSemantics\Validation\Publication())->establish($context, $statement, $sources);
+            return $statement;
+        }
         $publication = new Rules\Dml\Insert\Publication();
         if ($statement instanceof Statement\Dml\Insert\InsertRows && $publication->supports($statement)) {
             [$facts] = (new \SqlSemantics\Validation\Publication())->establish($context, $statement, $sources);
@@ -124,9 +129,9 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Lowers a parse tree into its statements.
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?\SqlSemantics\Contract\Session $session = null): array
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?\SqlSemantics\Contract\Session $session = null, bool $canonicalNames = false): array
     {
-        return (new Lowering($this->productions($profile), $leaves, $profile, $origins ?? new \SqlSemantics\Construction\Origins(), $session instanceof Statement\Type\Resolved\Settings ? $session->client : null))->statements($tree);
+        return (new Lowering($this->productions($profile), $leaves, $profile, $origins ?? new \SqlSemantics\Construction\Origins(), $session instanceof Statement\Type\Resolved\Settings ? $session->client : null, canonicalNames: $canonicalNames))->statements($tree);
     }
 
     /**

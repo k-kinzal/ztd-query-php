@@ -6,7 +6,7 @@ namespace MySqlMemory\Session\State;
 
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\Node;
 
 /**
  * Counts client requests separately from statements executed inside stored programs.
@@ -42,7 +42,7 @@ final class StatementCounters
     /**
      * Records the command kind once early parsing checks have succeeded.
      */
-    public static function evaluated(Statement $statement, Session $session): void
+    public static function evaluated(Node $statement, Session $session): void
     {
         if ($statement instanceof SetVariables && $session->program !== null && (new \MySqlMemory\Program\Interpreter($session, $session->program))->local($statement)) {
             return;
