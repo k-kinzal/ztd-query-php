@@ -89,7 +89,7 @@ final class TableDeclaration
      *
      * @return list<Name>
      */
-    public function primaryColumns(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition): array
+    public function primaryColumns(CreateTable $definition): array
     {
         $names = [];
         foreach ($definition->elements as $element) {
@@ -108,7 +108,7 @@ final class TableDeclaration
     /**
      * Builds the declaration of a CREATE TABLE; `$output` is the output of its query, when it has one.
      */
-    public function table(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition, ?QueryFact $output, Derivation $derivation): Table
+    public function table(CreateTable $definition, ?QueryFact $output, Derivation $derivation): Table
     {
         $comparison = $derivation->context->columnNames;
         $primary = $this->primaryColumns($definition);
@@ -157,7 +157,7 @@ final class TableDeclaration
      * @param list<array{ColumnDefinition|null, Column}> $columns
      * @return list<Key>
      */
-    public function keys(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition, array $columns, Comparison $comparison): array
+    public function keys(CreateTable $definition, array $columns, Comparison $comparison): array
     {
         $primary = [];
         $unique = [];
@@ -341,7 +341,7 @@ final class TableDeclaration
      *
      * @return list<Name>|null
      */
-    public function partitions(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition): ?array
+    public function partitions(CreateTable $definition): ?array
     {
         $partitioning = $definition->partitioning;
         if (!$partitioning instanceof PartitionClause) {

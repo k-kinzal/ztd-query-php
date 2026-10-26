@@ -39,7 +39,7 @@ final class AlterTableCommandTest extends TestCase
         self::assertTrue((new AlterTableCommand())->clearsDiagnostics());
     }
 
-    public function testExecuteConvertsTheRowsOfAChangedColumnWithWarnings(): void
+    public function testAlterConvertsTheRowsOfAChangedColumnWithWarnings(): void
     {
         $session = (new Instance())->connect();
         $session->query("CREATE DATABASE d; USE d; SET sql_mode = ''; CREATE TABLE t (a INT, b VARCHAR(10)); INSERT INTO t VALUES (1,'x'),(2,'abc'),(3,'12'),(NULL,NULL)");
@@ -167,9 +167,10 @@ final class AlterTableCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('CREATE PROCEDURE p() ALTER TABLE t WITH VALIDATION, FORCE');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
         $statement = $operation->statement->body;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable::class, $statement);
+        self::assertInstanceOf(AlterTable::class, $statement);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of ALTER and WITH VALIDATION');
@@ -193,7 +194,9 @@ final class AlterTableCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        $statement = $session->analyze('DROP INDEX i ON t LOCK = NONE')->statement;
+        $statementAnalysis = $session->analyze('DROP INDEX i ON t LOCK = NONE');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
+        $statement = $statementAnalysis->statement;
         self::assertInstanceOf(DropIndex::class, $statement);
 
         [$table, $commands] = (new AlterTableCommand())->request($statement);
@@ -288,6 +291,7 @@ final class AlterTableCommandTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $operation = $session->analyze('ALTER TABLE t ADD COLUMN b INT DEFAULT (zz())');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1305);
@@ -302,7 +306,9 @@ final class AlterTableCommandTest extends TestCase
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
-        $statement = $session->analyze('ALTER TABLE t MODIFY a BIGINT')->statement;
+        $statementAnalysis = $session->analyze('ALTER TABLE t MODIFY a BIGINT');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
+        $statement = $statementAnalysis->statement;
         self::assertInstanceOf(AlterTable::class, $statement);
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, 't', 'd', GrammarRelease::MySql847);
@@ -319,7 +325,9 @@ final class AlterTableCommandTest extends TestCase
     public function testIndexesAnswersTheAddedIndexesInOrder(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER TABLE t ADD COLUMN b INT, ADD INDEX i (a), ADD UNIQUE KEY j (b)')->statement;
+        $statementAnalysis = $session->analyze('ALTER TABLE t ADD COLUMN b INT, ADD INDEX i (a), ADD UNIQUE KEY j (b)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
+        $statement = $statementAnalysis->statement;
         self::assertInstanceOf(AlterTable::class, $statement);
 
         $indexes = (new AlterTableCommand())->indexes($statement->commands);
@@ -328,27 +336,7 @@ final class AlterTableCommandTest extends TestCase
     }
 
 
-    public function testCopiesColumnAnswersTrueForAColumnBecomingNotNullOutsideAStrictMode(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query("CREATE DATABASE d; USE d; SET sql_mode = ''; CREATE TABLE t (a INT, b INT NOT NULL)");
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
-        self::assertTrue((new AlterTableCommand())->copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
-    }
-
-    public function testCopiesColumnAnswersFalseForAColumnBecomingNotNullUnderAStrictMode(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT NOT NULL)');
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-
-        self::assertFalse((new AlterTableCommand())->copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
-    }
 
     public function testTableReportsATableOfAMissingDatabaseAsMissingIn57(): void
     {
@@ -407,15 +395,6 @@ final class AlterTableCommandTest extends TestCase
         self::assertSame('Records: 2  Duplicates: 0  Warnings: 0', $reply->info);
     }
 
-    public function testCopiesAddedAnswersTrueForAStoredGeneratedColumn(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c INT AS (a + 1) VIRTUAL, e INT DEFAULT (a + 1), f DATETIME DEFAULT CURRENT_TIMESTAMP)');
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
-
-        self::assertSame([false, true, false, true, false], array_map(static fn ($column): bool => (new AlterTableCommand())->copiesAdded($column), $table->definition->columns));
-    }
 
     public function testRebuildRewritesTheUpdateTimeWhenCopyingRowsIn57(): void
     {
@@ -445,6 +424,7 @@ final class AlterTableCommandTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $statement = $operation->statement;
         self::assertInstanceOf(CreateIndex::class, $statement);
         (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation->facts, true);

@@ -24,24 +24,22 @@ final class CreationRolesTest extends TestCase
         self::assertFalse($rules->columnless([], new M\Table\TableQuery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]))));
     }
 
-    public function testReadProblemKeepsAContradictoryReadOutsideAnOrdinaryDefinition(): void
+    public function testReadProblemRetainsAContradictoryReadInTheRequest(): void
     {
         $query = new M\Table\TableQuery(new M\Query\Select([], [new M\Query\Star()]));
         $rules = new CreationRoles();
         self::assertNull($rules->readProblem(null));
         self::assertNotNull($rules->readProblem($query));
         self::assertTrue($rules->deferred([], [], $query));
-        $this->expectExceptionMessage('A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
-        new M\Table\CreateTable(new QualifiedName(new Name('t')), query: $query);
+        self::assertTrue((new M\Table\CreateTable(new QualifiedName(new Name('t')), query: $query))->hasExecutionCondition());
     }
 
-    public function testDeferredRetainsTheColumnlessRoleWithoutAnOrdinaryStatement(): void
+    public function testDeferredRetainsTheColumnlessRequest(): void
     {
         $name = new QualifiedName(new Name('t'));
-        $definition = new M\Routine\Program\Write\DeferredCreateTable($name, ifNotExists: true);
+        $definition = new M\Table\CreateTable($name, ifNotExists: true);
         self::assertTrue((new CreationRoles())->deferred($definition->elements, $definition->options, $definition->query));
-        $this->expectExceptionMessage('An ordinary table creation has a declared column or a creation query.');
-        new M\Table\CreateTable($name, ifNotExists: true);
+        self::assertTrue($definition->hasExecutionCondition());
     }
     public function testTemporaryStorageDistinguishesZeroAndTheLastSpecifiedSize(): void
     {
@@ -59,11 +57,10 @@ final class CreationRolesTest extends TestCase
         $name = new QualifiedName(new Name('t'));
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $option = new M\Table\Option\AutoextendSizeOption(new M\Literal\ByteSize(new M\Literal\Numeral('1')));
-        $instruction = new M\Routine\Program\Write\DeferredCreateTable($name, [$column], [$option], temporaryWords: 1);
+        $instruction = new M\Table\CreateTable($name, [$column], [$option], temporaryWords: 1);
         self::assertSame([$column], $instruction->elements);
         self::assertSame([$option], $instruction->options);
-        $this->expectExceptionMessage('Positive AUTOEXTEND_SIZE with TEMPORARY belongs to a deferred creation instruction.');
-        new M\Table\CreateTable($name, [$column], [$option], temporaryWords: 1);
+        self::assertTrue($instruction->hasExecutionCondition());
     }
 
 }

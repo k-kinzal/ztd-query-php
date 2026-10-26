@@ -17,7 +17,6 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
@@ -43,9 +42,9 @@ final class TableExpressions
 {
     /**
      * @param Planner $planner The planner of the statement, which compiles the expressions
-     * @param CreateTable|DeferredCreateTable $create The statement that declares the table
+     * @param CreateTable $create The statement that declares the table
      */
-    public function __construct(public readonly Planner $planner, public readonly CreateTable|DeferredCreateTable $create)
+    public function __construct(public readonly Planner $planner, public readonly CreateTable $create)
     {
     }
 

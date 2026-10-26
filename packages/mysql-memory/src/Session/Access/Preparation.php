@@ -48,6 +48,15 @@ final class Preparation
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\TableUse())->prepare($operation->statement, $session);
+            return;
+        }
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $operation->statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\AlterUse())->header($operation->statement, $session);
+            $this->alterParameters($operation->statement, $session);
+            return;
+        }
         $this->protocol($operation->statement);
         $this->program($operation, $session);
         (new Reading())->read($operation, $session, true);
@@ -57,6 +66,16 @@ final class Preparation
             (new \MySqlMemory\Program\Routine\LoadNotices())->prepare($operation->statement, $session);
         }
         (new DefaultDatabase())->referenced($operation, $session);
+        $this->hints($operation, $session);
+    }
+
+    /**
+     * Resolves conditions under temporary hint values and restores them on every outcome.
+     *
+     * @throws SqlError When resolution or a hint condition refuses preparation
+     */
+    public function hints(Operation $operation, Session $session): void
+    {
         $application = (new Hints())->apply($operation->statement, $session, true);
         try {
             $application->report($session);
@@ -220,7 +239,7 @@ final class Preparation
      *
      * @throws SqlError When the complete declaration contains a dynamic parameter
      */
-    public function alterParameters(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex $definition, Session $session): void
+    public function alterParameters(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex $definition, Session $session): void
     {
         if (!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true) || (new \MySqlMemory\Command\Prepared\GenerationParameters())->occurrences($definition, $session->settings()->release()) === []) {
             return;

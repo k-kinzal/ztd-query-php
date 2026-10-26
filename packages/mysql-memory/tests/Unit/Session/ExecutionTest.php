@@ -103,15 +103,6 @@ final class ExecutionTest extends TestCase
         self::assertNull($session->running->partial);
     }
 
-    public function testAccessRejectsQueriesWhileTableCreationWaitsForCommit(): void
-    {
-        $session = (new Instance('8.4.7', [], ['d']))->connect();
-        $session->query('CREATE TABLE d.t(a INT) START TRANSACTION');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(3977);
-        $session->query('SELECT 1');
-    }
 
     public function testPerformRunsAnAnalyzedStatementAndSetsRowCount(): void
     {

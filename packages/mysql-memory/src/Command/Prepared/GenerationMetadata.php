@@ -9,9 +9,9 @@ use MySqlMemory\Dictionary\View;
 use MySqlMemory\Error\Family\TransactionError;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\State\StatementCounters;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 
 /**
  * Tracks generation-template preparation across destination changes.
@@ -40,14 +40,14 @@ final class GenerationMetadata
     /**
      * @param TableDefinition|View|null $destination The destination identity at preparation
      */
-    public function __construct(public readonly DeferredCreateTable $definition, public readonly string $database, public TableDefinition|View|null $destination)
+    public function __construct(public readonly CreateTable $definition, public readonly string $database, public TableDefinition|View|null $destination)
     {
     }
 
     /**
      * Captures complete deferred generation declarations for destination revalidation.
      */
-    public static function capture(DeferredCreateTable $definition, string $database, Session $session): ?self
+    public static function capture(CreateTable $definition, string $database, Session $session): ?self
     {
         if (!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
             return null;

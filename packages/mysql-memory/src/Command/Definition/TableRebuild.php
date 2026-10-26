@@ -308,6 +308,29 @@ final class TableRebuild
         return false;
     }
     /**
+     * Tells whether adding a column copies the table: a STORED generated column, or a column whose
+     * default is an expression other than the current time.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
+     */
+    public static function copiesAdded(ColumnDefinition $column): bool
+    {
+        return ($column->generated !== null && $column->stored) || ($column->default->expression !== null && !$column->default->now);
+    }
+
+    /**
+     * Tells whether the change of one column copies the table: the column becomes AUTO_INCREMENT,
+     * becomes NOT NULL outside a strict mode, or is or becomes a generated column whose expression
+     * or storage changes (a new STORED generated column copies it too).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
+     */
+    public static function copiesColumn(ColumnDefinition $before, ColumnDefinition $after, Context $context): bool
+    {
+        $generated = ($before->generated !== null) !== ($after->generated !== null) || $before->stored !== $after->stored || $before->expression !== $after->expression;
+
+        return $generated || ($after->srid !== null && $after->srid !== $before->srid) || ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
+    }
+
+    /**
      * Identifies storage and key changes that rebuild rows without changing column types.
      */
     public static function copiesDefinition(TableDefinition $old, TableDefinition $new, TableLayout $layout): bool

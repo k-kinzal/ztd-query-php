@@ -201,9 +201,6 @@ final class CreateTableRule
 
             return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate) {
-                throw $failure;
-            }
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts, $failure->sources);
         }
     }
@@ -241,18 +238,13 @@ final class CreateTableRule
     }
 
     /**
-     * Publishes an ordinary definition or retains its incompatible MERGE/query roles.
+     * Publishes the complete request, including incompatible MERGE/query roles.
      *
      * @param list<TableElement> $elements Complete column and key definitions
      * @param list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption> $options Complete table options
-     * @throws \SqlSemantics\Construction\RejectedInput When the definition belongs to a stored template
      */
     public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false): CreateTable
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $options, $query, $partitioning, $temporary > 0)) {
-            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate($definition), 0, false, $this->lowering->origins->publish());
-        }
         return new CreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
     }
 }

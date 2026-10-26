@@ -34,26 +34,25 @@ final class AlterRuleTest extends TestCase
     {
         self::assertSame('ALTER TABLE t ENGINE InnoDB, ROW_FORMAT DYNAMIC', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
     }
-    public function testDefinitionRefusesAnOrdinaryRootForARetainedDeclaration(): void
+    public function testDefinitionPublishesAnOrdinaryRootWithItsInvocationCondition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql, '5.7.44'))->analyze('ALTER TABLE t MODIFY g INT AS(USER())');
+        $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('ALTER TABLE t MODIFY g INT AS(USER())');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
+        self::assertTrue($operation->statement->hasExecutionCondition());
     }
 
     public function testDefinitionRetainsPartitionOperandRangesWithoutRetainingInputText(): void
     {
         $sql = 'ALTER TABLE t WITH VALIDATION PARTITION BY HASH(VERSION())';
-        try {
-            (new Semantics(Dialect::MySql))->analyze($sql);
-            self::fail('An inapplicable validation modifier retains a deferred alteration.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate::class, $failure->problem);
-            $partition = $failure->problem->definition->commands[1];
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy::class, $partition);
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod::class, $partition->partitioning->method);
-            $origin = $failure->sources->of($partition->partitioning->method->expression);
-            self::assertSame(strpos($sql, 'VERSION()'), $origin?->offset);
-            self::assertSame(9, $origin->length);
-        }
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
+        $partition = $operation->statement->commands[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy::class, $partition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod::class, $partition->partitioning->method);
+        $origin = $operation->sources->of($partition->partitioning->method->expression);
+        self::assertSame(strpos($sql, 'VERSION()'), $origin?->offset);
+        self::assertSame(9, $origin->length);
     }
 }

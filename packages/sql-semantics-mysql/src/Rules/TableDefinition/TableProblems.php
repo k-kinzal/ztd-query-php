@@ -53,7 +53,7 @@ final class TableProblems
     /**
      * Reports the problems of a definition against the declaration it provides.
      */
-    public function report(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition, Table $table, Derivation $derivation): void
+    public function report(CreateTable $definition, Table $table, Derivation $derivation): void
     {
         $this->collations($definition, $derivation);
         $this->duplicates($table, $derivation);
@@ -86,7 +86,7 @@ final class TableProblems
     /**
      * Reports explicit column collations that the selected release does not provide.
      */
-    public function collations(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition, Derivation $derivation): void
+    public function collations(CreateTable $definition, Derivation $derivation): void
     {
         $names = [];
         foreach ($definition->elements as $element) {
@@ -149,7 +149,7 @@ final class TableProblems
     /**
      * Reports each generated column of the CREATE TABLE part that a column of the SELECT part would fill (MYSQL-GENERATED-WRITE-001).
      */
-    public function selected(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $definition, QueryFact $output, Derivation $derivation): void
+    public function selected(CreateTable $definition, QueryFact $output, Derivation $derivation): void
     {
         $comparison = $derivation->context->columnNames;
         foreach ((new TableDeclaration())->settled($output) as $field) {

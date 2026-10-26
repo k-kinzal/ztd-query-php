@@ -49,6 +49,9 @@ final class Reading
      */
     public function read(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
+        if (Stages::definitionCondition($operation->statement)) {
+            return;
+        }
         if ($operation instanceof Operation && in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
         }

@@ -82,8 +82,9 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When a retained name or preceding key column is invalid
      */
-    public function creation(\MySqlMemory\Session\Resolution\TablePreparation $prepared, \MySqlMemory\Session\Session $session): void
+    public function creation(\SqlSemantics\Statement\Operation $prepared, \MySqlMemory\Session\Session $session): void
     {
+        \SqlSemantics\Diagnostic\Check::invariant($prepared->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable, 'Creation keys belong to the same table request.');
         if (array_filter($prepared->facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) === []) {
             return;
         }
@@ -93,7 +94,7 @@ final class IndexNames
         $indexes = array_values(array_filter($prepared->statement->elements, static fn ($element): bool => $element instanceof IndexDefinition));
         $declared = new \MySqlMemory\Typing\Declared($session->settings()->connectionCollation, $session->settings()->release());
         $columns = [];
-        foreach ($prepared->table->columns as $column) {
+        foreach ($prepared->declarations()[0]->columns as $column) {
             $columns[mb_strtolower($column->name->value)] = $column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? \MySqlMemory\Typing\Domain::of($column->type, true) : $declared->domain($column->type);
         }
         $engine = (new \MySqlMemory\Command\Definition\StorageOptions())->engine($prepared->statement, $session->variables);

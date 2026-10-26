@@ -10,7 +10,7 @@ use MySqlMemory\Command\Definition\TableLayout;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 
 /**
  * Opens a retained ALTER target and applies its ordered declaration changes.
@@ -32,7 +32,7 @@ final class AlterUse
      *
      * @throws SqlError When the retained header or partition clause is invalid
      */
-    public function header(DeferredAlterTable $definition, Session $session, ?string $database = null): string
+    public function header(AlterTable $definition, Session $session, ?string $database = null): string
     {
         $database = $definition->table->schema->value ?? $database ?? $session->variables->database;
         if ($database === '') {
@@ -46,7 +46,7 @@ final class AlterUse
             }
         }
         (new AlterTableCommand())->read($definition->commands, $facts, $session->settings()->legacy());
-        (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($definition, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()));
+        (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($definition, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()), $database);
         foreach ($facts->warnings as $warning) {
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $warning->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
                 throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
@@ -66,13 +66,8 @@ final class AlterUse
      *
      * @throws SqlError When target lookup or a declaration is refused
      */
-    public function raise(DeferredAlterTable $definition, Session $session, bool $invocation = true, ?string $database = null): \MySqlMemory\Result\Reply
+    public function raise(AlterTable $definition, Session $session, ?string $database = null): \MySqlMemory\Result\Reply
     {
-        if ($invocation) {
-            \MySqlMemory\Session\State\StatementCounters::query($session);
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_alter_table');
-            $session->diagnostics->clear();
-        }
         $database = $this->header($definition, $session, $database);
         $session->transaction->commit();
         if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->transaction($definition->commands)) {
@@ -106,7 +101,7 @@ final class AlterUse
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
             throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, true, (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database), $session);
         }
-        $statement = new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($definition->table, $rewrite->commands($definition), $definition->ignore);
+        $statement = new AlterTable($definition->table, $rewrite->commands($definition), $definition->ignore);
         $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();
         $reply = $execution->run($statement, $session, $database);
         $execution->display($table, $definition, $session, $rewrite->parameters);

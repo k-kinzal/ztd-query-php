@@ -172,4 +172,36 @@ final class TableRebuildTest extends TestCase
         self::assertFalse(TableRebuild::copiesDefinition($old->definition, $old->definition, TableLayout::of($old->definition)));
     }
 
+    public function testCopiesColumnAnswersTrueForAColumnBecomingNotNullOutsideAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; SET sql_mode = ''; CREATE TABLE t (a INT, b INT NOT NULL)");
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertTrue(TableRebuild::copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
+    }
+
+    public function testCopiesColumnAnswersFalseForAColumnBecomingNotNullUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT NOT NULL)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertFalse(TableRebuild::copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
+    }
+
+    public function testCopiesAddedAnswersTrueForAStoredGeneratedColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c INT AS (a + 1) VIRTUAL, e INT DEFAULT (a + 1), f DATETIME DEFAULT CURRENT_TIMESTAMP)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame([false, true, false, true, false], array_map(static fn ($column): bool => TableRebuild::copiesAdded($column), $table->definition->columns));
+    }
+
 }

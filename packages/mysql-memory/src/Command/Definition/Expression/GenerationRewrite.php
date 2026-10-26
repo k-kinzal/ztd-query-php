@@ -76,11 +76,10 @@ final class GenerationRewrite
     /**
      * Preserves all creation operands and any independent deferred definition role.
      */
-    public function create(M\Routine\Program\Write\DeferredCreateTable $source): M\Table\CreateTable|M\Routine\Program\Write\DeferredCreateTable
+    public function create(M\Table\CreateTable $source): M\Table\CreateTable
     {
         $elements = array_map(fn ($element) => $element instanceof M\Table\Column\ColumnDefinition ? $this->column($element) : $element, $source->elements);
-        $class = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($elements, $source->options, $source->query, $source->partitioning) ? M\Routine\Program\Write\DeferredCreateTable::class : M\Table\CreateTable::class;
-        return new $class($source->name, $elements, $source->options, $source->partitioning, $source->query, $source->temporaryWords, $source->ifNotExists, $source->enclosed);
+        return new M\Table\CreateTable($source->name, $elements, $source->options, $source->partitioning, $source->query, $source->temporaryWords, $source->ifNotExists, $source->enclosed);
     }
 
     /**
@@ -88,7 +87,7 @@ final class GenerationRewrite
      *
      * @return list<M\Alter\AlterCommand>
      */
-    public function commands(M\Routine\Program\Write\DeferredAlterTable $source): array
+    public function commands(M\Alter\AlterTable $source): array
     {
         $copy = new Reconstruction(fn (Node $node): ?Node => $node instanceof M\Table\Column\ColumnDefinition ? $this->column($node) : null);
         return array_map(static function (M\Alter\AlterCommand $command) use ($copy): M\Alter\AlterCommand {

@@ -46,7 +46,7 @@ final class StorageOptions
      *
      * @throws SqlError When an engine is unknown and substitution is disabled
      */
-    public function resolve(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $statement, Session $session, Context $context): void
+    public function resolve(Statement $statement, Session $session, Context $context, ?string $database = null): void
     {
         if ($statement instanceof CreateTable && array_key_exists(spl_object_id($statement), $session->variables->preparedEngines)) {
             return;
@@ -56,7 +56,7 @@ final class StorageOptions
             $statement instanceof AlterTable => $statement->table,
             default => null,
         };
-        if ($name !== null && $name->schema === null && $session->variables->database === '') {
+        if ($name !== null && $name->schema === null && ($database ?? $session->variables->database) === '') {
             throw QueryError::NoDatabase->error();
         }
         foreach ((new Walker())->find($statement, Node::class) as $node) {
@@ -82,7 +82,7 @@ final class StorageOptions
      *
      * @throws SqlError When the database is unspecified or an engine is unknown
      */
-    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $header, Session $session, Context $context): void
+    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail $header, Session $session, Context $context): void
     {
         if ($header->name->schema === null && $session->variables->database === '') {
             throw QueryError::NoDatabase->error();
@@ -184,7 +184,7 @@ final class StorageOptions
     /**
      * Resolves the selected engine, optionally reporting the fallback after resolve() checked its name.
      */
-    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Variables $variables, ?Context $context = null): string
+    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail $create, Variables $variables, ?Context $context = null): string
     {
         if (isset($variables->preparedEngines[spl_object_id($create)])) {
             return $variables->preparedEngines[spl_object_id($create)];
@@ -209,7 +209,7 @@ final class StorageOptions
      *
      * @throws SqlError When an option is invalid or unsupported
      */
-    public function check(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session, Context $context): void
+    public function check(CreateTable $create, Session $session, Context $context): void
     {
         $this->directories($create, $session);
         $engine = $this->engine($create, $session->variables);
@@ -232,7 +232,7 @@ final class StorageOptions
      * columns, absent schemas and IF NOT EXISTS follow it on 5.6 through 9.1.
      * Observed through SQL on 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
      */
-    public function directories(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session): void
+    public function directories(CreateTable $create, Session $session): void
     {
         foreach ($create->options as $option) {
             if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true) && !str_starts_with($option->value->bytes(), '/')) {
@@ -249,7 +249,7 @@ final class StorageOptions
      *
      * @throws SqlError When the selected engine requires an absent tablespace
      */
-    public function tablespace(TablespaceOption $option, CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, string $engine, Session $session): void
+    public function tablespace(TablespaceOption $option, CreateTable $create, string $engine, Session $session): void
     {
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $engine !== 'InnoDB' || in_array($option->tablespace->value, ['innodb_system', 'innodb_file_per_table'], true) || isset($session->instance->registry->tablespaces[$option->tablespace->value])) {
             return;

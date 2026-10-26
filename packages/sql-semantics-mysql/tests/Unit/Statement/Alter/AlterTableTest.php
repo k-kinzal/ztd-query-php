@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
+use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -98,6 +99,40 @@ final class AlterTableTest extends TestCase
         $sql = 'ALTER TABLE missing ADD (a INT(11), b BIT(65)), CHANGE c d INT(256)';
         $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $sql, strlen($sql), $semantics->profile());
 
-        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop ? $warning->name : ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated ? $warning->value : $warning->message()), array_column($notices, 1)));
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)"], array_map(static fn ($warning): string => $warning instanceof M\Notice\ParseStop ? $warning->name : ($warning instanceof M\Notice\Deprecated ? $warning->value : $warning->message()), array_column($notices, 1)));
+    }
+    public function testDeriveProgramAndDeriveRelationKeepTheTargetAndCompleteActions(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER()), ADD a INT');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
+        $alter = $operation->statement->body;
+        self::assertInstanceOf(AlterTable::class, $alter);
+        self::assertCount(2, $alter->commands);
+        self::assertTrue($operation->facts->covers($alter));
+    }
+
+    public function testRenderRetainsColumnAttributesAndActionOrder(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER()) STORED NOT NULL, ADD a INT');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS (USER()) STORED NOT NULL, ADD a INT', $operation->toString());
+    }
+
+    public function testHasExecutionConditionDistinguishesAnOrdinaryActionList(): void
+    {
+        self::assertFalse((new AlterTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), []))->hasExecutionCondition());
+    }
+    public function testDeriveRelationResolvesTheChangedTableShape(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '5.7.44');
+        $table = $semantics->analyze('CREATE TABLE t(g INT)');
+        $operation = $semantics->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER())', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
+        $alter = $operation->statement->body;
+        self::assertInstanceOf(AlterTable::class, $alter);
+        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
+        self::assertInstanceOf(DeclaredTable::class, $alter->deriveRelation($derivation, $derivation->environment())->table);
     }
 }

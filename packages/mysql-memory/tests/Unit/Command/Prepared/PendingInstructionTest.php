@@ -22,7 +22,6 @@ final class PendingInstructionTest extends TestCase
      */
     public static function providerInstructions(): iterable
     {
-        yield 'table partition' => ['CREATE TABLE t(a INT) PARTITION BY HASH(ROW(1,2))', 1564];
         yield 'routine revocation' => ['REVOKE ALL ON PROCEDURE * FROM u', 1144];
     }
 

@@ -12,7 +12,6 @@ use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Plan\Planner;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart as DeferredExpressionPart;
@@ -37,7 +36,7 @@ final class FunctionalKeys
      *
      * @throws \MySqlMemory\Error\SqlError When an indexed expression is forbidden or cannot be compiled
      */
-    public function columns(CreateTable|DeferredCreateTable $create, TableDefinition $definition, Planner $planner): array
+    public function columns(CreateTable $create, TableDefinition $definition, Planner $planner): array
     {
         (new \MySqlMemory\Session\Problem\Definition\IndexShapes())->prepare($create, $definition, $planner);
         $expressions = new TableExpressions($planner, $create);

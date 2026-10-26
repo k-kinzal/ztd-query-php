@@ -297,8 +297,6 @@ final class Session
         try {
             $operation = $this->analyze($statement, $prepared, $parameters);
             $this->hinted = $prepared ? [] : $this->hinted;
-        } catch (Parse\Definition\CompletedTemplate $completed) {
-            return $completed->reply;
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $this->diagnostics->clear();
@@ -316,7 +314,6 @@ final class Session
      *
      * @throws SqlError When the statement does not parse or does not resolve
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
-     * @throws Parse\Definition\CompletedTemplate When the legacy input path executes a conditional definition
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): \SqlSemantics\Statement\AnalyzedStatement

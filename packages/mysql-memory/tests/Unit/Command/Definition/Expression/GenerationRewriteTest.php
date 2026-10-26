@@ -50,16 +50,15 @@ final class GenerationRewriteTest extends TestCase
     #[DataProvider('providerColumns')]
     public function testCreateKeepsEveryOtherCreationOperand(M\Table\Column\ColumnDefinition $column): void
     {
-        $source = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$column], temporaryWords: 1, ifNotExists: true);
+        $source = new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column], temporaryWords: 1, ifNotExists: true);
         $result = (new GenerationRewrite())->create($source);
-        self::assertInstanceOf(M\Table\CreateTable::class, $result);
         self::assertSame([$source->name, 1, true], [$result->name, $result->temporaryWords, $result->ifNotExists]);
     }
 
     #[DataProvider('providerColumns')]
     public function testCommandsKeepsTheOrderedAlterActions(M\Table\Column\ColumnDefinition $column): void
     {
-        $source = new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('t')), [new M\Alter\Column\AddColumn($column)]);
+        $source = new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Column\AddColumn($column)]);
         $result = (new GenerationRewrite())->commands($source);
         self::assertCount(1, $result);
         self::assertInstanceOf(M\Alter\Column\AddColumn::class, $result[0]);

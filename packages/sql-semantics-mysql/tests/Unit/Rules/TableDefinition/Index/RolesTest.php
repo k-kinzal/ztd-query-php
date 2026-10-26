@@ -52,19 +52,17 @@ final class RolesTest extends TestCase
         new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
     }
 
-    public function testOrdinaryAlterCannotHoldARetainedRowKey(): void
+    public function testAlterRetainsARetainedRowKey(): void
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
-        $this->expectExceptionMessage('An ordinary ALTER statement excludes actions with an intrinsic invocation-time condition.');
-        new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]);
+        self::assertTrue((new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]))->hasExecutionCondition());
     }
 
-    public function testOrdinaryCreationCannotHoldARetainedRowKey(): void
+    public function testCreationRetainsARetainedRowKey(): void
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
-        $this->expectExceptionMessage('An index with a fixed name or operand condition belongs to a deferred creation instruction.');
-        new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]);
+        self::assertTrue((new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]))->hasExecutionCondition());
     }
     public function testElementsLeavesOrdinaryColumnKeysInTheDeclarationRole(): void
     {

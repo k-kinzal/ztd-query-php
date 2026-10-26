@@ -67,6 +67,16 @@ final class PreparedCommand implements Command
             return $this->run($statement, $session);
         }
         assert($statement instanceof Prepare);
+        return $this->prepare($statement, $session);
+    }
+
+    /**
+     * Reads and retains the definition named by SQL PREPARE.
+     *
+     * @throws \MySqlMemory\Error\SqlError When preparation refuses the statement
+     */
+    public function prepare(Prepare $statement, Session $session): Completion
+    {
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         $key = strtolower($statement->name->value);
         unset($session->preparation->named[$key]);
@@ -78,9 +88,6 @@ final class PreparedCommand implements Command
         }
         $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
         if ($prepared instanceof PendingInstruction) {
-            if ($prepared instanceof PendingTable && $prepared->metadata !== null) {
-                $prepared->metadata->sqlPrepared = true;
-            }
             $bindings = $prepared->parameters();
             $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
             return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
@@ -93,8 +100,14 @@ final class PreparedCommand implements Command
         (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         $bindings = ParameterBindings::capture($prepared);
-        $input = $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $prepared instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session);
-        $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session, $input)];
+        $cache = PreparedCache::capture($prepared, $session);
+        if ($cache->tables !== []) {
+            $cache = new PreparedCache($cache->definition, $cache->tables, (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session));
+        }
+        if ($cache->definition instanceof PreparedStatement && $cache->definition->generation !== null) {
+            $cache->definition->generation->sqlPrepared = true;
+        }
+        $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, $cache];
 
         return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
     }

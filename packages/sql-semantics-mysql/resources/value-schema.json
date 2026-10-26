@@ -537,9 +537,6 @@
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\PartitionEntryRefused": [],
-    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\RefusedAlterTemplate": {
-        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredAlterTable"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Problem\\RepeatedTable": {
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
@@ -2941,24 +2938,9 @@
         "names": "array",
         "type": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\DeclaredName"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredAlterTable": {
-        "commands": "array",
-        "ignore": "bool",
-        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredColumnAssignment": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable": {
-        "elements": "array",
-        "enclosed": "bool",
-        "ifNotExists": "bool",
-        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
-        "options": "array",
-        "partitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Partitioning",
-        "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery",
-        "temporaryWords": "int"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDefaultSetting": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
@@ -3860,9 +3842,6 @@
         "options": "array",
         "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic",
         "temporaryWords": "int"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedCreateTemplate": {
-        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredCreateTable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedIndexTemplate": {
         "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\Index\\DeferredCreateIndex"

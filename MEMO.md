@@ -2202,3 +2202,72 @@ missing native mysql.password_history provider, catalog completeness failures,
 5.6 account-name reconstruction refusal, incomplete model/generator migration,
 state observation and full corpus/900-second matrix remain unresolved. Goals B-D
 remain open; these scoped role checks do not close whole-system acceptance.
+
+### Complete table requests enter the common execution boundary (2026-10-26)
+
+CREATE TABLE and ALTER TABLE now retain representable intrinsic conditions on
+their ordinary statement types. Top-level, prepared and stored requests no longer
+require separate deferred table types. Their constructors retain structural
+invariants; preparation and execution decide whether a condition is reached or an
+existing destination satisfies a conditional request. The four deferred/refusal
+types, CompletedTemplate and TablePreparation have been removed. Complete table
+input no longer executes through TableInput while Session::analyze is running.
+
+The existing commands now own conditional execution inside the common statement
+lifecycle. Preparation retains the same request and original database, including
+generation metadata. Incomplete partition headers still use PendingTable.
+Prepared alternatives are captured only when the active request has resolved
+table dependencies, using the same rule for SQL and binary preparation. Statement
+access checks and table-copy decisions have been separated into their existing
+execution responsibilities without changing the protected size or test policies.
+
+Eris generates ordinary and duplicate-column requests and composes a creation
+with a dependent conditional request before the callback. The second request is
+prepared before its destination exists. Execution checks the release-specific
+outcome, destination identity and balanced statement scopes using opaque labels.
+Mapping the complete sequence over the operation generator preserves the shared
+column name during shrinking. Table publication still uses Operation, Facts and
+runtime derivation; this is not the required concrete-statement/local-meaning
+migration for table definitions.
+
+Scoped evidence on PHP 8.5.8:
+
+- Semantic table models, lowering, declaration rules, version structure and
+  related stored operands pass 1,052 tests / 1,947 assertions. CREATE/ALTER examples
+  pass 11 / 11. Earlier failures exposed obsolete constructor-error expectations
+  and incorrect type assertions added during the migration; those tests are fixed.
+- Generated execution and analysis/preparation boundaries pass 91 / 19,182.
+  The 27 Eris cases use 100 trials each and seed 20261026 on 5.6.51, 5.7.44,
+  8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1 and 9.1.0. These cases preserve the
+  checked catalog, transaction, diagnostics and counter state during analysis.
+- The broader definition/prepared/shared-boundary run reports 964 / 2,392,
+  with three obsolete PendingInstruction expectations and 13 time-limit risks.
+  The complete partition request's assertions now exercise PreparedStatement;
+  the final preparation-boundary run passes 8 / 38. A separate prepared-cache
+  and binary-protocol run reports 32 / 77 with seven one-second time-limit risks.
+  Neither broader run is a passing regression claim. All time limits are unchanged.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass for 81 memory
+  and 31 semantic PHP files. Strict autoload reports 8,630 memory classes and
+  8,568 semantic classes. Both source LOC/tree gates pass, and the retained-field
+  schema check covers 1,045 semantic value definitions. Deptrac reports zero
+  violations, uncovered dependencies, warnings and errors in both packages.
+- The ordinary reconstruction target attempts the supplied grammar seeds indexed
+  as CREATE [TEMPORARY] TABLE or ALTER [IGNORE] TABLE on all nine releases, with
+  default lexical settings, seed 20261026, max-runs 0 and timeout 60. The selection
+  contains 1,974 unmodified files: 268 for 5.6, 187 for 5.7, 223 for 8.4 and 216
+  for each other release. Every profile exits one at its first counterexample;
+  this is not a completed replay of those files.
+
+The first reconstruction counterexample on 5.6.51 and 5.7.44 is attribute-3.txt:
+`ALTER TABLE _sqlfaker_identifier MODIFY _sqlfaker_identifier BIT NULL ON UPDATE CURRENT_TIMESTAMP`.
+On 8.0.44 through 9.1.0 it is column_attribute-15.txt:
+`CREATE TABLE _sqlfaker_identifier ( _sqlfaker_identifier BIT NULL SRID 1 )`.
+Lowering rejects these column-attribute combinations before publishing a
+reconstructible request. These failures expose remaining nested-type limitations;
+the seeds and equality check are unchanged.
+
+The common table lifecycle does not establish read-only analysis for every
+statement. Deferred index/revocation/write input routes and shared dictionary/view
+caches remain, as do the Operation/Facts migration, complete generators, native
+catalog providers and observation, full corpus replay and the separate 900-second
+matrix. Goals B-D remain open, and PR #665 remains a draft.

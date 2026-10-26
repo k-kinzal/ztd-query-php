@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart as DeferredExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -22,8 +22,9 @@ final class ExpressionPartTest extends TestCase
     public function testDeriveKeyPartPreservesTheDeclarationScope(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT, KEY (((a,2))))');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         self::assertInstanceOf(CreateProcedure::class, $create->statement);
-        self::assertInstanceOf(DeferredCreateTable::class, $create->statement->body);
+        self::assertInstanceOf(CreateTable::class, $create->statement->body);
         $index = $create->statement->body->elements[1];
         self::assertInstanceOf(IndexDefinition::class, $index);
         $part = $index->parts[0];
@@ -38,8 +39,9 @@ final class ExpressionPartTest extends TestCase
     public function testDeriveKeyPartPreservesTheBareColumnDependency(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE IF NOT EXISTS t(a INT, KEY ((a)))');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         self::assertInstanceOf(CreateProcedure::class, $create->statement);
-        self::assertInstanceOf(DeferredCreateTable::class, $create->statement->body);
+        self::assertInstanceOf(CreateTable::class, $create->statement->body);
         $index = $create->statement->body->elements[1];
         self::assertInstanceOf(IndexDefinition::class, $index);
         $part = $index->parts[0];

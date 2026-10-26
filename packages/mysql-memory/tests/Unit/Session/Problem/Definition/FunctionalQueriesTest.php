@@ -60,9 +60,11 @@ final class FunctionalQueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $indexed = $session->analyze("CREATE PROCEDURE p() CREATE TABLE t(a INT,PRIMARY KEY ((CAST(a AT TIME ZONE '+00:00' AS DATETIME))))");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $indexed);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $indexed->statement);
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
         $selected = $session->analyze("SELECT CAST(a AT TIME ZONE '+00:00' AS DATETIME) FROM t");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $selected);
         $owned = array_values(array_filter($indexed->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion));
         self::assertCount(1, $owned);
         self::assertTrue((new FunctionalQueries())->deferred($owned[0], $indexed->statement->body));
@@ -72,10 +74,12 @@ final class FunctionalQueriesTest extends TestCase
     public function testForbiddenReportsTheIndexNameBeforeMissingKeyColumns(): void
     {
         $session = (new Instance())->connect();
-        $routine = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,INDEX i(missing,((TABLE present))))')->statement;
+        $routineAnalysis = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,INDEX i(missing,((TABLE present))))');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $routineAnalysis);
+        $routine = $routineAnalysis->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
         $statement = $routine->body;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3758);
         $this->expectExceptionMessage("Expression of functional index 'i' contains a disallowed function.");

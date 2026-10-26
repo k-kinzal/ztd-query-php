@@ -35,7 +35,7 @@ final class InnoDbOptions
      *
      * @throws SqlError When an InnoDB option is refused
      */
-    public function check(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session, Context $context): void
+    public function check(CreateTable $create, Session $session, Context $context): void
     {
         $row = null;
         $text = [];
@@ -72,7 +72,7 @@ final class InnoDbOptions
     /**
      * Reads the last explicit ROW_FORMAT, retaining DEFAULT separately from omission.
      */
-    public function requested(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create): ?RowFormat
+    public function requested(CreateTable $create): ?RowFormat
     {
         $format = null;
         foreach ($create->options as $option) {
@@ -87,7 +87,7 @@ final class InnoDbOptions
     /**
      * Resolves an accepted definition against the current instance settings.
      */
-    public function format(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Variables $variables): RowFormat
+    public function format(CreateTable $create, Variables $variables): RowFormat
     {
         $format = $this->requested($create);
         if ($format === RowFormat::Fixed || $this->antelope($format, $variables)) {
@@ -162,7 +162,7 @@ final class InnoDbOptions
      *
      * @throws SqlError When the table cannot use the requested encryption
      */
-    public function tableEncryption(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Session $session): void
+    public function tableEncryption(CreateTable $create, Session $session): void
     {
         $name = $create->name->name->value;
         $value = (new Database\TableEncryption())->value($create, $session);

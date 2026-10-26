@@ -83,8 +83,15 @@ final class AlterTable implements Statement, Relation
             );
         }
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($table, $this->commands);
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($this->commands), 'An ordinary ALTER statement excludes actions with an intrinsic invocation-time condition.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Identifies intrinsic action conditions retained until preparation or execution.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($this->commands);
     }
 
     /**

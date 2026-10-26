@@ -33,8 +33,9 @@ final class PreparedStatement
      * Captures a prepared structure and the inputs needed to interpret its literals.
      *
      * @param string|null $engine The selected table engine, resolved during preparation
+     * @param GenerationMetadata|null $generation Destination changes observed by generation declarations
      */
-    public function __construct(public readonly Statement|\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement $statement, public readonly LanguageProfile $profile, public readonly ?Settings $literals, public readonly string $database, public readonly ?string $engine = null)
+    public function __construct(public readonly Statement|\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement $statement, public readonly LanguageProfile $profile, public readonly ?Settings $literals, public readonly string $database, public readonly ?string $engine = null, public readonly ?GenerationMetadata $generation = null)
     {
     }
 
@@ -52,7 +53,8 @@ final class PreparedStatement
             throw new LogicException('No prepared statement implementation for ' . $operation::class);
         }
         $engine = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && array_filter($operation->statement->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) !== [] ? (new \MySqlMemory\Command\Definition\StorageOptions())->engine($operation->statement, $session->variables) : null;
-        return new self($operation->statement, $operation->profile(), Settings::of($operation->context), $session->variables->database, $engine);
+        $generation = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? GenerationMetadata::capture($operation->statement, $session->variables->database, $session) : null;
+        return new self($operation->statement, $operation->profile(), Settings::of($operation->context), $session->variables->database, $engine, $generation);
     }
 
     /**
@@ -78,6 +80,7 @@ final class PreparedStatement
         $session->hinted = [];
         $session->dots = [];
         try {
+            $this->generation?->refresh($session);
             if ($this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
                 return (new Execution($session))->statement($this->statement, $parameters);
             }

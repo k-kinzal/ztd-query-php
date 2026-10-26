@@ -7,6 +7,7 @@ namespace Tests\Unit\Session\Problem;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Problem\Stages;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
@@ -20,11 +21,21 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Stages::class)]
 #[Small]
 final class StagesTest extends TestCase
 {
+    public function testDefinitionConditionKeepsCompleteRequestsSeparateFromInstallableActions(): void
+    {
+        $name = new QualifiedName(new Name('t'));
+        self::assertTrue(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($name)));
+        self::assertTrue(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($name, [new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)])));
+        self::assertFalse(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($name, [new \SqlSemantics\Platform\MySql\Statement\Alter\Command\Force()])));
+        self::assertFalse(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit()));
+    }
+
     public function testGrammarLeavesResolutionNoticesForTheirSemanticSubjects(): void
     {
         $resolution = new Deprecation(Deprecated::ValuesElsewhere);
@@ -76,27 +87,25 @@ final class StagesTest extends TestCase
     public function testAnsweredLeavesTheMissingTableOfAShowStatementToItsCommand(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $show = $session->analyze('SHOW CREATE TABLE nosuch')->statement;
-        $select = $session->analyze('SELECT * FROM nosuch')->statement;
+        $show = $session->analyze('SHOW CREATE TABLE nosuch');
+        $select = $session->analyze('SELECT * FROM nosuch');
+        self::assertInstanceOf(Operation::class, $show);
+        self::assertInstanceOf(Operation::class, $select);
         $missing = new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('nosuch')));
 
-        self::assertTrue(Stages::answered($show, $missing));
-        self::assertFalse(Stages::answered($select, $missing));
+        self::assertTrue(Stages::answered($show->statement, $missing));
+        self::assertFalse(Stages::answered($select->statement, $missing));
     }
 
-    public function testAnsweredLeavesTheMissingTablesOfTheDefinitionAndMaintenanceStatementsToTheirCommands(): void
+    #[DataProvider('providerAnswered')]
+    public function testAnsweredLeavesTheMissingTablesOfTheDefinitionAndMaintenanceStatementsToTheirCommands(string $sql, bool $expected): void
     {
         $session = (new Instance())->connect();
+        $operation = $session->analyze($sql);
+        self::assertInstanceOf(Operation::class, $operation);
         $missing = new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('nosuch')));
 
-        self::assertSame([true, true, true, true, true, false], [
-            Stages::answered($session->analyze('CHECK TABLE nosuch')->statement, $missing),
-            Stages::answered($session->analyze('ALTER TABLE nosuch ADD a INT')->statement, $missing),
-            Stages::answered($session->analyze('RENAME TABLE nosuch TO x')->statement, $missing),
-            Stages::answered($session->analyze('LOCK TABLES nosuch READ')->statement, $missing),
-            Stages::answered($session->analyze("LOAD DATA INFILE 'x' INTO TABLE nosuch")->statement, $missing),
-            Stages::answered($session->analyze('TRUNCATE TABLE nosuch')->statement, $missing),
-        ]);
+        self::assertSame($expected, Stages::answered($operation->statement, $missing));
     }
 
     public function testParsedHoldsForTheProblemsOfTheParser(): void
@@ -130,32 +139,44 @@ final class StagesTest extends TestCase
         self::assertFalse(Stages::afterReading(new Deprecation(Deprecated::BinaryOperator)));
     }
 
-    public function testSelfCheckedHoldsForTheStatementsWhoseCommandRaisesEveryProblem(): void
+    #[DataProvider('providerSelfChecked')]
+    public function testSelfCheckedHoldsForTheStatementsWhoseCommandRaisesEveryProblem(string $sql, bool $expected): void
     {
         $session = (new Instance())->connect();
+        $operation = $session->analyze($sql);
+        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame([true, true, true, false], [Stages::selfChecked($session->analyze("CREATE USER u IDENTIFIED BY 'x'")->statement), Stages::selfChecked($session->analyze("INSTALL COMPONENT 'file://x'")->statement), Stages::selfChecked($session->analyze('FLUSH TABLES')->statement), Stages::selfChecked($session->analyze('SELECT 1')->statement)]);
+        self::assertSame($expected, Stages::selfChecked($operation->statement));
     }
 
-    public function testOpensTableFirstHoldsForAlterTableCreateIndexAndDropIndex(): void
+    #[DataProvider('providerOpensTableFirst')]
+    public function testOpensTableFirstHoldsForAlterTableCreateIndexAndDropIndex(string $sql, bool $expected): void
     {
         $session = (new Instance())->connect();
+        $operation = $session->analyze($sql);
+        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame([true, true, true, false], [Stages::opensTableFirst($session->analyze('ALTER TABLE t ADD a INT')->statement), Stages::opensTableFirst($session->analyze('CREATE INDEX i ON t (a)')->statement), Stages::opensTableFirst($session->analyze('DROP INDEX i ON t')->statement), Stages::opensTableFirst($session->analyze('DROP TABLE t')->statement)]);
+        self::assertSame($expected, Stages::opensTableFirst($operation->statement));
     }
 
-    public function testAdministersHoldsForTheMaintenanceAndKeyCacheStatements(): void
+    #[DataProvider('providerAdministers')]
+    public function testAdministersHoldsForTheMaintenanceAndKeyCacheStatements(string $sql, bool $expected): void
     {
         $session = (new Instance())->connect();
+        $operation = $session->analyze($sql);
+        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame([true, true, true, false], [Stages::administers($session->analyze('CHECKSUM TABLE t')->statement), Stages::administers($session->analyze('CACHE INDEX t IN hot')->statement), Stages::administers($session->analyze('OPTIMIZE TABLE t')->statement), Stages::administers($session->analyze('TRUNCATE TABLE t')->statement)]);
+        self::assertSame($expected, Stages::administers($operation->statement));
     }
 
-    public function testExplainsHoldsForExplainAndShowParseTree(): void
+    #[DataProvider('providerExplains')]
+    public function testExplainsHoldsForExplainAndShowParseTree(string $sql, bool $expected): void
     {
         $session = (new Instance())->connect();
+        $operation = $session->analyze($sql);
+        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame([true, true, false], [Stages::explains($session->analyze('EXPLAIN SELECT 1')->statement), Stages::explains($session->analyze('EXPLAIN FOR CONNECTION 1')->statement), Stages::explains($session->analyze('SELECT 1')->statement)]);
+        self::assertSame($expected, Stages::explains($operation->statement));
     }
 
     public function testParsedHoldsForASystemVariableTheServerDoesNotKnow(): void
@@ -177,7 +198,9 @@ final class StagesTest extends TestCase
     public function testViewTargetRetainsOnlyTheOwningDefinitionKindCheck(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE VIEW v AS SELECT 1')->statement;
+        $operation = $session->analyze('CREATE VIEW v AS SELECT 1');
+        self::assertInstanceOf(Operation::class, $operation);
+        $statement = $operation->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $statement);
         $target = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind($statement->definition->name, \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView);
         $other = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(new QualifiedName(new Name('v')), \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView);
@@ -185,7 +208,9 @@ final class StagesTest extends TestCase
         self::assertTrue(Stages::viewTarget($statement, $target));
         self::assertTrue(Stages::answered($statement, $target));
         self::assertFalse(Stages::viewTarget($statement, $other));
-        self::assertFalse(Stages::viewTarget($session->analyze('SELECT 1')->statement, $target));
+        $select = $session->analyze('SELECT 1');
+        self::assertInstanceOf(Operation::class, $select);
+        self::assertFalse(Stages::viewTarget($select->statement, $target));
     }
 
     public function testParsedRetainsRoutineIdentityConditionsBeforeOpeningTables(): void
@@ -201,6 +226,72 @@ final class StagesTest extends TestCase
         self::assertFalse(Stages::characters($collation, true));
         self::assertFalse(Stages::characters(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(''), false));
         self::assertTrue(Stages::characters(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset('missing'), true));
+    }
+
+    /**
+     * @return list<array{string, bool}>
+     */
+    public static function providerAnswered(): array
+    {
+        return [
+            ['CHECK TABLE nosuch', true],
+            ['ALTER TABLE nosuch ADD a INT', true],
+            ['RENAME TABLE nosuch TO x', true],
+            ['LOCK TABLES nosuch READ', true],
+            ['LOAD DATA INFILE \'x\' INTO TABLE nosuch', true],
+            ['TRUNCATE TABLE nosuch', false],
+        ];
+    }
+
+    /**
+     * @return list<array{string, bool}>
+     */
+    public static function providerSelfChecked(): array
+    {
+        return [
+            ['CREATE USER u IDENTIFIED BY \'x\'', true],
+            ['INSTALL COMPONENT \'file://x\'', true],
+            ['FLUSH TABLES', true],
+            ['SELECT 1', false],
+        ];
+    }
+
+    /**
+     * @return list<array{string, bool}>
+     */
+    public static function providerOpensTableFirst(): array
+    {
+        return [
+            ['ALTER TABLE t ADD a INT', true],
+            ['CREATE INDEX i ON t (a)', true],
+            ['DROP INDEX i ON t', true],
+            ['DROP TABLE t', false],
+        ];
+    }
+
+    /**
+     * @return list<array{string, bool}>
+     */
+    public static function providerAdministers(): array
+    {
+        return [
+            ['CHECKSUM TABLE t', true],
+            ['CACHE INDEX t IN hot', true],
+            ['OPTIMIZE TABLE t', true],
+            ['TRUNCATE TABLE t', false],
+        ];
+    }
+
+    /**
+     * @return list<array{string, bool}>
+     */
+    public static function providerExplains(): array
+    {
+        return [
+            ['EXPLAIN SELECT 1', true],
+            ['EXPLAIN FOR CONNECTION 1', true],
+            ['SELECT 1', false],
+        ];
     }
 
 }

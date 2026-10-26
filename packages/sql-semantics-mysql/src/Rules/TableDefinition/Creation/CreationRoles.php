@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableQuery;
 
 /**
- * Distinguishes ordinary declarations from complete stored creation instructions.
+ * Identifies intrinsic conditions retained by complete creation requests.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -37,7 +37,7 @@ final class CreationRoles
     }
 
     /**
-     * Identifies the complete definitions whose conditions belong to instruction use.
+     * Identifies definitions whose conditions require preparation or execution ordering.
      *
      * @param list<TableElement> $elements The ordered column and constraint definitions
      * @param list<TableOption> $options The table options

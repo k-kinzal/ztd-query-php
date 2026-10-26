@@ -36,7 +36,6 @@ final class Reader
      *
      * @throws SqlError When the statement does not parse or the parser refuses it
      * @throws Definition\DeferredPreparation When prepared input retains an execution-time definition condition
-     * @throws Definition\CompletedTemplate When the legacy input path executes a conditional definition
      */
     public function read(string $statement, bool $prepared, Session $session): Node
     {
@@ -149,7 +148,7 @@ final class Reader
             (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($tree, $statement);
         }
 
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
             try {
                 (new Syntax($session->resolution()->client))->debugOnly($tree, $statement);
             } catch (SqlError $error) {
@@ -167,7 +166,6 @@ final class Reader
      * Converts a typed operand refusal, preserving notices completed before its boundary.
      *
      * @throws Definition\DeferredPreparation When a CREATE definition is retained for prepared execution
-     * @throws Definition\CompletedTemplate When a conditional definition completes
      */
     public function rejection(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
@@ -224,7 +222,6 @@ final class Reader
      * Preserves complete instructions that can be stored before their condition is reached.
      *
      * @throws Definition\DeferredPreparation When a typed instruction is prepared
-     * @throws Definition\CompletedTemplate When a conditional definition completes
      */
     public function template(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
     {

@@ -107,14 +107,17 @@ final class CreateTableRuleTest extends TestCase
         self::assertNotNull((new CreateTableRule($lowering))->query($node));
     }
 
-    public function testCreateRetainsMergeQueriesOutsideTheOrdinaryStatementRole(): void
+    public function testCreateRetainsTheSameMergeQueryInOrdinaryAndStoredRequests(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
-        $procedure = $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t UNION=() SELECT 1')->statement;
+        $procedureAnalysis = $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t UNION=() SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $procedureAnalysis);
+        $procedure = $procedureAnalysis->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $procedure);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable::class, $procedure->body);
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $semantics->analyze('CREATE TABLE t UNION=() SELECT 1');
+        self::assertInstanceOf(CreateTable::class, $procedure->body);
+        $creation = $semantics->analyze('CREATE TABLE t UNION=() SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $creation);
+        self::assertEquals($procedure->body, $creation->statement);
     }
 
 }

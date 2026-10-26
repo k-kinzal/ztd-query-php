@@ -56,12 +56,12 @@ final class FunctionalQueries
      *
      * @throws \MySqlMemory\Error\SqlError When an explicit width or a referenced table is invalid
      */
-    public function prepare(Operation|\MySqlMemory\Session\Resolution\TablePreparation|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session, Problems $problems): void
+    public function prepare(Operation|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session, Problems $problems): void
     {
         $create = $operation->statement;
         $index = $create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex;
-        $alter = $create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || $create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable;
-        if ((!$create instanceof CreateTable && !$create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable && !$alter && !$index) || $session->settings()->legacy()) {
+        $alter = $create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
+        if ((!$create instanceof CreateTable && !$alter && !$index) || $session->settings()->legacy()) {
             return;
         }
         $indexes = $index ? $create->parts : (new Walker())->find($create, IndexDefinition::class);
@@ -165,7 +165,7 @@ final class FunctionalQueries
      *
      * @throws \MySqlMemory\Error\SqlError When an index expression contains a forbidden construct
      */
-    public function forbidden(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create): void
+    public function forbidden(CreateTable $create): void
     {
         $indexes = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof IndexDefinition));
         if (array_filter($indexes, static fn (IndexDefinition $index): bool => (new Walker())->find($index, Query::class) !== []) === []) {

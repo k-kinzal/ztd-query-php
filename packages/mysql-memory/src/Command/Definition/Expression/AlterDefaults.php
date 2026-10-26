@@ -15,9 +15,8 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -34,11 +33,11 @@ final class AlterDefaults
     /**
      * Derives the complete instruction against the current dictionary.
      */
-    public function facts(DeferredAlterTable $definition, Session $session, string $database): Facts
+    public function facts(AlterTable $definition, Session $session, string $database): Facts
     {
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
-        $definition->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        $definition->deriveStatement($derivation);
         return $derivation->facts();
     }
 
@@ -47,7 +46,7 @@ final class AlterDefaults
      *
      * @throws \MySqlMemory\Error\SqlError When a retained default reaches its condition
      */
-    public function check(DeferredAlterTable $definition, StoredTable $table, Session $session, string $database): void
+    public function check(AlterTable $definition, StoredTable $table, Session $session, string $database): void
     {
         $commands = array_values(array_filter($definition->commands, static fn ($command): bool => $command instanceof DeferredDefaultSetting));
         if ($commands === []) {

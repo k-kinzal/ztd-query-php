@@ -21,8 +21,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
@@ -43,7 +42,7 @@ final class ColumnlessUse
      *
      * @throws SqlError When the schema, constraints or columnless declaration are refused
      */
-    public function execute(DeferredCreateTable $definition, Session $session, ?string $database = null): Completion
+    public function execute(CreateTable $definition, Session $session, ?string $database = null): Completion
     {
         $database = $definition->name->schema->value ?? $database ?? $session->variables->database;
         if (!$definition->temporary()) {
@@ -81,7 +80,7 @@ final class ColumnlessUse
      *
      * @throws SqlError When the schema or tablespace is unavailable
      */
-    public function schema(DeferredCreateTable $definition, string $database, Session $session): Schema
+    public function schema(CreateTable $definition, string $database, Session $session): Schema
     {
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
@@ -101,10 +100,10 @@ final class ColumnlessUse
      *
      * @throws SqlError When a key, constraint or the missing visible columns are refused
      */
-    public function columns(DeferredCreateTable $definition, Schema $schema, Session $session): void
+    public function columns(CreateTable $definition, Schema $schema, Session $session): void
     {
         $derivation = new Derivation($session->semantics()->context($session->instance->dictionary->declarations(), true, new SearchPath($schema->name), $session->resolution()));
-        $definition->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        $definition->deriveStatement($derivation);
         $facts = $derivation->facts();
         $table = $facts->relation($definition)->table;
         Check::invariant($table instanceof DeclaredTable, 'A retained table instruction supplies its declaration.');

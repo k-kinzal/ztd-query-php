@@ -88,7 +88,16 @@ final class Stages
      */
     public static function selfChecked(\SqlSemantics\Statement\Statement $statement): bool
     {
-        return \MySqlMemory\Command\Account\Names::owns($statement) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
+        return \MySqlMemory\Command\Account\Names::owns($statement) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables
+            || ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $statement->hasExecutionCondition());
+    }
+
+    /**
+     * Table requests with intrinsic conditions prepare their operands in definition order.
+     */
+    public static function definitionCondition(Node $statement): bool
+    {
+        return ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof AlterTable) && $statement->hasExecutionCondition();
     }
 
     /**

@@ -18,7 +18,6 @@ use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute;
@@ -98,7 +97,7 @@ final class Definitions
      *
      * @throws \MySqlMemory\Error\SqlError When the column or key definition is invalid
      */
-    public function shape(CreateTable|DeferredCreateTable $create, Table $declaration, string $schema): TableDefinition
+    public function shape(CreateTable $create, Table $declaration, string $schema): TableDefinition
     {
         $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName($declaration->name->name, new \SqlSemantics\Statement\Identifier\Name($schema)), $declaration->profile, $declaration->columns, $declaration->implicit, $declaration->complete, $declaration->kind, $declaration->keys, $declaration->partitions);
         $collation = $this->collation($create);
@@ -106,7 +105,7 @@ final class Definitions
         [$columns, $keys] = $this->parts($create, $declaration, $schema, $engine, $collation);
         $expressions = new TableExpressions($this->planner, $create);
         $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
-        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create instanceof CreateTable ? $create : null, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
+        $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create, rowFormat: (new InnoDbOptions())->format($create, $this->planner->compiler->connection->variables));
         (new Constraint\IndexOptions())->check($definition);
         $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
 
@@ -120,7 +119,7 @@ final class Definitions
      * @return array{list<ColumnDefinition>, list<Key>}
      * @throws \MySqlMemory\Error\SqlError When a column, constraint or key definition is invalid
      */
-    public function parts(CreateTable|DeferredCreateTable $create, Table $declaration, string $schema, string $engine, Collation $collation): array
+    public function parts(CreateTable $create, Table $declaration, string $schema, string $engine, Collation $collation): array
     {
         $elements = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnElement));
         if ($elements === [] && $this->planner->settings->legacy()) {
@@ -166,7 +165,7 @@ final class Definitions
      *
      * @return list<Key>
      */
-    public function tableKeys(CreateTable|DeferredCreateTable $create, array $columns, array $keys, string $engine = 'InnoDB'): array
+    public function tableKeys(CreateTable $create, array $columns, array $keys, string $engine = 'InnoDB'): array
     {
         $foreign = new ForeignKeys($this->planner, $create);
         $implicit = [];
@@ -210,7 +209,7 @@ final class Definitions
     /**
      * Answers the default collation of the table: its option, else the database's.
      */
-    public function collation(CreateTable|DeferredCreateTable $create): Collation
+    public function collation(CreateTable $create): Collation
     {
         $collation = Collation::named($this->schemaCollation) ?? Collation::known('utf8mb4_0900_ai_ci');
         foreach ($create->options as $option) {
@@ -228,7 +227,7 @@ final class Definitions
     /**
      * Builds the definition of one column.
      */
-    public function column(ColumnElement $element, ?\SqlSemantics\Statement\Declaration\Column $declaration, Declared $declared, Scope $scope, CreateTable|DeferredCreateTable $create): ColumnDefinition
+    public function column(ColumnElement $element, ?\SqlSemantics\Statement\Declaration\Column $declaration, Declared $declared, Scope $scope, CreateTable $create): ColumnDefinition
     {
         $session = $this->planner->compiler->connection->session();
         if ($session !== null) {
@@ -284,7 +283,7 @@ final class Definitions
      *
      * @throws \MySqlMemory\Error\SqlError When the column cannot take the default
      */
-    public function default(array $attributes, ColumnDefinition $column, CreateTable|DeferredCreateTable $create): Fill
+    public function default(array $attributes, ColumnDefinition $column, CreateTable $create): Fill
     {
         $inferred = $this->inferredDefaults[mb_strtolower($column->name)] ?? null;
         if ($inferred !== null) {

@@ -77,6 +77,19 @@ final class AlterTableCommand implements Command
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
         assert($operation instanceof Operation && ($operation->statement instanceof AlterTable || $operation->statement instanceof CreateIndex || $operation->statement instanceof DropIndex));
+        if ($operation->statement instanceof AlterTable && $operation->statement->hasExecutionCondition()) {
+            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation->statement, $session->settings()->release(), $connection->parameters));
+            return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($operation->statement, $session);
+        }
+        return $this->alter($operation, $session, $context, $connection);
+    }
+
+    /**
+     * Applies actions after their invocation conditions have been resolved.
+     */
+    public function alter(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    {
+        assert($operation->statement instanceof AlterTable || $operation->statement instanceof CreateIndex || $operation->statement instanceof DropIndex);
         $statement = $operation->statement;
         [$name, $commands] = $this->request($statement);
         $this->read($commands, $operation->facts, $session->settings()->legacy());
@@ -172,10 +185,10 @@ final class AlterTableCommand implements Command
             (new Constraint\SpatialColumns())->check($column, $session->instance->registry->spatialCatalog);
         }
         $statement = $operation->statement;
-        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable);
+        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex);
         [, $commands] = $this->request($statement);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added($this->indexes($commands), $operation->facts, $session);
-        if (!$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable || $session->settings()->legacy()) {
+        if (!($operation->statement instanceof AlterTable && $operation->statement->hasExecutionCondition()) || $session->settings()->legacy()) {
             (new \MySqlMemory\Session\Problem\Definition\IndexNames())->check($operation->facts);
         }
         if ($operation instanceof \MySqlMemory\Session\Resolution\IndexPreparation) {
@@ -312,9 +325,9 @@ final class AlterTableCommand implements Command
      *
      * @return array{QualifiedName, list<AlterCommand>}
      */
-    public function request(AlterTable|CreateIndex|DropIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $statement): array
+    public function request(AlterTable|CreateIndex|DropIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex $statement): array
     {
-        if ($statement instanceof AlterTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
+        if ($statement instanceof AlterTable) {
             return [$statement->table, $statement->commands];
         }
         if ($statement instanceof CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
@@ -363,12 +376,12 @@ final class AlterTableCommand implements Command
         foreach (array_filter($new->columns, static fn (ColumnDefinition $column): bool => $column->functional === null) as $position => $column) {
             $origin = $origins[$position] ?? null;
             if ($origin === null) {
-                $copies = $copies || $this->copiesAdded($column);
+                $copies = $copies || TableRebuild::copiesAdded($column);
                 continue;
             }
             $before = $old->columns[$origin];
             $retyped = $retyped || !TableRebuild::columnInPlace($before, $column, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
-            $copies = $copies || $this->copiesColumn($before, $column, $context);
+            $copies = $copies || TableRebuild::copiesColumn($before, $column, $context);
         }
         if ($retyped) {
             $this->typeAlgorithm($change);
@@ -397,29 +410,6 @@ final class AlterTableCommand implements Command
         if ($change->lock === 'none') {
             throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
         }
-    }
-
-    /**
-     * Tells whether adding a column copies the table: a STORED generated column, or a column whose
-     * default is an expression other than the current time.
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
-     */
-    public function copiesAdded(ColumnDefinition $column): bool
-    {
-        return ($column->generated !== null && $column->stored) || ($column->default->expression !== null && !$column->default->now);
-    }
-
-    /**
-     * Tells whether the change of one column copies the table: the column becomes AUTO_INCREMENT,
-     * becomes NOT NULL outside a strict mode, or is or becomes a generated column whose expression
-     * or storage changes (a new STORED generated column copies it too).
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
-     */
-    public function copiesColumn(ColumnDefinition $before, ColumnDefinition $after, Context $context): bool
-    {
-        $generated = ($before->generated !== null) !== ($after->generated !== null) || $before->stored !== $after->stored || $before->expression !== $after->expression;
-
-        return $generated || ($after->srid !== null && $after->srid !== $before->srid) || ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
     }
 
     /**

@@ -47,9 +47,10 @@ final class IndexOptionsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');
         $operation = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,KEY k(missing) USING HASH)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
         $definition = $operation->statement->body;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable::class, $definition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $definition);
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $options = new IndexOptions();
         $options->prepare($definition, $session, $context);
@@ -92,7 +93,9 @@ final class IndexOptionsTest extends TestCase
     public function testMisorderedAnswersTrueForAnOrderedFullTextKeyPart(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $statement = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)')->statement;
+        $statementAnalysis = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
+        $statement = $statementAnalysis->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex::class, $statement);
         $index = (new \MySqlMemory\Command\Definition\AlterTableCommand())->indexes((new \MySqlMemory\Command\Definition\AlterTableCommand())->request($statement)[1])[0];
 
@@ -102,7 +105,9 @@ final class IndexOptionsTest extends TestCase
     public function testMisorderedAnswersFalseForAnOrderedBTreeKeyPart(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE INDEX i ON t (a DESC)')->statement;
+        $statementAnalysis = $session->analyze('CREATE INDEX i ON t (a DESC)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
+        $statement = $statementAnalysis->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex::class, $statement);
         $index = (new \MySqlMemory\Command\Definition\AlterTableCommand())->indexes((new \MySqlMemory\Command\Definition\AlterTableCommand())->request($statement)[1])[0];
 

@@ -106,14 +106,9 @@ final class AlterRule
      * Keeps every action when a legacy declaration must be checked at invocation.
      *
      * @param list<AlterCommand> $commands The ordered actions
-     * @throws \SqlSemantics\Construction\RejectedInput When an ordinary statement cannot retain the declaration
      */
     public function definition(\SqlSemantics\Statement\Identifier\QualifiedName $table, array $commands, bool $ignore = false): AlterTable
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableChange\AlterationRoles())->deferred($commands)) {
-            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable($table, $commands, $ignore);
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate($definition), 0, false, $this->lowering->origins->publish());
-        }
         return new AlterTable($table, $commands, $ignore);
     }
 

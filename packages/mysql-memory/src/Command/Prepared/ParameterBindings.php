@@ -55,6 +55,9 @@ final class ParameterBindings
         if (!$operation instanceof Operation) {
             throw new LogicException('No parameter capture for ' . $operation::class);
         }
+        if (\MySqlMemory\Session\Problem\Stages::definitionCondition($operation->statement) && !($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->query !== null)) {
+            return (new GenerationParameters())->capture($operation->statement, $operation->profile()->grammar);
+        }
         return new self(array_map(static fn (array $entry): array => [Domain::of($entry[0], true), $entry[1]], \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation)));
     }
 

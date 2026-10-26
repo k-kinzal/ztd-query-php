@@ -20,22 +20,21 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 final class GenerationExecutionTest extends TestCase
 {
     /**
-     * @return iterable<array{M\Routine\Program\Write\DeferredCreateTable}>
+     * @return iterable<array{M\Table\CreateTable}>
      */
     public static function providerDefinitions(): iterable
     {
         $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Variable\SystemVariable(new Name('version')), new M\Literal\NumberLiteral('1'));
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression));
         $ordinary = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
-        yield [new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$ordinary, $column])];
+        yield [new M\Table\CreateTable(new QualifiedName(new Name('t')), [$ordinary, $column])];
     }
 
     #[DataProvider('providerDefinitions')]
-    public function testRunUsesThePreparationDatabaseAndTheTypedRowExpression(M\Routine\Program\Write\DeferredCreateTable $source): void
+    public function testRunUsesThePreparationDatabaseAndTheTypedRowExpression(M\Table\CreateTable $source): void
     {
         $session = (new Instance('5.7.44', [], ['d', 'other']))->connect(database: 'other');
         $definition = (new GenerationRewrite())->create($source);
-        self::assertInstanceOf(M\Table\CreateTable::class, $definition);
         $session->text = 'unrelated invalid request';
         (new GenerationExecution())->run($definition, $session, 'd');
         self::assertSame('other', $session->variables->database);
@@ -47,11 +46,10 @@ final class GenerationExecutionTest extends TestCase
     }
 
     #[DataProvider('providerDefinitions')]
-    public function testDisplayUsesOriginalSemanticOperandsAfterCompilation(M\Routine\Program\Write\DeferredCreateTable $source): void
+    public function testDisplayUsesOriginalSemanticOperandsAfterCompilation(M\Table\CreateTable $source): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $definition = (new GenerationRewrite())->create($source);
-        self::assertInstanceOf(M\Table\CreateTable::class, $definition);
         $execution = new GenerationExecution();
         $execution->run($definition, $session, 'd');
         $table = $session->instance->dictionary->table('d', 't');

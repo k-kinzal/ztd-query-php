@@ -9,7 +9,7 @@ use MySqlMemory\Dictionary\View;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\State\StatementCounters;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use WeakMap;
 
 /**
@@ -27,7 +27,7 @@ final class IndexMetadata
     /**
      * Records an observed retry without modifying or reconstructing the instruction.
      */
-    public function refresh(DeferredCreateTable $definition, Session $session): void
+    public function refresh(CreateTable $definition, Session $session): void
     {
         if (!$session->settings()->legacy() || $session->program === null || !(new Roles())->elements($definition->elements)) {
             return;
@@ -43,7 +43,7 @@ final class IndexMetadata
     /**
      * Reads destination identity in the program's database and temporary-table scope.
      */
-    public function current(DeferredCreateTable $definition, Session $session): TableDefinition|View|null
+    public function current(CreateTable $definition, Session $session): TableDefinition|View|null
     {
         $database = $definition->name->schema->value ?? $session->variables->database;
         $name = $definition->name->name->value;

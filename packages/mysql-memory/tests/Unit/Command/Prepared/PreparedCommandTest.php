@@ -40,7 +40,7 @@ final class PreparedCommandTest extends TestCase
         self::assertTrue((new PreparedCommand())->clearsDiagnostics());
     }
 
-    public function testExecutePreparesAStatementWithItsMarkers(): void
+    public function testPrepareRetainsAStatementWithItsMarkers(): void
     {
         $session = (new Instance())->connect();
 

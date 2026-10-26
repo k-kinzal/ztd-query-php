@@ -37,7 +37,7 @@ final class TimestampDefaults
      *
      * @throws \MySqlMemory\Error\SqlError When an implicit zero default is invalid
      */
-    public function apply(ColumnDefinition $column, ColumnElement $element, CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, Context $context): ColumnDefinition
+    public function apply(ColumnDefinition $column, ColumnElement $element, CreateTable $create, Context $context): ColumnDefinition
     {
         if ($column->domain->field !== Field::Timestamp || $column->nullable() || $element->specification instanceof GeneratedColumn || !in_array($context->variables->read('explicit_defaults_for_timestamp'), ['OFF', '0', 0], true)) {
             return $column;
@@ -60,7 +60,7 @@ final class TimestampDefaults
     /**
      * Tells whether this is the table's first TIMESTAMP, including nullable columns.
      */
-    public function first(ColumnElement $element, CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create): bool
+    public function first(ColumnElement $element, CreateTable $create): bool
     {
         foreach ($create->elements as $candidate) {
             if (!$candidate instanceof ColumnElement) {

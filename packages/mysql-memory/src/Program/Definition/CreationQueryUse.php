@@ -12,7 +12,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 
 /**
  * Resolves a creation query after its sources and destination have opened.
@@ -31,7 +31,7 @@ final class CreationQueryUse
      *
      * @throws \MySqlMemory\Error\SqlError When a source, destination or query condition is reached
      */
-    public function execute(DeferredCreateTable $definition, Session $session): Completion
+    public function execute(CreateTable $definition, Session $session): Completion
     {
         if (!$definition->temporary()) {
             $session->transaction->commit();
@@ -70,7 +70,7 @@ final class CreationQueryUse
     /**
      * Binds the retained source against the invocation's catalog without a source string or AST.
      */
-    public function bound(DeferredCreateTable $definition, Session $session): QueryPreparation
+    public function bound(CreateTable $definition, Session $session): QueryPreparation
     {
         $query = $definition->query;
         Check::invariant($query !== null, 'A deferred creation read retains its complete query.');

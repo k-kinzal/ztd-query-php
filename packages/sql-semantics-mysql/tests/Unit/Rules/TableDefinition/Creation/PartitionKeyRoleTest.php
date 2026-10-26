@@ -17,14 +17,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class PartitionKeyRoleTest extends TestCase
 {
-    public function testMissingKeepsAnImplicitKeyWithoutASourceOutsideOrdinaryDeclarations(): void
+    public function testMissingRetainsAnImplicitKeyWithoutASource(): void
     {
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $partition = new M\Partition\PartitionClause(new M\Partition\Method\KeyMethod(false, null, []), null, null, []);
         self::assertTrue((new PartitionKeyRole())->missing([$column], $partition, null));
         self::assertFalse((new PartitionKeyRole())->missing([$column], null, null));
-        $this->expectExceptionMessage('An implicit partition key absent from the declaration belongs to a deferred creation instruction.');
-        new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column], partitioning: $partition);
+        self::assertTrue((new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column], partitioning: $partition))->hasExecutionCondition());
     }
 
     public function testColumnRecognizesPrimaryAndNonnullableUniqueKeys(): void

@@ -62,19 +62,17 @@ final class NamesTest extends TestCase
     }
 
     #[DataProvider('providerInvalidNames')]
-    public function testOrdinaryTableCannotRetainAnInvalidIndexName(string $value): void
+    public function testTableRetainsAnInvalidIndexName(string $value): void
     {
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\ColumnPart(new Name('a'))], new M\Name\ColumnName(new Name($value)));
-        $this->expectExceptionMessage('An index with a fixed name or operand condition belongs to a deferred creation instruction.');
-        new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]);
+        self::assertTrue((new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]))->hasExecutionCondition());
     }
 
     #[DataProvider('providerInvalidNames')]
-    public function testOrdinaryAlterCannotRetainAnInvalidIndexName(string $value): void
+    public function testAlterRetainsAnInvalidIndexName(string $value): void
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\ColumnPart(new Name('a'))], new M\Name\ColumnName(new Name($value)));
-        $this->expectExceptionMessage('An ordinary ALTER statement excludes actions with an intrinsic invocation-time condition.');
-        new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]);
+        self::assertTrue((new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]))->hasExecutionCondition());
     }
 }

@@ -24,7 +24,7 @@ final class TransactionStatements
      */
     public function implicit(Node $statement): bool
     {
-        if ($statement instanceof M\Table\CreateTable || $statement instanceof M\Table\CreateTableLike || $statement instanceof M\Routine\Program\Write\DeferredCreateTable) {
+        if ($statement instanceof M\Table\CreateTableLike || $statement instanceof M\Table\CreateTable) {
             return $statement->temporaryWords === 0;
         }
         if ($statement instanceof M\Alter\DropTable) {
@@ -34,7 +34,7 @@ final class TransactionStatements
             return true;
         }
         return in_array($statement::class, [
-            M\Alter\AlterTable::class, M\Routine\Program\Write\DeferredAlterTable::class,
+            M\Alter\AlterTable::class,
             M\Alter\RenameTable::class, M\Alter\TruncateTable::class, M\Alter\DropIndex::class, M\Table\CreateIndex::class,
             M\Server\Database\CreateDatabase::class, M\Server\Database\AlterDatabase::class, M\Server\Database\DropDatabase::class,
             M\Server\Storage\CreateTablespace::class, M\Server\Storage\AlterTablespace::class, M\Server\Storage\DropTablespace::class,

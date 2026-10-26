@@ -59,13 +59,12 @@ final class CommandPrefix
             try {
                 $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate
-                    ? $this->completed($failure->problem->definition, $tokens[$index + 1] ?? null, $statement, $session)
-                    : null;
+                return null;
             } catch (AnalysisException $failure) {
                 return (new Syntax())->error($failure, $statement, $session->settings()->release(), $session->following);
             }
-            $earlier = $this->completed($operation->statement, $tokens[$index + 1] ?? null, $statement, $session);
+            $model = $operation instanceof \SqlSemantics\Statement\Operation ? $operation->statement : $operation;
+            $earlier = $model instanceof \SqlSemantics\Statement\Statement ? $this->completed($model, $tokens[$index + 1] ?? null, $statement, $session) : null;
             if ($earlier !== null) {
                 return $earlier;
             }
@@ -91,7 +90,7 @@ final class CommandPrefix
         } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
             return null;
         }
-        foreach ($operation->facts->diagnostics as $problem) {
+        foreach ($operation instanceof \SqlSemantics\Statement\Operation ? $operation->facts->diagnostics : [] as $problem) {
             if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable) {
                 return (new RoutinePrefix())->database($statement, $end, $session)
                     ?? (new \MySqlMemory\Session\CacheOptions())->undeclared((new \MySqlMemory\Session\Problem\Errors())->error($problem, $session), $statement, $session);
@@ -148,9 +147,9 @@ final class CommandPrefix
     /**
      * Answers the condition raised after a command prefix has been resolved.
      */
-    public function completed(\SqlSemantics\Statement\Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $model, ?Token $next, string $statement, Session $session): ?SqlError
+    public function completed(\SqlSemantics\Statement\Statement $model, ?Token $next, string $statement, Session $session): ?SqlError
     {
-        if (($model instanceof LoadTable && $model->table->name->schema === null) || (($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $model instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
+        if (($model instanceof LoadTable && $model->table->name->schema === null) || (($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
             return $session->variables->database === '' ? QueryError::NoDatabase->error() : null;
         }
         if ($model instanceof \SqlSemantics\Platform\MySql\Statement\Account\SetPassword && $next?->text === ',' && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {

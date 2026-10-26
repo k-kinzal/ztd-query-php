@@ -10,7 +10,7 @@ use MySqlMemory\Program\Definition\ColumnlessUse;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
@@ -22,7 +22,7 @@ final class ColumnlessUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();
         $session->query('CREATE TABLE d.t(a INT)');
-        $definition = new DeferredCreateTable(new QualifiedName(new Name('t')), ifNotExists: true);
+        $definition = new CreateTable(new QualifiedName(new Name('t')), ifNotExists: true);
         $use = new ColumnlessUse();
         self::assertSame(0, $use->execute($definition, $session, 'd')->affectedRows);
         $session->query('DROP TABLE d.t');
@@ -35,7 +35,7 @@ final class ColumnlessUseTest extends TestCase
     public function testSchemaResolvesTheRetainedDestination(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();
-        self::assertSame($session->instance->dictionary->schema('d'), (new ColumnlessUse())->schema(new DeferredCreateTable(new QualifiedName(new Name('t'))), 'd', $session));
+        self::assertSame($session->instance->dictionary->schema('d'), (new ColumnlessUse())->schema(new CreateTable(new QualifiedName(new Name('t'))), 'd', $session));
     }
 
     public function testColumnsChecksTheRetainedIndexBeforeMissingVisibleColumns(): void

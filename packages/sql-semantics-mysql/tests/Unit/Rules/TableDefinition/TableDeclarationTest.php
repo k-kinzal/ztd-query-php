@@ -38,6 +38,7 @@ final class TableDeclarationTest extends TestCase
     public function testColumnDeclaresOneColumnDefinition(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -57,6 +58,7 @@ final class TableDeclarationTest extends TestCase
     public function testPrimaryColumnsNamesTheTableLevelKeyColumns(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT, PRIMARY KEY (b, a))');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -66,6 +68,7 @@ final class TableDeclarationTest extends TestCase
     public function testTableOrdersTheColumnsOfCreateTableSelect(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT NOT NULL) SELECT 1 AS b, 2 AS c');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $columns = $create->declarations()[0]->columns;
 
         self::assertSame(['a', 'b', 'c'], [$columns[0]->name->value, $columns[1]->name->value, $columns[2]->name->value]);
@@ -82,6 +85,7 @@ final class TableDeclarationTest extends TestCase
     public function testSplitKeepsInvisibleColumnsImplicit(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT INVISIBLE)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
@@ -95,6 +99,7 @@ final class TableDeclarationTest extends TestCase
     public function testViewNamesTheColumnsByTheList(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v (x) AS SELECT 1 AS a');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
 
         self::assertSame('x', $create->declarations()[0]->columns[0]->name->value);
         self::assertSame(RelationKind::View, $create->declarations()[0]->kind);
@@ -104,6 +109,7 @@ final class TableDeclarationTest extends TestCase
     public function testLikeLeavesAnUndeclaredSourceIncomplete(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
 
         self::assertFalse((new TableDeclaration())->like(new QualifiedName(new Name('c')), null, $create->profile())->complete);
         self::assertCount(1, (new TableDeclaration())->like(new QualifiedName(new Name('c')), $create->declarations()[0], $create->profile())->columns);
@@ -131,6 +137,7 @@ final class TableDeclarationTest extends TestCase
     public function testSettledStopsAtAnOpenStar(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a, t.* FROM t');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
 
@@ -140,6 +147,7 @@ final class TableDeclarationTest extends TestCase
     public function testFieldColumnNeedsAKnownType(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT NULL AS a');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
         $field = (new TableDeclaration())->settled($create->facts->query($statement->definition->query))[0];
@@ -150,6 +158,7 @@ final class TableDeclarationTest extends TestCase
     public function testFindAnswersThePositionOfADefinedColumn(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -178,14 +187,11 @@ final class TableDeclarationTest extends TestCase
     public function testPartitionsNarrowsCountsBeforeExpandingNamesAndKeepsOversizedClausesIntact(): void
     {
         $semantics = new Semantics(Dialect::MySql, '8.4.7');
-        $retained = static function (string $sql) use ($semantics): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable {
-            try {
-                $semantics->analyze($sql);
-            } catch (\SqlSemantics\Construction\RejectedInput $error) {
-                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate::class, $error->problem);
-                return $error->problem->definition;
-            }
-            self::fail('An implicit partition key without a source retains a complete instruction.');
+        $retained = static function (string $sql) use ($semantics): CreateTable {
+            $operation = $semantics->analyze($sql);
+            self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+            self::assertInstanceOf(CreateTable::class, $operation->statement);
+            return $operation->statement;
         };
         $wrapped = $retained('CREATE TABLE t(a INT) PARTITION BY KEY() PARTITIONS 4294967297');
         self::assertEquals([new Name('p0')], (new TableDeclaration())->partitions($wrapped));

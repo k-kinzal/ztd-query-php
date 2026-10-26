@@ -8,11 +8,11 @@ use SqlSemantics\Platform\MySql\Statement\Alter as A;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting;
 
 /**
- * Separates ordinary alterations from complete instructions checked on invocation.
+ * Identifies intrinsic conditions retained by complete alteration requests.
  *
  * Validation without an eligible action, a creation-only transaction option,
- * and non-scalar defaults can occur in
- * unexecuted stored programs. Neither belongs to an ordinary ALTER value.
+ * and non-scalar defaults remain represented in the request. Preparation and
+ * execution determine when their conditions are reached, including in stored programs.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -34,7 +34,7 @@ final class AlterationRoles
 
     /**
      * Identifies the creation-only transaction option inside ALTER table-option runs.
-     * The complete instruction may be stored, but an ordinary ALTER cannot use it.
+     * The complete request retains the option so execution can report its condition.
      *
      * @param list<A\AlterCommand> $commands Ordered alteration actions
      */

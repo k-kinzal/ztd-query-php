@@ -70,9 +70,9 @@ final class IndexOptions
      * Reports CREATE TABLE index substitutions before column binding failures.
      * Reusing the same prepared node never repeats its diagnostic.
      */
-    public function prepare(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $statement, Session $session, Context $context): void
+    public function prepare(Statement $statement, Session $session, Context $context): void
     {
-        if (!$statement instanceof CreateTable && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
+        if (!$statement instanceof CreateTable) {
             return;
         }
         $schemaName = $statement->name->schema->value ?? $session->variables->database;

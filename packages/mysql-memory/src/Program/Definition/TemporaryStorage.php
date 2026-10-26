@@ -9,7 +9,7 @@ use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use WeakMap;
 
 /**
@@ -28,7 +28,7 @@ final class TemporaryStorage
      * Repeats syntax notices when a stored conflicting definition is prepared again.
      * First invocation consumes the load notices. Routine DDL invalidates this cache.
      */
-    public function start(DeferredCreateTable $definition, Session $session): void
+    public function start(CreateTable $definition, Session $session): void
     {
         if ($session->program === null || !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
             return;
@@ -52,7 +52,7 @@ final class TemporaryStorage
      *
      * @throws SqlError When a dependency or the retained AUTOEXTEND_SIZE condition is reached
      */
-    public function raise(DeferredCreateTable $definition, Session $session, ?string $preparationDatabase = null): never
+    public function raise(CreateTable $definition, Session $session, ?string $preparationDatabase = null): never
     {
         if ($definition->query !== null && array_filter($definition->elements, static fn ($element): bool => (new \MySqlMemory\Command\Definition\Constraint\ColumnReferences())->key($element, $session->settings()->release()) !== null) !== []) {
             throw \MySqlMemory\Error\Family\TransactionError::CreateTransactionForeignKey->error();

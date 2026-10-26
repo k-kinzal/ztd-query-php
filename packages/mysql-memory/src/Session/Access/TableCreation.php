@@ -65,7 +65,7 @@ final class TableCreation
     /**
      * Tells whether a table definition requests a transaction that keeps the new table unpublished.
      */
-    public function requested(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create): bool
+    public function requested(CreateTable $create): bool
     {
         return array_filter($create->options, static fn ($option): bool => $option instanceof StartTransaction) !== [];
     }
@@ -77,9 +77,9 @@ final class TableCreation
      *
      * @throws SqlError When the table cannot be created in a restricted transaction
      */
-    public function validate(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $statement, Session $session): void
+    public function validate(Statement $statement, Session $session): void
     {
-        if ((!$statement instanceof CreateTable && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) || !$this->requested($statement)) {
+        if ((!$statement instanceof CreateTable) || !$this->requested($statement)) {
             return;
         }
         $engine = (new StorageOptions())->engine($statement, $session->variables);

@@ -23,7 +23,7 @@ final class TemporaryStorageTest extends TestCase
     {
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $option = new M\Table\Option\AutoextendSizeOption(new M\Literal\ByteSize(new M\Literal\Numeral('1')));
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$column], [$option], temporaryWords: 1, ifNotExists: true);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column], [$option], temporaryWords: 1, ifNotExists: true);
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $observe = static function () use ($definition, $session): int {
             $session->text = 'unrelated invalid input';

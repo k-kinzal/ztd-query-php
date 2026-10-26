@@ -21,19 +21,21 @@ final class TableUseTest extends TestCase
     public function testBoundKeepsTheSameCompleteDeclaration(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
-        $routine = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,a INT)')->statement;
+        $routineAnalysis = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,a INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $routineAnalysis);
+        $routine = $routineAnalysis->statement;
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $routine);
-        self::assertInstanceOf(M\Routine\Program\Write\DeferredCreateTable::class, $routine->body);
+        self::assertInstanceOf(M\Table\CreateTable::class, $routine->body);
         $session->text = 'unrelated invalid input';
         $prepared = (new TableUse())->bound($routine->body, $session);
         self::assertSame($routine->body, $prepared->statement);
-        self::assertCount(2, $prepared->table->columns);
+        self::assertCount(2, $prepared->declarations()[0]->columns);
         self::assertSame('unrelated invalid input', $session->text);
     }
 
     public function testRaiseUsesTheRetainedTargetWithoutInputText(): void
     {
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), options: [new M\Table\Option\UnionOption([])], query: new M\Table\TableQuery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))])));
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), options: [new M\Table\Option\UnionOption([])], query: new M\Table\TableQuery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))])));
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->text = 'unrelated input';
         $this->expectException(SqlError::class);
@@ -52,7 +54,7 @@ final class TableUseTest extends TestCase
     public function testContextualizeUsesThePartitionStructureBeforeTheDeferredCreationRole(): void
     {
         $partition = new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Call\FunctionCall(new Name('ST_LATITUDE'), [new M\Call\CallArgument(new M\Literal\NumberLiteral('1'))])), null, null, []);
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t'), new Name('missing')), partitioning: $partition);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t'), new Name('missing')), partitioning: $partition);
         $session = (new Instance('5.7.44'))->connect();
         $session->text = 'unrelated input';
         $this->expectException(SqlError::class);
@@ -72,7 +74,7 @@ final class TableUseTest extends TestCase
     {
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $partition = new M\Partition\PartitionClause(new M\Partition\Method\KeyMethod(false, null, []), null, null, []);
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$column], partitioning: $partition, ifNotExists: true);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column], partitioning: $partition, ifNotExists: true);
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $observe = static function () use ($definition, $session): int {
             $session->text = 'unrelated input';

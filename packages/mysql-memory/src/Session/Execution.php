@@ -131,7 +131,7 @@ final class Execution
         $late = $operation instanceof Operation ? $this->reading($operation, $read) : [];
         (new Statement\Reading())->read($operation, $session, $read && !$session->replayed);
         State\StatementCounters::evaluated($node, $session);
-        $this->access($node, $context);
+        (new Access\StatementAccess())->check($node, $session, $context);
         if ($operation instanceof Operation) {
             (new Access\DefaultDatabase())->referenced($operation, $session);
         }
@@ -191,6 +191,10 @@ final class Execution
         }
         if (!$read) {
             (new \MySqlMemory\Program\Routine\InspectionNotices())->start($operation, $session);
+            if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->hasExecutionCondition()) {
+                (new \MySqlMemory\Program\Definition\IndexMetadata())->refresh($operation->statement, $session);
+                (new \MySqlMemory\Program\Definition\TemporaryStorage())->start($operation->statement, $session);
+            }
         }
         try {
             (new Problem\Reading())->read($operation, $session);
@@ -199,28 +203,6 @@ final class Execution
         }
 
         return $late;
-    }
-
-    /**
-     * Checks connection restrictions and table-creation options before resolving tables and columns.
-     *
-     * @throws SqlError When the connection or CREATE TABLE options prohibit the statement
-     */
-    public function access(Node $statement, Context $context): void
-    {
-        if (!$statement instanceof \SqlSemantics\Statement\Statement) {
-            (new Access\PasswordAccess())->check($statement, $this->session);
-            return;
-        }
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction) {
-            (new \MySqlMemory\Command\Program\RoutineCommand())->types($statement, $this->session, $context);
-        }
-        (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($statement, $this->session, $context);
-        (new Access\PasswordAccess())->check($statement, $this->session);
-        (new Access\TableCreation())->check($statement, $this->session);
-        (new Access\TableCreation())->validate($statement, $this->session);
-        (new \MySqlMemory\Command\Definition\Constraint\SpatialColumns())->prepare($statement, $this->session);
-        (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->prepare($statement, $this->session, $context);
     }
 
     /**

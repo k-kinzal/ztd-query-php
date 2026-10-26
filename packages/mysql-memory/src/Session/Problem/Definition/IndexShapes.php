@@ -67,7 +67,7 @@ final class IndexShapes
      *
      * @throws \MySqlMemory\Error\SqlError When a retained declaration condition is reached
      */
-    public function prepare(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, \MySqlMemory\Dictionary\TableDefinition $definition, Planner $planner): void
+    public function prepare(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create, \MySqlMemory\Dictionary\TableDefinition $definition, Planner $planner): void
     {
         $facts = $planner->compiler->facts;
         if (array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof SpatialKeyArity || $problem instanceof FunctionalIndexKind) === []) {

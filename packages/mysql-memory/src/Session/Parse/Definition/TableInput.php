@@ -40,15 +40,11 @@ final class TableInput
      * Resolves a complete header after grammar conditions and before tail dependencies.
      *
      * @throws DeferredPreparation When preparation retains a partition condition for execution
-     * @throws CompletedTemplate When an existing table satisfies a conditional definition
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
     {
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate) {
             return (new IndexInput())->refused($failure, $statement, $session);
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
-            return $this->template($failure, $statement, $session);
         }
         $header = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($header instanceof RefusedCreateTail, 'Table input retains the completed CREATE header.');
@@ -130,55 +126,6 @@ final class TableInput
     }
 
     /**
-     * Retains a complete table template across PREPARE or reports its reached input condition.
-     *
-     * @throws DeferredPreparation When the header and source have prepared successfully
-     * @throws CompletedTemplate When a conditional table definition completes
-     */
-    public function template(RejectedInput $failure, string $statement, Session $session): SqlError
-    {
-        $problem = $failure->problem;
-        \SqlSemantics\Diagnostic\Check::invariant($problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate, 'The table refusal retains its complete template.');
-        $syntax = $this->warnings($problem->message(), $statement, $session);
-        if ($syntax !== null) {
-            return $syntax;
-        }
-        try {
-            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate) {
-                $alter = new \MySqlMemory\Program\Expression\AlterUse();
-                if ($session->preparation->inputPrepared) {
-                    $alter->header($problem->definition, $session);
-                    (new \MySqlMemory\Session\Access\Preparation())->alterParameters($problem->definition, $session);
-                    throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($problem->definition, $session->settings()->release())));
-                }
-                \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_alter_table');
-                throw new CompletedTemplate($alter->raise($problem->definition, $session, false));
-            }
-            $use = new \MySqlMemory\Program\Expression\TableUse();
-            if ($session->preparation->inputPrepared) {
-                $query = $use->prepare($problem->definition, $session);
-                $bindings = $query === null ? (new \MySqlMemory\Command\Prepared\GenerationParameters())->capture($problem->definition, $session->settings()->release()) : \MySqlMemory\Command\Prepared\ParameterBindings::capture($query);
-                throw new DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($problem->definition, $session->variables->database, $bindings, \MySqlMemory\Command\Prepared\GenerationMetadata::capture($problem->definition, $session->variables->database, $session)));
-            }
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
-            throw new CompletedTemplate($use->raise($problem->definition, $session, false));
-        } catch (SqlError $error) {
-            $cause = $error->getPrevious();
-            if ($cause instanceof RejectedInput) {
-                $error = (new \MySqlMemory\Session\Parse\LocatedErrors())->located($cause->problem, $failure->sources, $session) ?? $error;
-            }
-            if (!$error->recorded) {
-                $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
-            }
-            foreach ($error->following as [$code, $message]) {
-                $session->diagnostics->error($code, $message);
-            }
-            return new SqlError($error->error, $error->getMessage(), $failure, [], $error->signalled, $error->getCode(), true);
-        }
-    }
-
-
-    /**
      * Records the selected release's completed definition notices before execution.
      * A legacy cache conflict stops at its second modifier; modern-only notices
      * never enter the legacy diagnostic sequence.
@@ -210,7 +157,7 @@ final class TableInput
      */
     public function accepts(\SqlSemantics\Statement\Fact\Diagnostic $problem): bool
     {
-        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RefusedAlterTemplate || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate;
+        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate;
     }
 
 }

@@ -24,19 +24,20 @@ final class GenerationExecution
     /**
      * Uses the preparation database for binding and execution, restoring session state.
      */
-    public function run(M\Table\CreateTable|M\Alter\AlterTable|M\Routine\Program\Write\DeferredCreateTable $statement, Session $session, string $database): Reply
+    public function run(M\Table\CreateTable|M\Alter\AlterTable $statement, Session $session, string $database): Reply
     {
         $saved = $session->variables->database;
         $session->variables->database = $database;
         try {
-            if ($statement instanceof M\Routine\Program\Write\DeferredCreateTable) {
-                return (new \MySqlMemory\Program\Expression\TableUse())->raise($statement, $session, false);
+            if ($statement instanceof M\Table\CreateTable && $statement->hasExecutionCondition()) {
+                return (new \MySqlMemory\Program\Expression\TableUse())->raise($statement, $session);
             }
             $operation = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement);
             $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
             $connection = new Connection($session->variables, $context, session: WeakReference::create($session));
-            $command = $statement instanceof M\Table\CreateTable ? new \MySqlMemory\Command\Definition\CreateTableCommand() : new \MySqlMemory\Command\Definition\AlterTableCommand();
-            $reply = $command->execute($operation, $session, $context, $connection);
+            $reply = $statement instanceof M\Table\CreateTable
+                ? (new \MySqlMemory\Command\Definition\CreateTableCommand())->create($operation, $session, $context, $connection)
+                : (new \MySqlMemory\Command\Definition\AlterTableCommand())->alter($operation, $session, $context, $connection);
             $session->variables->rowCount = $reply instanceof \MySqlMemory\Result\Completion ? $reply->affectedRows : -1;
             return $reply;
         } finally {

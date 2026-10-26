@@ -44,19 +44,17 @@ final class ShapesTest extends TestCase
         new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))], M\Table\Key\IndexKind::Spatial);
     }
 
-    public function testOrdinaryAlterExcludesMultipleSpatialParts(): void
+    public function testAlterRetainsMultipleSpatialParts(): void
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Spatial, [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))]);
-        $this->expectExceptionMessage('An ordinary ALTER statement excludes actions with an intrinsic invocation-time condition.');
-        new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]);
+        self::assertTrue((new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]))->hasExecutionCondition());
     }
 
-    public function testOrdinaryCreationExcludesMultipleSpatialParts(): void
+    public function testCreationRetainsMultipleSpatialParts(): void
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Spatial, [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))]);
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
-        $this->expectExceptionMessage('An index with a fixed name or operand condition belongs to a deferred creation instruction.');
-        new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('b')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int))), $index]);
+        self::assertTrue((new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('b')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int))), $index]))->hasExecutionCondition());
     }
     /**
      * @return iterable<string, array{M\Table\Key\IndexKind, bool}>

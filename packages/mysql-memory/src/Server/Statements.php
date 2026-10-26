@@ -105,7 +105,10 @@ final class Statements
                 }
             }
             $parameters = count($bindings->types);
-            $input = $operation instanceof \MySqlMemory\Command\Prepared\PendingInstruction || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles ? null : (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session);
+            $cache = \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session);
+            if ($cache->tables !== []) {
+                $cache = new \MySqlMemory\Command\Prepared\PreparedCache($cache->definition, $cache->tables, (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($sql, $session));
+            }
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
@@ -119,7 +122,7 @@ final class Statements
         if ($session->preparation->triggerResourceLoads !== $loads) {
             $this->triggerLoad = [$id, (int) $session->variables->read('statement_id')];
         }
-        $this->prepared[$id] = [$sql, $parameters, [], [], $bindings, \MySqlMemory\Command\Prepared\PreparedCache::capture($operation, $session, $input)];
+        $this->prepared[$id] = [$sql, $parameters, [], [], $bindings, $cache];
         return $this->metadata($id, $columns, $parameters);
     }
 

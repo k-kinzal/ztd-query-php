@@ -19,16 +19,16 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 final class AlterDefaultsTest extends TestCase
 {
     /**
-     * @return iterable<array{M\Routine\Program\Write\DeferredAlterTable}>
+     * @return iterable<array{M\Alter\AlterTable}>
      */
     public static function providerDefinitions(): iterable
     {
         $row = new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]);
-        yield [new M\Routine\Program\Write\DeferredAlterTable(new QualifiedName(new Name('t')), [new M\Routine\Program\Write\DeferredDefaultSetting(new M\Name\ColumnName(new Name('a')), $row)])];
+        yield [new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Routine\Program\Write\DeferredDefaultSetting(new M\Name\ColumnName(new Name('a')), $row)])];
     }
 
     #[DataProvider('providerDefinitions')]
-    public function testFactsBindTheSameTargetAfterItsDeclarationAppears(M\Routine\Program\Write\DeferredAlterTable $definition): void
+    public function testFactsBindTheSameTargetAfterItsDeclarationAppears(M\Alter\AlterTable $definition): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $preparation = new AlterDefaults();
@@ -40,7 +40,7 @@ final class AlterDefaultsTest extends TestCase
     }
 
     #[DataProvider('providerDefinitions')]
-    public function testCheckReportsTheRowDefaultAfterOpeningItsTable(M\Routine\Program\Write\DeferredAlterTable $definition): void
+    public function testCheckReportsTheRowDefaultAfterOpeningItsTable(M\Alter\AlterTable $definition): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');

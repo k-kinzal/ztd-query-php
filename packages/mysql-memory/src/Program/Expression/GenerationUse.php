@@ -9,8 +9,8 @@ use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 
 /**
  * Invokes a retained legacy generation declaration after destination lookup.
@@ -33,7 +33,7 @@ final class GenerationUse
      *
      * @throws SqlError When a destination or generation declaration is rejected
      */
-    public function execute(DeferredCreateTable $definition, Session $session, ?string $database = null): \MySqlMemory\Result\Reply
+    public function execute(CreateTable $definition, Session $session, ?string $database = null): \MySqlMemory\Result\Reply
     {
         (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $database = $definition->name->schema->value ?? $database ?? $session->variables->database;
@@ -60,13 +60,12 @@ final class GenerationUse
     /**
      * Rewrites successful legacy expressions and preserves every remaining condition.
      */
-    public function create(DeferredCreateTable $source, Session $session, string $database): \MySqlMemory\Result\Reply
+    public function create(CreateTable $source, Session $session, string $database): \MySqlMemory\Result\Reply
     {
         $definition = $this->rewrite->create($source);
         $name = $definition->name->name->value;
         $columns = array_values(array_filter($definition->elements, static fn ($element): bool => $element instanceof ColumnDefinition));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
-            \SqlSemantics\Diagnostic\Check::invariant($definition instanceof DeferredCreateTable, 'A retained generation declaration belongs to a deferred creation instruction.');
             throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, $definition->temporary(), (new TableUse())->bound($definition, $session)->facts, $session);
         }
         $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();

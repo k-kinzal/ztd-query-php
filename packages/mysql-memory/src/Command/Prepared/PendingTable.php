@@ -12,33 +12,27 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail;
 
 /**
- * A prepared table template whose retained condition is checked on execution.
- * The typed refusal is retained without an ordinary semantic Statement or SQL.
- * Engine warnings belong to preparation; database lookup remains per execution.
- * A retained MERGE/query role rejects before table opening or metadata revalidation.
- * Legacy ALTER instructions retain all actions and check destination columns only
- * when invoked. Observed through COM_STMT_PREPARE on MySQL 5.7.44 and 8.4.7.
+ * A prepared, incomplete partition request whose retained scalar fails on execution.
+ * Complete CREATE and ALTER requests use PreparedStatement.
  *
  * @visibility MySqlMemory
  */
 final class PendingTable implements PendingInstruction
 {
     /**
-     * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header The complete retained definition
-     * @param ParameterBindings|null $bindings Prepared query parameters
+     * @param RefusedCreateTail $header The header retained before a refused partition operand
      * @param string $database The default database selected at preparation
-     * @param GenerationMetadata|null $metadata Legacy generation destination observations
      */
-    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable $header, public readonly string $database, public readonly ?ParameterBindings $bindings = null, public readonly ?GenerationMetadata $metadata = null)
+    public function __construct(public readonly RefusedCreateTail $header, public readonly string $database)
     {
     }
 
     /**
-     * Exposes the retained query parameters, or an empty table instruction binding.
+     * Exposes no markers for the incomplete header retained before the refused tail.
      */
     public function parameters(): ParameterBindings
     {
-        return $this->bindings ?? new ParameterBindings([]);
+        return new ParameterBindings([]);
     }
 
     /**
@@ -51,33 +45,10 @@ final class PendingTable implements PendingInstruction
     {
         $session->activity->begin();
         \MySqlMemory\Session\State\StatementCounters::received($session);
-        \MySqlMemory\Session\State\StatementCounters::command($session, $this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable ? 'Com_alter_table' : 'Com_create_table');
+        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
         $session->diagnostics->clear();
         $session->text = $label;
-        $this->metadata?->refresh($session);
-        $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite($this->header instanceof RefusedCreateTail ? [] : (new GenerationParameters())->values($this->header, $session->settings()->release(), $parameters));
-        if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredAlterTable) {
-            return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($this->header, $session, false, $this->database);
-        }
         $database = $this->header->name->schema->value ?? $this->database;
-        if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable) {
-            if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($this->header->partitioning)) {
-                return (new \MySqlMemory\Program\Expression\TableUse())->partition($this->header, $session, $this->database);
-            }
-            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($this->header->temporary(), $this->header->options)) {
-                (new \MySqlMemory\Program\Definition\TemporaryStorage())->raise($this->header, $session, $this->database);
-            }
-            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->header->elements, $this->header->query)) {
-                return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($this->header, $session, $database);
-            }
-            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->header->elements)) {
-                return (new \MySqlMemory\Program\Expression\GenerationUse($rewrite))->execute($this->header, $session, $database);
-            }
-            if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->header->elements) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->header->elements, $this->header->query) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->header->elements, $this->header->partitioning, $this->header->query)) {
-                return (new \MySqlMemory\Program\Expression\TableUse())->partition($this->header, $session, $this->database);
-            }
-            throw \MySqlMemory\Error\Family\SchemaError::WrongObject->error($database, $this->header->name->name->value, 'BASE TABLE');
-        }
         if ($session->instance->dictionary->schema($database) === null) {
             throw QueryError::BadDatabase->error($database);
         }

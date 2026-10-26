@@ -60,7 +60,7 @@ final class PartitionDefinitions
      *
      * @throws SqlError When partitioning is incompatible with the definition
      */
-    public static function apply(Planner $planner, \SqlSemantics\Platform\MySql\Statement\Table\CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable $create, TableDefinition $definition): TableDefinition
+    public static function apply(Planner $planner, \SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create, TableDefinition $definition): TableDefinition
     {
         if ($create->partitioning instanceof PartitionClause) {
             $scope = (new \MySqlMemory\Command\Definition\Expression\TableExpressions($planner, $create))->scope($definition);

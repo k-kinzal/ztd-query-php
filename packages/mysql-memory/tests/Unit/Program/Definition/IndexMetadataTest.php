@@ -22,7 +22,7 @@ final class IndexMetadataTest extends TestCase
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\ColumnPart(new Name('a'))], new M\Name\ColumnName(new Name('PRIMARY')));
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$column, $index]);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]);
         $metadata = new IndexMetadata();
         self::assertNull($metadata->current($definition, $session));
         $session->query('CREATE TABLE t(a INT)');
@@ -36,7 +36,7 @@ final class IndexMetadataTest extends TestCase
         $other = $instance->connect(database: 'd');
         $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [new M\Table\Key\ColumnPart(new Name('a'))], new M\Name\ColumnName(new Name('PRIMARY')));
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [$column, $index]);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, $index]);
         $session->program = new \MySqlMemory\Program\Activation('PROCEDURE', 'd.p', false, $session->settings()->connectionCollation);
         $metadata = new IndexMetadata();
         $metadata->refresh($definition, $session);

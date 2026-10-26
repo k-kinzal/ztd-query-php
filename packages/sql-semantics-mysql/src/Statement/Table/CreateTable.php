@@ -55,9 +55,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example The relation fact of the statement resolves to the declaration it provides
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
  *     $create->facts->scalar($create->statement->elements[1]->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
- * @example A contradictory column namespace cannot form an ordinary declaration
+ * @example A contradictory column namespace remains a request with an execution condition
  *     $column = static fn () => new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
- *     new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [$column(), $column()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [$column(), $column()]))->hasExecutionCondition() // => true
  */
 final class CreateTable implements Statement, Relation
 {
@@ -98,21 +98,21 @@ final class CreateTable implements Statement, Relation
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         $this->elements = Check::listOf($elements, TableElement::class, 'Table elements are an ordered list of table elements.');
         $this->options = Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($partitioning), 'A non-scalar partition method belongs to a retained ALTER instruction.');
         Check::input(
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
-        Check::input($query === null || array_filter($this->options, static fn ($option): bool => $option instanceof Option\UnionOption) === [], 'MERGE sources with a query belong to a deferred table-creation instruction.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($this->elements), 'Deferred generation declarations belong to a stored table-creation instruction.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($this->elements, $query), 'An ordinary table creation has a declared column or a creation query.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($query) === null, 'A creation query with a fixed read-shape constraint belongs to a deferred instruction.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\PartitionKeyRole())->missing($this->elements, $partitioning, $query), 'An implicit partition key absent from the declaration belongs to a deferred creation instruction.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($this->elements, $query) === null, 'Fixed column and key contradictions belong to a deferred creation instruction.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->elements($this->elements), 'An index with a fixed name or operand condition belongs to a deferred creation instruction.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($this->temporary(), $this->options), 'Positive AUTOEXTEND_SIZE with TEMPORARY belongs to a deferred creation instruction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Identifies intrinsic definition conditions whose outcome depends on preparation order and catalog state.
+     * The complete request remains representable even when no table can be installed.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($this->elements, $this->options, $this->query, $this->partitioning, $this->temporary());
     }
 
     /**

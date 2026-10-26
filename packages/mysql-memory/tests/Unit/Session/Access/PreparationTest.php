@@ -220,7 +220,7 @@ final class PreparationTest extends TestCase
         self::assertSame([['Error', 1146, "Table 'd.missing' doesn't exist"], ['Warning', 3651, "Resource Group 'missing' does not exist."]], $session->diagnostics->conditions);
     }
 
-    public function testCheckRestoresTypingHintsAfterSuccessfulPreparation(): void
+    public function testHintsRestoresTypingHintsAfterSuccessfulPreparation(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT /*+ SET_VAR(div_precision_increment=10) */ ?/3', true);

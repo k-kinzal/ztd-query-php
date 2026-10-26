@@ -10,7 +10,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Operation;
 use WeakReference;
 
@@ -22,20 +22,22 @@ use WeakReference;
 final class TableUse
 {
     /**
+     * @param \MySqlMemory\Command\Definition\Expression\GenerationRewrite $rewrite Bound generation operands for this execution
+     */
+    public function __construct(public readonly \MySqlMemory\Command\Definition\Expression\GenerationRewrite $rewrite = new \MySqlMemory\Command\Definition\Expression\GenerationRewrite())
+    {
+    }
+
+    /**
      * Resolves the header before the reached table-role condition.
      *
      * @throws SqlError When a header name or the incompatible table role is reached
      */
-    public function raise(DeferredCreateTable $definition, Session $session, bool $invocation = true): \MySqlMemory\Result\Reply
+    public function raise(CreateTable $definition, Session $session): \MySqlMemory\Result\Reply
     {
-        if ($invocation) {
-            \MySqlMemory\Session\State\StatementCounters::query($session);
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
-            $session->diagnostics->clear();
-            (new \MySqlMemory\Program\Definition\IndexMetadata())->refresh($definition, $session);
-            (new \MySqlMemory\Program\Definition\TemporaryStorage())->start($definition, $session);
+        if (!$session->replayed) {
+            $this->header($definition, $session);
         }
-        $this->header($definition, $session);
         if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($definition->partitioning)) {
             return $this->partition($definition, $session);
         }
@@ -46,7 +48,7 @@ final class TableUse
             return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($definition, $session);
         }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
-            return (new GenerationUse())->execute($definition, $session);
+            return (new GenerationUse($this->rewrite))->execute($definition, $session);
         }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($definition->query) !== null) {
             return (new \MySqlMemory\Program\Definition\CreationQueryUse())->execute($definition, $session);
@@ -60,7 +62,7 @@ final class TableUse
     /**
      * Binds the complete declaration before column, key and partition preparation.
      */
-    public function partition(DeferredCreateTable $definition, Session $session, ?string $preparationDatabase = null): \MySqlMemory\Result\Reply
+    public function partition(CreateTable $definition, Session $session, ?string $preparationDatabase = null): \MySqlMemory\Result\Reply
     {
         $saved = $session->variables->database;
         $session->variables->database = $preparationDatabase ?? $saved;
@@ -92,7 +94,7 @@ final class TableUse
     /**
      * Resolves engine options without opening the destination or the creation query.
      */
-    public function header(DeferredCreateTable $definition, Session $session, bool $preparing = false): void
+    public function header(CreateTable $definition, Session $session, bool $preparing = false): void
     {
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $storage = new StorageOptions();
@@ -112,7 +114,7 @@ final class TableUse
      *
      * @throws SqlError When a partition expression reads forbidden session state
      */
-    public function contextualize(DeferredCreateTable $definition, Session $session): void
+    public function contextualize(CreateTable $definition, Session $session): void
     {
         if ($definition->partitioning === null) {
             return;
@@ -142,7 +144,7 @@ final class TableUse
      *
      * @throws SqlError When the header or the creation query cannot prepare
      */
-    public function prepare(DeferredCreateTable $definition, Session $session): ?Operation
+    public function prepare(CreateTable $definition, Session $session): ?Operation
     {
         $this->header($definition, $session, true);
         $query = $definition->query;
@@ -177,16 +179,11 @@ final class TableUse
     }
 
     /**
-     * Resolves a complete instruction's declaration without constructing an ordinary Statement.
+     * Binds the complete request through the existing table-statement boundary.
      */
-    public function bound(DeferredCreateTable $definition, Session $session): \MySqlMemory\Session\Resolution\TablePreparation
+    public function bound(CreateTable $definition, Session $session): Operation
     {
         $database = $session->variables->database;
-        $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution()));
-        $definition->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
-        $facts = $derivation->facts();
-        $table = $facts->relation($definition)->table;
-        \SqlSemantics\Diagnostic\Check::invariant($table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable, 'A complete creation instruction supplies a table declaration.');
-        return new \MySqlMemory\Session\Resolution\TablePreparation($definition, $facts, $table->table);
+        return new Operation($session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution()), $definition);
     }
 }

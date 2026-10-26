@@ -319,11 +319,13 @@ beyond PHP's signed integer range and written leading zeros. The MySQL 5.6 and
 those booleans as constant ordering expressions. Dependency resolution and the
 consumer's preparation order determine which condition is reported first.
 
-Ordinary CREATE INDEX, CREATE TABLE and ALTER TABLE values exclude fixed invalid
-index names and non-scalar functional key operands. Their constructors reject
-these combinations before `Operation` construction. Stored instructions use
-`DeferredCreateIndex`, `DeferredCreateTable` or `DeferredAlterTable` to retain
-the complete request until its containing program reaches it. The target,
+CREATE TABLE and ALTER TABLE values retain fixed invalid index names and
+non-scalar functional key operands as complete requests. The same types represent
+top-level and stored statements; `hasExecutionCondition()` identifies intrinsic
+conditions whose outcome depends on preparation order or catalog state.
+Construction validates the request's structure without installing a declaration
+or executing a conditional skip. CREATE INDEX still uses `DeferredCreateIndex`
+for these stored requests. The target,
 ordered key parts, index kind and options remain available without SQL text or
 a parser AST. `InvalidIndexName` identifies an explicit secondary-index name
 that is empty, ends in an ASCII space, or equals PRIMARY ignoring case. Primary

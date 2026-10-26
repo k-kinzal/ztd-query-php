@@ -90,11 +90,11 @@ final class Preparation
     public ?WeakMap $roleCreations = null;
 
     /**
-     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable, array{\MySqlMemory\Dictionary\TableDefinition|\MySqlMemory\Dictionary\View|null}>|null Destination identities observed by stored retained index declarations
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, array{\MySqlMemory\Dictionary\TableDefinition|\MySqlMemory\Dictionary\View|null}>|null Destination identities observed by stored retained index declarations
      */
     public ?WeakMap $indexCreations = null;
     /**
-     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredCreateTable, true>|null Stored temporary definitions whose failed preparation repeats syntax notices
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, true>|null Stored temporary definitions whose failed preparation repeats syntax notices
      */
     public ?WeakMap $storageCreations = null;
 

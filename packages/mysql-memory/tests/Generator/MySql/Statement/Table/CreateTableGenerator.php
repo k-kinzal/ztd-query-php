@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
- * Generates a single INT column, keeping its qualifier consistent with the target table.
+ * Generates INT declarations and duplicate-column requests, preserving target qualifiers.
  *
  * @implements ErisGenerator<CreateTable>
  */
@@ -33,13 +33,16 @@ final class CreateTableGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<ColumnName> $columnNames The declaration names to exercise
      */
-    public function __construct(ErisGenerator $columnNames)
+    public function __construct(ErisGenerator $columnNames, bool $duplicateColumns = false, bool $ifNotExists = false)
     {
         $this->delegate = Generators::map(
-            static fn (ColumnName $columnName): CreateTable => new CreateTable(
-                $columnName->table ?? new QualifiedName(new Name('target')),
-                [new ColumnDefinition($columnName, new OrdinaryColumn(new Integral(IntegralKind::Int)))],
-            ),
+            static function (ColumnName $columnName) use ($duplicateColumns, $ifNotExists): CreateTable {
+                $elements = [new ColumnDefinition($columnName, new OrdinaryColumn(new Integral(IntegralKind::Int)))];
+                if ($duplicateColumns) {
+                    $elements[] = new ColumnDefinition(new ColumnName($columnName->column, $columnName->table, $columnName->dot), new OrdinaryColumn(new Integral(IntegralKind::Int)));
+                }
+                return new CreateTable($columnName->table ?? new QualifiedName(new Name('target')), $elements, ifNotExists: $ifNotExists);
+            },
             $columnNames,
         );
     }

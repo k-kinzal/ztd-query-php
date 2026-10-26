@@ -123,15 +123,26 @@ does not establish execution in a property or runtime coverage. Tests of MemoryD
 classes live under `tests/Unit`; generators do not create mysql-memory implementation
 types.
 
-`CreateTableExecutionProperties` uses `forAll(new OperationGenerator($release))`.
-`OperationGenerator` composes `CreateTableGenerator` and `ColumnNameGenerator`,
-all implementing `Eris\Generator`. It publishes the generated single-column CREATE
-TABLE statement in a matching analysis context. `then` executes that operation in
-MemoryDB and checks the stored column name. Shrinking rebuilds the statement,
-context and facts together; structurally unchanged statements end the shrink.
-This first example covers valid column-definition names, not every operation or
-column-name context. Each MySQL release gets 100 trials by default; `ERIS_SEED`
-reproduces the generated inputs.
+`CreateTableExecutionProperties` composes `OperationGenerator`,
+`CreateTableGenerator` and `ColumnNameGenerator` through Eris. It checks stored
+column names and duplicate-column refusals, then generates a related pair of
+creation requests. The dependent request is prepared before the first request
+installs its destination; execution checks the release-specific conditional
+outcome and preserves the installed table. Eris shrinks both requests together
+before the callback, which executes semantic values without rendering or analysis.
+Each release gets 100 trials per property by default; `ERIS_SEED` reproduces them.
+Table definitions still use the transitional `Operation` boundary and derive
+facts from an analysis context. These properties do not establish the required
+concrete-statement and local-meaning model for table definitions.
+
+Representable CREATE TABLE and ALTER TABLE requests share their statement types
+and command lifecycle with ordinary definitions, including retained intrinsic
+conditions. Analysis retains those requests; preparation and execution determine
+their outcome. Prepared definitions retain their original database and observe
+the catalog at execution. Some column-attribute combinations are still rejected
+during lowering instead of being retained. Incomplete input and deferred CREATE
+INDEX still have separate paths, so this does not establish read-only analysis
+for all SQL.
 
 `InsertExecutionProperties` exercises character-literal VALUES directly as concrete
 `InsertStatement` values. It distinguishes an absent-table SQL error from an

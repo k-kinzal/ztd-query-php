@@ -22,7 +22,7 @@ final class DeferredDefaultSettingTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
         $alter = $operation->statement->body;
-        self::assertInstanceOf(M\Routine\Program\Write\DeferredAlterTable::class, $alter);
+        self::assertInstanceOf(M\Alter\AlterTable::class, $alter);
         $default = $alter->commands[0];
         self::assertInstanceOf(DeferredDefaultSetting::class, $default);
         self::assertTrue($operation->facts->covers($default->expression));

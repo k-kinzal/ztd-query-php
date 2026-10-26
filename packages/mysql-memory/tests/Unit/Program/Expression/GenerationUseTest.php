@@ -22,7 +22,7 @@ final class GenerationUseTest extends TestCase
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $subquery = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]));
         $column = new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\NumberLiteral('2'), $subquery));
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), $column)], ifNotExists: true);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), $column)], ifNotExists: true);
         $session->query('CREATE TABLE t(a INT)');
         $session->text = 'unrelated input';
         self::assertSame(1, (new GenerationUse())->execute($definition, $session)->warnings());
@@ -36,7 +36,7 @@ final class GenerationUseTest extends TestCase
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $type = new M\Type\Integral(M\Type\Kind\IntegralKind::Int);
         $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Variable\SystemVariable(new Name('version')), new M\Name\ColumnUse(new Name('a')));
-        $definition = new M\Routine\Program\Write\DeferredCreateTable(new QualifiedName(new Name('t')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn($type)), new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression))], ifNotExists: true);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn($type)), new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('g')), new M\Table\Column\Generation\DeferredGeneratedColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $expression))], ifNotExists: true);
         $session->text = 'unrelated request';
         (new GenerationUse())->create($definition, $session, 'd');
         self::assertSame('unrelated request', $session->text);

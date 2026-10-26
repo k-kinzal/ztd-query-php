@@ -49,9 +49,10 @@ final class DeferredMethodTest extends TestCase
     public function testRenderRetainsTheMethodInsideAStoredAlteration(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t ENGINE=InnoDB PARTITION BY LINEAR HASH((1,2)) PARTITIONS 3');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertSame('CREATE PROCEDURE p() ALTER TABLE t ENGINE InnoDB PARTITION BY LINEAR HASH ((1, 2)) PARTITIONS 3', $operation->toString());
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(M\Routine\Program\Write\DeferredAlterTable::class, $operation->statement->body);
+        self::assertInstanceOf(M\Alter\AlterTable::class, $operation->statement->body);
     }
 
 }
