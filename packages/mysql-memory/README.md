@@ -139,10 +139,14 @@ Representable CREATE TABLE and ALTER TABLE requests share their statement types
 and command lifecycle with ordinary definitions, including retained intrinsic
 conditions. Analysis retains those requests; preparation and execution determine
 their outcome. Prepared definitions retain their original database and observe
-the catalog at execution. Some column-attribute combinations are still rejected
-during lowering instead of being retained. Incomplete input and deferred CREATE
-INDEX still have separate paths, so this does not establish read-only analysis
-for all SQL.
+the catalog at execution. Some column-attribute combinations, unknown index
+algorithms and invalid JSON index attributes are still rejected during lowering
+instead of being retained. Representable CREATE INDEX, REVOKE, UPDATE and trigger
+requests also enter the common execution boundary. Conditional
+index, revocation and update preparation retains the ordinary PreparedStatement.
+Incomplete input, fixed duplicate UPDATE aliases and shared dictionary/view
+caches still have separate behavior, so this does not establish read-only
+analysis for all SQL.
 
 `InsertExecutionProperties` exercises character-literal VALUES directly as concrete
 `InsertStatement` values. It distinguishes an absent-table SQL error from an
@@ -178,8 +182,16 @@ the assertion callbacks do not render or analyze them. Account analysis retains
 the request without changing accounts, role edges or transaction state. These
 checks do not yet establish read-only analysis for every statement family.
 
+`ConditionalRequestExecutionProperties` generates CREATE INDEX, UPDATE, REVOKE
+and CREATE TRIGGER values without source SQL. It checks their absent-state SQL
+errors, then composes table definitions with dependent indexes, updates and
+triggers before the assertion callback. Generation and shrinking preserve the
+referenced column. Both accepted and conditional requests use the same execution
+lifecycle. The generated forms are deliberately bounded; they do not establish
+complete operand or statement coverage.
+
 The property suite currently exercises the stated CREATE TABLE, INSERT, transaction,
-account and interval behaviors. It does not cover every statement family. The old constructor sampler
+account, index, update, trigger and interval behaviors. It does not cover every statement family. The old constructor sampler
 and its instance-only properties have been removed. Missing generators remain
 errors in the complete PHPStan check; deleting those properties does not satisfy
 model coverage. Interface generators must compose their concrete alternatives,

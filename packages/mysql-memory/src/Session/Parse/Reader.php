@@ -219,21 +219,12 @@ final class Reader
     }
 
     /**
-     * Preserves complete instructions that can be stored before their condition is reached.
+     * Preserves a completed table header when a later operand prevents publication.
      *
      * @throws Definition\DeferredPreparation When a typed instruction is prepared
      */
     public function template(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?SqlError
     {
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\TriggerSchemaMismatch) {
-            return (new Definition\TriggerInput())->refused($failure, $statement, $session);
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate) {
-            return (new Definition\UpdateInput())->refused($failure, $statement, $session);
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel) {
-            return (new Definition\RevocationInput())->refused($failure, $statement, $session);
-        }
         if ((new Definition\TableInput())->accepts($failure->problem)) {
             return (new Definition\TableInput())->refused($failure, $statement, $session);
         }

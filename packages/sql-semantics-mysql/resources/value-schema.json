@@ -228,9 +228,6 @@
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\Privilege\\RefusedRevokeLevel": {
-        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRevokePrivileges"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RefusedColumnLevel": {
         "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\CurrentDatabaseLevel|SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\DatabaseLevel|SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\GlobalLevel",
         "privilege": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\StaticPrivilege",
@@ -1211,9 +1208,6 @@
         "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Update\\RefusedUpdate": {
-        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredUpdate"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\ValueCountMismatch": {
         "actual": "int",
         "expected": "int",
@@ -1247,7 +1241,7 @@
         "lowPriority": "bool",
         "orderBy": "array",
         "tables": "array",
-        "where": "?SqlSemantics\\Statement\\Scalar",
+        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget": {
@@ -2508,11 +2502,6 @@
         "end": "?int",
         "offset": "?int"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\TriggerSchemaMismatch": {
-        "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
-        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
-        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTable"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ProgramKind": {
         "name": "string",
         "value": "string"
@@ -2920,7 +2909,7 @@
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredUpdate"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredGroupStart": {
         "options": "array"
@@ -2984,34 +2973,6 @@
         "targets": "array",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredRevokePrivileges": {
-        "ifExists": "bool",
-        "ignoreUnknownUser": "bool",
-        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
-        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
-        "privileges": "array",
-        "users": "array"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredUpdate": {
-        "assignments": "array",
-        "hints": "array",
-        "ignore": "bool",
-        "limit": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Limit",
-        "lowPriority": "bool",
-        "orderBy": "array",
-        "tables": "array",
-        "where": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand|null",
-        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\Index\\DeferredCreateIndex": {
-        "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
-        "alterOptions": "array",
-        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
-        "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array",
-        "parts": "array",
-        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\OrderPlacement": {
         "name": "string",
@@ -3842,9 +3803,6 @@
         "options": "array",
         "problem": "SqlSemantics\\Statement\\Fact\\Diagnostic",
         "temporaryWords": "int"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\RefusedIndexTemplate": {
-        "definition": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\Index\\DeferredCreateIndex"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Creation\\SpatialKeyArity": {
         "owner": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\KeyPart"

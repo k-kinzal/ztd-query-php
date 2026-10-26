@@ -102,11 +102,7 @@ final class ChangeRule
         if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($parts[3]) !== null) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(...$parts), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->problem($parts[0], $parts[3], $parts[4], $parts[6], $parts[7], $parts[5]) !== null) {
-            $write = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate(...$parts);
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate($write), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
-        return (new \SqlSemantics\Platform\MySql\Lowering\Dml\Update\Publication())->create(...$parts);
+        return new Update(...$parts);
     }
 
     /**

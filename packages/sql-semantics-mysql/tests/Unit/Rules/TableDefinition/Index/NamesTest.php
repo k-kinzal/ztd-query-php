@@ -55,10 +55,10 @@ final class NamesTest extends TestCase
     }
 
     #[DataProvider('providerInvalidNames')]
-    public function testOrdinaryIndexCannotRetainAnInvalidName(string $value): void
+    public function testRequestRetainsAnInvalidName(string $value): void
     {
-        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
-        new M\Table\CreateIndex(new Name($value), new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
+        $request = new M\Table\CreateIndex(new Name($value), new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
+        self::assertTrue($request->hasExecutionCondition());
     }
 
     #[DataProvider('providerInvalidNames')]

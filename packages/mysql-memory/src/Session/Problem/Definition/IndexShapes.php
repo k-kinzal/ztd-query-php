@@ -93,7 +93,7 @@ final class IndexShapes
     public function request(\MySqlMemory\Session\Resolution\IndexPreparation $prepared, Session $session): void
     {
         $statement = $prepared->statement;
-        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
+        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
             return;
         }
         $table = (new \MySqlMemory\Command\Definition\AlterTableCommand())->table($session, $statement->table->schema->value ?? $session->variables->database, $statement->table->name->value);

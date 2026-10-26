@@ -32,7 +32,7 @@ final class PreparedCache
     /**
      * @param list<array{string, string, Table}> $tables Resolved schema, name and declaration identities
      */
-    public function __construct(public PreparedStatement|PendingInstruction $definition, public array $tables, public readonly ?Definition $input = null)
+    public function __construct(public PreparedStatement|PendingTable $definition, public array $tables, public readonly ?Definition $input = null)
     {
     }
 
@@ -41,9 +41,9 @@ final class PreparedCache
      *
      * @throws LogicException When the statement has no preparation implementation
      */
-    public static function capture(\SqlSemantics\Statement\AnalyzedStatement|PendingInstruction $operation, Session $session, ?Definition $input = null): self
+    public static function capture(\SqlSemantics\Statement\AnalyzedStatement|PendingTable $operation, Session $session, ?Definition $input = null): self
     {
-        if ($operation instanceof PendingInstruction) {
+        if ($operation instanceof PendingTable) {
             return new self($operation, [], $input);
         }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {

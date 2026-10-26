@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTa
  *
  * @visibility MySqlMemory
  */
-final class PendingTable implements PendingInstruction
+final class PendingTable
 {
     /**
      * @param RefusedCreateTail $header The header retained before a refused partition operand

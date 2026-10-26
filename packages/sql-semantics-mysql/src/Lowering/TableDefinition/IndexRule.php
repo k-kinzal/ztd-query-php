@@ -75,8 +75,7 @@ final class IndexRule
         $keyParts = (new Key\OrderingRule())->parts($this->lowering, $form->node, $form->node($parts), $kind, $algorithm, $indexOptions);
 
         $indexName = $this->lowering->names->identifier($form->node($name));
-        $class = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->request($indexName, $keyParts, $kind) ? \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex::class : CreateIndex::class;
-        $index = new $class(
+        $index = new CreateIndex(
             $indexName,
             $this->lowering->columnTable,
             $keyParts,
@@ -85,9 +84,6 @@ final class IndexRule
             $indexOptions,
             $this->lowering->tableChanges->alterOptions($form->node($alter)),
         );
-        if ($index instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate($index), 0, false);
-        }
         return $index;
     }
 

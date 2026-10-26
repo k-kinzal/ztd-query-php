@@ -70,6 +70,9 @@ final class ChangeCommand implements Command
         assert($operation instanceof Operation);
         $statement = $operation->statement;
         assert($statement instanceof Update || $statement instanceof Delete);
+        if ($statement instanceof Update && $statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Write\UpdateUse())->raise($statement, $session, $connection->parameters);
+        }
         $relation = $statement instanceof Delete ? $statement->table : ($statement->tables[0] ?? null);
         if ($statement instanceof Update && (count($statement->tables) !== 1 || !$relation instanceof TableReference)) {
             throw StatementError::NotSupportedYet->error('multiple-table UPDATE');

@@ -30,7 +30,7 @@ final class IndexShapesTest extends TestCase
     public function testDefinitionUsesTheBoundOperandOwner(): void
     {
         $parts = [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))];
-        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), $parts, M\Table\Key\IndexKind::Spatial);
+        $definition = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), $parts, M\Table\Key\IndexKind::Spatial);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $prepared = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Spatial, $parts);

@@ -14,6 +14,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testConditionalPreparesIndexOperandsWithoutOpeningTheTable(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $request = new \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex(new \SqlSemantics\Statement\Identifier\Name('PRIMARY'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('missing')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'))]);
+        self::assertTrue((new Preparation())->conditional($request, $session));
+        self::assertSame([], $session->instance->dictionary->schema('d')?->tables);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     /**
      * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Statement}>
      */
@@ -98,7 +107,7 @@ final class PreparationTest extends TestCase
 
     public function testAlterParametersUsesTheRetainedMarkerWithoutReadingTheLabel(): void
     {
-        $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);
         $session = (new Instance('9.1.0'))->connect();
         $session->text = 'opaque request label';
         $this->expectExceptionMessage('Dynamic parameters can only be used in DML statements.');
@@ -107,7 +116,7 @@ final class PreparationTest extends TestCase
 
     public function testAlterParametersKeepsEarlierReleasesOpenForExecution(): void
     {
-        $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex(new \SqlSemantics\Statement\Identifier\Name('k'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Deferred\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter())]);
         $session = (new Instance('8.4.7'))->connect();
         (new Preparation())->alterParameters($definition, $session);
         self::assertSame(0, $session->diagnostics->raised());

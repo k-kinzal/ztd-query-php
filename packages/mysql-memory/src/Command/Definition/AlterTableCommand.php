@@ -81,6 +81,9 @@ final class AlterTableCommand implements Command
             $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation->statement, $session->settings()->release(), $connection->parameters));
             return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($operation->statement, $session);
         }
+        if ($operation->statement instanceof CreateIndex && $operation->statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Definition\IndexUse())->raise($operation->statement, $session);
+        }
         return $this->alter($operation, $session, $context, $connection);
     }
 
@@ -185,7 +188,7 @@ final class AlterTableCommand implements Command
             (new Constraint\SpatialColumns())->check($column, $session->instance->registry->spatialCatalog);
         }
         $statement = $operation->statement;
-        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex);
+        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
         [, $commands] = $this->request($statement);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added($this->indexes($commands), $operation->facts, $session);
         if (!($operation->statement instanceof AlterTable && $operation->statement->hasExecutionCondition()) || $session->settings()->legacy()) {
@@ -325,12 +328,12 @@ final class AlterTableCommand implements Command
      *
      * @return array{QualifiedName, list<AlterCommand>}
      */
-    public function request(AlterTable|CreateIndex|DropIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex $statement): array
+    public function request(AlterTable|CreateIndex|DropIndex $statement): array
     {
         if ($statement instanceof AlterTable) {
             return [$statement->table, $statement->commands];
         }
-        if ($statement instanceof CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
+        if ($statement instanceof CreateIndex) {
             $index = new IndexDefinition($statement->kind, $statement->parts, new ColumnName($statement->name), $statement->algorithm, $statement->options);
             $commands = [new AddConstraint($index)];
             foreach ($statement->alterOptions as $option) {

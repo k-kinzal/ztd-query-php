@@ -37,7 +37,7 @@ final class FunctionalQueries
      */
     public function rows(\SqlSemantics\Statement\Node $statement): void
     {
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
             $indexes = [new IndexDefinition($statement->kind, $statement->parts, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName($statement->name), $statement->algorithm, $statement->options)];
         } else {
             $indexes = (new Walker())->find($statement, IndexDefinition::class);
@@ -59,7 +59,7 @@ final class FunctionalQueries
     public function prepare(Operation|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session, Problems $problems): void
     {
         $create = $operation->statement;
-        $index = $create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex;
+        $index = $create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
         $alter = $create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
         if ((!$create instanceof CreateTable && !$alter && !$index) || $session->settings()->legacy()) {
             return;
@@ -151,7 +151,7 @@ final class FunctionalQueries
         if (!$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion) {
             return false;
         }
-        $owners = ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex) ? [$statement] : (new Walker())->find($statement, IndexDefinition::class);
+        $owners = ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) ? [$statement] : (new Walker())->find($statement, IndexDefinition::class);
         foreach ($owners as $index) {
             if (in_array($diagnostic->expression, (new Walker())->find($index, \SqlSemantics\Statement\Node::class), true)) {
                 return true;

@@ -34,7 +34,7 @@ final class OpenedTables
      */
     public function prepare(array $nodes, Facts $facts, Session $session): void
     {
-        $writing = array_filter($nodes, static fn (Node $node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete) !== [];
+        $writing = array_filter($nodes, static fn (Node $node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete) !== [];
         foreach ($nodes as $node) {
             if (!($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) || !$facts->covers($node)) {
                 continue;

@@ -146,17 +146,11 @@ final class StatementRule
         if ($administrative !== null) {
             return $administrative;
         }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Privilege\RefusedRevokeLevel) {
-            return $failure->problem->request;
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\RefusedUpdate || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery) {
             return $failure->problem->write;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
             return $failure->problem->explanation;
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate) {
-            return $failure->problem->definition;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
             return $failure->problem->query;

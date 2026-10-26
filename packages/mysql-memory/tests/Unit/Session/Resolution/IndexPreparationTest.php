@@ -17,7 +17,7 @@ final class IndexPreparationTest extends TestCase
 {
     public function testRetainsTheExactInstructionAndDerivedFacts(): void
     {
-        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
+        $definition = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $bound = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
         $prepared = new \MySqlMemory\Session\Resolution\IndexPreparation($definition, $bound->facts);

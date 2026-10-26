@@ -10,8 +10,7 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate;
+use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 /**
@@ -24,10 +23,10 @@ final class UpdateUse
     /**
      * Obtains the standalone request's first preparation condition.
      */
-    public function error(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session): SqlError
+    public function error(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session): SqlError
     {
         try {
-            $this->raise($write, $session, false);
+            $this->raise($write, $session);
         } catch (SqlError $error) {
             return (new \MySqlMemory\Session\Problem\Precision())->legacy($error, $session->settings()->release());
         }
@@ -40,13 +39,8 @@ final class UpdateUse
      * @throws SqlError When a dependency or retained input constraint is reached
      * @throws LogicException When the retained constraint loses its native error
      */
-    public function raise(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $invocation = true, array $parameters = []): never
+    public function raise(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, array $parameters = []): never
     {
-        if ($invocation) {
-            \MySqlMemory\Session\State\StatementCounters::query($session);
-            \MySqlMemory\Session\State\StatementCounters::command($session, count($write->tables) > 1 ? 'Com_update_multi' : 'Com_update');
-            $session->diagnostics->clear();
-        }
         $this->check($write, $session, parameters: $parameters);
         throw new LogicException('A retained UPDATE keeps its input, target or clause contradiction.');
     }
@@ -57,7 +51,7 @@ final class UpdateUse
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
      * @throws SqlError When an input, destination or reached clause cannot bind
      */
-    public function check(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $prepared = false, array $parameters = []): void
+    public function check(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $prepared = false, array $parameters = []): void
     {
         $database = $session->variables->database;
         \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
@@ -65,8 +59,8 @@ final class UpdateUse
         $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($session->settings()->release()));
         $write->render($output);
         $derivation = new Derivation($context, parameters: $output->parameters());
-        if ($write instanceof DeferredUpdate) {
-            $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        if ($write instanceof Update) {
+            $write->deriveStatement($derivation);
         } else {
             $write->derive($derivation);
         }
@@ -90,7 +84,7 @@ final class UpdateUse
             throw $input;
         }
         (new \MySqlMemory\Session\Problem\Sampling())->write($facts);
-        if ($write instanceof DeferredUpdate) {
+        if ($write instanceof Update) {
             if ((new UpdateOperands())->prepare($write, $facts, $session, $prepared, $parameters)) {
                 return;
             }
@@ -107,7 +101,7 @@ final class UpdateUse
      *
      * @throws SqlError When a reached input has no database or repeats a fixed name
      */
-    public function names(DeferredUpdate|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function names(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
     {
         $collisions = [];
         foreach ($facts->diagnostics as $problem) {

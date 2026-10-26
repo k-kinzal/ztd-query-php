@@ -49,7 +49,7 @@ final class Reading
      */
     public function read(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
-        if (Stages::definitionCondition($operation->statement)) {
+        if (Stages::definitionCondition($operation->statement) || ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $operation->statement->hasExecutionCondition())) {
             return;
         }
         if ($operation instanceof Operation && in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {

@@ -89,7 +89,7 @@ final class Stages
     public static function selfChecked(\SqlSemantics\Statement\Statement $statement): bool
     {
         return \MySqlMemory\Command\Account\Names::owns($statement) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables
-            || ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $statement->hasExecutionCondition());
+            || (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update) && $statement->hasExecutionCondition());
     }
 
     /**
@@ -97,7 +97,7 @@ final class Stages
      */
     public static function definitionCondition(Node $statement): bool
     {
-        return ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof AlterTable) && $statement->hasExecutionCondition();
+        return ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof AlterTable || $statement instanceof CreateIndex) && $statement->hasExecutionCondition();
     }
 
     /**

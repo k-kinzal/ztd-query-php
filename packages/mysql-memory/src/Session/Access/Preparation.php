@@ -48,13 +48,7 @@ final class Preparation
             (new DefaultDatabase())->check($operation->statement, $session);
         }
         (new Execution($session))->parsing($operation, $operation->facts->warnings);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->hasExecutionCondition()) {
-            (new \MySqlMemory\Program\Expression\TableUse())->prepare($operation->statement, $session);
-            return;
-        }
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $operation->statement->hasExecutionCondition()) {
-            (new \MySqlMemory\Program\Expression\AlterUse())->header($operation->statement, $session);
-            $this->alterParameters($operation->statement, $session);
+        if ($this->conditional($operation->statement, $session)) {
             return;
         }
         $this->protocol($operation->statement);
@@ -67,6 +61,39 @@ final class Preparation
         }
         (new DefaultDatabase())->referenced($operation, $session);
         $this->hints($operation, $session);
+    }
+
+    /**
+     * Prepares complete requests whose intrinsic conditions have command-specific order.
+     *
+     * @return bool Whether the request owns its remaining preparation phases
+     * @throws SqlError When a reached operand refuses preparation
+     */
+    public function conditional(\SqlSemantics\Statement\Statement $statement, Session $session): bool
+    {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\TableUse())->prepare($statement, $session);
+            return true;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\AlterUse())->header($statement, $session);
+            $this->alterParameters($statement, $session);
+            return true;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex && $statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Definition\IndexUse())->header($statement, $session);
+            $this->alterParameters($statement, $session);
+            return true;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Write\UpdateUse())->check($statement, $session, true);
+            return true;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges && $statement->hasExecutionCondition($session->settings()->release())) {
+            (new \MySqlMemory\Command\Account\RevokeCommand())->prepare($statement, $session);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -239,7 +266,7 @@ final class Preparation
      *
      * @throws SqlError When the complete declaration contains a dynamic parameter
      */
-    public function alterParameters(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex $definition, Session $session): void
+    public function alterParameters(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex $definition, Session $session): void
     {
         if (!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true) || (new \MySqlMemory\Command\Prepared\GenerationParameters())->occurrences($definition, $session->settings()->release()) === []) {
             return;
@@ -253,7 +280,7 @@ final class Preparation
      *
      * @throws SqlError When splitting or semantic interpretation refuses the input
      */
-    public function read(string $sql, Session $session): \SqlSemantics\Statement\AnalyzedStatement|\MySqlMemory\Command\Prepared\PendingInstruction
+    public function read(string $sql, Session $session): \SqlSemantics\Statement\AnalyzedStatement|\MySqlMemory\Command\Prepared\PendingTable
     {
         (new \MySqlMemory\Session\Parse\Preparation\EmptyPrepared())->check($sql, $session->semantics()->parser(), $session->resolution()->client, $session->settings()->legacy());
         try {

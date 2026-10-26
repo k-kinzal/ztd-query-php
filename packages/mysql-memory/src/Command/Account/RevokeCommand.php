@@ -69,6 +69,9 @@ final class RevokeCommand implements Command
     {
         assert($operation instanceof Operation);
         $statement = $operation->statement;
+        if ($statement instanceof RevokePrivileges && $statement->hasExecutionCondition($session->settings()->release())) {
+            $this->prepare($statement, $session);
+        }
         $session->transaction->commit();
         $accounts = $session->instance->accounts;
         $saved = $accounts->copy();
@@ -88,6 +91,16 @@ final class RevokeCommand implements Command
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());
+    }
+
+    /**
+     * Checks written account names and the selected target database before execution.
+     */
+    public function prepare(RevokePrivileges $request, Session $session): void
+    {
+        $names = new Names($session->settings()->release());
+        $names->check($names->users($request->users));
+        (new Levels($session->settings()->release()))->target($request->kind, $request->level, $session);
     }
 
     /**

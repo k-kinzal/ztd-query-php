@@ -2271,3 +2271,90 @@ statement. Deferred index/revocation/write input routes and shared dictionary/vi
 caches remain, as do the Operation/Facts migration, complete generators, native
 catalog providers and observation, full corpus replay and the separate 900-second
 matrix. Goals B-D remain open, and PR #665 remains a draft.
+
+### Complete index, revocation, update and trigger requests (2026-10-26)
+
+CREATE INDEX, routine wildcard REVOKE, UPDATE with retained operand conditions,
+and CREATE TRIGGER with contradictory explicit schemas now retain their complete
+operands on the ordinary statement types. Lowering no longer substitutes separate
+deferred/refusal roots for these conditions. Structural constructor checks remain;
+the execution boundary determines whether a condition is reached. Global routine
+ALL uses the selected release's interpretation instead of different request types.
+
+The commands, preparation checks and stored-program interpreter consume these
+ordinary requests through the common lifecycle. Conditional index, revocation and
+update requests use PreparedStatement, preserving the original database, marker
+slots and request identity. Their duplicate parse/prepared/stored routes and the
+now-unused PendingInstruction interface have been removed. PendingTable remains
+an explicit incomplete-input case. Legacy precision diagnostics are normalized at
+the common execution boundary after the command's conditions are reached.
+
+Four Eris generators compose their operands with ordinary Eris generators and
+delegate shrinking. The execution property distinguishes missing-state SQL errors
+from implementation failures, then generates related table definitions and
+dependent index, update and trigger requests together. The dependent sequence is
+constructed before the assertion callback, preserving its column relationship
+during shrinking. Execution receives opaque labels, without source SQL. These
+bounded forms still publish through Operation; they do not establish complete
+generator coverage or the required local ownership of meaning.
+
+Scoped evidence on PHP 8.5.8:
+
+- Semantic models, lowering, stored operands and related rules pass 1,323 tests /
+  3,661 assertions. The updated examples pass 12 / 12. The earlier semantic run's
+  obsolete expectation of DeferredExplain around an ordinary conditional UPDATE
+  has been replaced with assertions on the ordinary EXPLAIN request and an actual
+  deferred output-target condition.
+- Generated execution passes 63 cases / 49,137 assertions, with 100 Eris trials
+  per case and seed 20261026 across all nine releases. There are 36 missing-state
+  cases and 27 dependent-definition cases. The initial run exposed an incorrect
+  property field access (`ColumnUse::column` instead of `name`); the corrected
+  complete property run passes. No arbitrary exceptions are accepted as SQL errors.
+- The final analysis/preparation/execution regression reports 288 tests / 923
+  assertions with nine one-second time-limit risks in PreparedCacheTest,
+  Server/StatementsTest and PreparedUpdateBoundaryTest. It has no reported
+  assertion failures, but aborted tests make this a failed regression run. The
+  earlier broader command/program run reports 1,581 / 3,971 with three obsolete
+  PendingInstruction expectations and four time-limit risks. The obsolete tests
+  were removed with that interface; their assertions now exercise ordinary
+  prepared revocation. Neither run counts as full passing regression evidence.
+- After the complete static check exposed the two UPDATE consumers below, the
+  corrected name traversal, view rewriting and analysis-boundary regression pass
+  51 tests / 359 assertions, including a conditional UPDATE through a view. The
+  affected UPDATE properties pass again: 18 cases / 14,426 assertions with the
+  same nine releases, 100 trials per case and seed 20261026.
+- Changed-file PHPStan, formatting and PHP 8.1 compatibility pass for 53 memory
+  and 35 semantic PHP files. Strict autoload, source LOC/tree and Deptrac gates
+  pass in both packages; Deptrac reports no violations or uncovered dependencies.
+  The retained-field schema check covers 1,038 definitions. Protected configuration
+  files and test time limits are unchanged.
+- The complete memory PHPStan run before those consumer corrections reports
+  2,629 diagnostics, including 1,104 missing generators. It also identifies two
+  consumers still assuming scalar
+  UPDATE operands: name-order traversal and view-predicate composition. Traversal
+  now visits the retained assignment operands; view rewriting requires predicate
+  conditions to have been resolved first. The complete semantic run reports 6,033
+  diagnostics, mostly old aggregate-result assumptions in tests, plus two source
+  visibility violations in prepared interpretation. The first semantic Composer
+  invocation stops at its 300-second process timeout; invoking the same analyzer
+  directly completes with these diagnostics. No baseline or ignore was added.
+- The ordinary reconstruction target attempts 528 unmodified supplied seeds
+  indexed as CREATE INDEX, UPDATE, REVOKE or CREATE TRIGGER: 89 on 5.6.51, 54 on
+  5.7.44 and 55 on each other supported release. Default lexical settings, seed
+  20261026, max-runs 0 and timeout 60 are unchanged. Every profile stops at its
+  first counterexample, so this is not a completed replay of the selected corpus.
+
+The first legacy counterexample, alter_algorithm_option-1.txt, is
+`CREATE INDEX _sqlfaker_identifier ON _sqlfaker_identifier ( _sqlfaker_identifier ) ALGORITHM _sqlfaker_identifier`.
+The first modern counterexample, common_index_option-3.txt, is
+`CREATE INDEX _sqlfaker_identifier ON _sqlfaker_identifier ( _sqlfaker_identifier ) ENGINE_ATTRIBUTE 'text'`.
+Lowering rejects the unknown algorithm or invalid JSON before publishing a
+reconstructible request. Neither the seeds nor the comparison have been weakened.
+
+Fixed duplicate UPDATE aliases and incomplete-input routes remain separate.
+Analysis still mutates shared temporary-table selection and view caches; complete
+read-only analysis is not established. Operation/Facts, runtime derivation and
+rendered marker discovery also remain in the migrated families. Complete local
+meaning, generators, native catalog providers and state observation, full corpus
+replay and the separate 900-second matrix are still required. Goals B-D remain
+open, and PR #665 remains a draft.

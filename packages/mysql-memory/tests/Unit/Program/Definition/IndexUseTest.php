@@ -17,7 +17,7 @@ final class IndexUseTest extends TestCase
 {
     public function testHeaderBindsTheSameInstructionWithoutRequiringItsTarget(): void
     {
-        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
+        $definition = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $prepared = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
         self::assertSame($definition, $prepared->statement);
@@ -26,7 +26,7 @@ final class IndexUseTest extends TestCase
 
     public function testRaiseChecksThePopulatedTargetBeforeItsRetainedKeyRole(): void
     {
-        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
+        $definition = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT); INSERT INTO t VALUES(7)');
         $session->text = 'not executable SQL';

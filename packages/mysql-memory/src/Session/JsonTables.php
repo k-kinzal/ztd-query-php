@@ -42,7 +42,7 @@ final class JsonTables
             return $this->first($statement->statement, $facts);
         }
         $tables = match (true) {
-            $statement instanceof Update, $statement instanceof MultipleDelete, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete => $statement->tables,
+            $statement instanceof Update, $statement instanceof MultipleDelete, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete => $statement->tables,
             default => array_filter([(new Placement())->first($statement)?->from]),
         };
         foreach ($tables as $table) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\View;
 
+use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Construction\Reconstruction;
@@ -44,6 +45,8 @@ final class ViewRewrite
 {
     /**
      * Reconstructs a statement against the base table and resolves the new structure.
+     *
+     * @throws LogicException When a retained predicate condition bypasses preparation
      */
     public function operation(Operation $operation, ViewWrites $writes, TableReference|WriteTarget $target): Operation
     {
@@ -67,6 +70,9 @@ final class ViewRewrite
         if (($rewritten instanceof Update || $rewritten instanceof Delete) && $writes->where !== null) {
             $where = (new Reconstruction())->node($writes->where);
             assert($where instanceof Scalar);
+            if ($rewritten->where !== null && !$rewritten->where instanceof Scalar) {
+                throw new LogicException('A view write must resolve its predicate condition before rewriting.');
+            }
             $where = $rewritten->where === null ? $where : new Logical(LogicalOperator::And, new Grouped($rewritten->where), new Grouped($where));
             $rewritten = (new Reconstruction())->node($rewritten, ['where' => $where]);
             assert($rewritten instanceof Statement);

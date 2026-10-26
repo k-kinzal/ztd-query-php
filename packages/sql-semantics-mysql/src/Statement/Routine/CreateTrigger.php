@@ -72,10 +72,17 @@ final class CreateTrigger implements Statement
     ) {
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
-        Check::input(\SqlSemantics\Platform\MySql\Rules\Routine\Declaration\TriggerSchemas::compatible($name, $table), 'A trigger and its table cannot name distinct explicit databases.');
         $this->body = (new StatementSequence())->member($body);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Trigger, $name);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Identifies distinct explicit databases while retaining the complete trigger body.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return !\SqlSemantics\Platform\MySql\Rules\Routine\Declaration\TriggerSchemas::compatible($this->name, $this->table);
     }
 
     /**

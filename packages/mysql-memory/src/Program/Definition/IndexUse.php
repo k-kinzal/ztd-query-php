@@ -11,8 +11,7 @@ use MySqlMemory\Session\Resolution\IndexPreparation;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 
 /**
  * Binds retained index operands and reports their reached condition after target lookup.
@@ -24,7 +23,7 @@ final class IndexUse
     /**
      * Binds the complete request and prepares its header without opening the target.
      */
-    public function header(DeferredCreateIndex $definition, Session $session, ?string $database = null): IndexPreparation
+    public function header(CreateIndex $definition, Session $session, ?string $database = null): IndexPreparation
     {
         (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $database = $definition->table->schema->value ?? $database ?? $session->variables->database;
@@ -33,7 +32,7 @@ final class IndexUse
         }
         $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
-        $definition->deriveProgram($derivation, new ProgramScope($derivation->environment()));
+        $definition->deriveStatement($derivation);
         $facts = $derivation->facts();
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || \MySqlMemory\Session\Problem\Stages::characters($problem, $session->settings()->legacy())) {
@@ -52,13 +51,8 @@ final class IndexUse
      * @throws \MySqlMemory\Error\SqlError When lookup or the retained key is refused
      * @throws LogicException When a retained key reaches execution without its required condition
      */
-    public function raise(DeferredCreateIndex $definition, Session $session, bool $invocation = true, ?string $database = null): never
+    public function raise(CreateIndex $definition, Session $session, ?string $database = null): never
     {
-        if ($invocation) {
-            \MySqlMemory\Session\State\StatementCounters::query($session);
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_index');
-            $session->diagnostics->clear();
-        }
         $prepared = $this->header($definition, $session, $database);
         $session->transaction->commit();
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($prepared, $session, new \MySqlMemory\Session\Problems());

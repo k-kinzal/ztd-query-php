@@ -43,9 +43,6 @@ final class TableInput
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
     {
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate) {
-            return (new IndexInput())->refused($failure, $statement, $session);
-        }
         $header = $failure->problem;
         \SqlSemantics\Diagnostic\Check::invariant($header instanceof RefusedCreateTail, 'Table input retains the completed CREATE header.');
         $database = (new \MySqlMemory\Session\Parse\RoutinePrefix())->database($statement, $failure->end, $session);
@@ -157,7 +154,7 @@ final class TableInput
      */
     public function accepts(\SqlSemantics\Statement\Fact\Diagnostic $problem): bool
     {
-        return $problem instanceof RefusedCreateTail || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedIndexTemplate;
+        return $problem instanceof RefusedCreateTail;
     }
 
 }

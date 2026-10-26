@@ -20,6 +20,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class RevokeCommandTest extends TestCase
 {
+    public function testPrepareRequiresTheCurrentDatabaseBeforeAConditionalTarget(): void
+    {
+        $session = (new Instance())->connect();
+        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges(false, [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+        $this->expectExceptionCode(1046);
+        (new RevokeCommand())->prepare($request, $session);
+    }
+
     public function testRolesPreservesEarlierWarningsWhenALaterRecipientFails(): void
     {
         $session = (new Instance())->connect();

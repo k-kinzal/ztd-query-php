@@ -47,8 +47,8 @@ final class ExplainUse
             if ($explanation->statement instanceof W\DeferredInsertRows || $explanation->statement instanceof W\DeferredInsertSet || $explanation->statement instanceof W\DeferredInsertQuery) {
                 (new InsertUse())->raise($explanation->statement, $session, false);
             }
-            if ($explanation->statement instanceof W\DeferredUpdate) {
-                (new \MySqlMemory\Program\Write\UpdateUse())->raise($explanation->statement, $session, false);
+            if ($explanation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $explanation->statement->hasExecutionCondition()) {
+                (new \MySqlMemory\Program\Write\UpdateUse())->raise($explanation->statement, $session);
             }
             if ($explanation->statement instanceof W\DeferredDelete || $explanation->statement instanceof W\DeferredMultipleDelete) {
                 (new DeleteUse())->raise($explanation->statement, $session, false);

@@ -137,7 +137,7 @@ final class Blocks
             $this->insert($statement);
             return true;
         }
-        if ($statement instanceof Update || $statement instanceof Delete || $statement instanceof MultipleDelete || $statement instanceof W\DeferredUpdate || $statement instanceof W\DeferredDelete || $statement instanceof W\DeferredMultipleDelete) {
+        if ($statement instanceof Update || $statement instanceof Delete || $statement instanceof MultipleDelete || $statement instanceof W\DeferredDelete || $statement instanceof W\DeferredMultipleDelete) {
             $this->change($statement);
             return true;
         }
@@ -171,7 +171,7 @@ final class Blocks
     /**
      * Reads UPDATE and DELETE: block 1 holds the tables of the statement.
      */
-    public function change(Update|Delete|MultipleDelete|W\DeferredUpdate|W\DeferredDelete|W\DeferredMultipleDelete $statement): void
+    public function change(Update|Delete|MultipleDelete|W\DeferredDelete|W\DeferredMultipleDelete $statement): void
     {
         $this->enter($statement->with);
         $block = $this->open(false);
@@ -187,7 +187,7 @@ final class Blocks
                 $on = [...$on, ...$joined];
             }
         }
-        $values = $statement instanceof Update || $statement instanceof W\DeferredUpdate ? $this->subqueries(...$statement->assignments) : [];
+        $values = $statement instanceof Update ? $this->subqueries(...$statement->assignments) : [];
         $where = $this->subqueries($statement->where);
         $order = $statement instanceof MultipleDelete || $statement instanceof W\DeferredMultipleDelete ? [] : $this->subqueries(...$statement->orderBy);
         $this->contextualized[] = 1;

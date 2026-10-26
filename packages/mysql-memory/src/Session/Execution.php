@@ -96,6 +96,8 @@ final class Execution
         }
         try {
             return $this->run($operation, $command, $hints, $parameters, $read, $contained);
+        } catch (SqlError $error) {
+            throw (new Problem\Precision())->legacy($error, $this->session->settings()->release());
         } finally {
             $this->session->preparation->resolution = $previous;
             $hints->restore($this->session);

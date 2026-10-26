@@ -98,21 +98,17 @@ final class Errors
             return new SqlError(SchemaError::TooBigPrecision, sprintf("Too big precision %d specified for column '%s'. Maximum is %d.", $diagnostic->precision, $diagnostic->function, $diagnostic->maximum));
         }
 
-        try {
-            return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
-                ?? $this->unopened($diagnostic, $session, $statement)
-                ?? $this->names($diagnostic, $database, $clause, $statement, $session->settings()->release())
-                ?? $this->query($diagnostic, $clause)
-                ?? $this->call($diagnostic, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651)
-                ?? $this->database($diagnostic, $session->settings()->release())
-                ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
-                ?? $this->manipulation($diagnostic, $statement)
-                ?? $this->expression($diagnostic, $session->settings()->legacy())
-                ?? $this->server($diagnostic, $session, $statement)
-                ?? new SqlError(StatementError::UnknownError, $diagnostic->message());
-        } catch (SqlError $error) {
-            return $error;
-        }
+        return (new \MySqlMemory\Session\Parse\Entry\InputErrors())->error($diagnostic, $session)
+            ?? $this->unopened($diagnostic, $session, $statement)
+            ?? $this->names($diagnostic, $database, $clause, $statement, $session->settings()->release())
+            ?? $this->query($diagnostic, $clause)
+            ?? $this->call($diagnostic, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651)
+            ?? $this->database($diagnostic, $session->settings()->release())
+            ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
+            ?? $this->manipulation($diagnostic, $statement)
+            ?? $this->expression($diagnostic, $session->settings()->legacy())
+            ?? $this->server($diagnostic, $session, $statement)
+            ?? new SqlError(StatementError::UnknownError, $diagnostic->message());
     }
 
     /**
@@ -378,7 +374,7 @@ final class Errors
             WriteRule::LimitedMultipleUpdate => StatementError::WrongUsage->error('UPDATE', 'LIMIT'),
             WriteRule::SampledWrite => StatementError::FeatureNotSupported->error('TABLESAMPLE'),
             WriteRule::WildcardColumn => QueryError::BadField->error('*', 'field list'),
-            WriteRule::CommonTableTarget, WriteRule::NonUpdatableTarget => QueryError::NonUpdatableTable->error($misuse->table->value ?? '', $statement instanceof Update || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate ? 'UPDATE' : 'DELETE'),
+            WriteRule::CommonTableTarget, WriteRule::NonUpdatableTarget => QueryError::NonUpdatableTable->error($misuse->table->value ?? '', $statement instanceof Update ? 'UPDATE' : 'DELETE'),
             WriteRule::NonUpdatableColumn => QueryError::NonUpdatableColumn->error($misuse->table->value ?? ''),
         };
     }

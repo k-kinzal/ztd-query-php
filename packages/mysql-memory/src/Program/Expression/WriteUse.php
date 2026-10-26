@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program\Expression;
 
-use MySqlMemory\Program\Definition\IndexUse;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 
@@ -18,15 +17,9 @@ final class WriteUse
     /**
      * Runs the template's preparation and preserves a conditional CREATE completion.
      */
-    public function prepare(W\DeferredUpdate|W\DeferredRevokePrivileges|W\Index\DeferredCreateIndex|W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery $statement, Session $session): void
+    public function prepare(W\DeferredDelete|W\DeferredMultipleDelete|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery $statement, Session $session): void
     {
-        if ($statement instanceof W\DeferredUpdate) {
-            (new \MySqlMemory\Program\Write\UpdateUse())->raise($statement, $session);
-        } elseif ($statement instanceof W\DeferredRevokePrivileges) {
-            (new \MySqlMemory\Program\Account\RevokeUse())->raise($statement, $session);
-        } elseif ($statement instanceof W\Index\DeferredCreateIndex) {
-            (new IndexUse())->raise($statement, $session);
-        } elseif ($statement instanceof W\DeferredMultipleDelete || $statement instanceof W\DeferredDelete) {
+        if ($statement instanceof W\DeferredMultipleDelete || $statement instanceof W\DeferredDelete) {
             (new DeleteUse())->raise($statement, $session);
         } else {
             (new InsertUse())->raise($statement, $session);

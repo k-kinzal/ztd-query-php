@@ -69,7 +69,6 @@ final class TriggerRule
      * Lowers CREATE TRIGGER: a node of `trigger_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When explicit trigger and table database qualifiers contradict each other
      */
     public function create(Node $tail, ?Account $definer): CreateTrigger
     {
@@ -92,9 +91,6 @@ final class TriggerRule
         $body = (new StatementRule($this->lowering->inProgram($name)))->statement($parts['sp_proc_stmt']);
         (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, sources: $this->lowering->origins->publish());
         $table = new TriggerTable($this->lowering->names->qualified($parts['table_ident']));
-        if (!\SqlSemantics\Platform\MySql\Rules\Routine\Declaration\TriggerSchemas::compatible($name, $table)) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\TriggerSchemaMismatch($name, $table, $definer), (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, false);
-        }
         return new CreateTrigger(
             $name,
             self::TIMES[$time->signature] ?? throw ImplementationGap::production($time),

@@ -17,11 +17,14 @@ final class RequestsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
         $ordinary = $semantics->analyze('CREATE INDEX i ON t(a)', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $ordinary);
         $retained = $semantics->analyze('CREATE PROCEDURE p() CREATE INDEX i ON t ((ROW(a, 2)))', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $retained);
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $retained->statement);
         $instruction = $retained->statement->body;
-        self::assertInstanceOf(M\Routine\Program\Write\Index\DeferredCreateIndex::class, $instruction);
+        self::assertInstanceOf(M\Table\CreateIndex::class, $instruction);
         self::assertEquals($ordinary->facts->relation($ordinary->statement)->table, $retained->facts->relation($instruction)->table);
         self::assertSame('CREATE INDEX i ON t (a)', $ordinary->toString());
         self::assertSame('CREATE PROCEDURE p() CREATE INDEX i ON t ((ROW(a, 2)))', $retained->toString());
@@ -29,6 +32,7 @@ final class RequestsTest extends TestCase
     public function testRenderRetainsBothIndexAndAlterationOptions(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE INDEX i USING BTREE ON d.t ((ROW(1,2)) DESC) COMMENT 'retained' ALGORITHM=INPLACE LOCK=NONE");
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertSame("CREATE PROCEDURE p() CREATE INDEX i USING BTREE ON d.t ((ROW(1, 2)) DESC) COMMENT 'retained' ALGORITHM = INPLACE LOCK = NONE", $operation->toString());
     }
 

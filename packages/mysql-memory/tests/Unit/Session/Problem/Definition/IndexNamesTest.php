@@ -19,7 +19,7 @@ final class IndexNamesTest extends TestCase
     public function testCheckUsesTheBoundNameCondition(): void
     {
         $name = new Name('PRIMARY');
-        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex($name, new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
+        $definition = new M\Table\CreateIndex($name, new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $prepared = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
         $this->expectExceptionCode(1280);
@@ -30,7 +30,7 @@ final class IndexNamesTest extends TestCase
     public function testDefinitionSelectsTheExactNameOccurrence(): void
     {
         $name = new Name('PRIMARY');
-        $definition = new M\Routine\Program\Write\Index\DeferredCreateIndex($name, new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
+        $definition = new M\Table\CreateIndex($name, new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a'))]);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $prepared = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, $definition->parts, new M\Name\ColumnName($name));

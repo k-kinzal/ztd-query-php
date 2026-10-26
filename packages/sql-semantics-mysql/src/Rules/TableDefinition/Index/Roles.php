@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 
 /**
- * Separates ordinary index definitions from retained name and operand conditions.
+ * Identifies intrinsic name and operand conditions on complete index requests.
  *
  * @visibility SqlSemantics\Platform\MySql
  */

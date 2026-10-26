@@ -30,6 +30,7 @@ final class WriteScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('UPDATE t SET b = 1', [$t]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(Update::class, $operation->statement);
         $column = $operation->statement->assignments[0]->column;
         $field = (new WriteScope())->field(3, $column, $operation->facts->scalar($column));
@@ -43,6 +44,7 @@ final class WriteScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('UPDATE t SET a = DEFAULT', [$t]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         self::assertInstanceOf(Update::class, $operation->statement);
 
         self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->assignments[0]->value)->nullability);
@@ -50,9 +52,11 @@ final class WriteScopeTest extends TestCase
 
     public function testValueReportsARowAsTheWrittenValue(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
-        (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(Update::class, $operation->statement);
+        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertContains('Operand should contain 1 column(s), not 2.', array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testAssignAnswersTheAssignedColumns(): void
@@ -60,6 +64,7 @@ final class WriteScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t SET b = 1, z = 2', [$t]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -70,6 +75,7 @@ final class WriteScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t (b, t.b) VALUES (1, 2)', [$t]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         self::assertInstanceOf(DuplicateColumn::class, $operation->facts->diagnostics[0]);
     }

@@ -38,10 +38,10 @@ final class ShapesTest extends TestCase
         self::assertSame($refused ? $parts[0] : null, $problem?->owner);
     }
 
-    public function testOrdinaryIndexExcludesMultipleSpatialParts(): void
+    public function testRequestRetainsMultipleSpatialParts(): void
     {
-        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
-        new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))], M\Table\Key\IndexKind::Spatial);
+        $request = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))], M\Table\Key\IndexKind::Spatial);
+        self::assertTrue($request->hasExecutionCondition());
     }
 
     public function testAlterRetainsMultipleSpatialParts(): void
@@ -75,10 +75,10 @@ final class ShapesTest extends TestCase
         self::assertSame($refused ? $part : null, $problem?->owner);
     }
 
-    public function testOrdinaryIndexExcludesAFunctionalSpatialOperand(): void
+    public function testRequestRetainsAFunctionalSpatialOperand(): void
     {
-        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
-        new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ExpressionPart(new M\Literal\NumberLiteral('1'))], M\Table\Key\IndexKind::Spatial);
+        $request = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\ExpressionPart(new M\Literal\NumberLiteral('1'))], M\Table\Key\IndexKind::Spatial);
+        self::assertTrue($request->hasExecutionCondition());
     }
 
 }

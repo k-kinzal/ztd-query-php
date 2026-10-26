@@ -28,12 +28,22 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateTriggerTest extends TestCase
 {
+    public function testHasExecutionConditionPreservesDistinctExplicitSchemas(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW BEGIN END');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
+        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertInstanceOf(Block::class, $operation->statement->body);
+    }
+
     public function testDeriveStatementResolvesTheNewRowAndLocalVariablesInEveryBodyStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $context = [$semantics->analyze('CREATE TABLE t (a INT, b INT)'), $semantics->analyze('CREATE TABLE u (c INT)')];
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT NEW.a; '
             . 'SET NEW.b = v + NEW.a; UPDATE u SET c = NEW.a WHERE c = v; INSERT INTO u (c) VALUES (NEW.b); END', $context);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -45,8 +55,11 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
 
-        self::assertSame([], $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET new.a = old.b + NEW.b', [$table])->facts->diagnostics);
+        $operation = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET new.a = old.b + NEW.b', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testDeriveStatementResolvesTheOldRowOfADeleteTrigger(): void
@@ -54,14 +67,18 @@ final class CreateTriggerTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = [$semantics->analyze('CREATE TABLE t (a INT, b INT)'), $semantics->analyze('CREATE TABLE u (c INT)')];
 
-        self::assertSame([], $semantics->analyze('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW DELETE FROM u WHERE c = OLD.a', $context)->facts->diagnostics);
+        $operation = $semantics->analyze('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW DELETE FROM u WHERE c = OLD.a', $context);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testDeriveStatementReportsAColumnTheRowLacks(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
 
         self::assertSame(['Column NEW.zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
@@ -70,7 +87,9 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON u FOR EACH ROW SET @x = 1', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
 
         self::assertSame(['Relation u does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
@@ -91,7 +110,9 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
         $create = $semantics->analyze('CREATE TRIGGER tr ' . $timing . ' ON t FOR EACH ROW SET ' . $row . '.a = 1', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
         $problem = $create->facts->diagnostics[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
@@ -119,6 +140,7 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
         $this->expectExceptionMessage($message);
         $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);
@@ -164,10 +186,10 @@ final class CreateTriggerTest extends TestCase
         new CreateTrigger(new QualifiedName(new Name('tr'), new Name('shop'), new Name('def')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'))), new Block([]));
     }
 
-    public function testDistinctExplicitDatabasesAreRejected(): void
+    public function testHasExecutionConditionRetainsDistinctExplicitDatabases(): void
     {
-        $this->expectExceptionMessage('A trigger and its table cannot name distinct explicit databases.');
-        new CreateTrigger(new QualifiedName(new Name('tr'), new Name('a')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('b'))), new Block([], []));
+        $request = new CreateTrigger(new QualifiedName(new Name('tr'), new Name('a')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('b'))), new Block([], []));
+        self::assertTrue($request->hasExecutionCondition());
     }
 
     public function testABodyOfAnotherClassIsRejected(): void

@@ -40,16 +40,16 @@ final class RolesTest extends TestCase
     {
         $part = new M\Table\Key\ArrayPart(new M\Variable\UserVariable(new Name('x')), new M\Type\CastTarget(M\Type\Kind\CastKind::Unsigned));
         self::assertTrue((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->parts([$part]));
-        $template = new M\Routine\Program\Write\Index\DeferredCreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
+        $template = new M\Table\CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
         self::assertSame($part, $template->parts[0]);
-        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
-        new M\Table\CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
+        $request = new M\Table\CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
+        self::assertTrue($request->hasExecutionCondition());
     }
 
-    public function testOrdinaryIndexCannotHoldARetainedRowKey(): void
+    public function testRequestRetainsARowKey(): void
     {
-        $this->expectExceptionMessage('An ordinary index request requires a valid name and key operands compatible with its kind.');
-        new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
+        $request = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
+        self::assertTrue($request->hasExecutionCondition());
     }
 
     public function testAlterRetainsARetainedRowKey(): void

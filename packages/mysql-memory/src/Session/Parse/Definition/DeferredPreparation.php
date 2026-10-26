@@ -7,7 +7,7 @@ namespace MySqlMemory\Session\Parse\Definition;
 use RuntimeException;
 
 /**
- * Returns a typed pending definition from the input boundary to preparation.
+ * Returns an incomplete table definition from the input boundary to preparation.
  * This control transfer is neither a SQL error nor an ordinary semantic value.
  *
  * @visibility MySqlMemory
@@ -15,9 +15,9 @@ use RuntimeException;
 final class DeferredPreparation extends RuntimeException
 {
     /**
-     * @param \MySqlMemory\Command\Prepared\PendingInstruction $definition The retained execution-time condition
+     * @param \MySqlMemory\Command\Prepared\PendingTable $definition The retained execution-time condition
      */
-    public function __construct(public readonly \MySqlMemory\Command\Prepared\PendingInstruction $definition)
+    public function __construct(public readonly \MySqlMemory\Command\Prepared\PendingTable $definition)
     {
         parent::__construct('The prepared instruction retains a condition resolved during execution.');
     }

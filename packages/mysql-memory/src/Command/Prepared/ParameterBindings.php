@@ -58,6 +58,10 @@ final class ParameterBindings
         if (\MySqlMemory\Session\Problem\Stages::definitionCondition($operation->statement) && !($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->query !== null)) {
             return (new GenerationParameters())->capture($operation->statement, $operation->profile()->grammar);
         }
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $operation->statement->hasExecutionCondition()) {
+            $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, Parameter::class);
+            return new self(array_map(static fn ($marker): array => [Domain::string(0, Collation::binary()), false], $markers));
+        }
         return new self(array_map(static fn (array $entry): array => [Domain::of($entry[0], true), $entry[1]], \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation)));
     }
 

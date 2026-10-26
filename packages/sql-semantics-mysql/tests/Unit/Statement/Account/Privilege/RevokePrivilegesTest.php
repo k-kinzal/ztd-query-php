@@ -12,6 +12,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
+use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(RevokePrivileges::class)]
 #[Medium]
@@ -20,6 +22,7 @@ final class RevokePrivilegesTest extends TestCase
     public function testDeriveStatementAcceptsAnAbsentTable(): void
     {
         $revoke = (new Semantics(Dialect::MySql))->analyze('REVOKE SELECT ON t FROM u', []);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $revoke);
 
         self::assertInstanceOf(RevokePrivileges::class, $revoke->statement);
         self::assertInstanceOf(AbsentGrantTable::class, $revoke->facts->relation($revoke->statement->level)->table);
@@ -43,16 +46,49 @@ final class RevokePrivilegesTest extends TestCase
     #[DataProvider('providerOptions')]
     public function testRejectsAuthenticationClauses(bool $ifExists, bool $ignoreUnknownUser): void
     {
-        $user = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('pw')));
+        $user = new M\Account\User\UserSpecification(new M\Name\AccountName(new Name('u')), new M\Account\User\Identification(null, M\Account\User\Credential::Password, new M\Literal\Text('pw')));
 
         $this->expectExceptionMessage('A REVOKE account has no authentication clause.');
 
-        new RevokePrivileges($ifExists, [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [$user], $ignoreUnknownUser);
+        new RevokePrivileges($ifExists, [new M\Account\Privilege\Item\AllPrivileges()], M\Account\Privilege\Level\ObjectKind::Table, new M\Account\Privilege\Level\GlobalLevel(), [$user], $ignoreUnknownUser);
     }
 
-    public function testRoutineWildcardCannotBeConstructedAsAnOrdinaryStatement(): void
+    public function testHasExecutionConditionRetainsARoutineWildcard(): void
     {
-        $this->expectExceptionMessage('An ordinary revocation names a routine object or a global ALL interpretation.');
-        new RevokePrivileges(false, [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Function, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+        $request = new RevokePrivileges(false, [new M\Account\Privilege\Item\AllPrivileges()], M\Account\Privilege\Level\ObjectKind::Function, new M\Account\Privilege\Level\CurrentDatabaseLevel(), [new M\Account\User\UserSpecification(new M\Name\CurrentUser())]);
+        self::assertTrue($request->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
+    public function testDeriveStatementStoredRetainsEveryRecipientAndOption(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() REVOKE IF EXISTS ALL ON PROCEDURE * FROM u, CURRENT_USER IGNORE UNKNOWN USER');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(RevokePrivileges::class, $operation->statement->body);
+        self::assertTrue($operation->statement->body->ifExists);
+        self::assertTrue($operation->statement->body->ignoreUnknownUser);
+        self::assertCount(2, $operation->statement->body->users);
+    }
+
+    public function testHasExecutionConditionRetainsTheWildcardTarget(): void
+    {
+        $request = new RevokePrivileges(false, [new M\Account\Privilege\Item\AllPrivileges()], M\Account\Privilege\Level\ObjectKind::Procedure, new M\Account\Privilege\Level\CurrentDatabaseLevel(), [new M\Account\User\UserSpecification(new M\Name\AccountName(new Name('u')))]);
+        self::assertTrue($request->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
+    public function testRenderWritesTheStoredTargetCondition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() REVOKE IF EXISTS ALL ON FUNCTION d.* FROM u IGNORE UNKNOWN USER');
+        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertSame('CREATE PROCEDURE p() REVOKE IF EXISTS ALL ON FUNCTION d.* FROM u IGNORE UNKNOWN USER', $operation->toString());
+    }
+
+
+    public function testHasExecutionConditionSelectsTheGlobalAllMeaningByRelease(): void
+    {
+        $request = new RevokePrivileges(false, [new M\Account\Privilege\Item\AllPrivileges()], M\Account\Privilege\Level\ObjectKind::Function, new M\Account\Privilege\Level\GlobalLevel(), [new M\Account\User\UserSpecification(new M\Name\CurrentUser())]);
+        self::assertTrue($request->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertTrue($request->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertFalse($request->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
 }

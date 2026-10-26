@@ -23,7 +23,7 @@ final class SamplingTest extends TestCase
         $source = new M\Relation\TableReference(new QualifiedName(new Name('u')), sample: new M\Relation\Hint\TableSample(M\Relation\Hint\SamplingMethod::System, new M\Literal\NumberLiteral('5')));
         $read = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], $source));
         $assignment = new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), $read);
-        $write = new M\Routine\Program\Write\DeferredUpdate(null, false, false, [new M\Relation\TableReference(new QualifiedName(new Name('t')))], [$assignment]);
+        $write = new M\Dml\Update(null, false, false, [new M\Relation\TableReference(new QualifiedName(new Name('t')))], [$assignment]);
 
         self::assertSame(M\Dml\Problem\WriteRule::SampledWrite, (new Sampling())->of($write)?->rule);
         self::assertSame($read, $write->assignments[0]->value);
@@ -42,7 +42,7 @@ final class SamplingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Closure(): M\Routine\Program\ProgramStatement}>
+     * @return iterable<string, array{Closure(): (M\Routine\Program\ProgramStatement|M\Dml\Update)}>
      */
     public static function providerOrdinaryWrites(): iterable
     {
@@ -51,14 +51,14 @@ final class SamplingTest extends TestCase
         $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], $sampled);
         $where = new M\Expression\Subquery\Exists($query);
         $assignment = new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), new M\Literal\NumberLiteral('1'));
-        yield 'update-input' => [static fn (): M\Routine\Program\ProgramStatement => new M\Routine\Program\Write\DeferredUpdate(null, false, false, [$sampled], [$assignment])];
-        yield 'update-predicate' => [static fn (): M\Routine\Program\ProgramStatement => new M\Routine\Program\Write\DeferredUpdate(null, false, false, [new M\Relation\TableReference($name)], [$assignment], $where)];
+        yield 'update-input' => [static fn (): M\Dml\Update => new M\Dml\Update(null, false, false, [$sampled], [$assignment])];
+        yield 'update-predicate' => [static fn (): M\Dml\Update => new M\Dml\Update(null, false, false, [new M\Relation\TableReference($name)], [$assignment], $where)];
         yield 'delete-predicate' => [static fn (): M\Routine\Program\ProgramStatement => new M\Routine\Program\Write\DeferredDelete(null, [], new M\Dml\WriteTarget($name), $where)];
         yield 'multiple-delete-input' => [static fn (): M\Routine\Program\ProgramStatement => new M\Routine\Program\Write\DeferredMultipleDelete(null, [], new M\Dml\Target\DeletionInput([$sampled], [$name]), M\Dml\MultipleDeleteForm::BeforeFrom)];
     }
 
     /**
-     * @param Closure(): M\Routine\Program\ProgramStatement $construct A retained write with a reached sampling clause
+     * @param Closure(): (M\Routine\Program\ProgramStatement|M\Dml\Update) $construct A retained write with a reached sampling clause
      */
     #[DataProvider('providerOrdinaryWrites')]
     public function testOfIdentifiesRetainedSamplingBeforeOperationConstruction(Closure $construct): void

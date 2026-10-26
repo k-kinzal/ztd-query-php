@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\Index\DeferredCreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
@@ -28,7 +27,7 @@ final class Requests
     /**
      * Binds the target, key operands and alteration modifiers in their declared scope.
      */
-    public function derive(CreateIndex|DeferredCreateIndex $statement, Derivation $derivation): void
+    public function derive(CreateIndex $statement, Derivation $derivation): void
     {
         $problem = (new Names())->problem($statement->name);
         if ($problem !== null) {
@@ -58,7 +57,7 @@ final class Requests
     /**
      * Writes every retained index operand without recovering input syntax.
      */
-    public function render(CreateIndex|DeferredCreateIndex $statement, Output $out): void
+    public function render(CreateIndex $statement, Output $out): void
     {
         $out->keyword('CREATE');
         if ($statement->kind !== IndexKind::Index) {

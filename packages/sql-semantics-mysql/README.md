@@ -309,28 +309,39 @@ consumer must bind the row's names and report its scalar-use error if that
 instruction is reached. It must not replace the row with an ordinary scalar or
 require the original SQL to prepare it.
 
-Ordinary DELETE and UPDATE values exclude bare integer ORDER BY positions,
-including integers under parentheses or unary plus: these writes have no select
-list in which a position could resolve. `DeferredDelete` and `DeferredUpdate`
-retain the complete stored instruction so an unreached branch remains dormant.
+UPDATE retains bare integer ORDER BY operands, including integers under
+parentheses or unary plus, as execution conditions: a write has no select list
+in which an output position could resolve. Row-valued assignments and predicates
+also remain on the complete UPDATE request. Top-level and stored UPDATE use the
+same statement type. DELETE still uses `DeferredDelete` for these stored
+conditions, so an unreached branch remains dormant.
 `OrderingPosition` retains the offending literal, including unsigned values
 beyond PHP's signed integer range and written leading zeros. The MySQL 5.6 and
 5.7 profiles also diagnose boolean ordering positions; modern profiles treat
 those booleans as constant ordering expressions. Dependency resolution and the
 consumer's preparation order determine which condition is reported first.
 
-CREATE TABLE and ALTER TABLE values retain fixed invalid index names and
+CREATE TABLE, ALTER TABLE and CREATE INDEX values retain fixed invalid index names and
 non-scalar functional key operands as complete requests. The same types represent
 top-level and stored statements; `hasExecutionCondition()` identifies intrinsic
 conditions whose outcome depends on preparation order or catalog state.
 Construction validates the request's structure without installing a declaration
-or executing a conditional skip. CREATE INDEX still uses `DeferredCreateIndex`
-for these stored requests. The target,
+or executing a conditional skip. The target,
 ordered key parts, index kind and options remain available without SQL text or
 a parser AST. `InvalidIndexName` identifies an explicit secondary-index name
 that is empty, ends in an ASCII space, or equals PRIMARY ignoring case. Primary
 key labels are ignored. This describes the instruction and its condition;
 Semantics does not decide whether execution will reach or report that condition.
+
+Routine wildcard REVOKE and explicitly mismatched trigger schemas also remain
+complete requests. `RevokePrivileges::hasExecutionCondition($release)` accounts
+for the release-specific meaning of global ALL; modern account flags still
+constrain the request's language domain. `CreateTrigger` retains its body when
+the explicit trigger and table databases differ. Catalog lookup and protocol
+restrictions belong to the consumer. These families still publish through
+Operation and Facts; they have not migrated to concrete analyzed statements.
+These retained conditions do not cover every grammar-valid refusal: unknown
+index algorithms and invalid JSON ENGINE_ATTRIBUTE still fail during lowering.
 
 `Settings::$fullTextParsers` supplies the available full-text parser plugins as
 a list of `Name` values. An empty list means no parser plugins are available;

@@ -113,11 +113,10 @@ final class ReadDependencies
     {
         $with = match (true) {
             $node instanceof QueryExpression,
-            $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete,
-            $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate,
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete,
             $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete => $node->with,
             default => null,

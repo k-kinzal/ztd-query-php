@@ -15,9 +15,9 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
+use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredUpdate;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
@@ -42,7 +42,7 @@ final class UpdateOperands
      * @return bool Whether MySQL 5.6 preparation defers the assignment values
      * @throws SqlError When a reached clause, destination or value cannot prepare
      */
-    public function prepare(DeferredUpdate $write, Facts $facts, Session $session, bool $prepared = false, array $parameters = []): bool
+    public function prepare(Update $write, Facts $facts, Session $session, bool $prepared = false, array $parameters = []): bool
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure();
         if ($rules->target($write->tables, $write->assignments, $write->with) !== null) {
@@ -86,7 +86,7 @@ final class UpdateOperands
      *
      * @throws SqlError When an assignment value cannot bind
      */
-    public function values(DeferredUpdate $write, Planner $planner, Scope $scope): void
+    public function values(Update $write, Planner $planner, Scope $scope): void
     {
         foreach ($write->assignments as $assignment) {
             $this->operand($assignment->value, $planner, $scope, 'field list');
@@ -116,7 +116,7 @@ final class UpdateOperands
      *
      * @throws SqlError When a destination does not resolve
      */
-    public function destinations(DeferredUpdate $write, Facts $facts, Session $session): void
+    public function destinations(Update $write, Facts $facts, Session $session): void
     {
         foreach ($write->assignments as $assignment) {
             $resolution = $facts->scalar($assignment->column)->resolution;

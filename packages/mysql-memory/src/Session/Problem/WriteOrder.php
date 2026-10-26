@@ -98,8 +98,14 @@ final class WriteOrder
             $relations->conditions($table, [2, $index]);
         }
         $this->locator->visit($statement->where, 'where clause', [3]);
-        $this->locator->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->assignments), 'field list', $legacy && $multiple ? [self::UPDATE_DESTINATIONS, 0] : [5]);
-        $this->locator->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->assignments), 'field list', $multiple && $this->locator->prepared && $this->locator->release === GrammarRelease::MySql5744 ? [self::UPDATE_DESTINATIONS, 1] : [self::UPDATE_VALUES]);
+        $columns = [];
+        $values = [];
+        foreach ($statement->assignments as $assignment) {
+            $columns[] = $assignment->column;
+            $values[] = $assignment->value;
+        }
+        $this->locator->visit($columns, 'field list', $legacy && $multiple ? [self::UPDATE_DESTINATIONS, 0] : [5]);
+        $this->locator->visit($values, 'field list', $multiple && $this->locator->prepared && $this->locator->release === GrammarRelease::MySql5744 ? [self::UPDATE_DESTINATIONS, 1] : [self::UPDATE_VALUES]);
         $this->locator->visit($statement->orderBy, 'order clause', [$legacy ? 4 : 7]);
     }
 
