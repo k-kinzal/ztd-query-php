@@ -56,11 +56,11 @@
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>{</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRetainsAPreparedDefinitionWithoutReportingASqlError</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    {</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>(<span class="tok-str">&#039;8.4.7&#039;</span>, [], [<span class="tok-str">&#039;d&#039;</span>]))-&gt;<span class="tok-id">connect</span>(<span class="tok-id">database</span>: <span class="tok-str">&#039;d&#039;</span>);</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">DeferredPreparation</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;The prepared instruction retains a condition resolved during execution.&#039;</span>);</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE TABLE later.t(a INT) PARTITION BY HASH(ROW(1,2))&#039;</span>, <span class="tok-id">true</span>);</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE INDEX i ON t((ROW(1,2)))&#039;</span>, <span class="tok-id">true</span>);</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    }</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>}</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
