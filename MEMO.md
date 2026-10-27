@@ -10,6 +10,163 @@ The intended result is a SQL model that preserves the information needed to reco
 
 This memo records the agreed direction and the remaining work on [PR #665](https://github.com/k-kinzal/ztd-query-php/pull/665). It is not a claim that these checks currently pass.
 
+## Required outcome and implementation order (2026-10-27)
+
+The deliverable is a SQL semantic model whose types and invariants preserve the
+meaning needed for reconstruction and execution, together with three working
+mechanisms that search for counterexamples to those claims. MySQL Memory is the
+executable consumer used to test that model; real MySQL is the independent
+reference used to test MySQL Memory. The implementation and the mechanisms must
+be designed and changed together.
+
+These are the user's existing requirements, consolidated here as the direction
+for subsequent work. The source requests are S1:10, 186, 2271, 6472, 6852, 7254,
+7496, 7641, 7973, 8578 and 9131; S2:7, 23, 69 and 105; and S3:2621 and 2635, using the
+[session references below](#evidence-and-scope). This section states required
+outcomes, not additional claims of implementation or acceptance.
+
+### The model and execution structure to build
+
+```text
+SQL -> parse and analyze ----+
+                            +-> concrete SQL semantic statement
+Eris -> compose values -----+            |
+                                        +-> render SQL from its fields
+                                        |
+                                        +-> plan and execute -> result and state
+                                             ^
+                                    runtime state and parameters
+```
+
+Both producers supply the same semantic types. They do not produce separate
+representations with separate execution paths. The required structure has the
+following concrete responsibilities:
+
+| Component | Required form |
+| --- | --- |
+| Analysis result | `analyze()` declares an interface and returns a concrete SQL statement implementing it. The result is the structured statement itself, with its SQL alternatives and enforced invariants. |
+| Semantic elements | Each statement, clause, expression, name, reference and definition owns the meaning that belongs to it: operands, SQL types, nullability, resolved identities or explicit missing inputs, and optional source locations as applicable. The expression's type and its destination column's type remain distinct. |
+| Analysis internals | Parser nodes, source text, lookup indexes and the analysis environment may be used to produce the result. The result does not retain a generic `Operation` containing `Statement`, `AnalysisContext`, `Facts` and `SourceMap`. Renaming or redistributing the same aggregate does not satisfy the requirement. |
+| SQL reconstruction | The renderer traverses the semantic fields to produce every clause and expression. Required information is represented in the model; original SQL, retained fragments, source-span extraction and parser fallback cannot supply the output. |
+| MySQL Memory | Planning, dispatch and execution obtain all SQL meaning from those semantic types. Database state and parameter values are legitimate runtime inputs. AST inspection, text inspection or rendering and reparsing cannot fill missing semantic information. |
+| Shared execution | Values returned by analysis and values generated directly by Eris enter the same phase after analysis and use the same execution lifecycle. A direct generated statement must work without original SQL or an AST. |
+
+Vocabulary and abstractions follow SQL meaning. Distinct SQL concepts must not
+be combined merely to reduce code duplication; for example, INSERT and REPLACE
+retain their distinct statement forms. Invariants must prevent contradictory
+representations and preserve the relationships between nested values. Ordinary
+SQL errors caused by missing database state remain distinguishable from a broken
+representation or an implementation failure. The earlier incomplete INSERT and
+Expression examples are not the specification for the whole model.
+
+The library's public usage remains through PDO or mysqli, with startup selecting
+a MySQL version explicitly. Direct semantic execution is the internal PBT
+boundary. Both must exercise the same implementation after SQL analysis, and
+version selection must affect the applicable semantics and behavior.
+
+### The three mechanisms that must actually operate
+
+| Mechanism | Generated input and path | Property and required failure behavior |
+| --- | --- | --- |
+| Semantic reconstruction, PHPFuzzer | `sql-faker` SQL -> semantic analysis -> reconstruction from semantic fields | `Compact(original SQL) == Compact(reconstructed SQL)` under matching settings. Missing information, changed SQL and implementation failures remain counterexamples. The harness retains the original only as the comparison input. |
+| Semantic execution, PHPUnit + Eris | Generators for `sql-semantics` and `sql-semantics-mysql` types -> composed semantic statements -> the actual MemoryDB execution phase | Generated values supply the information required for execution, and the property asserts the applicable result and state. Construction success, `assertInstanceOf`, unrelated early SQL errors or arbitrary caught exceptions do not establish this property. |
+| MySQL behavior, PHPFuzzer | The same `sql-faker` SQL and equivalent setup/settings -> MemoryDB and version-matched MySQL through Testcontainers | Compare observable results and relevant effects. Deterministic differences remain failures. Only inherently environment-dependent values use explicit structure/type checks; their surrounding output and deterministic content remain checked. |
+
+The PBT generation contract is part of this deliverable:
+
+- Every semantic model type, including nested types, has its corresponding
+  generator, with namespaces and placement consistently mapping to the model.
+  Interface generators compose the applicable concrete alternatives.
+- Generators implement `Eris\Generator` through Eris composition or delegates.
+  Eris drives generation, trials and shrinking. Independent constructor samplers
+  and manually repeated samples do not implement this contract.
+- Generate both statements without prerequisite state and dependent sequences.
+  For example, generate a CREATE TABLE and then an INSERT consistent with that
+  generated definition. Composition and shrinking preserve their relationship.
+- `forAll` receives the completed generated input. `then()` sets up execution,
+  executes it and asserts the property; it does not manufacture or repair the
+  semantic statement that was supposed to be generated.
+- Generator coverage and property organization are separate. The PHPStan rule
+  checks the semantic-type-to-generator mapping. The configurable class-unused
+  rule checks actual use. Properties are grouped by the behavior being verified,
+  under `tests/Property`, as `<Name>Properties` with `satisfies<Property>` methods.
+  A generator file or an interface implementation alone proves neither use nor
+  execution coverage.
+
+Use the existing package tools and conventions to make each path readable as
+generation, consumption and assertion. Fuzz remains an independent top-level
+package directory. No dedicated Diff suite, private sampling framework, or
+additional verification framework is needed. A missing semantic field is fixed
+in the model and its producers/consumers; a missing observation is fixed in the
+comparison. Neither is resolved by changing the property to accept the omission.
+
+### What must be done next
+
+The next implementation deliverable is the completed structural work in goals
+B and C below: the verification mechanism and the model/executor design must
+become operational together across the required SQL families. Goal A's design
+document is input to that work. It is not evidence that those structures already
+exist, and writing another design-only checkpoint does not complete them.
+
+1. **Resolve the whole model and boundary before further local polishing.** Use
+   the existing family inventory and ownership map to identify every published
+   type, its meaning and invariants, its producer, and its downstream consumers.
+   Resolve missing contracts across statements and shared nested types. Keep
+   one design for all families rather than letting an INSERT demonstration or
+   the current `Operation` API determine the rest.
+2. **Replace the model and dependent implementation together.** Change analysis
+   publication, semantic constructors, rendering, planning and execution to use
+   that structure. Remove the old aggregate and alternative sources of SQL
+   meaning from consumers. Update callers affected by the shared API, including
+   other dialects and downstream packages. Complete the common execution path
+   instead of retaining a new path beside the legacy one.
+3. **Connect genuine generated execution throughout that structure.** Implement
+   the mapped Eris generators and their composition, connect the behavior
+   properties to the common execution phase, and make missing or unused
+   generators visible through the ordinary rules. Cover both state-independent
+   and state-dependent generation and shrinking.
+4. **Make both ordinary fuzz targets check their stated properties.** Connect
+   reconstruction to the semantic renderer and native comparison to equivalent
+   setup and complete applicable observations. Preserve failures through the
+   execution, comparison and command exit paths. Align local and CI invocation,
+   corpus selection and release/settings coverage with the existing conventions.
+5. **Establish that the whole structure is in use.** Verify that required
+   families and nested values enter these paths; generated values reach the
+   same executor as analyzed ones; and lost meaning, execution failures and
+   relevant result differences can be exposed. Missing generators, bypasses,
+   disconnected targets and unobserved effects remain structural incompleteness.
+
+These are responsibilities within one structural migration, not a sequence of
+independently accepted SQL examples. Edits can be made in manageable increments,
+but the stage remains open until the whole connection works. Focused checks may
+validate a changed contract; their success does not permit switching to
+statement-by-statement behavioral polishing while other contracts remain absent.
+An unrelated regression timeout is not a prerequisite for this migration merely
+because it is the next visible failing test.
+
+### When to move from construction to counterexample correction
+
+The structural stage is complete when the three ordinary checks actually consume
+the required model through the required paths across the supported scope. At
+that point they may still expose behavioral defects. A useful failing
+counterexample from a valid mechanism is different from a missing mechanism,
+unsupported execution placeholder, or a test that bypasses the model.
+
+Then use those counterexamples to correct the responsible model, invariant,
+generator, renderer, executor or comparison. Preserve the property and its input
+domain while making corrections. This is the intended repeatable development
+loop: the mechanisms discover and localize defects, and corrections improve the
+same system they continue to exercise.
+
+Final completion requires all ordinary package checks, complete replay of the
+applicable SQL Faker grammar-coverage seeds, and a separate seedless 15-minute
+fuzz search without a finding, with releases, settings and execution evidence
+recorded as specified in the acceptance matrix below. The generator coverage,
+usage and actual execution requirements must also be satisfied. The work stays
+on this branch and is delivered through PR #665. The endpoint is the working
+model, executor and verification system with that evidence; individual green
+tests, an implementation plan, or this memo cannot substitute for it.
+
 ## Session review: the user–AI mismatch (2026-10-27)
 
 The recurring problem is a mismatch in what counts as progress. The user wants
