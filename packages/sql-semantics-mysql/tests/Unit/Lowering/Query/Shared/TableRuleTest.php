@@ -59,7 +59,7 @@ final class TableRuleTest extends TestCase
 
     public function testHintLowersOneHint(): void
     {
-        self::assertSame('SELECT 1 FROM t USE INDEX FOR JOIN ()', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from t use key for join ()')->toString());
+        self::assertSame('SELECT 1 FROM t USE KEY FOR JOIN ()', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from t use key for join ()')->toString());
     }
 
     public function testIndexesLowersNamesAndPrimary(): void

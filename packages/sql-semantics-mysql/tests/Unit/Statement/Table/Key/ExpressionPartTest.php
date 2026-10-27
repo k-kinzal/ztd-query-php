@@ -43,6 +43,6 @@ final class ExpressionPartTest extends TestCase
 
     public function testRenderWritesTheParenthesizedExpression(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, INDEX ((a + 1) DESC))', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY ((a + 1) DESC))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY ((a + 1) DESC))', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY ((a + 1) DESC))')->toString());
     }
 }

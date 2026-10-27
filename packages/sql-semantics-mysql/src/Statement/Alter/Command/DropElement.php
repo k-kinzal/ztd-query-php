@@ -39,12 +39,19 @@ final class DropElement implements AlterCommand
     public readonly ?bool $columnWritten;
 
     /**
+     * The index keyword, absent for other kinds of altered elements.
+     */
+    public readonly ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword;
+
+    /**
      * @param ElementKind $kind The kind of element
      * @param ColumnName|null $name The element name; null only for the primary key
      * @param DropBehavior|null $behavior RESTRICT or CASCADE after a column, when written
      */
-    public function __construct(public readonly ElementKind $kind, public readonly ?ColumnName $name = null, public readonly ?DropBehavior $behavior = null, ?bool $columnWritten = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ElementKind $kind, public readonly ?ColumnName $name = null, public readonly ?DropBehavior $behavior = null, ?bool $columnWritten = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword = null)
     {
+        Check::input($kind === ElementKind::Index || $keyword === null, 'Only an altered index has an interchangeable index keyword.');
+        $this->keyword = $kind === ElementKind::Index ? ($keyword ?? \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index) : null;
         Check::input(($name === null) === ($kind === ElementKind::PrimaryKey), 'Every dropped element but the primary key is named.');
         Check::input($behavior === null || $kind === ElementKind::Column, 'Only a dropped column takes RESTRICT or CASCADE.');
         Check::input($columnWritten === null || $kind === ElementKind::Column, 'Only a dropped column has an optional COLUMN keyword.');
@@ -66,7 +73,7 @@ final class DropElement implements AlterCommand
     {
         $out->keyword('DROP');
         if ($this->columnWritten !== false) {
-            $out->keyword(...explode(' ', $this->kind->value));
+            $out->keyword(...explode(' ', $this->keyword->value ?? $this->kind->value));
         }
         $out->node($this->name);
         if ($this->behavior !== null) {

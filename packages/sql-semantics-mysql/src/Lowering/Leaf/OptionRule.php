@@ -93,6 +93,23 @@ final class OptionRule
     }
 
     /**
+     * Retains the chosen KEY or INDEX keyword, including optional keyword forms.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function indexWord(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord
+    {
+        $form = $this->lowering->form($node);
+        return match ($form->signature) {
+            'opt_key_or_index:' => null,
+            'normal_key_type: key_or_index', 'opt_key_or_index: key_or_index' => $this->indexWord($form->node(0)),
+            'key_or_index: KEY_SYM' => \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key,
+            'key_or_index: INDEX_SYM' => \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index,
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
      * Lowers the optional RESTRICT or CASCADE keyword of a DROP.
      *
      * @throws ImplementationGap When the production has no rule

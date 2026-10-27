@@ -67,4 +67,14 @@ final class OptionRuleTest extends TestCase
         self::assertSame(DropBehavior::Restrict, $rule->dropBehavior(new Node('opt_restrict', 1, [new Token(0, 'RESTRICT', 'RESTRICT', 0)])));
         self::assertSame(DropBehavior::Cascade, $rule->dropBehavior(new Node('opt_restrict', 2, [new Token(0, 'CASCADE', 'CASCADE', 0)])));
     }
+
+    public function testIndexWordRetainsBothSynonymsAndAnAbsentOptionalKeyword(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key, $rule->indexWord(new Node('key_or_index', 0, [new Token(0, 'KEY_SYM', 'KEY', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index, $rule->indexWord(new Node('key_or_index', 1, [new Token(0, 'INDEX_SYM', 'INDEX', 0)])));
+        self::assertNull($rule->indexWord(new Node('opt_key_or_index', 0, [])));
+    }
 }

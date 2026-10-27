@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * optionally an index list `INDEX (…)`: an absent list selects every index,
  * an empty list none, as the server's USE INDEX hints do (init_index_hints
  * with INDEX_HINT_USE); PRIMARY names the primary key. KEY and INDEX are
- * synonyms; INDEX is written. Terminates: one pass over the list.
+ * synonyms; the selected keyword is retained. Terminates: one pass over the list.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cache-index.html,
  * https://dev.mysql.com/doc/refman/8.4/en/load-index.html.
  * Status: Implemented.
@@ -56,7 +56,7 @@ final class CachedIndexes
      *
      * @param list<Name|PrimaryIndex>|null $indexes
      */
-    public function render(Output $out, QualifiedName $table, ?PartitionSelection $partitions, ?array $indexes): void
+    public function render(Output $out, QualifiedName $table, ?PartitionSelection $partitions, ?array $indexes, ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword = null): void
     {
         if ($table->schema !== null) {
             $out->name($table->schema, NameUse::Qualifier)->symbol('.');
@@ -68,7 +68,7 @@ final class CachedIndexes
         if ($indexes === null) {
             return;
         }
-        $out->keyword('INDEX')->symbol('(');
+        $out->keyword(($keyword ?? \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index)->value)->symbol('(');
         foreach ($indexes as $position => $index) {
             if ($position > 0) {
                 $out->symbol(',');

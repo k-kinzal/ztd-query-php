@@ -23,16 +23,17 @@ final class IndexHintGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope|null> $scope Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Statement\Node>> $indexes Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\IndexWord>|null $keyword Generated constructor operand
      */
-    public function __construct(ErisGenerator $action, ErisGenerator $scope, ErisGenerator $indexes, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $action, ErisGenerator $scope, ErisGenerator $indexes, ?ErisGenerator $inputSource = null, ?ErisGenerator $keyword = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint {
-            return new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(action: $parts[0], scope: $parts[1], indexes: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $action,
             $scope,
             $indexes,
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static function (array $parts) use ($keyword): ErisGenerator {
+            return Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint => new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(action: $parts[0], scope: $parts[1], indexes: $parts[2], inputSource: $parts[3], keyword: $selected), $keyword ?? new \Tests\Generator\MySql\Statement\Table\IndexWordGenerator());
+        });
     }
 }

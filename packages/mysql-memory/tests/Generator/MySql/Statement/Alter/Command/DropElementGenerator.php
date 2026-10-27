@@ -24,17 +24,18 @@ final class DropElementGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior|null>|null $behavior Generated constructor operand
      * @param ErisGenerator<bool|null>|null $columnWritten Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\IndexWord|null>|null $keyword Generated constructor operand
      */
-    public function __construct(ErisGenerator $kind, ?ErisGenerator $name = null, ?ErisGenerator $behavior = null, ?ErisGenerator $columnWritten = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ?ErisGenerator $name = null, ?ErisGenerator $behavior = null, ?ErisGenerator $columnWritten = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $keyword = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement(kind: $parts[0], name: $parts[1], behavior: $parts[2], columnWritten: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $kind,
             $name ?? Generators::constant(null),
             $behavior ?? Generators::constant(null),
             $columnWritten ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static function (array $parts) use ($keyword): ErisGenerator {
+            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement => new \SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement(kind: $parts[0], name: $parts[1], behavior: $parts[2], columnWritten: $parts[3], inputSource: $parts[4], keyword: $selected), $keyword ?? ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::Index ? new \Tests\Generator\MySql\Statement\Table\IndexWordGenerator() : Generators::constant(null)));
+        });
     }
 }

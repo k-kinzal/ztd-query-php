@@ -29,6 +29,6 @@ final class IndexUsingTest extends TestCase
 
         self::assertInstanceOf(IndexUsing::class, $option);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm::Btree, $option->algorithm);
-        self::assertSame('CREATE TABLE t (a INT, INDEX (a) USING BTREE)', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) USING BTREE)', $create->toString());
     }
 }

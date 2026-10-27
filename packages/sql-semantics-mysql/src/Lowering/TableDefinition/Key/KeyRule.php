@@ -89,16 +89,7 @@ final class KeyRule
         [$kind, $keyword, $name, $structure, $parts, $options] = self::INDEXES[$form->signature];
         $rule = new KeyOptionRule($this->lowering);
         $algorithm = null;
-        $lead = $form->node->children[0];
-        if ($lead instanceof Node) {
-            $first = $this->lowering->productions->form($lead);
-            match ($first->signature) {
-                'normal_key_type: key_or_index' => $this->lowering->options->skip($first->node(0)),
-                'key_or_index: KEY_SYM', 'key_or_index: INDEX_SYM' => $this->lowering->options->skip($lead),
-                'fulltext: FULLTEXT_SYM', 'spatial: SPATIAL_SYM' => null,
-                default => throw ImplementationGap::production($first),
-            };
-        }
+        $word = $this->lowering->options->indexWord($form->node($keyword ?? 0));
         if ($structure !== null) {
             $algorithm = $rule->algorithm($form->node($structure));
         } elseif ($form->node->children[$parts - 2] instanceof Node && $form->node($parts - 2)->name === 'init_key_options') {
@@ -120,7 +111,7 @@ final class KeyRule
             $algorithm,
             $indexOptions,
             null,
-            $keyword !== null && $this->lowering->options->present($form->node($keyword)),
+            $word,
         );
     }
 
@@ -135,8 +126,8 @@ final class KeyRule
     {
         $type = $this->lowering->productions->form($form->node(1));
         [$kind, $keyword] = match ($type->signature) {
-            'constraint_key_type: PRIMARY_SYM KEY_SYM' => [IndexKind::Primary, false],
-            'constraint_key_type: UNIQUE_SYM opt_key_or_index' => [IndexKind::Unique, $this->lowering->options->present($type->node(1))],
+            'constraint_key_type: PRIMARY_SYM KEY_SYM' => [IndexKind::Primary, null],
+            'constraint_key_type: UNIQUE_SYM opt_key_or_index' => [IndexKind::Unique, $this->lowering->options->indexWord($type->node(1))],
             default => throw ImplementationGap::production($type),
         };
 

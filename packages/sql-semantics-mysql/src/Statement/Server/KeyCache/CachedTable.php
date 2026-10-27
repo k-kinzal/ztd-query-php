@@ -37,17 +37,24 @@ final class CachedTable implements Node, \SqlSemantics\Statement\TableUse
     public readonly ?array $indexes;
 
     /**
+     * The keyword introducing the index list, absent when no list is written.
+     */
+    public readonly ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword;
+
+    /**
      * @param QualifiedName $table The table name with its optional database
      * @param PartitionSelection|null $partitions The partitions, when written
      * @param list<Name|PrimaryIndex>|null $indexes The indexes, when an index list is written
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
+    public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword = null)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
         }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         $this->indexes = (new CachedIndexes())->checked($table, $indexes);
+        \SqlSemantics\Diagnostic\Check::input($indexes !== null || $keyword === null, 'Only a written index list has an index keyword.');
+        $this->keyword = $indexes === null ? null : ($keyword ?? \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index);
     }
 
     /**
@@ -55,6 +62,6 @@ final class CachedTable implements Node, \SqlSemantics\Statement\TableUse
      */
     public function render(Output $out): void
     {
-        (new CachedIndexes())->render($out, $this->table, $this->partitions, $this->indexes);
+        (new CachedIndexes())->render($out, $this->table, $this->partitions, $this->indexes, $this->keyword);
     }
 }

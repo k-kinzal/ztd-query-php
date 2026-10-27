@@ -33,6 +33,12 @@ final class DropElementTest extends TestCase
 
     public function testRenderWritesEveryKind(): void
     {
-        self::assertSame('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP INDEX i, DROP CHECK c, DROP CONSTRAINT d', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP KEY i, DROP CHECK c, DROP CONSTRAINT d')->toString());
+        self::assertSame('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP KEY i, DROP CHECK c, DROP CONSTRAINT d', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t DROP a CASCADE, DROP PRIMARY KEY, DROP KEY i, DROP CHECK c, DROP CONSTRAINT d')->toString());
+    }
+
+    public function testRejectsAnIndexKeywordForADroppedColumn(): void
+    {
+        $this->expectExceptionMessage('Only an altered index has an interchangeable index keyword.');
+        new DropElement(\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::Column, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), keyword: \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key);
     }
 }

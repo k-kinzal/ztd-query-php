@@ -168,4 +168,28 @@ final class CreateTableExecutionProperties extends TestCase
             yield $release->value => [$release];
         }
     }
+
+    /**
+     * The generated KEY and INDEX spellings install the same declared key parts.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesGeneratedIndexKeywordsInstallTheDeclaredIndex(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Table\Key\IndexDefinitionGenerator::tables($release))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $operation) use ($release): void {
+            self::assertInstanceOf(CreateTable::class, $operation);
+            $index = $operation->elements[1];
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class, $index);
+            $database = $operation->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), databases: [$database]))->connect(database: $database);
+            $session->text = 'Generated index definition without SQL';
+            self::assertInstanceOf(Completion::class, (new Execution($session))->statement($operation));
+            $table = $session->instance->dictionary->table($database, $operation->name->name->value);
+            self::assertNotNull($table);
+            self::assertCount(1, $table->definition->keys);
+            self::assertSame($index->name?->column->value, $table->definition->keys[0]->name);
+            self::assertSame([0], $table->definition->keys[0]->columns);
+            self::assertSame('Generated index definition without SQL', $session->text);
+        });
+    }
 }

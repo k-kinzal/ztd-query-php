@@ -28,12 +28,19 @@ final class RenameElement implements AlterCommand
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * The index keyword, absent for other kinds of altered elements.
+     */
+    public readonly ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword;
+
+    /**
      * @param ElementKind $kind A column or an index
      * @param ColumnName $from The current name
      * @param ColumnName $to The new name
      */
-    public function __construct(public readonly ElementKind $kind, public readonly ColumnName $from, public readonly ColumnName $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ElementKind $kind, public readonly ColumnName $from, public readonly ColumnName $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword = null)
     {
+        Check::input($kind === ElementKind::Index || $keyword === null, 'Only an altered index has an interchangeable index keyword.');
+        $this->keyword = $kind === ElementKind::Index ? ($keyword ?? \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index) : null;
         Check::input($kind === ElementKind::Column || $kind === ElementKind::Index, 'Only a column or an index is renamed by name.');
     }
 
@@ -51,6 +58,6 @@ final class RenameElement implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword('RENAME', $this->kind->value)->node($this->from)->keyword('TO')->node($this->to);
+        $out->keyword('RENAME', $this->keyword->value ?? $this->kind->value)->node($this->from)->keyword('TO')->node($this->to);
     }
 }

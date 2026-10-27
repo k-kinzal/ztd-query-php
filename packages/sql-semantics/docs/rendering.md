@@ -50,7 +50,7 @@ use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
 ### Literals
 
-Literals hold their exact value: digits as strings, decoded text, hexadecimal digits. They are never converted through a PHP float. A literal is written in a spelling of that value that the database reads back as the same value.
+Literals hold their exact value: digits as strings, decoded text, hexadecimal digits. They are never converted through a PHP float. A literal is written in a spelling of that value that the database reads back as the same value. MySQL `RadixLiteral`, `Text` and `Numeral` also retain their `RadixNotation`: quoted or prefixed hexadecimal and bit forms, including the letter case of the quoted prefix. The digits and leading zeroes remain separate from this notation.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -75,6 +75,8 @@ Some tokens have no influence on meaning in the production they appear in: `WORK
 
 Some keywords are declared synonyms: different spellings that the database reads as the same request, such as MySQL `&&` and `AND`, or SQLite `TEMPORARY` and `TEMP`. They are compared as one key, listed in the same tables with the same kind of justification.
 
+MySQL index definitions, index hints, cache-index lists and index alterations retain `KEY` or `INDEX` as `IndexWord`. An optional omitted keyword remains absent. `IndexDefinition::$keyword` holds this enum or `null`, rather than a presence boolean.
+
 ## What the rendered SQL does not preserve
 
 The rendered text is SQL that requests the same thing as the input, in the spelling the writer chooses. Outside [spelled regions](#spelled-regions), the following are not preserved:
@@ -83,7 +85,7 @@ The rendered text is SQL that requests the same thing as the input, in the spell
 - comments; MySQL version comments are read as the selected release reads them, and the rendered text writes that reading without the comment markers;
 - the letter case of keywords, which are written in upper case;
 - optional noise words listed in the noise tables, and statement terminators;
-- the spelling of declared synonyms, for example MySQL `VALUE` and `VALUES`, `CONVERT(a, CHAR)` and `CAST(a AS CHAR)`, `KEY` and `INDEX`; SQLite `TEMPORARY` and `TEMP`;
+- the spelling of declared synonyms, for example MySQL `VALUE` and `VALUES`, `CONVERT(a, CHAR)` and `CAST(a AS CHAR)`; SQLite `TEMPORARY` and `TEMP`;
 - the spelling of a name or a literal where the database reads several spellings as the same value: identifier quotes, string escapes, dollar quoting and Unicode escapes, digit separators, the case of hexadecimal digits.
 
 ```php

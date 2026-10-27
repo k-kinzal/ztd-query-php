@@ -752,7 +752,7 @@ final class AlterTableGenerator implements ErisGenerator
                         algorithm: Generators::constant(null),
                         options: Generators::constant([]),
                         constraint: Generators::constant(null),
-                        keyword: Generators::constant(false)
+                        keyword: Generators::constant(null)
                     )
                 )
             ),

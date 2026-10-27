@@ -826,7 +826,7 @@ final class CreateTableGenerator implements ErisGenerator
                     algorithm: Generators::constant(null),
                     options: Generators::constant([]),
                     constraint: Generators::constant(null),
-                    keyword: Generators::constant(false)
+                    keyword: Generators::constant(null)
                 )
             ),
             options: Generators::constant([]),
@@ -992,7 +992,7 @@ final class CreateTableGenerator implements ErisGenerator
                     constraint: new Key\ConstraintNameGenerator(
                         name: Generators::constant(null)
                     ),
-                    keyword: Generators::constant(false)
+                    keyword: Generators::constant(null)
                 )
             ),
             options: Generators::constant([]),
@@ -1665,7 +1665,7 @@ final class CreateTableGenerator implements ErisGenerator
                         )
                     ),
                     constraint: Generators::constant(null),
-                    keyword: Generators::constant(false)
+                    keyword: Generators::constant(null)
                 )
             ),
             options: Generators::constant([]),

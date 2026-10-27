@@ -29,7 +29,7 @@ final class IndexCommentTest extends TestCase
 
         self::assertInstanceOf(IndexComment::class, $option);
         self::assertSame('c', $option->comment->value);
-        self::assertSame('CREATE TABLE t (a INT, INDEX (a) COMMENT \'c\')', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) COMMENT \'c\')', $create->toString());
     }
 
     public function testCommentDomainRequiresQuotedText(): void

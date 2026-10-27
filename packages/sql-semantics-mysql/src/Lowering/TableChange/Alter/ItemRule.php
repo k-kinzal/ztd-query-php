@@ -149,9 +149,10 @@ final class ItemRule
     public function drop(Form $form): DropElement
     {
         [$kind, $name, $behavior] = self::DROPS[$form->signature];
+        $keyword = null;
         $second = $form->node->children[1] ?? null;
         if ($second instanceof Node && $second->name === 'key_or_index') {
-            $this->lowering->options->skip($second);
+            $keyword = $this->lowering->options->indexWord($second);
         } elseif ($second instanceof Node) {
             (new ColumnItemRule($this->lowering))->optional($second);
         }
@@ -162,6 +163,7 @@ final class ItemRule
             $name === null ? null : $columns->name($form->node($name)),
             $behavior === null ? null : $this->lowering->options->dropBehavior($form->node($behavior)),
             $kind === ElementKind::Column ? $columns->column($form) : null,
+            keyword: $keyword,
         );
     }
 
@@ -174,11 +176,9 @@ final class ItemRule
     {
         $columns = new ColumnItemRule($this->lowering);
         if ($form->token(0)->name === 'RENAME') {
-            if ($kind === ElementKind::Index) {
-                $this->lowering->options->skip($form->node(1));
-            }
+            $keyword = $kind === ElementKind::Index ? $this->lowering->options->indexWord($form->node(1)) : null;
 
-            return new RenameElement($kind, $columns->name($form->node(2)), $columns->name($form->node(4)));
+            return new RenameElement($kind, $columns->name($form->node(2)), $columns->name($form->node(4)), keyword: $keyword);
         }
         $name = $this->lowering->names->identifier($form->node(2));
         if ($kind === ElementKind::Index) {

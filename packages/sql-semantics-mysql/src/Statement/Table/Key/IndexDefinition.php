@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
+use SqlSemantics\Platform\MySql\Statement\Table\IndexWord;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
@@ -46,13 +47,18 @@ final class IndexDefinition implements TableElement
     public readonly array $options;
 
     /**
+     * The index keyword, absent for PRIMARY KEY and omitted optional keywords.
+     */
+    public readonly ?IndexWord $keyword;
+
+    /**
      * @param IndexKind $kind The kind of index
      * @param list<KeyPart> $parts The key parts in order; at least one
      * @param ColumnName|null $name The index name, when written
      * @param IndexAlgorithm|null $algorithm The USING clause written before the key parts
      * @param list<IndexOption> $options The options after the key parts, in written order
      * @param ConstraintName|null $constraint The CONSTRAINT clause of a PRIMARY KEY or UNIQUE index
-     * @param bool $keyword Whether INDEX or KEY is written after UNIQUE, FULLTEXT or SPATIAL
+     * @param IndexWord|null $keyword The written INDEX or KEY; optional after UNIQUE, FULLTEXT and SPATIAL
      */
     public function __construct(
         public readonly IndexKind $kind,
@@ -61,14 +67,15 @@ final class IndexDefinition implements TableElement
         public readonly ?IndexAlgorithm $algorithm = null,
         array $options = [],
         public readonly ?ConstraintName $constraint = null,
-        public readonly bool $keyword = false,
+        ?IndexWord $keyword = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->check($kind, $this->options);
         Check::input($constraint === null || $kind === IndexKind::Primary || $kind === IndexKind::Unique, 'Only a primary key or a unique index has a CONSTRAINT clause.');
-        Check::input(!$keyword || $kind === IndexKind::Unique || $kind === IndexKind::FullText || $kind === IndexKind::Spatial, 'Only UNIQUE, FULLTEXT and SPATIAL are followed by an optional INDEX.');
+        Check::input($keyword === null || $kind !== IndexKind::Primary, 'PRIMARY KEY has no interchangeable index keyword.');
+        $this->keyword = $kind === IndexKind::Index ? ($keyword ?? IndexWord::Index) : $keyword;
         Check::input($algorithm === null || ($kind !== IndexKind::FullText && $kind !== IndexKind::Spatial), 'A full-text or spatial index has no USING clause before its key parts.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -96,9 +103,12 @@ final class IndexDefinition implements TableElement
      */
     public function render(Output $out): void
     {
-        $out->node($this->constraint)->keyword(...explode(' ', $this->kind->value));
-        if ($this->keyword) {
-            $out->keyword('INDEX');
+        $out->node($this->constraint);
+        if ($this->kind !== IndexKind::Index) {
+            $out->keyword(...explode(' ', $this->kind->value));
+        }
+        if ($this->keyword !== null) {
+            $out->keyword($this->keyword->value);
         }
         $out->node($this->name);
         if ($this->algorithm !== null) {

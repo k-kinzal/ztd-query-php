@@ -29,6 +29,6 @@ final class IndexVisibilityTest extends TestCase
 
         self::assertInstanceOf(IndexVisibility::class, $option);
         self::assertTrue($option->visible);
-        self::assertSame('CREATE TABLE t (a INT, INDEX (a) VISIBLE)', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) VISIBLE)', $create->toString());
     }
 }

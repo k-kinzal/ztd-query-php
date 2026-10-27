@@ -531,6 +531,7 @@
         "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
         "columnWritten": "?bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyword": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind",
         "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
     },
@@ -549,6 +550,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameElement": {
         "from": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyword": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind",
         "to": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
     },
@@ -2480,6 +2482,7 @@
         "action": "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintAction",
         "indexes": "array",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintScope"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Hint\\IndexHintAction": {
@@ -3811,6 +3814,7 @@
         "indexes": "?array",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyword": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord",
         "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
@@ -3824,6 +3828,7 @@
         "indexes": "?array",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyword": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord",
         "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
@@ -4464,6 +4469,10 @@
         "source": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "temporaryWords": "int"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ArrayPart": {
         "direction": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\Direction",
         "expression": "SqlSemantics\\Statement\\Scalar",
@@ -4512,7 +4521,7 @@
         "algorithm": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
         "constraint": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ConstraintName",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "keyword": "bool",
+        "keyword": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\IndexWord",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
         "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
         "options": "array",

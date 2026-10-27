@@ -40,6 +40,6 @@ final class ColumnPartTest extends TestCase
 
     public function testRenderWritesTheColumnTheLengthAndTheDirection(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT, INDEX (a(4) ASC))', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT, KEY (a(4) ASC))', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
     }
 }

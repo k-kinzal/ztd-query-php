@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * preload_keys, adm_partition, opt_ignore_leaves. The index list goes
  * through the query family's index rule, which reads PRIMARY as the primary
  * key; the partitions through the table change family's partition list
- * rule. KEY and INDEX are synonyms (LeafNoise). Constructs: CacheIndex,
+ * rule. KEY and INDEX are synonyms whose spelling is retained. Constructs: CacheIndex,
  * CachedTable, LoadIndex, PreloadedTable. Terminates: lists are flattened
  * iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cache-index.html,
@@ -122,8 +122,8 @@ final class KeyCacheRule
     {
         $tables = [];
         foreach ($entries as $entry) {
-            [$table, $partitions, $indexes] = $this->entry($entry);
-            $tables[] = new CachedTable($table, $partitions, $indexes);
+            [$table, $partitions, $indexes, , $keyword] = $this->entry($entry);
+            $tables[] = new CachedTable($table, $partitions, $indexes, keyword: $keyword);
         }
 
         return $tables;
@@ -140,8 +140,8 @@ final class KeyCacheRule
     {
         $tables = [];
         foreach ($entries as $entry) {
-            [$table, $partitions, $indexes, $ignoreLeaves] = $this->entry($entry);
-            $tables[] = new PreloadedTable($table, $partitions, $indexes, $ignoreLeaves);
+            [$table, $partitions, $indexes, $ignoreLeaves, $keyword] = $this->entry($entry);
+            $tables[] = new PreloadedTable($table, $partitions, $indexes, $ignoreLeaves, keyword: $keyword);
         }
 
         return $tables;
@@ -150,7 +150,7 @@ final class KeyCacheRule
     /**
      * Lowers the table, the partitions, the index list and IGNORE LEAVES of one entry.
      *
-     * @return array{\SqlSemantics\Statement\Identifier\QualifiedName, PartitionSelection|null, list<Name|PrimaryIndex>|null, bool}
+     * @return array{\SqlSemantics\Statement\Identifier\QualifiedName, PartitionSelection|null, list<Name|PrimaryIndex>|null, bool, \SqlSemantics\Platform\MySql\Statement\Table\IndexWord|null}
      * @throws ImplementationGap When a production has no rule
      */
     public function entry(Form $form): array
@@ -162,6 +162,7 @@ final class KeyCacheRule
             $partitions === null ? null : $this->partitions($form->node($partitions)),
             $this->indexes($form->node($indexes)),
             $leaves !== null && $this->leaves($form->node($leaves)),
+            $this->keyword($form->node($indexes)),
         ];
     }
 
@@ -214,6 +215,24 @@ final class KeyCacheRule
     }
 
     /**
+     * Retains the keyword introducing an optional cache-index list.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function keyword(Node $list): ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord
+    {
+        $form = $this->lowering->form($list);
+        if ($form->signature === 'cache_keys_spec: cache_key_list_or_empty') {
+            $form = $this->lowering->form($form->node(0));
+        }
+        return match ($form->signature) {
+            'cache_key_list_or_empty:', 'opt_cache_key_list:' => null,
+            'cache_key_list_or_empty: key_or_index ( opt_key_usage_list )', 'opt_cache_key_list: key_or_index ( opt_key_usage_list )' => $this->lowering->options->indexWord($form->node(0)),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
      * Lowers a written index list.
      *
      * @return list<Name|PrimaryIndex>
@@ -221,8 +240,6 @@ final class KeyCacheRule
      */
     public function keys(Form $form): array
     {
-        $this->lowering->options->skip($form->node(0));
-
         return $this->lowering->queries->indexKeys($form->node(2));
     }
 

@@ -27,7 +27,7 @@ final class AddConstraintTest extends TestCase
 
     public function testRenderWritesTheElement(): void
     {
-        self::assertSame('ALTER TABLE t ADD UNIQUE INDEX u (a)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD UNIQUE KEY u (a)')->toString());
+        self::assertSame('ALTER TABLE t ADD UNIQUE KEY u (a)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD UNIQUE KEY u (a)')->toString());
     }
 
     /**

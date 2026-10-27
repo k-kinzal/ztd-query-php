@@ -39,7 +39,7 @@ final class IndexHint implements Node
      * @param IndexHintScope|null $scope The part of processing it applies to
      * @param list<Name|Node> $indexes The indexes in written order, each a name or the primary key
      */
-    public function __construct(public readonly IndexHintAction $action, public readonly ?IndexHintScope $scope, array $indexes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly IndexHintAction $action, public readonly ?IndexHintScope $scope, array $indexes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword = \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index)
     {
         $list = [];
         foreach ($indexes as $index) {
@@ -55,7 +55,7 @@ final class IndexHint implements Node
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->action->value, 'INDEX');
+        $out->keyword($this->action->value, $this->keyword->value);
         if ($this->scope !== null) {
             $out->keyword(...match ($this->scope) {
                 IndexHintScope::Join => ['FOR', 'JOIN'],
