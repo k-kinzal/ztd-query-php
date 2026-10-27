@@ -57,7 +57,7 @@
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the operator of an integer division</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE a DIV 2&#039;);</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $query-&gt;statement-&gt;where-&gt;operator // =&gt; \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query-&gt;statement-&gt;query-&gt;where-&gt;operator // =&gt; \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query-&gt;query-&gt;where-&gt;operator // =&gt; \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide</span></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">enum</span> <span class="tok-id">ArithmeticOperator</span>: <span class="tok-id">string</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>{</span>

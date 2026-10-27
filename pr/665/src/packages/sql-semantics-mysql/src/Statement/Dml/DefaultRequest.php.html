@@ -50,37 +50,40 @@
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\ScalarFact</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operand</span>;</span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Invalid</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * The keyword DEFAULT used as a value: the default of the column it is assigned to.</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * Mirrors the server&#039;s `Item_default_value` without an argument. The value</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * means something only where a statement assigns it to a column: a row of</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * INSERT or REPLACE, an assignment of SET, ON DUPLICATE KEY UPDATE, UPDATE</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * or LOAD DATA.</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * Rule: MYSQL-DML-DEFAULT-001. The statement that assigns the value derives</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * it at a position whose environment holds exactly one field, the column it</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> * is assigned to; the value has the type and nullability of that column,</span></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> * because the default is stored as a value of the column. Anywhere else,</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> * such as a row of a VALUES statement, the server rejects DEFAULT and the</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> * fact is that diagnostic. Terminates: no child. Source:</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/insert.html,</span></span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/values.html. Status: Implemented.</span></span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com"> * @example Reading the value DEFAULT of an INSERT</span></span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;INSERT INTO t (a) VALUES (DEFAULT)&#039;);</span></span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com"> *     $insert-&gt;statement-&gt;rows[0]-&gt;values[0] instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest // =&gt; true</span></span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Invalid</span>;</span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * The keyword DEFAULT used as a value: the default of the column it is assigned to.</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * Mirrors the server&#039;s `Item_default_value` without an argument. The value</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * means something only where a statement assigns it to a column: a row of</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * INSERT or REPLACE, an assignment of SET, ON DUPLICATE KEY UPDATE, UPDATE</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * or LOAD DATA.</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * Rule: MYSQL-DML-DEFAULT-001. The statement that assigns the value derives</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * it at a position whose environment holds exactly one field, the column it</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * is assigned to; the value has the type and nullability of that column,</span></span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> * because the default is stored as a value of the column. Anywhere else,</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> * such as a row of a VALUES statement, the server rejects DEFAULT and the</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> * fact is that diagnostic. Terminates: no child. Source:</span></span>
+<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/insert.html,</span></span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> * https://dev.mysql.com/doc/refman/8.4/en/values.html. Status: Implemented.</span></span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com"> * @example Reading the value DEFAULT of an INSERT</span></span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;INSERT INTO t (a) VALUES (DEFAULT)&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span><span class="tok-com"> *     $insert-&gt;statement-&gt;rows[0]-&gt;values[0] instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest // =&gt; true</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com"> *     $insert-&gt;rows[0]-&gt;values[0] instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest // =&gt; true</span></span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com"> */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">40</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DefaultRequest</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DefaultRequest</span> <span class="tok-kw">implements</span> <span class="tok-id">Operand</span></span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>{</span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DefaultRequest</span> <span class="tok-kw">implements</span> <span class="tok-id">Operand</span></span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">42</span>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\ScalarSemantics</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\Occurrence</span>;</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * Derives the type and nullability of the column the value is assigned to.</span></span>
@@ -102,9 +105,18 @@
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    {</span>
 <span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DEFAULT&#039;</span>);</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    }</span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>}</span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    }</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     * Constructs this SQL form with optional completed semantics and an input range.</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(?<span class="tok-id">ScalarFact</span> <span class="tok-var">$scalarInformation</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">if</span> (<span class="tok-var">$scalarInformation</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">initializeScalarInformation</span>(<span class="tok-var">$scalarInformation</span>);</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        }</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>    }</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>}</span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

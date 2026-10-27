@@ -59,7 +59,7 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    {</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;WITH c AS (VALUES ROW(7, ROW(1,2), DEFAULT)) SELECT 9&#039;</span>);</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;WITH c AS (VALUES ROW(7, ROW(1, 2), DEFAULT)) SELECT 9&#039;</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$operation</span>-&gt;<span class="tok-id">diagnostics</span>());</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    }</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>}</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>

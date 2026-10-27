@@ -59,7 +59,7 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @example Comparing two explicit collations</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;SELECT &#039;a&#039; COLLATE utf8mb4_bin = &#039;b&#039; COLLATE utf8mb4_general_ci&quot;);</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $query-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &quot;Illegal mix of collations (utf8mb4_bin,EXPLICIT) and (utf8mb4_general_ci,EXPLICIT) for operation &#039;=&#039;&quot;</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $query-&gt;diagnostics()[0]-&gt;message() // =&gt; &quot;Illegal mix of collations (utf8mb4_bin,EXPLICIT) and (utf8mb4_general_ci,EXPLICIT) for operation &#039;=&#039;&quot;</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">IllegalCollationMix</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>{</span>

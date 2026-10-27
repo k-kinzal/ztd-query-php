@@ -45,9 +45,9 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">MySqlMemory\Command\Program</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Command\Show\FixedColumns</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\Facts</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\StatementSemantics</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
@@ -63,7 +63,7 @@
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * Answers whether the filter fixes a database and routine name.</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">single</span>(<span class="tok-id">ShowLike</span>|<span class="tok-id">ShowWhere</span>|<span class="tok-id">null</span> <span class="tok-var">$filter</span>, <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">single</span>(<span class="tok-id">ShowLike</span>|<span class="tok-id">ShowWhere</span>|<span class="tok-id">null</span> <span class="tok-var">$filter</span>, <span class="tok-id">StatementSemantics</span> <span class="tok-var">$facts</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    {</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-var">$fixed</span> = <span class="tok-id">FixedColumns</span>::<span class="tok-id">of</span>(<span class="tok-var">$filter</span>, <span class="tok-var">$facts</span>);</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
@@ -73,7 +73,7 @@
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Answers the unqualified column fixed to a statement constant, or an empty name.</span></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">column</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$column</span>, <span class="tok-id">Scalar</span> <span class="tok-var">$value</span>, <span class="tok-id">Facts</span> <span class="tok-var">$facts</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">column</span>(<span class="tok-id">Scalar</span> <span class="tok-var">$column</span>, <span class="tok-id">Scalar</span> <span class="tok-var">$value</span>, <span class="tok-id">StatementSemantics</span> <span class="tok-var">$facts</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-id">FixedColumns</span>::<span class="tok-id">column</span>(<span class="tok-var">$column</span>, <span class="tok-var">$value</span>, <span class="tok-var">$facts</span>);</span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>

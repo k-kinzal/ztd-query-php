@@ -61,7 +61,7 @@
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveProgramKeepsTheAssignmentDependencies</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    {</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE PROCEDURE p(x INT) SET @a=x,@b=(x,2)&#039;</span>);</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$operation</span>-&gt;<span class="tok-id">diagnostics</span>());</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    }</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>}</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>

@@ -52,9 +52,10 @@
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Reading a position outside the select list</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT 1 ORDER BY 3&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-com"> *     $query-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &quot;Unknown column &#039;3&#039; in &#039;order clause&#039;: the select list has 1 items.&quot;</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $query = $semantics-&gt;analyze(&#039;SELECT * FROM t ORDER BY 3&#039;, [$semantics-&gt;analyze(&#039;CREATE TABLE t(a INT)&#039;)]);</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $query-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &quot;Unknown column &#039;3&#039; in &#039;order clause&#039;: the select list has 1 items.&quot;</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $query-&gt;diagnostics()[0]-&gt;message() // =&gt; &quot;Unknown column &#039;3&#039; in &#039;order clause&#039;: the select list has 1 items.&quot;</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OrdinalOutOfRange</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>

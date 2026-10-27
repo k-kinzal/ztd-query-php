@@ -54,7 +54,7 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example Identifying the instruction&#039;s declaration constraint</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;GRANT ALL ON *.* TO u&#039;)-&gt;statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange // =&gt; true</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;GRANT ALL ON *.* TO u&#039;) instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange // =&gt; true</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">interface</span> <span class="tok-id">PrivilegeChange</span> <span class="tok-kw">extends</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>{</span>

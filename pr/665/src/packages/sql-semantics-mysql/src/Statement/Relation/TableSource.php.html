@@ -53,7 +53,7 @@
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @example Identifying an input table</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT * FROM t&#039;)-&gt;statement-&gt;query-&gt;from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource // =&gt; true</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT * FROM t&#039;)-&gt;query-&gt;from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource // =&gt; true</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">interface</span> <span class="tok-id">TableSource</span> <span class="tok-kw">extends</span> <span class="tok-id">\SqlSemantics\Statement\Relation</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>{</span>

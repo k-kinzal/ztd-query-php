@@ -55,7 +55,7 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Describing a contradictory role grant</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;CREATE PROCEDURE p() GRANT &#039;&#039; TO u&quot;)-&gt;statement;</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;CREATE PROCEDURE p() GRANT &#039;&#039; TO u&quot;);</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $create-&gt;body-&gt;problem-&gt;message() // =&gt; &#039;GRANT cannot use anonymous accounts or grant an explicit account to itself.&#039;</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RefusedGrantRoles</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>

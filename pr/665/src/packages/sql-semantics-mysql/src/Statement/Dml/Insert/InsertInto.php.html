@@ -50,51 +50,53 @@
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a></span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * The head of INSERT and REPLACE: the verb, its modifiers, the table and the optional column list.</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * Mirrors the server&#039;s `PT_insert` with its `is_replace` flag: REPLACE</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * deletes a row that duplicates a unique key before it inserts the new one.</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * REPLACE takes no IGNORE and no HIGH_PRIORITY; the written table has no</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a></span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> * The head of INSERT and REPLACE: the verb, its modifiers, the table and the optional column list.</span></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * Mirrors the server&#039;s `PT_insert` with its `is_replace` flag: REPLACE</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * deletes a row that duplicates a unique key before it inserts the new one.</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * REPLACE takes no IGNORE and no HIGH_PRIORITY; the written table has no</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> * correlation name. The keyword INTO is optional and always written.</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * correlation name. The presence of the optional INTO keyword is retained. The</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * hints of the comment written right after the verb are kept with it.</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html, https://dev.mysql.com/doc/refman/8.4/en/replace.html.</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * @example Reading the head of a REPLACE</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> *     $replace = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;REPLACE LOW_PRIORITY t VALUES (1)&#039;);</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * correlation name. The presence of the optional INTO keyword is retained. The</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * hints of the comment written right after the verb are kept with it.</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html, https://dev.mysql.com/doc/refman/8.4/en/replace.html.</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Reading the head of a REPLACE</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> *     $replace = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;REPLACE LOW_PRIORITY t VALUES (1)&#039;);</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-com"> *     [$replace-&gt;statement-&gt;into-&gt;replace, $replace-&gt;statement-&gt;into-&gt;priority, $replace-&gt;toString()] // =&gt; [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, &#039;REPLACE LOW_PRIORITY INTO t VALUES (1)&#039;]</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     [$replace-&gt;statement-&gt;into-&gt;replace, $replace-&gt;statement-&gt;into-&gt;priority, $replace-&gt;toString()] // =&gt; [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, &#039;REPLACE LOW_PRIORITY t VALUES (1)&#039;]</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertInto</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>{</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @var list&lt;OptimizerHint&gt; The hints of the comment written right after the verb, in written order</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$hints</span>;</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param bool $replace Whether the verb is REPLACE</span></span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param InsertPriority|null $priority The scheduling modifier</span></span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * @param bool $ignore Whether IGNORE turns errors into warnings</span></span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param WriteTarget $table The table the rows are written to</span></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param ColumnList|null $columns The columns written; null for every column of the table</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param list&lt;OptimizerHint&gt; $hints The hints of the comment written right after the verb, in written order</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @throws InvalidConstruction When REPLACE has IGNORE or HIGH_PRIORITY, or the table has a correlation name</span></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$replace</span>,</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">InsertPriority</span> <span class="tok-var">$priority</span>,</span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$ignore</span>,</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">WriteTarget</span> <span class="tok-var">$table</span>,</span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">ColumnList</span> <span class="tok-var">$columns</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-kw">array</span> <span class="tok-var">$hints</span> = [],</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$intoWritten</span> = <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     [$replace-&gt;into-&gt;replace, $replace-&gt;into-&gt;priority, $replace-&gt;toString()] // =&gt; [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, &#039;REPLACE LOW_PRIORITY t VALUES (1)&#039;]</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertInto</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
+<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">30</span>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\Occurrence</span>;</span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @var list&lt;OptimizerHint&gt; The hints of the comment written right after the verb, in written order</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$hints</span>;</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param bool $replace Whether the verb is REPLACE</span></span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param InsertPriority|null $priority The scheduling modifier</span></span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param bool $ignore Whether IGNORE turns errors into warnings</span></span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * @param WriteTarget $table The table the rows are written to</span></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param ColumnList|null $columns The columns written; null for every column of the table</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param list&lt;OptimizerHint&gt; $hints The hints of the comment written right after the verb, in written order</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * @throws InvalidConstruction When REPLACE has IGNORE or HIGH_PRIORITY, or the table has a correlation name</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$replace</span>,</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">InsertPriority</span> <span class="tok-var">$priority</span>,</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$ignore</span>,</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">WriteTarget</span> <span class="tok-var">$table</span>,</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">ColumnList</span> <span class="tok-var">$columns</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-kw">array</span> <span class="tok-var">$hints</span> = [],</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$intoWritten</span> = <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    ) {</span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">hints</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$hints</span>, <span class="tok-id">OptimizerHint</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;The hints of a statement are optimizer hints.&#039;</span>);</span>
 <span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(!<span class="tok-var">$replace</span> || (!<span class="tok-var">$ignore</span> &amp;&amp; <span class="tok-var">$priority</span> !== <span class="tok-id">InsertPriority</span>::<span class="tok-id">High</span>), <span class="tok-str">&#039;REPLACE takes neither IGNORE nor HIGH_PRIORITY.&#039;</span>);</span>

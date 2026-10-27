@@ -53,9 +53,10 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-com"> * @example Reading the problem of a multiple-table UPDATE with LIMIT</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;UPDATE t, u SET t.a = 1 LIMIT 1&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-com"> *     $update-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &#039;Incorrect usage of UPDATE and LIMIT&#039;</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @example Reading the retained problem of a stored multiple-table UPDATE with LIMIT</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CREATE PROCEDURE p() UPDATE t, u SET t.a = 1 LIMIT 1&#039;);</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $update-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &#039;Incorrect usage of UPDATE and LIMIT&#039;</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $update-&gt;diagnostics()[0]-&gt;message() // =&gt; &#039;Incorrect usage of UPDATE and LIMIT&#039;</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">WriteMisuse</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>

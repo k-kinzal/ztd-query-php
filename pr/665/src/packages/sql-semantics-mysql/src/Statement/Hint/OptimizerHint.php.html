@@ -57,7 +57,7 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the hints of a query block</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT /*+ BKA(t) MAX_EXECUTION_TIME(5) *&#039; . &#039;/ 1&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     array_map(static fn ($hint) =&gt; $hint-&gt;name(), $query-&gt;statement-&gt;query-&gt;hints) // =&gt; [\SqlSemantics\Platform\MySql\Statement\Hint\HintName::Bka, \SqlSemantics\Platform\MySql\Statement\Hint\HintName::MaxExecutionTime]</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     array_map(static fn ($hint) =&gt; $hint-&gt;name(), $query-&gt;query-&gt;hints) // =&gt; [\SqlSemantics\Platform\MySql\Statement\Hint\HintName::Bka, \SqlSemantics\Platform\MySql\Statement\Hint\HintName::MaxExecutionTime]</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">interface</span> <span class="tok-id">OptimizerHint</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>{</span>

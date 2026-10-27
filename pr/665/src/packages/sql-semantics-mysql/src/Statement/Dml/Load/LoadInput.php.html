@@ -51,55 +51,58 @@
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * What LOAD reads: `[LOCAL] INFILE|URL|S3 &#039;name&#039; [COUNT n] [IN PRIMARY KEY ORDER]`.</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * LOCAL makes the client read the file. COUNT and IN PRIMARY KEY ORDER</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * belong to the bulk load of the HeatWave grammars (8.0.30 and later) and</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * tell how many files the name pattern matches and that they are sorted by</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * What LOAD reads: `[LOCAL] INFILE|URL|S3 &#039;name&#039; [COUNT n] [IN PRIMARY KEY ORDER]`.</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * LOCAL makes the client read the file. COUNT and IN PRIMARY KEY ORDER</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * belong to the bulk load of the HeatWave grammars (8.0.30 and later) and</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * tell how many files the name pattern matches and that they are sorted by</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> * primary key. The 8.4 and later grammars read the word COUNT as an</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> * identifier, which the server requires to be `count` in any letter case;</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-com"> * that word is kept so it is written back the way the grammar reads it.</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * primary key. COUNT may be read as an identifier, which the server requires</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * to be `count` in any letter case; that word is kept so it is written back</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * the way the grammar reads it. MySQL 8.0 through 8.3 also have a keyword</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * production, while 8.4 and later use only the identifier production.</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Reading the input of LOAD DATA</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;LOAD DATA LOCAL INFILE &#039;f.csv&#039; INTO TABLE t&quot;);</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> *     [$load-&gt;statement-&gt;input-&gt;local, $load-&gt;statement-&gt;input-&gt;source, $load-&gt;statement-&gt;input-&gt;file-&gt;value] // =&gt; [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, &#039;f.csv&#039;]</span></span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LoadInput</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>{</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a></span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * The noncanonical spelling of COUNT when read as an identifier.</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Name</span> <span class="tok-var">$countWord</span>;</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param bool $local Whether the client reads the file</span></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param LoadSource $source The kind of location</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param Text $file The file name, URL or pattern</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @param Numeral|null $count The number of files</span></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     * @param bool $primaryKeyOrder Whether the files are sorted by primary key</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * primary key. COUNT may be read as an identifier, which the server requires</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * to be `count` in any letter case; that word is kept so it is written back</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * the way the grammar reads it. MySQL 8.0 through 8.3 also have a keyword</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * production, while 8.4 and later use only the identifier production.</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> * @example Reading the input of LOAD DATA</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;LOAD DATA LOCAL INFILE &#039;f.csv&#039; INTO TABLE t&quot;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">31</span><span class="tok-com"> *     [$load-&gt;statement-&gt;input-&gt;local, $load-&gt;statement-&gt;input-&gt;source, $load-&gt;statement-&gt;input-&gt;file-&gt;value] // =&gt; [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, &#039;f.csv&#039;]</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     [$load-&gt;input-&gt;local, $load-&gt;input-&gt;source, $load-&gt;input-&gt;file-&gt;value] // =&gt; [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, &#039;f.csv&#039;]</span></span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LoadInput</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">35</span>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\Occurrence</span>;</span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * The noncanonical spelling of COUNT when read as an identifier.</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Name</span> <span class="tok-var">$countWord</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * @param bool $local Whether the client reads the file</span></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param LoadSource $source The kind of location</span></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param Text $file The file name, URL or pattern</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param Numeral|null $count The number of files</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @param bool $primaryKeyOrder Whether the files are sorted by primary key</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">43</span><span class="tok-com">     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier (8.4 and later), which may be quoted; null for the keyword</span></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier, which may be quoted; null for the keyword</span></span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     * @throws InvalidConstruction When the word COUNT is given without a count or is another word</span></span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$local</span>,</span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">LoadSource</span> <span class="tok-var">$source</span>,</span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Text</span> <span class="tok-var">$file</span>,</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Numeral</span> <span class="tok-var">$count</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$primaryKeyOrder</span> = <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier, which may be quoted; null for the keyword</span></span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com">     * @throws InvalidConstruction When the word COUNT is given without a count or is another word</span></span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$local</span>,</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">LoadSource</span> <span class="tok-var">$source</span>,</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Text</span> <span class="tok-var">$file</span>,</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Numeral</span> <span class="tok-var">$count</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$primaryKeyOrder</span> = <span class="tok-id">false</span>,</span>
 <span class="src-line" data-diff="removed"><span class="ln">52</span>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Name</span> <span class="tok-var">$countWord</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        ?<span class="tok-id">Name</span> <span class="tok-var">$countWord</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        ?<span class="tok-id">Name</span> <span class="tok-var">$countWord</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>    ) {</span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$file</span>-&gt;<span class="tok-id">radix</span> === <span class="tok-id">null</span>, <span class="tok-str">&#039;A LOAD file name is quoted text.&#039;</span>);</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$count</span> === <span class="tok-id">null</span> || <span class="tok-var">$count</span>-&gt;<span class="tok-id">isIntegerToken</span>(), <span class="tok-str">&#039;A LOAD file count is a decimal integer token no greater than 2147483647.&#039;</span>);</span>

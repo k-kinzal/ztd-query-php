@@ -59,7 +59,7 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer</span>;</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\DropServer</span>;</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption</span>;</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Operation</span>;</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span> <span class="tok-kw">as</span> <span class="tok-id">MySqlStatement</span>;</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * Executes CREATE SERVER, ALTER SERVER and DROP SERVER.</span></span>
@@ -95,8 +95,8 @@
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    #[<span class="tok-id">Override</span>]</span>
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">execute</span>(<span class="tok-id">\SqlSemantics\Statement\AnalyzedStatement</span> <span class="tok-var">$operation</span>, <span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>, <span class="tok-id">Connection</span> <span class="tok-var">$connection</span>): <span class="tok-id">Reply</span></span>
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    {</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-id">assert</span>(<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Operation</span>);</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$operation</span>-&gt;<span class="tok-id">statement</span>;</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-id">assert</span>(<span class="tok-var">$operation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">MySqlStatement</span>);</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$operation</span>;</span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$registry</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>;</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-var">$affected</span> = <span class="tok-num">1</span>;</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">commit</span>();</span>

@@ -43,17 +43,18 @@
 <span class="src-line" id="L4" data-diff="same"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Account</span>;</span>
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\GrammarRelease</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\LanguageProfile</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>;</span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\AnalyzedStatement</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Override</span>;</span>
+<span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\GrammarRelease</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\LanguageProfile</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Statement</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset</span>;</span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\AnalyzedStatement</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Source\Span</span>;</span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com">/**</span></span>
@@ -72,9 +73,10 @@
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;rename user a to b, c to d&#039;)-&gt;toString() // =&gt; &#039;RENAME USER a TO b, c TO d&#039;</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RenameUser</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RenameUser</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span>, <span class="tok-id">AnalyzedStatement</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RenameUser</span> <span class="tok-kw">extends</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\SqlStatement</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span>, <span class="tok-id">AnalyzedStatement</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>{</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\Occurrence</span>;</span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">30</span><span class="tok-com">     * @var list&lt;UserRenaming&gt; The renamings in order</span></span>
@@ -94,58 +96,64 @@
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * @param Span|null $source The optional original statement location</span></span>
 <span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">37</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$renamings</span>)</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$renamings</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span> = <span class="tok-kw">new</span> <span class="tok-id">LanguageProfile</span>(<span class="tok-id">GrammarRelease</span>::<span class="tok-id">MySql847</span>), <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Charset</span> <span class="tok-var">$client</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Span</span> <span class="tok-var">$source</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$renamings</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span> = <span class="tok-kw">new</span> <span class="tok-id">LanguageProfile</span>(<span class="tok-id">GrammarRelease</span>::<span class="tok-id">MySql847</span>), <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Charset</span> <span class="tok-var">$client</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Span</span> <span class="tok-var">$source</span> = <span class="tok-id">null</span>, ?<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\StatementSemantics</span> <span class="tok-var">$statementInformation</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    {</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$profile</span>-&gt;<span class="tok-id">grammar</span>-&gt;<span class="tok-id">database</span>() === <span class="tok-str">&#039;mysql&#039;</span>, <span class="tok-str">&#039;An account rename uses a MySQL language profile.&#039;</span>);</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$renamings</span>, <span class="tok-id">UserRenaming</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;RENAME USER names at least one pair.&#039;</span>, <span class="tok-num">1</span>);</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Account\Renamings</span>())-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span>) === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-kw">new</span> <span class="tok-id">Problem\User\RefusedRenameUser</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span>);</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>    }</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a></span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     * Derives nothing: the statement names no relation and no expression.</span></span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>    {</span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    }</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a></span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a><span class="tok-com">     * Writes the request.</span></span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    {</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;RENAME&#039;</span>, <span class="tok-str">&#039;USER&#039;</span>)-&gt;<span class="tok-id">list</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span>);</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * Reconstructs the complete request from its ordered pairs and selected language.</span></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toString</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    {</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        <span class="tok-var">$out</span> = <span class="tok-kw">new</span> <span class="tok-id">Output</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rendering\Codec</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">grammar</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">lexical</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">client</span>));</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">render</span>(<span class="tok-var">$out</span>);</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Rendering\Lexical</span>())-&gt;<span class="tok-id">join</span>(<span class="tok-var">$out</span>-&gt;<span class="tok-id">pieces</span>()) . <span class="tok-var">$out</span>-&gt;<span class="tok-id">trailing</span>();</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    }</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a></span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     * Answers the selected language without retaining an analysis environment.</span></span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">profile</span>(): <span class="tok-id">LanguageProfile</span></span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    {</span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>;</span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    }</span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a></span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     * An account rename contributes no table declarations.</span></span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-com">     * @return list&lt;\SqlSemantics\Statement\Declaration\Table&gt;</span></span>
-<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declarations</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>    {</span>
-<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-kw">return</span> [];</span>
-<span class="src-line" id="L102" data-diff="same"><a class="ln" href="#L102">102</a>    }</span>
-<span class="src-line" id="L103" data-diff="same"><a class="ln" href="#L103">103</a>}</span>
-<span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statementInformation</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">initializeStatementInformation</span>(<span class="tok-var">$statementInformation</span>);</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        }</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$profile</span>-&gt;<span class="tok-id">grammar</span>-&gt;<span class="tok-id">database</span>() === <span class="tok-str">&#039;mysql&#039;</span>, <span class="tok-str">&#039;An account rename uses a MySQL language profile.&#039;</span>);</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$renamings</span>, <span class="tok-id">UserRenaming</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;RENAME USER names at least one pair.&#039;</span>, <span class="tok-num">1</span>);</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Account\Renamings</span>())-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span>) === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-kw">new</span> <span class="tok-id">Problem\User\RefusedRenameUser</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span>);</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    }</span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a></span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a><span class="tok-com">     * Derives nothing: the statement names no relation and no expression.</span></span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    {</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    }</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a><span class="tok-com">     * Writes the request.</span></span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>    {</span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;RENAME&#039;</span>, <span class="tok-str">&#039;USER&#039;</span>)-&gt;<span class="tok-id">list</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">renamings</span>);</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    }</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     * Reconstructs the complete request from its ordered pairs and selected language.</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toString</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    {</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-var">$out</span> = <span class="tok-kw">new</span> <span class="tok-id">Output</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rendering\Codec</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">grammar</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">lexical</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">client</span>));</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">render</span>(<span class="tok-var">$out</span>);</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Rendering\Lexical</span>())-&gt;<span class="tok-id">join</span>(<span class="tok-var">$out</span>-&gt;<span class="tok-id">pieces</span>()) . <span class="tok-var">$out</span>-&gt;<span class="tok-id">trailing</span>();</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    }</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a></span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * Answers the selected language without retaining an analysis environment.</span></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">profile</span>(): <span class="tok-id">LanguageProfile</span></span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>    {</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">profile</span>;</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    }</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a></span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a><span class="tok-com">     * An account rename contributes no table declarations.</span></span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a><span class="tok-com">     * @return list&lt;\SqlSemantics\Statement\Declaration\Table&gt;</span></span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">declarations</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>    {</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>        <span class="tok-kw">return</span> [];</span>
+<span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a>    }</span>
+<span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a>}</span>
+<span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

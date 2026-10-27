@@ -56,7 +56,7 @@
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example Selecting a partition the table lacks</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $table = $semantics-&gt;analyze(&#039;CREATE TABLE t (a INT) PARTITION BY HASH(a) PARTITIONS 2&#039;);</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;SELECT a FROM t PARTITION (p9)&#039;, [$table])-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &quot;Unknown partition &#039;p9&#039; in table &#039;t&#039;&quot;</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;SELECT a FROM t PARTITION (p9)&#039;, [$table])-&gt;diagnostics()[0]-&gt;message() // =&gt; &quot;Unknown partition &#039;p9&#039; in table &#039;t&#039;&quot;</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UnknownPartition</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>{</span>

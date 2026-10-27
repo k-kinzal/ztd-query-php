@@ -49,44 +49,42 @@
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * Resolves marker occurrences in retained structures before consumer preparation.</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * Written positions come from structural rendering, never input SQL or parser</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * nodes. An unbound marker receives the same initial VARCHAR domain as ordinary</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * prepared input. Previously supplied parameter domains remain authoritative.</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Parameters</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>{</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * Builds a derivation with occurrence identities and initial preparation domains.</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param array&lt;int, Domain&gt; $bound Previously supplied marker domains</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">derivation</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, <span class="tok-id">AnalysisContext</span> <span class="tok-var">$context</span>, <span class="tok-kw">array</span> <span class="tok-var">$bound</span> = []): <span class="tok-id">Derivation</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    {</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-var">$output</span> = <span class="tok-kw">new</span> <span class="tok-id">Output</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rendering\Codec</span>(<span class="tok-var">$context</span>-&gt;<span class="tok-id">profile</span>-&gt;<span class="tok-id">grammar</span>));</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-var">$node</span>-&gt;<span class="tok-id">render</span>(<span class="tok-var">$output</span>);</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$occurrences</span> = <span class="tok-var">$output</span>-&gt;<span class="tok-id">parameters</span>();</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-var">$settings</span> = <span class="tok-id">Settings</span>::<span class="tok-id">of</span>(<span class="tok-var">$context</span>);</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-var">$default</span> = <span class="tok-id">Domain</span>::<span class="tok-id">string</span>(<span class="tok-num">16383</span>, <span class="tok-var">$settings</span>-&gt;<span class="tok-id">connection</span>, <span class="tok-id">coercibility</span>: <span class="tok-id">Coercibility</span>::<span class="tok-id">Coercible</span>);</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$bindings</span> = [];</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$unbound</span> = [];</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$occurrences</span> <span class="tok-kw">as</span> <span class="tok-var">$position</span> =&gt; <span class="tok-var">$occurrence</span>) {</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>            <span class="tok-var">$bindings</span>[<span class="tok-var">$position</span>] = <span class="tok-var">$settings</span>-&gt;<span class="tok-id">parameters</span>[<span class="tok-var">$position</span>] ?? <span class="tok-var">$bound</span>[<span class="tok-var">$position</span>] ?? <span class="tok-var">$default</span>;</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>            <span class="tok-kw">if</span> ((!<span class="tok-kw">isset</span>(<span class="tok-var">$settings</span>-&gt;<span class="tok-id">parameters</span>[<span class="tok-var">$position</span>]) &amp;&amp; !<span class="tok-kw">isset</span>(<span class="tok-var">$bound</span>[<span class="tok-var">$position</span>])) || <span class="tok-id">in_array</span>(<span class="tok-var">$position</span>, <span class="tok-var">$settings</span>-&gt;<span class="tok-id">unboundParameters</span>, <span class="tok-id">true</span>)) {</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>                <span class="tok-var">$unbound</span>[] = <span class="tok-var">$position</span>;</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            }</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        }</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Derivation</span>(<span class="tok-var">$context</span>-&gt;<span class="tok-id">withSession</span>(<span class="tok-var">$settings</span>-&gt;<span class="tok-id">withParameters</span>(<span class="tok-var">$bindings</span>, <span class="tok-var">$unbound</span>)), <span class="tok-id">parameters</span>: <span class="tok-var">$occurrences</span>);</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>}</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Resolves marker occurrences in retained structures before consumer preparation.</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Written positions belong to the parameter occurrences; no renderer or parser</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * discovers them. An unbound marker receives the same initial VARCHAR domain as ordinary</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * prepared input. Previously supplied parameter domains remain authoritative.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Parameters</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * Builds a derivation with occurrence identities and initial preparation domains.</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param array&lt;int, Domain&gt; $bound Previously supplied marker domains</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">derivation</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, <span class="tok-id">AnalysisContext</span> <span class="tok-var">$context</span>, <span class="tok-kw">array</span> <span class="tok-var">$bound</span> = []): <span class="tok-id">Derivation</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    {</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-var">$occurrences</span> = (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Evaluation\Compile\Walker</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$node</span>, <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\Parameter</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-var">$settings</span> = <span class="tok-id">Settings</span>::<span class="tok-id">of</span>(<span class="tok-var">$context</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-var">$default</span> = <span class="tok-id">Domain</span>::<span class="tok-id">string</span>(<span class="tok-num">16383</span>, <span class="tok-var">$settings</span>-&gt;<span class="tok-id">connection</span>, <span class="tok-id">coercibility</span>: <span class="tok-id">Coercibility</span>::<span class="tok-id">Coercible</span>);</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$bindings</span> = [];</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-var">$unbound</span> = [];</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$occurrences</span> <span class="tok-kw">as</span> <span class="tok-var">$occurrence</span>) {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>            <span class="tok-var">$position</span> = <span class="tok-var">$occurrence</span>-&gt;<span class="tok-id">position</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-var">$bindings</span>[<span class="tok-var">$position</span>] = <span class="tok-var">$settings</span>-&gt;<span class="tok-id">parameters</span>[<span class="tok-var">$position</span>] ?? <span class="tok-var">$bound</span>[<span class="tok-var">$position</span>] ?? <span class="tok-var">$default</span>;</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-kw">if</span> ((!<span class="tok-kw">isset</span>(<span class="tok-var">$settings</span>-&gt;<span class="tok-id">parameters</span>[<span class="tok-var">$position</span>]) &amp;&amp; !<span class="tok-kw">isset</span>(<span class="tok-var">$bound</span>[<span class="tok-var">$position</span>])) || <span class="tok-id">in_array</span>(<span class="tok-var">$position</span>, <span class="tok-var">$settings</span>-&gt;<span class="tok-id">unboundParameters</span>, <span class="tok-id">true</span>)) {</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>                <span class="tok-var">$unbound</span>[] = <span class="tok-var">$position</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>            }</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        }</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Derivation</span>(<span class="tok-var">$context</span>-&gt;<span class="tok-id">withSession</span>(<span class="tok-var">$settings</span>-&gt;<span class="tok-id">withParameters</span>(<span class="tok-var">$bindings</span>, <span class="tok-var">$unbound</span>)));</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    }</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>}</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

@@ -55,10 +55,13 @@
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> * spelled token per token the rendering of the region produces, in order.</span></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * The tokens themselves still come from the structure; a layout only chooses</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * the trivia between them and after the last of them, and an equivalent</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * spelling of each. Publication</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-com"> * spelling of each. Publication</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * spelling of each. Rendering a statement</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * refuses a layout that does not align one to one with the rendered tokens,</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * whose spellings are not the same tokens, or whose gaps are not trivia, and</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * the rendered SQL must lower to the same structure, layout included. A layout</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-com"> * whose spellings are not the same tokens, or whose gaps are not trivia, and</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> * the rendered SQL must lower to the same structure, layout included. A layout</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * whose spellings are not the same tokens, or whose gaps are not trivia, as checked by the dialect</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * token correspondence rules. A layout</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * never stands for structure, and nothing is rendered from it alone.</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * Identifier slots use the model name representation; the output codec encodes</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * their spelling for the client. Literal slots keep their value bytes.</span></span>

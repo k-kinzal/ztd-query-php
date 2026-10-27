@@ -50,13 +50,16 @@
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-com"> * A scalar expression: an operation over operands that yields one value per evaluation.</span></span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-com"> * Its type, NULL fact and name resolution are not stored on the node; the</span></span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com"> * operation that contains the node derives and owns them.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-com"> * Its type, NULL fact and name resolution are not stored on the node; the</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> * operation that contains the node derives and owns them.</span></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Each occurrence owns its type, nullability, name resolution and optional</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * source range. Binding completes those values before consumers execute it.</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Reading the facts an operation derived for an expression</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))-&gt;analyze(&#039;SELECT 1&#039;);</span></span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $operation-&gt;facts-&gt;scalar($operation-&gt;field(0)-&gt;expression)-&gt;nullability // =&gt; \SqlSemantics\Statement\Type\Nullability::NotNull</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $operation-&gt;facts-&gt;scalar($operation-&gt;field(0)-&gt;expression)-&gt;nullability // =&gt; \SqlSemantics\Statement\Type\Nullability::NotNull</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $operation-&gt;field(0)-&gt;expression-&gt;scalarInformation()-&gt;nullability // =&gt; \SqlSemantics\Statement\Type\Nullability::NotNull</span></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-kw">interface</span> <span class="tok-id">Scalar</span> <span class="tok-kw">extends</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">interface</span> <span class="tok-id">Scalar</span> <span class="tok-kw">extends</span> <span class="tok-id">Operand</span></span>

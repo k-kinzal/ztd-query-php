@@ -54,23 +54,23 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\ScalarFact</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * A row containing an expression whose scalar use is deferred until preparation.</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * Unlike an ordinary Row, it cannot participate in a scalar or row comparison</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * until its enclosing query or stored instruction is reached.</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @example Retaining a deferred row element</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredRegexp(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;2&#039;)]), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;3&#039;));</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow([$value, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;4&#039;)]) instanceof \SqlSemantics\Statement\Scalar // =&gt; false</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DeferredRow</span> <span class="tok-kw">implements</span> <span class="tok-id">DeferredOperand</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>{</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * A row containing an expression whose scalar use is deferred until preparation.</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * Unlike an ordinary Row, it cannot participate in a scalar or row comparison</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * until its enclosing query or stored instruction is reached.</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Retaining a deferred row element</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     $value = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredRegexp(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;2&#039;)]), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;3&#039;));</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow([$value, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;4&#039;)]) instanceof \SqlSemantics\Statement\Scalar // =&gt; false</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DeferredRow</span> <span class="tok-kw">implements</span> <span class="tok-id">DeferredOperand</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>{</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\ScalarSemantics</span>;</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\Occurrence</span>;</span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @var non-empty-list&lt;Scalar|RowOperand|DeferredOperand&gt; The elements in order; at least two</span></span>
@@ -81,67 +81,70 @@
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param list&lt;Scalar|RowOperand|DeferredOperand&gt; $elements The elements in order; at least two</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param OptionalWords $keyword Whether the optional ROW keyword is written</span></span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$elements</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">OptionalWords</span> <span class="tok-var">$keyword</span> = <span class="tok-id">OptionalWords</span>::<span class="tok-id">Omitted</span>)</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$elements</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">OptionalWords</span> <span class="tok-var">$keyword</span> = <span class="tok-id">OptionalWords</span>::<span class="tok-id">Omitted</span>, ?<span class="tok-id">ScalarFact</span> <span class="tok-var">$scalarInformation</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-var">$checked</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$elements</span>, <span class="tok-id">\SqlSemantics\Statement\Operand</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;A row constructor has at least two elements.&#039;</span>, <span class="tok-num">2</span>);</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-var">$accepted</span> = [];</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$checked</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span> || <span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">RowOperand</span> || <span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>, <span class="tok-str">&#039;A deferred row element retains a scalar, row or deferred role.&#039;</span>);</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>            <span class="tok-var">$accepted</span>[] = <span class="tok-var">$element</span>;</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        }</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-id">array_filter</span>(<span class="tok-var">$accepted</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$element</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>) !== [], <span class="tok-str">&#039;A deferred row retains at least one deferred element.&#039;</span>);</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span> = <span class="tok-var">$accepted</span>;</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    }</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * Derives every element and the row.</span></span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveScalar</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    {</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-var">$nullability</span> = <span class="tok-id">Nullability</span>::<span class="tok-id">NotNull</span>;</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-var">$nullability</span> = <span class="tok-var">$nullability</span>-&gt;<span class="tok-id">propagate</span>(<span class="tok-var">$derivation</span>-&gt;<span class="tok-id">scalar</span>(<span class="tok-var">$element</span>, <span class="tok-var">$environment</span>)-&gt;<span class="tok-id">nullability</span>);</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        }</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ScalarFact</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Statement\Type\Invalid</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>()), <span class="tok-var">$nullability</span>);</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">if</span> (<span class="tok-var">$scalarInformation</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">initializeScalarInformation</span>(<span class="tok-var">$scalarInformation</span>);</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        }</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-var">$checked</span> = <span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$elements</span>, <span class="tok-id">\SqlSemantics\Statement\Operand</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;A row constructor has at least two elements.&#039;</span>, <span class="tok-num">2</span>);</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-var">$accepted</span> = [];</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$checked</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar</span> || <span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">RowOperand</span> || <span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>, <span class="tok-str">&#039;A deferred row element retains a scalar, row or deferred role.&#039;</span>);</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>            <span class="tok-var">$accepted</span>[] = <span class="tok-var">$element</span>;</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        }</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-id">array_filter</span>(<span class="tok-var">$accepted</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$element</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>) !== [], <span class="tok-str">&#039;A deferred row retains at least one deferred element.&#039;</span>);</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span> = <span class="tok-var">$accepted</span>;</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    }</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * Derives every element and the row.</span></span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveScalar</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    {</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$nullability</span> = <span class="tok-id">Nullability</span>::<span class="tok-id">NotNull</span>;</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            <span class="tok-var">$nullability</span> = <span class="tok-var">$nullability</span>-&gt;<span class="tok-id">propagate</span>(<span class="tok-var">$derivation</span>-&gt;<span class="tok-id">scalar</span>(<span class="tok-var">$element</span>, <span class="tok-var">$environment</span>)-&gt;<span class="tok-id">nullability</span>);</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        }</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a></span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-com">     * @return non-empty-list&lt;Scalar|RowOperand|DeferredOperand&gt; Elements in written order</span></span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">operands</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span>;</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    }</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     * Describes the first deferred element; ordinary nested rows remain legal.</span></span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     * @throws LogicException If the constructor invariant has been bypassed</span></span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">\SqlSemantics\Statement\Fact\Diagnostic</span></span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    {</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>            <span class="tok-kw">if</span> (<span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>) {</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>                <span class="tok-kw">return</span> <span class="tok-var">$element</span>-&gt;<span class="tok-id">problem</span>();</span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>            }</span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        }</span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A deferred row retains at least one deferred element.&#039;</span>);</span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    }</span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     * Writes the ROW keyword when it is written and the elements in parentheses.</span></span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    {</span>
-<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">keyword</span> === <span class="tok-id">OptionalWords</span>::<span class="tok-id">Written</span>) {</span>
-<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ROW&#039;</span>)-&gt;<span class="tok-id">glue</span>();</span>
-<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        }</span>
-<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">list</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
-<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>    }</span>
-<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>}</span>
-<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ScalarFact</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Statement\Type\Invalid</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>()), <span class="tok-var">$nullability</span>);</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    }</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     * @return non-empty-list&lt;Scalar|RowOperand|DeferredOperand&gt; Elements in written order</span></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">operands</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    {</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span>;</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    }</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     * Describes the first deferred element; ordinary nested rows remain legal.</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a><span class="tok-com">     * @throws LogicException If the constructor invariant has been bypassed</span></span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(): <span class="tok-id">\SqlSemantics\Statement\Fact\Diagnostic</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    {</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>            <span class="tok-kw">if</span> (<span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeferredOperand</span>) {</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>                <span class="tok-kw">return</span> <span class="tok-var">$element</span>-&gt;<span class="tok-id">problem</span>();</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>            }</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        }</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;A deferred row retains at least one deferred element.&#039;</span>);</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    }</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a></span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-com">     * Writes the ROW keyword when it is written and the elements in parentheses.</span></span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>    {</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">keyword</span> === <span class="tok-id">OptionalWords</span>::<span class="tok-id">Written</span>) {</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ROW&#039;</span>)-&gt;<span class="tok-id">glue</span>();</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>        }</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">list</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">elements</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>    }</span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>}</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

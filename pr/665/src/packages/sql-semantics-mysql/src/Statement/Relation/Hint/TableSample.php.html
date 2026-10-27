@@ -50,45 +50,47 @@
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a></span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * The TABLESAMPLE clause of a table reference (MySQL 9.x grammars): the sampling method and the percentage.</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * The percentage is a number, a user variable or a parameter marker. The</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * statement that holds the table derives it; it sees no column.</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/9.1/en/select.html.</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * @example Reading a sampling clause</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, &#039;mysql-9.1.0&#039;))-&gt;analyze(&#039;SELECT a FROM t TABLESAMPLE BERNOULLI (10)&#039;);</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a></span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> * The TABLESAMPLE clause of a table reference (MySQL 9.x grammars): the sampling method and the percentage.</span></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * The percentage is a number, a user variable or a parameter marker. The</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * statement that holds the table derives it; it sees no column.</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/9.1/en/select.html.</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * @example Reading a sampling clause</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, &#039;mysql-9.1.0&#039;))-&gt;analyze(&#039;SELECT a FROM t TABLESAMPLE BERNOULLI (10)&#039;);</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-com"> *     [$query-&gt;statement-&gt;from-&gt;sample-&gt;method, $query-&gt;statement-&gt;from-&gt;sample-&gt;percentage-&gt;text] // =&gt; [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, &#039;10&#039;]</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> *     [$query-&gt;statement-&gt;query-&gt;from-&gt;sample-&gt;method, $query-&gt;statement-&gt;query-&gt;from-&gt;sample-&gt;percentage-&gt;text] // =&gt; [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, &#039;10&#039;]</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * @example Refusing an expression as the percentage</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::System, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TableSample</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>{</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param SamplingMethod $method The sampling method</span></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     * @param Scalar $percentage The percentage of rows to sample</span></span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">SamplingMethod</span> <span class="tok-var">$method</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Scalar</span> <span class="tok-var">$percentage</span>)</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    {</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$percentage</span> <span class="tok-kw">instanceof</span> <span class="tok-id">NumberLiteral</span> || <span class="tok-var">$percentage</span> <span class="tok-kw">instanceof</span> <span class="tok-id">UserVariable</span> || <span class="tok-var">$percentage</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Parameter</span>, <span class="tok-str">&#039;A sampling percentage is a number, a user variable or a parameter marker.&#039;</span>);</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a></span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     * Writes the clause.</span></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;TABLESAMPLE&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">method</span>-&gt;<span class="tok-id">value</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">percentage</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    }</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>}</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     [$query-&gt;query-&gt;from-&gt;sample-&gt;method, $query-&gt;query-&gt;from-&gt;sample-&gt;percentage-&gt;text] // =&gt; [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, &#039;10&#039;]</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Refusing an expression as the percentage</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::System, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">TableSample</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">32</span>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">use</span> <span class="tok-id">\SqlSemantics\Statement\Semantics\Occurrence</span>;</span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param SamplingMethod $method The sampling method</span></span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param Scalar $percentage The percentage of rows to sample</span></span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">SamplingMethod</span> <span class="tok-var">$method</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Scalar</span> <span class="tok-var">$percentage</span>)</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">SamplingMethod</span> <span class="tok-var">$method</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Scalar</span> <span class="tok-var">$percentage</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$percentage</span> <span class="tok-kw">instanceof</span> <span class="tok-id">NumberLiteral</span> || <span class="tok-var">$percentage</span> <span class="tok-kw">instanceof</span> <span class="tok-id">UserVariable</span> || <span class="tok-var">$percentage</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Parameter</span>, <span class="tok-str">&#039;A sampling percentage is a number, a user variable or a parameter marker.&#039;</span>);</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * Writes the clause.</span></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    {</span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;TABLESAMPLE&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">method</span>-&gt;<span class="tok-id">value</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;(&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">percentage</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>}</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

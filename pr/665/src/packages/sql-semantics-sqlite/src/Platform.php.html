@@ -70,11 +70,11 @@
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Platform</span> <span class="tok-kw">implements</span> <span class="tok-id">\SqlSemantics\Contract\Platform</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>{</span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Publishes the existing representation until this dialect&#039;s statements are migrated.</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Publishes the concrete statement with meaning owned by its SQL occurrences.</span></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">publish</span>(<span class="tok-id">AnalysisContext</span> <span class="tok-var">$context</span>, <span class="tok-id">\SqlSemantics\Statement\Statement</span> <span class="tok-var">$statement</span>, <span class="tok-id">\SqlSemantics\Statement\Source\SourceMap</span> <span class="tok-var">$sources</span>): <span class="tok-id">\SqlSemantics\Statement\AnalyzedStatement</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Statement\Operation</span>(<span class="tok-var">$context</span>, <span class="tok-var">$statement</span>, <span class="tok-var">$sources</span>);</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Validation\Publication</span>())-&gt;<span class="tok-id">publish</span>(<span class="tok-var">$context</span>, <span class="tok-var">$statement</span>, <span class="tok-var">$sources</span>);</span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>

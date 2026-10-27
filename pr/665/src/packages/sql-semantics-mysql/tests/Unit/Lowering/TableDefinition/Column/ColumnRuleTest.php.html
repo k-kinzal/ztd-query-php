@@ -144,7 +144,8 @@
 <span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a>    {</span>
 <span class="src-line" id="L105" data-diff="same"><a class="ln" href="#L105">105</a>        <span class="tok-var">$create</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \&#039;c\&#039; INVISIBLE)&#039;</span>);</span>
 <span class="src-line" id="L106" data-diff="same"><a class="ln" href="#L106">106</a></span>
-<span class="src-line" id="L107" data-diff="same"><a class="ln" href="#L107">107</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$create</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">94</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$create</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$create</span>-&gt;<span class="tok-id">diagnostics</span>());</span>
 <span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a>    }</span>
 <span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a></span>
 <span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAlwaysAcceptsTheOptionalWords</span>(): <span class="tok-id">void</span></span>
