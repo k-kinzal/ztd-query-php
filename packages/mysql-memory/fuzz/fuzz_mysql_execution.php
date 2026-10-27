@@ -62,13 +62,29 @@ register_shutdown_function(static function () use ($reference): void {
     $reference->stop();
 });
 $endpoint = $reference->getData(Endpoint::class);
-$server = MemoryDatabase::start($version, ['test']);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, 'test', $endpoint->port);
+$identityResult = $native->query('SELECT USER()');
+if (!$identityResult instanceof mysqli_result) {
+    throw new RuntimeException('MySQL must return its client identity.');
+}
+$identity = $identityResult->fetch_column();
+$identityResult->free();
+$prefix = $endpoint->username . '@';
+if (!is_string($identity) || !str_starts_with($identity, $prefix) || strlen($identity) === strlen($prefix)) {
+    throw new RuntimeException('MySQL must identify the configured user and its connecting host.');
+}
+/** Docker and the local server see different peers; configure the same client identity. */
+$server = MemoryDatabase::start($version, ['test'], clientHost: substr($identity, strlen($prefix)));
 register_shutdown_function(static function () use ($server): void {
     $server->stop();
 });
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, 'test', $endpoint->port);
 $memory = new mysqli($server->host, 'root', '', 'test', $server->port);
+$identityResult = $memory->query('SELECT USER()');
+if (!$identityResult instanceof mysqli_result || $identityResult->fetch_column() !== $identity) {
+    throw new RuntimeException('Both connections must expose the configured client identity.');
+}
+$identityResult->free();
 foreach ([$native, $memory] as $connection) {
     $connection->set_charset('utf8mb4');
     $connection->query("SET SESSION sql_mode = '" . $connection->real_escape_string($mode) . "'");
