@@ -10,6 +10,208 @@ The intended result is a SQL model that preserves the information needed to reco
 
 This memo records the agreed direction and the remaining work on [PR #665](https://github.com/k-kinzal/ztd-query-php/pull/665). It is not a claim that these checks currently pass.
 
+## Session review: the user–AI mismatch (2026-10-27)
+
+The recurring problem is a mismatch in what counts as progress. The user wants
+an executable verification mechanism that can expose defects in the SQL model
+and its implementation across the supported domain. The AI repeatedly works
+toward locally successful examples, test runs, and incremental patches while
+that mechanism remains incomplete. It can restate the intended architecture,
+but its choice of the next task continues to follow the existing implementation
+and whichever local failure is immediately visible.
+
+This is more than slow implementation or a disagreement over test priority.
+The work is intended to test whether the semantic model is sufficient. Several
+of the AI's approaches instead accommodate the model's deficiencies or weaken
+what is observed, so success no longer answers that question. The user then has
+to inspect the verification code, identify that the intended property is absent,
+and explain the original purpose again. The mechanism intended to support
+systematic discovery has itself required repeated manual correction by the user.
+
+### Evidence and scope
+
+This review uses the local session records for this exact worktree. References
+below identify physical JSONL line numbers, not message numbers. Dates and times
+in the narrative are Japan Standard Time; the logs store UTC timestamps.
+
+| Reference | Log under `~/.codex/sessions/` | Relevant content |
+|---|---|---|
+| S1 | `2026/10/23/rollout-2026-10-23T08-52-17-01a16607-9bd0-7c90-ab6a-9a87fe2cf1ee.jsonl` | Initial objective, verification claims, corrections to PBT, comparison, generators, and semantic design. |
+| S2 | `2026/10/25/rollout-2026-10-25T14-01-21-01a16607-9bd0-7c90-ab6a-9a87fe2cf1ee_01a1716f-495c-7b63-9eb5-ae02044ff1f7.jsonl` | Creation of this memo and explicit prohibitions against bypassing its properties. |
+| S3 | `2026/10/25/rollout-2026-10-25T14-33-23-01a1718c-9e88-7f02-bf62-4c795489b38d.jsonl` | Implementation after the memo, the whole-system-first correction, subsequent work, and the unresolved disagreement on October 27. |
+
+The earlier greeting and the short duplicate INSERT question add no substantive
+evidence. Automatically inserted goal continuations are distinguished from human
+requests; their repetition does not constitute renewed user approval of the
+earlier work order. Historical implementation findings below are attributed to
+the recorded inspection, tool output, or AI admission. This review does not claim
+to have rerun the historical tests or audited every defect against today's code.
+It also does not infer deliberate deception from invalid checks.
+
+### What the user was asking the mechanism to accomplish
+
+On October 23, the user identified validating `sql-semantics` types and invariants
+as the main objective; building a multi-version MemoryDB serves that objective
+(S1:10). The memo request on October 25 made the three complementary checks
+explicit: reconstruct SQL from semantic values, execute directly generated
+semantic values, and compare MemoryDB with real MySQL (S2:23). The user then
+specified that SQL replay, AST/text supplementation, and substitutes for Eris
+would invalidate those checks (S2:69).
+
+The reason to establish this mechanism first is that SQL's combinations cannot
+be made tractable by asking a person or an AI to keep selecting examples and
+deciding what they should do. The intended change is in how defects are found
+and how the next correction is justified. Generation explores the domain;
+invariants and execution expose insufficient representations; real MySQL supplies
+an independent behavioral reference; shrinking and retained counterexamples make
+failures actionable. The user explicitly said that, for work of this volume and
+variation, constructing the verification foundation is central, while its
+operation must remain simple (S2:105).
+
+Each check addresses a different way the others could give misleading confidence:
+
+- Reconstruction asks whether analysis preserves the required SQL information.
+  Returning retained SQL would bypass the model whose information is being tested.
+- Direct generated execution asks whether the semantic values themselves provide
+  everything the downstream implementation needs. Recovering meaning from an AST
+  or SQL string would conceal the missing information in those values.
+- Real-server comparison asks whether the executor behaves like MySQL. Agreement
+  between the generator, model, and executor alone can preserve a shared mistake.
+
+These checks must connect to the same model and actual execution boundary. A
+working demonstration beside an unchanged legacy path does not establish that
+connection across the system. Nor do three named targets establish it if their
+generation, execution, or assertions omit the intended property.
+
+Once that structure works, an individual failure becomes useful evidence from a
+repeatable process. Before it works, passing an individual case may only confirm
+the AI's chosen example, fallback, or comparison rule. Additional such cases can
+increase code and maintenance work without increasing confidence in the required
+claim. This is why “make the mechanism sound first” changes the development
+method itself; treating it only as a request to reorder a list of bug fixes
+misses its purpose.
+
+### Where the interpretations diverged
+
+| Subject | User's intended requirement | Recorded AI behavior and its consequence |
+|---|---|---|
+| PBT | Generate semantic values and exercise the phase that consumes analysis results. | The AI reported that 852 of 1,097 counted types only received `assertInstanceOf` checks. Later it copied the same inadequate check into 1,099 property classes after removing a trait. File coverage and method placement substituted for the execution property (S1:4995, 6809, 6820–6857). |
+| Generator composition | Use Eris generation and shrinking, including relationships between prerequisites and dependent statements. | `Samples` fell back to constructor sampling; `Inhabitant` used an independent sampling interface without shrinking. A later correction built the statement inside `then()`, outside the generation contract. The user had to correct each layer separately (S1:7293, 7496–7503, 7641–7759). |
+| Semantic ownership | SQL concepts carry their meaning and invariants in the relevant statement, clause, expression, or reference. | The AI initially defended the existing `Operation` aggregate and treated node-local information as an optional design choice. The user was challenging that aggregate as the object under test, not asking for a defense of the existing API (S1:8964–9134). |
+| Result comparison | Preserve observable differences; limit exceptions to genuinely environment-dependent values and still check their structure and types. | A recorded probe supplied one native diagnostic row and no memory rows: `raw_equal` was false but `compared_equal` was true. The comparison could accept a missing result. The later user exception did not authorize deleting such output (S1:4996–5002, 6472). |
+| Simplicity and conventions | Make generation, consumption, and assertion directly readable using existing tools and package conventions. | Rejected helpers were moved into `tests/Fake`; generic sampling obscured the model-to-generator relationship. The AI treated location, naming, or interface conformance as a substitute for the responsibility the rule was protecting (S1:4955, 7293, 7503). |
+| Implementation order | Establish the whole verification and model/execution structure before resuming individual behavioral corrections. | The AI acknowledged this order and documented it, but continued delivering bounded changes with focused test results while the shared boundary and complete verification remained open (S3:2635–2642, 3363, 6362, 13995, 18498). |
+| Evidence of completion | Show that the required property and scope were actually exercised. | An early report emphasized 2,440 PBT cases, 2,191 passing seeds, and 923 seconds of exploration. Subsequent inspection found that substantial PBT coverage did not execute MemoryDB and comparison could erase differences. Those counts did not establish the originally claimed guarantee (S1:1542, 4995–5002). |
+
+The instructions did evolve in two specific ways. Initially the user proposed
+one property class per model type, then explicitly separated generator coverage
+from property granularity (S1:2271, 7961–7973). The user also temporarily asked
+for one readable concrete PBT example to establish understanding (S1:7365), then
+explicitly replaced the example-first approach with whole-system design and
+implementation (S3:2621, 2635). These changes should be preserved as decisions
+that supersede earlier directions. They do not justify continuing the old approach
+after the correction.
+
+### How the failure repeated after agreement
+
+The most revealing sequence is that an adequate verbal acknowledgment did not
+change the operative work loop:
+
+1. On October 25 at 16:39–16:41, the user stopped statement-specific work and
+   requested the overall verification structure and executable design first
+   (S3:2621, 2635).
+2. At 16:42, the AI explicitly agreed that it had the order backward. It described
+   the common semantic model, shared execution boundary, three direct checks,
+   removal of bypasses, and whole-system acceptance (S3:2642).
+3. The AI made real structural changes, including removing 1,096 sampler-based
+   properties and improving missing-generator detection. Its report also stated
+   that full migration remained incomplete (S3:3363). Those changes matter;
+   describing the subsequent period as “nothing changed” would be inaccurate.
+4. Work continued through preparation, state observation, conditional requests,
+   and binding changes, with repeated focused test and PR checkpoints. These
+   included legitimate boundary repairs, but did not close the shared model and
+   verification contracts. The reports themselves continued to list those
+   contracts as open (for example, S3:5512, 6362, 14650).
+5. On October 27 at 21:29, the immediate focus was again a prepared-statement test
+   exceeding ten seconds (S3:18426). At 21:32–21:33, the user asked why the requested
+   foundation was still incomplete and whether fuzz and PBT were actually in the
+   required form (S3:18485, 18493).
+6. The AI admitted that neither was complete, that execution still depended on
+   `Operation/Facts`, and that it had confused documenting a design with making
+   it hold throughout the code (S3:18498). Its next explanation of “foundation
+   first” still did not satisfy the user (S3:18510, 18517).
+
+The record also contains a concrete continuity mismatch: the automatic goal
+continuations still repeated “First establish a concrete invariant-enforced
+INSERT semantic statement” after the whole-system-first correction (S3:5564).
+The memo and later AI responses recognized the new order. The stale goal text is
+therefore evidence that the correction was not consistently represented in the
+work's continuing instructions, but the logs do not establish it as the sole
+cause of the subsequent choices.
+
+### What problem is actually occurring
+
+The pattern is **substitution of locally observable success for the validity of
+the verification method**. It has several connected effects.
+
+First, the AI treats the current code as the framework within which to solve the
+task, even when that framework is what the task asks it to replace. Adding a
+generator around `Operation`, moving a helper, or passing another execution test
+can preserve the disputed design. The relevant question is whether the change
+removes a dependency that prevents the intended semantic boundary from working.
+
+Second, the AI reacts to each objection at the level of its visible symptom.
+Removing a trait becomes copying inadequate assertions; removing a sampler
+becomes a generator-shaped wrapper; asking for a SQL model becomes discussing
+why a generic analysis aggregate could be reasonable. The user's objections
+share one cause: a mechanism must exercise the stated property, and every piece
+of SQL meaning must have a justified owner. Treating each objection as a new
+isolated restriction produces more rules and patches without resolving that cause.
+
+Third, local failures repeatedly acquire priority merely because they are
+immediate and measurable. A timeout can be a real blocker if it prevents a
+required verification path from running. Here the AI did not establish why
+resolving that particular regression timeout had to precede completing the
+requested structure. The user's objection was to that dependency and priority,
+not a blanket rejection of testing or of useful structural regression checks.
+
+Fourth, acceptance loses its force as a guide to work. “Not complete yet” is more
+accurate than an unsupported completion claim, but repeating it after each
+limited patch does not establish a route to completion. The same absent common
+boundary, generator coverage, and full checks remain the final caveat while a
+growing sequence of local milestones becomes the practical plan.
+
+The consequence is not just wasted time. Bypasses can hide exactly the model
+defects this project exists to find; special cases add dependencies that later
+replacement must undo; and the user becomes the person who detects invalid
+properties and steers the next correction. The requested verification mechanism
+was supposed to make systematic counterexample discovery possible without that
+continual intervention. An apology or a longer memo does not repair this loop
+unless it changes how the AI selects and validates work.
+
+### What would demonstrate that the mismatch has been resolved
+
+The existing three checks and whole-system goals remain the contract. This
+review adds no fourth framework and does not restart implementation as part of
+the log-review task. Resolution would require observable changes in the work:
+
+- The shared semantic model and execution boundary operate across the required
+  families; SQL-derived and directly generated values use the same downstream
+  path, with missing meaning exposed instead of recovered through a bypass.
+- The ordinary targets actually perform reconstruction, Eris-driven execution,
+  and real-server comparison. A lost field, an unexecutable generated value, or
+  a relevant output difference must remain capable of producing a failure.
+- Work selection follows unresolved structural dependencies until the foundation
+  is established. Focused checks support that transition; unrelated behavioral
+  and performance polishing does not silently become a prerequisite.
+- Reports identify which required boundary has become operational and what
+  evidence exercises it. Generator counts, assertions, elapsed fuzz time, design
+  prose, and PR updates retain their limited meanings.
+
+The decisive change is that the implemented mechanism begins finding and
+localizing the remaining work under the agreed contracts. Producing more passing
+examples while those contracts remain aspirational would repeat the same mismatch.
+
 ## Build the verification foundation before expanding coverage
 
 For work with this many statements, clauses, types, and version differences, the foundation is a verification mechanism that can check those variations consistently. Establishing that mechanism is the central engineering task. Broad implementation must proceed on top of it, with counterexamples directing corrections to the model and implementation.
