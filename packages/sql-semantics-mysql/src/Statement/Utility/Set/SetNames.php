@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET NAMES: sets the client, connection and result character sets, and the connection collation.
@@ -27,17 +26,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading SET NAMES
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SET NAMES 'utf8mb4' COLLATE utf8mb4_bin");
- *     [$set->statement->items[0]->charset->name?->value, $set->statement->items[0]->collation?->name?->value, $set->toString()] // => ['utf8mb4', 'utf8mb4_bin', 'SET NAMES utf8mb4 COLLATE utf8mb4_bin']
+ *     [$set->items[0]->charset->name?->value, $set->items[0]->collation?->name?->value, $set->toString()] // => ['utf8mb4', 'utf8mb4_bin', 'SET NAMES utf8mb4 COLLATE utf8mb4_bin']
  */
 final class SetNames implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharsetName $charset The character set, or DEFAULT
      * @param CollationName|null $collation The collation of the connection; MySQL 5.x also accepts COLLATE DEFAULT
      */
-    public function __construct(public readonly CharsetName $charset, public readonly ?CollationName $collation = null)
+    public function __construct(public readonly CharsetName $charset, public readonly ?CollationName $collation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

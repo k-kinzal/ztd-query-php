@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -28,17 +27,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the name TRUE gives its column
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT TRUE');
- *     [$query->statement->targets[0]->expression->value, $query->field(0)->name->value] // => [true, '?column?']
+ *     [$query->targets[0]->expression->value, $query->field(0)->name->value] // => [true, '?column?']
  */
 final class BooleanLiteral implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $value The truth value
      */
-    public function __construct(public readonly bool $value)
+    public function __construct(public readonly bool $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

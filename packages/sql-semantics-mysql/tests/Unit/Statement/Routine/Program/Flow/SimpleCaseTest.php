@@ -23,7 +23,7 @@ final class SimpleCaseTest extends TestCase
     public function testDeriveProgramDerivesTheOperandAndEveryBranch(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE b WHEN c THEN SELECT d; WHEN 1 THEN SELECT a; ELSE SELECT e; END CASE');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $case = $create->body;
         self::assertInstanceOf(SimpleCase::class, $case);
@@ -31,14 +31,14 @@ final class SimpleCaseTest extends TestCase
         self::assertInstanceOf(ColumnUse::class, $case->operand);
         self::assertCount(2, $case->branches);
         self::assertCount(1, $case->otherwise);
-        self::assertSame(['Column b does not exist.', 'Column c does not exist.', 'Column d does not exist.', 'Column e does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column b does not exist.', 'Column c does not exist.', 'Column d does not exist.', 'Column e does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testDeriveProgramResolvesAVariableAsTheOperand(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; CASE x WHEN 1 THEN SET x = 2; ELSE BEGIN END; END CASE; END');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]

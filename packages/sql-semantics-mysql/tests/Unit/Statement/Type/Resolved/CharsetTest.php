@@ -66,4 +66,19 @@ final class CharsetTest extends TestCase
     {
         self::assertSame([2, 4, 1], [Charset::known('ucs2')->minLength(), Charset::known('utf32')->minLength(), Charset::known('utf8mb4')->minLength()]);
     }
+
+    public function testAvailableInDistinguishesTheCatalogsOfTheReleases(): void
+    {
+        self::assertFalse(Charset::known('gb18030')->availableIn(GrammarRelease::MySql5651));
+        self::assertTrue(Charset::known('gb18030')->availableIn(GrammarRelease::MySql5744));
+        self::assertTrue(Charset::known('utf8mb4')->availableIn(GrammarRelease::MySql910));
+    }
+
+    public function testAllIncludesOnlyCharacterSetsAvailableInTheSelectedRelease(): void
+    {
+        self::assertNotContains(Charset::known('gb18030'), Charset::all(GrammarRelease::MySql5651));
+        self::assertContains(Charset::known('gb18030'), Charset::all(GrammarRelease::MySql5744));
+        self::assertContains(Charset::binary(), Charset::all(GrammarRelease::MySql847));
+    }
+
 }

@@ -12,7 +12,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -33,9 +32,9 @@ use SqlSemantics\Statement\Source\Span;
  *     $end = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('commit work and no chain release');
  *     [$end->toString(), $end->chain, $end->release] // => ['COMMIT WORK AND NO CHAIN RELEASE', false, true]
  */
-final class Commit implements TransactionStatement
+final class Commit extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
     use TransactionSql;
 
     /**
@@ -47,8 +46,11 @@ final class Commit implements TransactionStatement
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null, public readonly bool $work = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null, public readonly bool $work = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         Check::input($chain !== true || $release !== true, 'AND CHAIN and RELEASE exclude each other.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

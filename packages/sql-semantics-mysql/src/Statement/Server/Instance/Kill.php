@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ProcessReferences;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `KILL [CONNECTION | QUERY] processlist_id`: a request to end a connection or the statement it runs.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Ending the statement of a connection
  *     $kill = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('kill query 42');
- *     [$kill->toString(), $kill->statement->scope] // => ['KILL QUERY 42', \SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]
+ *     [$kill->toString(), $kill->scope] // => ['KILL QUERY 42', \SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]
  */
-final class Kill implements Statement
+final class Kill extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The server's name for dependencies forbidden in a process identifier.
@@ -39,8 +38,11 @@ final class Kill implements Statement
      * @param KillScope|null $scope CONNECTION or QUERY, when written
      * @param Scalar $process The processlist identifier
      */
-    public function __construct(public readonly ?KillScope $scope, public readonly Scalar $process)
+    public function __construct(public readonly ?KillScope $scope, public readonly Scalar $process, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

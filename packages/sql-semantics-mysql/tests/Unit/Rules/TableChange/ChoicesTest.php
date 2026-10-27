@@ -42,27 +42,27 @@ final class ChoicesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ALGORITHM = COPY, ALGORITHM = INSTANT')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t ALGORITHM = COPY, ALGORITHM = INSTANT')->diagnostics());
     }
 
     public function testLockChecksTheLock(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze('ALTER TABLE t LOCK = none, LOCK = EXCLUSIVE')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t LOCK = none, LOCK = EXCLUSIVE')->diagnostics());
     }
 
     public function testRefusalAcceptsDefaultAsANameIn57(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t ALGORITHM = `DEFAULT`, LOCK = `DEFAULT`')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t ALGORITHM = `DEFAULT`, LOCK = `DEFAULT`')->diagnostics()));
     }
 
     public function testRefusalIgnoresTheKeywordDefault(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t ALGORITHM = DEFAULT, LOCK = DEFAULT')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t ALGORITHM = DEFAULT, LOCK = DEFAULT')->diagnostics()));
     }
 }

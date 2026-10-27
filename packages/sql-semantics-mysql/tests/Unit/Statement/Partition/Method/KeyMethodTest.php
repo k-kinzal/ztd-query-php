@@ -21,7 +21,7 @@ final class KeyMethodTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
 
-        self::assertSame(['Column q does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t PARTITION BY KEY (a, q)', [$table])->facts->diagnostics));
+        self::assertSame(['Column q does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t PARTITION BY KEY (a, q)', [$table])->diagnostics()));
     }
 
     public function testRenderWritesLinearAndTheAlgorithm(): void

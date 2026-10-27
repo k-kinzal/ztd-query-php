@@ -9,7 +9,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `STOP GROUP_REPLICATION`: stops group replication (MySQL 5.7 and later).
@@ -23,9 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Stopping group replication
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('stop group_replication')->toString() // => 'STOP GROUP_REPLICATION'
  */
-final class StopGroupReplication implements Statement
+final class StopGroupReplication extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Checks that the release has group replication.
@@ -41,5 +40,14 @@ final class StopGroupReplication implements Statement
     public function render(Output $out): void
     {
         $out->keyword('STOP', 'GROUP_REPLICATION');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 }

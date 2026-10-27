@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,18 +23,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the schema and the target of a vacuum
  *     $vacuum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VACUUM main INTO 'backup.db'");
- *     [$vacuum->statement->schema?->value, $vacuum->statement->into !== null] // => ['main', true]
+ *     [$vacuum->schema?->value, $vacuum->into !== null] // => ['main', true]
  */
-final class Vacuum implements Statement
+final class Vacuum extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $schema The schema to rebuild; null is the main schema
      * @param Scalar|null $into The expression that names the file to write the rebuilt database to
      */
-    public function __construct(public readonly ?Name $schema = null, public readonly ?Scalar $into = null)
+    public function __construct(public readonly ?Name $schema = null, public readonly ?Scalar $into = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

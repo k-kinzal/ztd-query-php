@@ -28,9 +28,9 @@ final class ValueSourcesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t(id INT)')->declarations();
         $operation = $semantics->analyze('INSERT INTO t VALUES ROW(1) ORDER BY FOUND_ROWS(), CAST(1 AS CHAR CHARACTER SET utf8)', $tables);
-        self::assertCount(1, $operation->facts->warnings);
-        self::assertInstanceOf(M\Notice\Deprecation::class, $operation->facts->warnings[0]);
-        self::assertSame(M\Notice\Deprecated::Utf8Alias, $operation->facts->warnings[0]->construct);
+        self::assertCount(1, $operation->warnings());
+        self::assertInstanceOf(M\Notice\Deprecation::class, $operation->warnings()[0]);
+        self::assertSame(M\Notice\Deprecated::Utf8Alias, $operation->warnings()[0]->construct);
     }
 
 

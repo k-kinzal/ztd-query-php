@@ -21,7 +21,7 @@ final class PrimaryKeyRuleTest extends TestCase
 {
     public function testKeyMakesAnIntegerPrimaryKeyColumnTheRowid(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, id INTEGER PRIMARY KEY)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, id INTEGER PRIMARY KEY)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = (new PrimaryKeyRule())->key($statement, (new TableDeclaration())->domains($statement), Comparison::AsciiInsensitive);
@@ -32,7 +32,7 @@ final class PrimaryKeyRuleTest extends TestCase
 
     public function testKeyDoesNotMakeADescendingColumnConstraintTheRowid(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY DESC)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY DESC)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = (new PrimaryKeyRule())->key($statement, (new TableDeclaration())->domains($statement), Comparison::AsciiInsensitive);
@@ -42,7 +42,7 @@ final class PrimaryKeyRuleTest extends TestCase
 
     public function testKeyDoesNotMakeAnotherTypeTheRowid(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id INT PRIMARY KEY, b BIGINT)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id INT PRIMARY KEY, b BIGINT)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertNull((new PrimaryKeyRule())->key($statement, (new TableDeclaration())->domains($statement), Comparison::AsciiInsensitive)->rowid);
@@ -50,7 +50,7 @@ final class PrimaryKeyRuleTest extends TestCase
 
     public function testKeyCountsEveryPrimaryKeyConstraintAndUsesTheFirst(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY, b, PRIMARY KEY (b))')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY, b, PRIMARY KEY (b))');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = (new PrimaryKeyRule())->key($statement, (new TableDeclaration())->domains($statement), Comparison::AsciiInsensitive);
@@ -60,7 +60,7 @@ final class PrimaryKeyRuleTest extends TestCase
 
     public function testKeyIsEmptyWithoutAPrimaryKey(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = (new PrimaryKeyRule())->key($statement, (new TableDeclaration())->domains($statement), Comparison::AsciiInsensitive);
@@ -71,7 +71,7 @@ final class PrimaryKeyRuleTest extends TestCase
 
     public function testTableKeyMakesASingleIntegerColumnTheRowidWhateverItsSortOrder(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, id INTEGER, PRIMARY KEY (ID DESC AUTOINCREMENT))')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, id INTEGER, PRIMARY KEY (ID DESC AUTOINCREMENT))');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $constraint = $statement->constraints[0]->items[0];
@@ -84,7 +84,7 @@ final class PrimaryKeyRuleTest extends TestCase
 
     public function testTableKeyListsTheColumnsOfACompositeKeyInKeyOrder(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a INTEGER, b, c, PRIMARY KEY (c, 'a', (b) COLLATE nocase, zz, a + 1))")->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a INTEGER, b, c, PRIMARY KEY (c, 'a', (b) COLLATE nocase, zz, a + 1))");
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $constraint = $statement->constraints[0]->items[0];

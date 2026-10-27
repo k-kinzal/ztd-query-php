@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Generator\MySql\Statement\Account;
+
+use Eris\Generator as ErisGenerator;
+use Eris\Generators;
+use Tests\Generator\Composition;
+
+/**
+ * Composes SetDefaultRole values and preserves their operand generators when shrinking.
+ *
+ * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole>
+ */
+final class SetDefaultRoleGenerator implements ErisGenerator
+{
+    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole> */
+    use Composition;
+
+    /**
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection> $roles Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName>> $users Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     */
+    public function __construct(ErisGenerator $roles, ErisGenerator $users, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    {
+        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole {
+            return new \SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole(roles: $parts[0], users: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
+        }, \Tests\Generator\Operands::tuple(
+            $roles,
+            $users,
+            $statementInformation ?? Generators::constant(null),
+            $inputSource ?? Generators::constant(null)
+        ));
+    }
+    /**
+     * Composes the statement's SQL forms from typed operand generators.
+     *
+     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole>>
+     */
+    public static function forms(): iterable
+    {
+        yield 'SetDefaultRole/385' => new SetDefaultRoleGenerator(
+            roles: new User\RoleSelectionGenerator(
+                set: User\RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::Named]),
+                roles: \Tests\Generator\Operands::tuple(
+                    \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
+                        user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
+                            quote: Generators::constant(null)
+                        ),
+                        host: Generators::constant(null)
+                    )
+                )
+            ),
+            users: \Tests\Generator\Operands::tuple(
+                \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
+                    user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
+                        quote: Generators::constant(null)
+                    ),
+                    host: Generators::constant(null)
+                )
+            )
+        );
+    }
+
+}

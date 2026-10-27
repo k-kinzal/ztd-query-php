@@ -14,11 +14,11 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW COLLATION and SHOW CHARACTER SET: the collations and character sets of the server, in name order.
@@ -51,8 +51,8 @@ final class ShowCollationCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowCollation || $statement instanceof ShowCharacterSet);
         $release = $session->settings()->release();
         $legacy = $session->settings()->legacy();

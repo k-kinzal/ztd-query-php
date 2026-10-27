@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -29,7 +28,7 @@ final class DistinctOrdering
      * @param array<int, \SqlSemantics\Resolution\VisibleRelation> $relations
      * @param list<Operand> $aggregates The aggregate occurrences owned by this block
      */
-    public function check(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates): NonGroupedColumn|AggregateInOrdering|null
+    public function check(Select $select, array $relations, Derivation $derivation, array $aggregates): NonGroupedColumn|AggregateInOrdering|null
     {
         if ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return null;
@@ -44,21 +43,21 @@ final class DistinctOrdering
             }
             $expressions[] = $item->expression;
             if ($matching->unwrap($item->expression) instanceof ColumnUse) {
-                foreach ($reads->columns($item->expression, $relations, $facts, true) as [$key]) {
+                foreach ($reads->columns($item->expression, $relations, true) as [$key]) {
                     $selected[$key] = true;
                 }
             }
         }
-        if ($this->redundant($select, $expressions, $facts)) {
+        if ($this->redundant($select, $expressions)) {
             return null;
         }
         $owned = array_fill_keys(array_map(spl_object_id(...), $aggregates), true);
         foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $position => $item) {
-            $expression = $matching->target($item->expression, $facts);
-            if ($matching->listed($expression, $expressions, $facts)) {
+            $expression = $matching->target($item->expression);
+            if ($matching->listed($expression, $expressions)) {
                 continue;
             }
-            $missing = $this->missing($expression, $relations, $facts, $selected, $owned);
+            $missing = $this->missing($expression, $relations, $selected, $owned);
             if ($missing instanceof ResolvedColumn) {
                 return new NonGroupedColumn(GroupingRule::NotSelected, true, $position + 1, (new GroupedColumns())->name($missing, $relations, $derivation), release: $derivation->context->profile->grammar);
             }
@@ -72,14 +71,14 @@ final class DistinctOrdering
     /**
      * @param list<Operand> $expressions
      */
-    public function redundant(Select $select, array $expressions, Facts $facts): bool
+    public function redundant(Select $select, array $expressions): bool
     {
         if ($select->groupBy === null || $select->groupBy->modifier !== null) {
             return false;
         }
         $matching = new Matching();
         foreach ($select->groupBy->items as $item) {
-            if (!$matching->listed($matching->target($item->expression, $facts), $expressions, $facts)) {
+            if (!$matching->listed($matching->target($item->expression), $expressions)) {
                 return false;
             }
         }
@@ -93,7 +92,7 @@ final class DistinctOrdering
      * @param array<string, true> $selected
      * @param array<int, true> $owned
      */
-    public function missing(Operand $expression, array $relations, Facts $facts, array $selected, array $owned): ResolvedColumn|Operand|null
+    public function missing(Operand $expression, array $relations, array $selected, array $owned): ResolvedColumn|Operand|null
     {
         $pending = [$expression];
         while ($pending !== []) {
@@ -108,8 +107,8 @@ final class DistinctOrdering
             if ($value instanceof Operand && isset($owned[spl_object_id($value)])) {
                 return $value;
             }
-            if ($value instanceof ColumnUse && $facts->covers($value)) {
-                $resolution = $facts->scalar($value)->resolution;
+            if ($value instanceof ColumnUse && $value->hasBinding()) {
+                $resolution = $value->scalarInformation()->resolution;
                 if ($resolution instanceof AliasTarget) {
                     continue;
                 }

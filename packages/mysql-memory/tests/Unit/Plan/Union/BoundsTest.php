@@ -44,7 +44,7 @@ final class BoundsTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.6.51'))->connect();
         $operation = $session->analyze('SELECT 1');
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
         $rules = new \MySqlMemory\Plan\Union\Bounds($planner);
         $leaf = new \MySqlMemory\Plan\Path\Source\SingleRow();
         $union = new \MySqlMemory\Plan\Path\Combine\SetOperation(\MySqlMemory\Plan\Path\SetKind::Union, false, $leaf, $leaf, []);
@@ -58,7 +58,7 @@ final class BoundsTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.6.51'))->connect();
         $operation = $session->analyze('SELECT 1');
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
         $rules = new \MySqlMemory\Plan\Union\Bounds($planner);
         $leaf = new \MySqlMemory\Plan\Path\Source\SingleRow();
         $distinct = new \MySqlMemory\Plan\Path\Combine\SetOperation(\MySqlMemory\Plan\Path\SetKind::Union, true, $leaf, $leaf, []);
@@ -74,7 +74,7 @@ final class BoundsTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.6.51'))->connect();
         $operation = $session->analyze('SELECT 1');
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
         $rules = new \MySqlMemory\Plan\Union\Bounds($planner);
         $leaf = new \MySqlMemory\Plan\Path\Source\SingleRow();
         $union = new \MySqlMemory\Plan\Path\Combine\SetOperation(\MySqlMemory\Plan\Path\SetKind::Union, true, $leaf, $leaf, []);

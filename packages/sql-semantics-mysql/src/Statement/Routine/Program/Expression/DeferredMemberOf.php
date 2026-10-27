@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -32,15 +31,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredMemberOf implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $operand The searched value
      * @param Scalar|RowOperand|DeferredOperand $array The JSON array
      * @param \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $of Whether OF is written
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $array, public readonly \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $of = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $array, public readonly \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $of = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input(!$operand instanceof Scalar || !$array instanceof Scalar, 'A deferred MEMBER OF contains a non-scalar operand.');
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The MEMBER OF operand requires grouping.');

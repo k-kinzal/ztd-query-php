@@ -19,7 +19,7 @@ final class ResetBinaryLogsTest extends TestCase
     {
         $reset = (new Semantics(Dialect::MySql))->analyze('RESET BINARY LOGS AND GTIDS TO 2000000000');
 
-        self::assertSame([], $reset->facts->diagnostics);
+        self::assertSame([], $reset->diagnostics());
     }
 
     public function testRenderKeepsMasterBeforeTheCurrentSpellingExists(): void

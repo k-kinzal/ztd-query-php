@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
@@ -34,7 +33,7 @@ final class MergeDependencies
      *
      * @param list<object> $parts The selected expressions
      */
-    public function separate(array $parts, GrammarRelease $release, ?Facts $facts = null): bool
+    public function separate(array $parts, GrammarRelease $release): bool
     {
         $pending = $parts;
         while ($pending !== []) {
@@ -44,10 +43,10 @@ final class MergeDependencies
                 $part = $replacement ?? $part->query;
             }
             if (($part instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $part instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison)
-                && (new ScalarReduction())->expression($part->query) === null && ($facts === null || (new SubqueryRows())->stored($part, $release) !== null || $this->external($part->operand, $facts))) {
+                && (new ScalarReduction())->expression($part->query) === null && (!$part->hasBinding() || (new SubqueryRows())->stored($part, $release) !== null || $this->external($part->operand))) {
                 return true;
             }
-            if ($part instanceof VariableAssignment || ($part instanceof Query && ($facts === null || $this->external($part, $facts) || $this->changing($part, $release)))) {
+            if ($part instanceof VariableAssignment || ($part instanceof Query && (!$part->hasBinding() || $this->external($part) || $this->changing($part, $release)))) {
                 return true;
             }
             if (is_object($part) && !$part instanceof Query) {
@@ -87,10 +86,10 @@ final class MergeDependencies
      * Query-expression wrappers do not introduce a name-resolution level. A non-lateral
      * derived table skips its containing FROM block, as its environment does.
      */
-    public function external(Node $node, Facts $facts, int $level = 0): bool
+    public function external(Node $node, int $level = 0): bool
     {
         if ($node instanceof ColumnUse) {
-            $resolution = $facts->covers($node) ? $facts->scalar($node)->resolution : null;
+            $resolution = $node->hasBinding() ? $node->scalarInformation()->resolution : null;
 
             return ($resolution instanceof ResolvedColumn || $resolution instanceof AliasTarget) && $resolution->depth >= $level;
         }
@@ -106,7 +105,7 @@ final class MergeDependencies
             }
         });
         foreach ($children as $child) {
-            if ($this->external($child, $facts, $level)) {
+            if ($this->external($child, $level)) {
                 return true;
             }
         }

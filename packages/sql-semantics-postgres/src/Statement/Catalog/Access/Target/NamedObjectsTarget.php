@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Objects with unqualified names as the objects of a GRANT or REVOKE: databases, schemas, tablespaces, languages, foreign-data wrappers or foreign servers.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the schemas of a grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT USAGE ON SCHEMA app, audit TO joe');
- *     $operation->statement->target->names[1]->value // => 'audit'
+ *     $operation->target->names[1]->value // => 'audit'
  */
 final class NamedObjectsTarget implements PrivilegeTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The kinds whose objects have unqualified names.
@@ -41,7 +40,7 @@ final class NamedObjectsTarget implements PrivilegeTarget
      * @param PrivilegeObjectKind $object The kind, one whose objects have unqualified names
      * @param list<Name> $names The names in the order written, at least one
      */
-    public function __construct(public readonly PrivilegeObjectKind $object, array $names)
+    public function __construct(public readonly PrivilegeObjectKind $object, array $names, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(in_array($object, self::KINDS, true), 'The kind has objects with unqualified names.');
         $this->names = Check::listOf($names, Name::class, 'A grant names at least one object.', 1);

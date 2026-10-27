@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `behavior ON EMPTY` and `behavior ON ERROR` of an SQL/JSON function or JSON_TABLE column.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonBehaviorClause implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonBehavior|null $onEmpty The behavior when the path finds nothing
      * @param JsonBehavior|null $onError The behavior when an error occurs
      */
-    public function __construct(public readonly ?JsonBehavior $onEmpty, public readonly ?JsonBehavior $onError)
+    public function __construct(public readonly ?JsonBehavior $onEmpty, public readonly ?JsonBehavior $onError, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($onEmpty !== null || $onError !== null, 'A behavior clause has at least one behavior.');
     }

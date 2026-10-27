@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping a path condition with its owning call
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE(NULL, 'bad')")->facts->diagnostics[0]->message() // => 'Invalid JSON path expression. The error is around character position 1.'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE(NULL, 'bad')")->diagnostics()[0]->message() // => 'Invalid JSON path expression. The error is around character position 1.'
  */
 final class InvalidJsonPath implements Diagnostic
 {

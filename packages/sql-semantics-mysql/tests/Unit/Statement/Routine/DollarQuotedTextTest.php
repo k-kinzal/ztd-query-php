@@ -24,7 +24,7 @@ final class DollarQuotedTextTest extends TestCase
     public function testRenderKeepsTheTextBetweenTheDelimiters(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(ExternalBody::class, $statement->body);
 

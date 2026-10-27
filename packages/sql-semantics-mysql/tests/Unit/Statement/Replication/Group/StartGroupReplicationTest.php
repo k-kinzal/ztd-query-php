@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(StartGroupReplication::class)]
 #[Medium]
@@ -19,7 +18,7 @@ final class StartGroupReplicationTest extends TestCase
     public function testDeriveStatementAcceptsExplicitCredentials(): void
     {
         $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'");
-        self::assertSame([], $start->facts->diagnostics);
+        self::assertSame([], $start->diagnostics());
     }
 
     public function testRenderRequiresConsistentCredentials(): void
@@ -32,7 +31,7 @@ final class StartGroupReplicationTest extends TestCase
     {
         $this->expectExceptionMessage('Group replication needs MySQL 5.7 or later.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new StartGroupReplication());
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new StartGroupReplication(), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheBareStatement(): void

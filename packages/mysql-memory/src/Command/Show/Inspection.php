@@ -159,7 +159,7 @@ final class Inspection
         $schema = $this->database($database ?? $table->name->schema, $session);
         $stored = $session->temporaries->table($schema->name, $name) ?? $schema->table($name);
         if ($stored === null && isset($schema->views[$name])) {
-            return \MySqlMemory\Plan\Views::stored($schema->views[$name], $session->instance->dictionary);
+            return \MySqlMemory\Plan\Views::stored(\MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($schema->views[$name]), $session->instance->dictionary);
         }
         if ($stored === null) {
             throw QueryError::NoSuchTable->error($schema->name, $name);

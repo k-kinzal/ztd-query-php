@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Command\ConvertCharset;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\SetTableOptions;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(TableChange::class)]
 #[Small]
@@ -61,7 +60,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT, c INT, KEY kb (b))');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ADD COLUMN b VARCHAR(3), DROP COLUMN b, ADD x INT FIRST')->statement;
+        $alter = $session->analyze('ALTER TABLE t ADD COLUMN b VARCHAR(3), DROP COLUMN b, ADD x INT FIRST');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $layout = TableLayout::of($table->definition);
@@ -70,7 +69,7 @@ final class TableChangeTest extends TestCase
         $change->apply($alter->commands);
 
         self::assertSame([['x', null], ['a', 0], ['c', 2], ['b', null]], array_map(static fn (array $column): array => [$column[0]->name->column->value, $column[1]], $layout->columns));
-        self::assertStringContainsString('INDEX kb (b)', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertStringContainsString('INDEX kb (b)', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
         self::assertTrue($change->changes);
     }
 
@@ -79,7 +78,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ADD INDEX kq (a), DROP INDEX kq')->statement;
+        $alter = $session->analyze('ALTER TABLE t ADD INDEX kq (a), DROP INDEX kq');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
 
@@ -117,7 +116,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ALGORITHM = COPY, LOCK = SHARED, RENAME TO u')->statement;
+        $alter = $session->analyze('ALTER TABLE t ALGORITHM = COPY, LOCK = SHARED, RENAME TO u');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $change = new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847);
@@ -145,7 +144,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t DROP CHECK nope')->statement;
+        $alter = $session->analyze('ALTER TABLE t DROP CHECK nope');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         self::assertInstanceOf(DropElement::class, $alter->commands[0]);
@@ -162,7 +161,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t RENAME INDEX nope TO q')->statement;
+        $alter = $session->analyze('ALTER TABLE t RENAME INDEX nope TO q');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         self::assertInstanceOf(RenameElement::class, $alter->commands[0]);
@@ -189,7 +188,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze("ALTER TABLE t CHARACTER SET latin1 COMMENT = 'x'")->statement;
+        $alter = $session->analyze("ALTER TABLE t CHARACTER SET latin1 COMMENT = 'x'");
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -198,7 +197,7 @@ final class TableChangeTest extends TestCase
 
         (new TableChange($layout, 't', 'd', GrammarRelease::MySql847))->options($command->options);
 
-        self::assertStringEndsWith("CHARSET latin1 COMMENT 'x'", (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertStringEndsWith("CHARSET latin1 COMMENT 'x'", ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testKindAnswersTheKindOfAnOption(): void
@@ -206,7 +205,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t AUTO_INCREMENT = 5')->statement;
+        $alter = $session->analyze('ALTER TABLE t AUTO_INCREMENT = 5');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -220,7 +219,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a VARCHAR(5), b INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t CONVERT TO CHARACTER SET latin1')->statement;
+        $alter = $session->analyze('ALTER TABLE t CONVERT TO CHARACTER SET latin1');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -230,7 +229,7 @@ final class TableChangeTest extends TestCase
 
         $change->convert($command);
 
-        self::assertSame('CREATE TABLE d.t (a VARCHAR(5) COLLATE latin1_swedish_ci, b INT) COLLATE latin1_swedish_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertSame('CREATE TABLE d.t (a VARCHAR(5) COLLATE latin1_swedish_ci, b INT) COLLATE latin1_swedish_ci', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
         self::assertFalse($change->copies);
     }
 
@@ -251,7 +250,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ALTER INDEX `PRIMARY` INVISIBLE')->statement;
+        $alter = $session->analyze('ALTER TABLE t ALTER INDEX `PRIMARY` INVISIBLE');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
 
@@ -267,7 +266,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t RENAME TO u')->statement;
+        $alter = $session->analyze('ALTER TABLE t RENAME TO u');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $change = new TableChange(TableLayout::of($table->definition), 't', 'e', GrammarRelease::MySql847);
@@ -282,7 +281,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ORDER BY a')->statement;
+        $alter = $session->analyze('ALTER TABLE t ORDER BY a');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $change = new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847);
@@ -297,7 +296,7 @@ final class TableChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t SECONDARY_LOAD')->statement;
+        $alter = $session->analyze('ALTER TABLE t SECONDARY_LOAD');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
 

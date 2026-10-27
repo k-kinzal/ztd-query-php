@@ -77,7 +77,7 @@ final class SelectionsTest extends TestCase
         $session->text = 'unrelated invalid input';
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3943);
-        (new \MySqlMemory\Program\Expression\QueryUse())->plan(new \MySqlMemory\Session\Resolution\QueryPreparation($query, $derivation->facts(), $context->profile), $session);
+        (new \MySqlMemory\Program\Expression\QueryUse())->plan(new \MySqlMemory\Session\Resolution\QueryPreparation($query, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $context->profile), $session);
     }
 
     public function testBoundRejectsQualifyBeforeProjectionWidthWithoutReadingInputText(): void

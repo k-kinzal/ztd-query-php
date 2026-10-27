@@ -9,7 +9,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
@@ -32,14 +32,14 @@ final class OpenedTables
      *
      * @param list<Node> $nodes The nodes the server prepares
      */
-    public function prepare(array $nodes, Facts $facts, Session $session): void
+    public function prepare(array $nodes, StatementSemantics $facts, Session $session): void
     {
         $writing = array_filter($nodes, static fn (Node $node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete) !== [];
         foreach ($nodes as $node) {
-            if (!($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) || !$facts->covers($node)) {
+            if (!($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) || !$node->hasBinding()) {
                 continue;
             }
-            $resolution = $facts->relation($node)->table;
+            $resolution = $node->relationInformation()->table;
             if ($resolution instanceof DeclaredTable) {
                 $name = $resolution->table->name;
                 $this->open($name->schema->value ?? $session->variables->database, $name->name->value, $session, $node instanceof WriteTarget || $writing);
@@ -58,7 +58,7 @@ final class OpenedTables
         if ($syntax !== null) {
             throw $syntax;
         }
-        $table = $dictionary->table($schema, $name);
+        $table = $dictionary->table($schema, $name, $session->temporaries);
         if ($table !== null && in_array($session->transaction->xa, [\MySqlMemory\Session\XaState::Idle, \MySqlMemory\Session\XaState::Prepared], true)) {
             throw \MySqlMemory\Error\Family\StatementError::XaWrongState->error($session->transaction->xa->value);
         }

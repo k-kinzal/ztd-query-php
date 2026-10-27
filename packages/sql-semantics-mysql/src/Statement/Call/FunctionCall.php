@@ -18,7 +18,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call written as `name(...)` or `db.name(...)`: a native function reached by name, a loadable function or a stored function.
@@ -53,7 +52,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FunctionCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CallArgument> The arguments in order
@@ -65,8 +65,11 @@ final class FunctionCall implements Scalar
      * @param list<CallArgument> $arguments The arguments in order
      * @param Name|null $schema The database of a qualified call
      */
-    public function __construct(public readonly Name $name, array $arguments = [], public readonly ?Name $schema = null)
+    public function __construct(public readonly Name $name, array $arguments = [], public readonly ?Name $schema = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check(new \SqlSemantics\Statement\Identifier\QualifiedName($name, $schema));
         $this->arguments = Check::listOf($arguments, CallArgument::class, 'Function arguments are call arguments.');
         Check::input($schema === null || !$this->named(), 'Only an unqualified call takes argument aliases.');

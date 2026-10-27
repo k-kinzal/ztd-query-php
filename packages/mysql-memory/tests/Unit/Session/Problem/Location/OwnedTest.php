@@ -21,10 +21,11 @@ final class OwnedTest extends TestCase
     public function testLocatedJsonPathFollowsItsDocumentButPrecedesTheNextExpression(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT JSON_VALUE(CAST(missing_function() AS SIGNED), ''), JSON_VALUE(0, '$')");
-        $locator = (new Locator())->statement($operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $locator = (new Locator())->statement($operation);
         $calls = (new \MySqlMemory\Session\Problems())->calls($operation);
-        [$names] = (new Locations())->names($operation, $locator, $calls, $operation->facts->diagnostics);
-        $located = (new Owned())->located($locator, $operation->facts->diagnostics, $names);
+        [$names] = (new Locations())->names($operation, $locator, $calls, $operation->statementInformation()->diagnostics);
+        $located = (new Owned())->located($locator, $operation->statementInformation()->diagnostics, $names);
 
         self::assertCount(3, $located);
         $first = Locations::first($located);
@@ -40,10 +41,12 @@ final class OwnedTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
         $operation = $semantics->analyze("SELECT CAST(a AT TIME ZONE '+00:00' AS DATETIME), missing FROM t", [$table]);
-        $locator = (new Locator())->statement($operation->statement);
-        [$names] = (new Locations())->names($operation, $locator, [], $operation->facts->diagnostics);
-        $located = (new Owned())->located($locator, $operation->facts->diagnostics, $names);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $locator = (new Locator())->statement($operation);
+        [$names] = (new Locations())->names($operation, $locator, [], $operation->statementInformation()->diagnostics);
+        $located = (new Owned())->located($locator, $operation->statementInformation()->diagnostics, $names);
         $first = Locations::first($located);
 
         self::assertNotNull($first);
@@ -56,9 +59,9 @@ final class OwnedTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
         $operation = $session->analyze('EXPLAIN UPDATE t SET missing=1 WHERE NULL ORDER BY TRUE');
-        $locator = (new Locator(release: \SqlSemantics\Contract\GrammarRelease::MySql5744))->statement($operation->statement);
-        [$names] = (new Locations())->names($operation, $locator, [], $operation->facts->diagnostics);
-        $first = Locations::first((new Owned())->located($locator, $operation->facts->diagnostics, $names));
+        $locator = (new Locator(release: \SqlSemantics\Contract\GrammarRelease::MySql5744))->statement($operation);
+        [$names] = (new Locations())->names($operation, $locator, [], $operation->statementInformation()->diagnostics);
+        $first = Locations::first((new Owned())->located($locator, $operation->statementInformation()->diagnostics, $names));
         self::assertNotNull($first);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Read\OrderingPosition::class, $first[0]);
         self::assertSame('order clause', $first[1][0]);

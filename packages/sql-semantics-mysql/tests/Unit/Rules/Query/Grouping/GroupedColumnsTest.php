@@ -60,7 +60,7 @@ final class GroupedColumnsTest extends TestCase
             $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'),
             $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, flag TINYINT, UNIQUE KEY uk (name))'),
         ];
-        $diagnostics = $semantics->analyze($sql, $semantics->context($tables, true, new SearchPath('fz')))->facts->diagnostics;
+        $diagnostics = $semantics->analyze($sql, $semantics->context($tables, true, new SearchPath('fz')))->diagnostics();
 
         self::assertCount(1, $diagnostics);
         self::assertInstanceOf(NonGroupedColumn::class, $diagnostics[0]);
@@ -105,14 +105,14 @@ final class GroupedColumnsTest extends TestCase
             $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, flag TINYINT, UNIQUE KEY uk (name))'),
         ];
 
-        self::assertSame([], $semantics->analyze($sql, $semantics->context($tables, true, new SearchPath('fz')))->facts->diagnostics);
+        self::assertSame([], $semantics->analyze($sql, $semantics->context($tables, true, new SearchPath('fz')))->diagnostics());
     }
 
     public function testItemsNumbersTheFieldsAStarSelects(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))');
-        $diagnostics = $semantics->analyze('SELECT a, t1.*, b FROM t1 GROUP BY id, a WITH ROLLUP', $semantics->context([$table], true, new SearchPath('fz')))->facts->diagnostics;
+        $diagnostics = $semantics->analyze('SELECT a, t1.*, b FROM t1 GROUP BY id, a WITH ROLLUP', $semantics->context([$table], true, new SearchPath('fz')))->diagnostics();
 
         self::assertInstanceOf(NonGroupedColumn::class, $diagnostics[0]);
         self::assertSame(4, $diagnostics[0]->position);
@@ -123,7 +123,7 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
 
-        self::assertCount(1, $semantics->analyze('SELECT a AS x, b AS x FROM t GROUP BY x', [$table])->facts->diagnostics);
+        self::assertCount(1, $semantics->analyze('SELECT a AS x, b AS x FROM t GROUP BY x', [$table])->diagnostics());
     }
 
     public function testGroupedReportsTheFirstOrderKeyTheGroupingDoesNotDetermine(): void
@@ -131,14 +131,14 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a FROM t1 GROUP BY a ORDER BY a, b', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
+        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $select->from->relationInformation()->shape, null, $select->from->name)];
 
-        $problem = (new GroupedColumns())->grouped($select, $operation->facts->query($select)->projection, $relations, $operation->facts, new Derivation($context));
+        $problem = (new GroupedColumns())->grouped($select, $select->queryInformation()->projection, $relations, new Derivation($context));
 
         self::assertNotNull($problem);
         self::assertSame([GroupingRule::NotDetermined, true, 2, 'fz.t1.b'], [$problem->rule, $problem->ordering, $problem->position, $problem->column]);
@@ -149,14 +149,14 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a, b FROM t1 GROUP BY id ORDER BY b', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
+        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $select->from->relationInformation()->shape)];
 
-        self::assertNull((new GroupedColumns())->grouped($select, $operation->facts->query($select)->projection, $relations, $operation->facts, new Derivation($context)));
+        self::assertNull((new GroupedColumns())->grouped($select, $select->queryInformation()->projection, $relations, new Derivation($context)));
     }
 
     public function testDistinctReportsAnOrderColumnNoSelectItemIs(): void
@@ -164,14 +164,14 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT DISTINCT a, a + 1 AS c FROM t1 ORDER BY a, a + 1, b', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
+        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $select->from->relationInformation()->shape, null, $select->from->name)];
 
-        $problem = (new GroupedColumns())->distinct($select, $relations, $operation->facts, new Derivation($context));
+        $problem = (new GroupedColumns())->distinct($select, $relations, new Derivation($context));
 
         self::assertInstanceOf(NonGroupedColumn::class, $problem);
         self::assertSame([GroupingRule::NotSelected, true, 3, 'fz.t1.b'], [$problem->rule, $problem->ordering, $problem->position, $problem->column]);
@@ -182,14 +182,14 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT DISTINCT * FROM t1 ORDER BY b', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
+        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $select->from->relationInformation()->shape)];
 
-        self::assertNull((new GroupedColumns())->distinct($select, $relations, $operation->facts, new Derivation($context)));
+        self::assertNull((new GroupedColumns())->distinct($select, $relations, new Derivation($context)));
     }
 
     public function testHavingChecksCorrelatedInputsAfterResolution(): void
@@ -197,18 +197,18 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, '9.1.0');
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT)')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT COUNT(*) FROM t1 HAVING (SELECT t1.a)>0', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
-        $problem = (new GroupedColumns())->having($select, $relations, $operation->facts, null, new Derivation($context));
+        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $select->from->relationInformation()->shape, null, $select->from->name)];
+        $problem = (new GroupedColumns())->having($select, $relations, null, new Derivation($context));
 
         self::assertNotNull($problem);
         self::assertSame([GroupingRule::WithoutGroupBy, true, 'fz.t1.a'], [$problem->rule, $problem->having, $problem->column]);
-        self::assertEquals([$problem], $operation->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('SELECT id FROM t1 GROUP BY id HAVING (SELECT t1.a)>0', $context)->facts->diagnostics);
+        self::assertEquals([$problem], $operation->diagnostics());
+        self::assertSame([], $semantics->analyze('SELECT id FROM t1 GROUP BY id HAVING (SELECT t1.a)>0', $context)->diagnostics());
     }
 
     public function testNameWritesTheDatabaseTheTableAndTheColumn(): void
@@ -216,15 +216,15 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT a FROM t1', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableReference::class, $select->from);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        $column = $operation->facts->scalar($select->items[0]->expression)->resolution;
+        $column = $select->items[0]->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $column);
-        $shape = $operation->facts->relation($select->from)->shape;
+        $shape = $select->from->relationInformation()->shape;
         $columns = new GroupedColumns();
 
         self::assertSame('fz.t1.a', $columns->name($column, [spl_object_id($select->from) => new VisibleRelation($select->from, $shape, null, $select->from->name)], new Derivation($context)));
@@ -238,16 +238,16 @@ final class GroupedColumnsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $grouped = static function (string $sql) use ($semantics, $table): array {
             $query = $semantics->analyze($sql, [$table]);
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query->statement);
-            self::assertInstanceOf(Select::class, $query->statement->query);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+            self::assertInstanceOf(Select::class, $query->query);
 
-            return [$query->statement->query, $query->facts];
+            return [$query->query, $query->statementInformation()];
         };
         [$window, $windowFacts] = $grouped('SELECT a, RANK() OVER () AS r FROM t GROUP BY r');
         [$plain, $plainFacts] = $grouped('SELECT a FROM t GROUP BY a');
 
-        self::assertTrue((new GroupedColumns())->computed($window, $windowFacts));
-        self::assertFalse((new GroupedColumns())->computed($plain, $plainFacts));
+        self::assertTrue((new GroupedColumns())->computed($window));
+        self::assertFalse((new GroupedColumns())->computed($plain));
         self::assertSame([], $windowFacts->diagnostics);
     }
 
@@ -269,7 +269,7 @@ final class GroupedColumnsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $version);
         $operation = $semantics->analyze('SELECT DISTINCT SUM(n) total FROM t ORDER BY ' . $ordering, [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        $problem = $operation->facts->diagnostics[0] ?? null;
+        $problem = $operation->diagnostics()[0] ?? null;
 
         self::assertSame($invalid, $problem instanceof NonGroupedColumn);
         self::assertSame($invalid ? GroupingRule::WithoutGroupBy : null, $problem instanceof NonGroupedColumn ? $problem->rule : null);

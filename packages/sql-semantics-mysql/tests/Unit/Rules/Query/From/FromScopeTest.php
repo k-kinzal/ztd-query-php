@@ -43,7 +43,7 @@ final class FromScopeTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('SELECT (SELECT x FROM (SELECT t.a AS x) d) FROM t', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $operation->diagnostics()[0]);
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
@@ -54,9 +54,9 @@ final class FromScopeTest extends TestCase
         $procedure = $semantics->analyze('CREATE PROCEDURE p(IN x INT) BEGIN DECLARE y INT DEFAULT 3; SELECT * FROM (SELECT x,y) d; END');
         $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET NEW.a=(SELECT v FROM (SELECT NEW.a+OLD.a AS v) d)', [$table]);
 
-        self::assertSame([], $procedure->facts->diagnostics);
-        self::assertSame([], $trigger->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $semantics->analyze('CREATE TRIGGER bad BEFORE DELETE ON t FOR EACH ROW SET @v=(SELECT x FROM (SELECT NEW.a AS x) d)', [$table])->facts->diagnostics[0]);
+        self::assertSame([], $procedure->diagnostics());
+        self::assertSame([], $trigger->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $semantics->analyze('CREATE TRIGGER bad BEFORE DELETE ON t FOR EACH ROW SET @v=(SELECT x FROM (SELECT NEW.a AS x) d)', [$table])->diagnostics()[0]);
     }
 
     public function testDerivedRetainsModernOuterQueryScopes(): void
@@ -66,7 +66,7 @@ final class FromScopeTest extends TestCase
         $environment = new \SqlSemantics\Resolution\Environment($semantics->context());
 
         self::assertSame($environment, (new FromScope())->derived($environment));
-        self::assertSame([], $semantics->analyze('SELECT (SELECT x FROM (SELECT t.a AS x) d) FROM t', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SELECT (SELECT x FROM (SELECT t.a AS x) d) FROM t', [$table])->diagnostics());
     }
 
     public function testUniqueRetainsTheLaterRelationEvenWhenIdentifierValuesAreShared(): void
@@ -98,13 +98,13 @@ final class FromScopeTest extends TestCase
         $wrong = $semantics->analyze('SELECT t.a FROM t AS x', [$t]);
 
         self::assertSame($t->columns[0], $operation->field('a')->column());
-        self::assertInstanceOf(MissingColumn::class, $wrong->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $wrong->diagnostics()[0]);
     }
 
     public function testUniqueReportsTheFirstNameTwoRelationsOfOneDatabaseTake(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $semantics->context(null, false, new SearchPath('fz')))->facts->diagnostics);
+        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $semantics->context(null, false, new SearchPath('fz')))->diagnostics());
 
         self::assertSame(["Not unique table/alias: 't2'."], $messages('SELECT 1 FROM fz.t2 JOIN t3 AS t2'));
         self::assertSame(["Not unique table/alias: 't'."], $messages('SELECT 1 FROM fz.t, t'));
@@ -132,7 +132,7 @@ final class FromScopeTest extends TestCase
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $operation = $semantics->analyze('SELECT 1 FROM t LEFT JOIN u ON u.c = 1', [$t, $u]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
 
@@ -140,6 +140,6 @@ final class FromScopeTest extends TestCase
         self::assertInstanceOf(JoinedTable::class, $select->from);
         self::assertNotNull($select->from->on);
         self::assertInstanceOf(Comparison::class, $select->from->on);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($select->from->on->left)->nullability);
+        self::assertSame(Nullability::NotNull, $select->from->on->left->scalarInformation()->nullability);
     }
 }

@@ -20,7 +20,7 @@ final class ChangeRuleTest extends TestCase
     {
         self::assertSame("CHANGE MASTER TO MASTER_HOST = 'h'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("change master to master_host = 'h'")->toString());
         self::assertSame("CHANGE MASTER TO SOURCE_HOST = 'h'", (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("change master to source_host = 'h'")->toString());
-        $change = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("change master to source_host = 'h'")->statement;
+        $change = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("change master to source_host = 'h'");
         self::assertInstanceOf(ChangeReplicationSource::class, $change);
         self::assertTrue($change->synonym);
         self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'h' FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("change replication source to source_host = 'h' for channel 'c'")->toString());

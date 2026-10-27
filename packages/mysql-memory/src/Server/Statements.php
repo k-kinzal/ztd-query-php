@@ -95,12 +95,11 @@ final class Statements
             $bindings = $operation instanceof \MySqlMemory\Command\Prepared\PendingTable ? $operation->parameters() : new \MySqlMemory\Command\Prepared\ParameterBindings([]);
             $columns = [];
             if ($operation instanceof \SqlSemantics\Statement\AnalyzedStatement) {
-                $node = $operation instanceof \SqlSemantics\Statement\Operation ? $operation->statement : $operation;
-                assert($node instanceof \SqlSemantics\Statement\Node);
+                $node = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation;
                 (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($node));
                 (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
                 $bindings = \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation);
-                if ($operation instanceof \SqlSemantics\Statement\Operation) {
+                if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement) {
                     $columns = $this->columns($operation, $session, count($bindings->types));
                 }
             }
@@ -156,16 +155,16 @@ final class Statements
      *
      * @return list<ResultColumn>
      */
-    public function columns(\SqlSemantics\Statement\Operation $operation, \MySqlMemory\Session\Session $session, int $parameters): array
+    public function columns(\SqlSemantics\Platform\MySql\Statement\Statement $operation, \MySqlMemory\Session\Session $session, int $parameters): array
     {
-        if (!$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+        if (!$operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
             return [];
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), new \MySqlMemory\Session\Diagnostics(), $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, [], $session->program, WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement->query, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation->query, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
 
-        return (new \MySqlMemory\Command\Output())->columns($planner->query($operation->statement->query, null));
+        return (new \MySqlMemory\Command\Output())->columns($planner->query($operation->query, null));
     }
 
     /**

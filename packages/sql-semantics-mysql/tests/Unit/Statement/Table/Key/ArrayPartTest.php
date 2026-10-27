@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(ArrayPart::class)]
@@ -30,12 +29,15 @@ final class ArrayPartTest extends TestCase
         $document = new ColumnUse(new Name('j'));
         $part = new ArrayPart($document, new CastTarget(CastKind::Signed));
         $index = new CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
-        $operation = new Operation($semantics->context([$table]), $index);
-        $resolution = $operation->facts->scalar($document)->resolution;
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$table]), $index, new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertInstanceOf(CreateIndex::class, $operation);
+        $bound = $operation->parts[0];
+        self::assertInstanceOf(ArrayPart::class, $bound);
+        $resolution = $bound->expression->scalarInformation()->resolution;
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->declarations()[0]->columns[0], $resolution->slot->column);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarSeparatesTheEntryDomainFromTheDocumentDomain(): void
@@ -44,9 +46,12 @@ final class ArrayPartTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(j JSON)');
         $document = new ColumnUse(new Name('j'));
         $part = new ArrayPart($document, new CastTarget(CastKind::Char, '5'));
-        $operation = new Operation($semantics->context([$table]), new CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]));
-        $entry = $operation->facts->scalar($part)->type;
-        $input = $operation->facts->scalar($document)->type;
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$table]), new CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]), new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertInstanceOf(CreateIndex::class, $operation);
+        $bound = $operation->parts[0];
+        self::assertInstanceOf(ArrayPart::class, $bound);
+        $entry = $bound->scalarInformation()->type;
+        $input = $bound->expression->scalarInformation()->type;
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $entry);
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $input);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $entry->descriptor);
@@ -61,8 +66,8 @@ final class ArrayPartTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE INDEX k ON t ((CAST(j AS SIGNED ARRAY)))');
-        self::assertInstanceOf(CreateIndex::class, $operation->statement);
-        self::assertInstanceOf(ArrayPart::class, $operation->statement->parts[0]);
+        self::assertInstanceOf(CreateIndex::class, $operation);
+        self::assertInstanceOf(ArrayPart::class, $operation->parts[0]);
         self::assertSame('CREATE INDEX k ON t ((CAST(j AS SIGNED ARRAY)))', $operation->toString());
     }
 
@@ -71,7 +76,7 @@ final class ArrayPartTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $part = new ArrayPart(new ColumnUse(new Name('j')), new CastTarget(CastKind::Decimal, '10', '2'));
         $index = new CreateIndex(new Name('k'), new QualifiedName(new Name('t')), [$part]);
-        $operation = new Operation($semantics->context(), $index);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $index, new \SqlSemantics\Statement\Source\SourceMap());
 
         self::assertSame('CREATE INDEX k ON t ((CAST(j AS DECIMAL(10, 2) ARRAY)))', $operation->toString());
     }

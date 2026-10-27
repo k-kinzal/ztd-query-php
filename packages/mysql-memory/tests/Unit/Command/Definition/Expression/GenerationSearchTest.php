@@ -19,7 +19,8 @@ final class GenerationSearchTest extends TestCase
     public function testErrorPreservesTheMissingColumnAndFollowingSearchCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT MATCH(a) AGAINST('x')", []);
-        $error = (new GenerationSearch())->error($operation->statement, $operation->facts, (new Instance('5.7.44'))->connect());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $error = (new GenerationSearch())->error($operation, $operation->statementInformation(), (new Instance('5.7.44'))->connect());
         self::assertSame(1054, $error?->getCode());
         self::assertSame([[1210, 'Incorrect arguments to AGAINST']], $error->following);
     }
@@ -28,7 +29,9 @@ final class GenerationSearchTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(a TEXT)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
         $operation = $semantics->analyze('SELECT MATCH(a) AGAINST(RAND()) FROM t', [$table]);
-        self::assertSame(1210, (new GenerationSearch())->error($operation->statement, $operation->facts, (new Instance('5.7.44'))->connect())?->getCode());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame(1210, (new GenerationSearch())->error($operation, $operation->statementInformation(), (new Instance('5.7.44'))->connect())?->getCode());
     }
 }

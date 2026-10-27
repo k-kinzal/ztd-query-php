@@ -20,8 +20,8 @@ final class AccountChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(InvalidUserAttribute::class, $semantics->analyze("ALTER USER u ATTRIBUTE '1'")->facts->diagnostics[0]);
-        self::assertSame([], $semantics->analyze("ALTER USER u ATTRIBUTE '{\"a\": 1}'")->facts->diagnostics);
+        self::assertInstanceOf(InvalidUserAttribute::class, $semantics->analyze("ALTER USER u ATTRIBUTE '1'")->diagnostics()[0]);
+        self::assertSame([], $semantics->analyze("ALTER USER u ATTRIBUTE '{\"a\": 1}'")->diagnostics());
     }
 
 }

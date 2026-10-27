@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `OPTIMIZE [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, …`: a request to reorganize the storage of tables.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the request
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('optimize table t');
- *     [$statement->toString(), !$statement->statement->noWriteToBinlog] // => ['OPTIMIZE TABLE t', true]
+ *     [$statement->toString(), !$statement->noWriteToBinlog] // => ['OPTIMIZE TABLE t', true]
  */
-final class OptimizeTable implements Statement
+final class OptimizeTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<MaintainedTable> The tables in written order; at least one
@@ -40,8 +39,11 @@ final class OptimizeTable implements Statement
      * @param bool $noWriteToBinlog Whether NO_WRITE_TO_BINLOG or its synonym LOCAL is written
      * @param list<MaintainedTable> $tables The tables in written order; at least one
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables)
+    public function __construct(public readonly bool $noWriteToBinlog, array $tables, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = (new MaintainedTables())->checked($tables);
 
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

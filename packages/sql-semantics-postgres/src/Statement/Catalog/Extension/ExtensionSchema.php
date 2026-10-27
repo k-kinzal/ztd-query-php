@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The SCHEMA option of CREATE EXTENSION: the schema the objects of the extension go into.
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ExtensionSchema implements ExtensionOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $schema The schema name
      */
-    public function __construct(public readonly Name $schema)
+    public function __construct(public readonly Name $schema, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

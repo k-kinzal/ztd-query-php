@@ -72,7 +72,7 @@ final class RangesTest extends TestCase
     public function testComparisonsAnswersTheComparisonTypeOfEachElementOfAMixedList(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $ranges = new Ranges((new Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $ranges = new Ranges((new Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
         $text = Domain::string(1, Collation::known('utf8mb4_general_ci'));
 
         self::assertSame(['double', 'string', null, 'double'], $ranges->comparisons($text, [Domain::integer(), $text, Domain::null(), Domain::decimal(1, 0)]));
@@ -81,7 +81,7 @@ final class RangesTest extends TestCase
     public function testComparisonsAnswersNoTypeWhenEveryElementComparesAsOne(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $ranges = new Ranges((new Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $ranges = new Ranges((new Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
 
         self::assertSame([], $ranges->comparisons(Domain::integer(), [Domain::integer(), Domain::null()]));
     }

@@ -60,7 +60,7 @@ final class DeleteUseTest extends TestCase
         $write->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
         $session->text = 'opaque request label';
         $this->expectExceptionCode(1241);
-        (new DeleteUse())->inputs($write, $derivation->facts(), $session);
+        (new DeleteUse())->inputs($write, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
     }
 
     public function testErrorBindsTheOriginalPredicateBeforeItsOrderingPosition(): void

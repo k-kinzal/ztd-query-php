@@ -24,6 +24,6 @@ final class CreateLogfileGroupTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a'");
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored cast around an expression whose preparation is deferred until invocation.
@@ -27,13 +26,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredBinaryCast implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $operand The retained invocation-time expression
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand)
+    public function __construct(public readonly RowOperand|DeferredOperand $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Precedence())->opening($operand) >= \SqlSemantics\Platform\MySql\Rules\Expression\Precedence::PREFIX, 'A BINARY operand requires grouping.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

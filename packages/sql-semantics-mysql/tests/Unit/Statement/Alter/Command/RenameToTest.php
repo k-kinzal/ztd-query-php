@@ -21,8 +21,8 @@ final class RenameToTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $other = $semantics->analyze('CREATE TABLE u (a INT)');
 
-        self::assertSame('Table u already exists.', $semantics->analyze('ALTER TABLE t RENAME u', [$table, $other])->facts->diagnostics[0]->message());
-        self::assertSame([], $semantics->analyze('ALTER TABLE t RENAME TO t', [$table, $other])->facts->diagnostics);
+        self::assertSame('Table u already exists.', $semantics->analyze('ALTER TABLE t RENAME u', [$table, $other])->diagnostics()[0]->message());
+        self::assertSame([], $semantics->analyze('ALTER TABLE t RENAME TO t', [$table, $other])->diagnostics());
     }
 
     public function testRenderWritesTo(): void

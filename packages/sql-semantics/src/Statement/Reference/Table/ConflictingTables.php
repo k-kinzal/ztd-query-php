@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE t (b TEXT)')]);
  *     $query = $semantics->analyze('SELECT 1 FROM t', $declarations);
- *     count($query->facts->relation($query->inputRelation())->table->candidates) // => 2
+ *     count($query->inputRelation()->relationInformation()->table->candidates) // => 2
  */
 final class ConflictingTables implements TableResolution, Diagnostic
 {

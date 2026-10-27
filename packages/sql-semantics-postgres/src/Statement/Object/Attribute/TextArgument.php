@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An attribute value read as text, such as the initial condition of an aggregate or the locale of a collation.
@@ -27,16 +26,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the locale of a collation
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE COLLATION german (locale = 'de_DE')");
- *     $operation->statement->definition[0]->value->text->value // => 'de_DE'
+ *     $operation->definition[0]->value->text->value // => 'de_DE'
  */
 final class TextArgument implements AttributeArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant $text The value as written
      */
-    public function __construct(public readonly TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant $text)
+    public function __construct(public readonly TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

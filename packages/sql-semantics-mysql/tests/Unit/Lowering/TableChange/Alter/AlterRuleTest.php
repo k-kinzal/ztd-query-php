@@ -37,22 +37,23 @@ final class AlterRuleTest extends TestCase
     public function testDefinitionPublishesAnOrdinaryRootWithItsInvocationCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('ALTER TABLE t MODIFY g INT AS(USER())');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
     }
 
     public function testDefinitionRetainsPartitionOperandRangesWithoutRetainingInputText(): void
     {
         $sql = 'ALTER TABLE t WITH VALIDATION PARTITION BY HASH(VERSION())';
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
-        $partition = $operation->statement->commands[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        $partition = $operation->commands[1];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy::class, $partition);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod::class, $partition->partitioning->method);
-        $origin = $operation->sources->of($partition->partitioning->method->expression);
-        self::assertSame(strpos($sql, 'VERSION()'), $origin?->offset);
+        $origin = $partition->partitioning->method->expression->source();
+        self::assertNotNull($origin);
+        self::assertSame(strpos($sql, 'VERSION()'), $origin->offset);
         self::assertSame(9, $origin->length);
     }
 }

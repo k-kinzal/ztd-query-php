@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition\Expression;
 
-use SqlSemantics\Construction\Reconstruction;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Construction\Occurrences as Reconstruction;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Node;

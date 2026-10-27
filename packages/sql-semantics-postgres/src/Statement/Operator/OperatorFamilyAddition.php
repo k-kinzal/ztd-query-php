@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Counting the added items
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8)');
- *     count($operation->statement->items) // => 1
+ *     count($operation->items) // => 1
  */
-final class OperatorFamilyAddition implements Statement
+final class OperatorFamilyAddition extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<OperatorClassItem> The added items in written order
@@ -41,8 +40,11 @@ final class OperatorFamilyAddition implements Statement
      * @param Name $method The index access method
      * @param list<OperatorClassItem> $items The added items; at least one
      */
-    public function __construct(public readonly DottedName $name, public readonly Name $method, array $items)
+    public function __construct(public readonly DottedName $name, public readonly Name $method, array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, OperatorClassItem::class, 'ADD names at least one item.', 1);
     }
 

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One column of a table definition: its name and its specification.
@@ -25,17 +24,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a column definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (id BIGINT UNSIGNED NOT NULL)');
- *     [$create->statement->elements[0]->name->column->value, $create->statement->elements[0]->specification->dataType()->name()] // => ['id', 'BIGINT']
+ *     [$create->elements[0]->name->column->value, $create->elements[0]->specification->dataType()->name()] // => ['id', 'BIGINT']
  */
 final class ColumnDefinition implements TableElement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnName $name The column name, with the qualifier MySQL 5.x allows
      * @param ColumnSpecification $specification The type, attributes, generation expression and reference
      */
-    public function __construct(public readonly ColumnName $name, public readonly ColumnSpecification $specification)
+    public function __construct(public readonly ColumnName $name, public readonly ColumnSpecification $specification, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

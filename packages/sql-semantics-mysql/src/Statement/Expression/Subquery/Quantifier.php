@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Subquery;
  *
  * @visibility public
  * @example Writing SOME as ANY
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a > SOME (SELECT 1)')->statement->query->where->quantifier // => \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a > SOME (SELECT 1)')->query->where->quantifier // => \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any
  */
 enum Quantifier: string
 {

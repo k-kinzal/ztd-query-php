@@ -33,11 +33,11 @@ final class QueryRulesTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT ABS(cast('123' as decimal(1))) AS result");
 
         self::assertSame("SELECT ABS(cast('123' as decimal(1))) AS result", $operation->toString());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class, $operation->statement->query->items[0]->expression);
-        $arguments = $operation->statement->query->items[0]->expression->arguments;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class, $operation->query->items[0]->expression);
+        $arguments = $operation->query->items[0]->expression->arguments;
         self::assertCount(1, $arguments);
         self::assertSame("cast('123' as decimal(1))", $arguments[0]->layout?->text());
     }
@@ -45,27 +45,27 @@ final class QueryRulesTest extends TestCase
     public function testLegacyParenthesizedQueryRetainsItsCompleteWriteSource(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1,2) FROM missing)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->body->source);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->body);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->body->source);
         self::assertSame('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1, 2) FROM missing)', $operation->toString());
     }
 
     public function testLegacyQueryRetainsTheWriteSourceBeforeItsDestinationIsAvailable(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1, 2) FROM missing');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
-        self::assertSame('t', $operation->statement->body->into->table->name->name->value);
-        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->statement->body->problem()->message());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->body);
+        self::assertSame('t', $operation->body->into->table->name->name->value);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->body->problem()->message());
     }
 
     public function testEmbeddedKeepsOnlyThePublishedQueryInTheSourceMap(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) AS SELECT 1 AS b');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $operation->statement);
-        self::assertNotNull($operation->statement->query);
-        self::assertInstanceOf(Select::class, $operation->statement->query->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $operation);
+        self::assertNotNull($operation->query);
+        self::assertInstanceOf(Select::class, $operation->query->query);
         self::assertSame('CREATE TABLE t (a INT) AS SELECT 1 AS b', $operation->toString());
     }
 
@@ -240,10 +240,10 @@ final class QueryRulesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT a AS `x y`, b 'z' FROM t AS u");
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
-        self::assertSame('x y', $operation->statement->query->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertSame('x y', $operation->query->items[0]->alias?->value);
         self::assertSame('SELECT a AS `x y`, b z FROM t AS u', $operation->toString());
     }
 

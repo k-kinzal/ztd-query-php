@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * RESIGNAL: passes on, or changes and passes on, the condition a handler is handling.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the statement
  *     $signal = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('RESIGNAL SET MYSQL_ERRNO = 5');
- *     [$signal->statement->condition, $signal->toString()] // => [null, 'RESIGNAL SET MYSQL_ERRNO = 5']
+ *     [$signal->condition, $signal->toString()] // => [null, 'RESIGNAL SET MYSQL_ERRNO = 5']
  */
-final class Resignal implements Statement, ProgramStatement
+final class Resignal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, ProgramStatement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SignalItem> The condition information items in written order
@@ -39,8 +38,11 @@ final class Resignal implements Statement, ProgramStatement
      * @param ConditionName|SqlState|null $condition The condition passed on instead of the handled one, when written
      * @param list<SignalItem> $items The condition information items of the SET clause; empty without SET
      */
-    public function __construct(public readonly ConditionName|SqlState|null $condition, array $items = [])
+    public function __construct(public readonly ConditionName|SqlState|null $condition, array $items = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
         $repeated = (new ConditionFacts())->repeated($this->items);
         Check::input($repeated === null, "Duplicate condition information item '" . ($repeated?->name->value ?? '') . "'");

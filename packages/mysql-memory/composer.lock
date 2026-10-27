@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d4d22273e0dabc94bbd1cc0e292ae074",
+    "content-hash": "02638df0a798255e2880962e84b9ebad",
     "packages": [
         {
             "name": "k-kinzal/sql-parser",
@@ -6273,6 +6273,7 @@
         "ext-mbstring": "*"
     },
     "platform-dev": {
+        "ext-mysqli": "*",
         "ext-pdo_mysql": "*"
     },
     "platform-overrides": {

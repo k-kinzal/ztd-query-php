@@ -17,7 +17,7 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes DROP PROCEDURE, DROP FUNCTION, DROP TRIGGER and DROP EVENT.
@@ -51,8 +51,8 @@ final class DropProgramCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof DropProgram);
         $session->transaction->commit();
         $missing = $this->drop($statement, $session);

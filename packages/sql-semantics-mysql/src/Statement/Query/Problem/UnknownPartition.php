@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Selecting a partition the table lacks
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT) PARTITION BY HASH(a) PARTITIONS 2');
- *     $semantics->analyze('SELECT a FROM t PARTITION (p9)', [$table])->facts->diagnostics[0]->message() // => "Unknown partition 'p9' in table 't'"
+ *     $semantics->analyze('SELECT a FROM t PARTITION (p9)', [$table])->diagnostics()[0]->message() // => "Unknown partition 'p9' in table 't'"
  */
 final class UnknownPartition implements Diagnostic
 {

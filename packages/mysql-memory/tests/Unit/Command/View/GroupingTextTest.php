@@ -22,10 +22,10 @@ final class GroupingTextTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t(x INT)');
         $operation = $session->analyze('SELECT x FROM t GROUP BY x WITH ROLLUP');
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $writer = new GroupingText((new ViewText($operation->facts, '', 'd'))->expressions);
-        self::assertSame(' group by `d`.`t`.`x` with rollup', $writer->clause($operation->statement->query->groupBy));
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $writer = new GroupingText((new ViewText($operation->statementInformation(), '', 'd'))->expressions);
+        self::assertSame(' group by `d`.`t`.`x` with rollup', $writer->clause($operation->query->groupBy));
         self::assertSame('', $writer->clause(null));
     }
 }

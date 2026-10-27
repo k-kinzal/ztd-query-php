@@ -13,7 +13,7 @@ namespace SqlSemantics\Statement\Fact;
  * @visibility public
  * @example Reading the warnings of a statement
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT BINARY 1');
- *     $query->facts->warnings[0]->message() // => "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"
+ *     $query->warnings()[0]->message() // => "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"
  */
 interface Warning
 {

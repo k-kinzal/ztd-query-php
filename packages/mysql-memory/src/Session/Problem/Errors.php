@@ -85,6 +85,8 @@ final class Errors
 {
     /**
      * Answers the server error of a diagnostic, for a name read in a clause of a statement.
+     *
+     * @throws SqlError When an earlier dependency or definer condition fails
      */
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {

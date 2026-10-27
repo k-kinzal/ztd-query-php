@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace MySqlMemory\Session\Statement;
 
 use MySqlMemory\Hint\Hints;
-use MySqlMemory\Session\Resolution;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\Platforms;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\AnalyzedStatement;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Source\SourceMap;
 use SqlSemantics\Statement\Statement;
 
@@ -31,9 +30,13 @@ final class Binding
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      */
-    public function operation(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null): Operation
+    public function operation(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null): MySqlStatement
     {
-        return new Operation($this->context($session, $statement, $parameters, $profile, $literals), $statement);
+        $result = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, new SourceMap());
+        if ($statement instanceof MySqlStatement && isset($session->preparation->programSources[$statement])) {
+            $session->preparation->programSources[$result] = $session->preparation->programSources[$statement];
+        }
+        return $result;
     }
 
     /**
@@ -43,11 +46,12 @@ final class Binding
      */
     public function statement(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null, SourceMap $sources = new SourceMap()): AnalyzedStatement
     {
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
-            \SqlSemantics\Diagnostic\Check::input($profile === null || $statement->profile()->compatibleWith($profile), 'A catalog-independent statement retains its selected language when reused.');
-            return $statement;
+        $result = Platforms::of('mysql')->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, $sources);
+        \SqlSemantics\Diagnostic\Check::invariant($result instanceof MySqlStatement, 'MySQL binding publishes a MySQL statement.');
+        if ($statement instanceof MySqlStatement && isset($session->preparation->programSources[$statement])) {
+            $session->preparation->programSources[$result] = $session->preparation->programSources[$statement];
         }
-        return Platforms::of('mysql')->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, $sources);
+        return $result;
     }
 
     /**
@@ -59,11 +63,9 @@ final class Binding
     {
         $typing = (new Hints())->typingValue($statement, $session);
         try {
-            $session->instance->dictionary->temporaries = $session->temporaries;
-            Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
             $profile ??= $session->semantics()->profile();
             $database = $session->variables->database;
-            $context = Platforms::of('mysql')->context($profile, $database === '' ? null : [$database], $session->instance->dictionary->declarations(), true);
+            $context = Platforms::of('mysql')->context($profile, $database === '' ? null : [$database], Catalog::declarations($session), true);
             return $context->withSession($session->resolution($this->parameters($session, $parameters), $literals));
         } finally {
             $typing->restore($session);
@@ -86,4 +88,5 @@ final class Binding
         }
         return $domains;
     }
+
 }

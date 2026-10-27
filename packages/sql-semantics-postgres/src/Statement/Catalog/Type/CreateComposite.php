@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\TypeChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the attributes of a composite type
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE pair AS (a int4, b text)');
- *     count($operation->statement->attributes) // => 2
+ *     count($operation->attributes) // => 2
  */
-final class CreateComposite implements Statement
+final class CreateComposite extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TypedColumn> The attributes in order
@@ -40,8 +39,11 @@ final class CreateComposite implements Statement
      * @param DottedName $name The type name
      * @param list<TypedColumn> $attributes The attributes in order
      */
-    public function __construct(public readonly DottedName $name, array $attributes)
+    public function __construct(public readonly DottedName $name, array $attributes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->attributes = Check::listOf($attributes, TypedColumn::class, 'Composite type attributes are typed columns.');
     }
 

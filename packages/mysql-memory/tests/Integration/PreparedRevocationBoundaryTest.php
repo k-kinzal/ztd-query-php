@@ -28,7 +28,7 @@ final class PreparedRevocationBoundaryTest extends TestCase
     {
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = (new \MySqlMemory\Session\Access\Preparation())->read('REVOKE ALL ON PROCEDURE * FROM u', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Statement::class, $operation);
         (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
         $definition = PreparedStatement::capture($operation, $session);
         $session->query('DROP DATABASE d');

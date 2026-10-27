@@ -20,7 +20,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,7 +38,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredCall implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CallArgument|DeferredCallArgument> Arguments in written order
@@ -51,8 +51,11 @@ final class DeferredCall implements DeferredOperand
      * @param list<CallArgument|DeferredCallArgument> $arguments Complete arguments, with a retained name or argument condition
      * @param Name|null $schema The database of a qualified stored function
      */
-    public function __construct(public readonly Name $name, array $arguments, public readonly ?Name $schema = null)
+    public function __construct(public readonly Name $name, array $arguments, public readonly ?Name $schema = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $accepted = [];
         Check::input(!str_contains($name->value, "\0"), 'A routine name cannot contain NUL.');
         foreach (Check::listOf($arguments, Node::class, 'A deferred call has argument operands.') as $argument) {

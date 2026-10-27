@@ -37,10 +37,10 @@ final class ParenthesizedQueryTest extends TestCase
         ]);
         $operation = $semantics->analyze('(SELECT a FROM t)', [$t]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->query);
-        self::assertInstanceOf(Select::class, $operation->statement->query->query);
-        self::assertSame($operation->facts->query($operation->statement->query->query), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->query);
+        self::assertInstanceOf(Select::class, $operation->query->query);
+        self::assertSame($operation->query->query->queryInformation(), $operation->output());
     }
 
     public function testDeriveQueryAnswersTheFactsOfTheInnerQuery(): void
@@ -56,11 +56,11 @@ final class ParenthesizedQueryTest extends TestCase
         ]);
         $operation = $semantics->analyze('((SELECT a FROM t)) UNION SELECT c FROM u', [$t, $u]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->query);
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->query->left);
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->query->left->query);
-        self::assertSame($t->columns[0], $operation->facts->query($operation->statement->query->left)->fields()?->at(0)->column());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(SetOperation::class, $operation->query);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->query->left);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->query->left->query);
+        self::assertSame($t->columns[0], $operation->query->left->queryInformation()->fields()?->at(0)->column());
     }
 
     public function testRenderWritesTheParentheses(): void

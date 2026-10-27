@@ -32,9 +32,9 @@ use SqlSemantics\Statement\Source\Span;
  *     $start = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('start transaction with consistent snapshot, read only');
  *     [$start->toString(), $start->characteristics[1]] // => ['START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY', \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly]
  */
-final class StartTransaction implements TransactionStatement
+final class StartTransaction extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
     use TransactionSql;
 
     /**
@@ -49,8 +49,11 @@ final class StartTransaction implements TransactionStatement
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(array $characteristics = [], public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(array $characteristics = [], public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         $this->characteristics = Check::listOf($characteristics, TransactionCharacteristic::class, 'START TRANSACTION takes a list of characteristics.');
         Check::input(

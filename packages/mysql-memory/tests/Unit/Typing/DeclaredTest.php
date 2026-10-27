@@ -38,6 +38,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class DeclaredTest extends TestCase
 {
+    public function testRealDeclarationFollowsTheSessionMode(): void
+    {
+        $real = new Floating(FloatingKind::Real);
+        $default = (new Declared(Collation::binary()))->floating($real);
+        $single = (new Declared(Collation::binary(), realAsFloat: true))->floating($real);
+        self::assertSame([Field::Double, 22], [$default->field, $default->length]);
+        self::assertSame([Field::Float, 12], [$single->field, $single->length]);
+    }
+
     public function testEnumerationDecodesRadixMembersAndRemovesTrailingSpaces(): void
     {
         $type = new Enumeration(EnumerationKind::Enum, [new Text('e920', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal), new Text('b ')]);

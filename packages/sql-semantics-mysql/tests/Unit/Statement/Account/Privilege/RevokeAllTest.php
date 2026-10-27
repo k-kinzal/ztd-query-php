@@ -18,7 +18,7 @@ final class RevokeAllTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE ALL, GRANT OPTION FROM u')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE ALL, GRANT OPTION FROM u')->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void

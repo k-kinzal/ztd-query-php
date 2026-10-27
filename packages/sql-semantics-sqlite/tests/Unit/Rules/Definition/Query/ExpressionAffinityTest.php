@@ -38,14 +38,14 @@ final class ExpressionAffinityTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a TEXT, b INTEGER, c)');
         $query = $semantics->analyze('SELECT (a) COLLATE nocase, CAST(b AS REAL), CAST(b AS), (a, b), (SELECT b FROM t UNION ALL SELECT a FROM t), a || b, c, rowid, (VALUES (1), (CAST(1 AS TEXT))) FROM t', [$table]);
-        $select = $query->statement;
+        $select = $query;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(Select::class, $select);
-        $affinities = array_map(static fn (int $position): ?Affinity => $rule->column($select, $position, $query->facts)->affinity, range(0, 8));
+        $affinities = array_map(static fn (int $position): ?Affinity => $rule->column($select, $position)->affinity, range(0, 8));
         self::assertSame([Affinity::Text, Affinity::Real, Affinity::Numeric, Affinity::Text, Affinity::Text, null, Affinity::Blob, Affinity::Integer, Affinity::Text], $affinities);
-        self::assertTrue($rule->column($select, 5, $query->facts)->determined);
-        self::assertSame(Affinity::Numeric, $rule->of(new Cast(new IntegerLiteral('1')), $query->facts)->affinity);
+        self::assertTrue($rule->column($select, 5)->determined);
+        self::assertSame(Affinity::Numeric, $rule->of(new Cast(new IntegerLiteral('1')))->affinity);
     }
 
     public function testReferenceReadsADoubleQuotedWordThatIsNoColumnAsAStringWithoutAffinity(): void
@@ -53,7 +53,7 @@ final class ExpressionAffinityTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a TEXT)');
         $query = $semantics->analyze('SELECT "a", "zz", zz FROM t', [$table]);
-        $select = $query->statement;
+        $select = $query;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(Select::class, $select);
@@ -63,11 +63,11 @@ final class ExpressionAffinityTest extends TestCase
         self::assertInstanceOf(ResultColumn::class, $column);
         self::assertInstanceOf(ResultColumn::class, $string);
         self::assertInstanceOf(ResultColumn::class, $missing);
-        self::assertSame(Affinity::Text, $rule->reference($column->expression, $query->facts)->affinity);
-        self::assertNull($rule->reference($string->expression, $query->facts)->affinity);
-        self::assertTrue($rule->reference($string->expression, $query->facts)->determined);
-        self::assertFalse($rule->reference($missing->expression, $query->facts)->determined);
-        self::assertFalse($rule->reference(new IntegerLiteral('1'), $query->facts)->determined);
+        self::assertSame(Affinity::Text, $rule->reference($column->expression)->affinity);
+        self::assertNull($rule->reference($string->expression)->affinity);
+        self::assertTrue($rule->reference($string->expression)->determined);
+        self::assertFalse($rule->reference($missing->expression)->determined);
+        self::assertFalse($rule->reference(new IntegerLiteral('1'))->determined);
     }
 
     public function testFieldReadsTheExpressionOrTheColumnAnExpandedStarExposes(): void
@@ -77,10 +77,10 @@ final class ExpressionAffinityTest extends TestCase
         $query = $semantics->analyze('SELECT *, 1 FROM t', [$table]);
         $rule = new ExpressionAffinity();
 
-        self::assertSame(Affinity::Text, $rule->field($query->field(0), $query->facts)->affinity);
-        self::assertSame(Affinity::Blob, $rule->field($query->field(1), $query->facts)->affinity);
-        self::assertNull($rule->field($query->field(2), $query->facts)->affinity);
-        self::assertTrue($rule->field($query->field(2), $query->facts)->determined);
+        self::assertSame(Affinity::Text, $rule->field($query->field(0))->affinity);
+        self::assertSame(Affinity::Blob, $rule->field($query->field(1))->affinity);
+        self::assertNull($rule->field($query->field(2))->affinity);
+        self::assertTrue($rule->field($query->field(2))->determined);
     }
 
     public function testResolvedReadsADeclarationADerivedTableAndACommonTable(): void
@@ -96,10 +96,10 @@ final class ExpressionAffinityTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $declared);
         self::assertInstanceOf(ResolvedColumn::class, $derived);
         self::assertInstanceOf(ResolvedColumn::class, $common);
-        self::assertSame(Affinity::Text, $rule->resolved($declared, $query->facts)->affinity);
-        self::assertSame(Affinity::Integer, $rule->resolved($derived, $query->facts)->affinity);
-        self::assertSame(Affinity::Numeric, $rule->resolved($common, $query->facts)->affinity);
-        self::assertTrue($rule->resolved($common, $query->facts)->flexible);
+        self::assertSame(Affinity::Text, $rule->resolved($declared)->affinity);
+        self::assertSame(Affinity::Integer, $rule->resolved($derived)->affinity);
+        self::assertSame(Affinity::Numeric, $rule->resolved($common)->affinity);
+        self::assertTrue($rule->resolved($common)->flexible);
     }
 
     public function testDeclaredReadsEachKindOfTypeDescriptor(): void
@@ -121,16 +121,16 @@ final class ExpressionAffinityTest extends TestCase
         $declared = $query->field(0)->resolution;
         $derived = $query->field(1)->resolution;
         $common = $query->field(2)->resolution;
-        $with = $query->statement;
+        $with = $query;
 
         self::assertInstanceOf(ResolvedColumn::class, $declared);
         self::assertInstanceOf(ResolvedColumn::class, $derived);
         self::assertInstanceOf(ResolvedColumn::class, $common);
         self::assertInstanceOf(WithQuery::class, $with);
-        self::assertNull($rule->computing($declared->relation, $query->facts));
+        self::assertNull($rule->computing($declared->relation));
         self::assertInstanceOf(DerivedQuery::class, $derived->relation);
-        self::assertSame($derived->relation->query, $rule->computing($derived->relation, $query->facts));
-        self::assertSame($with->with->tables[0]->query, $rule->computing($common->relation, $query->facts));
+        self::assertSame($derived->relation->query, $rule->computing($derived->relation));
+        self::assertSame($with->with->tables[0]->query, $rule->computing($common->relation));
     }
 
     public function testPositionFindsTheOutputFieldASlotReExposes(): void
@@ -140,23 +140,23 @@ final class ExpressionAffinityTest extends TestCase
         $query = $semantics->analyze('SELECT d.b, d.a FROM (SELECT a, b FROM t UNION ALL SELECT b, a FROM t) AS d', [$table]);
         $derived = $query->inputRelation();
         $resolution = $query->field(0)->resolution;
-        $select = $query->statement;
-        $other = $semantics->analyze('SELECT 1')->statement;
+        $select = $query;
+        $other = $semantics->analyze('SELECT 1');
 
         self::assertInstanceOf(DerivedQuery::class, $derived);
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Select::class, $other);
-        self::assertSame(1, (new ExpressionAffinity())->position($derived->query, $resolution->slot, $query->facts));
-        self::assertNull((new ExpressionAffinity())->position($select, $resolution->slot, $query->facts));
-        self::assertNull((new ExpressionAffinity())->position($other, $resolution->slot, $query->facts));
+        self::assertSame(1, (new ExpressionAffinity())->position($derived->query, $resolution->slot));
+        self::assertNull((new ExpressionAffinity())->position($select, $resolution->slot));
+        self::assertNull((new ExpressionAffinity())->position($other, $resolution->slot));
     }
 
     public function testArmsFlattensWithClausesCompoundsAndValuesRows(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $compound = $semantics->analyze('WITH w AS (SELECT 1) SELECT 1 UNION ALL VALUES (2), (3) UNION SELECT 4')->statement;
-        $values = $semantics->analyze('VALUES (1), (2)')->statement;
+        $compound = $semantics->analyze('WITH w AS (SELECT 1) SELECT 1 UNION ALL VALUES (2), (3) UNION SELECT 4');
+        $values = $semantics->analyze('VALUES (1), (2)');
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(ValuesClause::class, $values);
@@ -179,17 +179,17 @@ final class ExpressionAffinityTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a TEXT)');
         $query = $semantics->analyze('SELECT *, CAST(1 AS INT) FROM t', [$table]);
         $rows = $semantics->analyze("VALUES (1, 'x')");
-        $values = $rows->statement;
-        $select = $query->statement;
+        $values = $rows;
+        $select = $query;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ValuesClause::class, $values);
-        self::assertSame(Affinity::Text, $rule->arm($select, 0, $query->facts)->affinity);
-        self::assertSame(Affinity::Integer, $rule->arm($select, 1, $query->facts)->affinity);
-        self::assertFalse($rule->arm($select, 2, $query->facts)->determined);
-        self::assertNull($rule->arm($values->rows[0], 1, $rows->facts)->affinity);
-        self::assertFalse($rule->arm($values->rows[0], 2, $rows->facts)->determined);
+        self::assertSame(Affinity::Text, $rule->arm($select, 0)->affinity);
+        self::assertSame(Affinity::Integer, $rule->arm($select, 1)->affinity);
+        self::assertFalse($rule->arm($select, 2)->determined);
+        self::assertNull($rule->arm($values->rows[0], 1)->affinity);
+        self::assertFalse($rule->arm($values->rows[0], 2)->determined);
     }
 
     public function testWrittenReadsTheExpressionOfAPositionAndNothingForAStar(): void
@@ -198,17 +198,17 @@ final class ExpressionAffinityTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a TEXT)');
         $query = $semantics->analyze('SELECT *, CAST(1 AS INT) FROM t', [$table]);
         $rows = $semantics->analyze("VALUES (1, 'x')");
-        $values = $rows->statement;
-        $select = $query->statement;
+        $values = $rows;
+        $select = $query;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ValuesClause::class, $values);
-        self::assertNull($rule->written($select, 0, $query->facts));
-        self::assertInstanceOf(Cast::class, $rule->written($select, 1, $query->facts));
-        self::assertNull($rule->written($select, 2, $query->facts));
-        self::assertSame($values->rows[0]->values[1], $rule->written($values->rows[0], 1, $rows->facts));
-        self::assertNull($rule->written($values->rows[0], 2, $rows->facts));
+        self::assertNull($rule->written($select, 0));
+        self::assertInstanceOf(Cast::class, $rule->written($select, 1));
+        self::assertNull($rule->written($select, 2));
+        self::assertSame($values->rows[0]->values[1], $rule->written($values->rows[0], 1));
+        self::assertNull($rule->written($values->rows[0], 2));
     }
 
     public function testFirstReadsTheFirstResultOfTheRightmostArm(): void
@@ -216,13 +216,13 @@ final class ExpressionAffinityTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a TEXT, b INTEGER)');
         $query = $semantics->analyze('SELECT (SELECT a FROM t UNION ALL SELECT b FROM t), (VALUES (1), (CAST(1 AS BLOB))), (SELECT * FROM u) FROM t', [$table]);
-        $select = $query->statement;
+        $select = $query;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame(Affinity::Integer, $rule->column($select, 0, $query->facts)->affinity);
-        self::assertSame(Affinity::Blob, $rule->column($select, 1, $query->facts)->affinity);
-        self::assertFalse($rule->column($select, 2, $query->facts)->determined);
+        self::assertSame(Affinity::Integer, $rule->column($select, 0)->affinity);
+        self::assertSame(Affinity::Blob, $rule->column($select, 1)->affinity);
+        self::assertFalse($rule->column($select, 2)->determined);
     }
 
     public function testColumnAdjustsACompoundByTheOtherArms(): void
@@ -230,15 +230,15 @@ final class ExpressionAffinityTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a TEXT, b INTEGER, c, d DECIMAL)');
         $query = $semantics->analyze("SELECT a, b, b, a, CAST(b AS INT), 1, NULL, CAST(d AS NUMERIC), c FROM t UNION ALL SELECT 1, 'x', b, a, b, b, a, d, a FROM t", [$table]);
-        $compound = $query->statement;
+        $compound = $query;
         $rule = new ExpressionAffinity();
 
         self::assertInstanceOf(Compound::class, $compound);
-        $affinities = array_map(static fn (int $position): ?Affinity => $rule->column($compound, $position, $query->facts)->affinity, range(0, 8));
+        $affinities = array_map(static fn (int $position): ?Affinity => $rule->column($compound, $position)->affinity, range(0, 8));
         self::assertSame([Affinity::Blob, Affinity::Blob, Affinity::Integer, Affinity::Text, Affinity::Numeric, Affinity::Integer, Affinity::Text, Affinity::Numeric, Affinity::Blob], $affinities);
-        self::assertTrue($rule->column($compound, 4, $query->facts)->flexible);
-        self::assertTrue($rule->column($compound, 7, $query->facts)->flexible);
-        self::assertFalse($rule->column($compound->first, 4, $query->facts)->flexible);
+        self::assertTrue($rule->column($compound, 4)->flexible);
+        self::assertTrue($rule->column($compound, 7)->flexible);
+        self::assertFalse($rule->column($compound->first, 4)->flexible);
     }
 
     public function testColumnIsNotDeterminedWhenAnArmDependsOnAMissingDeclaration(): void
@@ -246,10 +246,10 @@ final class ExpressionAffinityTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a TEXT)');
         $query = $semantics->analyze('SELECT t.a FROM t UNION ALL SELECT u.x FROM u', [$table]);
-        $compound = $query->statement;
+        $compound = $query;
 
         self::assertInstanceOf(Compound::class, $compound);
-        self::assertFalse((new ExpressionAffinity())->column($compound, 0, $query->facts)->determined);
+        self::assertFalse((new ExpressionAffinity())->column($compound, 0)->determined);
     }
 
     public function testAdjustedAppliesTheRulesOfACompoundColumn(): void

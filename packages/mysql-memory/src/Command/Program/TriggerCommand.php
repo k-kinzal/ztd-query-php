@@ -18,7 +18,7 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\OrderPlacement;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes CREATE TRIGGER.
@@ -57,8 +57,8 @@ final class TriggerCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof CreateTrigger);
         $session->transaction->commit();
         [$database, $table, $schema] = $this->target($statement, $session);

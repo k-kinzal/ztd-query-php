@@ -48,7 +48,7 @@ final class TypeNoticesTest extends TestCase
     public function testTypeWarnsAboutTheDeprecatedPartsOfEachColumnType(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $warnings = $semantics->analyze('CREATE TABLE w (a INT(11), b INT ZEROFILL, c FLOAT(5,2), d DECIMAL(5,2) UNSIGNED, f TINYINT(1), g YEAR(4), h CHAR(1) CHARACTER SET utf8)')->facts->warnings;
+        $warnings = $semantics->analyze('CREATE TABLE w (a INT(11), b INT ZEROFILL, c FLOAT(5,2), d DECIMAL(5,2) UNSIGNED, f TINYINT(1), g YEAR(4), h CHAR(1) CHARACTER SET utf8)')->warnings();
 
         self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::DisplayWidth, Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction, Deprecated::DisplayWidth, Deprecated::YearWidth, Deprecated::Utf8Alias]), $warnings);
     }
@@ -57,21 +57,21 @@ final class TypeNoticesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a INT(11), b CHAR(2) ASCII) RETURNS NATIONAL CHAR(3) RETURN b');
 
-        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::DisplayWidth, Deprecated::AsciiCharset, Deprecated::National]), $operation->facts->warnings);
+        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::DisplayWidth, Deprecated::AsciiCharset, Deprecated::National]), $operation->warnings());
     }
 
     public function testCharsetKeepsThePositionOfTheBinaryAttribute(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a CHAR(2) BINARY ASCII, b CHAR(2) ASCII BINARY, c CHAR(2) BINARY)');
 
-        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::BinaryAttribute, Deprecated::AsciiCharset, Deprecated::AsciiCharset, Deprecated::BinaryAttribute, Deprecated::BinaryAttribute]), $operation->facts->warnings);
+        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::BinaryAttribute, Deprecated::AsciiCharset, Deprecated::AsciiCharset, Deprecated::BinaryAttribute, Deprecated::BinaryAttribute]), $operation->warnings());
     }
 
     public function testCharsetWarnsForShorthandAndExplicitDeprecatedNames(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a CHAR(2) ASCII, b CHAR(2) UNICODE, c CHAR(2) CHARACTER SET utf8mb3, d CHAR(2) CHARACTER SET ucs2)');
 
-        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::AsciiCharset, Deprecated::UnicodeCharset, Deprecated::Utf8mb3, Deprecated::Ucs2]), $operation->facts->warnings);
+        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::AsciiCharset, Deprecated::UnicodeCharset, Deprecated::Utf8mb3, Deprecated::Ucs2]), $operation->warnings());
     }
 
     public function testTypeWarnsForAnExplicitTinyintWidthOfOne(): void
@@ -103,6 +103,6 @@ final class TypeNoticesTest extends TestCase
 
     public function testTypeWarnsOfEachNationalCharacterColumn(): void
     {
-        self::assertSame([Deprecated::National->value, Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a NCHAR(3), b NATIONAL VARCHAR(3), c CHAR(1))')->facts->warnings));
+        self::assertSame([Deprecated::National->value, Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a NCHAR(3), b NATIONAL VARCHAR(3), c CHAR(1))')->warnings()));
     }
 }

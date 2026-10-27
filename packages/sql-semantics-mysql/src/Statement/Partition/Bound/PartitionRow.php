@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A parenthesized row of partition values: expressions and MAXVALUE.
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar|PartitionMaximum> The values in order; at least one
@@ -36,7 +35,7 @@ final class PartitionRow implements Node
     /**
      * @param list<Scalar|PartitionMaximum> $items The values in order; at least one
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $list = [];
         foreach (Check::listOf($items, Node::class, 'A row of partition values holds at least one value.', 1) as $item) {

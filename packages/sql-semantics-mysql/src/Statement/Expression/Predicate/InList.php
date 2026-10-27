@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A membership test in a list of expressions: `x [NOT] IN (e1, e2 …)` (`Item_func_in`).
@@ -36,11 +35,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the elements of a list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a NOT IN (1, 2)');
- *     [$query->statement->query->where->negated, count($query->statement->query->where->elements)] // => [true, 2]
+ *     [$query->query->where->negated, count($query->query->where->elements)] // => [true, 2]
  */
 final class InList implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand> The elements in order
@@ -52,8 +52,11 @@ final class InList implements Scalar
      * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand> $elements The elements in order; at least one
      * @param bool $negated Whether NOT is written before IN
      */
-    public function __construct(public readonly Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, array $elements, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, array $elements, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of IN needs a grouping to keep its place.');
         $checked = Check::listOf($elements, \SqlSemantics\Statement\Operand::class, 'An IN list has at least one element.', 1);
         $accepted = [];

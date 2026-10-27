@@ -20,7 +20,7 @@ final class DropIndexTest extends TestCase
     {
         $drop = (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = COPY', []);
 
-        self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $drop->facts->diagnostics));
+        self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $drop->diagnostics()));
     }
 
     public function testDeriveStatementRequiresKnownInputOptions(): void

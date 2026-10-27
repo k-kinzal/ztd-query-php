@@ -43,15 +43,15 @@ final class CreateFunctionTest extends TestCase
     public function testDeriveStatementResolvesParametersInTheBody(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN add.a + b', []);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(ReturnStatement::class, $statement->body);
         self::assertInstanceOf(BinaryOperation::class, $statement->body->value);
-        $resolution = $operation->facts->scalar($statement->body->value->left)->resolution;
+        $resolution = $statement->body->value->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($statement->parameters, $resolution->relation);
-        self::assertEquals(new Known(Builtin::Int4), $operation->facts->scalar($statement->body->value)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertEquals(new Known(Builtin::Int4), $statement->body->value->scalarInformation()->type);
+        self::assertSame([], $operation->diagnostics());
         self::assertNull($operation->shape());
     }
 
@@ -59,14 +59,14 @@ final class CreateFunctionTest extends TestCase
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Text)]);
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION f(a int4) RETURNS text BEGIN ATOMIC SELECT a FROM t; END', [$table]);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(AtomicBody::class, $statement->body);
         $select = $statement->body->statements[0];
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
         self::assertInstanceOf(ExpressionTarget::class, $target);
-        $resolution = $operation->facts->scalar($target->expression)->resolution;
+        $resolution = $target->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->columns[0], $resolution->declaration());
     }
@@ -79,7 +79,7 @@ final class CreateFunctionTest extends TestCase
             new RoutineProblem(RoutineProblemKind::MissingLanguage),
             new RoutineProblem(RoutineProblemKind::MissingDefault),
             new RoutineProblem(RoutineProblemKind::MissingResultType),
-        ], $operation->facts->diagnostics);
+        ], $operation->diagnostics());
     }
 
     public function testRenderWritesProcedures(): void

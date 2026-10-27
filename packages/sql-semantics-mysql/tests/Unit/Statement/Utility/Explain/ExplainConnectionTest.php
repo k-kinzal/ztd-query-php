@@ -21,7 +21,7 @@ final class ExplainConnectionTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $explain = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN PARTITIONS FOR CONNECTION 7');
-        self::assertInstanceOf(ExplainConnection::class, $explain->statement);
+        self::assertInstanceOf(ExplainConnection::class, $explain);
         self::assertSame('partitions', $explain->field(3)->name?->value);
     }
 

@@ -19,10 +19,12 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the persistence of a table
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE LOCAL TEMP TABLE t (a int)');
- *     [$create->statement->persistence->temporary(), $create->declarations()[0]->name->schema->value] // => [true, 'pg_temp']
+ *     [$create->persistence->temporary(), $create->declarations()[0]->name->schema->value] // => [true, 'pg_temp']
  */
 enum Persistence: string implements Node
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Permanent = '';
     case Temporary = 'TEMPORARY';
     case Temp = 'TEMP';

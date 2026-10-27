@@ -110,7 +110,7 @@ final class Cursors
         (new Problems())->raise($operation, $session);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, microtime(true));
         $connection = new Connection($session->variables, $context, $session->user, $session->host, $session->id, [], $this->statements->activation, WeakReference::create($session));
-        $plan = (new Planner($query, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->query($query, null);
+        $plan = (new Planner($query, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session)))->query($query, null);
         $cursor->rows = (new Output())->result($plan, $context, false)->rows;
         $cursor->domains = $plan->domains;
         $cursor->position = 0;

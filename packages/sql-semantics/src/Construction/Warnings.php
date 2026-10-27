@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Construction;
 
 use Closure;
+use SqlSemantics\Statement\Fact\Notice;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Source\SourceMap;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * Collects derivation warnings with the input boundaries that order parsing notices.
@@ -100,6 +102,23 @@ final class Warnings
             }
         }
         return $subjects;
+    }
+
+    /**
+     * Preserves each warning's subject, stored instruction and input boundary.
+     *
+     * @return list<Notice>
+     */
+    public function notices(): array
+    {
+        $located = [];
+        foreach ($this->sources->notices as $notice) {
+            $located[spl_object_id($notice->warning)] = new Notice($notice->warning, $notice->subject, inputSource: new Span($notice->offset, 0), fromInput: true);
+        }
+        foreach ($this->entries as [$warning, $offset, $instruction, $subject]) {
+            $located[spl_object_id($warning)] = new Notice($warning, $subject, $instruction, $offset === null ? null : new Span($offset, 0));
+        }
+        return array_map(static fn (Warning $warning): Notice => $located[spl_object_id($warning)], $this->all());
     }
 
     /**

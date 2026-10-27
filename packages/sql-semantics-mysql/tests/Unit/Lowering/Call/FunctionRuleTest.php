@@ -182,14 +182,14 @@ final class FunctionRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operation = $semantics->analyze('WITH x AS (SELECT POSITION(ROW(1,2) IN 3)) SELECT 7');
         self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testCharacterPreservesItsCharsetAndNonScalarDependencies(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c AS (SELECT CHAR(7, ROW(1,2) USING utf8mb4)) SELECT 9');
         self::assertSame('WITH c AS (SELECT CHAR(7, ROW(1, 2) USING utf8mb4)) SELECT 9', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testQualifiedRetainsAnInvalidNameAndItsNestedSignature(): void

@@ -82,13 +82,13 @@ final class RelationsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT * FROM t');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $scope = new Scope();
 
         $path = $planner->relations->plan($statement->from, $scope);
@@ -102,13 +102,13 @@ final class RelationsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         self::assertInstanceOf(SingleRow::class, $planner->relations->plan($statement->from, new Scope()));
     }
@@ -155,12 +155,12 @@ final class RelationsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH c AS (SELECT 1 AS n) SELECT n FROM c AS x');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         $plan = $planner->query($statement, null);
         $result = (new Output())->result($plan, $context);
@@ -210,14 +210,14 @@ final class RelationsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM (SELECT a FROM t) AS x');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $from = $statement->from;
         self::assertInstanceOf(DerivedTable::class, $from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $scope = new Scope();
 
         $path = $planner->relations->derived($from, $scope);
@@ -248,13 +248,13 @@ final class RelationsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT NOT NULL, c VARCHAR(5))');
         $operation = $session->analyze('SELECT * FROM (SELECT a, c FROM t) AS x');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         $domains = $planner->relations->shaped($statement->from, [Domain::null(), Domain::null()]);
 
@@ -269,16 +269,16 @@ final class RelationsTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
-        $plain = $session->analyze('SELECT a FROM t')->statement;
+        $plain = $session->analyze('SELECT a FROM t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
         $plain = $plain->query;
-        $distinct = $session->analyze('SELECT DISTINCT a FROM t')->statement;
+        $distinct = $session->analyze('SELECT DISTINCT a FROM t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $distinct);
         $distinct = $distinct->query;
-        $grouped = $session->analyze('SELECT a FROM t GROUP BY a')->statement;
+        $grouped = $session->analyze('SELECT a FROM t GROUP BY a');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $grouped);
         $grouped = $grouped->query;
-        $limited = $session->analyze('SELECT a FROM t LIMIT 1')->statement;
+        $limited = $session->analyze('SELECT a FROM t LIMIT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $limited);
         $limited = $limited->query;
         self::assertInstanceOf(Select::class, $plain);
@@ -287,7 +287,7 @@ final class RelationsTest extends TestCase
         self::assertInstanceOf(Select::class, $limited);
         $operation = $session->analyze('SELECT 1');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
 
         self::assertSame([true, false, false, false], [$relations->mergeable($plain), $relations->mergeable($distinct), $relations->mergeable($grouped), $relations->mergeable($limited)]);
     }
@@ -302,14 +302,14 @@ final class RelationsTest extends TestCase
         $session->query('INSERT INTO t VALUES (1), (2)');
         $session->query('INSERT INTO u VALUES (3), (4)');
         $operation = $session->analyze('SELECT * FROM t, u');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $from = $statement->from;
         self::assertInstanceOf(TableList::class, $from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         $path = $planner->relations->list($from, new Scope());
 
@@ -338,14 +338,14 @@ final class RelationsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM t, LATERAL (SELECT t.a) AS l, (SELECT 1) AS m');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $from = $statement->from;
         self::assertInstanceOf(TableList::class, $from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
 
         self::assertSame([false, true, false], array_map(static fn ($member): bool => $relations->lateral($member), $from->members));
     }
@@ -422,13 +422,13 @@ final class RelationsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
         $scope = new Scope();
         $scope->place($statement, [Domain::integer(), Domain::integer(), Domain::integer()], ['c', 'a', 'B']);
         $scope->place($statement->from, [Domain::integer(), Domain::integer(), Domain::integer()], ['b', 'x', 'C']);
@@ -445,13 +445,13 @@ final class RelationsTest extends TestCase
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         $operation = $session->analyze('SELECT 1 FROM DUAL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
         $scope = new Scope();
         $scope->place($statement, [Domain::integer(), Domain::integer(), Domain::integer()], ['a', 'b', 'c'], $table->definition);
         $scope->place($statement->from, [Domain::integer()], ['b']);
@@ -464,13 +464,13 @@ final class RelationsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
         $scope = new Scope();
         $scope->place($statement, [Domain::integer(), Domain::integer()], ['a', 'b']);
         $scope->place($statement->from, [Domain::integer(), Domain::integer()], ['B', 'A']);
@@ -488,7 +488,7 @@ final class RelationsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
 
         self::assertNull($relations->equalities(new Scope(), [], [], []));
     }
@@ -497,13 +497,13 @@ final class RelationsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
         $scope = new Scope();
         $scope->place($statement, [Domain::integer()], ['a']);
         $scope->place($statement->from, [Domain::integer()], ['b']);
@@ -519,13 +519,13 @@ final class RelationsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->from);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $relations = new Relations(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $relations = new Relations(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
         $scope = new Scope();
         $scope->place($statement, [Domain::integer(), Domain::integer()], ['a', 'b']);
         $scope->place($statement->from, [Domain::integer(), Domain::null()], ['c', 'D']);

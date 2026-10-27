@@ -18,7 +18,7 @@ final class ShowEngineMutexTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW ENGINE innodb MUTEX');
-        self::assertInstanceOf(ShowEngineMutex::class, $show->statement);
+        self::assertInstanceOf(ShowEngineMutex::class, $show);
         self::assertSame('Type', $show->field(0)->name?->value);
     }
 

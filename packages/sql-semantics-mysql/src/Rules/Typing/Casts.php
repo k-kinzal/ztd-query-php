@@ -27,7 +27,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * SIGNED and UNSIGNED are BIGINTs, as long as the operand but at most 21 characters in MySQL 5.6
  * and 5.7 (verified on live 5.6.51 and 5.7.44 servers). A legacy string conversion retains
  * up to 65 digits for arithmetic, separately from that reported width. DECIMAL takes the written precision and scale, 10 and 0 by
- * default; DOUBLE and REAL are doubles, FLOAT a single unless its precision exceeds 24; the
+ * default; DOUBLE is a double; REAL is FLOAT under REAL_AS_FLOAT and DOUBLE otherwise;
+ * FLOAT is a single unless its precision exceeds 24; the
  * temporal targets keep the fractional digits written; CHAR is a string in the connection
  * collation or the character set written, BINARY a binary string, both as long as written or as
  * the operand written as text; JSON is JSON; YEAR is four digits wide, five in MySQL 8.0 (verified
@@ -58,7 +59,8 @@ final class Casts
             CastKind::Signed => $this->integer($operand, false),
             CastKind::Unsigned => $this->integer($operand, true),
             CastKind::Decimal => $this->decimal($target),
-            CastKind::Double, CastKind::Real => Domain::double(23),
+            CastKind::Double => Domain::double(23),
+            CastKind::Real => $this->settings->realAsFloat ? $this->float($target) : Domain::double(23),
             CastKind::Float => $this->float($target),
             CastKind::Date => new Domain(Kind::Date, Field::Date, 10),
             CastKind::Time => new Domain(Kind::Time, Field::Time, 10 + $fraction, $decimals),

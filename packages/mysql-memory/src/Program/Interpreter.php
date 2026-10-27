@@ -330,7 +330,7 @@ final class Interpreter
      */
     public function declare(VariableDeclaration $declaration, Row $row): void
     {
-        $domain = VariableDomain::declared($declaration->type, $declaration->collation, $this->activation->collation);
+        $domain = VariableDomain::declared($declaration->type, $declaration->collation, $this->activation->collation, $this->session->modes()->has('REAL_AS_FLOAT'));
         foreach ($declaration->names as $name) {
             $row->variables[] = new Variable($name->value, $domain);
         }

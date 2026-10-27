@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -75,12 +75,12 @@ final class EventCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof CreateEvent || $statement instanceof AlterEvent);
         $session->transaction->commit();
         ProgramSource::definer($statement->definer, $session, $context);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $schedule = $statement->schedule === null ? null : $this->schedule($statement->schedule, $planner, $context);
         $database = ProgramSource::database($statement->name->schema, $session);
         $dictionary = $session->instance->dictionary;

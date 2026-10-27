@@ -234,6 +234,7 @@ final class Rows
      * under a strict mode; otherwise it takes NULL when it admits NULL, else the implicit default
      * of its type, with the warning once for a column no row names and for each DEFAULT written
      * (verified on a live 8.4 server).
+     * @throws SqlError When a required default is missing or conversion fails
      */
     public function defaulted(int $position, Frame $frame, Store $store, int $number, bool $explicit): int|float|string|null
     {

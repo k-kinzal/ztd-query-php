@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -29,9 +28,9 @@ use SqlSemantics\Statement\Source\Span;
  *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa recover convert xid");
  *     [$xa->toString(), $xa->convertXid] // => ["XA RECOVER CONVERT XID", true]
  */
-final class XaRecover implements TransactionStatement
+final class XaRecover extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
     use TransactionSql;
 
     /**
@@ -45,8 +44,11 @@ final class XaRecover implements TransactionStatement
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly bool $convertXid = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(public readonly bool $convertXid = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->shape = new \SqlSemantics\Statement\Shape\RowShape((new \SqlSemantics\Platform\MySql\Rules\Utility\ShowRows())->slots([['formatID', 'b'], ['gtrid_length', 'b'], ['bqual_length', 'b'], ['data', 'v']]));
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         Check::input(!$convertXid || $profile->grammar !== GrammarRelease::MySql5651, 'CONVERT XID starts in MySQL 5.7.');

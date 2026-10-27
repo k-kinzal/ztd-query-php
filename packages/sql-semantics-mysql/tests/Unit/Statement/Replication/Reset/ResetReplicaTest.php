@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ResetReplica::class)]
 #[Medium]
@@ -29,7 +28,7 @@ final class ResetReplicaTest extends TestCase
     {
         $this->expectExceptionMessage('RESET REPLICA is written in the vocabulary of the release.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Reset([new ResetReplica(Terminology::Current)]));
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Reset([new ResetReplica(Terminology::Current)]), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheLegacySpellingWithChannel(): void

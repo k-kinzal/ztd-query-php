@@ -55,11 +55,11 @@ final class DeferredCharsetConversionTest extends TestCase
         $sql = 'CREATE PROCEDURE p() SELECT CONVERT((1, 2) USING utf8mb4)';
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredSelection::class, $operation->statement->body);
-        $item = $operation->statement->body->items[0];
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredSelection::class, $operation->body);
+        $item = $operation->body->items[0];
         self::assertInstanceOf(DeferredProjection::class, $item);
-        self::assertEquals($value, $item->expression);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($value, $item->expression));
         self::assertSame($sql, $operation->toString());
         self::assertSame($sql, $semantics->analyze($operation->toString())->toString());
     }

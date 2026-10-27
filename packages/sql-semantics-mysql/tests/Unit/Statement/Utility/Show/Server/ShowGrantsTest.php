@@ -18,7 +18,7 @@ final class ShowGrantsTest extends TestCase
     public function testDeriveStatementDependsOnTheCurrentUser(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW GRANTS');
-        self::assertInstanceOf(ShowGrants::class, $show->statement);
+        self::assertInstanceOf(ShowGrants::class, $show);
         self::assertFalse($show->shape()?->complete());
         $named = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW GRANTS FOR u');
         self::assertSame('Grants for u@%', $named->field(0)->name?->value);

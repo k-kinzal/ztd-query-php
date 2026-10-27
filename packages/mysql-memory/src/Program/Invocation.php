@@ -170,7 +170,7 @@ final class Invocation
         $context = $this->context($mode);
         $row = new Row(\MySqlMemory\Program\Routine\Body::of($routine)->parameters, []);
         foreach (\MySqlMemory\Program\Routine\Body::of($routine)->parameters->parameters as $index => $parameter) {
-            $variable = new Variable($parameter->name->value, VariableDomain::declared($parameter->type, $parameter->collation, $collation));
+            $variable = new Variable($parameter->name->value, VariableDomain::declared($parameter->type, $parameter->collation, $collation, \MySqlMemory\Session\SqlModes::parse($mode, $routine->release)?->has('REAL_AS_FLOAT') ?? false));
             if (isset($arguments[$index])) {
                 $variable->assign($arguments[$index][0], $arguments[$index][1], $context);
             }

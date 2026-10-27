@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP [TEMPORARY] TABLE [IF EXISTS] t, … [RESTRICT | CASCADE]`: a request to remove tables.
@@ -34,11 +33,11 @@ use SqlSemantics\Statement\Snapshot;
  * @example Resolving the dropped table to its declaration
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $drop = $semantics->analyze('drop tables if exists t, u cascade', []);
- *     [$drop->toString(), $drop->statement->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
+ *     [$drop->toString(), $drop->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
  */
-final class DropTable implements Statement
+final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TargetTable> The tables in order; at least one
@@ -51,8 +50,11 @@ final class DropTable implements Statement
      * @param list<TargetTable> $tables The tables in order; at least one
      * @param DropBehavior|null $behavior RESTRICT or CASCADE, when written
      */
-    public function __construct(public readonly bool $temporary, public readonly bool $ifExists, array $tables, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly bool $temporary, public readonly bool $ifExists, array $tables, public readonly ?DropBehavior $behavior = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($tables !== [], 'DROP TABLE names at least one table.');
         $this->tables = Check::listOf($tables, TargetTable::class, 'DROP TABLE names a list of tables.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated(array_map(static fn (TargetTable $table): \SqlSemantics\Statement\Identifier\QualifiedName => $table->name, $this->tables)) === null, 'DROP TABLE cannot repeat an identical table name.');

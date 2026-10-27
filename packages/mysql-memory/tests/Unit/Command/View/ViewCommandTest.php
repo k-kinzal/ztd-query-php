@@ -171,7 +171,7 @@ final class ViewCommandTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $session->query('CREATE VIEW v AS SELECT a FROM t');
         $operation = $session->analyze('CREATE VIEW w AS SELECT * FROM v');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateView::class, $statement);
         $session->query('DROP TABLE t');
 
@@ -188,7 +188,7 @@ final class ViewCommandTest extends TestCase
         $session->query('CREATE VIEW v AS SELECT 1');
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);
-        $statement = $session->analyze('CREATE OR REPLACE VIEW v AS SELECT 2')->statement;
+        $statement = $session->analyze('CREATE OR REPLACE VIEW v AS SELECT 2');
         self::assertInstanceOf(CreateView::class, $statement);
 
         ViewCommand::checkName($statement, $schema, 'd', 'v');
@@ -205,7 +205,7 @@ final class ViewCommandTest extends TestCase
         $session->query('CREATE VIEW v AS SELECT 1');
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);
-        $statement = $session->analyze('CREATE VIEW v AS SELECT 2')->statement;
+        $statement = $session->analyze('CREATE VIEW v AS SELECT 2');
         self::assertInstanceOf(CreateView::class, $statement);
 
         $this->expectExceptionCode(1050);
@@ -221,7 +221,7 @@ final class ViewCommandTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('CREATE VIEW v AS SELECT * FROM t');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateView::class, $statement);
 
         ViewCommand::refuseTemporaryTables($operation, $statement->definition->query, $session);
@@ -236,7 +236,7 @@ final class ViewCommandTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TEMPORARY TABLE tt (a INT)');
         $operation = $session->analyze('CREATE VIEW v AS SELECT * FROM tt');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateView::class, $statement);
 
         $this->expectExceptionCode(1352);
@@ -251,10 +251,10 @@ final class ViewCommandTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
 
-        $query = $session->analyze('SELECT a FROM t')->statement;
+        $query = $session->analyze('SELECT a FROM t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
-        $statement = ViewCommand::reanalyze($session, 'd', 'v', [new Name('x')], $query)->statement;
+        $statement = ViewCommand::reanalyze($session, 'd', 'v', [new Name('x')], $query);
 
         self::assertInstanceOf(CreateView::class, $statement);
         self::assertSame([true, 'x'], [$statement->orReplace, $statement->definition->columns[0]->value ?? null]);
@@ -266,7 +266,7 @@ final class ViewCommandTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
-        $statement = $session->analyze('CREATE VIEW v AS SELECT a FROM t')->statement;
+        $statement = $session->analyze('CREATE VIEW v AS SELECT a FROM t');
         self::assertInstanceOf(CreateView::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
@@ -277,7 +277,7 @@ final class ViewCommandTest extends TestCase
     public function testAlgorithmWarnsAndAnswersUndefinedForMergeOverAQueryThatCannotBeMerged(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE VIEW v AS SELECT DISTINCT 1')->statement;
+        $statement = $session->analyze('CREATE VIEW v AS SELECT DISTINCT 1');
         self::assertInstanceOf(CreateView::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 

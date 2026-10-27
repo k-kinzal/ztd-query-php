@@ -25,10 +25,10 @@ final class JsonNullsTest extends TestCase
         $session->query("SET @document='broken'");
         $operation = $session->analyze("SELECT JSON_EXTRACT(@document, '$') IS NULL");
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $compiler = (new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary))->compiler;
+        $compiler = (new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary))->compiler;
         $session->text = 'unrelated invalid input';
         $this->expectExceptionCode(3141);
 
-        (new JsonNulls())->check($compiler, (new Walker())->find($operation->statement, Node::class));
+        (new JsonNulls())->check($compiler, (new Walker())->find($operation, Node::class));
     }
 }

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET item, …`: resets the replica, the binary logs or (5.x) the query cache.
@@ -25,9 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Resetting the replica and the binary logs
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('reset replica, binary logs and gtids')->toString() // => 'RESET REPLICA, BINARY LOGS AND GTIDS'
  */
-final class Reset implements Statement
+final class Reset extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ResetTarget> The items in written order; at least one
@@ -37,8 +36,11 @@ final class Reset implements Statement
     /**
      * @param list<ResetTarget> $targets The items in written order; at least one
      */
-    public function __construct(array $targets)
+    public function __construct(array $targets, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->targets = Check::listOf($targets, ResetTarget::class, 'RESET names a list of items.', 1);
         $terms = [];
         foreach ($this->targets as $target) {

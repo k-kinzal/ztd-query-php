@@ -18,8 +18,9 @@ use SqlSemantics\Statement\Spelling\Layout;
  *
  * Nodes add keywords, punctuation, names and literal spellings; there is no
  * operation that adds a free SQL fragment. The pieces are joined into text by
- * the lexical writer and the result is parsed again and compared with the
- * structure before an operation is published.
+ * the lexical writer. Explicit toString() calls check that observable layouts
+ * only respell those pieces; constructing or executing a statement does not
+ * call this renderer to recover semantic information.
  *
  * @visibility SqlSemantics
  */

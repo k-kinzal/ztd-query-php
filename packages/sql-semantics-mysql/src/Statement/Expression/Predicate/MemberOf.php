@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A JSON array membership test: `value MEMBER OF (json_array)` (`Item_func_member_of`, MySQL 8.0.17 and later).
@@ -35,15 +34,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class MemberOf implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The value searched for
      * @param Scalar $array The JSON array searched
      * @param OptionalWords $of Whether the optional OF is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly Scalar $array, public readonly OptionalWords $of = OptionalWords::Written)
+    public function __construct(public readonly Scalar $operand, public readonly Scalar $array, public readonly OptionalWords $of = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of MEMBER OF needs a grouping to keep its place.');
         Check::input($precedence->admits($array, Precedence::SIMPLE_EXPR), 'The array of MEMBER OF needs a grouping to keep its place.');

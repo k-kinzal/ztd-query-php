@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\DropResourceGrou
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes CREATE, ALTER, DROP and SET RESOURCE GROUP.
@@ -62,8 +62,8 @@ final class ResourceGroupCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $groups = $session->instance->registry->resourceGroups;
         if ($statement instanceof SetResourceGroup) {
             $this->assign($statement, $session, $groups);

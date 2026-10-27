@@ -20,6 +20,6 @@ final class ConditionsTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE n (a int CHECK (a), b bool CHECK (b), c text CHECK (\'t\'))', $context);
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

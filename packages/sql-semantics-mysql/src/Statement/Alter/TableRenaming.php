@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `old TO new`: one rename of RENAME TABLE.
@@ -23,16 +22,20 @@ use SqlSemantics\Statement\Snapshot;
  *     $renaming = new \SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('archive')));
  *     $renaming->to->schema?->value // => 'archive'
  */
-final class TableRenaming implements Node
+final class TableRenaming implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $from The current name with its optional database
      * @param QualifiedName $to The new name with its optional database
      */
-    public function __construct(public readonly QualifiedName $from, public readonly QualifiedName $to)
+    public function __construct(public readonly QualifiedName $from, public readonly QualifiedName $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($from);
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($to);
         Check::input($from->catalog === null && $to->catalog === null, 'A table is qualified by at most a database.');

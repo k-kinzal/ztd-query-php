@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -39,17 +38,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the column
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE VALUES(a)');
- *     $query->facts->scalar($query->statement->query->where)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $query->query->where->scalarInformation()->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
  */
 final class InsertedColumn implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnUse $column The column whose inserted value is read
      */
-    public function __construct(public readonly ColumnUse $column)
+    public function __construct(public readonly ColumnUse $column, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

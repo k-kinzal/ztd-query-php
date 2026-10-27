@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER UNDO TABLESPACE name SET {ACTIVE | INACTIVE} [option …]`: a request to activate or deactivate an undo tablespace (MySQL 8.0.14 and later).
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Deactivating an undo tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter undo tablespace u set inactive");
- *     [$statement->toString(), $statement->statement->active] // => ["ALTER UNDO TABLESPACE u SET INACTIVE", false]
+ *     [$statement->toString(), $statement->active] // => ["ALTER UNDO TABLESPACE u SET INACTIVE", false]
  */
-final class AlterUndoTablespace implements Statement
+final class AlterUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -41,8 +40,11 @@ final class AlterUndoTablespace implements Statement
      * @param bool $active Whether ACTIVE (true) or INACTIVE (false) is written
      * @param list<StorageOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, public readonly bool $active, array $options = [])
+    public function __construct(public readonly Name $name, public readonly bool $active, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::UNDO_TABLESPACE);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Leaf;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
@@ -344,6 +345,8 @@ final class LiteralRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->leaves->record(new Parameter($form->token(0)->text));
+        $token = $form->token(0);
+        Check::invariant(isset($this->lowering->parameterPositions[$token->offset]), 'A lowered parameter belongs to the input parameter list.');
+        return $this->lowering->leaves->record(new Parameter($token->text, $this->lowering->parameterPositions[$token->offset]));
     }
 }

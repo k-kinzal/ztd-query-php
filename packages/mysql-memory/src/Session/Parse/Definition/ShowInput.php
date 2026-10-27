@@ -49,14 +49,16 @@ final class ShowInput
      */
     public function resolve(RefusedFilter $problem, Session $session): SqlError
     {
-        $operand = $problem->condition->operand;
+        $operand = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($problem->condition->operand);
+        $header = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($problem->header);
+        $problem = new RefusedFilter($header, new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($operand));
         (new \MySqlMemory\Session\Problem\Identifiers())->check($operand, $session->settings()->release());
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
-        $fact = $derivation->relation($problem->header, $derivation->environment());
-        $derivation->scalar($operand, new Environment($context, null, [new VisibleRelation($problem->header, $fact->shape)]));
-        $diagnostics = $derivation->facts()->diagnostics;
+        $fact = $derivation->relation($header, $derivation->environment());
+        $derivation->scalar($operand, new Environment($context, null, [new VisibleRelation($header, $fact->shape)]));
+        $diagnostics = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics;
         foreach ($diagnostics as $diagnostic) {
             if ($session->settings()->legacy() && Stages::parsed($diagnostic)) {
                 return (new Errors())->error($diagnostic, $session, 'where clause');
@@ -66,7 +68,7 @@ final class ShowInput
         if ($selected === '') {
             return QueryError::NoDatabase->error();
         }
-        (new \MySqlMemory\Session\Access\RelationEntry())->counts($operand, $derivation->facts(), $session);
+        (new \MySqlMemory\Session\Access\RelationEntry())->counts($operand, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         foreach ($diagnostics as $diagnostic) {
             if ($database === '' && $diagnostic instanceof MissingTable && $diagnostic->name->schema === null) {
                 return QueryError::NoDatabase->error();
@@ -100,7 +102,7 @@ final class ShowInput
     {
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($problem->condition->operand, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($problem->condition->operand, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $headings = $this->headings($problem, $derivation, $session);
         $domains = array_map(static fn (\MySqlMemory\Command\Show\Heading $heading): \MySqlMemory\Typing\Domain => $heading->domain(), $headings);
         $scope = new \MySqlMemory\Evaluation\Scope();
@@ -124,7 +126,7 @@ final class ShowInput
 
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys => (new \MySqlMemory\Command\Show\ShowKeysCommand())->headings(),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => (new \MySqlMemory\Command\Show\ShowColumnsCommand())->headings($problem->header->listing?->full() === true, $session->settings()->legacy(), $session->modes()->strict()),
-            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => (new \MySqlMemory\Command\ShowTablesCommand())->headings((new \SqlSemantics\Statement\Operation($derivation->context, $problem->header)), $session),
+            $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => (new \MySqlMemory\Command\ShowTablesCommand())->headings(((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($derivation->context, $problem->header, new \SqlSemantics\Statement\Source\SourceMap())), $session),
             $problem->header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus => $session->settings()->legacy() ? (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->legacyHeadings() : (new \MySqlMemory\Command\Show\ShowTableStatusCommand())->headings(false),
             default => (new \MySqlMemory\Command\Program\ShowTriggersCommand())->headings($session->settings()->release()),
         };

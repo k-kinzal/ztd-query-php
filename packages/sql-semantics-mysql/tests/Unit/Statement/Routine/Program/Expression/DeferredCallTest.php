@@ -45,9 +45,9 @@ final class DeferredCallTest extends TestCase
     public function testRenderRoundTripsTheDeferredProgramRole(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() IF ABS((2,3)) THEN DO 0; END IF');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement::class, $operation->statement->body);
-        self::assertInstanceOf(DeferredCall::class, $operation->statement->body->branches[0]->condition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement::class, $operation->body);
+        self::assertInstanceOf(DeferredCall::class, $operation->body->branches[0]->condition);
         self::assertSame('CREATE PROCEDURE p() IF ABS((2, 3)) THEN DO 0; END IF', $operation->toString());
     }
 
@@ -84,7 +84,7 @@ final class DeferredCallTest extends TestCase
         $sql = 'WITH c AS (SELECT ``(ABS())) SELECT 7';
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
         self::assertSame($sql, $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
 }

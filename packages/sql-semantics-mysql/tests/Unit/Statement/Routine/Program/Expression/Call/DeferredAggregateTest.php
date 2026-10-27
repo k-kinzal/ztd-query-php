@@ -25,7 +25,7 @@ final class DeferredAggregateTest extends TestCase
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context());
         self::assertInstanceOf(Invalid::class, $call->deriveScalar($derivation, $derivation->environment())->type);
         self::assertSame([$row], $call->operands());
-        self::assertTrue($derivation->facts()->covers($row));
+        self::assertTrue($row->hasBinding());
     }
 
     public function testOperandsRejectAnOrdinaryAggregate(): void

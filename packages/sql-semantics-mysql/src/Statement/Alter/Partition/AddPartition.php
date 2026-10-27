@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ADD PARTITION [NO_WRITE_TO_BINLOG] [(definitions) | PARTITIONS n]`: a request to add partitions.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Adding two hash partitions
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION PARTITIONS 2');
- *     $alter->statement->commands[0]->count?->text // => '2'
+ *     $alter->commands[0]->count?->text // => '2'
  */
 final class AddPartition implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionDefinition> The new partitions in order
@@ -40,7 +39,7 @@ final class AddPartition implements StandaloneCommand
      * @param list<PartitionDefinition> $definitions The new partitions in order
      * @param Numeral|null $count The PARTITIONS count, when written
      */
-    public function __construct(public readonly bool $local, array $definitions, public readonly ?Numeral $count = null)
+    public function __construct(public readonly bool $local, array $definitions, public readonly ?Numeral $count = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'ADD PARTITION holds a list of partition definitions.');
         (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions);

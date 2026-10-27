@@ -10,9 +10,9 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 
 /**
@@ -29,9 +29,9 @@ final class CheckQueries
     /**
      * Prepares subqueries embedded in CREATE TABLE constraints from semantic structures alone.
      */
-    public function prepare(Operation $operation, Session $session, Problems $problems): void
+    public function prepare(MySqlStatement $operation, Session $session, Problems $problems): void
     {
-        $create = $operation->statement;
+        $create = $operation;
         if (!$create instanceof CreateTable || $session->settings()->legacy()) {
             return;
         }
@@ -40,12 +40,12 @@ final class CheckQueries
         if (array_filter($checks, static fn (CheckConstraint $check): bool => (new Walker())->find($check->condition, Query::class) !== []) === []) {
             return;
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof OperandColumns && $diagnostic->expression !== null && $walker->find($diagnostic->expression, Query::class) === []) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $create);
             }
         }
-        $problems->opened($operation, $session, $operation->facts->diagnostics);
+        $problems->opened($operation, $session, $operation->statementInformation()->diagnostics);
         CheckDefinitions::forbidden($create, false, release: $session->settings()->release());
     }
 }

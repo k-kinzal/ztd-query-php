@@ -27,15 +27,15 @@ final class VariableDeclarationTest extends TestCase
     public function testDeriveRelationAnswersANullablePositionPerName(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a, b VARCHAR(5) DEFAULT \'x\'; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $declaration = $block->declarations[0];
         self::assertInstanceOf(VariableDeclaration::class, $declaration);
-        $slots = $operation->facts->relation($declaration)->shape->slots;
+        $slots = $declaration->relationInformation()->shape->slots;
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame(['a', 'b'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $slots));
         self::assertSame([Nullability::Nullable, Nullability::Nullable], array_map(static fn (OutputSlot $slot): Nullability => $slot->nullability, $slots));
         self::assertEquals(new Known($declaration->type), $slots[0]->type);
@@ -45,7 +45,7 @@ final class VariableDeclarationTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) BEGIN DECLARE b INT DEFAULT a + c; END');
 
-        self::assertSame(['Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     #[DataProvider('providerRenderWritesTheDeclaration')]
@@ -75,13 +75,13 @@ final class VariableDeclarationTest extends TestCase
     }
     public function testDeriveRelationChecksTheTypeAfterDefaultNotices(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(255) DEFAULT !1; END');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(Block::class, $operation->statement->body);
-        $original = $operation->statement->body->declarations[0];
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy((new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(255) DEFAULT !1; END'));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(Block::class, $operation->body);
+        $original = $operation->body->declarations[0];
         self::assertInstanceOf(VariableDeclaration::class, $original);
         $declaration = new VariableDeclaration($original->names, new Integral(IntegralKind::Int, '256'), default: $original->default);
-        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context([]));
         $declaration->deriveRelation($derivation, $derivation->environment());
 
         self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", "Display width out of range for column '' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $derivation->facts()->warnings));

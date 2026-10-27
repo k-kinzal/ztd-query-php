@@ -42,7 +42,8 @@ final class RelationEntryTest extends TestCase
     {
         $session = (new Instance('8.4.7'))->connect();
         $operation = $session->semantics()->analyze('WITH unused AS (SELECT NTILE(n) OVER ()) SELECT 1', []);
-        (new RelationEntry())->counts($operation->statement, $operation->facts, $session);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        (new RelationEntry())->counts($operation, $operation->statementInformation(), $session);
         self::assertSame([], $session->diagnostics->conditions);
     }
 
@@ -50,7 +51,8 @@ final class RelationEntryTest extends TestCase
     {
         $session = (new Instance('8.4.7'))->connect();
         $operation = $session->semantics()->analyze('WITH unused AS (SELECT * FROM ignored), active AS (SELECT * FROM reached) SELECT * FROM active', []);
-        $nodes = (new RelationEntry())->nodes($operation->statement, $operation->facts);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $nodes = (new RelationEntry())->nodes($operation, $operation->statementInformation());
         $tables = array_filter($nodes, static fn ($node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference);
         self::assertSame(['active', 'reached'], array_values(array_map(static fn ($table): string => $table->name->name->value, $tables)));
     }
@@ -60,10 +62,11 @@ final class RelationEntryTest extends TestCase
     {
         $session = (new Instance('8.4.7'))->connect();
         $operation = $session->semantics()->analyze($sql, $session->semantics()->context([], true));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $session->text = 'unrelated invalid input';
         $this->expectException(SqlError::class);
         $this->expectExceptionCode($code);
-        (new RelationEntry())->check($operation->statement, $operation->facts, $session);
+        (new RelationEntry())->check($operation, $operation->statementInformation(), $session);
     }
 
     public function testCountsResolvesAnExplicitTableLimitFromItsConstructedStructure(): void
@@ -75,7 +78,7 @@ final class RelationEntryTest extends TestCase
         $derivation->query($query, $derivation->environment());
         $this->expectExceptionCode(1327);
         $this->expectExceptionMessage('Undeclared variable: n');
-        (new RelationEntry())->counts($query, $derivation->facts(), $session);
+        (new RelationEntry())->counts($query, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
     }
 
     public function testAliasesRetainsTheLaterRelationIdentity(): void
@@ -84,7 +87,7 @@ final class RelationEntryTest extends TestCase
         $first = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName($name));
         $later = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName($name));
         $problem = new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($name, $later);
-        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [$problem]);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [$problem]);
         $aliases = (new RelationEntry())->aliases($facts);
         self::assertArrayNotHasKey(spl_object_id($first), $aliases);
         self::assertSame($problem, $aliases[spl_object_id($later)]);
@@ -94,9 +97,10 @@ final class RelationEntryTest extends TestCase
     {
         $session = (new Instance('8.4.7'))->connect();
         $operation = $session->semantics()->analyze('WITH c AS (SELECT 1) SELECT * FROM c,t', []);
-        $tables = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class);
-        self::assertFalse((new RelationEntry())->implicit($tables[0], $operation->facts));
-        self::assertTrue((new RelationEntry())->implicit($tables[1], $operation->facts));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $tables = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class);
+        self::assertFalse((new RelationEntry())->implicit($tables[0], $operation->statementInformation()));
+        self::assertTrue((new RelationEntry())->implicit($tables[1], $operation->statementInformation()));
     }
 
     public function testVariablesKeepsReadDependenciesSeparateFromAssignmentTargets(): void
@@ -104,7 +108,7 @@ final class RelationEntryTest extends TestCase
         $read = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('missing');
         $assigned = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('assigned', true);
         $structured = new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('structured', false, true);
-        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [$read, $assigned, $structured]);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [$read, $assigned, $structured]);
         self::assertSame(['missing' => $read], (new RelationEntry())->variables($facts));
     }
 }

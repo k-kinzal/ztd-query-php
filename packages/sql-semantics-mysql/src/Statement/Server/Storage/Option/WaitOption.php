@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `WAIT` or `NO_WAIT`: whether the statement waits for the change to complete.
@@ -19,12 +18,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WaitOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $wait Whether WAIT (true) or NO_WAIT (false) is written
      */
-    public function __construct(public readonly bool $wait)
+    public function __construct(public readonly bool $wait, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

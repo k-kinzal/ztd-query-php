@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * What LOAD reads: `[LOCAL] INFILE|URL|S3 'name' [COUNT n] [IN PRIMARY KEY ORDER]`.
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the input of LOAD DATA
  *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA LOCAL INFILE 'f.csv' INTO TABLE t");
- *     [$load->statement->input->local, $load->statement->input->source, $load->statement->input->file->value] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, 'f.csv']
+ *     [$load->input->local, $load->input->source, $load->input->file->value] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, 'f.csv']
  */
 final class LoadInput implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The noncanonical spelling of COUNT when read as an identifier.
@@ -56,6 +55,7 @@ final class LoadInput implements Node
         public readonly ?Numeral $count = null,
         public readonly bool $primaryKeyOrder = false,
         ?Name $countWord = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($file->radix === null, 'A LOAD file name is quoted text.');
         Check::input($count === null || $count->isIntegerToken(), 'A LOAD file count is a decimal integer token no greater than 2147483647.');

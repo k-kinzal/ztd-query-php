@@ -13,7 +13,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\SyntaxLocks;
 use SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Resolves completed lock specifications before the original input error.
@@ -61,7 +60,7 @@ final class LockInput
         foreach ($locks as [$boundary, $lock]) {
             $prefix[] = $lock;
             $context = $semantics->context(searchPath: $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database));
-            $failure = (new LockNames())->failure(new Operation($context, new LockTables($prefix)), $session);
+            $failure = (new LockNames())->failure((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new LockTables($prefix), new \SqlSemantics\Statement\Source\SourceMap()), $session);
             if ($failure !== null) {
                 $notices = (new SyntaxWarnings())->completed($parser, $statement, $boundary, $semantics->profile(), $session->resolution()->replicaNetTimeout, $session->resolution()->client);
 

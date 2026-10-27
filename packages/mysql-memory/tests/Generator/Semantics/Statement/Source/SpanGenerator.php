@@ -49,4 +49,16 @@ final class SpanGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<int> $offset The generated semantic operand
+     * @param ErisGenerator<int> $length The generated semantic operand
+     * @return ErisGenerator<Span>
+     */
+    public static function fromOperands(ErisGenerator $offset, ErisGenerator $length): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): Span => new Span(offset: $parts[0], length: $parts[1]), \Tests\Generator\Operands::tuple($offset, $length));
+    }
+
 }

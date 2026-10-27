@@ -45,6 +45,7 @@ final class SyntaxWarnings
         $malformed = (new Query\Legacy\SyntaxInputNames())->unparsed($parser, $statement, $profile);
         $state = new Notice\Completion((new Account\SyntaxResourceNames())->completed($parser, $statement, $end));
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile, client: $client);
+        $lowering->parameters($tokens);
         $operands = new Notice\OperandCompletion();
         $header = new Routine\Program\NoticeHeader();
         $handlers = new Routine\Condition\HandlerPrefix();
@@ -112,6 +113,7 @@ final class SyntaxWarnings
     public function before(Node $tree, int $end, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
     {
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+        $lowering->parameters($tree->tokens());
 
         $failure = (new Routine\Program\InputPrefix($lowering))->before($tree, $end);
         return $failure?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateSignalItem ? (new Routine\RefusedBodyHeader())->wrap($tree, $failure, $lowering) : $failure;
@@ -124,6 +126,7 @@ final class SyntaxWarnings
     public function enclosures(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
     {
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+        $lowering->parameters($tree->tokens());
         return (new Query\Legacy\UnionEnclosures())->tree($tree, $lowering);
     }
 
@@ -137,6 +140,7 @@ final class SyntaxWarnings
             return $entry;
         }
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 2) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile);
+        $lowering->parameters($tree->tokens());
         $inactive = (new Query\Shared\ValueQueries($lowering))->inactive($tree) + (new Call\UncontextualizedCalls())->inactive($tree, $lowering);
         $unprepared = $lowering->unprepared();
         $tokens = $tree->tokens();

@@ -174,8 +174,8 @@ final class GrantCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->semantics()->analyze("GRANT EXECUTE ON PROCEDURE d.p TO a@'猫'");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
         $identities = (new GrantCommand())->identities($statement, 'PROCEDURE', $session);
 

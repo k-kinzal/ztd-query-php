@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -25,17 +24,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a boolean literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = TRUE');
- *     $query->statement->query->where->right->value // => true
+ *     $query->query->where->right->value // => true
  */
 final class BooleanLiteral implements LiteralExpression
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $value Whether the literal is TRUE
      */
-    public function __construct(public readonly bool $value)
+    public function __construct(public readonly bool $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

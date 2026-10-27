@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ORDER BY column [ASC | DESC], …`: a request to store the rows in an order once, when the table is rebuilt.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Reorder implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OrderItem> The ordering columns in order; at least one
@@ -38,7 +37,7 @@ final class Reorder implements AlterCommand
     /**
      * @param list<OrderItem> $items The ordering columns in order; at least one
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($items !== [], 'ORDER BY names at least one column.');
         $this->items = Check::listOf($items, OrderItem::class, 'ORDER BY holds a list of ordering items.');

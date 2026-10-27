@@ -67,7 +67,7 @@ final class Names
      */
     public function column(ColumnUse $use, Scope $scope): Evaluable
     {
-        $fact = $this->compiler->facts->scalar($use);
+        $fact = $use->scalarInformation();
         $resolution = $fact->resolution;
         if ($resolution instanceof AliasTarget) {
             return $this->field($resolution->field, $scope);
@@ -124,7 +124,7 @@ final class Names
                 }
             }
         }
-        $slots = $this->compiler->facts->relation($resolution->relation)->shape->slots;
+        $slots = $resolution->relation->relationInformation()->shape->slots;
         for ($slot = $resolution->slot; $slot instanceof OutputSlot; $slot = $slot->origin) {
             $position = array_search($slot, $slots, true);
             if (is_int($position)) {
@@ -172,7 +172,7 @@ final class Names
      */
     public function inserted(InsertedColumn $node, Scope $scope): Evaluable
     {
-        $resolution = $this->compiler->facts->scalar($node->column)->resolution;
+        $resolution = $node->column->scalarInformation()->resolution;
         if ($resolution instanceof ResolvedColumn && $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler) {
             foreach ($this->compiler->facts->warnings as $warning) {
                 if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation && $this->compiler->facts->warningSubject($warning) === $node) {
@@ -182,7 +182,7 @@ final class Names
         }
         $definition = $scope->inserted;
         if ($definition === null) {
-            if ($this->compiler->facts->scalar($node->column)->type instanceof \SqlSemantics\Statement\Type\Invalid) {
+            if ($node->column->scalarInformation()->type instanceof \SqlSemantics\Statement\Type\Invalid) {
                 $this->column($node->column, $scope);
             }
             return new Constant(Domain::null(), null);
@@ -201,7 +201,7 @@ final class Names
      */
     public function ordinal(OutputOrdinal $ordinal, Scope $scope): Evaluable
     {
-        $resolution = $this->compiler->facts->scalar($ordinal)->resolution;
+        $resolution = $ordinal->scalarInformation()->resolution;
         if (!$resolution instanceof AliasTarget) {
             throw QueryError::BadField->error($ordinal->name(), 'order clause');
         }
@@ -242,7 +242,7 @@ final class Names
      */
     public function userVariable(UserVariable $variable): Evaluable
     {
-        $binding = $this->compiler->facts->scalar($variable)->resolution;
+        $binding = $variable->scalarInformation()->resolution;
         if ($this->compiler->settings->legacy() && $binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding && !$binding->exists) {
             return new Constant($this->compiler->domain($variable), null);
         }

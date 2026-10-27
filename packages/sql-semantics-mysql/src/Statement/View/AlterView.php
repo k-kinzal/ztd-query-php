@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to change the definition of an existing view.
@@ -26,17 +25,24 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the new query of a view
  *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER VIEW v AS SELECT 1 AS a');
- *     [$view->statement->definition->name->name->value, $view->declarations()] // => ['v', []]
+ *     [$view->definition->name->name->value, $view->declarations()] // => ['v', []]
  */
-final class AlterView implements Statement
+final class AlterView extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ViewDefinition $definition The new view definition
      */
-    public function __construct(public readonly ViewDefinition $definition)
+    public function __construct(public readonly ViewDefinition $definition, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input(!$definition->ifNotExists, 'ALTER VIEW has no IF NOT EXISTS clause.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

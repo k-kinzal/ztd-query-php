@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The specification of a column that stores the values written to it: data type, attributes and an inline reference.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the attributes of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL DEFAULT 0)');
- *     count($create->statement->elements[0]->specification->attributes) // => 2
+ *     count($create->elements[0]->specification->attributes) // => 2
  */
 final class OrdinaryColumn implements ColumnSpecification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnAttribute> The attributes in written order
@@ -44,7 +43,7 @@ final class OrdinaryColumn implements ColumnSpecification
      * @param list<ColumnAttribute> $attributes The attributes in written order
      * @param References|null $references The inline reference, when written
      */
-    public function __construct(public readonly DeclaredName $type, array $attributes = [], public readonly ?References $references = null)
+    public function __construct(public readonly DeclaredName $type, array $attributes = [], public readonly ?References $references = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($this->attributes) === null, 'Column enforcement follows a CHECK constraint or its enforcement chain.');

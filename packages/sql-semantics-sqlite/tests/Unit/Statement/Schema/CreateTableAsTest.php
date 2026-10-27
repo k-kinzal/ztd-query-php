@@ -60,7 +60,7 @@ final class CreateTableAsTest extends TestCase
         $operation = $semantics->analyze('CREATE TEMP TABLE main.t AS SELECT 1 AS one');
 
         self::assertSame('temp', $operation->declarations()[0]->name->schema?->value);
-        self::assertInstanceOf(QualifiedTemporaryName::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(QualifiedTemporaryName::class, $operation->diagnostics()[0]);
     }
 
     #[TestWith(["CREATE TABLE v AS SELECT a+1, \"zz\", A COLLATE nocase, likely(b), true, 1 AS false, x'0aff' FROM t"])]
@@ -89,7 +89,7 @@ final class CreateTableAsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create temp table if not exists t as select 1 as one');
 
-        self::assertInstanceOf(CreateTableAs::class, $operation->statement);
+        self::assertInstanceOf(CreateTableAs::class, $operation);
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS t AS SELECT 1 AS one', $operation->toString());
     }
 }

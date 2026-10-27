@@ -14,14 +14,13 @@ use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding;
-use SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -51,7 +50,7 @@ final class BranchParameters
     /**
      * @return array<int, Domain> Inferred domains keyed by the resolved marker occurrence
      */
-    public function infer(Scalar $expression, Operation $operation): array
+    public function infer(Scalar $expression, Statement $operation): array
     {
         $markers = [];
         $domains = [];
@@ -59,7 +58,7 @@ final class BranchParameters
             while ($branch instanceof Grouped) {
                 $branch = $branch->operand;
             }
-            $fact = $operation->facts->scalar($branch);
+            $fact = $branch->scalarInformation();
             if ($branch instanceof Parameter && $fact->resolution instanceof ParameterBinding) {
                 $markers[] = $fact->resolution->position;
             } else {
@@ -73,7 +72,9 @@ final class BranchParameters
         if ($markers === [] || $domains === []) {
             return [];
         }
-        $domain = (new Aggregation(new Collations(Settings::of($operation->context)->connection)))->of($domains, 'case', new Derivation($operation->context));
+        $settings = new Settings($operation->statementInformation()->connection ?? Settings::defaults($operation->profile()->grammar)->connection);
+        $context = new \SqlSemantics\Contract\AnalysisContext($operation->profile(), [new \SqlSemantics\Statement\Identifier\Name('intrinsic')], session: $settings);
+        $domain = (new Aggregation(new Collations($settings->connection)))->of($domains, 'case', new Derivation($context));
         if ($domain === null) {
             return [];
         }

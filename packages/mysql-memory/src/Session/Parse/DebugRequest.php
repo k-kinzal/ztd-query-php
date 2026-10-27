@@ -12,10 +12,10 @@ use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\Warning;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Retains conditions read inside SHOW PARSE_TREE before its release-build refusal.
@@ -31,11 +31,11 @@ final class DebugRequest
     /**
      * Records completed semantic notices followed by the debug-only syntax refusal.
      */
-    public function refusal(Operation $operation, SqlError $syntax, Session $session): SqlError
+    public function refusal(MySqlStatement $operation, SqlError $syntax, Session $session): SqlError
     {
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree && \MySqlMemory\Command\Dispatcher::program($operation->statement->statement)) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree && \MySqlMemory\Command\Dispatcher::program($operation)) {
             try {
-                (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement->statement, $session);
+                (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation, $session);
             } catch (SqlError $header) {
                 return (new \MySqlMemory\Session\CacheOptions())->recorded([], null, $header, $session);
             }
@@ -46,16 +46,16 @@ final class DebugRequest
         } elseif ($this->preserves($operation)) {
             return (new \MySqlMemory\Session\CacheOptions())->recorded([], null, $syntax, $session, clear: false);
         }
-        return $this->notices($operation->facts->warnings, $syntax, $session);
+        return $this->notices($operation->statementInformation()->warnings, $syntax, $session);
     }
 
     /**
      * Finds name bindings performed by grammar actions before the debug-build check.
      * Column references, SELECT INTO and LIMIT bindings are contextualized later.
      */
-    public function operand(Operation $operation): ?Diagnostic
+    public function operand(MySqlStatement $operation): ?Diagnostic
     {
-        foreach ($operation->facts->diagnostics as $problem) {
+        foreach ($operation->statementInformation()->diagnostics as $problem) {
             if (($problem instanceof ProgramProblem && in_array($problem->rule, [ProgramRule::UndeclaredVariable, ProgramRule::UndefinedCondition], true)) || ($problem instanceof UnknownSystemVariable && $problem->assigned)) {
                 return $problem;
             }
@@ -67,10 +67,10 @@ final class DebugRequest
      * Keeps the previous diagnostic area for a valid GET DIAGNOSTICS inspection.
      * Its undeclared local target instead starts a new area before reporting the error.
      */
-    public function preserves(Operation $operation): bool
+    public function preserves(MySqlStatement $operation): bool
     {
-        return $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree
-            && $operation->statement->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics
+        return $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree
+            && $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics
             && $this->operand($operation) === null;
     }
 

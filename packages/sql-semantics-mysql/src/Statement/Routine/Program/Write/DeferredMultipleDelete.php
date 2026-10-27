@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored deletion retaining a target, input-column or sampling condition and all its dependencies.
@@ -31,11 +30,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping a deferred target in a stored definition
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() DELETE q FROM (SELECT 1) q');
- *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete // => true
+ *     $operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete // => true
  */
 final class DeferredMultipleDelete implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
@@ -69,10 +68,11 @@ final class DeferredMultipleDelete implements ProgramStatement
     public function __construct(
         public readonly ?WithClause $with,
         array $options,
-        Target\DeletionInput $input,
+        public readonly Target\DeletionInput $input,
         public readonly MultipleDeleteForm $form,
         public readonly ?Scalar $where = null,
         array $hints = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');

@@ -36,7 +36,7 @@ final class JsonTables
     /**
      * Answers the error of the first path that is not valid of a JSON_TABLE the statement names among its outermost table references, if any.
      */
-    public function first(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts): ?SqlError
+    public function first(Node $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): ?SqlError
     {
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
             return $this->first($statement->statement, $facts);
@@ -49,7 +49,7 @@ final class JsonTables
             foreach ($this->functions($table) as $function) {
                 try {
                     \MySqlMemory\Plan\Relations::jsonPath($function->path->value());
-                    $slots = $facts->relation($function)->shape->slots;
+                    $slots = $function->relationInformation()->shape->slots;
                     foreach ($function->columns as $column) {
                         (new \MySqlMemory\Plan\Json\Columns())->compile($column, $slots);
                     }

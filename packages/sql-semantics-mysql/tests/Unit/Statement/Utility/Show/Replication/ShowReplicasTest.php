@@ -18,7 +18,7 @@ final class ShowReplicasTest extends TestCase
     public function testDeriveStatementNamesTheColumnsAfterTheSpelling(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW REPLICAS');
-        self::assertInstanceOf(ShowReplicas::class, $show->statement);
+        self::assertInstanceOf(ShowReplicas::class, $show);
         self::assertSame('Replica_UUID', $show->field(4)->name?->value);
     }
 

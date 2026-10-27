@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One parenthesized row of INSERT ... VALUES: values or DEFAULT, one per written column.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the values of a row
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t VALUES (1, 2), (3, DEFAULT)');
- *     [count($insert->statement->rows[0]->values), count($insert->statement->rows[1]->values)] // => [2, 2]
+ *     [count($insert->rows[0]->values), count($insert->rows[1]->values)] // => [2, 2]
  */
 final class InsertedRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar|DefaultRequest> The values in written order
@@ -36,7 +35,7 @@ final class InsertedRow implements Node
     /**
      * @param list<Scalar|DefaultRequest> $values The values in written order
      */
-    public function __construct(array $values)
+    public function __construct(array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $accepted = [];
         foreach (Check::listOf($values, Operand::class, 'A row holds values.') as $value) {

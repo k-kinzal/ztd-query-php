@@ -21,7 +21,7 @@ final class ExpressionPartTest extends TestCase
     public function testDeriveKeyPartResolvesTheExpressionInTheTable(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY ((a + 1)))');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
         self::assertInstanceOf(IndexDefinition::class, $element1);
@@ -29,7 +29,7 @@ final class ExpressionPartTest extends TestCase
 
         self::assertInstanceOf(ExpressionPart::class, $part);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic::class, $part->expression);
-        $resolution = $create->facts->scalar($part->expression->left)->resolution;
+        $resolution = $part->expression->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($create->declarations()[0]->columns[0], $resolution->slot->column);
     }

@@ -28,7 +28,7 @@ final class InsertNoteTest extends TestCase
     {
         $session = (new Instance(databases: ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT DEFAULT 7)');
-        $statement = $session->analyze('INSERT INTO t VALUES(DEFAULT)')->statement;
+        $statement = $session->analyze('INSERT INTO t VALUES(DEFAULT)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $statement);
         self::assertSame([[$statement->rows[0]->values[0]]], (new InsertNote())->values($statement));
     }

@@ -19,8 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Statement;
 
@@ -60,8 +60,8 @@ final class ViewWriteCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $target = self::viewTarget($operation);
         if ($target === null) {
             return $this->command->execute($operation, $session, $context, $connection);
@@ -79,7 +79,7 @@ final class ViewWriteCommand implements Command
         if (!$insert && $statement->limit !== null && !$writes->keyed && !self::limitable($session)) {
             throw QueryError::NonUpdatableTable->error($view->name, $statement instanceof Update ? 'UPDATE' : 'DELETE');
         }
-        $rewritten = (new ViewRewrite())->operation($operation, $writes, $target);
+        $rewritten = (new ViewRewrite())->operation($operation, $writes, $target, $session);
         $reply = (new \MySqlMemory\Session\Execution($session))->perform($rewritten, $this->command);
 
         return self::noted($statement, $writes, $reply, $session);
@@ -89,9 +89,9 @@ final class ViewWriteCommand implements Command
      * Answers the one table a statement writes when it resolves to a view, or null: for a base
      * table, or a statement that writes several tables or none.
      */
-    public static function viewTarget(Operation $operation): TableReference|WriteTarget|null
+    public static function viewTarget(MySqlStatement $operation): TableReference|WriteTarget|null
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         $target = match (true) {
             $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => $statement->into->table,
             $statement instanceof Update => count($statement->tables) === 1 ? $statement->tables[0] : null,
@@ -99,7 +99,7 @@ final class ViewWriteCommand implements Command
             default => null,
         };
         $named = $target instanceof TableReference || $target instanceof WriteTarget;
-        $resolution = $named && $operation->facts->covers($target) ? $operation->facts->relation($target)->table : null;
+        $resolution = $named && $target->hasBinding() ? $target->relationInformation()->table : null;
         if (!$named || !$resolution instanceof DeclaredTable || $resolution->table->kind !== RelationKind::View) {
             return null;
         }

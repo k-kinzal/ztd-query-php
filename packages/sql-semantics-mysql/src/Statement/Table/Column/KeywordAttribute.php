@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column attribute written as keywords alone, such as NOT NULL, AUTO_INCREMENT, PRIMARY KEY or INVISIBLE.
@@ -23,12 +22,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class KeywordAttribute implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnKeyword $keyword The attribute
      */
-    public function __construct(public readonly ColumnKeyword $keyword)
+    public function __construct(public readonly ColumnKeyword $keyword, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

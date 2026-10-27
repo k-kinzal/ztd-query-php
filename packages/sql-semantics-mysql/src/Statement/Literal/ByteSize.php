@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A size in bytes: a plain number, or a word such as `16M` that the lexer reads as an identifier.
@@ -31,13 +30,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ByteSize implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral|null $number The size written as a number
      * @param Name|null $word The size written as a word; exactly one of the two is given
      */
-    public function __construct(public readonly ?Numeral $number, public readonly ?Name $word = null)
+    public function __construct(public readonly ?Numeral $number, public readonly ?Name $word = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($number === null) !== ($word === null), 'A size is either a number or a word.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\StorageSizes())->problem($number, $word) === null, 'A storage size is an integer token or a bounded K, M or G coefficient.');

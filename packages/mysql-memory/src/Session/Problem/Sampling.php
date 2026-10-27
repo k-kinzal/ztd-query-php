@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
@@ -46,7 +46,7 @@ final class Sampling
      *
      * @throws SqlError When the statement samples a table it cannot
      */
-    public function opened(Node $statement, Facts $facts, Settings $settings, Dictionary $dictionary): void
+    public function opened(Node $statement, StatementSemantics $facts, Settings $settings, Dictionary $dictionary): void
     {
         $this->write($facts);
         $sampled = array_values(array_filter((new Walker())->resolved($statement, $facts), static fn (Node $reference): bool => $reference instanceof TableReference && $reference->sample !== null));
@@ -71,7 +71,7 @@ final class Sampling
      *
      * @throws SqlError When the retained write has a reached sampling condition
      */
-    public function write(Facts $facts): void
+    public function write(StatementSemantics $facts): void
     {
         foreach ($facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof WriteMisuse && $diagnostic->rule === WriteRule::SampledWrite) {
@@ -85,7 +85,7 @@ final class Sampling
      *
      * @throws SqlError When the statement samples a table
      */
-    public function optimized(Node $statement, Facts $facts, Settings $settings, Dictionary $dictionary): void
+    public function optimized(Node $statement, StatementSemantics $facts, Settings $settings, Dictionary $dictionary): void
     {
         foreach ((new Walker())->resolved($statement, $facts) as $reference) {
             if ($reference instanceof TableReference && $reference->sample !== null) {
@@ -97,7 +97,7 @@ final class Sampling
     /**
      * Answers the error of a statement no secondary engine is defined for; MySQL 9.1 names the first table of the statement when it is a base table.
      */
-    public function unengined(Node $statement, Facts $facts, Settings $settings, Dictionary $dictionary): SqlError
+    public function unengined(Node $statement, StatementSemantics $facts, Settings $settings, Dictionary $dictionary): SqlError
     {
         if ($settings->release() !== GrammarRelease::MySql910) {
             return SchemaError::SecondaryEngineFailed->error('No secondary engine defined for at least one of the query tables');
@@ -116,7 +116,7 @@ final class Sampling
                 };
             }
             if ($first instanceof TableReference && $this->base($first, $facts, $settings, $dictionary)) {
-                $resolution = $facts->relation($first)->table;
+                $resolution = $first->relationInformation()->table;
                 $schema = $resolution instanceof DeclaredTable ? ($resolution->table->name->schema->value ?? $settings->database) : $settings->database;
                 $named = ' [' . $schema . '.' . $first->name->name->value . ']';
             }
@@ -129,9 +129,9 @@ final class Sampling
     /**
      * Tells whether a table reference names a base table: not a common table expression, a view or a table of INFORMATION_SCHEMA.
      */
-    public function base(TableReference $reference, Facts $facts, Settings $settings, Dictionary $dictionary): bool
+    public function base(TableReference $reference, StatementSemantics $facts, Settings $settings, Dictionary $dictionary): bool
     {
-        $resolution = $facts->relation($reference)->table;
+        $resolution = $reference->relationInformation()->table;
         if (!$resolution instanceof DeclaredTable) {
             return false;
         }
@@ -142,6 +142,6 @@ final class Sampling
         }
         $view = $dictionary->schema($schema)?->views[$name->name->value] ?? null;
 
-        return !($view !== null && $resolution->table === $view->declaration);
+        return !($view !== null && $resolution->table->kind === \SqlSemantics\Statement\Declaration\RelationKind::View);
     }
 }

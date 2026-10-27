@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored projection that requires invocation-time operand preparation.
@@ -27,14 +26,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredProjection implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $expression The stored projection operand
      * @param Name|null $alias The optional result alias
      * @param AliasMark $mark Whether the alias follows AS
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($mark !== AliasMark::Equals && ($alias !== null || $mark === AliasMark::As), 'A stored select alias follows AS or is bare; an absent alias has no mark.');
     }

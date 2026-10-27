@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -30,7 +29,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredRow implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RowOperand|DeferredOperand> The elements in order; at least two
@@ -41,8 +41,11 @@ final class DeferredRow implements DeferredOperand
      * @param list<Scalar|RowOperand|DeferredOperand> $elements The elements in order; at least two
      * @param OptionalWords $keyword Whether the optional ROW keyword is written
      */
-    public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted)
+    public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $checked = Check::listOf($elements, \SqlSemantics\Statement\Operand::class, 'A row constructor has at least two elements.', 2);
         $accepted = [];
         foreach ($checked as $element) {

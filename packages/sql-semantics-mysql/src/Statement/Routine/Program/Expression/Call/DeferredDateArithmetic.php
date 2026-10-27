@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -29,7 +28,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredDateArithmetic implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $subtract Whether the function subtracts the interval
@@ -37,8 +37,11 @@ final class DeferredDateArithmetic implements DeferredOperand
      * @param Scalar|RowOperand|DeferredOperand $quantity The interval quantity
      * @param IntervalUnit $unit The interval unit
      */
-    public function __construct(public readonly bool $subtract, public readonly Scalar|RowOperand|DeferredOperand $date, public readonly Scalar|RowOperand|DeferredOperand $quantity, public readonly IntervalUnit $unit)
+    public function __construct(public readonly bool $subtract, public readonly Scalar|RowOperand|DeferredOperand $date, public readonly Scalar|RowOperand|DeferredOperand $quantity, public readonly IntervalUnit $unit, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$date instanceof Scalar || !$quantity instanceof Scalar, 'A deferred date call retains a non-scalar operand.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

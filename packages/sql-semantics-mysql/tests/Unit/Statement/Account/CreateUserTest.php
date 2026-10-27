@@ -20,7 +20,7 @@ final class CreateUserTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE USER u REQUIRE ISSUER 'a' PASSWORD EXPIRE INTERVAL 1 DAY ATTRIBUTE 'x'");
 
-        self::assertInstanceOf(InvalidUserAttribute::class, $create->facts->diagnostics[0]);
+        self::assertInstanceOf(InvalidUserAttribute::class, $create->diagnostics()[0]);
     }
 
     public function testRenderWritesEveryClause(): void

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A PRIMARY KEY table constraint.
@@ -34,12 +33,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the terms of a primary key
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, PRIMARY KEY (a, b DESC) ON CONFLICT ROLLBACK)');
- *     $key = $create->statement->constraints[0]->items[0];
+ *     $key = $create->constraints[0]->items[0];
  *     [count($key->terms), $key->terms[1]->direction?->value, $key->conflict?->value] // => [2, 'DESC', 'ROLLBACK']
  */
 final class TablePrimaryKey implements TableConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SortTerm> The key terms in written order
@@ -51,7 +50,7 @@ final class TablePrimaryKey implements TableConstraint
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution
      * @param bool $autoincrement Whether AUTOINCREMENT is written after the last key term
      */
-    public function __construct(array $terms, public readonly ?ConflictResolution $conflict = null, public readonly bool $autoincrement = false)
+    public function __construct(array $terms, public readonly ?ConflictResolution $conflict = null, public readonly bool $autoincrement = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->terms = Check::listOf($terms, SortTerm::class, 'A key constraint has at least one term.', 1);
         foreach ($this->terms as $term) {

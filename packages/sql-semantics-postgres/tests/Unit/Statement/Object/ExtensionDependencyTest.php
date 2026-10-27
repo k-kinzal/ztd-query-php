@@ -21,7 +21,7 @@ final class ExtensionDependencyTest extends TestCase
     public function testDeriveStatementRecordsNothingForATrigger(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER TRIGGER g ON t DEPENDS ON EXTENSION e');
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesNo(): void
@@ -40,6 +40,6 @@ final class ExtensionDependencyTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not an index'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER INDEX v DEPENDS ON EXTENSION e', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not an index'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER INDEX v DEPENDS ON EXTENSION e', $context)->diagnostics()));
     }
 }

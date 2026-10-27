@@ -22,10 +22,11 @@ final class RevokePrivilegesTest extends TestCase
     public function testDeriveStatementAcceptsAnAbsentTable(): void
     {
         $revoke = (new Semantics(Dialect::MySql))->analyze('REVOKE SELECT ON t FROM u', []);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $revoke);
+        self::assertInstanceOf(M\Statement::class, $revoke);
 
-        self::assertInstanceOf(RevokePrivileges::class, $revoke->statement);
-        self::assertInstanceOf(AbsentGrantTable::class, $revoke->facts->relation($revoke->statement->level)->table);
+        self::assertInstanceOf(RevokePrivileges::class, $revoke);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $revoke->level);
+        self::assertInstanceOf(AbsentGrantTable::class, $revoke->level->relationInformation()->table);
     }
 
     public function testRenderWritesEveryClause(): void
@@ -61,12 +62,12 @@ final class RevokePrivilegesTest extends TestCase
     public function testDeriveStatementStoredRetainsEveryRecipientAndOption(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() REVOKE IF EXISTS ALL ON PROCEDURE * FROM u, CURRENT_USER IGNORE UNKNOWN USER');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(RevokePrivileges::class, $operation->statement->body);
-        self::assertTrue($operation->statement->body->ifExists);
-        self::assertTrue($operation->statement->body->ignoreUnknownUser);
-        self::assertCount(2, $operation->statement->body->users);
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(RevokePrivileges::class, $operation->body);
+        self::assertTrue($operation->body->ifExists);
+        self::assertTrue($operation->body->ignoreUnknownUser);
+        self::assertCount(2, $operation->body->users);
     }
 
     public function testHasExecutionConditionRetainsTheWildcardTarget(): void
@@ -78,7 +79,7 @@ final class RevokePrivilegesTest extends TestCase
     public function testRenderWritesTheStoredTargetCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() REVOKE IF EXISTS ALL ON FUNCTION d.* FROM u IGNORE UNKNOWN USER');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Statement::class, $operation);
         self::assertSame('CREATE PROCEDURE p() REVOKE IF EXISTS ALL ON FUNCTION d.* FROM u IGNORE UNKNOWN USER', $operation->toString());
     }
 

@@ -20,14 +20,14 @@ final class SetTableOptionsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ENGINE = InnoDB', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t ENGINE = InnoDB', [$table])->diagnostics());
     }
 
     public function testRenderWritesTheRunsApart(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x', AUTO_INCREMENT = 5");
 
-        self::assertInstanceOf(AlterTable::class, $alter->statement);
-        self::assertCount(2, $alter->statement->commands);
+        self::assertInstanceOf(AlterTable::class, $alter);
+        self::assertCount(2, $alter->commands);
     }
 }

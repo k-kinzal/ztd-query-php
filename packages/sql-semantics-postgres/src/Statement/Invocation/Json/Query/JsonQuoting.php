@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `KEEP QUOTES` or `OMIT QUOTES` of JSON_QUERY or a JSON_TABLE column; the words ON SCALAR STRING are noise.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonQuoting implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $keep Whether KEEP QUOTES is written, rather than OMIT QUOTES
      */
-    public function __construct(public readonly bool $keep)
+    public function __construct(public readonly bool $keep, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

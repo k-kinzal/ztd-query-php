@@ -16,7 +16,7 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes CREATE, ALTER and DROP LOGFILE GROUP, which only NDB Cluster supports.
@@ -47,8 +47,8 @@ final class LogfileGroupCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $session->transaction->commit();
         (new Storage\LegacySupport())->check($statement, $session, $context);
         $operationName = 'CREATE/ALTER/DROP LOGFILE GROUP';

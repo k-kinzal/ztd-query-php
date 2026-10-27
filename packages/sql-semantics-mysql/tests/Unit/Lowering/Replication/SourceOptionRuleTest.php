@@ -19,7 +19,7 @@ final class SourceOptionRuleTest extends TestCase
 {
     public function testOptionLowersDirectAndForwardedOptions(): void
     {
-        $change = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("change master to master_tls_version = 'TLSv1.2', master_log_file = 'f'")->statement;
+        $change = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("change master to master_tls_version = 'TLSv1.2', master_log_file = 'f'");
 
         self::assertInstanceOf(ChangeReplicationSource::class, $change);
         self::assertSame([SourceOptionKind::TlsVersion, SourceOptionKind::LogFile], array_column($change->options, 'kind'));

@@ -104,7 +104,7 @@ final class ColumnRuleTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testAlwaysAcceptsTheOptionalWords(): void

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[LINEAR] KEY [ALGORITHM = n] (columns)`: partitioning by the server's hash of column values.
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class KeyMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The partitioning columns in order; empty for the primary key
@@ -43,7 +42,7 @@ final class KeyMethod implements PartitionMethod
      * @param Numeral|null $algorithm The ALGORITHM number, when written
      * @param list<Name> $columns The partitioning columns in order; empty for the primary key
      */
-    public function __construct(public readonly bool $linear, public readonly ?Numeral $algorithm, array $columns)
+    public function __construct(public readonly bool $linear, public readonly ?Numeral $algorithm, array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($algorithm === null || (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->accepts($algorithm), 'A KEY partition algorithm is one or two.');
         $this->columns = Check::listOf($columns, Name::class, 'Key partitioning columns are a list of names.');

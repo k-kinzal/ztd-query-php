@@ -19,7 +19,7 @@ final class ValueRowsTest extends TestCase
     public function testExtendedAddsTheFirstLaterRowOfAnotherLengthIn57(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1), (2, 3), (4)')->statement;
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1), (2, 3), (4)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $procedure);
         $statement = $procedure->body;
         $error = (new ValueRows())->extended(QueryError::WrongValueCountOnRow->error(1), $statement, GrammarRelease::MySql5744);

@@ -60,9 +60,7 @@ final class Lifecycle
             $session->running->check($statement, $session->variables->database);
         }
         $used = $session->running->used($statement, $session->variables->database);
-        $temporaries = $session->instance->dictionary->temporaries;
         $session->transaction->statements->begin($contained);
-        $session->instance->dictionary->temporaries = $session->temporaries;
         $session->running->using[] = $used;
         $succeeded = false;
         try {
@@ -78,7 +76,6 @@ final class Lifecycle
                 }
             } finally {
                 array_pop($session->running->using);
-                $session->instance->dictionary->temporaries = $temporaries;
             }
         }
         $last = $reply instanceof Batch ? ($reply->replies[count($reply->replies) - 1] ?? null) : $reply;

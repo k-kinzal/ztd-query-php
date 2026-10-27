@@ -28,23 +28,23 @@ final class RecurringScheduleTest extends TestCase
     public function testDeriveScheduleDerivesTheQuantityAndBothTimes(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS NOW() ENDS '2030-01-01' DO SELECT 1", []);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateEvent::class, $statement);
         $schedule = $statement->schedule;
         self::assertInstanceOf(RecurringSchedule::class, $schedule);
         self::assertNotNull($schedule->starts);
         self::assertNotNull($schedule->ends);
-        $quantity = $create->facts->scalar($schedule->quantity)->type;
-        $starts = $create->facts->scalar($schedule->starts)->type;
+        $quantity = $schedule->quantity->scalarInformation()->type;
+        $starts = $schedule->starts->scalarInformation()->type;
         self::assertInstanceOf(Known::class, $quantity);
         self::assertInstanceOf(Known::class, $starts);
 
         self::assertInstanceOf(Domain::class, $quantity->descriptor);
         self::assertSame('BIGINT', $quantity->descriptor->name());
         self::assertSame('DATETIME', $starts->descriptor->name());
-        self::assertTrue($create->facts->covers($schedule->ends));
+        self::assertTrue($schedule->ends->hasBinding());
         self::assertSame(IntervalUnit::Hour, $schedule->unit);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveScheduleReportsAColumnInEveryExpressionEvenWhenATableHasIt(): void
@@ -53,25 +53,25 @@ final class RecurringScheduleTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY b MINUTE STARTS a ENDS zz DO SELECT a FROM t', [$table]);
 
-        self::assertSame(['Column b does not exist.', 'Column a does not exist.', 'Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column b does not exist.', 'Column a does not exist.', 'Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveScheduleDerivesAnEndWithoutAStart(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 MINUTE ENDS zz DO SELECT 1', []);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
 
         self::assertNull($statement->schedule->starts);
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveScheduleResolvesALocalVariableOfTheEnclosingProcedure(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE n INT DEFAULT 1; ALTER EVENT e ON SCHEDULE EVERY n DAY; END', []);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**

@@ -22,7 +22,7 @@ final class ColumnFlagsTest extends TestCase
     public function testFlagsAppliesTheAttributesInOrder(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
 
         $element0 = $statement->elements[0];
@@ -33,7 +33,7 @@ final class ColumnFlagsTest extends TestCase
     public function testNullabilityFollowsTheFlags(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL NULL, b SERIAL, c TIMESTAMP, d INT AUTO_INCREMENT)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $flags = new ColumnFlags();
 
@@ -57,7 +57,7 @@ final class ColumnFlagsTest extends TestCase
     public function testKeywordTellsWhetherAnAttributeIsWritten(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL UNIQUE, b SERIAL)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $flags = new ColumnFlags();
 
@@ -74,7 +74,7 @@ final class ColumnFlagsTest extends TestCase
     public function testSerialTellsWhetherTheTypeIsSerial(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a SERIAL, b BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $flags = new ColumnFlags();
 
@@ -89,7 +89,7 @@ final class ColumnFlagsTest extends TestCase
     public function testInvisibleFollowsTheLastVisibilityAttribute(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT INVISIBLE VISIBLE, b INT INVISIBLE)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
 
         $element0 = $statement->elements[0];

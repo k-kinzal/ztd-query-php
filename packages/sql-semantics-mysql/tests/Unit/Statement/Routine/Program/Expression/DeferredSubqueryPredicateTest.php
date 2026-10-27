@@ -16,13 +16,13 @@ final class DeferredSubqueryPredicateTest extends TestCase
     public function testDeriveScalarPreservesProgramParameterBinding(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SELECT x IN (SELECT 1,2)');
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarKeepsLimitRestrictionsBeforeInvocation(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 IN (SELECT 1,2 LIMIT 1)');
-        self::assertContains("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+        self::assertContains("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", array_map(static fn ($problem): string => $problem->message(), $operation->diagnostics()));
     }
 
     public function testRenderKeepsBothCompleteOperands(): void

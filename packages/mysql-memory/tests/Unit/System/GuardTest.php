@@ -43,10 +43,7 @@ final class GuardTest extends TestCase
         $insert = $s->analyze('INSERT INTO t VALUES (1)');
         $update = $s->analyze('UPDATE t JOIN u ON t.a=u.a SET t.a=1');
         $create = $s->analyze('CREATE TABLE v(a INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $insert);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $update);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        self::assertSame([['t'], ['t'], []], array_map(static fn (\SqlSemantics\Statement\Operation $operation): array => array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($operation->statement, $operation->facts)), [$insert, $update, $create]));
+        self::assertSame([['t'], ['t'], []], array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Statement $operation): array => array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->written($operation, $operation->statementInformation())), [$insert, $update, $create]));
     }
 
     public function testCheckAllowsASystemTableToSupplyAJoinedUpdateInput(): void
@@ -74,11 +71,7 @@ final class GuardTest extends TestCase
         $rename = $s->analyze('RENAME TABLE a TO b');
         $lock = $s->analyze('LOCK TABLES t READ');
         $select = $s->analyze('SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $rename);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $lock);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $select);
-        self::assertSame([['t'], ['a', 'b'], ['t'], []], [array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($create->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($rename->statement)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($lock->statement)), (new Guard())->defined($select->statement)]);
+        self::assertSame([['t'], ['a', 'b'], ['t'], []], [array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($create)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($rename)), array_map(static fn (QualifiedName $name): string => $name->name->value, (new Guard())->defined($lock)), (new Guard())->defined($select)]);
     }
 
     public function testSchemaAnswersTheDatabaseOfAName(): void
@@ -93,8 +86,6 @@ final class GuardTest extends TestCase
         $s = (new Instance())->connect();
         $update = $s->analyze('UPDATE t SET a = 1');
         $insert = $s->analyze('INSERT INTO t VALUES (1)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $update);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $insert);
-        self::assertSame(['UPDATE', 'INSERT'], [(new Guard())->verb($update->statement), (new Guard())->verb($insert->statement)]);
+        self::assertSame(['UPDATE', 'INSERT'], [(new Guard())->verb($update), (new Guard())->verb($insert)]);
     }
 }

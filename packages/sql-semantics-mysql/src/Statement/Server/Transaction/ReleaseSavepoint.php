@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -31,9 +30,9 @@ use SqlSemantics\Statement\Source\Span;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('release savepoint sp1');
  *     [$statement->toString(), $statement->savepoint->value] // => ['RELEASE SAVEPOINT sp1', 'sp1']
  */
-final class ReleaseSavepoint implements TransactionStatement
+final class ReleaseSavepoint extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
     use TransactionSql;
 
     /**
@@ -47,8 +46,11 @@ final class ReleaseSavepoint implements TransactionStatement
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly Name $savepoint, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(public readonly Name $savepoint, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         $this->nameWarning = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::unqualifiedName($savepoint, $profile->grammar);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

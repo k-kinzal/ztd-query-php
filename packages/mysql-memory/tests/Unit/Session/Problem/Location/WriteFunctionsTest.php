@@ -22,9 +22,9 @@ final class WriteFunctionsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t(a INT)');
         $operation = $session->analyze('UPDATE t SET a=(SELECT AVG(a) FROM t) WHERE AVG(a)');
-        $locator = (new Locator())->statement($operation->statement);
+        $locator = (new Locator())->statement($operation);
 
-        $located = (new WriteFunctions())->located($operation->statement, $locator, []);
+        $located = (new WriteFunctions())->located($operation, $locator, []);
         $first = Locations::first($located);
 
         self::assertCount(1, $located);
@@ -38,8 +38,8 @@ final class WriteFunctionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT AVG(1)');
-        $locator = (new Locator())->statement($operation->statement);
+        $locator = (new Locator())->statement($operation);
 
-        self::assertSame([], (new WriteFunctions())->located($operation->statement, $locator, []));
+        self::assertSame([], (new WriteFunctions())->located($operation, $locator, []));
     }
 }

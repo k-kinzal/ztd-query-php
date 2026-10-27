@@ -77,7 +77,7 @@ final class DictionaryTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE `1`; USE `1`; CREATE TABLE `2` (base_value INT); CREATE TABLE `3` (other_value INT)');
         $session->query('CREATE TEMPORARY TABLE `2` (temporary_value INT)');
-        $declarations = $session->instance->dictionary->declarations();
+        $declarations = $session->instance->dictionary->declarations($session->temporaries);
         self::assertSame(['2', '3'], [$declarations[0]->name->name->value, $declarations[1]->name->name->value]);
         $temporary = $session->query('INSERT INTO `2` VALUES(9); SELECT * FROM `2`')[1];
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $temporary);
@@ -128,17 +128,17 @@ final class DictionaryTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TEMPORARY TABLE t (b INT)');
 
-        self::assertSame(['b', 'a'], [$session->instance->dictionary->table('d', 't')?->definition->columns[0]->name, $session->instance->dictionary->schema('d')?->table('t')?->definition->columns[0]->name]);
+        self::assertSame(['b', 'a'], [$session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->columns[0]->name, $session->instance->dictionary->schema('d')?->table('t')?->definition->columns[0]->name]);
     }
 
     public function testReleaseRemovesATemporaryTableBeforeABaseTable(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TEMPORARY TABLE t (b INT)');
-        $table = $session->instance->dictionary->table('d', 't');
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         self::assertNotNull($table);
 
-        $session->instance->dictionary->release($table, 'd', 't');
+        $session->instance->dictionary->release($table, 'd', 't', $session->temporaries);
 
         self::assertSame('a', $session->instance->dictionary->table('d', 't')?->definition->columns[0]->name);
     }

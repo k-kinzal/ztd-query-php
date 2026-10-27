@@ -101,6 +101,7 @@ final class Geohashes
 
     /**
      * @param list<Evaluable> $arguments Hash and reference identifier
+     * @throws \MySqlMemory\Error\SqlError When the hash or reference identifier is invalid
      */
     public function pointValue(Frame $frame, array $arguments, int|float|string|null $hash): ?string
     {

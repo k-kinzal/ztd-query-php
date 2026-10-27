@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A program-only GRANT whose non-global AS condition is raised when reached.
@@ -30,17 +29,17 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs($grant, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Keeping a deferred privilege instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER');
- *     [$operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $operation->toString(), $operation->statement->body->problem()->error] // => [true, 'CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER', 'ER_UNSUPPORTED_USE_OF_GRANT_AS']
+ *     [$operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $operation->toString(), $operation->body->problem()->error] // => [true, 'CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER', 'ER_UNSUPPORTED_USE_OF_GRANT_AS']
  */
 final class DeferredGrantAs implements ProgramStatement, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param GrantRequest $grant The retained privilege operands, without an AS clause
      * @param GrantAs $as The clause whose level constraint is deferred by the program
      */
-    public function __construct(public readonly GrantRequest $grant, public readonly GrantAs $as)
+    public function __construct(public readonly GrantRequest $grant, public readonly GrantAs $as, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($grant->as === null && !$grant->level instanceof GlobalLevel, 'A deferred GRANT AS has a non-global level and exactly one AS clause.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

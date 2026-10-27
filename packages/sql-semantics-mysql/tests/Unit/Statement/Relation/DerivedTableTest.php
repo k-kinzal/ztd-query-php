@@ -39,7 +39,7 @@ final class DerivedTableTest extends TestCase
 
         self::assertSame($t->columns[0], $plain->field('a')->column());
         self::assertSame($t->columns[0], $listed->field('x')->column());
-        self::assertSame([], $listed->facts->diagnostics);
+        self::assertSame([], $listed->diagnostics());
     }
 
     public function testDeriveRelationSeesTheTablesToTheLeftWhenLateral(): void
@@ -56,20 +56,20 @@ final class DerivedTableTest extends TestCase
         $lateral = $semantics->analyze('SELECT x FROM t, LATERAL (SELECT t.a AS x) AS d', [$t]);
         $plain = $semantics->analyze('SELECT x FROM t, (SELECT t.a AS x) AS d', [$t]);
 
-        self::assertSame([], $lateral->facts->diagnostics);
+        self::assertSame([], $lateral->diagnostics());
         self::assertSame($t->columns[0], $lateral->field('x')->column());
-        self::assertInstanceOf(MissingTableQualifier::class, $plain->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTableQualifier::class, $plain->diagnostics()[0]);
     }
 
     public function testDeriveRelationAcceptsAnEmptyQuotedAlias(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM (SELECT 1) AS ``');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
-        self::assertInstanceOf(DerivedTable::class, $operation->statement->query->from);
-        self::assertSame('', $operation->statement->query->from->alias->value);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->query);
+        self::assertInstanceOf(DerivedTable::class, $operation->query->from);
+        self::assertSame('', $operation->query->from->alias->value);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheDerivedTable(): void

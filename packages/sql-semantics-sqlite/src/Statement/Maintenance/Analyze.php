@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,17 +25,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the target of an analysis request
  *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ANALYZE users');
- *     $analyze->statement->target?->name->value // => 'users'
+ *     $analyze->target?->name->value // => 'users'
  */
-final class Analyze implements Statement
+final class Analyze extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName|null $target The schema, table or index name; null analyzes every attached schema
      */
-    public function __construct(public readonly ?QualifiedName $target = null)
+    public function __construct(public readonly ?QualifiedName $target = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($target?->catalog === null, 'An analysis target has at most a schema qualifier.');
     }
 

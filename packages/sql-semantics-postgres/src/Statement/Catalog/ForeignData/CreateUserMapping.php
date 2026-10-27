@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a user mapping
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE USER MAPPING FOR USER SERVER s OPTIONS (user 'bob')");
- *     [$operation->statement->user, $operation->statement->options[0]->value->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User, 'bob']
+ *     [$operation->user, $operation->options[0]->value->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User, 'bob']
  */
-final class CreateUserMapping implements Statement
+final class CreateUserMapping extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<GenericOption> The options
@@ -42,8 +41,11 @@ final class CreateUserMapping implements Statement
      * @param Name $server The foreign server
      * @param list<GenericOption> $options The options
      */
-    public function __construct(public readonly bool $ifNotExists, public readonly RoleSpec|MappingUser $user, public readonly Name $server, array $options = [])
+    public function __construct(public readonly bool $ifNotExists, public readonly RoleSpec|MappingUser $user, public readonly Name $server, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, GenericOption::class, 'User mapping options are a list of options.');
     }
 

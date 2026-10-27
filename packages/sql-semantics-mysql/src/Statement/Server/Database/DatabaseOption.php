@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the options of CREATE DATABASE
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE DATABASE d CHARACTER SET utf8mb4');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption // => true
  */
 interface DatabaseOption extends Node
 {

@@ -22,7 +22,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,7 +37,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredWindowFunction implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar|RoutineVariable|RowOperand|DeferredOperand> The complete arguments
@@ -48,8 +48,11 @@ final class DeferredWindowFunction implements DeferredOperand
     /**
      * @param list<Scalar|RoutineVariable|RowOperand|DeferredOperand> $arguments Arguments retaining at least one invocation-time condition
      */
-    public function __construct(public readonly WindowFunctionKind $kind, array $arguments, public readonly Name|WindowSpecification $over, public readonly ?NullTreatment $nulls = null, public readonly ?CountingEdge $edge = null)
+    public function __construct(public readonly WindowFunctionKind $kind, array $arguments, public readonly Name|WindowSpecification $over, public readonly ?NullTreatment $nulls = null, public readonly ?CountingEdge $edge = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $values = (new Arguments())->checked($kind, $arguments, $nulls, $edge);
         Check::input((array_filter($values, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || (new Arguments())->limitation($nulls, $edge) !== null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values) || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) !== null), 'A deferred window call retains an argument, option, count or frame preparation condition.');
         $this->arguments = $values;

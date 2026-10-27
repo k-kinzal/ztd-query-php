@@ -48,7 +48,7 @@ final class ResourceGroupNameTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP RESOURCE GROUP `😀`');
 
-        self::assertSame("Cannot convert string '\\xF0\\x9F\\x98\\x80' from utf8mb4 to utf8mb3", $operation->facts->warnings[0]->message());
+        self::assertSame("Cannot convert string '\\xF0\\x9F\\x98\\x80' from utf8mb4 to utf8mb3", $operation->warnings()[0]->message());
     }
 
     public function testRenderRetainsTheOriginalDecodedOperand(): void

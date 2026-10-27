@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] item, …`: a request to clear or reload server caches and logs.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Flushing logs and privileges
  *     $flush = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('flush local binary logs, privileges');
- *     [$flush->toString(), $flush->statement->items[1]->option] // => ['FLUSH NO_WRITE_TO_BINLOG BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
+ *     [$flush->toString(), $flush->items[1]->option] // => ['FLUSH NO_WRITE_TO_BINLOG BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
  */
-final class Flush implements Statement
+final class Flush extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<FlushItem> The items in written order; at least one
@@ -41,8 +40,11 @@ final class Flush implements Statement
      * @param list<FlushItem> $items The items in written order; at least one
      * @throws InvalidConstruction When the list is empty
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $items)
+    public function __construct(public readonly bool $noWriteToBinlog, array $items, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, FlushItem::class, 'FLUSH flushes at least one item.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

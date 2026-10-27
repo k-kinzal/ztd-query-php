@@ -97,7 +97,7 @@ final class DistinctStorage
     public function active(Select $select, ?Scope $outer): bool
     {
         return in_array(SelectOption::Distinct, $select->options, true)
-            && ($this->planner->settings->legacy() ? $select->groupBy === null && (new Grouping($this->planner))->collect($select) === [] : !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupKeys())->direct($select, $this->planner->compiler->facts))
+            && ($this->planner->settings->legacy() ? $select->groupBy === null && (new Grouping($this->planner))->collect($select) === [] : !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupKeys())->direct($select))
             && (new Windowing($this->planner))->calls($select) === []
             && !$this->planner->blocks->empty($select, $outer)
             && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 0;
@@ -219,7 +219,7 @@ final class DistinctStorage
             }
             $expressions[] = $item->expression;
         }
-        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\DistinctOrdering())->redundant($select, $expressions, $this->planner->compiler->facts)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\DistinctOrdering())->redundant($select, $expressions)) {
             return $path;
         }
         $keys = [];

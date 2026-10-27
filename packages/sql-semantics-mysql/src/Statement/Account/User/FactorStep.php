@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One factor an ALTER USER factor change names: `n FACTOR`, with the method ADD and MODIFY give it.
@@ -20,13 +19,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FactorStep implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Factor $factor The additional authentication factor
      * @param Identification|null $identification The authentication method of the factor, for ADD and MODIFY
      */
-    public function __construct(public readonly Factor $factor, public readonly ?Identification $identification = null)
+    public function __construct(public readonly Factor $factor, public readonly ?Identification $identification = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

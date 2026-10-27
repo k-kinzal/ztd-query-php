@@ -39,9 +39,9 @@ final class FixedColumnsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
         $operation = $session->analyze('SHOW FULL TABLES FROM d ' . $filter);
-        self::assertInstanceOf(ShowTables::class, $operation->statement);
+        self::assertInstanceOf(ShowTables::class, $operation);
 
-        self::assertSame($expected, FixedColumns::of($operation->statement->filter, $operation->facts));
+        self::assertSame($expected, FixedColumns::of($operation->filter, $operation->statementInformation()));
     }
 
     public function testColumnDoesNotTreatAComparisonBetweenColumnsAsFixed(): void
@@ -49,8 +49,8 @@ final class FixedColumnsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
         $operation = $session->analyze('SHOW FULL TABLES FROM d WHERE Tables_in_d=Table_type');
-        self::assertInstanceOf(ShowTables::class, $operation->statement);
+        self::assertInstanceOf(ShowTables::class, $operation);
 
-        self::assertSame([], FixedColumns::of($operation->statement->filter, $operation->facts));
+        self::assertSame([], FixedColumns::of($operation->filter, $operation->statementInformation()));
     }
 }

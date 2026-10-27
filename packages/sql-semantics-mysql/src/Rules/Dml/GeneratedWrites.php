@@ -143,7 +143,7 @@ final class GeneratedWrites
      */
     public function table(Relation $relation, Derivation $derivation): ?Name
     {
-        $table = $derivation->facts()->relation($relation)->table;
+        $table = $relation->relationInformation()->table;
 
         return $table instanceof DeclaredTable ? $table->table->name->name : null;
     }

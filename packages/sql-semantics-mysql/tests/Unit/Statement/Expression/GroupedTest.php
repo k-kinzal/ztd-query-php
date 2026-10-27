@@ -46,7 +46,7 @@ final class GroupedTest extends TestCase
         self::assertInstanceOf(Grouped::class, $field->expression);
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $field->resolution);
         self::assertSame('id', $field->column()?->name->value);
-        self::assertSame($field->resolution, $query->facts->scalar($field->expression->operand)->resolution);
+        self::assertSame($field->resolution, $field->expression->operand->scalarInformation()->resolution);
     }
 
     public function testDeriveScalarKeepsTheReplacementOfAReducedOperand(): void
@@ -54,6 +54,7 @@ final class GroupedTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operand = $semantics->analyze('SELECT (SELECT 1 LIMIT 0)')->field(0)->expression;
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $operand);
+        $operand = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($operand);
         $derivation = new Derivation($semantics->context());
         $fact = $derivation->scalar(new Grouped($operand), $derivation->environment());
 

@@ -20,10 +20,10 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the facts of an expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT NULL');
- *     $query->facts->scalar($query->field(0)->expression)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $query->field(0)->expression->scalarInformation()->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
  * @example Reading a scalar subquery reduction without rewriting its syntax
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (SELECT 1 LIMIT 0)');
- *     $query->facts->scalar($query->field(0)->expression)->replacement instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral // => true
+ *     $query->field(0)->expression->scalarInformation()->replacement instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral // => true
  */
 final class ScalarFact
 {

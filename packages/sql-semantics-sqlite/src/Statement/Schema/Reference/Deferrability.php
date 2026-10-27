@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DEFERRABLE or NOT DEFERRABLE clause of a foreign key.
@@ -24,19 +23,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Telling a deferred foreign key from an immediate one
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $deferred = $semantics->analyze('CREATE TABLE c (p REFERENCES parent DEFERRABLE INITIALLY DEFERRED)')->statement->columns[0]->constraints[1];
- *     $immediate = $semantics->analyze('CREATE TABLE c (p REFERENCES parent NOT DEFERRABLE INITIALLY DEFERRED)')->statement->columns[0]->constraints[1];
+ *     $deferred = $semantics->analyze('CREATE TABLE c (p REFERENCES parent DEFERRABLE INITIALLY DEFERRED)')->columns[0]->constraints[1];
+ *     $immediate = $semantics->analyze('CREATE TABLE c (p REFERENCES parent NOT DEFERRABLE INITIALLY DEFERRED)')->columns[0]->constraints[1];
  *     [$deferred->deferred(), $immediate->deferred()] // => [true, false]
  */
 final class Deferrability implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $deferrable Whether DEFERRABLE is written without NOT
      * @param InitialMode|null $initially The word written after INITIALLY
      */
-    public function __construct(public readonly bool $deferrable, public readonly ?InitialMode $initially = null)
+    public function __construct(public readonly bool $deferrable, public readonly ?InitialMode $initially = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

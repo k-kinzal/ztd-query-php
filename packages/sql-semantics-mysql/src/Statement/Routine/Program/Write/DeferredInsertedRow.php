@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A VALUES row template retaining at least one non-scalar, aggregate or window value condition.
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredInsertedRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|DefaultRequest|RowOperand|DeferredOperand> Complete row operands
@@ -36,7 +35,7 @@ final class DeferredInsertedRow implements Node
     /**
      * @param list<Scalar|DefaultRequest|RowOperand|DeferredOperand> $values The complete row, with at least one retained condition
      */
-    public function __construct(array $values)
+    public function __construct(array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $items = [];
         $deferred = false;

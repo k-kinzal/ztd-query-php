@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the parts of a floating point literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1.50E-3 AS r');
- *     $literal = $query->statement->columns[0]->expression;
+ *     $literal = $query->columns[0]->expression;
  *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3 AS r']
  * @example Refusing a literal with neither a decimal point nor an exponent
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -39,15 +38,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class RealLiteral implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $whole The digits before the decimal point; empty when the literal starts with the point
      * @param string|null $fraction The digits after the decimal point; null when the literal has no point
      * @param string|null $exponent The exponent digits with their optional sign; null when the literal has no exponent
      */
-    public function __construct(public readonly string $whole, public readonly ?string $fraction, public readonly ?string $exponent = null)
+    public function __construct(public readonly string $whole, public readonly ?string $fraction, public readonly ?string $exponent = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match('/\A[0-9]*\z/', $whole) === 1 && preg_match('/\A[0-9]*\z/', $fraction ?? '') === 1, 'The parts of a floating point literal are decimal digits.');
         Check::input($whole !== '' || ($fraction !== null && $fraction !== ''), 'A floating point literal has a digit before or after its decimal point.');
         Check::input($fraction !== null || $exponent !== null, 'A floating point literal has a decimal point or an exponent.');

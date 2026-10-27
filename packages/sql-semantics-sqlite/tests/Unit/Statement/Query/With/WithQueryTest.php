@@ -24,7 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\CommonTable as CommonTableReference;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
@@ -38,17 +37,17 @@ final class WithQueryTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c', []);
 
-        self::assertInstanceOf(WithQuery::class, $query->statement);
-        self::assertInstanceOf(Select::class, $query->statement->body);
+        self::assertInstanceOf(WithQuery::class, $query);
+        self::assertInstanceOf(Select::class, $query->body);
         self::assertSame('x', $query->field(0)->name?->value);
         self::assertInstanceOf(Known::class, $query->field('x')->type);
         self::assertSame(Storage::Integer, $query->field('x')->type->descriptor);
-        $input = $query->statement->body->from;
+        $input = $query->body->from;
         self::assertNotNull($input);
-        $reference = $query->facts->relation($input)->table;
+        $reference = $input->relationInformation()->table;
         self::assertInstanceOf(CommonTableReference::class, $reference);
-        self::assertSame($query->statement->with->tables[0], $reference->definition);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame($query->with->tables[0], $reference->definition);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveQueryMakesTheCommonTablesVisibleInNestedQueries(): void
@@ -57,21 +56,21 @@ final class WithQueryTest extends TestCase
 
         self::assertInstanceOf(Known::class, $query->field('y')->type);
         self::assertSame(Nullability::Nullable, $query->field('y')->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveQueryTypesARecursiveColumnAsAnyStorageClassInTheRecursiveArm(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 5) SELECT x FROM c', []);
 
-        self::assertInstanceOf(WithQuery::class, $query->statement);
-        $compound = $query->statement->with->tables[0]->query;
+        self::assertInstanceOf(WithQuery::class, $query);
+        $compound = $query->with->tables[0]->query;
         self::assertInstanceOf(Compound::class, $compound);
         $recursive = $compound->steps[0]->query;
         self::assertInstanceOf(Select::class, $recursive);
         self::assertInstanceOf(ResultColumn::class, $recursive->columns[0]);
         self::assertInstanceOf(Binary::class, $recursive->columns[0]->expression);
-        $reference = $query->facts->scalar($recursive->columns[0]->expression->left);
+        $reference = $recursive->columns[0]->expression->left->scalarInformation();
         self::assertInstanceOf(Choice::class, $reference->type);
         self::assertSame(Storage::cases(), $reference->type->alternatives);
         self::assertSame(Nullability::Nullable, $reference->nullability);
@@ -83,7 +82,7 @@ final class WithQueryTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1) SELECT RAISE(IGNORE)');
 
-        self::assertSame(MisuseRule::RaiseOutsideTrigger->value, $query->facts->diagnostics[0]->message());
+        self::assertSame(MisuseRule::RaiseOutsideTrigger->value, $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheClauseAndTheBody(): void
@@ -93,8 +92,8 @@ final class WithQueryTest extends TestCase
         $values = $semantics->analyze('with c as (select 1) values (2)');
 
         self::assertSame('WITH RECURSIVE c (n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c) SELECT n FROM c LIMIT 3', $compound->toString());
-        self::assertInstanceOf(WithQuery::class, $values->statement);
-        self::assertInstanceOf(ValuesClause::class, $values->statement->body);
+        self::assertInstanceOf(WithQuery::class, $values);
+        self::assertInstanceOf(ValuesClause::class, $values->body);
         self::assertSame('WITH c AS (SELECT 1) VALUES (2)', $values->toString());
     }
 
@@ -102,7 +101,7 @@ final class WithQueryTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $with = new WithClause([new CommonTable(new Name('c'), new Select([new ResultColumn(new IntegerLiteral('1'), new Name('x'))]))]);
-        $operation = new Operation($semantics->context([]), new WithQuery($with, new Select([new Star()], new TableInput(new QualifiedName(new Name('c'))))));
+        $operation = Semantics::fromStatement($semantics->context([]), new WithQuery($with, new Select([new Star()], new TableInput(new QualifiedName(new Name('c'))))));
 
         self::assertSame('WITH c AS (SELECT 1 AS x) SELECT * FROM c', $operation->toString());
         self::assertSame('x', $operation->field(0)->name?->value);

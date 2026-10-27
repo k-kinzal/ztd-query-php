@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\Grantee;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `GRANT privileges ON [kind] level TO accounts [REQUIRE …] [WITH …] [AS user [WITH ROLE …]]`: a request to grant privileges.
@@ -45,9 +44,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Granting table privileges with the grant option
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON shop.t TO app@localhost WITH GRANT OPTION'
  */
-final class GrantPrivileges implements Statement, PrivilegeChange
+final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Privilege> The granted privileges in order; ALL stands alone
@@ -81,7 +80,12 @@ final class GrantPrivileges implements Statement, PrivilegeChange
         public readonly ?TlsRequirement $tls = null,
         array $options = [],
         public readonly ?GrantAs $as = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $request = new Request\GrantRequest($privileges, $kind, $level, $grantees, $tls, $options, $as);
         $this->privileges = $request->privileges;
         $this->grantees = $request->grantees;

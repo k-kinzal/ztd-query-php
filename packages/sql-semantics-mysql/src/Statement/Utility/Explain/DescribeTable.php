@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DESCRIBE (DESC, EXPLAIN) with a table: the columns of a table or view, as SHOW COLUMNS reports them.
@@ -30,18 +29,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a column pattern
  *     $describe = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("DESC t 'a%'");
- *     [$describe->statement->column?->value, $describe->field(0)->name?->value, $describe->toString()] // => ['a%', 'Field', "DESCRIBE t 'a%'"]
+ *     [$describe->column?->value, $describe->field(0)->name?->value, $describe->toString()] // => ['a%', 'Field', "DESCRIBE t 'a%'"]
  */
-final class DescribeTable implements Statement
+final class DescribeTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param InspectedTable $table The table
      * @param Name|Text|null $column The pattern of the column names, written as a name or as a string
      */
-    public function __construct(public readonly InspectedTable $table, public readonly Name|Text|null $column = null)
+    public function __construct(public readonly InspectedTable $table, public readonly Name|Text|null $column = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

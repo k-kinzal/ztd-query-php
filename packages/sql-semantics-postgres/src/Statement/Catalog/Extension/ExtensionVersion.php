@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The VERSION or FROM option of CREATE EXTENSION.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ExtensionVersion implements ExtensionOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param VersionRole $role Whether this is the version to install or the old version
      * @param Word|StringConstant $version The version
      */
-    public function __construct(public readonly VersionRole $role, public readonly Word|StringConstant $version)
+    public function __construct(public readonly VersionRole $role, public readonly Word|StringConstant $version, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

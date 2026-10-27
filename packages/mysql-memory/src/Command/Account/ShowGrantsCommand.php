@@ -19,9 +19,9 @@ use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowGrants;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW GRANTS.
@@ -54,8 +54,8 @@ final class ShowGrantsCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowGrants);
         $names = new Names($session->settings()->release());
         $names->check([$statement->user, ...$statement->using]);

@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FORCE option of the old COPY syntax: FORCE QUOTE, FORCE NOT NULL or FORCE NULL with a column list or `*`.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the columns of a FORCE option
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t TO STDOUT CSV FORCE QUOTE a, b');
- *     [count($copy->statement->legacy[1]->columns), $copy->statement->legacy[1]->option()] // => [2, 'force_quote']
+ *     [count($copy->legacy[1]->columns), $copy->legacy[1]->option()] // => [2, 'force_quote']
  * @example Refusing columns together with the star
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForce(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForceKind::Quote, [new \SqlSemantics\Statement\Identifier\Name('a')], true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class CopyForce implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns named; empty with the star
@@ -42,7 +41,7 @@ final class CopyForce implements Node
      *
      * @throws InvalidConstruction When both or neither of columns and the star are written
      */
-    public function __construct(public readonly CopyForceKind $kind, array $columns, public readonly bool $all = false)
+    public function __construct(public readonly CopyForceKind $kind, array $columns, public readonly bool $all = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'FORCE names columns.');
         Check::input($all === ($this->columns === []), 'FORCE names columns or writes *.');

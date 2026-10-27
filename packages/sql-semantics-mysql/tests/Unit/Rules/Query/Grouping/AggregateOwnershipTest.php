@@ -44,10 +44,10 @@ final class AggregateOwnershipTest extends TestCase
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
         self::assertInstanceOf(Select::class, $subquery->query);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertCount($outer, $operation->facts->query($operation->statement->query)->aggregates);
-        self::assertCount($inner, $operation->facts->query($subquery->query)->aggregates);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertCount($outer, $operation->query->queryInformation()->aggregates);
+        self::assertCount($inner, $subquery->query->queryInformation()->aggregates);
     }
 
     public function testReferencesNamesTheBoundOccurrencesWithoutEnteringUnreducedQueries(): void
@@ -58,9 +58,9 @@ final class AggregateOwnershipTest extends TestCase
         $call = $operation->field(0)->expression;
         self::assertInstanceOf(SetFunction::class, $call);
 
-        self::assertSame([$operation->inputRelation()], (new AggregateOwnership())->references($call, $operation->facts));
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame([$call], $operation->facts->query($operation->statement->query)->aggregates);
+        self::assertSame([$operation->inputRelation()], (new AggregateOwnership())->references($call));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame([$call], $operation->query->queryInformation()->aggregates);
     }
 }

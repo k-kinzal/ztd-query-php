@@ -38,7 +38,7 @@ final class WindowFunctionTest extends TestCase
         $query = (new Semantics(Dialect::MySql))->analyze('SELECT FIRST_VALUE(10) OVER ()');
         $expression = $query->field(0)->expression;
         self::assertNotNull($expression);
-        $fact = $query->facts->scalar($expression);
+        $fact = $expression->scalarInformation();
 
         self::assertEquals(new Known(Domain::integer(Field::LongLong, 3)), $fact->type);
         self::assertEquals($fact->type, $query->field(0)->type);

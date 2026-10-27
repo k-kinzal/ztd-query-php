@@ -16,7 +16,7 @@ final class DeallocateTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DEALLOCATE p');
-        self::assertNull($query->facts->output);
+        self::assertNull($query->output());
     }
 
     public function testRenderDropsTheIgnoredKeyword(): void

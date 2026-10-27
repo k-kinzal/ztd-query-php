@@ -27,7 +27,7 @@ final class DefaultOfColumnTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $default = new DefaultOfColumn(new ColumnUse(new Name('a')));
         $fact = $derivation->scalar($default, $derivation->environment());
-        $column = $derivation->scalar($default->column, $derivation->environment());
+        $column = $default->column->scalarInformation();
 
         self::assertEquals([$column->type, $column->nullability], [$fact->type, $fact->nullability]);
         self::assertInstanceOf(Invalid::class, $fact->type);

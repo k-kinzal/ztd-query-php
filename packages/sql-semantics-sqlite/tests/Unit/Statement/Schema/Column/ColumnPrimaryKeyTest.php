@@ -22,13 +22,13 @@ final class ColumnPrimaryKeyTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheSortOrderTheConflictResolutionAndAutoincrement(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (id integer primary key asc on conflict abort autoincrement)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->columns[0]->constraints[0];
@@ -42,7 +42,7 @@ final class ColumnPrimaryKeyTest extends TestCase
     public function testRenderWritesABareKey(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id PRIMARY KEY)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->columns[0]->constraints[0];

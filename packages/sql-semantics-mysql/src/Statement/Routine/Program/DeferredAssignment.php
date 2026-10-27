@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored SET item whose assigned operand requires invocation-time preparation.
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredAssignment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|SystemTarget|UserVariable $target The assigned name or explicit variable target
@@ -39,7 +38,7 @@ final class DeferredAssignment implements Node
      * @param VariableScope|null $scope The leading scope keyword of a named assignment
      * @param Name|null $qualifier The component, cache or trigger row of a named assignment
      */
-    public function __construct(public readonly Name|SystemTarget|UserVariable $target, public readonly RowOperand|DeferredOperand $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
+    public function __construct(public readonly Name|SystemTarget|UserVariable $target, public readonly RowOperand|DeferredOperand $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($target instanceof Name || ($scope === null && $qualifier === null), 'Only a named assignment carries a leading scope or qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

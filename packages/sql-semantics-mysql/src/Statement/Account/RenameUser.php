@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account;
 
+use Override;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -13,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\AnalyzedStatement;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -30,9 +30,9 @@ use SqlSemantics\Statement\Source\Span;
  * @example Renaming two accounts
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('rename user a to b, c to d')->toString() // => 'RENAME USER a TO b, c TO d'
  */
-final class RenameUser implements Statement, AnalyzedStatement
+final class RenameUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<UserRenaming> The renamings in order
@@ -50,8 +50,11 @@ final class RenameUser implements Statement, AnalyzedStatement
      * @param Charset|null $client The client encoding used to reconstruct account names
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(array $renamings, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(array $renamings, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'An account rename uses a MySQL language profile.');
         $this->renamings = Check::listOf($renamings, UserRenaming::class, 'RENAME USER names at least one pair.', 1);
         $this->problem = (new \SqlSemantics\Platform\MySql\Rules\Account\Renamings())->problem($this->renamings) === null ? null : new Problem\User\RefusedRenameUser($this->renamings);
@@ -76,6 +79,7 @@ final class RenameUser implements Statement, AnalyzedStatement
     /**
      * Reconstructs the complete request from its ordered pairs and selected language.
      */
+    #[Override]
     public function toString(): string
     {
         $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($this->profile->grammar, $this->profile->lexical, $this->client));
@@ -86,6 +90,7 @@ final class RenameUser implements Statement, AnalyzedStatement
     /**
      * Answers the selected language without retaining an analysis environment.
      */
+    #[Override]
     public function profile(): LanguageProfile
     {
         return $this->profile;
@@ -96,6 +101,7 @@ final class RenameUser implements Statement, AnalyzedStatement
      *
      * @return list<\SqlSemantics\Statement\Declaration\Table>
      */
+    #[Override]
     public function declarations(): array
     {
         return [];

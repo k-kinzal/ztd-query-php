@@ -22,7 +22,21 @@ use SqlSemantics\Statement\Fact\QueryFact;
 interface Query extends Node
 {
     /**
+     * Returns the projection, aggregates and conditions owned by this query.
+     */
+    public function queryInformation(): QueryFact;
+
+    /**
+     * Completes this query during semantic construction.
+     */
+    public function initializeQueryInformation(QueryFact $information): void;
+
+    /**
      * Derives the output of this query inside the environment of its use position.
      */
     public function deriveQuery(Derivation $derivation, Environment $outer): QueryFact;
+    /**
+     * Reports whether construction supplied this occurrence's information.
+     */
+    public function hasQueryInformation(): bool;
 }

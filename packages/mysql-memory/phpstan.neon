@@ -18,6 +18,13 @@ parameters:
 
 services:
     -
+        class: Rules\ErisTupleComposition
+        tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]
+    -
+        class: Rules\ErisTupleComposition
+        arguments: [Tests\Generator\Operands]
+        tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]
+    -
         class: Rules\AnalysisFileCollector
         tags: [phpstan.collector]
     -

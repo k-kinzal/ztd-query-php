@@ -36,11 +36,17 @@ final class DeletionInput
     public readonly array $tables;
 
     /**
+     * @var list<Relation|null>|null The input occurrence bound to each target; null before binding
+     */
+    private ?array $resolutions = null;
+
+    /**
      * @param list<Relation> $tables The input relation trees
      * @param list<QualifiedName>|null $targets The requested targets; null selects every visible input occurrence
+     * @param list<Relation|null>|null $resolutions The completed target bindings, when supplied directly
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the supplied target namespace contradicts this role
      */
-    public function __construct(array $tables, ?array $targets = null)
+    public function __construct(array $tables, ?array $targets = null, ?array $resolutions = null)
     {
         $members = [];
         foreach (Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1) as $table) {
@@ -53,5 +59,35 @@ final class DeletionInput
         }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) === null, 'A multiple-table DELETE cannot repeat an identical target.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) === null, 'Every DELETE target must name a possible input occurrence.');
+        if ($resolutions !== null) {
+            $this->initializeResolutions($resolutions);
+        }
+    }
+
+    /**
+     * Binds the deletion targets to this DELETE's own input namespace.
+     *
+     * @param array<array-key, Relation|null> $resolutions Missing names retain a null binding
+     */
+    public function initializeResolutions(array $resolutions): void
+    {
+        Check::input($this->resolutions === null || $this->resolutions === $resolutions, 'A deletion input is resolved once.');
+        Check::input(array_is_list($resolutions) && count($resolutions) === count($this->targets), 'Every deletion target has one resolution.');
+        $occurrences = (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($this->tables);
+        foreach ($resolutions as $relation) {
+            Check::input($relation === null || in_array($relation, $occurrences, true), 'A deletion target resolves inside its own input namespace.');
+        }
+        $this->resolutions = $resolutions;
+    }
+
+    /**
+     * Returns the input occurrence of a written deletion target.
+     */
+    public function relation(QualifiedName $target): ?Relation
+    {
+        $position = array_search($target, $this->targets, true);
+        Check::input($position !== false, 'The target belongs to this DELETE.');
+        Check::input(isset($this->resolutions), 'Deletion targets must be bound before execution.');
+        return $this->resolutions[$position];
     }
 }

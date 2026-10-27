@@ -43,9 +43,9 @@ final class DeferredArithmeticTest extends TestCase
     public function testRenderRetainsTheStoredComputationThroughLowering(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() IF 1 + (2,3) THEN DO 1; END IF');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement::class, $operation->statement->body);
-        self::assertInstanceOf(DeferredArithmetic::class, $operation->statement->body->branches[0]->condition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement::class, $operation->body);
+        self::assertInstanceOf(DeferredArithmetic::class, $operation->body->branches[0]->condition);
         self::assertSame('CREATE PROCEDURE p() IF 1 + (2, 3) THEN DO 1; END IF', $operation->toString());
     }
     public function testOperandsRetainsThePreparationOrder(): void

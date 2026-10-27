@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A query submitted as a statement, separately from a query used as an operand.
@@ -49,7 +48,7 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [$item], windows: [$window])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the body of a SELECT statement
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1');
- *     $operation->statement->query::class // => \SqlSemantics\Platform\MySql\Statement\Query\Select::class
+ *     $operation->query::class // => \SqlSemantics\Platform\MySql\Statement\Query\Select::class
  * @example Refusing partitioning on an inherited window in a completed read
  *     $window = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('w'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
  *     $child = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition(new \SqlSemantics\Statement\Identifier\Name('v'), new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w'), partition: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.1'))]));
@@ -70,15 +69,18 @@ use SqlSemantics\Statement\Snapshot;
  *     $table = new \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), [new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('b')), new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('B'))], new \SqlSemantics\Statement\Identifier\Name('j'));
  *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], $table)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class QueryRoot implements Explainable, \SqlSemantics\Statement\Selection
+final class QueryRoot extends SqlStatement implements Explainable, \SqlSemantics\Statement\Selection, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query in the statement grammar position
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, ?StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new StatementQuery())->check($query);
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'A read statement has coherent fixed output columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

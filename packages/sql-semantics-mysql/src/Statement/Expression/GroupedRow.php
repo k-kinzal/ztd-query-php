@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Grouping around a row operand, retaining its row-valued role.
@@ -25,14 +24,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class GroupedRow implements RowOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand $operand The grouped row
      * @param \SqlSemantics\Statement\Identifier\Name|null $escape An ODBC escape kind, or null for ordinary parentheses
      */
-    public function __construct(public readonly RowOperand $operand, public readonly ?\SqlSemantics\Statement\Identifier\Name $escape = null)
+    public function __construct(public readonly RowOperand $operand, public readonly ?\SqlSemantics\Statement\Identifier\Name $escape = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -18,15 +18,15 @@ final class ShowEventsTest extends TestCase
     public function testDeriveStatementResolvesTheCondition(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW EVENTS WHERE Db = 1');
-        self::assertInstanceOf(ShowEvents::class, $show->statement);
-        self::assertSame([], $show->facts->diagnostics);
+        self::assertInstanceOf(ShowEvents::class, $show);
+        self::assertSame([], $show->diagnostics());
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW EVENTS WHERE Db = 1');
-        self::assertInstanceOf(ShowEvents::class, $show->statement);
-        self::assertSame('Db', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
+        self::assertInstanceOf(ShowEvents::class, $show);
+        self::assertSame('Db', $show->relationInformation()->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

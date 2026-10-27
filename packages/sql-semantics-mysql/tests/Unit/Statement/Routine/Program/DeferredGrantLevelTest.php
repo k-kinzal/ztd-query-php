@@ -19,14 +19,14 @@ final class DeferredGrantLevelTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredGrantLevel::class, $operation->statement->body);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredGrantLevel::class, $operation->body);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testProblemDescribesTheRetainedLevel(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
         $body = $create->body;
         self::assertInstanceOf(DeferredGrantLevel::class, $body);

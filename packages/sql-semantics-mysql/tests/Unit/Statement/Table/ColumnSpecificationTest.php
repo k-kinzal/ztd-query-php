@@ -44,6 +44,6 @@ final class ColumnSpecificationTest extends TestCase
         $specification = new OrdinaryColumn(new Integral(IntegralKind::Int), [new DefaultLiteral($literal)]);
         $specification->deriveSpecification($derivation, $derivation->environment());
 
-        self::assertTrue($derivation->facts()->covers($literal));
+        self::assertTrue($literal->hasBinding());
     }
 }

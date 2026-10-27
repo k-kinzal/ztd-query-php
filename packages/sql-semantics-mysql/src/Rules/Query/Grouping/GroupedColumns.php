@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -65,10 +64,10 @@ final class GroupedColumns
     public function check(Select $select, array $visible, array $fields, Derivation $derivation, ?array $ownedAggregates = null): void
     {
         $facts = $derivation->facts();
-        if ($facts->diagnostics !== [] || $this->computed($select, $facts)) {
+        if ($facts->diagnostics !== [] || $this->computed($select)) {
             return;
         }
-        $ordering = (new OrderingAliases())->check($select, $facts, $ownedAggregates ?? [], $derivation->context->profile->grammar) ?? (new OrderingAggregates())->check($select, $ownedAggregates ?? [], $derivation->context->profile->grammar);
+        $ordering = (new OrderingAliases())->check($select, $ownedAggregates ?? [], $derivation->context->profile->grammar) ?? (new OrderingAggregates())->check($select, $ownedAggregates ?? [], $derivation->context->profile->grammar);
         if ($ordering !== null) {
             $derivation->report($ordering);
 
@@ -81,11 +80,11 @@ final class GroupedColumns
         $aggregates = $ownedAggregates !== null ? $ownedAggregates !== [] : ((new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items)) || ($select->having !== null && (new Aggregation())->aggregates([$select->having])));
         $problem = null;
         if ($select->groupBy !== null) {
-            $problem = $this->grouped($select, $fields, $relations, $facts, $derivation) ?? (in_array(SelectOption::Distinct, $select->options, true) ? $this->distinct($select, $relations, $facts, $derivation, $ownedAggregates ?? []) : null);
+            $problem = $this->grouped($select, $fields, $relations, $derivation) ?? (in_array(SelectOption::Distinct, $select->options, true) ? $this->distinct($select, $relations, $derivation, $ownedAggregates ?? []) : null);
         } elseif ($aggregates) {
-            $problem = $this->implicit($select, $fields, $relations, $facts, $derivation);
+            $problem = $this->implicit($select, $fields, $relations, $derivation);
         } elseif (in_array(SelectOption::Distinct, $select->options, true)) {
-            $problem = $this->distinct($select, $relations, $facts, $derivation, $ownedAggregates ?? []);
+            $problem = $this->distinct($select, $relations, $derivation, $ownedAggregates ?? []);
         }
         if ($problem !== null) {
             $derivation->report($problem);
@@ -95,10 +94,10 @@ final class GroupedColumns
     /**
      * Tells whether a GROUP BY item, or the select item its alias names, holds an aggregate or a window function, which the server refuses before it checks the columns.
      */
-    public function computed(Select $select, Facts $facts): bool
+    public function computed(Select $select): bool
     {
         $matching = new Matching();
-        $pending = array_map(static fn ($item): Operand => $matching->target($item->expression, $facts), $select->groupBy->items ?? []);
+        $pending = array_map(static fn ($item): Operand => $matching->target($item->expression), $select->groupBy->items ?? []);
         while ($pending !== []) {
             $value = array_pop($pending);
             if (is_array($value)) {
@@ -123,7 +122,7 @@ final class GroupedColumns
      * @param list<Field|OpenStar> $fields
      * @param array<int, VisibleRelation> $relations
      */
-    public function grouped(Select $select, array $fields, array $relations, Facts $facts, Derivation $derivation): ?NonGroupedColumn
+    public function grouped(Select $select, array $fields, array $relations, Derivation $derivation): ?NonGroupedColumn
     {
         $matching = new Matching();
         $reads = new ColumnReads();
@@ -131,30 +130,30 @@ final class GroupedColumns
         $groups = [];
         $determined = [];
         foreach ($select->groupBy->items ?? [] as $item) {
-            $expression = $matching->target($item->expression, $facts);
+            $expression = $matching->target($item->expression);
             $groups[] = $expression;
-            foreach ($reads->columns($expression, $relations, $facts, false) as [$key]) {
+            foreach ($reads->columns($expression, $relations, false) as [$key]) {
                 if ($matching->unwrap($expression) instanceof ColumnUse || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) {
                     $determined[$key] = true;
                 }
             }
         }
         if ($select->groupBy?->modifier === null) {
-            $determined = $determination->closure($select, $relations, $facts, $determined);
+            $determined = $determination->closure($select, $relations, $determined);
         }
-        $problem = $this->items($fields, $relations, $facts, [$groups, $determined], GroupingRule::NotDetermined, $derivation);
+        $problem = $this->items($fields, $relations, [$groups, $determined], GroupingRule::NotDetermined, $derivation);
         if ($problem !== null) {
             return $problem;
         }
         foreach ($select->orderBy as $position => $item) {
-            $expression = $matching->target($item->expression, $facts);
-            $missing = $determination->undetermined($expression, $groups, $determined, $relations, $facts);
+            $expression = $matching->target($item->expression);
+            $missing = $determination->undetermined($expression, $groups, $determined, $relations);
             if ($missing !== null) {
                 return new NonGroupedColumn(GroupingRule::NotDetermined, true, $position + 1, $this->name($missing, $relations, $derivation), release: $derivation->context->profile->grammar);
             }
         }
 
-        return $this->having($select, $relations, $facts, [$groups, $determined], $derivation);
+        return $this->having($select, $relations, [$groups, $determined], $derivation);
     }
 
     /**
@@ -167,12 +166,12 @@ final class GroupedColumns
      * @param array<int, VisibleRelation> $relations
      * @param array{list<Operand>, array<string, true>}|null $grouping
      */
-    public function having(Select $select, array $relations, Facts $facts, ?array $grouping, Derivation $derivation): ?NonGroupedColumn
+    public function having(Select $select, array $relations, ?array $grouping, Derivation $derivation): ?NonGroupedColumn
     {
         if ($select->having === null) {
             return null;
         }
-        $missing = $grouping === null ? ((new ColumnReads())->columns($select->having, $relations, $facts, false)[0][1] ?? null) : (new Determination())->undetermined($select->having, $grouping[0], $grouping[1], $relations, $facts);
+        $missing = $grouping === null ? ((new ColumnReads())->columns($select->having, $relations, false)[0][1] ?? null) : (new Determination())->undetermined($select->having, $grouping[0], $grouping[1], $relations);
 
         return $missing === null ? null : new NonGroupedColumn($grouping === null ? GroupingRule::WithoutGroupBy : GroupingRule::NotDetermined, false, 1, $this->name($missing, $relations, $derivation), true, $derivation->context->profile->grammar);
     }
@@ -184,7 +183,7 @@ final class GroupedColumns
      * @param array<int, VisibleRelation> $relations
      * @param array{list<Operand>, array<string, true>}|null $grouping The GROUP BY expressions and determined columns
      */
-    public function items(array $fields, array $relations, Facts $facts, ?array $grouping, GroupingRule $rule, Derivation $derivation): ?NonGroupedColumn
+    public function items(array $fields, array $relations, ?array $grouping, GroupingRule $rule, Derivation $derivation): ?NonGroupedColumn
     {
         $reads = new ColumnReads();
         $determination = new Determination();
@@ -193,7 +192,7 @@ final class GroupedColumns
                 return null;
             }
             if ($field->expression !== null) {
-                $missing = $grouping === null ? ($reads->columns($field->expression, $relations, $facts, false)[0][1] ?? null) : $determination->undetermined($field->expression, $grouping[0], $grouping[1], $relations, $facts);
+                $missing = $grouping === null ? ($reads->columns($field->expression, $relations, false)[0][1] ?? null) : $determination->undetermined($field->expression, $grouping[0], $grouping[1], $relations);
             } else {
                 $column = $field->resolution instanceof ResolvedColumn && isset($relations[spl_object_id($field->resolution->relation)]) ? $field->resolution : null;
                 $missing = $column !== null && ($grouping === null || !isset($grouping[1][$reads->key($column)])) ? $column : null;
@@ -212,9 +211,9 @@ final class GroupedColumns
      * @param array<int, VisibleRelation> $relations
      * @param list<Operand> $aggregates The aggregate occurrences owned by this block
      */
-    public function distinct(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates = []): NonGroupedColumn|AggregateInOrdering|null
+    public function distinct(Select $select, array $relations, Derivation $derivation, array $aggregates = []): NonGroupedColumn|AggregateInOrdering|null
     {
-        return (new DistinctOrdering())->check($select, $relations, $facts, $derivation, $aggregates);
+        return (new DistinctOrdering())->check($select, $relations, $derivation, $aggregates);
     }
 
     /**
@@ -223,9 +222,9 @@ final class GroupedColumns
      * @param list<Field|OpenStar> $fields
      * @param array<int, VisibleRelation> $relations
      */
-    public function implicit(Select $select, array $fields, array $relations, Facts $facts, Derivation $derivation): ?NonGroupedColumn
+    public function implicit(Select $select, array $fields, array $relations, Derivation $derivation): ?NonGroupedColumn
     {
-        return $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, $facts, null, $derivation) ?? $this->implicitOrdering($select, $relations, $facts, $derivation);
+        return $this->items($fields, $relations, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, null, $derivation) ?? $this->implicitOrdering($select, $relations, $derivation);
     }
 
     /**
@@ -235,13 +234,13 @@ final class GroupedColumns
      *
      * @param array<int, VisibleRelation> $relations
      */
-    public function implicitOrdering(Select $select, array $relations, Facts $facts, Derivation $derivation): ?NonGroupedColumn
+    public function implicitOrdering(Select $select, array $relations, Derivation $derivation): ?NonGroupedColumn
     {
         if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return null;
         }
         foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $position => $item) {
-            $missing = (new ColumnReads())->columns($item->expression, $relations, $facts, false)[0][1] ?? null;
+            $missing = (new ColumnReads())->columns($item->expression, $relations, false)[0][1] ?? null;
             if ($missing !== null) {
                 return new NonGroupedColumn(GroupingRule::WithoutGroupBy, true, $position + 1, $this->name($missing, $relations, $derivation), release: $derivation->context->profile->grammar);
             }
@@ -258,7 +257,7 @@ final class GroupedColumns
     {
         $relation = $relations[spl_object_id($column->relation)] ?? null;
         $table = $relation->alias->value ?? $relation->name->name->value ?? '';
-        $common = $derivation->facts()->covers($column->relation) && $derivation->facts()->relation($column->relation)->table instanceof CommonTable;
+        $common = $column->relation->hasBinding() && $column->relation->relationInformation()->table instanceof CommonTable;
         $schema = $relation?->name === null || $common ? null : ($relation->name->schema->value ?? ($derivation->context->searchPath[0]->value ?? null));
         $name = $column->slot->name->value ?? '';
 

@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the document type condition
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE(1, '$')")->facts->diagnostics[0]->message() // => 'Invalid data type for JSON data in argument 1 to function json_value; a JSON string or JSON type is required.'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE(1, '$')")->diagnostics()[0]->message() // => 'Invalid data type for JSON data in argument 1 to function json_value; a JSON string or JSON type is required.'
  */
 final class InvalidJsonDocument implements Diagnostic
 {

@@ -41,18 +41,18 @@ final class EvaluationUse
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_do');
             $session->diagnostics->clear();
         }
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $statement = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($statement);
         $derivation = new Derivation($context);
         $statement->deriveProgram($derivation, new ProgramScope($derivation->environment()));
-        $this->database($statement, $derivation->facts(), $session);
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        $this->database($statement, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
             if (Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);
             }
         }
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
             if ($problem instanceof MissingTable) {
                 throw (new Errors())->error($problem, $session);
             }
@@ -63,7 +63,7 @@ final class EvaluationUse
         }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($statement, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($statement, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $this->prepare($statement, $planner);
     }
 
@@ -72,7 +72,7 @@ final class EvaluationUse
      *
      * @throws \MySqlMemory\Error\SqlError When a reached dependency has no default database
      */
-    public function database(DeferredEvaluation $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function database(DeferredEvaluation $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         if ($session->variables->database !== '') {
             return;

@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A table named with or without its inheritance descendants, as `relation_expr` writes it.
@@ -23,16 +22,21 @@ use SqlSemantics\Statement\Snapshot;
  *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), true);
  *     [$table->name->name->value, $table->only] // => ['t', true]
  */
-final class RelationReference implements Node
+final class RelationReference implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The relation name
      * @param bool $only Whether descendant tables are excluded
      */
-    public function __construct(public readonly QualifiedName $name, public readonly bool $only = false)
+    public function __construct(public readonly QualifiedName $name, public readonly bool $only = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

@@ -23,7 +23,7 @@ final class LegacyReplicationTest extends TestCase
         $this->expectExceptionCode(1794);
         $this->expectExceptionMessage(LegacyReplication::UNCONFIGURED);
 
-        (new LegacyReplication())->check($session->analyze('STOP SLAVE')->statement, $session);
+        (new LegacyReplication())->check($session->analyze('STOP SLAVE'), $session);
     }
 
     public function testCheckWarnsOfResetQueryCacheIn57(): void
@@ -37,7 +37,7 @@ final class LegacyReplicationTest extends TestCase
     public function testChangingTheServerIdDoesNotInitializeALegacyReplica(): void
     {
         $session = (new Instance('5.7.44', ['server_id' => 0]))->connect();
-        $statement = $session->analyze('STOP SLAVE')->statement;
+        $statement = $session->analyze('STOP SLAVE');
         $session->query('SET GLOBAL server_id=1');
 
         $this->expectException(SqlError::class);

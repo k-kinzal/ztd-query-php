@@ -17,13 +17,13 @@ final class AlgorithmOptionTest extends TestCase
 {
     public function testDeriveOptionAcceptsTheKnownAlgorithm(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t ALGORITHM = COPY')->facts->diagnostics);
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = instant')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t ALGORITHM = COPY')->diagnostics());
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = instant')->diagnostics());
     }
 
     public function testDeriveCommandChecksTheAlgorithm(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM = INPLACE')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM = INPLACE')->diagnostics());
     }
 
     public function testRenderWritesTheAlgorithmOrDefault(): void

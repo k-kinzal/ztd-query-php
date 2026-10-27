@@ -11,7 +11,6 @@ use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ViewRewrite::class)]
 #[Small]
@@ -26,14 +25,12 @@ final class ViewRewriteTest extends TestCase
         $writes = ViewWrites::of($view, $session);
         self::assertNotNull($writes);
         $operation = $session->analyze('UPDATE v SET x = 2');
-        self::assertInstanceOf(Operation::class, $operation);
         $target = ViewWriteCommand::viewTarget($operation);
         self::assertNotNull($target);
         $select = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Operation::class, $select);
-        $unrelated = $select->statement;
+        $unrelated = $select;
 
-        self::assertNull((new ViewRewrite())->replacement($unrelated, $operation, $writes, $target, new \SqlSemantics\Construction\Reconstruction(), []));
+        self::assertNull((new ViewRewrite())->replacement($unrelated, $operation, $writes, $target, new \SqlSemantics\Platform\MySql\Construction\Occurrences(), []));
     }
 
     public function testInsertionExpandsTheImplicitViewColumnList(): void
@@ -45,11 +42,10 @@ final class ViewRewriteTest extends TestCase
         $writes = ViewWrites::of($view, $session);
         self::assertNotNull($writes);
         $operation = $session->analyze('INSERT INTO v VALUES (2,1)');
-        self::assertInstanceOf(Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $operation);
         $target = ViewWriteCommand::viewTarget($operation);
         self::assertNotNull($target);
-        $into = (new ViewRewrite())->insertion($operation->statement->into, $writes, $target, false);
+        $into = (new ViewRewrite())->insertion($operation->into, $writes, $target, false);
         self::assertNotNull($into->columns);
         self::assertSame(['b', 'a'], array_map(static fn ($column) => $column instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse ? $column->name->value : null, $into->columns->columns));
     }
@@ -66,14 +62,13 @@ final class ViewRewriteTest extends TestCase
         $writes = ViewWrites::of($view, $session);
         self::assertNotNull($writes);
         $operation = $session->analyze('INSERT INTO e VALUES (5, 6)');
-        self::assertInstanceOf(Operation::class, $operation);
         $target = ViewWriteCommand::viewTarget($operation);
         self::assertNotNull($target);
 
         $this->expectExceptionCode(1348);
         $this->expectExceptionMessage("Column 'bb' is not updatable");
 
-        (new ViewRewrite())->operation($operation, $writes, $target)->toString();
+        (new ViewRewrite())->operation($operation, $writes, $target, $session)->toString();
     }
 
     public function testOperationInsertWritesTheBaseColumns(): void
@@ -88,11 +83,10 @@ final class ViewRewriteTest extends TestCase
         $writes = ViewWrites::of($view, $session);
         self::assertNotNull($writes);
         $operation = $session->analyze('INSERT INTO w (x) VALUES (1)');
-        self::assertInstanceOf(Operation::class, $operation);
         $target = ViewWriteCommand::viewTarget($operation);
         self::assertNotNull($target);
 
-        self::assertSame('INSERT INTO d.t (a) VALUES (1)', (new ViewRewrite())->operation($operation, $writes, $target)->toString());
+        self::assertSame('INSERT INTO d.t (a) VALUES (1)', (new ViewRewrite())->operation($operation, $writes, $target, $session)->toString());
     }
 
     public function testOperationChangeAddsTheConditionOfTheView(): void
@@ -107,11 +101,10 @@ final class ViewRewriteTest extends TestCase
         $writes = ViewWrites::of($view, $session);
         self::assertNotNull($writes);
         $operation = $session->analyze('UPDATE w SET x = x * 100 WHERE b < 3');
-        self::assertInstanceOf(Operation::class, $operation);
         $target = ViewWriteCommand::viewTarget($operation);
         self::assertNotNull($target);
 
-        self::assertSame('UPDATE d.t AS q SET a = q.a * 100 WHERE (q.b < 3) AND (q.a > 0)', (new ViewRewrite())->operation($operation, $writes, $target)->toString());
+        self::assertSame('UPDATE d.t AS q SET a = q.a * 100 WHERE (q.b < 3) AND (q.a > 0)', (new ViewRewrite())->operation($operation, $writes, $target, $session)->toString());
     }
 
     public function testOperationRetargetWritesTheStatementAgainstTheBaseTable(): void
@@ -126,10 +119,9 @@ final class ViewRewriteTest extends TestCase
         $writes = ViewWrites::of($view, $session);
         self::assertNotNull($writes);
         $operation = $session->analyze('UPDATE w SET x = b ORDER BY x LIMIT 2');
-        self::assertInstanceOf(Operation::class, $operation);
         $target = ViewWriteCommand::viewTarget($operation);
         self::assertNotNull($target);
 
-        self::assertSame('UPDATE d.t AS q SET a = q.b WHERE q.a > 0 ORDER BY q.a LIMIT 2', (new ViewRewrite())->operation($operation, $writes, $target)->toString());
+        self::assertSame('UPDATE d.t AS q SET a = q.b WHERE q.a > 0 ORDER BY q.a LIMIT 2', (new ViewRewrite())->operation($operation, $writes, $target, $session)->toString());
     }
 }

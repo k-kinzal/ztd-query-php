@@ -22,7 +22,7 @@ final class QueryPreparationTest extends TestCase
         $derivation = new Derivation($context);
         $query = new M\Query\ValuesQuery([new M\Query\ValueRow([])]);
         $derivation->query($query, $derivation->environment());
-        $input = new QueryPreparation($query, $derivation->facts(), $context->profile);
+        $input = new QueryPreparation($query, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $context->profile);
         self::assertSame($context->profile, $input->profile());
         self::assertSame($query, $input->statement);
         self::assertNotEmpty($input->facts->diagnostics);

@@ -42,7 +42,7 @@ final class SyntaxLoadInputTest extends TestCase
 
     public function testRejectedAllowsZeroInTheEarlierReleaseWithTheSameProduction(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("LOAD DATA INFILE 'f' COUNT 000 INTO TABLE t")->statement;
+        $statement = (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("LOAD DATA INFILE 'f' COUNT 000 INTO TABLE t");
         self::assertInstanceOf(LoadTable::class, $statement);
         self::assertSame('000', $statement->input->count?->text);
     }

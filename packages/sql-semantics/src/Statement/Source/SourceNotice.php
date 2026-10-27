@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example An identifier spelling that MySQL deprecates
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT 1 AS full');
- *     $query->sources->notices[0]->offset // => 16
+ *     $query->notices()[0]->inputSource?->offset // => 16
  */
 final class SourceNotice
 {

@@ -46,6 +46,19 @@ final class TimeZoneFactsTest extends TestCase
         self::assertNull($rule->input(new NullLiteral()));
     }
 
+    public function testInputProbesWithoutBindingTheCallerOperands(): void
+    {
+        $column = new ColumnUse(new Name('absent'));
+        $parameter = new Parameter();
+        $comparison = new Comparison(ComparisonOperator::Equal, $column, $parameter);
+        $rule = new TimeZoneFacts();
+        self::assertFalse($rule->input($comparison));
+        self::assertFalse($rule->input($comparison));
+        self::assertFalse($comparison->hasBinding());
+        self::assertFalse($column->hasBinding());
+        self::assertFalse($parameter->hasBinding());
+    }
+
     public function testExcludesRequiresEveryAlternativeToExcludeTheField(): void
     {
         $rule = new TimeZoneFacts();

@@ -97,7 +97,7 @@ final class DefaultDatabase
      *
      * @throws SqlError When a write head contains an unqualified base-table reference
      */
-    public function write(\SqlSemantics\Statement\Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function write(\SqlSemantics\Statement\Node $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         if ($session->variables->database !== '') {
             return;
@@ -120,7 +120,7 @@ final class DefaultDatabase
             if ($table instanceof \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget && $table->name->schema === null) {
                 throw QueryError::NoDatabase->error();
             }
-            if ($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $table->name->schema === null && (!$facts->covers($table) || !$facts->relation($table)->table instanceof \SqlSemantics\Statement\Reference\Table\CommonTable)) {
+            if ($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $table->name->schema === null && (!$table->hasBinding() || !$table->relationInformation()->table instanceof \SqlSemantics\Statement\Reference\Table\CommonTable)) {
                 throw QueryError::NoDatabase->error();
             }
         }
@@ -133,19 +133,19 @@ final class DefaultDatabase
      *
      * @throws SqlError When a reached base-table reference requires a current database
      */
-    public function referenced(\SqlSemantics\Statement\Operation|\MySqlMemory\Session\Resolution\QueryPreparation $operation, Session $session): void
+    public function referenced(\SqlSemantics\Platform\MySql\Statement\Statement|\MySqlMemory\Session\Resolution\QueryPreparation $operation, Session $session): void
     {
-        if ($session->variables->database !== '' || \MySqlMemory\Command\Dispatcher::program($operation->statement)) {
+        if ($session->variables->database !== '' || \MySqlMemory\Command\Dispatcher::program($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation->statement)) {
             return;
         }
-        $this->calls($operation->statement, $session);
+        $this->calls($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation->statement, $session);
         $names = [];
-        foreach ((new \MySqlMemory\Session\Problems())->reached($operation->statement) as $node) {
+        foreach ((new \MySqlMemory\Session\Problems())->reached($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation->statement) as $node) {
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget) {
                 $names[spl_object_id($node->name())] = true;
             }
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation->statementInformation() : $operation->facts)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name->schema === null && isset($names[spl_object_id($diagnostic->name)])) {
                 throw QueryError::NoDatabase->error();
             }
@@ -170,4 +170,25 @@ final class DefaultDatabase
             }
         }
     }
+    /**
+     * Checks missing implicit databases reached before a duplicate table alias.
+     *
+     * @param list<\SqlSemantics\Statement\Node> $nodes FROM occurrences in reading order
+     * @throws SqlError When a preceding base table requires a current database
+     */
+    public function beforeAlias(array $nodes, \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable $diagnostic, Session $session): void
+    {
+        if ($session->settings()->legacy() || $session->variables->database !== '') {
+            return;
+        }
+        foreach ($nodes as $node) {
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $node->hasBinding() && $node->relationInformation()->table instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $node->name->schema === null) {
+                throw QueryError::NoDatabase->error();
+            }
+            if ($node === $diagnostic->relation) {
+                break;
+            }
+        }
+    }
+
 }

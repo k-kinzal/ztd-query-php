@@ -20,11 +20,11 @@ final class CallRolesTest extends TestCase
     public function testProblemFollowsOnlyContextualizedDefinitionsAndClauses(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT ``(ABS())) SELECT 7');
-        self::assertInstanceOf(M\QueryRoot::class, $operation->statement);
-        self::assertNull((new CallRoles())->problem($operation->statement));
-        self::assertInstanceOf(M\Query\QueryExpression::class, $operation->statement->query);
-        self::assertInstanceOf(M\Query\With\With::class, $operation->statement->query->with);
-        self::assertSame("Incorrect routine name ''", (new CallRoles())->problem($operation->statement->query->with->tables[0]->query)?->message());
+        self::assertInstanceOf(M\QueryRoot::class, $operation);
+        self::assertNull((new CallRoles())->problem($operation));
+        self::assertInstanceOf(M\Query\QueryExpression::class, $operation->query);
+        self::assertInstanceOf(M\Query\With\With::class, $operation->query->with);
+        self::assertSame("Incorrect routine name ''", (new CallRoles())->problem($operation->query->with->tables[0]->query)?->message());
         self::assertSame("Incorrect parameter count in the call to native function 'ABS'", (new CallRoles())->problem(new M\Routine\Program\Expression\Call\DormantCall(new Name('ABS')))?->message());
     }
 }

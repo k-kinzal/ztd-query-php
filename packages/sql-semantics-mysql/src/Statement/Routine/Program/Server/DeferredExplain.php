@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A complete stored explanation whose operands require invocation-time preparation.
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining a complete explanation in a stored body
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.1.0'))->analyze("CREATE PROCEDURE p() EXPLAIN FORMAT=JSON INTO @'' SELECT 1");
- *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain // => true
+ *     $operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain // => true
  */
 final class DeferredExplain implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement The complete explained statement, including deferred query operands
@@ -44,7 +43,7 @@ final class DeferredExplain implements ProgramStatement
      * @param \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier|null $modifier The optional legacy report modifier
      * @param bool $emptyInto Whether the ignored empty INTO spelling of 8.2–8.3 is present
      */
-    public function __construct(public readonly Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier $modifier = null, public readonly bool $emptyInto = false)
+    public function __construct(public readonly Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier $modifier = null, public readonly bool $emptyInto = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');

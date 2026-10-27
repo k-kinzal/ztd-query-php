@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Statement\Operation;
 
 #[CoversNothing]
 #[Medium]
@@ -27,8 +26,6 @@ final class ConditionalRequestAnalysisBoundaryTest extends TestCase
         $rows = [$session->variables->rowCount, $session->variables->foundRows];
 
         $operation = $session->analyze($sql);
-
-        self::assertInstanceOf(Operation::class, $operation);
         self::assertSame($table, $session->instance->dictionary->table('d', 't'));
         self::assertTrue($session->transaction->open);
         self::assertEquals($status, $session->instance->registry->status);
@@ -42,7 +39,6 @@ final class ConditionalRequestAnalysisBoundaryTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['a', 'b']))->connect();
         $operation = $session->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW SET @x=1');
-        self::assertInstanceOf(Operation::class, $operation);
         $prepared = \MySqlMemory\Command\Prepared\PreparedStatement::capture($operation, $session);
         $missing = $prepared->run($session, 'opaque trigger request', [])[0];
         self::assertInstanceOf(SqlError::class, $missing);
@@ -52,7 +48,7 @@ final class ConditionalRequestAnalysisBoundaryTest extends TestCase
         self::assertInstanceOf(SqlError::class, $reached);
         self::assertSame(1435, $reached->getCode());
         self::assertFalse($session->transaction->open);
-        self::assertSame($operation->statement, $prepared->statement);
+        self::assertSame($operation, $prepared->statement);
         self::assertSame([], $session->transaction->statements->running);
         self::assertSame([], $session->running->using);
         $this->expectExceptionCode(1295);

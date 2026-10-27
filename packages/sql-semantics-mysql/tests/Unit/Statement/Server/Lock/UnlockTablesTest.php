@@ -24,7 +24,7 @@ final class UnlockTablesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('UNLOCK TABLES');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

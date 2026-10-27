@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the slot of a parameter
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ?');
- *     $operation->facts->scalar($operation->statement->query->items[0]->expression)->resolution->position // => 0
+ *     $operation->query->items[0]->expression->scalarInformation()->resolution->position // => 0
  */
 final class ParameterBinding implements Resolution
 {

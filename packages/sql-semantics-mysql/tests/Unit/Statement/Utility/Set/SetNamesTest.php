@@ -19,20 +19,20 @@ final class SetNamesTest extends TestCase
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET NAMES utf8 COLLATE utf8_bin');
 
-        self::assertCount(2, $set->facts->warnings);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning::class, $set->facts->warnings[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning::class, $set->facts->warnings[1]);
-        self::assertSame([3719, 3778], [$set->facts->warnings[0]->code(), $set->facts->warnings[1]->code()]);
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SET CHARACTER SET utf8')->facts->warnings);
+        self::assertCount(2, $set->warnings());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning::class, $set->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning::class, $set->warnings()[1]);
+        self::assertSame([3719, 3778], [$set->warnings()[0]->code(), $set->warnings()[1]->code()]);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SET CHARACTER SET utf8')->warnings());
     }
 
     public function testDeriveItemDerivesNothing(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET NAMES DEFAULT');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
-        self::assertInstanceOf(SetNames::class, $set->statement->items[0]);
-        self::assertNull($set->statement->items[0]->charset->name);
-        self::assertSame([], $set->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set);
+        self::assertInstanceOf(SetNames::class, $set->items[0]);
+        self::assertNull($set->items[0]->charset->name);
+        self::assertSame([], $set->diagnostics());
     }
 
     public function testRenderWritesTheCollation(): void

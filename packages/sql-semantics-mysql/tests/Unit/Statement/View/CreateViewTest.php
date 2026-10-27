@@ -41,8 +41,8 @@ final class CreateViewTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v (a, b) AS SELECT 1');
         $duplicate = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v (a, a) AS SELECT 1, 2');
 
-        self::assertInstanceOf(ViewColumnCount::class, $create->facts->diagnostics[0]);
-        self::assertInstanceOf(DuplicateColumn::class, $duplicate->facts->diagnostics[0]);
+        self::assertInstanceOf(ViewColumnCount::class, $create->diagnostics()[0]);
+        self::assertInstanceOf(DuplicateColumn::class, $duplicate->diagnostics()[0]);
     }
 
     public function testRenderWritesTheStatement(): void
@@ -56,8 +56,8 @@ final class CreateViewTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', [$table, $view])->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', [$table, $view])->facts->diagnostics));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', [$table, $view])->diagnostics()));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', [$table, $view])->diagnostics()));
         self::assertSame(RelationKind::View, $view->declarations()[0]->kind);
     }
 }

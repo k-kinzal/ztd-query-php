@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * HELP: searches the help tables of the server for a topic.
@@ -28,17 +27,20 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the topic
  *     $help = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("HELP 'contents'");
- *     [$help->statement->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, 'HELP contents']
+ *     [$help->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, 'HELP contents']
  */
-final class Help implements Statement
+final class Help extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $topic The search string
      */
-    public function __construct(public readonly Name $topic)
+    public function __construct(public readonly Name $topic, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping every select list item an alias names
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []);
- *     count($query->facts->diagnostics[0]->candidates) // => 2
+ *     count($query->diagnostics()[0]->candidates) // => 2
  * @example Refusing a single candidate
  *     new \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias(new \SqlSemantics\Statement\Identifier\Name('x'), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

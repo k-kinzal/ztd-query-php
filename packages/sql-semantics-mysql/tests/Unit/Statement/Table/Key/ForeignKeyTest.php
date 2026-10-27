@@ -19,13 +19,13 @@ final class ForeignKeyTest extends TestCase
     public function testDeriveElementDerivesNothing(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE c (p INT, FOREIGN KEY f (p) REFERENCES c (p))');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->elements[1];
 
         self::assertInstanceOf(ForeignKey::class, $key);
         self::assertSame('f', $key->name?->column->value);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheConstraintTheColumnsAndTheReference(): void

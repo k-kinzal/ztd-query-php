@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One table whose indexes CACHE INDEX assigns to a key cache: `t [PARTITION (…)] [INDEX (…)]`.
@@ -27,9 +26,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $table = new \SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), null, [new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex()]);
  *     count($table->indexes ?? []) // => 1
  */
-final class CachedTable implements Node
+final class CachedTable implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name|PrimaryIndex>|null The indexes, when an index list is written
@@ -41,8 +41,11 @@ final class CachedTable implements Node
      * @param PartitionSelection|null $partitions The partitions, when written
      * @param list<Name|PrimaryIndex>|null $indexes The indexes, when an index list is written
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null)
+    public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         $this->indexes = (new CachedIndexes())->checked($table, $indexes);
     }

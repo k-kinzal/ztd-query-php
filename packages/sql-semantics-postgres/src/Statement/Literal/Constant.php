@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,13 +37,17 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class Constant implements Scalar, OutputNaming, IntegerValued
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntegerConstant|NumericConstant|StringConstant|BitStringConstant $value The exact value
      */
-    public function __construct(public readonly IntegerConstant|NumericConstant|StringConstant|BitStringConstant $value)
+    public function __construct(public readonly IntegerConstant|NumericConstant|StringConstant|BitStringConstant $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

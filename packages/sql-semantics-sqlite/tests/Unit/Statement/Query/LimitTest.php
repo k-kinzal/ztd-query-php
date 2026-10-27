@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Limit;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Limit::class)]
 #[Medium]
@@ -23,8 +22,8 @@ final class LimitTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('select a from t limit 5, 10');
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        $limit = $query->statement->limit;
+        self::assertInstanceOf(Select::class, $query);
+        $limit = $query->limit;
         self::assertNotNull($limit);
         self::assertTrue($limit->comma);
         self::assertInstanceOf(IntegerLiteral::class, $limit->offset);
@@ -38,8 +37,8 @@ final class LimitTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('select a from t limit 10 offset 5');
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        $limit = $query->statement->limit;
+        self::assertInstanceOf(Select::class, $query);
+        $limit = $query->limit;
         self::assertNotNull($limit);
         self::assertFalse($limit->comma);
         self::assertInstanceOf(IntegerLiteral::class, $limit->offset);
@@ -51,7 +50,7 @@ final class LimitTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $limit = new Limit(new IntegerLiteral('3'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('1'))], null, null, [], null, [], [], $limit));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('1'))], null, null, [], null, [], [], $limit));
 
         self::assertNull($limit->offset);
         self::assertSame('SELECT 1 LIMIT 3', $operation->toString());

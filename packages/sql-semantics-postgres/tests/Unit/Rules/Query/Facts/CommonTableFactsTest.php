@@ -75,7 +75,7 @@ final class CommonTableFactsTest extends TestCase
     public function testBindReportsMergeBeforeRelease17(): void
     {
         $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6'))->analyze('WITH m AS (MERGE INTO t USING u ON TRUE WHEN MATCHED THEN DO NOTHING) SELECT 1');
-        self::assertSame('MERGE not supported in WITH query', $query->facts->diagnostics[0]->message());
+        self::assertSame('MERGE not supported in WITH query', $query->diagnostics()[0]->message());
     }
 
     public function testMemberReportsASearchColumnTheTableLacks(): void

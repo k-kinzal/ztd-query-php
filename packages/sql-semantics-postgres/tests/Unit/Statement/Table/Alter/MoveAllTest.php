@@ -16,7 +16,7 @@ final class MoveAllTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('ALTER INDEX ALL IN TABLESPACE a SET TABLESPACE b', []);
-        self::assertSame(0, count($statement->facts->diagnostics));
+        self::assertSame(0, count($statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

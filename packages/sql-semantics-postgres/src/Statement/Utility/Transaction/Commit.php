@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,18 +20,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a chained end of a transaction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('END AND CHAIN');
- *     [$operation->statement->chaining, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::Chain, 'END AND CHAIN']
+ *     [$operation->chaining, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::Chain, 'END AND CHAIN']
  */
-final class Commit implements Statement
+final class Commit extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CommitSpelling $spelling The spelling of the command
      * @param Chaining|null $chaining AND CHAIN or AND NO CHAIN, when written
      */
-    public function __construct(public readonly CommitSpelling $spelling = CommitSpelling::Commit, public readonly ?Chaining $chaining = null)
+    public function __construct(public readonly CommitSpelling $spelling = CommitSpelling::Commit, public readonly ?Chaining $chaining = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

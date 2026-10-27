@@ -6,7 +6,6 @@ namespace MySqlMemory\Session;
 
 use LogicException;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -15,13 +14,11 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Statement\Lifecycle;
 use RuntimeException;
-use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
-use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\AnalyzedStatement;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 use WeakReference;
 
 /**
@@ -49,10 +46,7 @@ final class Execution
      */
     public function statement(AnalyzedStatement $statement, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
-        $node = $statement instanceof Operation ? $statement->statement : $statement;
-        if (!$node instanceof Node) {
-            throw new LogicException('No semantic statement executor for ' . $statement::class);
-        }
+        $node = $statement;
         return $this->perform($statement, (new \MySqlMemory\Command\Dispatcher())->command($node), $parameters, $read, $contained);
     }
 
@@ -79,21 +73,13 @@ final class Execution
      */
     public function perform(AnalyzedStatement $operation, Command $command, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
-        if ($operation instanceof Operation && $operation->statement instanceof AnalyzedStatement) {
-            $operation = $operation->statement;
-        }
         if ($operation->profile()->grammar !== $this->session->settings()->release()) {
             throw new RuntimeException('The statement and execution session must select the same MySQL release.');
         }
-        $node = $operation instanceof Operation ? $operation->statement : $operation;
-        if (!$node instanceof Node) {
-            throw new LogicException('No semantic command for ' . $operation::class);
-        }
+        $node = $operation;
         $hints = (new \MySqlMemory\Hint\Hints())->apply($node, $this->session);
         $previous = $this->session->preparation->resolution;
-        if ($operation instanceof Operation) {
-            $this->session->preparation->resolution = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($operation->context);
-        }
+        $this->session->preparation->resolution = $this->session->resolution();
         try {
             return $this->run($operation, $command, $hints, $parameters, $read, $contained);
         } catch (SqlError $error) {
@@ -124,43 +110,37 @@ final class Execution
     public function run(AnalyzedStatement $operation, Command $command, \MySqlMemory\Hint\Application $hints, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
         $session = $this->session;
-        $node = $operation instanceof Operation ? $operation->statement : $operation;
-        if (!$node instanceof Node) {
-            throw new LogicException('No semantic command for ' . $operation::class);
-        }
+        $node = $operation;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
-        $late = $operation instanceof Operation ? $this->reading($operation, $read) : [];
+        $late = $operation instanceof MySqlStatement ? $this->reading($operation, $read) : [];
         (new Statement\Reading())->read($operation, $session, $read && !$session->replayed);
         State\StatementCounters::evaluated($node, $session);
         (new Access\StatementAccess())->check($node, $session, $context);
-        if ($operation instanceof Operation) {
+        if ($operation instanceof MySqlStatement) {
             (new Access\DefaultDatabase())->referenced($operation, $session);
         }
         $hints->report($session);
-        if ($operation instanceof Operation) {
+        if ($operation instanceof MySqlStatement) {
             foreach ($session->replayed || $this->undeclared($operation) ? [] : $late as $warning) {
                 $session->diagnostics->warning($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning ? $warning->code() : 1105, $warning->message());
             }
-            (new \MySqlMemory\System\Guard())->check($operation->statement, $session, $operation->facts);
+            (new \MySqlMemory\System\Guard())->check($operation, $session, $operation->statementInformation());
             (new \MySqlMemory\Concurrency\Access())->check($operation, $session);
             try {
                 (new Problems())->raise($operation, $session);
             } catch (SqlError $error) {
-                $error = (new \MySqlMemory\Command\Replication\PurgeErrors())->prepared($error, $operation->statement);
-                throw (new Problem\Precision())->legacy(\MySqlMemory\Command\Admin\KillCommand::preparation((new Problem\ValueRows())->extended($error, $operation->statement, $session->settings()->release()), $operation->statement), $session->settings()->release());
+                $error = (new \MySqlMemory\Command\Replication\PurgeErrors())->prepared($error, $operation);
+                throw (new Problem\Precision())->legacy(\MySqlMemory\Command\Admin\KillCommand::preparation((new Problem\ValueRows())->extended($error, $operation, $session->settings()->release()), $operation), $session->settings()->release());
             }
             if ($session->locks !== []) {
                 (new \MySqlMemory\Command\Access\Locks())->check($operation, $session);
             }
-            (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
-        } elseif ($operation instanceof InsertStatement) {
-            (new \MySqlMemory\Concurrency\Access())->writes([$operation->target->resolvedName ?? $operation->target->name], $session);
-        } elseif ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
-            (new \MySqlMemory\Concurrency\Access())->definition($session);
-        } elseif (!$operation instanceof TransactionStatement) {
+            (new Problem\Reopened())->check($operation, $session, $operation->statementInformation());
+        } else {
             throw new LogicException('No semantic preparation for ' . $operation::class);
         }
+
         return (new Lifecycle($session))->run($node, fn (): Reply => $command->execute($operation, $session, $context, new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, $session->program, WeakReference::create($session))), $contained);
     }
 
@@ -173,29 +153,29 @@ final class Execution
      * @return array<int, \SqlSemantics\Statement\Fact\Warning> Deferred notices with their original indexes
      * @throws SqlError When an initial condition rejects the statement
      */
-    public function reading(Operation $operation, bool $read): array
+    public function reading(MySqlStatement $operation, bool $read): array
     {
         $session = $this->session;
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree) {
             throw (new Parse\DebugRequest())->refusal($operation, (new \MySqlMemory\Command\InternalCommand())->error($operation), $session);
         }
-        (new Access\TableCreation())->database($operation->statement, $session);
-        (new Access\DefaultDatabase())->check($operation->statement, $session);
+        (new Access\TableCreation())->database($operation, $session);
+        (new Access\DefaultDatabase())->check($operation, $session);
         (new Access\LockNames())->check($operation, $session, $read);
-        $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
+        $late = array_filter($operation->statementInformation()->warnings, Stages::afterReading(...));
         if ($read && !$session->replayed) {
-            $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
+            $this->parsing($operation, array_diff_key($operation->statementInformation()->warnings, $late));
         }
-        foreach ($session->replayed ? $operation->facts->warnings : [] as $warning) {
+        foreach ($session->replayed ? $operation->statementInformation()->warnings : [] as $warning) {
             if ($warning instanceof Deprecation && $warning->construct === \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryBitwise) {
                 $session->diagnostics->warning($warning->code(), $warning->message());
             }
         }
         if (!$read) {
             (new \MySqlMemory\Program\Routine\InspectionNotices())->start($operation, $session);
-            if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->hasExecutionCondition()) {
-                (new \MySqlMemory\Program\Definition\IndexMetadata())->refresh($operation->statement, $session);
-                (new \MySqlMemory\Program\Definition\TemporaryStorage())->start($operation->statement, $session);
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->hasExecutionCondition()) {
+                (new \MySqlMemory\Program\Definition\IndexMetadata())->refresh($operation, $session);
+                (new \MySqlMemory\Program\Definition\TemporaryStorage())->start($operation, $session);
             }
         }
         try {
@@ -215,16 +195,12 @@ final class Execution
      * retains them, and empties the area otherwise; so does a GET DIAGNOSTICS that names an
      * undeclared variable or has a problem found while it is parsed, such as an unknown system
      * variable (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
-     * @throws LogicException When the statement has no semantic execution implementation
      */
     public function area(AnalyzedStatement $operation, Command $command): void
     {
         $session = $this->session;
         (new Lifecycle($session))->start();
-        if (!$operation instanceof Operation) {
-            if (!$operation instanceof Node) {
-                throw new LogicException('A command requires a semantic node.');
-            }
+        if (!$operation instanceof MySqlStatement) {
             if ($command->clearsDiagnostics() && $this->retains($operation, $command)) {
                 $session->diagnostics->retain();
             } elseif ($command->clearsDiagnostics()) {
@@ -235,10 +211,10 @@ final class Execution
         if ((new Parse\DebugRequest())->preserves($operation)) {
             return;
         }
-        $resetsOnParseFailure = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings && $session->settings()->legacy()) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
-        if ($command->clearsDiagnostics() && $this->retains($operation->statement, $command)) {
+        $resetsOnParseFailure = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings && $session->settings()->legacy()) || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
+        if ($command->clearsDiagnostics() && $this->retains($operation, $command)) {
             $session->diagnostics->retain();
-        } elseif ($command->clearsDiagnostics() || ($resetsOnParseFailure && ($this->undeclared($operation) || array_filter($operation->facts->diagnostics, Stages::parsed(...)) !== []))) {
+        } elseif ($command->clearsDiagnostics() || ($resetsOnParseFailure && ($this->undeclared($operation) || array_filter($operation->statementInformation()->diagnostics, Stages::parsed(...)) !== []))) {
             $session->diagnostics->clear();
         }
     }
@@ -256,17 +232,15 @@ final class Execution
      *
      * @throws SqlError When a problem is found while the statement is parsed
      */
-    public function parsing(Operation $operation, array $warnings): void
+    public function parsing(MySqlStatement $operation, array $warnings): void
     {
         $session = $this->session;
-        $warnings = Stages::grammar((new Parse\SpatialWarnings())->accepted($operation, $warnings), $session->settings()->legacy(), $operation->facts);
+        $warnings = Stages::grammar((new Parse\SpatialWarnings())->accepted($operation, $warnings), $session->settings()->legacy(), $operation->statementInformation());
+        $hints = array_filter($warnings, static fn ($warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError);
+        $warnings = array_diff_key($warnings, $hints);
         $dots = $session->dots;
         $failure = null;
-        foreach ($session->hinted as [$message, $leading]) {
-            if ($leading) {
-                $session->diagnostics->warning(StatementError::ParseError, $message);
-            }
-        }
+        (new \MySqlMemory\Hint\Hints())->warnings($hints, true, $session);
         foreach ($warnings as $warning) {
             if (!$warning instanceof Deprecation || !in_array($warning->construct, Syntax::HEAD, true)) {
                 foreach ($dots as $construct) {
@@ -275,12 +249,12 @@ final class Execution
                 $dots = [];
             }
             if ($warning instanceof ParseFailure) {
-                if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && in_array($warning->problem->rule, [\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownLockedTable, \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RepeatedLockedTable], true)) {
+                if (Stages::locked($warning->problem)) {
                     (new Access\DefaultDatabase())->referenced($operation, $session);
                 }
                 (new \MySqlMemory\Command\Definition\StorageOptions())->beforePartition($warning, $operation, $session);
-                (new Access\TableCreation())->database($operation->statement, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
-                $error = (new Problem\Precision())->legacy((new Parse\LocatedErrors())->error($warning->problem, $operation, $session) ?? (new CacheOptions())->placed($warning->problem, $operation->statement, $session) ?? (new Errors())->error($warning->problem, $session, 'field list', $operation->statement), $session->settings()->release());
+                (new Access\TableCreation())->database($operation, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+                $error = (new Problem\Precision())->legacy((new Parse\LocatedErrors())->error($warning->problem, $operation, $session) ?? (new CacheOptions())->placed($warning->problem, $operation, $session) ?? (new Errors())->error($warning->problem, $session, 'field list', $operation), $session->settings()->release());
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
                 $failure ??= $error;
                 if ($warning->aborts) {
@@ -293,11 +267,7 @@ final class Execution
                 break;
             }
         }
-        foreach ($session->hinted as [$message, $leading]) {
-            if (!$leading) {
-                $session->diagnostics->warning(StatementError::ParseError, $message);
-            }
-        }
+        (new \MySqlMemory\Hint\Hints())->warnings($hints, false, $session);
         foreach ($dots as $construct) {
             $session->diagnostics->warning($construct->code(), $construct->value);
         }
@@ -368,12 +338,12 @@ final class Execution
     /**
      * Tells whether an INTO clause or a GET DIAGNOSTICS target of the statement names a variable no running stored program declares: the parser stops there (ER_SP_UNDECLARED_VAR), before it warns about INTO written before the locking clauses, and GET DIAGNOSTICS then fails as a new statement that empties the diagnostics area (verified on a live 8.4 server).
      */
-    public function undeclared(Operation $operation): bool
+    public function undeclared(MySqlStatement $operation): bool
     {
         try {
-            (new Problem\Reading())->into($operation->statement, $this->session);
-            if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors) {
-                (new Problem\Reading())->limited($operation->statement->limit, $this->session);
+            (new Problem\Reading())->into($operation, $this->session);
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors) {
+                (new Problem\Reading())->limited($operation->limit, $this->session);
             }
         } catch (SqlError) {
             return true;

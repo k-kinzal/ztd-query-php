@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PURGE BINARY LOGS BEFORE datetime_expr`: deletes the binary log files older than a moment.
@@ -25,16 +24,19 @@ use SqlSemantics\Statement\Snapshot;
  * @example Purging the logs before a moment
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("purge binary logs before '2024-01-01 00:00:00'")->toString() // => "PURGE BINARY LOGS BEFORE '2024-01-01 00:00:00'"
  */
-final class PurgeLogsBefore implements Statement
+final class PurgeLogsBefore extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $moment The moment: files last modified before it are deleted
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the moment contains a subquery
      */
-    public function __construct(public readonly Scalar $moment)
+    public function __construct(public readonly Scalar $moment, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Replication\LogMoment())->check($moment);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

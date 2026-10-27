@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One password management or account locking option of CREATE USER or ALTER USER, with its number when it takes one.
@@ -22,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a password history option
- *     $option = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE USER u PASSWORD HISTORY 5')->statement->options[0];
+ *     $option = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE USER u PASSWORD HISTORY 5')->options[0];
  *     [$option->kind, $option->number?->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, '5']
  * @example Refusing an intrinsically invalid locking interval
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::LockTime, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('00032768')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -33,13 +32,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AccountOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param AccountOptionKind $kind The option
      * @param Numeral|null $number The number of an option that takes one
      */
-    public function __construct(public readonly AccountOptionKind $kind, public readonly ?Numeral $number = null)
+    public function __construct(public readonly AccountOptionKind $kind, public readonly ?Numeral $number = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($number !== null) === $kind->numbered(), 'A number is written exactly for an option that takes one.');
         $problem = $number === null ? null : (new NumberChecks())->option($kind, $number);

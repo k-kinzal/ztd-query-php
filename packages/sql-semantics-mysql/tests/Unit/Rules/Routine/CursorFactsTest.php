@@ -25,7 +25,7 @@ final class CursorFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -46,7 +46,7 @@ final class CursorFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**

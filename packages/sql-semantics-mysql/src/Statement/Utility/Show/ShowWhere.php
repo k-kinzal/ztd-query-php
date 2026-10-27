@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The WHERE clause of a SHOW: the rows of the statement for which a condition holds.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Resolving a condition against the result columns
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW VARIABLES WHERE Variable_name = 'port'");
- *     $show->facts->scalar($show->statement->filter->condition->left)->resolution->slot->name?->value // => 'Variable_name'
+ *     $show->filter->condition->left->scalarInformation()->resolution->slot->name?->value // => 'Variable_name'
  */
 final class ShowWhere implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $condition The condition
      */
-    public function __construct(public readonly Scalar $condition)
+    public function __construct(public readonly Scalar $condition, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -37,11 +36,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the searched columns
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)");
- *     [count($query->statement->query->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
+ *     [count($query->query->where->columns), $query->toString()] // => [2, "SELECT a FROM t WHERE MATCH a, b AGAINST ('x' WITH QUERY EXPANSION)"]
  */
 final class FullTextSearch implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ColumnUse> The searched columns in order
@@ -55,8 +55,11 @@ final class FullTextSearch implements Scalar
      * @param OptionalWords $parentheses Whether the column list is written in parentheses
      * @param OptionalWords $stated Whether a natural language search writes IN NATURAL LANGUAGE MODE
      */
-    public function __construct(array $columns, public readonly Scalar $against, public readonly FullTextMode $mode = FullTextMode::NaturalLanguage, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly OptionalWords $stated = OptionalWords::Omitted)
+    public function __construct(array $columns, public readonly Scalar $against, public readonly FullTextMode $mode = FullTextMode::NaturalLanguage, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly OptionalWords $stated = OptionalWords::Omitted, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->columns = Check::listOf($columns, ColumnUse::class, 'MATCH searches at least one column.', 1);
         $precedence = new Precedence();
         Check::input($precedence->admits($against, Precedence::BIT_EXPR), 'The search string of AGAINST needs a grouping to keep its place.');

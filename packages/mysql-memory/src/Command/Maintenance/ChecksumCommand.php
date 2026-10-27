@@ -17,9 +17,9 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CHECKSUM TABLE: a row of Table and Checksum for each table in written order.
@@ -50,8 +50,8 @@ final class ChecksumCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ChecksumTable);
         $database = $session->variables->database;
         foreach ($statement->tables as $table) {
@@ -62,7 +62,7 @@ final class ChecksumCommand implements Command
         $rows = [];
         foreach ($statement->tables as $table) {
             $schema = $table->name->schema->value ?? $database;
-            $stored = $session->instance->dictionary->table($schema, $table->name->name->value);
+            $stored = $session->instance->dictionary->table($schema, $table->name->name->value, $session->temporaries);
             $label = $schema . '.' . $table->name->name->value;
             if ($stored === null) {
                 $owner = $session->instance->dictionary->schema($schema);

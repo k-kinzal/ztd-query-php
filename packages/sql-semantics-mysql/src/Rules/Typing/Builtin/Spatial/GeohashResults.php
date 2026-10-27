@@ -81,7 +81,7 @@ final class GeohashResults
         $domain = $call->domain(0);
         $node = $this->operand($call, 0);
         $parameter = $node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-        $unbound = $parameter && in_array($call->derivation->parameterPosition($node), $call->settings->unboundParameters, true);
+        $unbound = $parameter && in_array($node->position, $call->settings->unboundParameters, true);
         $legacy = $call->derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744;
         $valid = $unbound || $domain->kind === Kind::Null || $this->binary($call, 0) || ($parameter && (!$legacy || $domain->kind !== Kind::String));
         if (!$valid) {

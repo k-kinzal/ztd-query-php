@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LOCK {TABLE | TABLES} t [[AS] alias] lock_type, …`: a request to lock tables for the session.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Locking two tables
  *     $lock = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('lock table t read local, u as v write');
- *     [$lock->toString(), $lock->statement->locks[1]->alias?->value] // => ['LOCK TABLES t READ LOCAL, u AS v WRITE', 'v']
+ *     [$lock->toString(), $lock->locks[1]->alias?->value] // => ['LOCK TABLES t READ LOCAL, u AS v WRITE', 'v']
  */
-final class LockTables implements Statement
+final class LockTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TableLock> The locked tables in written order; at least one
@@ -41,8 +40,11 @@ final class LockTables implements Statement
      * @param list<TableLock> $locks The locked tables in written order; at least one
      * @throws InvalidConstruction When the list is empty
      */
-    public function __construct(array $locks)
+    public function __construct(array $locks, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->locks = Check::listOf($locks, TableLock::class, 'LOCK TABLES locks at least one table.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

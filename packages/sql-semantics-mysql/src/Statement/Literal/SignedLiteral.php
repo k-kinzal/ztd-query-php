@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -34,14 +33,18 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class SignedLiteral implements Literal
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $negative Whether the sign is minus; otherwise plus
      * @param NumberLiteral $number The unsigned number
      */
-    public function __construct(public readonly bool $negative, public readonly NumberLiteral $number)
+    public function __construct(public readonly bool $negative, public readonly NumberLiteral $number, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

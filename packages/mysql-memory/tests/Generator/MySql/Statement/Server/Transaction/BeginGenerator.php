@@ -48,4 +48,37 @@ final class BeginGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<bool> $work The generated semantic operand
+     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
+     * @return ErisGenerator<Begin>
+     */
+    public static function fromOperands(ErisGenerator $work, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): Begin => new Begin(work: $parts[0], profile: $parts[1], client: $parts[2]), \Tests\Generator\Operands::tuple($work, $profile, $client));
+    }
+
+    /**
+     * Composes the statement's SQL forms from typed operand generators.
+     *
+     * @return iterable<string, ErisGenerator<Begin>>
+     */
+    public static function forms(): iterable
+    {
+        yield 'Begin/1' => BeginGenerator::fromOperands(
+            work: Generators::constant(false),
+            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
+                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
+                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
+                    settings: Generators::constant('')
+                ),
+                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
+            ),
+            client: Generators::constant(null)
+        );
+    }
+
 }

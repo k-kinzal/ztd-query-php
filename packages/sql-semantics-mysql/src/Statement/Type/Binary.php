@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Type;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A binary string type with its optional length.
@@ -23,13 +22,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Binary implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param BinaryKind $kind The binary type
      * @param string|null $length The length exactly as written; only BINARY, VARBINARY and BLOB take one
      */
-    public function __construct(public readonly BinaryKind $kind, public readonly ?string $length = null)
+    public function __construct(public readonly BinaryKind $kind, public readonly ?string $length = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($kind !== BinaryKind::VarBinary || $length !== null, 'A VARBINARY declaration requires a length.');
         Check::input($length === null || in_array($kind, [BinaryKind::Binary, BinaryKind::VarBinary, BinaryKind::Blob], true), 'Only BINARY, VARBINARY and BLOB take a length.');

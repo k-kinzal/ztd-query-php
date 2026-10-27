@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\MembershipChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a membership grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff TO joe WITH ADMIN OPTION GRANTED BY boss');
- *     [$operation->statement->roles[0]->privilege(), $operation->statement->options[0]->setting->value, $operation->statement->grantor?->name?->value] // => ['staff', 'OPTION', 'boss']
+ *     [$operation->roles[0]->privilege(), $operation->options[0]->setting->value, $operation->grantor?->name?->value] // => ['staff', 'OPTION', 'boss']
  */
-final class GrantRole implements Statement
+final class GrantRole extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Privilege> The granted roles in the order written
@@ -55,8 +54,11 @@ final class GrantRole implements Statement
      * @param list<MembershipOption> $options The options of WITH in the order written
      * @param RoleSpec|null $grantor The role of GRANTED BY, when written
      */
-    public function __construct(array $roles, array $members, array $options = [], public readonly ?RoleSpec $grantor = null)
+    public function __construct(array $roles, array $members, array $options = [], public readonly ?RoleSpec $grantor = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = (new PrivilegeLists())->roles($roles);
         $this->members = Check::listOf($members, RoleSpec::class, 'A role grant names at least one member.', 1);
         $this->options = Check::listOf($options, MembershipOption::class, 'Membership options are a list of membership options.');

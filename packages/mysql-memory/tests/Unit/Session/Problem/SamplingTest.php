@@ -19,7 +19,7 @@ final class SamplingTest extends TestCase
 {
     public function testWriteConsumesTheResolvedConditionWithoutInspectingAStatement(): void
     {
-        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::SampledWrite)]);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::SampledWrite)]);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(6033);
@@ -91,7 +91,7 @@ final class SamplingTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT 1 UNION SELECT * FROM t TABLESAMPLE SYSTEM (5)');
 
-        self::assertSame('Secondary engine operation failed. Reason: "You have not defined the secondary engine for at least one of the query tables [d.t].".', (new Sampling())->unengined($operation->statement, $operation->facts, $session->settings(), $session->instance->dictionary)->getMessage());
+        self::assertSame('Secondary engine operation failed. Reason: "You have not defined the secondary engine for at least one of the query tables [d.t].".', (new Sampling())->unengined($operation, $operation->statementInformation(), $session->settings(), $session->instance->dictionary)->getMessage());
     }
 
     public function testUnenginedNamesNoTableIn91WhenTheFirstIsDerived(): void
@@ -102,7 +102,7 @@ final class SamplingTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM (SELECT 1) AS x, t TABLESAMPLE SYSTEM (5)');
 
-        self::assertSame('Secondary engine operation failed. Reason: "You have not defined the secondary engine for at least one of the query tables.".', (new Sampling())->unengined($operation->statement, $operation->facts, $session->settings(), $session->instance->dictionary)->getMessage());
+        self::assertSame('Secondary engine operation failed. Reason: "You have not defined the secondary engine for at least one of the query tables.".', (new Sampling())->unengined($operation, $operation->statementInformation(), $session->settings(), $session->instance->dictionary)->getMessage());
     }
 
     public function testBaseAnswersFalseForACommonTableExpression(): void
@@ -111,17 +111,17 @@ final class SamplingTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $operation = $session->analyze('WITH c AS (SELECT 1) SELECT * FROM c');
-        $reference = (new Walker())->find($operation->statement, TableReference::class)[0];
+        $reference = (new Walker())->find($operation, TableReference::class)[0];
 
-        self::assertFalse((new Sampling())->base($reference, $operation->facts, $session->settings(), $session->instance->dictionary));
+        self::assertFalse((new Sampling())->base($reference, $operation->statementInformation(), $session->settings(), $session->instance->dictionary));
     }
 
     public function testBaseAnswersTrueForASystemTableOfMysql(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT * FROM mysql.db');
-        $reference = (new Walker())->find($operation->statement, TableReference::class)[0];
+        $reference = (new Walker())->find($operation, TableReference::class)[0];
 
-        self::assertTrue((new Sampling())->base($reference, $operation->facts, $session->settings(), $session->instance->dictionary));
+        self::assertTrue((new Sampling())->base($reference, $operation->statementInformation(), $session->settings(), $session->instance->dictionary));
     }
 }

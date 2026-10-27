@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -44,7 +43,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class JsonValueCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The constant path's selection steps or decoded-operand condition.
@@ -57,6 +57,7 @@ final class JsonValueCall implements Scalar
      * @param CastTarget|null $returning The written RETURNING type
      * @param JsonResponse|null $onEmpty The ON EMPTY response
      * @param JsonResponse|null $onError The ON ERROR response
+     * @param Path|Path\Invalid|null $pathValue Explicit selection steps, when constructed from semantic values; they must agree with the literal operand
      */
     public function __construct(
         public readonly Scalar $document,
@@ -64,10 +65,18 @@ final class JsonValueCall implements Scalar
         public readonly ?CastTarget $returning = null,
         public readonly ?JsonResponse $onEmpty = null,
         public readonly ?JsonResponse $onError = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        Path|Path\Invalid|null $pathValue = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->admits($document, Precedence::SIMPLE_EXPR), 'The document of JSON_VALUE needs a grouping.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->returning($returning) === null, 'JSON_VALUE needs a nonspatial return type with valid width, precision and scale.');
-        $this->pathValue = Path::read($path->value());
+        $interpreted = Path::read($path->value());
+        Check::input($pathValue === null || (new \SqlSemantics\Validation\Equivalence())->difference($pathValue, $interpreted) === null, 'JSON path steps must agree with the decoded path literal.');
+        $this->pathValue = $pathValue ?? $interpreted;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -20,10 +20,14 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
  */
 final class LabelPrefix
 {
-    /** @var array<string, bool> Visible labels and whether they name loops */
+    /**
+ * @var array<string, bool> Visible labels and whether they name loops
+ */
     private array $labels = [];
 
-    /** @var list<array{int, array<string, bool>}> Handler boundaries and saved outer labels */
+    /**
+ * @var list<array{int, array<string, bool>}> Handler boundaries and saved outer labels
+ */
     private array $handlers = [];
 
     /**

@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,11 +38,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the alias of the new row
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a, b) VALUES (1, 2) AS new (m, n) ON DUPLICATE KEY UPDATE a = m + n');
- *     [$insert->statement->alias->name->value, count($insert->statement->alias->columns)] // => ['new', 2]
+ *     [$insert->alias->name->value, count($insert->alias->columns)] // => ['new', 2]
  */
-final class RowAlias implements Relation
+final class RowAlias implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names in written order; empty for the names of the written columns
@@ -54,8 +54,11 @@ final class RowAlias implements Relation
      * @param Name $name The alias
      * @param list<Name> $columns The column names
      */
-    public function __construct(public readonly Name $name, array $columns = [])
+    public function __construct(public readonly Name $name, array $columns = [], ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'The columns of a row alias are names.');
     }
 

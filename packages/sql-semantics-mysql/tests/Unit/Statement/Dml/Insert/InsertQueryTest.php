@@ -29,9 +29,9 @@ final class InsertQueryTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t (a) SELECT 1, 2', [$t]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(ValueCountMismatch::class, $operation->facts->diagnostics[0]);
-        self::assertSame(1, $operation->facts->diagnostics[0]->row);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(ValueCountMismatch::class, $operation->diagnostics()[0]);
+        self::assertSame(1, $operation->diagnostics()[0]->row);
     }
 
     public function testDeriveStatementLetsUpdatesSeeTheSourceTables(): void
@@ -41,7 +41,7 @@ final class InsertQueryTest extends TestCase
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('INSERT INTO t (a) SELECT x FROM u ON DUPLICATE KEY UPDATE b = u.y + x', [$t, $u]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheSource(): void
@@ -53,8 +53,8 @@ final class InsertQueryTest extends TestCase
     public function testValuesSeesThroughParenthesesWithOrderByAndLimit(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $wrapped = $semantics->analyze('INSERT INTO t WITH x AS (SELECT 1) (VALUES ROW(1), ROW(2)) ORDER BY 1 LIMIT 1')->statement;
-        $union = $semantics->analyze('INSERT INTO t VALUES ROW(1) UNION VALUES ROW(2)')->statement;
+        $wrapped = $semantics->analyze('INSERT INTO t WITH x AS (SELECT 1) (VALUES ROW(1), ROW(2)) ORDER BY 1 LIMIT 1');
+        $union = $semantics->analyze('INSERT INTO t VALUES ROW(1) UNION VALUES ROW(2)');
         self::assertInstanceOf(InsertQuery::class, $wrapped);
         self::assertInstanceOf(InsertQuery::class, $union);
 
@@ -65,8 +65,8 @@ final class InsertQueryTest extends TestCase
     public function testValuesSeesThroughALockingClause(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $locked = $semantics->analyze('INSERT INTO t VALUES ROW(1) LOCK IN SHARE MODE')->statement;
-        $queried = $semantics->analyze('INSERT INTO t SELECT 1')->statement;
+        $locked = $semantics->analyze('INSERT INTO t VALUES ROW(1) LOCK IN SHARE MODE');
+        $queried = $semantics->analyze('INSERT INTO t SELECT 1');
         self::assertInstanceOf(InsertQuery::class, $locked);
         self::assertInstanceOf(InsertQuery::class, $queried);
 
@@ -80,12 +80,12 @@ final class InsertQueryTest extends TestCase
         $tables = $semantics->analyze('CREATE TABLE t(id INT)')->declarations();
         $insert = $semantics->analyze('INSERT INTO t WITH x AS (SELECT absent) (VALUES ROW(1)) ORDER BY ABS() LIMIT absent FOR UPDATE OF missing', $tables);
         $union = $semantics->analyze('INSERT INTO t VALUES ROW(1) UNION VALUES ROW(2)', $tables);
-        self::assertInstanceOf(InsertQuery::class, $insert->statement);
-        self::assertInstanceOf(InsertQuery::class, $union->statement);
+        self::assertInstanceOf(InsertQuery::class, $insert);
+        self::assertInstanceOf(InsertQuery::class, $union);
 
-        self::assertCount(3, $insert->statement->wrappers());
-        self::assertSame([], $insert->facts->diagnostics);
-        self::assertSame([], $union->statement->wrappers());
+        self::assertCount(3, $insert->wrappers());
+        self::assertSame([], $insert->diagnostics());
+        self::assertSame([], $union->wrappers());
         self::assertStringContainsString('ORDER BY ABS() LIMIT absent FOR UPDATE OF missing', $insert->toString());
     }
 

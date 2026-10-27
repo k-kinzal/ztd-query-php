@@ -39,7 +39,7 @@ final class VocabularyTest extends TestCase
     public function testDerivePublishesVocabularyBeforeExecution(string $release, string $sql, array $names): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze($sql);
-        $messages = array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings);
+        $messages = array_map(static fn ($warning): string => $warning->message(), $operation->warnings());
 
         self::assertSame($names, array_map(static fn (string $message): string => explode("'", $message)[1], $messages));
     }

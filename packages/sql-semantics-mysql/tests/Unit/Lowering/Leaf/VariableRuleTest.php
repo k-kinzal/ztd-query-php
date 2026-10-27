@@ -33,18 +33,18 @@ final class VariableRuleTest extends TestCase
         $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern->statement);
-        self::assertInstanceOf(Select::class, $modern->statement->query);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy->statement);
-        self::assertInstanceOf(Select::class, $legacy->statement->query);
-        $item0 = $modern->statement->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern);
+        self::assertInstanceOf(Select::class, $modern->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy);
+        self::assertInstanceOf(Select::class, $legacy->query);
+        $item0 = $modern->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(UserVariable::class, $item0->expression);
-        $item1 = $modern->statement->query->items[1];
+        $item1 = $modern->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(SystemVariable::class, $item1->expression);
         self::assertSame(VariableScope::Global, $item1->expression->scope);
-        $item3 = $legacy->statement->query->items[3];
+        $item3 = $legacy->query->items[3];
         self::assertInstanceOf(SelectExpression::class, $item3);
         self::assertInstanceOf(SystemVariable::class, $item3->expression);
         self::assertSame('innodb', $item3->expression->instance?->value);
@@ -56,9 +56,9 @@ final class VariableRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT @a AS a, @`b c` AS b, @'d' AS d, @\"e\" AS e, @localhost AS f");
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $item1 = $operation->statement->query->items[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(UserVariable::class, $item1->expression);
         self::assertSame('b c', $item1->expression->name->value);
@@ -70,9 +70,9 @@ final class VariableRuleTest extends TestCase
         $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v := 1');
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v := 1');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern->statement);
-        self::assertInstanceOf(Select::class, $modern->statement->query);
-        $item0 = $modern->statement->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern);
+        self::assertInstanceOf(Select::class, $modern->query);
+        $item0 = $modern->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(VariableAssignment::class, $item0->expression);
         self::assertSame('v', $item0->expression->target->name->value);
@@ -85,13 +85,13 @@ final class VariableRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $item0 = $operation->statement->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame(VariableScope::Session, $item0->expression->scope);
-        $item1 = $operation->statement->query->items[1];
+        $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(SystemVariable::class, $item1->expression);
         self::assertSame(VariableScope::Session, $item1->expression->scope);

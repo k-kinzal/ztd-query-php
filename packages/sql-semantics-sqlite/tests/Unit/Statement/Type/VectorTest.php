@@ -31,14 +31,14 @@ final class VectorTest extends TestCase
         $triple = $query->field(1)->expression;
 
         self::assertInstanceOf(Binary::class, $pair);
-        self::assertInstanceOf(Known::class, $query->facts->scalar($pair->left)->type);
-        self::assertInstanceOf(Vector::class, $query->facts->scalar($pair->left)->type->descriptor);
-        self::assertSame('ROW(2)', $query->facts->scalar($pair->left)->type->descriptor->name());
+        self::assertInstanceOf(Known::class, $pair->left->scalarInformation()->type);
+        self::assertInstanceOf(Vector::class, $pair->left->scalarInformation()->type->descriptor);
+        self::assertSame('ROW(2)', $pair->left->scalarInformation()->type->descriptor->name());
         self::assertInstanceOf(Binary::class, $triple);
-        self::assertInstanceOf(Known::class, $query->facts->scalar($triple->left)->type);
-        self::assertInstanceOf(Vector::class, $query->facts->scalar($triple->left)->type->descriptor);
-        self::assertSame(3, $query->facts->scalar($triple->left)->type->descriptor->width);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertInstanceOf(Known::class, $triple->left->scalarInformation()->type);
+        self::assertInstanceOf(Vector::class, $triple->left->scalarInformation()->type->descriptor);
+        self::assertSame(3, $triple->left->scalarInformation()->type->descriptor->width);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testRefusesASingleValue(): void

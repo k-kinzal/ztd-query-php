@@ -18,7 +18,7 @@ final class TimestampDefaultsTest extends TestCase
 {
     public function testFirstCountsANullableTimestampBeforeARequiredOne(): void
     {
-        $create = (new Instance('5.7.44'))->connect()->analyze('CREATE TABLE t(a TIMESTAMP NULL, b TIMESTAMP)')->statement;
+        $create = (new Instance('5.7.44'))->connect()->analyze('CREATE TABLE t(a TIMESTAMP NULL, b TIMESTAMP)');
         self::assertInstanceOf(CreateTable::class, $create);
         self::assertInstanceOf(ColumnDefinition::class, $create->elements[0]);
         self::assertInstanceOf(ColumnDefinition::class, $create->elements[1]);

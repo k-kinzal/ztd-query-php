@@ -43,7 +43,7 @@ final class ExpressionRulesTest extends TestCase
     public function testCalledAnswersTheNameANodeCallsAFunctionBy(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT RAND()')->statement;
+        $statement = $session->analyze('SELECT RAND()');
         $calls = (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, FunctionCall::class);
 
         self::assertSame(['rand'], array_map(static fn (FunctionCall $call): ?string => (new ExpressionRules())->called($call), $calls));

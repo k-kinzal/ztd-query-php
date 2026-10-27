@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -38,15 +37,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class Regexp implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The matched expression
      * @param Scalar $pattern The regular expression
      * @param bool $negated Whether NOT is written before REGEXP
      */
-    public function __construct(public readonly Scalar $operand, public readonly Scalar $pattern, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, public readonly Scalar $pattern, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of REGEXP needs a grouping to keep its place.');
         Check::input($precedence->admits($pattern, Precedence::BIT_EXPR), 'The pattern of REGEXP needs a grouping to keep its place.');

@@ -23,7 +23,8 @@ final class CreateTableLikeTest extends TestCase
         $copy = $semantics->analyze('CREATE TABLE c LIKE s', [$source]);
         $table = $copy->declarations()[0];
 
-        self::assertInstanceOf(DeclaredTable::class, $copy->facts->relation($copy->statement)->table);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $copy);
+        self::assertInstanceOf(DeclaredTable::class, $copy->relationInformation()->table);
         self::assertSame(['a', 'b'], [$table->columns[0]->name->value, $table->implicit[0]->column->name->value]);
         self::assertNotSame($source->declarations()[0]->columns[0], $table->columns[0]);
     }
@@ -46,6 +47,6 @@ final class CreateTableLikeTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TABLE c LIKE v', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TABLE c LIKE v', [$table, $view])->diagnostics()));
     }
 }

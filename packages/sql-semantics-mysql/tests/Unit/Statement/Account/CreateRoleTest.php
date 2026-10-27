@@ -54,10 +54,10 @@ final class CreateRoleTest extends TestCase
     public function testDeriveProgramKeepsAnUnreachedDefinition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE ROLE r, ''");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(CreateRole::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(CreateRole::class, $operation->body);
     }
 
     public function testRenderPreservesTheCompleteDefinition(): void
@@ -75,12 +75,12 @@ final class CreateRoleTest extends TestCase
     public function testRenderRetainsDuplicateAccountsInAStoredDefinition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE ROLE r, r');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(CreateRole::class, $operation->statement->body);
-        self::assertCount(2, $operation->statement->body->roles);
-        self::assertNotNull($operation->statement->body->problem);
-        self::assertSame('CREATE ROLE cannot unconditionally define the same account twice.', $operation->statement->body->problem->message());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(CreateRole::class, $operation->body);
+        self::assertCount(2, $operation->body->roles);
+        self::assertNotNull($operation->body->problem);
+        self::assertSame('CREATE ROLE cannot unconditionally define the same account twice.', $operation->body->problem->message());
         self::assertSame('CREATE PROCEDURE p() CREATE ROLE r, r', $operation->toString());
     }
 

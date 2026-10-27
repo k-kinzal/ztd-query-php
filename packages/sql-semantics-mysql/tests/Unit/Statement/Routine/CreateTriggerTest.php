@@ -31,10 +31,10 @@ final class CreateTriggerTest extends TestCase
     public function testHasExecutionConditionPreservesDistinctExplicitSchemas(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW BEGIN END');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition());
-        self::assertInstanceOf(Block::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
+        self::assertInstanceOf(Block::class, $operation->body);
     }
 
     public function testDeriveStatementResolvesTheNewRowAndLocalVariablesInEveryBodyStatement(): void
@@ -43,23 +43,23 @@ final class CreateTriggerTest extends TestCase
         $context = [$semantics->analyze('CREATE TABLE t (a INT, b INT)'), $semantics->analyze('CREATE TABLE u (c INT)')];
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT NEW.a; '
             . 'SET NEW.b = v + NEW.a; UPDATE u SET c = NEW.a WHERE c = v; INSERT INTO u (c) VALUES (NEW.b); END', $context);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementResolvesBothRowsOfAnUpdateTriggerWhateverTheirCase(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
 
         $operation = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET new.a = old.b + NEW.b', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementResolvesTheOldRowOfADeleteTrigger(): void
@@ -68,30 +68,30 @@ final class CreateTriggerTest extends TestCase
         $context = [$semantics->analyze('CREATE TABLE t (a INT, b INT)'), $semantics->analyze('CREATE TABLE u (c INT)')];
 
         $operation = $semantics->analyze('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW DELETE FROM u WHERE c = OLD.a', $context);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementReportsAColumnTheRowLacks(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
 
-        self::assertSame(['Column NEW.zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column NEW.zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementReportsATableTheContextLacks(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON u FOR EACH ROW SET @x = 1', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
 
-        self::assertSame(['Relation u does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Relation u does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     /**
@@ -110,13 +110,13 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
         $create = $semantics->analyze('CREATE TRIGGER tr ' . $timing . ' ON t FOR EACH ROW SET ' . $row . '.a = 1', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $problem = $create->facts->diagnostics[0] ?? null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $problem = $create->diagnostics()[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
-        self::assertCount(1, $create->facts->diagnostics);
+        self::assertCount(1, $create->diagnostics());
         self::assertSame($rule, $problem->rule);
         self::assertSame($message, $problem->message());
     }
@@ -140,7 +140,7 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
         $this->expectExceptionMessage($message);
         $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);

@@ -59,12 +59,12 @@ final class ClientRowsTest extends TestCase
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT,b INT)');
         $operation = $session->analyze("LOAD DATA LOCAL INFILE 'file' INTO TABLE t (b,@v,a)");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable::class, $operation);
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
-        self::assertSame([1, $operation->statement->columns[1], 0], (new ClientRows())->targets($operation->statement, $planner, $table));
+        self::assertSame([1, $operation->columns[1], 0], (new ClientRows())->targets($operation, $planner, $table));
     }
     public function testXmlBindsNamedFieldsInDestinationOrderAndSuppliesMissingNulls(): void
     {

@@ -30,7 +30,7 @@ final class UninstallComponentTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("UNINSTALL COMPONENT 'a', 'b'");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

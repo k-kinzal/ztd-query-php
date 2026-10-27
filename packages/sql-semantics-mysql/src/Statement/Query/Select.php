@@ -28,7 +28,6 @@ use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One query block: SELECT with its modifiers, select list, FROM clause, filters, grouping, windows, ordering, limit, INTO and locking clauses.
@@ -52,7 +51,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parts of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t WHERE a > 1 GROUP BY a, b HAVING a > 2 ORDER BY a LIMIT 3');
- *     [count($query->statement->query->items), $query->statement->query->where !== null, $query->statement->query->having !== null, count($query->statement->query->orderBy)] // => [2, true, true, 1]
+ *     [count($query->query->items), $query->query->where !== null, $query->query->having !== null, count($query->query->orderBy)] // => [2, true, true, 1]
  * @example Depending on a table the context does not declare
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t');
  *     $query->field('a')->type instanceof \SqlSemantics\Statement\Type\Dependent // => true
@@ -61,7 +60,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Select implements Query, Selection
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SelectOption> The modifiers in written order
@@ -128,7 +128,12 @@ final class Select implements Query, Selection
         public readonly ?IntoPosition $intoPosition = null,
         public readonly ?LateOrdering $late = null,
         array $hints = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a query block are optimizer hints.');
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
         $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A selection projects at least one item.');

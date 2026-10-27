@@ -17,11 +17,11 @@ final class ColumnsTest extends TestCase
     {
         $session = (new \MySqlMemory\Instance())->connect();
         $operation = $session->analyze("SELECT * FROM JSON_TABLE('[{}]', '$[*]' COLUMNS (NESTED PATH '$' COLUMNS (n FOR ORDINALITY, a INT PATH '$.a' DEFAULT '7' ON EMPTY))) j");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
-        $table = $operation->statement->query->from;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->query);
+        $table = $operation->query->from;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Relation\JsonTable::class, $table);
-        $slots = $operation->facts->relation($table)->shape->slots;
+        $slots = $table->relationInformation()->shape->slots;
         $column = (new Columns())->compile($table->columns[0], $slots);
         self::assertSame(['n', 'a'], array_column($column->columns, 'name'));
         self::assertSame([], $slots);

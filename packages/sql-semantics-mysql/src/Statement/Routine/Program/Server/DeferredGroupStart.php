@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedGroupStart;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored group start whose explicit credentials conflict independently of server state.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining the credential condition until invocation
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() START GROUP_REPLICATION PASSWORD = 'p'");
- *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart // => true
+ *     $operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart // => true
  */
 final class DeferredGroupStart implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CredentialOption> The complete ordered credentials
@@ -37,7 +36,7 @@ final class DeferredGroupStart implements ProgramStatement
     /**
      * @param list<CredentialOption> $options The complete ordered credentials
      */
-    public function __construct(array $options)
+    public function __construct(array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, CredentialOption::class, 'A deferred group start retains credentials.', 1);
         Check::input((new GroupCredentials())->problem($this->options) !== null, 'A deferred group start retains an intrinsic credential condition.');

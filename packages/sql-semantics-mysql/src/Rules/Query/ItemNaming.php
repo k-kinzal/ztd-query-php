@@ -299,7 +299,7 @@ final class ItemNaming
             return $this->narrowed($this->latin1($text));
         }
         if (!$ascii && !in_array($charset, ['binary', 'utf8mb3', 'utf8', 'national'], true)) {
-            return new NameConversion($charset);
+            return new NameConversion($charset, $text);
         }
         $same = in_array($charset, ['utf8mb3', 'utf8', 'national'], true);
 
@@ -356,7 +356,7 @@ final class ItemNaming
     {
         $characters = mb_check_encoding($text, 'UTF-8') ? mb_str_split($text, 1, 'UTF-8') : null;
         if ($characters === null) {
-            return new NameConversion('utf8mb4');
+            return new NameConversion('utf8mb4', $text);
         }
         $name = '';
         foreach ($characters as $character) {

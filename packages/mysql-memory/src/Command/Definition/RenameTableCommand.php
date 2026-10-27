@@ -18,9 +18,9 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes RENAME TABLE: renames tables one after the other, all or none.
@@ -54,8 +54,8 @@ final class RenameTableCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof RenameTable);
         $database = $session->variables->database;
         $this->written($statement, $database);
@@ -196,7 +196,7 @@ final class RenameTableCommand implements Command
         if ($session->instance->dictionary->schema($schema) === null) {
             throw QueryError::BadDatabase->error($schema);
         }
-        if ($session->instance->dictionary->table($schema, $name) !== null || isset($session->instance->dictionary->schema($schema)?->views[$name])) {
+        if ($session->instance->dictionary->table($schema, $name, $session->temporaries) !== null || isset($session->instance->dictionary->schema($schema)?->views[$name])) {
             throw SchemaError::TableExists->error($name);
         }
     }
@@ -210,7 +210,7 @@ final class RenameTableCommand implements Command
     {
         $layout = TableLayout::of($table->definition);
         $layout->name = new QualifiedName(new Name($name), new Name($schema));
-        $others = array_values(array_filter($session->instance->dictionary->declarations(), static fn ($declaration): bool => $declaration !== $table->definition->declaration));
+        $others = array_values(array_filter(\MySqlMemory\Session\Statement\Catalog::declarations($session), static fn ($declaration): bool => $declaration !== $table->definition->declaration));
 
         return (new TableRebuild($session, $context, $connection))->definition($layout, $others, false)->withRowFormat($table->definition->rowFormat);
     }

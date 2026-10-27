@@ -20,10 +20,10 @@ final class KillTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('KILL SUM(1) OVER missing');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $operation->facts->diagnostics[0]->rule);
-        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $operation->facts->diagnostics[0]->name);
-        self::assertSame('missing', $operation->facts->diagnostics[0]->name->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $operation->diagnostics()[0]);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $operation->diagnostics()[0]->rule);
+        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $operation->diagnostics()[0]->name);
+        self::assertSame('missing', $operation->diagnostics()[0]->name->value);
     }
 
     public function testRenderWritesTheScopeAndTheIdentifier(): void
@@ -34,8 +34,8 @@ final class KillTest extends TestCase
     public function testDeriveStatementDerivesTheIdentifier(): void
     {
         $kill = (new Semantics(Dialect::MySql))->analyze('KILL 42');
-        self::assertInstanceOf(Kill::class, $kill->statement);
+        self::assertInstanceOf(Kill::class, $kill);
 
-        self::assertInstanceOf(Known::class, $kill->facts->scalar($kill->statement->process)->type);
+        self::assertInstanceOf(Known::class, $kill->process->scalarInformation()->type);
     }
 }

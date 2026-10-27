@@ -17,7 +17,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
  * @visibility public
  * @example Reading the kind of a WHEN clause
  *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED BY TARGET THEN DO NOTHING');
- *     [$merge->statement->clauses[0]->match, $merge->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::NotMatched, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN DO NOTHING']
+ *     [$merge->clauses[0]->match, $merge->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::NotMatched, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN DO NOTHING']
  */
 enum MergeMatch
 {

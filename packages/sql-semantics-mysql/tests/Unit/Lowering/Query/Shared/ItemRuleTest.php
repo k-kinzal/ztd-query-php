@@ -45,9 +45,9 @@ final class ItemRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1+1, 1 + 1, a, 2 AS b FROM t');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame(['1+1', null, null, null], array_map(static fn (object $item): ?string => $item instanceof SelectExpression ? $item->layout?->text() : null, $operation->statement->query->items));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame(['1+1', null, null, null], array_map(static fn (object $item): ?string => $item instanceof SelectExpression ? $item->layout?->text() : null, $operation->query->items));
         self::assertSame('SELECT 1+1, 1 + 1, a, 2 AS b FROM t', $operation->toString());
     }
 
@@ -60,8 +60,8 @@ final class ItemRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 x, 2 AS y, 3 'z', 4 FROM t");
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame([AliasMark::Bare, AliasMark::As, AliasMark::Bare, AliasMark::As], array_map(static fn (object $item): AliasMark => $item instanceof SelectExpression ? $item->mark : AliasMark::Equals, $operation->statement->query->items));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame([AliasMark::Bare, AliasMark::As, AliasMark::Bare, AliasMark::As], array_map(static fn (object $item): AliasMark => $item instanceof SelectExpression ? $item->mark : AliasMark::Equals, $operation->query->items));
     }
 }

@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading a position outside the select list
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $query = $semantics->analyze('SELECT * FROM t ORDER BY 3', [$semantics->analyze('CREATE TABLE t(a INT)')]);
- *     $query->facts->diagnostics[0]->message() // => "Unknown column '3' in 'order clause': the select list has 1 items."
+ *     $query->diagnostics()[0]->message() // => "Unknown column '3' in 'order clause': the select list has 1 items."
  */
 final class OrdinalOutOfRange implements Diagnostic
 {

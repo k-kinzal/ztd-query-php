@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Orders handler preparation before opening its cursor's relation.
@@ -31,13 +31,13 @@ final class HandlerPreparation
      *
      * @throws \MySqlMemory\Error\SqlError When an operand is refused before handler lookup
      */
-    public function check(Operation $operation, Session $session): void
+    public function check(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof HandlerScan || $statement instanceof HandlerIndexRead || $statement instanceof HandlerIndexSeek);
         $reading = new Reading();
         $reading->limited($statement->limit, $session);
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === 'stored functions in HANDLER ... READ') {
                 throw (new Errors())->error($diagnostic, $session);
             }
@@ -49,15 +49,15 @@ final class HandlerPreparation
      *
      * @throws \MySqlMemory\Error\SqlError When an unqualified stored call has no database
      */
-    public function database(Operation $operation, Session $session): void
+    public function database(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         if (!$statement instanceof HandlerScan && !$statement instanceof HandlerIndexRead && !$statement instanceof HandlerIndexSeek) {
             return;
         }
         if ($session->variables->database === '') {
             foreach ((new Walker())->find($statement, FunctionCall::class) as $call) {
-                if ($call->schema === null && !$call->native($operation->context->profile->grammar)) {
+                if ($call->schema === null && !$call->native($operation->profile()->grammar)) {
                     throw (new Errors())->routine($call, $session);
                 }
             }

@@ -11,7 +11,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER {DATABASE | SCHEMA} [name] option …`: a request to change the options of a database.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Altering the current database
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter schema character set latin1 read only default');
- *     [$alter->toString(), $alter->statement->name] // => ['ALTER DATABASE CHARACTER SET latin1 READ ONLY DEFAULT', null]
+ *     [$alter->toString(), $alter->name] // => ['ALTER DATABASE CHARACTER SET latin1 READ ONLY DEFAULT', null]
  */
-final class AlterDatabase implements Statement
+final class AlterDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<DatabaseOption> The options in written order; at least one
@@ -41,8 +40,11 @@ final class AlterDatabase implements Statement
      * @param list<DatabaseOption> $options The options in written order; at least one
      * @throws InvalidConstruction When there is no option
      */
-    public function __construct(public readonly ?Name $name, array $options)
+    public function __construct(public readonly ?Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, DatabaseOption::class, 'ALTER DATABASE changes at least one option.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

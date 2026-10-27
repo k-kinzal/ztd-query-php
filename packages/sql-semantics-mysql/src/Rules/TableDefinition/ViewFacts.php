@@ -60,7 +60,7 @@ final class ViewFacts
     {
         $release = $derivation->context->profile->grammar;
         $types = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
-        $merged = $definition->algorithm !== \SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::TempTable && $types->view($definition->query, $release, $derivation->facts());
+        $merged = $definition->algorithm !== \SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::TempTable && $types->view($definition->query, $release);
         $columns = [];
         foreach ($table->columns as $position => $column) {
             if ($merged) {

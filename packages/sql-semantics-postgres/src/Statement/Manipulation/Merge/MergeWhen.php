@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One WHEN clause of MERGE: the rows it applies to, an optional condition and the action.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the condition of a WHEN clause
  *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED AND u.c THEN DELETE');
- *     $merge->statement->clauses[0]->condition !== null // => true
+ *     $merge->clauses[0]->condition !== null // => true
  * @example Refusing an insert for rows that have a target row
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeWhen(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::Matched, null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsertDefaults()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class MergeWhen implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param MergeMatch $match The rows the clause applies to
@@ -41,6 +40,7 @@ final class MergeWhen implements Node
         public readonly MergeMatch $match,
         public readonly ?Scalar $condition,
         public readonly MergeUpdate|MergeDelete|MergeInsert|MergeInsertDefaults|MergeNothing $action,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         $inserts = $action instanceof MergeInsert || $action instanceof MergeInsertDefaults;
         $changes = $action instanceof MergeUpdate || $action instanceof MergeDelete;

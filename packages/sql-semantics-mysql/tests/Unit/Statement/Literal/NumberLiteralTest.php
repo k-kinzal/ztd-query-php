@@ -101,14 +101,14 @@ final class NumberLiteralTest extends TestCase
     public function testDeriveScalarAnswersTheTypeOfTheTextThatIsNeverNull(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 18446744073709551615');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
         self::assertInstanceOf(NumberLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame('18446744073709551615', $literal->text);
         self::assertSame(NumberForm::Integer, $literal->form);
@@ -121,13 +121,13 @@ final class NumberLiteralTest extends TestCase
     public function testDeriveScalarAnswersDecimalForAnExactNumberWithAPoint(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT .5');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
-        $fact = $operation->facts->scalar($item->expression);
+        $fact = $item->expression->scalarInformation();
 
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertInstanceOf(Domain::class, $fact->type->descriptor);

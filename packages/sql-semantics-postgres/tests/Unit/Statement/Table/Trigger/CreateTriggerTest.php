@@ -16,7 +16,7 @@ final class CreateTriggerTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON s.t EXECUTE FUNCTION f()', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
     }
@@ -29,16 +29,16 @@ final class CreateTriggerTest extends TestCase
         $statement = $semantics->analyze('CREATE TRIGGER g BEFORE UPDATE ON t FOR EACH ROW WHEN (old.a <> new.a OR b > 0) EXECUTE FUNCTION f()', $context);
         self::assertSame([
           0 => 'Column b is ambiguous.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f()');
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $statement->statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
-        $n1 = $statement->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f()'));
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context());
+        $statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger::class, $n1);
         $n2 = $derivation->facts()->relation($n1)->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $n2);
@@ -51,9 +51,9 @@ final class CreateTriggerTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f()', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($semantics->context($context)), new \SqlSemantics\Resolution\Environment($semantics->context($context)))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

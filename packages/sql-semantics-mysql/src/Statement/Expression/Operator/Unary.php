@@ -20,7 +20,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -45,15 +44,19 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class Unary implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param UnaryOperator $operator The operator
      * @param Scalar $operand The operand
      * @param bool $keyword Whether tight negation was written NOT under HIGH_NOT_PRECEDENCE
      */
-    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand, public readonly bool $keyword = false)
+    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand, public readonly bool $keyword = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$keyword || $operator === UnaryOperator::Not, 'Only logical negation has a keyword spelling.');
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of a prefix operator needs a grouping to keep its place.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

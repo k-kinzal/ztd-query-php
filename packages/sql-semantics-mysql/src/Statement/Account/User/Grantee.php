@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An account receiving a grant, with the optional authentication of legacy GRANT.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Grantee implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Account $user The named account or CURRENT_USER
      * @param Identification|null $identification The optional legacy authentication
      */
-    public function __construct(public readonly Account $user, public readonly ?Identification $identification = null)
+    public function __construct(public readonly Account $user, public readonly ?Identification $identification = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($identification?->credential !== Credential::RandomPassword, 'GRANT authentication does not generate a random password.');
     }

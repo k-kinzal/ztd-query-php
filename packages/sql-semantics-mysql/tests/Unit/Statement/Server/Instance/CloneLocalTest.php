@@ -31,7 +31,7 @@ final class CloneLocalTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CLONE LOCAL DATA DIRECTORY = '/d'");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

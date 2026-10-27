@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeRoles;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes REVOKE of privileges, of roles, of PROXY, and of ALL, GRANT OPTION.
@@ -67,8 +67,8 @@ final class RevokeCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if ($statement instanceof RevokePrivileges && $statement->hasExecutionCondition($session->settings()->release())) {
             $this->prepare($statement, $session);
         }
@@ -108,9 +108,9 @@ final class RevokeCommand implements Command
      *
      * @throws SqlError When the statement is refused
      */
-    public function privileges(Operation $operation, Session $session): void
+    public function privileges(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof RevokePrivileges);
         if (!$session->settings()->legacy() && $statement->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel && count($statement->privileges) === 1 && $statement->privileges[0] instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges) {
             $this->everything($statement, $session);
@@ -273,7 +273,7 @@ final class RevokeCommand implements Command
      *
      * @throws SqlError When an account or a role does not exist
      */
-    public function roles(RevokeRoles $statement, Operation $operation, Session $session): void
+    public function roles(RevokeRoles $statement, MySqlStatement $operation, Session $session): void
     {
         $names = new Names($session->settings()->release());
         $listed = array_map(static fn (GrantedRole $role): AccountName => $role->role, $statement->roles);

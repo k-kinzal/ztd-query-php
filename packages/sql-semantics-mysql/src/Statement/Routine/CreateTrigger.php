@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CREATE TRIGGER: a statement that runs for each row an INSERT, UPDATE or DELETE changes in a table.
@@ -38,11 +37,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a trigger definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET @changed = 1');
- *     [$create->statement->time->value, $create->statement->event->value, $create->statement->table->name->name->value] // => ['BEFORE', 'UPDATE', 't']
+ *     [$create->time->value, $create->event->value, $create->table->name->name->value] // => ['BEFORE', 'UPDATE', 't']
  */
-final class CreateTrigger implements Statement
+final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var ProgramStatement|Statement The statement the trigger runs
@@ -69,7 +68,12 @@ final class CreateTrigger implements Statement
         public readonly ?TriggerOrder $order = null,
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);

@@ -24,7 +24,6 @@ use SqlSemantics\Statement\AnalyzedStatement;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Validation\LeafEmbedding;
 use SqlSemantics\Validation\Publication;
-use SqlSemantics\Validation\TokenCorrespondence;
 use SqlSemantics\Validation\ValueGraph;
 
 /**
@@ -59,6 +58,22 @@ final class Semantics
     private readonly LanguageProfile $profile;
 
     private readonly SqlParser $parser;
+
+    /**
+     * Resolves typed SQL operands without rendering or parsing SQL text.
+     *
+     * The context is a construction input, never part of the returned statement.
+     * A new construction leaves the original occurrences and their bindings intact.
+     *
+     * @example Constructing a query from semantic values
+     *     $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+     *     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
+     *     \SqlSemantics\Facade\Semantics::fromStatement(new \SqlSemantics\Contract\AnalysisContext($profile, [new \SqlSemantics\Statement\Identifier\Name('test')]), $query)->toString() // => 'SELECT 1'
+     */
+    public static function fromStatement(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): AnalyzedStatement
+    {
+        return Platforms::of($context->profile->grammar->database())->publish($context, $statement, $sources);
+    }
 
     /**
      * @var list<string>|null
@@ -146,9 +161,9 @@ final class Semantics
      * as if this profile had produced it.
      *
      * Semantic problems of grammatical SQL, such as a missing column, are
-     * facts of the returned operation. The operation is returned only after
-     * its structure was confirmed to hold every operand of the input and its
-     * rendered SQL was confirmed to carry the same significant tokens.
+     * facts of the returned statement. Analysis checks that lowering retained
+     * every input operand. The independent reconstruction property compares
+     * rendered SQL with the input; analysis does not parse its own output.
      *
      * @param string|Node $sql The SQL text, or the tree parser() produced for it
      * @param list<Table|AnalyzedStatement>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
@@ -177,14 +192,8 @@ final class Semantics
         $operation = $this->platform->publish($declarations, $statement, $origins->publish());
 
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $this->platform->statementNamespace()]);
-        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
+        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement, complete: false));
         Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
-        $tokens = new TokenCorrespondence();
-        $keys = $this->platform->leafKeys($this->profile);
-        $productions = $this->platform->productions($this->profile);
-        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($parser->parse($operation->toString()), $productions, $keys));
-        Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
-
         return $operation;
     }
 

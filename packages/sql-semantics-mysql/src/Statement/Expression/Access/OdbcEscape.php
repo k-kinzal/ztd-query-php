@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -37,11 +36,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing an ODBC date
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = { d '2024-01-31' }");
- *     $query->facts->scalar($query->statement->query->where->right)->type->descriptor->name() // => 'DATE'
+ *     $query->query->where->right->scalarInformation()->type->descriptor->name() // => 'DATE'
  */
 final class OdbcEscape implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The temporal literal forms of the escape keywords.
@@ -52,8 +52,11 @@ final class OdbcEscape implements Scalar
      * @param Name $kind The escape keyword
      * @param Scalar $operand The escaped expression
      */
-    public function __construct(public readonly Name $kind, public readonly Scalar $operand)
+    public function __construct(public readonly Name $kind, public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

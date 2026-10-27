@@ -19,11 +19,11 @@ final class DeferredInsertSetTest extends TestCase
     public function testDeriveProgramKeepsAllAssignmentDependencies(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=ROW(@@unknown,2), b=DEFAULT');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertSet::class, $operation->statement->body);
-        self::assertCount(2, $operation->statement->body->assignments);
-        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->statement->body);
-        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->statement->body->problem()->message());
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertSet::class, $operation->body);
+        self::assertCount(2, $operation->body->assignments);
+        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->body);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->body->problem()->message());
     }
 
     public function testRenderPreservesSetAndDuplicateKeyRoles(): void
@@ -36,8 +36,8 @@ final class DeferredInsertSetTest extends TestCase
     public function testProblemRetainsTheFirstDeferredAssignment(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() REPLACE INTO t SET a=ROW(1,2,3), b=ROW(4,5)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertSet::class, $operation->statement->body);
-        self::assertSame('Operand should contain 1 column(s), not 3.', $operation->statement->body->problem()->message());
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertSet::class, $operation->body);
+        self::assertSame('Operand should contain 1 column(s), not 3.', $operation->body->problem()->message());
     }
 }

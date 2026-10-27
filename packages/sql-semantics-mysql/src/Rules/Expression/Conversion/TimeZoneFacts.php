@@ -41,7 +41,8 @@ final class TimeZoneFacts
         foreach ([GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910] as $release) {
             $context = new AnalysisContext(new LanguageProfile($release), [new Name('intrinsic')], [], false);
             $derivation = new Derivation($context);
-            if (!$this->excludes($derivation->scalar($operand, $derivation->environment())->type)) {
+            $occurrence = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($operand);
+            if (!$this->excludes($derivation->scalar($occurrence, $derivation->environment())->type)) {
                 return null;
             }
         }

@@ -21,7 +21,8 @@ final class HistogramsTest extends TestCase
     public function testCheckRefusesAColumnNamedTwice(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON e, E')->statement;
+        $operation = $session->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON e, E');
+        $statement = $operation;
         self::assertInstanceOf(AnalyzeTable::class, $statement);
         self::assertNotNull($statement->histogram);
 
@@ -46,8 +47,9 @@ final class HistogramsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY, b JSON, e INT, f INT, Y INT)');
-        $table = $session->instance->dictionary->table('d', 't');
-        $statement = $session->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON zz, f, y, b, e')->statement;
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
+        $operation = $session->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON zz, f, y, b, e');
+        $statement = $operation;
         self::assertNotNull($table);
         self::assertInstanceOf(AnalyzeTable::class, $statement);
         self::assertNotNull($statement->histogram);
@@ -68,8 +70,9 @@ final class HistogramsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE t (a INT)');
-        $statement = $session->analyze('ANALYZE TABLE t DROP HISTOGRAM ON a')->statement;
-        $table = $session->instance->dictionary->table('d', 't');
+        $operation = $session->analyze('ANALYZE TABLE t DROP HISTOGRAM ON a');
+        $statement = $operation;
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         self::assertNotNull($table);
         self::assertInstanceOf(AnalyzeTable::class, $statement);
         self::assertNotNull($statement->histogram);
@@ -81,8 +84,9 @@ final class HistogramsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT)');
-        $statement = $session->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a, b USING DATA '{}'")->statement;
-        $table = $session->instance->dictionary->table('d', 't');
+        $operation = $session->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a, b USING DATA '{}'");
+        $statement = $operation;
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         self::assertNotNull($table);
         self::assertInstanceOf(AnalyzeTable::class, $statement);
         self::assertNotNull($statement->histogram);
@@ -94,8 +98,9 @@ final class HistogramsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, Y INT)');
-        $table = $session->instance->dictionary->table('d', 't');
-        $statement = $session->analyze('ANALYZE TABLE t DROP HISTOGRAM ON y, a')->statement;
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
+        $operation = $session->analyze('ANALYZE TABLE t DROP HISTOGRAM ON y, a');
+        $statement = $operation;
         self::assertNotNull($table);
         self::assertInstanceOf(AnalyzeTable::class, $statement);
         self::assertInstanceOf(DropHistogram::class, $statement->histogram);
@@ -117,7 +122,7 @@ final class HistogramsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, v VARCHAR(5), UNIQUE KEY (v(2)))');
-        $table = $session->instance->dictionary->table('d', 't');
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         self::assertNotNull($table);
 
         self::assertSame("The column 'v' is covered by a single-part unique index.", (new Histograms())->problem($table, 'v', 1));
@@ -127,7 +132,7 @@ final class HistogramsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $table = $session->instance->dictionary->table('d', 't');
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         self::assertNotNull($table);
 
         self::assertSame([

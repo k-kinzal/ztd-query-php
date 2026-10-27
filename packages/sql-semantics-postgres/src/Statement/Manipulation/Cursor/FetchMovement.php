@@ -19,7 +19,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Reading a movement
  *     $fetch = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('FETCH BACKWARD 5 FROM c');
- *     [$fetch->statement->movement, $fetch->statement->count->magnitude->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::BackwardCount, '5']
+ *     [$fetch->movement, $fetch->count->magnitude->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::BackwardCount, '5']
  */
 enum FetchMovement
 {

@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The `ATTRIBUTE '…'` or `COMMENT '…'` clause of CREATE USER or ALTER USER.
@@ -19,18 +18,18 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a comment
- *     $comment = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER u COMMENT 'ops'")->statement->comment;
+ *     $comment = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER u COMMENT 'ops'")->comment;
  *     [$comment?->kind, $comment?->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Comment, 'ops']
  */
 final class UserComment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CommentKind $kind Whether the attributes or the comment are set
      * @param Text $text The JSON object or the comment
      */
-    public function __construct(public readonly CommentKind $kind, public readonly Text $text)
+    public function __construct(public readonly CommentKind $kind, public readonly Text $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($text->radix === null, 'An account comment or attribute is quoted text.');
     }

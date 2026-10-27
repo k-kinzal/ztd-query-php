@@ -22,7 +22,7 @@ final class DeferredBodyTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT ROW(1,2) LIKE 1) SELECT 7');
         self::assertSame('WITH c AS (SELECT ROW(1, 2) LIKE 1) SELECT 7', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveQueryKeepsEveryProjectionPositionAndItsInvalidType(): void

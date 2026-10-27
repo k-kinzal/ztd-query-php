@@ -20,11 +20,11 @@ final class RevokeRuleTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() REVOKE ALL ON FUNCTION *.* FROM u';
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $legacy = $operation->statement;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        $legacy = $operation;
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $modern = $operation->statement;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        $modern = $operation;
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $legacy);
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $modern);
         self::assertInstanceOf(M\Account\Privilege\RevokePrivileges::class, $legacy->body);
@@ -34,8 +34,8 @@ final class RevokeRuleTest extends TestCase
     public function testStatementRetainsARoutineWildcard(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('REVOKE ALL ON FUNCTION * FROM u');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Account\Privilege\RevokePrivileges::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Account\Privilege\RevokePrivileges::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 }

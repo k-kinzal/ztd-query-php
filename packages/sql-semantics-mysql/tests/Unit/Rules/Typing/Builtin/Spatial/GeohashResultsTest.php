@@ -97,13 +97,13 @@ final class GeohashResultsTest extends TestCase
 
     public function testPointDistinguishesAnUnboundPlaceholderFromAnActualStringBinding(): void
     {
-        $node = new Parameter();
+        $node = new Parameter(position: 7);
         $domain = Domain::string(16383, Collation::known('utf8mb4_bin'));
-        $settings = new Settings(Collation::known('utf8mb4_bin'), parameters: [$domain], unboundParameters: [0]);
+        $settings = new Settings(Collation::known('utf8mb4_bin'), parameters: [7 => $domain], unboundParameters: [7]);
         $context = new AnalysisContext(new LanguageProfile(GrammarRelease::MySql5744), [new \SqlSemantics\Statement\Identifier\Name('d')], session: $settings);
-        $derivation = new Derivation($context, parameters: [$node]);
+        $derivation = new Derivation($context);
         self::assertTrue((new GeohashResults())->point(new Invocation([$domain], [$node], $settings, $derivation)));
-        self::assertFalse((new GeohashResults())->point(new Invocation([$domain], [$node], $settings->withParameters([$domain]), $derivation)));
+        self::assertFalse((new GeohashResults())->point(new Invocation([$domain], [$node], $settings->withParameters([7 => $domain]), $derivation)));
     }
 
     public function testDecodedResolvesGeometryWithoutBorrowingSourceSyntax(): void

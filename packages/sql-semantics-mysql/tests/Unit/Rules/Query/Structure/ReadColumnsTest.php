@@ -41,8 +41,8 @@ final class ReadColumnsTest extends TestCase
     public function testTemplatesExcludesAnUnusedDefinitionFromReadConstraints(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c AS (SELECT ROW(1,2)), d AS (SELECT * FROM c) SELECT 1');
-        self::assertInstanceOf(M\QueryRoot::class, $operation->statement);
-        self::assertNull((new ReadColumns())->templates($operation->statement->query));
+        self::assertInstanceOf(M\QueryRoot::class, $operation);
+        self::assertNull((new ReadColumns())->templates($operation->query));
     }
 
     public function testProjectionChecksStarsBeforeCatalogResolution(): void

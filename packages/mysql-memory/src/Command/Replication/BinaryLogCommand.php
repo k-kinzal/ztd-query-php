@@ -23,9 +23,9 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes PURGE BINARY LOGS and BINLOG.
@@ -78,15 +78,15 @@ final class BinaryLogCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $log = $session->instance->registry->binaryLog;
         $logging = BinaryLog::enabled($session);
         if ($statement instanceof PurgeLogsTo && $logging) {
             $number = $log->find((new Literals())->bytes($statement->file)) ?? throw AdministrationError::UnknownTargetBinlog->error();
             $log->purge($number);
         } elseif ($statement instanceof PurgeLogsBefore) {
-            $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+            $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
             try {
                 $moment = $planner->compiler->compile($statement->moment, new Scope());
             } catch (\MySqlMemory\Error\SqlError $error) {

@@ -16,8 +16,8 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\AnalyzedStatement as Operation;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
@@ -101,10 +101,10 @@ final class SemanticsTest extends TestCase
         $open = $semantics->analyze('SELECT a FROM t');
         $missing = $semantics->analyze('SELECT a FROM t', []);
 
-        self::assertInstanceOf(DeclaredTable::class, $declared->facts->relation($declared->singleNamedInput())->table);
-        self::assertInstanceOf(DeclaredTable::class, $prepared->facts->relation($prepared->singleNamedInput())->table);
-        self::assertInstanceOf(UndeclaredTable::class, $open->facts->relation($open->singleNamedInput())->table);
-        self::assertInstanceOf(MissingTable::class, $missing->facts->relation($missing->singleNamedInput())->table);
+        self::assertInstanceOf(DeclaredTable::class, $declared->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(DeclaredTable::class, $prepared->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(UndeclaredTable::class, $open->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $missing->singleNamedInput()->relationInformation()->table);
         self::assertSame('SELECT a FROM t', $declared->toString());
     }
 
@@ -144,7 +144,7 @@ final class SemanticsTest extends TestCase
         self::assertCount(3, $operations);
         self::assertContainsOnlyInstancesOf(Operation::class, $operations);
         self::assertSame(['CREATE TABLE t (a INTEGER)', 'SELECT a FROM t', 'DELETE FROM t'], array_map(static fn (Operation $operation): string => $operation->toString(), $operations));
-        self::assertInstanceOf(MissingTable::class, $operations[1]->facts->relation($operations[1]->singleNamedInput())->table);
+        self::assertInstanceOf(MissingTable::class, $operations[1]->singleNamedInput()->relationInformation()->table);
         self::assertSame([], $semantics->analyzeAll(''));
     }
 
@@ -175,6 +175,20 @@ final class SemanticsTest extends TestCase
         $unbound = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         self::assertSame('SELECT 1 AS x', $unbound->analyze($sql, $unbound->context(session: $settings))->toString());
         self::assertCount(2, $unbound->analyzeAll($sql . ';' . $sql, $unbound->context(session: $settings)));
+    }
+
+
+    public function testFromStatementBindsFreshOccurrencesAndPreservesTheInput(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $column = new \SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse(new Name('a'));
+        $query = new \SqlSemantics\Platform\Sqlite\Statement\Query\Select([new \SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn($column)]);
+        $constructed = Semantics::fromStatement($semantics->context([]), $query);
+        self::assertFalse($column->hasBinding());
+        self::assertFalse($query->hasStatementInformation());
+        self::assertNotSame($query, $constructed);
+        self::assertTrue($constructed->hasStatementInformation());
+        self::assertSame('Column a does not exist.', $constructed->diagnostics()[0]->message());
     }
 
 }

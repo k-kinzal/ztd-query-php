@@ -85,8 +85,7 @@ final class CreateUserCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("CREATE USER x ATTRIBUTE 'bad'");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\CreateUser::class, $statement);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3982);

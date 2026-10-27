@@ -95,7 +95,7 @@ final class ViewWritesTest extends TestCase
         self::assertNotNull($block);
         self::assertInstanceOf(TableReference::class, $block->from);
 
-        $columns = ViewWrites::columns($view, $block, $block->from, new Name('q'));
+        $columns = ViewWrites::columns(\MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($view), $block, $block->from, new Name('q'));
         self::assertNotNull($columns);
         self::assertInstanceOf(ColumnUse::class, $columns[0][2]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $block->items[1]);

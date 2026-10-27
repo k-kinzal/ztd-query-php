@@ -10,12 +10,12 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Typing\Prepared\BranchParameters;
+use SqlSemantics\Platform\MySql\Rules\Typing\Prepared\ParameterInference;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference;
 
 #[CoversClass(BranchParameters::class)]
 #[Small]
@@ -34,6 +34,7 @@ final class BranchParametersTest extends TestCase
     public function testInferUsesResolvedSlotsAndOtherBranches(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT CASE WHEN ? THEN 123 ELSE ? END, COALESCE('é', ?), IF(?, NULL, ?), IFNULL(NULL, ?)");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $domains = ParameterInference::infer($operation);
 
         self::assertSame([0, 1, 2, 3, 4, 5], array_keys($domains));

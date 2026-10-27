@@ -19,7 +19,7 @@ final class DeferredGroupConcatTest extends TestCase
     public function testDeriveScalarRetainsAStoredCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT GROUP_CONCAT(RANK() OVER ())');
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderPreservesArgumentsAndModifiers(): void

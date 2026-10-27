@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a star without input
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT *');
- *     $query->facts->diagnostics[0]->message() // => 'No tables used'
+ *     $query->diagnostics()[0]->message() // => 'No tables used'
  */
 final class Misuse implements Diagnostic
 {

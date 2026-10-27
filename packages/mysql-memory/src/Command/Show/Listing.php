@@ -18,11 +18,11 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Encoding;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
-use SqlSemantics\Statement\Operation;
 
 /**
  * The rows a SHOW statement answers, filtered by its LIKE or WHERE clause and sent as the server sends them.
@@ -60,12 +60,12 @@ final class Listing
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the condition fails
      */
-    public function result(array $rows, Operation $operation, Session $session, Context $context, Connection $connection, ShowLike|ShowWhere|null $filter = null, int $named = 0, string $collation = 'utf8mb3_general_ci', string $derivation = 'IMPLICIT'): ResultSet
+    public function result(array $rows, MySqlStatement $operation, Session $session, Context $context, Connection $connection, ShowLike|ShowWhere|null $filter = null, int $named = 0, string $collation = 'utf8mb3_general_ci', string $derivation = 'IMPLICIT'): ResultSet
     {
         $this->constantEmpty = false;
         if ($filter instanceof ShowLike) {
             $pattern = $filter->pattern->value;
-            if ($session->settings()->legacy() && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables)) {
+            if ($session->settings()->legacy() && ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables)) {
                 $pattern = Encoding::convert($pattern, $session->resolution()->client ?? Charset::known('utf8mb4'), Charset::known('utf8mb3'));
             }
             $this->mix($pattern, $collation, $derivation, $context);
@@ -133,11 +133,11 @@ final class Listing
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the condition fails
      */
-    public function where(array $rows, ShowWhere $where, Operation $operation, Session $session, Context $context, Connection $connection): array
+    public function where(array $rows, ShowWhere $where, MySqlStatement $operation, Session $session, Context $context, Connection $connection): array
     {
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $scope = new Scope();
-        $scope->place($operation->statement, array_map(static fn (Heading $heading): Domain => $heading->domain(), $this->headings));
+        $scope->place($operation, array_map(static fn (Heading $heading): Domain => $heading->domain(), $this->headings));
         $expressions = [];
         foreach ($rows as $row) {
             $expressions[] = array_map(fn ($value, int $position): Constant => new Constant($this->headings[$position]->domain(), $value), $row, array_keys($row));

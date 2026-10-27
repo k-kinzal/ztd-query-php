@@ -22,28 +22,28 @@ final class TableUniqueTest extends TestCase
     public function testDeriveConstraintResolvesTheKeyColumns(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, UNIQUE (a, b COLLATE nocase))', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $unique = $statement->constraints[0]->items[0];
         self::assertInstanceOf(TableUnique::class, $unique);
-        self::assertTrue($operation->facts->covers($unique->terms[1]->expression));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertTrue($unique->terms[1]->expression->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveConstraintReportsAMissingColumnAndAnExpressionTerm(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, UNIQUE (zz, a + 1))', []);
 
-        self::assertCount(2, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(PrimaryKeyProblem::class, $operation->facts->diagnostics[1]);
+        self::assertCount(2, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(PrimaryKeyProblem::class, $operation->diagnostics()[1]);
     }
 
     public function testRenderKeepsTheTermsAndTheConflictResolution(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a, b, unique (a asc, b) on conflict ignore)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $unique = $statement->constraints[0]->items[0];

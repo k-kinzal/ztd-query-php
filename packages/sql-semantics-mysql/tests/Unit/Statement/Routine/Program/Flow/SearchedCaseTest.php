@@ -21,14 +21,14 @@ final class SearchedCaseTest extends TestCase
     public function testDeriveProgramDerivesEveryBranch(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE WHEN b THEN SELECT d; WHEN a THEN SELECT a; ELSE SELECT e; END CASE');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $case = $create->body;
         self::assertInstanceOf(SearchedCase::class, $case);
 
         self::assertCount(2, $case->branches);
         self::assertCount(1, $case->otherwise);
-        self::assertSame(['Column b does not exist.', 'Column d does not exist.', 'Column e does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column b does not exist.', 'Column d does not exist.', 'Column e does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testDeriveProgramChecksTheLabelsInTheBranches(): void

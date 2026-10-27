@@ -63,7 +63,7 @@ final class WeightResultsTest extends TestCase
         $operation = $semantics->analyze($sql, [$table, $merged, $materialized]);
         $expression = $operation->field(0)->expression;
         self::assertNotNull($expression);
-        self::assertSame($stored, (new WeightResults())->stored($operation->facts->scalar($expression), $operation->facts, $semantics->profile()->grammar, true));
+        self::assertSame($stored, (new WeightResults())->stored($expression->scalarInformation(), $semantics->profile()->grammar, true));
     }
 
     public function testTemporalLengthPreservesStoredFractionalPrecision(): void

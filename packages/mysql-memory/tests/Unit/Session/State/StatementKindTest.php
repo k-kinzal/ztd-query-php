@@ -48,7 +48,7 @@ final class StatementKindTest extends TestCase
     #[DataProvider('providerStatements')]
     public function testOfDistinguishesTheExecutionCommand(string $sql, string $counter): void
     {
-        $statement = (new Instance())->connect()->analyze($sql)->statement;
+        $statement = (new Instance())->connect()->analyze($sql);
         self::assertSame($counter, StatementKind::of($statement));
     }
 }

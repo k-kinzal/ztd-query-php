@@ -60,7 +60,7 @@ final class JoinText
             return $left === null || $right === null ? null : ($relation->operator->keepsRight() ? $right + $left : $left + $right);
         }
         $columns = [];
-        foreach ($this->writer->facts->relation($relation)->shape->slots as $slot) {
+        foreach ($relation->relationInformation()->shape->slots as $slot) {
             if ($slot->name !== null) {
                 $text = $this->writer->column(new ResolvedColumn($relation, $slot));
                 if ($text === null) {

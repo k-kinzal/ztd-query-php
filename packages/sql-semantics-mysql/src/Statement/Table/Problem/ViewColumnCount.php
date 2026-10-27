@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE VIEW v (a, b) AS SELECT 1')->facts->diagnostics[0]->returned // => 1
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE VIEW v (a, b) AS SELECT 1')->diagnostics()[0]->returned // => 1
  */
 final class ViewColumnCount implements Diagnostic
 {

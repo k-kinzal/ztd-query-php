@@ -25,7 +25,7 @@ final class ScalarFactTest extends TestCase
         $expression = $query->field(0)->expression;
 
         self::assertNotNull($expression);
-        $fact = $query->facts->scalar($expression);
+        $fact = $expression->scalarInformation();
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame(Storage::Text, $fact->type->descriptor);
         self::assertSame(Nullability::NotNull, $fact->nullability);
@@ -41,7 +41,7 @@ final class ScalarFactTest extends TestCase
         $expression = $query->field('a')->expression;
 
         self::assertNotNull($expression);
-        $fact = $query->facts->scalar($expression);
+        $fact = $expression->scalarInformation();
         self::assertInstanceOf(ResolvedColumn::class, $fact->resolution);
         self::assertSame($table->declarations()[0]->columns[0], $fact->resolution->declaration());
         self::assertSame(Nullability::Nullable, $fact->nullability);

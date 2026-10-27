@@ -20,7 +20,7 @@ foreach ($composer['autoload']['psr-4'] as $namespace => $relative) {
             continue;
         }
         $reflection = new ReflectionClass($class);
-        if ($reflection->isEnum() || in_array(SqlSemantics\Statement\Snapshot::class, $reflection->getTraitNames(), true)) {
+        if ($reflection->isEnum() || in_array(SqlSemantics\Statement\Snapshot::class, $reflection->getTraitNames(), true) || in_array(SqlSemantics\Statement\Semantics\Occurrence::class, $reflection->getTraitNames(), true)) {
             $schema[$class] = $audit->fields($class);
         }
     }

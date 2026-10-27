@@ -32,12 +32,12 @@ final class OperandColumnsTest extends TestCase
     public function testMessageKeepsTheOwningPredicateWhenWidthsAreIdentical(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t(a INT, b INT)')->facts->declarations;
+        $tables = $semantics->analyze('CREATE TABLE t(a INT, b INT)')->declarations();
         $operation = $semantics->analyze('SELECT 1 IN (SELECT * FROM t), 1 = ALL (SELECT * FROM t)', $tables);
-        $query = $operation->statement;
+        $query = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
-        $diagnostics = $operation->facts->diagnostics;
+        $diagnostics = $operation->diagnostics();
 
         self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(SelectExpression::class, $query->items[0]);

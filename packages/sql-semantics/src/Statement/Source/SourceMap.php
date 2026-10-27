@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Coverage is partial: an occurrence constructed directly, or lowered by a rule without source
  * tracking, has no location. Identity distinguishes equal expressions at different positions.
- * A new operation does not inherit the locations of a previous operation implicitly.
+ * Rebinding an existing occurrence can read the input location it already owns.
  *
  * @visibility public
  * @example Looking up an occurrence by identity
@@ -62,6 +62,33 @@ final class SourceMap
             }
         }
 
-        return null;
+        $span = $node->source();
+        return $span === null ? null : new Origin($node, $span->offset, $span->length);
     }
+
+    /**
+     * Keeps spelling notices when the same SQL structure is bound to another context.
+     * Derived warnings are recomputed; equal warnings at different occurrences remain distinct.
+     */
+    public function retainingInputNotices(\SqlSemantics\Statement\AnalyzedStatement $statement): self
+    {
+        if (!$statement->hasStatementInformation()) {
+            return $this;
+        }
+        $notices = $this->notices;
+        foreach ($statement->notices() as $notice) {
+            if (!$notice->fromInput) {
+                continue;
+            }
+            Check::invariant($notice->subject !== null && $notice->inputSource !== null, 'An input notice owns its subject and boundary.');
+            foreach ($notices as $existing) {
+                if ($existing->subject === $notice->subject && $existing->warning === $notice->warning && $existing->offset === $notice->inputSource->offset) {
+                    continue 2;
+                }
+            }
+            $notices[] = new SourceNotice($notice->subject, $notice->warning, $notice->inputSource->offset);
+        }
+        return new self($this->origins, $notices);
+    }
+
 }

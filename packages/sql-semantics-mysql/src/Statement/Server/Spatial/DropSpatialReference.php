@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP SPATIAL REFERENCE SYSTEM [IF EXISTS] srid`: a request to remove a spatial reference system (MySQL 8.0 and later).
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a spatial reference system
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('drop spatial reference system if exists 13000');
- *     [$drop->toString(), $drop->statement->ifExists] // => ['DROP SPATIAL REFERENCE SYSTEM IF EXISTS 13000', true]
+ *     [$drop->toString(), $drop->ifExists] // => ['DROP SPATIAL REFERENCE SYSTEM IF EXISTS 13000', true]
  */
-final class DropSpatialReference implements Statement
+final class DropSpatialReference extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The intrinsic identifier constraint, or null for a modifiable identifier.
@@ -39,8 +38,11 @@ final class DropSpatialReference implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Numeral $srid The spatial reference system identifier
      */
-    public function __construct(public readonly bool $ifExists, public readonly Numeral $srid)
+    public function __construct(public readonly bool $ifExists, public readonly Numeral $srid, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
         $this->problem = (new SpatialChecks())->identifier($srid);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

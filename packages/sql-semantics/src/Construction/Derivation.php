@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\TableLookup;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -44,7 +43,7 @@ final class Derivation
     private array $scalars = [];
 
     /**
-     * @var list<array{Node, RelationFact}>
+     * @var list<array{\SqlSemantics\Statement\TableUse, RelationFact}>
      */
     private array $relations = [];
 
@@ -81,6 +80,11 @@ final class Derivation
 
     private ?QueryFact $output = null;
 
+    /**
+ * @var list<array{Statement, AnalysisContext, Facts}> Temporary per-statement construction results
+ */
+    private array $statements = [];
+
     private ?Environment $base = null;
 
     private readonly InstructionScope $instructions;
@@ -93,9 +97,8 @@ final class Derivation
     /**
      * @param AnalysisContext $context The fixed declaration context every part is derived against
      * @param \SqlSemantics\Statement\Source\SourceMap $sources Original spelling notices and optional occurrence ranges
-     * @param list<Operand> $parameters Parameter occurrences in written order, supplied by the structural renderer
      */
-    public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap(), private readonly array $parameters = [])
+    public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap())
     {
         $this->warnings = new Warnings($sources);
         $this->conditions = new Conditions();
@@ -104,32 +107,22 @@ final class Derivation
     }
 
     /**
-     * Answers a parameter's written position, independent of the order facts are derived.
-     */
-    public function parameterPosition(Operand $parameter): ?int
-    {
-        $position = array_search($parameter, $this->parameters, true);
-
-        return $position === false ? null : $position;
-    }
-
-    /**
      * Derives a nested statement that the database reads with other name-search settings.
      *
-     * The statement sees the declarations of the same profile under the
-     * search settings of the given context, as the elements of a schema
-     * definition are read with that schema searched first. The context may add
-     * only declarations this statement has already provided, as the elements
-     * of one schema definition see each other.
+     * @param Closure(): void|null $derive A dialect-specific derivation of this statement
+     * @param-immediately-invoked-callable $derive
+     *
+     * The profile and enclosing declarations stay fixed. The context may add only
+     * this statement's own declarations, as successive schema elements see each other.
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context holds other declarations or another profile
      */
-    public function within(AnalysisContext $context, Statement $node): void
+    public function within(AnalysisContext $context, Statement $node, ?Closure $derive = null): void
     {
         $this->admit($context);
         [$outer, $base] = [$this->context, $this->base];
         [$this->context, $this->base] = [$context, null];
-        $this->statement($node);
+        $this->statement($node, $derive);
         [$this->context, $this->base] = [$outer, $base];
     }
 
@@ -159,13 +152,35 @@ final class Derivation
 
     /**
      * Derives a statement nested in or equal to the root.
+     *
+     * @param Closure(): void|null $derive A dialect-specific derivation of this statement
+     * @param-immediately-invoked-callable $derive
      */
-    public function statement(Statement $node): void
+    public function statement(Statement $node, ?Closure $derive = null): void
     {
         $outer = $this->reading;
+        $declarations = count($this->declarations);
+        $conditions = count($this->conditions->all());
+        $warnings = $this->warnings->all();
+        $this->output = null;
         $this->reading = $node;
-        $node->deriveStatement($this);
+        if ($derive === null) {
+            $node->deriveStatement($this);
+        } else {
+            $derive();
+        }
+        $this->statements[] = [$node, $this->context, new Facts([], [], [], array_slice($this->declarations, $declarations), $this->output, array_slice($this->conditions->all(), $conditions), array_values(array_filter($this->warnings->all(), static fn (Warning $warning): bool => !in_array($warning, $warnings, true))), notices: $this->warnings->notices())];
         $this->reading = $outer;
+    }
+
+    /**
+     * Returns construction results for each concrete statement, including stored instructions.
+     *
+     * @return list<array{Statement, AnalysisContext, Facts}>
+     */
+    public function statements(): array
+    {
+        return $this->statements;
     }
 
     /**
@@ -186,13 +201,9 @@ final class Derivation
     /**
      * Derives a statement whose request is only inspected or stored, such as the operand of EXPLAIN or a routine body.
      *
-     * Every part of the statement receives its facts, and its diagnostics are
-     * kept, but the rows it would return and the declarations it would
-     * provide are discarded: inspecting or storing a statement neither
-     * executes it nor declares anything. An environment, when given, is the
-     * position the statement is read at instead of a statement root, such as
-     * the variables of a routine body or the search settings of EXPLAIN FOR
-     * DATABASE; its context follows the rule of within().
+     * Keeps operand facts and diagnostics, discards output and declarations.
+     * An optional environment supplies routine variables or EXPLAIN search settings;
+     * its context must satisfy within()'s declaration rule.
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the environment holds other declarations or another profile
      */
@@ -239,11 +250,7 @@ final class Derivation
     }
 
     /**
-     * Records that the statement writes the rows of a query into the given columns, as an INSERT writes the rows of its source.
-     *
-     * The query is derived later as any other; written() lets its rules
-     * accept what the database accepts only in rows that are written, such
-     * as a value that stands for the default of its column.
+     * Records a query's destination columns, allowing its rules to resolve DEFAULT.
      *
      * @param list<Field> $columns The written columns in row order
      * @param bool $defaults Whether an empty row writes the defaults of every column
@@ -273,6 +280,7 @@ final class Derivation
         $fact = $node->deriveScalar($this, $environment);
         $this->reading = $outer;
         $this->scalars[] = [$node, $fact];
+        $node->initializeScalarInformation($fact);
         if ($fact->resolution instanceof Diagnostic) {
             $this->conditions->report($fact->resolution);
         }
@@ -296,9 +304,10 @@ final class Derivation
     /**
      * Records the facts of a table use that is not an input relation, such as a write target.
      */
-    public function target(Node $node, RelationFact $fact): RelationFact
+    public function target(\SqlSemantics\Statement\TableUse $node, RelationFact $fact): RelationFact
     {
         $this->relations[] = [$node, $fact];
+        $node->initializeRelationInformation($fact);
         if ($fact->table instanceof Diagnostic) {
             $this->conditions->report($fact->table);
         }
@@ -324,6 +333,7 @@ final class Derivation
         $fact = $this->conditions->query(fn (): QueryFact => $node->deriveQuery($this, $outer));
         $this->reading = $previous;
         $this->queries[] = [$node, $fact];
+        $node->initializeQueryInformation($fact);
 
         return $fact;
     }
@@ -403,19 +413,6 @@ final class Derivation
     }
 
     /**
-     * Merges input spelling notices with warnings whose semantic derivation records a source boundary.
-     *
-     * Unlocated warnings retain their relative emission order after located warnings. Without
-     * spelling notices the established derivation order is retained unchanged.
-     *
-     * @return list<Warning>
-     */
-    public function readingWarnings(): array
-    {
-        return $this->warnings->all();
-    }
-
-    /**
      * Orders the located warnings of this statement by input position after its dependencies are derived.
      */
     public function orderWarnings(Node $scope): void
@@ -428,6 +425,8 @@ final class Derivation
      */
     public function facts(): Facts
     {
-        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->conditions->all(), $this->readingWarnings(), $this->warnings->instructions(), array_values($this->references), $this->warnings->subjects());
+        $facts = new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->conditions->all(), $this->warnings->all(), $this->warnings->instructions(), array_values($this->references), $this->warnings->subjects(), $this->warnings->notices());
+        $facts->localize();
+        return $facts;
     }
 }

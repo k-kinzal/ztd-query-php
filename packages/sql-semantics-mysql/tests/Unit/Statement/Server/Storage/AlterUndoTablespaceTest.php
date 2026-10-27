@@ -24,6 +24,6 @@ final class AlterUndoTablespaceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

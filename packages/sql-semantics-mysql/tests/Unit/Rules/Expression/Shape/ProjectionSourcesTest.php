@@ -20,17 +20,22 @@ final class ProjectionSourcesTest extends TestCase
     public function testExpressionsRetainsBothSetContributors(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 7 UNION ALL SELECT 10');
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        $sources = (new ProjectionSources($operation->facts))->expressions($operation->statement->query, 0, true);
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        $sources = (new ProjectionSources())->expressions($operation->query, 0, true);
         self::assertCount(2, $sources);
-        self::assertEquals([new NumberLiteral('7'), new NumberLiteral('10')], $sources);
+        self::assertInstanceOf(NumberLiteral::class, $sources[0]);
+        self::assertInstanceOf(NumberLiteral::class, $sources[1]);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new NumberLiteral('7'), new NumberLiteral('10')], [$sources[0], $sources[1]]));
     }
 
     public function testFieldRetainsAStarFieldsResolvedSource(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT 7 AS i) q');
-        $sources = new ProjectionSources($operation->facts);
-        self::assertEquals([new NumberLiteral('7')], $sources->field($operation->field(0), true, []));
+        $sources = new ProjectionSources();
+        $expressions = $sources->field($operation->field(0), true, []);
+        self::assertCount(1, $expressions);
+        self::assertInstanceOf(NumberLiteral::class, $expressions[0]);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new NumberLiteral('7'), $expressions[0]));
         self::assertSame([null], $sources->field($operation->field(0), false, []));
     }
 
@@ -39,7 +44,10 @@ final class ProjectionSourcesTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 7 AS i) SELECT i FROM c');
         $resolution = $operation->field(0)->resolution;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $resolution);
-        self::assertEquals([new NumberLiteral('7')], (new ProjectionSources($operation->facts))->column($resolution, []));
+        $expressions = (new ProjectionSources())->column($resolution, []);
+        self::assertCount(1, $expressions);
+        self::assertInstanceOf(NumberLiteral::class, $expressions[0]);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new NumberLiteral('7'), $expressions[0]));
     }
 
     public function testConstantDistinguishesIndependentExpressionsFromAggregates(): void
@@ -47,9 +55,9 @@ final class ProjectionSourcesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $constant = $semantics->analyze('SELECT * FROM (SELECT 7 AS i UNION ALL SELECT 10) q');
         $aggregate = $semantics->analyze('SELECT MAX(7)');
-        self::assertInstanceOf(QueryRoot::class, $constant->statement);
-        self::assertInstanceOf(QueryRoot::class, $aggregate->statement);
-        self::assertTrue((new ProjectionSources($constant->facts))->constant($constant->statement->query));
-        self::assertFalse((new ProjectionSources($aggregate->facts))->constant($aggregate->statement->query));
+        self::assertInstanceOf(QueryRoot::class, $constant);
+        self::assertInstanceOf(QueryRoot::class, $aggregate);
+        self::assertTrue((new ProjectionSources())->constant($constant->query));
+        self::assertFalse((new ProjectionSources())->constant($aggregate->query));
     }
 }

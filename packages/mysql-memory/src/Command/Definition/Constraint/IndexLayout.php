@@ -44,7 +44,7 @@ final class IndexLayout
      */
     public function added(IndexDefinition $index): IndexDefinition
     {
-        $copy = (new \SqlSemantics\Construction\Reconstruction())->node($index);
+        $copy = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->node($index);
         \SqlSemantics\Diagnostic\Check::invariant($copy instanceof IndexDefinition, 'Index reconstruction preserves its declaration type.');
 
         return $copy;

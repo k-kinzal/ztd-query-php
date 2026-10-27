@@ -102,13 +102,14 @@ final class ColumnlessUse
      */
     public function columns(CreateTable $definition, Schema $schema, Session $session): void
     {
-        $derivation = new Derivation($session->semantics()->context($session->instance->dictionary->declarations(), true, new SearchPath($schema->name), $session->resolution()));
+        $definition = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($definition);
+        $derivation = new Derivation($session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, new SearchPath($schema->name), $session->resolution()));
         $definition->deriveStatement($derivation);
-        $facts = $derivation->facts();
-        $table = $facts->relation($definition)->table;
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
+        $table = $definition->relationInformation()->table;
         Check::invariant($table instanceof DeclaredTable, 'A retained table instruction supplies its declaration.');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
-        $planner = new Planner($definition, $facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($definition, $facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $builder = new Definitions($planner, $schema->collation);
         $engine = (new StorageOptions())->engine($definition, $session->variables);
         $builder->parts($definition, $table->table, $schema->name, $engine, $builder->collation($definition));

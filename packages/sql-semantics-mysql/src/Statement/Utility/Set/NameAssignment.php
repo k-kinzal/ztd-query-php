@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment to a variable named without `@@`: `SET x = v`, `SET GLOBAL x = v`, `SET a.x = v`.
@@ -42,11 +41,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a scoped name assignment
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET SESSION sort_buffer_size = DEFAULT');
- *     [$set->statement->items[0]->scope, $set->statement->items[0]->name->value, $set->statement->items[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, 'sort_buffer_size', \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Default]
+ *     [$set->items[0]->scope, $set->items[0]->name->value, $set->items[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, 'sort_buffer_size', \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Default]
  */
 final class NameAssignment implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The assigned name
@@ -54,7 +53,7 @@ final class NameAssignment implements SetItem
      * @param VariableScope|null $scope The scope keyword written before the name
      * @param Name|null $qualifier The component, key cache instance or trigger row written before the name
      */
-    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
+    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$value instanceof BareName || $value->system === ($scope !== null), 'A bare name value is known to be text exactly when a scope keyword names a system variable.');
     }

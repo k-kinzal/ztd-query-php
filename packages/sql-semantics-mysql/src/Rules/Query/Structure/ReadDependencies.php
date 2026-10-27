@@ -40,16 +40,16 @@ final class ReadDependencies
      */
     public function inputs(array $roots, ?With $with = null, Comparison $names = Comparison::Sensitive, bool $childrenFirst = false): array
     {
-        /** @var list<array<string, int>> $scopes */
+        /**
+ * @var list<array<string, int>> $scopes
+ */
         $scopes = [[]];
-        /** @var list<array{CommonTableExpression, int}> $definitions */
+        /**
+ * @var list<array{CommonTableExpression, int}> $definitions
+ */
         $definitions = [];
         $initial = $with === null ? 0 : $this->define($with, $names, $scopes, $definitions, 0);
-        /** @var list<array{Node, int, bool}> $pending */
-        $pending = [];
-        foreach (array_reverse($roots) as $root) {
-            $pending[] = [$root, $initial, false];
-        }
+        $pending = array_map(static fn (Node $root): array => [$root, $initial, false], array_reverse($roots));
         $seen = [];
         $found = [];
         while ($pending !== []) {

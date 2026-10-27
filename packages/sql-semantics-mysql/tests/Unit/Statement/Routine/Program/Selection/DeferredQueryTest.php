@@ -18,9 +18,9 @@ final class DeferredQueryTest extends TestCase
     public function testDeriveProgramRetainsEveryQueryDependency(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT missing UNION VALUES ROW()');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(M\Routine\Program\Selection\DeferredQuery::class, $operation->statement->body);
-        self::assertNotEmpty($operation->facts->diagnostics);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(M\Routine\Program\Selection\DeferredQuery::class, $operation->body);
+        self::assertNotEmpty($operation->diagnostics());
     }
 
     public function testProblemIdentifiesTheReadColumnConstraint(): void

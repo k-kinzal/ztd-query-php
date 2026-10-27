@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[LINEAR] HASH (expression)`: partitioning by the value of an expression modulo the number of partitions.
@@ -29,13 +28,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class HashMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $linear Whether LINEAR is written
      * @param Scalar $expression The partitioning expression
      */
-    public function __construct(public readonly bool $linear, public readonly Scalar $expression)
+    public function __construct(public readonly bool $linear, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
         Check::input($rules->possible($expression), 'A partition method cannot depend on session state or stored functions.');

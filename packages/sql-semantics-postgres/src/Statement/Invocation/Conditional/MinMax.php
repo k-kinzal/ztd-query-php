@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `GREATEST (values)` or `LEAST (values)`.
@@ -31,7 +30,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class MinMax implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The values in order
@@ -42,8 +42,11 @@ final class MinMax implements Scalar, OutputNaming
      * @param MinMaxKind $kind Which extreme is selected
      * @param list<Scalar> $values The values in order; at least one
      */
-    public function __construct(public readonly MinMaxKind $kind, array $values)
+    public function __construct(public readonly MinMaxKind $kind, array $values, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->values = Check::listOf($values, Scalar::class, 'GREATEST and LEAST take at least one value.', 1);
     }
 

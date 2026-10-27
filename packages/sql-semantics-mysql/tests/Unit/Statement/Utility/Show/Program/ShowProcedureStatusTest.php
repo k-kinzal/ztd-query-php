@@ -18,17 +18,17 @@ final class ShowProcedureStatusTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("SHOW PROCEDURE STATUS LIKE 'x'");
-        self::assertInstanceOf(ShowProcedureStatus::class, $show->statement);
+        self::assertInstanceOf(ShowProcedureStatus::class, $show);
         self::assertSame('Definer', $show->field(3)->name?->value);
     }
 
     public function testDeriveRelationShapesTheRowsOfTheRelease(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("SHOW PROCEDURE STATUS LIKE 'x'");
-        self::assertInstanceOf(ShowProcedureStatus::class, $show->statement);
+        self::assertInstanceOf(ShowProcedureStatus::class, $show);
         $later = (new Semantics(Dialect::MySql))->analyze('SHOW PROCEDURE STATUS');
         self::assertSame('Language', $later->field(3)->name?->value);
-        self::assertSame('Db', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
+        self::assertSame('Db', $show->relationInformation()->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

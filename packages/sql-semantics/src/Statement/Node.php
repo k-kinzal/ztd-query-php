@@ -16,10 +16,20 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Reading the structure of an analyzed statement
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1');
- *     $operation->statement instanceof \SqlSemantics\Statement\Node // => true
+ *     $operation instanceof \SqlSemantics\Statement\Node // => true
  */
 interface Node
 {
+    /**
+     * Returns the input location when this occurrence was lowered from SQL.
+     */
+    public function source(): ?Source\Span;
+
+    /**
+     * Reports whether this occurrence owns resolved operand or row information.
+     */
+    public function hasBinding(): bool;
+
     /**
      * Writes the typed output pieces of this node; it cannot write free SQL text.
      *

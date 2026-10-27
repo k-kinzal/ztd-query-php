@@ -16,7 +16,7 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes CREATE SPATIAL REFERENCE SYSTEM and DROP SPATIAL REFERENCE SYSTEM.
@@ -54,8 +54,8 @@ final class SpatialReferenceCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $session->transaction->commit();
         if ($statement instanceof CreateSpatialReference) {
             $this->create($statement, $session);

@@ -22,7 +22,7 @@ final class IndexHintsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, KEY k (a))');
-        $statement = $session->analyze('UPDATE t USE INDEX (nosuch) SET a = 1')->statement;
+        $statement = $session->analyze('UPDATE t USE INDEX (nosuch) SET a = 1');
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1176);
@@ -35,7 +35,7 @@ final class IndexHintsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $statement = $session->analyze('UPDATE t SET a = (SELECT 1 FROM t AS x USE INDEX (nosuch))')->statement;
+        $statement = $session->analyze('UPDATE t SET a = (SELECT 1 FROM t AS x USE INDEX (nosuch))');
 
         (new IndexHints())->check($statement, (new Problems())->reached($statement), $session);
 
@@ -46,14 +46,14 @@ final class IndexHintsTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertSame(['c'], (new IndexHints())->common($session->analyze('WITH c AS (SELECT 1) SELECT * FROM c')->statement));
+        self::assertSame(['c'], (new IndexHints())->common($session->analyze('WITH c AS (SELECT 1) SELECT * FROM c')));
     }
 
     public function testRefusalNamesTheTableByItsAliasAndTheIndexAsWritten(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT PRIMARY KEY, KEY k (a))');
-        $reference = (new Walker())->find($session->analyze('SELECT * FROM t AS x FORCE INDEX (K, primary, Nosuch)')->statement, TableReference::class)[0];
+        $reference = (new Walker())->find($session->analyze('SELECT * FROM t AS x FORCE INDEX (K, primary, Nosuch)'), TableReference::class)[0];
 
         $refusal = (new IndexHints())->refusal($reference, [], $session);
 
@@ -64,7 +64,7 @@ final class IndexHintsTest extends TestCase
     public function testRefusalAcceptsAnyIndexOfACommonTable(): void
     {
         $session = (new Instance())->connect();
-        $reference = (new Walker())->find($session->analyze('WITH c AS (SELECT 1) SELECT * FROM c USE INDEX (k)')->statement, TableReference::class)[0];
+        $reference = (new Walker())->find($session->analyze('WITH c AS (SELECT 1) SELECT * FROM c USE INDEX (k)'), TableReference::class)[0];
 
         self::assertNull((new IndexHints())->refusal($reference, ['c'], $session));
     }
@@ -74,9 +74,9 @@ final class IndexHintsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, KEY k (a))');
         $session->query('CREATE VIEW v AS SELECT * FROM t');
-        $view = (new Walker())->find($session->analyze('SELECT * FROM v')->statement, TableReference::class)[0];
-        $table = (new Walker())->find($session->analyze('SELECT * FROM t')->statement, TableReference::class)[0];
-        $system = (new Walker())->find($session->analyze('SELECT * FROM information_schema.TABLES')->statement, TableReference::class)[0];
+        $view = (new Walker())->find($session->analyze('SELECT * FROM v'), TableReference::class)[0];
+        $table = (new Walker())->find($session->analyze('SELECT * FROM t'), TableReference::class)[0];
+        $system = (new Walker())->find($session->analyze('SELECT * FROM information_schema.TABLES'), TableReference::class)[0];
 
         self::assertSame([[], ['k'], null], [(new IndexHints())->keys($view, $session), (new IndexHints())->keys($table, $session), (new IndexHints())->keys($system, $session)]);
     }
@@ -85,7 +85,7 @@ final class IndexHintsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t(a INT,KEY k(a) INVISIBLE)');
-        $reference = (new Walker())->find($session->analyze('SELECT * FROM t')->statement, TableReference::class)[0];
+        $reference = (new Walker())->find($session->analyze('SELECT * FROM t'), TableReference::class)[0];
 
         self::assertSame([], (new IndexHints())->keys($reference, $session));
         $session->query("SET optimizer_switch='use_invisible_indexes=on'");

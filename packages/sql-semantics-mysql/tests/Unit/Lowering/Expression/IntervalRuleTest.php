@@ -34,8 +34,8 @@ final class IntervalRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE p() DO INTERVAL ((1,2)) DAY + 3');
         self::assertSame('CREATE PROCEDURE p() DO INTERVAL ((1, 2)) DAY + 3', $operation->toString());
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
     }
     /**
      * @return iterable<string, array{string, string}>

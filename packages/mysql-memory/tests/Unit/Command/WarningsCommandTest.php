@@ -144,7 +144,7 @@ final class WarningsCommandTest extends TestCase
     public function testBoundReadsAnIntegerLiteral(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SHOW WARNINGS LIMIT 2, 3')->statement;
+        $statement = $session->analyze('SHOW WARNINGS LIMIT 2, 3');
         self::assertInstanceOf(ShowWarnings::class, $statement);
         self::assertInstanceOf(RowLimit::class, $statement->limit);
 

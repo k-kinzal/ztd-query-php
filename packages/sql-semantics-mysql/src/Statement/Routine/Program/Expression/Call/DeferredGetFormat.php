@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -30,14 +29,18 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredGetFormat implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TemporalFormat $format The keyword operand
      * @param RowOperand|DeferredOperand $standard The complete operand retaining its preparation condition
      */
-    public function __construct(public readonly TemporalFormat $format, public readonly RowOperand|DeferredOperand $standard)
+    public function __construct(public readonly TemporalFormat $format, public readonly RowOperand|DeferredOperand $standard, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

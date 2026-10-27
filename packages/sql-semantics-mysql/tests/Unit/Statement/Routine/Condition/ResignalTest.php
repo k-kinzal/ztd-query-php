@@ -28,24 +28,24 @@ final class ResignalTest extends TestCase
     public function testDeriveStatementAcceptsTheBareStatement(): void
     {
         $resignal = (new Semantics(Dialect::MySql))->analyze('RESIGNAL');
-        $statement = $resignal->statement;
+        $statement = $resignal;
         self::assertInstanceOf(Resignal::class, $statement);
 
         self::assertNull($statement->condition);
         self::assertSame([], $statement->items);
-        self::assertSame([], $resignal->facts->diagnostics);
+        self::assertSame([], $resignal->diagnostics());
     }
 
     public function testDeriveStatementAcceptsAnSqlStateValueAndItsItems(): void
     {
         $resignal = (new Semantics(Dialect::MySql))->analyze("RESIGNAL SQLSTATE '01000' SET CLASS_ORIGIN = 'x', SUBCLASS_ORIGIN = 'y'");
-        $statement = $resignal->statement;
+        $statement = $resignal;
         self::assertInstanceOf(Resignal::class, $statement);
         self::assertInstanceOf(SqlState::class, $statement->condition);
 
         self::assertSame('01000', $statement->condition->state->value);
         self::assertSame([ConditionItemName::ClassOrigin, ConditionItemName::SubclassOrigin], array_map(static fn (SignalItem $item): ConditionItemName => $item->name, $statement->items));
-        self::assertSame([], $resignal->facts->diagnostics);
+        self::assertSame([], $resignal->diagnostics());
     }
 
     /**
@@ -60,10 +60,10 @@ final class ResignalTest extends TestCase
     public function testDeriveStatementReportsTheBrokenRule(string $sql, ProgramRule $rule, string $message): void
     {
         $resignal = (new Semantics(Dialect::MySql))->analyze($sql);
-        $problem = $resignal->facts->diagnostics[0] ?? null;
+        $problem = $resignal->diagnostics()[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
-        self::assertCount(1, $resignal->facts->diagnostics);
+        self::assertCount(1, $resignal->diagnostics());
         self::assertSame($rule, $problem->rule);
         self::assertSame($message, $problem->message());
     }
@@ -71,7 +71,7 @@ final class ResignalTest extends TestCase
     public function testDeriveProgramResolvesADeclaredConditionInAHandler(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p(m TEXT) BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = m; END");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);
@@ -82,7 +82,7 @@ final class ResignalTest extends TestCase
         self::assertInstanceOf(ConditionName::class, $resignal->condition);
 
         self::assertSame('c', $resignal->condition->name->value);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**
@@ -154,7 +154,7 @@ final class ResignalTest extends TestCase
     {
         $resignal = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertInstanceOf(Resignal::class, $resignal->statement);
+        self::assertInstanceOf(Resignal::class, $resignal);
         self::assertSame($expected, $resignal->toString());
     }
 

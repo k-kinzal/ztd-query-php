@@ -36,7 +36,7 @@ final class ProjectionTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('SELECT 1 AS x, 2 AS y');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
@@ -69,7 +69,7 @@ final class ProjectionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT *');
 
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
     }
 
     public function testQualifiedReportsAnUnknownTable(): void
@@ -85,8 +85,8 @@ final class ProjectionTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT u.* FROM t', [$t]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(UnknownQualifier::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(UnknownQualifier::class, $operation->diagnostics()[0]);
     }
 
     public function testAdmitsComparesTheDatabaseOfAQualifierWithTheCurrentOne(): void
@@ -94,8 +94,8 @@ final class ProjectionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context(null, false, new \SqlSemantics\Contract\SearchPath('fz'));
 
-        self::assertSame("Unknown table 't2.t2'", $semantics->analyze('SELECT t2.t2.* FROM t2', $context)->facts->diagnostics[0]->message());
-        self::assertSame([], $semantics->analyze('SELECT fz.t2.* FROM t2', $context)->facts->diagnostics);
+        self::assertSame("Unknown table 't2.t2'", $semantics->analyze('SELECT t2.t2.* FROM t2', $context)->diagnostics()[0]->message());
+        self::assertSame([], $semantics->analyze('SELECT fz.t2.* FROM t2', $context)->diagnostics());
     }
 
     public function testExpandAppendsAnOpenStarForUndeclaredColumns(): void

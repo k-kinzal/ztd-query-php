@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The collation written among the constraints of a column or a domain.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the collation of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text COLLATE "C")');
- *     $create->statement->definition->elements[0]->qualifiers[0]->collation->last()->value // => 'C'
+ *     $create->definition->elements[0]->qualifiers[0]->collation->last()->value // => 'C'
  */
 final class ColumnCollation implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $collation The collation name
      */
-    public function __construct(public readonly DottedName $collation)
+    public function __construct(public readonly DottedName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

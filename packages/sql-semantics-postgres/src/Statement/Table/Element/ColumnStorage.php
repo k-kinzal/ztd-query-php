@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The STORAGE clause of a column: the storage method of its values, or DEFAULT.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the storage of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text STORAGE DEFAULT)');
- *     $create->statement->definition->elements[0]->storage->method // => null
+ *     $create->definition->elements[0]->storage->method // => null
  */
 final class ColumnStorage implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $method The method; null for DEFAULT
      */
-    public function __construct(public readonly ?Name $method)
+    public function __construct(public readonly ?Name $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

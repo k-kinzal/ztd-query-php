@@ -24,9 +24,9 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\Conditio
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\DiagnosticsArea;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes GET DIAGNOSTICS: reads the diagnostics area of the statement before it into variables.
@@ -63,15 +63,15 @@ final class DiagnosticsCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof GetDiagnostics);
         $stacked = $session->program === null ? [] : $session->program->stacked;
         if ($statement->area === DiagnosticsArea::Stacked && $stacked === []) {
             throw new SqlError(ProgramError::StackedWithoutHandler, ProgramError::StackedWithoutHandler->message(), null, [], null, null, true);
         }
         $diagnostics = $statement->area === DiagnosticsArea::Stacked ? $stacked[count($stacked) - 1] : $session->diagnostics;
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $integer = $planner->compiler->names->stored(Domain::integer());
         $text = $planner->compiler->names->stored(Domain::string(0, Collation::known('utf8mb3_general_ci')));
         $information = $statement->information;

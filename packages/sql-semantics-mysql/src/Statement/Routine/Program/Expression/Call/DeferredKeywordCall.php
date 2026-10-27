@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -36,7 +35,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredKeywordCall implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RowOperand|DeferredOperand> Arguments in preparation order
@@ -47,8 +47,11 @@ final class DeferredKeywordCall implements DeferredOperand
      * @param KeywordFunction $function The fixed keyword function
      * @param list<Scalar|RowOperand|DeferredOperand> $arguments The arguments, including at least one deferred use
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $items = [];
         $deferred = false;
         foreach (Check::listOf($arguments, Operand::class, 'A deferred keyword call has argument operands.', 1) as $argument) {

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored GROUP BY retaining at least one invocation-time ordering operand.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredGrouping implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<OrderItem|DeferredOrderItem> The grouping expressions in written order
@@ -34,7 +33,7 @@ final class DeferredGrouping implements Node
      * @param list<OrderItem|DeferredOrderItem> $items The grouping expressions in written order; at least one
      * @param GroupingModifier|null $modifier The super-aggregate modifier
      */
-    public function __construct(array $items, public readonly ?GroupingModifier $modifier = null)
+    public function __construct(array $items, public readonly ?GroupingModifier $modifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $list = [];
         $deferred = false;

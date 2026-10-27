@@ -32,6 +32,6 @@ final class TableElementTest extends TestCase
         $element = new CheckConstraint($literal);
         $element->deriveElement($derivation, $derivation->environment());
 
-        self::assertTrue($derivation->facts()->covers($literal));
+        self::assertTrue($literal->hasBinding());
     }
 }

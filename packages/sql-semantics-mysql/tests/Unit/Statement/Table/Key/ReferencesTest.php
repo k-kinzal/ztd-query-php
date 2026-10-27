@@ -23,7 +23,7 @@ final class ReferencesTest extends TestCase
     public function testDeriveReferencesResolvesTheTableBeingDefined(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
         self::assertInstanceOf(ColumnDefinition::class, $element1);
@@ -32,7 +32,7 @@ final class ReferencesTest extends TestCase
         $references = $specification1->references;
 
         self::assertInstanceOf(References::class, $references);
-        $table = $create->facts->relation($references)->table;
+        $table = $references->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $table);
         self::assertSame($create->declarations()[0], $table->table);
     }
@@ -42,11 +42,11 @@ final class ReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $parent = $semantics->analyze('CREATE TABLE p (id INT)');
         $child = $semantics->analyze('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id))', [$parent]);
-        $childStatement = $child->statement;
+        $childStatement = $child;
         self::assertInstanceOf(CreateTable::class, $childStatement);
         $element1 = $childStatement->elements[1];
         self::assertInstanceOf(ForeignKey::class, $element1);
-        $table = $child->facts->relation($element1->references)->table;
+        $table = $element1->references->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $table);
         self::assertSame($parent->declarations()[0], $table->table);

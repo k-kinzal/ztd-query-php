@@ -21,7 +21,7 @@ final class RenameElementTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t RENAME INDEX i TO j', [$table]);
 
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testRenderWritesTheKind(): void

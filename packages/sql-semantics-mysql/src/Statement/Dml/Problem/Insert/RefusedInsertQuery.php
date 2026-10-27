@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @example Retaining the full write before invocation
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1, 2)');
- *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery($operation->statement->body))->message() // => 'Operand should contain 1 column(s), not 2.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery($operation->body))->message() // => 'Operand should contain 1 column(s), not 2.'
  * @visibility public
  */
 final class RefusedInsertQuery implements Diagnostic

@@ -61,7 +61,7 @@ final class Rows
         if ($node instanceof RowOperand || $this->elements($node) !== null) {
             return true;
         }
-        $type = $this->compiler->facts->covers($node) ? $this->compiler->facts->scalar($node)->type : null;
+        $type = $node->hasBinding() ? $node->scalarInformation()->type : null;
 
         return $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
     }

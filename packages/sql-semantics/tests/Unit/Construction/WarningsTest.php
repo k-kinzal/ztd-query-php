@@ -114,4 +114,16 @@ final class WarningsTest extends TestCase
         self::assertSame([$syntax, $kept, $omitted], $warnings->all());
     }
 
+
+    public function testNoticesPreserveSpellingSubjectsAndInputBoundaries(): void
+    {
+        $name = new \SqlSemantics\Statement\Identifier\Name('full');
+        $warning = new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull);
+        $warnings = new Warnings(new SourceMap(notices: [new SourceNotice($name, $warning, 16)]));
+        $notice = $warnings->notices()[0];
+        self::assertSame($warning, $notice->warning);
+        self::assertSame($name, $notice->subject);
+        self::assertEquals(new \SqlSemantics\Statement\Source\Span(16, 0), $notice->inputSource);
+    }
+
 }

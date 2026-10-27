@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A key part that names a column, with an optional prefix length and sort direction.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a prefix key part
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(10) DESC))');
- *     [$create->statement->elements[1]->parts[0]->column->value, $create->statement->elements[1]->parts[0]->length->text] // => ['a', '10']
+ *     [$create->elements[1]->parts[0]->column->value, $create->elements[1]->parts[0]->length->text] // => ['a', '10']
  * @example Refusing a hexadecimal prefix length
  *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1', true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a prefix length outside the integer token range
@@ -38,14 +37,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnPart implements KeyPart
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column
      * @param Numeral|null $length The prefix length, when written
      * @param Direction|null $direction The sort direction, when written
      */
-    public function __construct(public readonly Name $column, public readonly ?Numeral $length = null, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Name $column, public readonly ?Numeral $length = null, public readonly ?Direction $direction = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($length === null || $length->isIntegerToken(), 'A key prefix length is a decimal integer token no greater than 2147483647.');
         Check::input($length === null || (int) $length->text > 0, 'A key prefix length must be positive.');

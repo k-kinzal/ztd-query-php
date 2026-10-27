@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP ROLE [IF EXISTS] role, …` (8.0+): a request to remove roles.
@@ -21,9 +20,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Dropping a role
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('drop role if exists reader')->toString() // => 'DROP ROLE IF EXISTS reader'
  */
-final class DropRole implements Statement
+final class DropRole extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AccountName> The roles in order
@@ -34,8 +33,11 @@ final class DropRole implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<AccountName> $roles The roles in order; at least one
      */
-    public function __construct(public readonly bool $ifExists, array $roles)
+    public function __construct(public readonly bool $ifExists, array $roles, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = Check::listOf($roles, AccountName::class, 'DROP ROLE names at least one role.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

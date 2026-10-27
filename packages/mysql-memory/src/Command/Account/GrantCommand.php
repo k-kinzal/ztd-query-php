@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes GRANT of privileges, of roles and of PROXY.
@@ -61,8 +61,8 @@ final class GrantCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $session->transaction->commit();
         if ($statement instanceof GrantProxy) {
             (new Proxies())->grant($statement, $session);
@@ -79,7 +79,7 @@ final class GrantCommand implements Command
      *
      * @throws SqlError When the statement is refused
      */
-    public function privileges(GrantPrivileges $statement, Operation $operation, Session $session, Context $context): void
+    public function privileges(GrantPrivileges $statement, MySqlStatement $operation, Session $session, Context $context): void
     {
         $names = new Names($session->settings()->release());
         $names->check([...$names->users($statement->grantees), $statement->as?->user, ...$statement->as->roles->roles ?? []]);
@@ -112,7 +112,7 @@ final class GrantCommand implements Command
      * @param array{string, string, string} $target The resolved privilege level
      * @throws SqlError When a privilege cannot be granted at this level
      */
-    public function apply(GrantPrivileges $statement, Operation $operation, Account $account, array $target, Session $session): void
+    public function apply(GrantPrivileges $statement, MySqlStatement $operation, Account $account, array $target, Session $session): void
     {
         $levels = new Levels($session->settings()->release());
         $levels->usage($operation);
@@ -136,7 +136,7 @@ final class GrantCommand implements Command
      * @return list<Account>
      * @throws SqlError When any recipient does not exist
      */
-    public function existing(array $grantees, Session $session, ?Operation $operation = null): array
+    public function existing(array $grantees, Session $session, ?MySqlStatement $operation = null): array
     {
         $found = [];
         $failure = null;

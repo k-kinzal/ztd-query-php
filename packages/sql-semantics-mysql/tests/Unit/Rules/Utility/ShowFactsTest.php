@@ -33,13 +33,13 @@ final class ShowFactsTest extends TestCase
     public function testDeriveResolvesTheWhereConditionAgainstTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW VARIABLES WHERE Value = 1 AND nope = 2', []);
-        self::assertSame('Column nope does not exist.', $show->facts->diagnostics[0]->message());
+        self::assertSame('Column nope does not exist.', $show->diagnostics()[0]->message());
     }
 
     public function testDeriveKeepsWindowNamesInTheInspectionScope(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW EVENTS FROM d WHERE DENSE_RANK() OVER missing');
-        $diagnostic = $show->facts->diagnostics[0];
+        $diagnostic = $show->diagnostics()[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $diagnostic);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $diagnostic->rule);
         self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $diagnostic->name);
@@ -54,7 +54,8 @@ final class ShowFactsTest extends TestCase
     public function testFactReplacesTheFirstName(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze("SHOW DATABASES LIKE 'x'");
-        self::assertSame('Database (x)', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $show);
+        self::assertSame('Database (x)', $show->relationInformation()->shape->slots[0]->name?->value);
     }
 
     public function testShapeAnswersTheLayoutOfTheRelease(): void
@@ -86,8 +87,8 @@ final class ShowFactsTest extends TestCase
     public function testLimitDerivesTheOperands(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW WARNINGS LIMIT ?, ?');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings::class, $show->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit::class, $show->statement->limit);
-        self::assertTrue($show->facts->covers($show->statement->limit->count));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings::class, $show);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit::class, $show->limit);
+        self::assertTrue($show->limit->count->hasBinding());
     }
 }

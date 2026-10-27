@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use LogicException;
 use MySqlMemory\Dictionary\Cache\TableCache;
 use MySqlMemory\System\SystemSchemas;
 use SqlSemantics\Statement\Declaration\Table;
@@ -46,11 +47,6 @@ final class Dictionary
     public ?SystemSchemas $system = null;
 
     /**
-     * The temporary tables of the session whose statement runs, which hide the base tables of their names from it.
-     */
-    public Temporaries $temporaries;
-
-    /**
      * The server's open table handles, independent of its table definitions.
      */
     public readonly TableCache $cache;
@@ -65,7 +61,6 @@ final class Dictionary
      */
     public function __construct(public array $schemas = [])
     {
-        $this->temporaries = new Temporaries();
         $this->cache = new TableCache();
     }
 
@@ -97,21 +92,26 @@ final class Dictionary
     }
 
     /**
-     * Finds a table of a database, or answers null: a temporary table of the session whose statement runs before a base table.
+     * Finds a table in an explicit session namespace, or in the persistent catalog.
      */
-    public function table(string $schema, string $name): ?StoredTable
+    public function table(string $schema, string $name, ?Temporaries $temporaries = null): ?StoredTable
     {
-        return $this->schema($schema) === null ? null : $this->temporaries->table($schema, $name) ?? $this->schema($schema)->table($name);
+        return $this->schema($schema) === null ? null : $temporaries?->table($schema, $name) ?? $this->schema($schema)->table($name);
     }
 
     /**
-     * Stores a table under the database and name its definition holds: a temporary table among the temporary tables of the session whose statement runs.
+     * Stores a definition in its persistent or explicitly supplied temporary namespace.
+     *
+     * @throws LogicException When a temporary definition has no owning session namespace
      */
-    public function store(StoredTable $table): void
+    public function store(StoredTable $table, ?Temporaries $temporaries = null): void
     {
         $definition = $table->definition;
         if ($definition->temporary) {
-            $this->temporaries->add($table);
+            if ($temporaries === null) {
+                throw new LogicException('A temporary table requires its owning session namespace.');
+            }
+            $temporaries->add($table);
 
             return;
         }
@@ -120,11 +120,16 @@ final class Dictionary
 
     /**
      * Removes a table stored under a database and name, a temporary one or a base one.
+     *
+     * @throws LogicException When a temporary definition is not owned by the supplied namespace
      */
-    public function release(StoredTable $table, string $schema, string $name): void
+    public function release(StoredTable $table, string $schema, string $name, ?Temporaries $temporaries = null): void
     {
-        if ($this->temporaries->table($schema, $name) === $table) {
-            $this->temporaries->remove($schema, $name);
+        if ($table->definition->temporary) {
+            if ($temporaries === null || $temporaries->table($schema, $name) !== $table) {
+                throw new LogicException('Releasing a temporary table requires its owning session namespace.');
+            }
+            $temporaries->remove($schema, $name);
 
             return;
         }
@@ -152,20 +157,22 @@ final class Dictionary
      *
      * @return list<Table>
      */
-    public function declarations(): array
+    public function declarations(?Temporaries $temporaries = null): array
     {
         $declarations = [];
         foreach ($this->schemas as $schema) {
-            foreach ($this->temporaries->tables[$schema->name] ?? [] as $table) {
+            foreach ($temporaries->tables[$schema->name] ?? [] as $table) {
                 $declarations[] = $table->definition->declaration;
             }
             foreach ($schema->tables as $table) {
-                if ($this->temporaries->table($schema->name, $table->definition->name) === null) {
+                if ($temporaries?->table($schema->name, $table->definition->name) === null) {
                     $declarations[] = $table->definition->declaration;
                 }
             }
             foreach ($schema->views as $view) {
-                $declarations[] = $view->declaration;
+                if ($temporaries?->table($schema->name, $view->name) === null) {
+                    $declarations[] = $view->declaration;
+                }
             }
         }
 

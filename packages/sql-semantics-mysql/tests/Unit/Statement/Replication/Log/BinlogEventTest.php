@@ -17,7 +17,7 @@ final class BinlogEventTest extends TestCase
 {
     public function testDeriveStatementRecordsNoDiagnostic(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("BINLOG 'AAAA'")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("BINLOG 'AAAA'")->diagnostics());
     }
 
     public function testRenderWritesTheEvents(): void

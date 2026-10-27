@@ -51,9 +51,9 @@ final class GeneratedWritesTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
-        self::assertInstanceOf(GeneratedColumnWrite::class, $operation->facts->diagnostics[0] ?? null);
-        self::assertSame(WriteKind::Insert, $operation->facts->diagnostics[0]->write);
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertInstanceOf(GeneratedColumnWrite::class, $operation->diagnostics()[0] ?? null);
+        self::assertSame(WriteKind::Insert, $operation->diagnostics()[0]->write);
+        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         $this->expectException(PDOException::class);
         $this->expectExceptionMessage($message);
         $database->exec($sql);
@@ -72,7 +72,7 @@ final class GeneratedWritesTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         self::assertNotFalse($database->query($sql));
     }
 
@@ -87,9 +87,9 @@ final class GeneratedWritesTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
-        self::assertInstanceOf(GeneratedColumnWrite::class, $operation->facts->diagnostics[0]);
-        self::assertSame(WriteKind::Update, $operation->facts->diagnostics[0]->write);
+        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
+        self::assertInstanceOf(GeneratedColumnWrite::class, $operation->diagnostics()[0]);
+        self::assertSame(WriteKind::Update, $operation->diagnostics()[0]->write);
         $this->expectException(PDOException::class);
         $this->expectExceptionMessage($message);
         $database->exec($sql);
@@ -99,7 +99,7 @@ final class GeneratedWritesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (a, b AS (a + 1), rowid AS (a))');
-        $statement = $semantics->analyze('UPDATE t SET a = 1', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('UPDATE t SET a = 1', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
         $rules = new GeneratedWrites();
 
@@ -127,7 +127,7 @@ final class GeneratedWritesTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec($schema);
 
-        self::assertSame(['cannot UPDATE generated column "b"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['cannot UPDATE generated column "b"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         $this->expectException(PDOException::class);
         $this->expectExceptionMessage('cannot UPDATE generated column "b"');
         $database->exec($sql);
@@ -145,7 +145,7 @@ final class GeneratedWritesTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1)); CREATE TABLE k (a UNIQUE, b AS (a))');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertNotFalse($database->exec($sql));
     }
 
@@ -159,7 +159,7 @@ final class GeneratedWritesTest extends TestCase
         $indexed = new PDO('sqlite::memory:');
         $indexed->exec('CREATE TABLE t (a, b AS (a)); CREATE UNIQUE INDEX i ON t (a)');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertNotFalse($plain->exec($sql));
         $this->expectException(PDOException::class);
         $this->expectExceptionMessage('cannot UPDATE generated column "b"');
@@ -170,7 +170,7 @@ final class GeneratedWritesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $u = $semantics->analyze('CREATE TABLE u (id INTEGER PRIMARY KEY, a, b AS (a + 1))');
-        $statement = $semantics->analyze('INSERT INTO u VALUES (1, 2) ON CONFLICT ((id)) DO NOTHING ON CONFLICT (oid) DO NOTHING ON CONFLICT (id COLLATE nocase) DO NOTHING ON CONFLICT (id, a) DO NOTHING ON CONFLICT (a) DO NOTHING', [$u])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO u VALUES (1, 2) ON CONFLICT ((id)) DO NOTHING ON CONFLICT (oid) DO NOTHING ON CONFLICT (id COLLATE nocase) DO NOTHING ON CONFLICT (id, a) DO NOTHING ON CONFLICT (a) DO NOTHING', [$u]));
         $derivation = new Derivation($semantics->context([$u]));
         $rowid = $u->declarations()[0]->implicit[0]->column;
         $rules = new GeneratedWrites();
@@ -188,9 +188,9 @@ final class GeneratedWritesTest extends TestCase
         $w = $semantics->analyze('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');
         $derivation = new Derivation($semantics->context([$u, $t, $w]));
         $scope = new MutationScope();
-        $statement = $semantics->analyze('INSERT INTO u VALUES (1, 2)', [$u])->statement;
-        $other = $semantics->analyze('INSERT INTO t VALUES (1, 2)', [$t])->statement;
-        $keyed = $semantics->analyze('INSERT INTO w VALUES (1)', [$w])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO u VALUES (1, 2)', [$u]));
+        $other = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t VALUES (1, 2)', [$t]));
+        $keyed = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO w VALUES (1)', [$w]));
         $rules = new GeneratedWrites();
 
         self::assertInstanceOf(InsertRows::class, $statement);

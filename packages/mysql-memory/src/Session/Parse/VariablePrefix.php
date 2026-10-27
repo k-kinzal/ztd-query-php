@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Parse;
 
+use LogicException;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
@@ -29,6 +30,7 @@ final class VariablePrefix
      * Answers an unknown assignment target that precedes the syntax error.
      *
      * @param list<Token> $tokens The original statement tokens
+     * @throws LogicException When a platform publishes a statement of another dialect
      */
     public function before(array $tokens, string $statement, int $end, Session $session): ?SqlError
     {
@@ -50,7 +52,10 @@ final class VariablePrefix
             } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
                 continue;
             }
-            foreach ($operation->facts->diagnostics as $problem) {
+            if (!$operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement) {
+                throw new LogicException('A MySQL analysis returns a concrete MySQL statement.');
+            }
+            foreach ($operation->statementInformation()->diagnostics as $problem) {
                 if ($problem instanceof UnknownSystemVariable) {
                     return (new Errors())->error($problem, $session);
                 }

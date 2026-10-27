@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The LANGUAGE characteristic of a stored routine: SQL, or from MySQL 8.1 the name of an external language.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the language of a routine
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER FUNCTION f LANGUAGE SQL');
- *     $alter->statement->characteristics[0]->external // => null
+ *     $alter->characteristics[0]->external // => null
  */
 final class RoutineLanguage implements Characteristic
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $external The name of the external language; null for the keyword SQL
      */
-    public function __construct(public readonly ?Name $external = null)
+    public function __construct(public readonly ?Name $external = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

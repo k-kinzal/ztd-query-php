@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -280,7 +279,7 @@ final class Numbers
      * Their own reported widths remain unchanged. Verified through differential
      * arithmetic and text conversions on MySQL 5.6.51 and 5.7.44.
      */
-    public function signed(Scalar $node, Domain $domain, ?Facts $facts = null): Domain
+    public function signed(Scalar $node, Domain $domain): Domain
     {
         while ($node instanceof Grouped) {
             $node = $node->operand;
@@ -291,9 +290,6 @@ final class Numbers
         if ($node instanceof NumberLiteral) {
             return Domain::integer($domain->field, $domain->length + 1);
         }
-        if ($facts === null) {
-            return $domain;
-        }
         $branches = match (true) {
             $node instanceof CaseExpression => [...array_map(static fn ($branch): Scalar => $branch->result, $node->branches), ...($node->else === null ? [] : [$node->else])],
             $node instanceof KeywordCall && $node->function === KeywordFunction::If => array_slice($node->arguments, 1),
@@ -302,9 +298,9 @@ final class Numbers
         };
         $length = $domain->length;
         foreach ($branches as $branch) {
-            $resolved = $facts->covers($branch) ? (new Precision())->domain($facts->scalar($branch)->type) : null;
+            $resolved = $branch->hasBinding() ? (new Precision())->domain($branch->scalarInformation()->type) : null;
             if ($resolved !== null) {
-                $length = max($length, $this->signed($branch, $resolved->value(), $facts)->length);
+                $length = max($length, $this->signed($branch, $resolved->value())->length);
             }
         }
 

@@ -23,7 +23,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -50,7 +49,8 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class Aggregate implements SetFunction
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in order; none for COUNT(*)
@@ -70,7 +70,12 @@ final class Aggregate implements SetFunction
         public readonly bool $distinct = false,
         public readonly bool $all = false,
         public readonly Name|WindowSpecification|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($over === null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($function, $distinct) === null, 'An ordinary aggregate uses a supported window quantifier.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Aggregate arguments are expressions.');
         $star = $arguments === [];
@@ -117,7 +122,7 @@ final class Aggregate implements SetFunction
         while ($argument instanceof Grouped) {
             $argument = $argument->operand;
         }
-        $column = $this->over === null && $argument !== null && $derivation->facts()->scalar($argument)->resolution instanceof ResolvedColumn;
+        $column = $this->over === null && $argument !== null && $argument->scalarInformation()->resolution instanceof ResolvedColumn;
         $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null, $derivation->context->profile->grammar, $column);
         if ($domain !== null && $domain->kind->temporal() && $domain->collation->bytes()) {
             $domain = $domain->withCollation(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), $domain->coercibility);

@@ -42,7 +42,8 @@ final class RunningTest extends TestCase
 
     public function testUsedAnswersTheRunningAStatementReadsAndWrites(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t SELECT * FROM e.u')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t SELECT * FROM e.u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame(['e.u', 'd.t'], (new Running())->used($statement, 'd'));
     }

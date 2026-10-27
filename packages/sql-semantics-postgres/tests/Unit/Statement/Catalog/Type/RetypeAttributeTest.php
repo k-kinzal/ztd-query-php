@@ -19,6 +19,6 @@ final class RetypeAttributeTest extends TestCase
 
     public function testDeriveClauseDerivesTheType(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ALTER ATTRIBUTE a TYPE varchar(10)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ALTER ATTRIBUTE a TYPE varchar(10)')->diagnostics());
     }
 }

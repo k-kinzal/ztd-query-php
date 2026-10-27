@@ -29,13 +29,13 @@ final class EquivalenceTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT t.a, a, b FROM t');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $first = $operation->facts->scalar($operation->field(0)->expression ?? new ColumnUse(new Name('a')))->resolution;
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $first = ($operation->field(0)->expression ?? new ColumnUse(new Name('a')))->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $first);
         $second = $operation->field(1)->expression;
         $third = $operation->field(2)->expression;
@@ -52,14 +52,14 @@ final class EquivalenceTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a FROM t GROUP BY a WITH ROLLUP');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $item = $operation->facts->scalar($operation->field(0)->expression ?? new ColumnUse(new Name('a')))->resolution;
-        $group = $operation->facts->scalar($statement->groupBy->items[0]->expression ?? new ColumnUse(new Name('a')))->resolution;
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $item = ($operation->field(0)->expression ?? new ColumnUse(new Name('a')))->scalarInformation()->resolution;
+        $group = ($statement->groupBy->items[0]->expression ?? new ColumnUse(new Name('a')))->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $item);
         self::assertInstanceOf(ResolvedColumn::class, $group);
 
@@ -73,12 +73,12 @@ final class EquivalenceTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT ABS(t.a + 1), (abs(a + 1)), ABS(b + 1) FROM t');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $equivalence = new Equivalence($planner);
 
         self::assertSame([true, false, true], [$equivalence->same($operation->field(0)->expression, $operation->field(1)->expression), $equivalence->same($operation->field(0)->expression, $operation->field(2)->expression), $equivalence->same(1, 1)]);
@@ -91,12 +91,12 @@ final class EquivalenceTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT t.a + 1, (A + 1), a + 2 FROM t');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $equivalence = new Equivalence($planner);
         $first = $operation->field(0)->expression;
         $second = $operation->field(1)->expression;

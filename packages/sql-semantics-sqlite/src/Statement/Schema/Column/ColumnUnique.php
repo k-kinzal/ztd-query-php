@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A UNIQUE column constraint.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a UNIQUE column constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a UNIQUE ON CONFLICT REPLACE)');
- *     $create->statement->columns[0]->constraints[0]->conflict?->value // => 'REPLACE'
+ *     $create->columns[0]->constraints[0]->conflict?->value // => 'REPLACE'
  */
 final class ColumnUnique implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution
      */
-    public function __construct(public readonly ?ConflictResolution $conflict = null)
+    public function __construct(public readonly ?ConflictResolution $conflict = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

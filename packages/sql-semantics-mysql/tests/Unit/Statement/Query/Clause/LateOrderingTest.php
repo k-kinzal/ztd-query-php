@@ -32,7 +32,7 @@ final class LateOrderingTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('select (select a from t for update order by b limit 1) as v', [$table]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -44,14 +44,14 @@ final class LateOrderingTest extends TestCase
         self::assertInstanceOf(Select::class, $block);
         $late = $block->late;
         self::assertNotNull($late);
-        $resolution = $operation->facts->scalar($late->orderBy[0]->expression)->resolution;
+        $resolution = $late->orderBy[0]->expression->scalarInformation()->resolution;
 
         self::assertSame('SELECT (SELECT a FROM t FOR UPDATE ORDER BY b LIMIT 1) AS v', $operation->toString());
         self::assertSame([], $block->orderBy);
         self::assertNull($block->limit);
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->columns[1], $resolution->declaration());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesALimitThatReplacesTheLimitOfTheBlock(): void

@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -33,7 +32,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredFullTextSearch implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ColumnUse> The searched columns in order
@@ -47,8 +47,11 @@ final class DeferredFullTextSearch implements DeferredOperand
      * @param OptionalWords $parentheses Whether the column list is written in parentheses
      * @param OptionalWords $stated Whether a natural language search writes IN NATURAL LANGUAGE MODE
      */
-    public function __construct(array $columns, public readonly RowOperand|DeferredOperand $against, public readonly FullTextMode $mode = FullTextMode::NaturalLanguage, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly OptionalWords $stated = OptionalWords::Omitted)
+    public function __construct(array $columns, public readonly RowOperand|DeferredOperand $against, public readonly FullTextMode $mode = FullTextMode::NaturalLanguage, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly OptionalWords $stated = OptionalWords::Omitted, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->columns = Check::listOf($columns, ColumnUse::class, 'MATCH searches at least one column.', 1);
         $precedence = new Precedence();
         Check::input($precedence->admits($against, Precedence::BIT_EXPR), 'The search string of AGAINST needs a grouping to keep its place.');

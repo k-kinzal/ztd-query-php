@@ -31,6 +31,6 @@ final class AlterTablespaceDatafileTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1M");
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

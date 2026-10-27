@@ -27,7 +27,7 @@ final class BlockPartsTest extends TestCase
     public function testLeavesAnswersTheTablesOfAFromClauseThroughJoinsListsAndParentheses(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $select = $semantics->analyze('SELECT 1 FROM (t1 JOIN t2 ON 1), { OJ t3 LEFT JOIN (SELECT 1) AS d ON 1 }')->statement;
+        $select = $semantics->analyze('SELECT 1 FROM (t1 JOIN t2 ON 1), { OJ t3 LEFT JOIN (SELECT 1) AS d ON 1 }');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -38,7 +38,7 @@ final class BlockPartsTest extends TestCase
     public function testJoinsAnswersTheJoinsOfAFromClause(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $select = $semantics->analyze('SELECT 1 FROM (t1 JOIN t2 ON 1), { OJ t3 LEFT JOIN (SELECT 1) AS d ON 1 }')->statement;
+        $select = $semantics->analyze('SELECT 1 FROM (t1 JOIN t2 ON 1), { OJ t3 LEFT JOIN (SELECT 1) AS d ON 1 }');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -49,7 +49,7 @@ final class BlockPartsTest extends TestCase
     public function testPartsAnswersWhatAListGroupsAndNullForATable(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $select = $semantics->analyze('SELECT 1 FROM t1, t2')->statement;
+        $select = $semantics->analyze('SELECT 1 FROM t1, t2');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -63,19 +63,19 @@ final class BlockPartsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('SELECT 1 FROM ((SELECT 1 AS a) ORDER BY a) AS d, (SELECT 1 UNION SELECT 2) AS e');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         [$derived, $union] = (new BlockParts())->leaves($select->from);
 
-        self::assertInstanceOf(Select::class, (new BlockParts())->block($derived, $operation->facts));
-        self::assertNull((new BlockParts())->block($union, $operation->facts));
+        self::assertInstanceOf(Select::class, (new BlockParts())->block($derived));
+        self::assertNull((new BlockParts())->block($union));
     }
 
     public function testConjunctsAnswersTheAndOperandsOfACondition(): void
     {
-        $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t1 WHERE (a = 1 AND b = 2) AND (id = 3 OR a = 4)')->statement;
+        $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t1 WHERE (a = 1 AND b = 2) AND (id = 3 OR a = 4)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -90,14 +90,14 @@ final class BlockPartsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT)'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY)')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT 1 FROM t1 JOIN t2 ON t1.id = t2.id, t1 AS x', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableList::class, $select->from);
         self::assertInstanceOf(JoinedTable::class, $select->from->members[0]);
         $parts = new BlockParts();
-        $occurrences = $parts->occurrences($select, $operation->facts);
+        $occurrences = $parts->occurrences($select);
         $join = $select->from->members[0];
 
         self::assertSame([spl_object_id($join->left), spl_object_id($join->right)], array_keys($parts->members($join, $occurrences)));
@@ -109,16 +109,16 @@ final class BlockPartsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT)'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY)')], true, new SearchPath('fz'));
         $operation = $semantics->analyze('SELECT 1 FROM t1 JOIN t2 ON t1.id = t2.id, t1 AS x', $context);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $parts = new BlockParts();
 
-        $occurrences = $parts->occurrences($select, $operation->facts);
+        $occurrences = $parts->occurrences($select);
 
         self::assertSame(array_map('spl_object_id', $parts->leaves($select->from)), array_keys($occurrences));
         self::assertSame([2, 1, 2], array_map(static fn (VisibleRelation $relation): int => count($relation->shape->slots), array_values($occurrences)));
-        self::assertSame([], $parts->occurrences(new Select([], [new SelectExpression(new NumberLiteral('1'))]), $operation->facts));
+        self::assertSame([], $parts->occurrences(new Select([], [new SelectExpression(new NumberLiteral('1'))])));
     }
 }

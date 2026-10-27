@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Session\Statement;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Dictionary\Temporaries;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -17,7 +16,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Lifecycle::class)]
 #[Medium]
@@ -28,9 +26,7 @@ final class LifecycleTest extends TestCase
         $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t (n INT)');
         $operation = $session->analyze('SELECT /*+ SET_VAR(unique_checks = OFF) */ 1');
-        self::assertInstanceOf(Operation::class, $operation);
-        $temporaries = new Temporaries();
-        $session->instance->dictionary->temporaries = $temporaries;
+        $temporaries = $session->temporaries;
         $resolution = $session->preparation->resolution;
         $failure = new RuntimeException('The command lost access to its execution resource.');
         $command = $this->createMock(Command::class);
@@ -48,7 +44,7 @@ final class LifecycleTest extends TestCase
         } finally {
             self::assertSame([], $session->transaction->statements->running);
             self::assertSame([], $session->running->using);
-            self::assertSame($temporaries, $session->instance->dictionary->temporaries);
+            self::assertSame($temporaries, $session->temporaries);
             self::assertSame($resolution, $session->preparation->resolution);
             self::assertSame('ON', $session->variables->read('unique_checks'));
             self::assertSame(-1, $session->variables->rowCount);
@@ -64,7 +60,6 @@ final class LifecycleTest extends TestCase
         $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
         $session->query("SET sql_mode = 'STRICT_ALL_TABLES'; CREATE TABLE t (n INT)");
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Operation::class, $operation);
         $command = $this->createMock(Command::class);
         $command->method('clearsDiagnostics')->willReturn(true);
         $command->expects(self::once())->method('execute')->willReturnCallback(static function () use ($session): Reply {

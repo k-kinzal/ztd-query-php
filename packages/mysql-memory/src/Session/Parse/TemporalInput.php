@@ -93,12 +93,12 @@ final class TemporalInput
             return null;
         }
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context([], session: $session->resolution()));
-        $variable->deriveScalar($derivation, $derivation->environment());
-        foreach ($derivation->facts()->warnings as $warning) {
+        \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($variable)->deriveScalar($derivation, $derivation->environment());
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->warnings as $warning) {
             Check::invariant($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation, 'System-variable warnings describe deprecated names.');
             $notices[$offset] = $warning;
         }
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
             if (!$session->settings()->legacy() || !$problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
             }

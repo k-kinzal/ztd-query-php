@@ -23,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogStatus;
@@ -30,7 +31,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEve
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicas;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicaStatus;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes the SHOW statements of replication: SHOW REPLICA STATUS, SHOW REPLICAS, SHOW BINARY LOGS, SHOW BINARY LOG STATUS, SHOW BINLOG EVENTS and SHOW RELAYLOG EVENTS.
@@ -126,8 +126,8 @@ final class ReplicationShowCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $log = $session->instance->registry->binaryLog;
         $version = $session->instance->version;
         (new LegacyReplication())->check($statement, $session);
@@ -155,10 +155,10 @@ final class ReplicationShowCommand implements Command
             return $this->listing($legacy ? self::LEGACY_LOG_STATUS : self::LOG_STATUS, $logging ? [[BinaryLog::name($active), $log->size($active, $version), '', '', '']] : [], $context);
         }
         if ($statement instanceof ShowBinlogEvents) {
-            return $this->binlogEvents($statement, $session, $context, new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary)));
+            return $this->binlogEvents($statement, $session, $context, new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session))));
         }
         if ($statement instanceof ShowRelaylogEvents) {
-            return $this->relaylogEvents($statement, $session, $context, new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary)));
+            return $this->relaylogEvents($statement, $session, $context, new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session))));
         }
         if ($statement instanceof ShowReplicas) {
             $columns = str_starts_with($version, '5.') ? [['Server_Id', Field::Long, 10], ['Host', 20], ['Port', Field::Long, 7], ['Source_Id', Field::Long, 10], ['Replica_UUID', 36]] : self::REPLICAS;

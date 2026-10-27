@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,17 +21,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Removing every prepared statement
  *     $deallocate = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DEALLOCATE PREPARE ALL');
- *     [$deallocate->statement->name, $deallocate->toString()] // => [null, 'DEALLOCATE ALL']
+ *     [$deallocate->name, $deallocate->toString()] // => [null, 'DEALLOCATE ALL']
  */
-final class Deallocate implements Statement
+final class Deallocate extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $name The name of the prepared statement; null for ALL
      */
-    public function __construct(public readonly ?Name $name)
+    public function __construct(public readonly ?Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

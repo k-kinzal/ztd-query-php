@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the role and its changed attribute
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE joe WITH NOSUPERUSER');
- *     [$operation->statement->role->name?->value, $operation->statement->options[0]->flag()?->enabled()] // => ['joe', false]
+ *     [$operation->role->name?->value, $operation->options[0]->flag()?->enabled()] // => ['joe', false]
  */
-final class AlterRole implements Statement
+final class AlterRole extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<RoleOption> The options in the order written
@@ -44,8 +43,11 @@ final class AlterRole implements Statement
      * @param RoleSpec $role The role to change
      * @param list<RoleOption> $options The options in the order written
      */
-    public function __construct(public readonly RoleWord $word, public readonly RoleSpec $role, array $options = [])
+    public function __construct(public readonly RoleWord $word, public readonly RoleSpec $role, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($word !== RoleWord::Group, 'ALTER GROUP changes members only.');
         $this->options = Check::listOf($options, RoleOption::class, 'Role options are a list of role options.');
         foreach ($this->options as $option) {

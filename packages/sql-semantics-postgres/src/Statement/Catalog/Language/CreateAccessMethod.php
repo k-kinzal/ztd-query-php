@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,19 +20,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the kind of a new access method
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler');
- *     $operation->statement->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\AccessMethodKind::Table
+ *     $operation->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\AccessMethodKind::Table
  */
-final class CreateAccessMethod implements Statement
+final class CreateAccessMethod extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The access method name
      * @param AccessMethodKind $kind Whether it is an index or a table access method
      * @param DottedName $handler The handler function
      */
-    public function __construct(public readonly Name $name, public readonly AccessMethodKind $kind, public readonly DottedName $handler)
+    public function __construct(public readonly Name $name, public readonly AccessMethodKind $kind, public readonly DottedName $handler, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

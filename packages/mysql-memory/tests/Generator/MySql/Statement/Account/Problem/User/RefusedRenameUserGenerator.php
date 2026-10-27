@@ -49,4 +49,16 @@ final class RefusedRenameUserGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<list<UserRenaming>> $renamings The generated semantic operand
+     * @return ErisGenerator<RefusedRenameUser>
+     */
+    public static function fromOperands(ErisGenerator $renamings): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): RefusedRenameUser => new RefusedRenameUser(renamings: $parts[0]), \Tests\Generator\Operands::tuple($renamings));
+    }
+
+
 }

@@ -60,10 +60,10 @@ final class UpgradeDatabaseCommandTest extends TestCase
         $statement1 = (new Embedding())->statement(new UpgradeDatabaseName(new LegacyDatabaseName(new Name('old-name'))));
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         $operation1 = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-        $reply = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), []);
+        $reply = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), []);
         self::assertInstanceOf(Completion::class, $reply);
         self::assertSame(0, $reply->affectedRows);
         self::assertSame($release === '5.7.44' ? 1 : 0, $reply->warnings);

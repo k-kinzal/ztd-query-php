@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the output of a query
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS a, 2 AS b');
- *     [count($query->facts->output->projection), $query->facts->output->shape->complete()] // => [2, true]
+ *     [count($query->output()->projection), $query->output()->shape->complete()] // => [2, true]
  */
 final class QueryFact
 {

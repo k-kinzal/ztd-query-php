@@ -30,14 +30,14 @@ final class CollatedTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44');
         $definition = $semantics->analyze("CREATE PROCEDURE p() SELECT 'x' COLLATE missing");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition->statement);
-        self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $definition->statement->body);
-        $instruction = new \SqlSemantics\Statement\Operation($definition->context, $definition->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition);
+        self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $definition->body);
+        $instruction = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([]), $definition->body, new \SqlSemantics\Statement\Source\SourceMap());
 
-        self::assertSame([], $definition->facts->diagnostics);
-        self::assertSame([], $definition->facts->warnings);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $instruction->facts->diagnostics[0]);
-        self::assertSame([], $instruction->facts->warnings);
+        self::assertSame([], $definition->diagnostics());
+        self::assertSame([], $definition->warnings());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $instruction->diagnostics()[0]);
+        self::assertSame([], $instruction->warnings());
     }
 
     public function testDeriveScalarMakesCollatedResultsNullableFrom57(): void
@@ -93,17 +93,17 @@ final class CollatedTest extends TestCase
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (BINARY 1) COLLATE zz');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->facts->warnings[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->warnings()[1]);
     }
 
     public function testAnEmptyCollationNameIsResolvedAfterTheOperand(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT missing COLLATE ``');
 
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\MissingColumn::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->facts->diagnostics[1]);
-        self::assertSame([], $operation->facts->warnings);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\MissingColumn::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->diagnostics()[1]);
+        self::assertSame([], $operation->warnings());
     }
 
 }

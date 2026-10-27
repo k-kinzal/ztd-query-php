@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\TableConstraints;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionBound;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A partition: its columns are those of the partitioned parent, and its bound says which rows it holds.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionOf implements TableForm
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Clause> The column options and table constraints; none means no parentheses are written
@@ -39,7 +38,7 @@ final class PartitionOf implements TableForm
      * @param PartitionBound $bound The bound of the partition
      * @param list<Clause> $elements The column options and table constraints
      */
-    public function __construct(public readonly ParentTable $parent, public readonly PartitionBound $bound, array $elements = [])
+    public function __construct(public readonly ParentTable $parent, public readonly PartitionBound $bound, array $elements = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->elements = (new TableConstraints())->typedElements($elements);
     }

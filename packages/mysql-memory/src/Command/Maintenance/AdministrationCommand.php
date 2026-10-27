@@ -30,11 +30,11 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\Histogram;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes the table maintenance and key cache statements: CHECK, OPTIMIZE, REPAIR and ANALYZE TABLE, CACHE INDEX and LOAD INDEX INTO CACHE.
@@ -80,8 +80,8 @@ final class AdministrationCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof CheckTable || $statement instanceof OptimizeTable || $statement instanceof RepairTable || $statement instanceof AnalyzeTable || $statement instanceof CacheIndex || $statement instanceof LoadIndex);
         $histogram = $statement instanceof AnalyzeTable ? $statement->histogram : null;
         $names = $this->names($statement);
@@ -161,7 +161,7 @@ final class AdministrationCommand implements Command
     {
         $schema = $name->schema->value ?? $session->variables->database;
         $label = $schema . '.' . $name->name->value;
-        $table = $session->instance->dictionary->table($schema, $name->name->value);
+        $table = $session->instance->dictionary->table($schema, $name->name->value, $session->temporaries);
         $failure = $this->failure($session, $schema, $name, $table);
         $view = $table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value]);
         if ($histogram !== null) {

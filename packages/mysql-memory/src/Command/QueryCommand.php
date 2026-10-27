@@ -29,9 +29,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 
 /**
@@ -60,14 +60,14 @@ final class QueryCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $root = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $root = $operation;
         assert($root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot);
         $statement = $root->query;
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $into = $this->destination($statement);
         $plan = $planner->result($planner->query($statement, null));
-        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement, $operation->facts, $planner->settings, $planner->dictionary);
+        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement, $operation->statementInformation(), $planner->settings, $planner->dictionary);
         if ($into !== null && !$into instanceof IntoVariables) {
             $this->file($into, $context, $session->settings()->legacy());
         }
@@ -75,7 +75,7 @@ final class QueryCommand implements Command
             $nullable = $plan->domains[0]->nullable;
             $plan = new QueryPlan($plan->root, array_map(static fn (Domain $domain): Domain => $domain->withNullable($nullable), $plan->domains), $plan->names, $plan->origins);
         }
-        $restricted = $session->settings()->release() === GrammarRelease::MySql847 ? $this->restricted($statement, $operation->facts) : null;
+        $restricted = $session->settings()->release() === GrammarRelease::MySql847 ? $this->restricted($statement, $operation->statementInformation()) : null;
         if ($restricted !== null && count($restricted) === count($plan->domains)) {
             $plan = new QueryPlan($plan->root, array_map(static fn (Domain $domain, bool $nullable): Domain => $domain->withNullable($domain->nullable || $nullable), $plan->domains, $restricted), $plan->names, $plan->origins);
         }
@@ -136,7 +136,7 @@ final class QueryCommand implements Command
      *
      * @return list<bool>|null
      */
-    public function restricted(Query $query, \SqlSemantics\Statement\Fact\Facts $facts): ?array
+    public function restricted(Query $query, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): ?array
     {
         $outermost = $this->outermost($query);
         if (!($outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation)
@@ -152,7 +152,7 @@ final class QueryCommand implements Command
      *
      * @return list<bool>
      */
-    public function nullables(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query, \SqlSemantics\Statement\Fact\Facts $facts): array
+    public function nullables(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): array
     {
         $outermost = $query instanceof Query ? $this->outermost($query) : $query;
         if ($outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation || $outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion) {
@@ -162,7 +162,7 @@ final class QueryCommand implements Command
             return array_map(static fn (bool $one, ?bool $other): bool => $one || $other === true, $left, array_pad($right, count($left), null));
         }
 
-        return array_map(static fn ($slot): bool => $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull, $facts->query($outermost)->shape->slots);
+        return array_map(static fn ($slot): bool => $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull, $outermost->queryInformation()->shape->slots);
     }
 
     /**

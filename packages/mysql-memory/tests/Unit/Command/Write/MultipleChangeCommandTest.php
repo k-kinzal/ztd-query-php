@@ -145,9 +145,9 @@ final class MultipleChangeCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (id INT); CREATE TABLE b (id INT)');
-        $single = $session->analyze('UPDATE a SET id = 1')->statement;
-        $list = $session->analyze('UPDATE a, b SET a.id = 1')->statement;
-        $join = $session->analyze('UPDATE a JOIN b ON a.id = b.id SET a.id = 1')->statement;
+        $single = $session->analyze('UPDATE a SET id = 1');
+        $list = $session->analyze('UPDATE a, b SET a.id = 1');
+        $join = $session->analyze('UPDATE a JOIN b ON a.id = b.id SET a.id = 1');
 
         self::assertInstanceOf(Update::class, $single);
         self::assertInstanceOf(Update::class, $list);
@@ -265,10 +265,10 @@ final class MultipleChangeCommandTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
         $operation = $session->analyze('DELETE t FROM t JOIN u ON t.a = u.a');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($statement, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
         $scope = new \MySqlMemory\Evaluation\Scope();
         $planner->relations->plan($statement->tables[0], $scope);
 

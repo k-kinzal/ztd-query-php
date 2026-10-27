@@ -76,10 +76,10 @@ final class ComparisonRuleTest extends TestCase
     public function testLowerKeepsAValidComparison(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (1,2) <=> (3,4)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement->query);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $operation->statement->query->items[0]);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->items[0]->expression);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(Comparison::class, $operation->query->items[0]->expression);
+        self::assertSame([], $operation->diagnostics());
     }
 }

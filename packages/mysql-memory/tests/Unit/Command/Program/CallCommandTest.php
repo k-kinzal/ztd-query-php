@@ -124,7 +124,7 @@ final class CallCommandTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->query('CREATE PROCEDURE p() SELECT 1');
-        $statement = $session->analyze('CALL p()')->statement;
+        $statement = $session->analyze('CALL p()');
         self::assertInstanceOf(ProcedureCall::class, $statement);
 
         self::assertSame('p', (new CallCommand())->routine($statement, $session)->name);

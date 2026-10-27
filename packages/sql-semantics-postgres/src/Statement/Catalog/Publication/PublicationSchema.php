@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The tables of a schema as an item of a publication: `TABLES IN SCHEMA { name | CURRENT_SCHEMA }`.
@@ -19,17 +18,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Publishing the tables of the current schema
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s');
- *     [$operation->statement->objects[0]->schema, $operation->statement->objects[1]->schema?->value] // => [null, 's']
+ *     [$operation->objects[0]->schema, $operation->objects[1]->schema?->value] // => [null, 's']
  */
 final class PublicationSchema implements PublicationMember
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $schema The schema; null for CURRENT_SCHEMA
      * @param bool $keywords Whether TABLES IN SCHEMA is written
      */
-    public function __construct(public readonly ?Name $schema, public readonly bool $keywords = true)
+    public function __construct(public readonly ?Name $schema, public readonly bool $keywords = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -111,13 +111,13 @@ final class CreateTableRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $procedureAnalysis = $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t UNION=() SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $procedureAnalysis);
-        $procedure = $procedureAnalysis->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $procedureAnalysis);
+        $procedure = $procedureAnalysis;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $procedure);
         self::assertInstanceOf(CreateTable::class, $procedure->body);
         $creation = $semantics->analyze('CREATE TABLE t UNION=() SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $creation);
-        self::assertEquals($procedure->body, $creation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $creation);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($procedure->body, $creation));
     }
 
 }

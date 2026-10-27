@@ -13,8 +13,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use WeakMap;
 
@@ -34,18 +34,18 @@ final class ResolutionNotices
      * @param list<int>|null $failure The first unresolved operand in resolution order
      * @throws LogicException When a resolution notice has no semantic subject
      */
-    public function report(Operation|QueryPreparation $operation, Session $session, bool $prepared, ?array $failure): void
+    public function report(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared, ?array $failure): void
     {
         if (($session->replayed && !$prepared) || !$this->fresh($operation, $session, $failure === null)) {
             return;
         }
-        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release(), $prepared))->statement($operation->statement);
+        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release(), $prepared))->statement($operation instanceof MySqlStatement ? $operation : $operation->statement);
         $pending = [];
-        foreach ($operation->facts->warnings as $warning) {
+        foreach (($operation instanceof MySqlStatement ? $operation->statementInformation() : $operation->facts)->warnings as $warning) {
             if (!$warning instanceof Deprecation || $warning->phase() !== NoticePhase::Resolution) {
                 continue;
             }
-            $subject = $operation->facts->warningSubject($warning);
+            $subject = ($operation instanceof MySqlStatement ? $operation->statementInformation() : $operation->facts)->warningSubject($warning);
             if (!$subject instanceof InsertedColumn) {
                 throw new LogicException('A VALUES resolution warning requires its semantic operand.');
             }
@@ -63,22 +63,22 @@ final class ResolutionNotices
     /**
      * Retains successful stored preparations while preserving retries after failure.
      */
-    public function fresh(Operation|QueryPreparation $operation, Session $session, bool $successful): bool
+    public function fresh(MySqlStatement|QueryPreparation $operation, Session $session, bool $successful): bool
     {
         if ($session->program === null) {
             return true;
         }
         $tables = [];
-        foreach ((new Walker())->find($operation->statement, NamedRelation::class) as $relation) {
-            $resolved = $operation->facts->covers($relation) ? $operation->facts->relation($relation)->table : null;
+        foreach ((new Walker())->find($operation instanceof MySqlStatement ? $operation : $operation->statement, NamedRelation::class) as $relation) {
+            $resolved = $relation->hasBinding() ? $relation->relationInformation()->table : null;
             $tables[] = $resolved instanceof DeclaredTable ? $resolved->table : null;
         }
         $cache = $session->preparation->resolutionNotices ??= new WeakMap();
-        $previous = $cache[$operation->statement] ?? null;
+        $previous = $cache[$operation instanceof MySqlStatement ? $operation : $operation->statement] ?? null;
         if ($successful) {
-            $cache[$operation->statement] = $tables;
+            $cache[$operation instanceof MySqlStatement ? $operation : $operation->statement] = $tables;
         } else {
-            unset($cache[$operation->statement]);
+            unset($cache[$operation instanceof MySqlStatement ? $operation : $operation->statement]);
         }
         return $previous === null || $previous !== $tables;
     }

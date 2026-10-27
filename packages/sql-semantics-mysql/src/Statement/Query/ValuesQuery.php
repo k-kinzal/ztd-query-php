@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The VALUES statement: a table of rows written with row constructors (MySQL 8.0.19 and later).
@@ -32,7 +31,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ValuesQuery implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ValueRow> The rows in written order
@@ -42,8 +42,11 @@ final class ValuesQuery implements Query
     /**
      * @param list<ValueRow> $rows The rows in written order; at least one
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->rows = Check::listOf($rows, ValueRow::class, 'VALUES holds at least one row.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

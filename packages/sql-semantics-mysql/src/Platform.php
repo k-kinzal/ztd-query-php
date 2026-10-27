@@ -56,21 +56,11 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Publishes concrete INSERT, transaction and migrated account statements; other families await migration.
+     * Publishes the concrete MySQL statement with information owned by its occurrences.
      */
     public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
     {
-        if ($statement instanceof \SqlSemantics\Statement\AnalyzedStatement) {
-            \SqlSemantics\Diagnostic\Check::input($statement->profile()->compatibleWith($context->profile), 'A concrete statement retains its selected language.');
-            (new \SqlSemantics\Validation\Publication())->establish($context, $statement, $sources);
-            return $statement;
-        }
-        $publication = new Rules\Dml\Insert\Publication();
-        if ($statement instanceof Statement\Dml\Insert\InsertRows && $publication->supports($statement)) {
-            [$facts] = (new \SqlSemantics\Validation\Publication())->establish($context, $statement, $sources);
-            return $publication->publish($statement, $context, $facts, $sources);
-        }
-        return new \SqlSemantics\Statement\Operation($context, $statement, $sources);
+        return (new Construction\Publication())->publish($context, $statement, $sources);
     }
 
     /**

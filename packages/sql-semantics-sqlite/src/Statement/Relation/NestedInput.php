@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FROM clause term list written in parentheses and used as one term.
@@ -28,11 +27,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a parenthesised join
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM a LEFT JOIN (b JOIN c) AS x');
- *     [$query->statement->from->steps[0]->relation->alias->value, count($query->statement->from->steps[0]->relation->relation->steps)] // => ['x', 1]
+ *     [$query->from->steps[0]->relation->alias->value, count($query->from->steps[0]->relation->relation->steps)] // => ['x', 1]
  */
-final class NestedInput implements Relation
+final class NestedInput implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Relation $relation The relation written inside the parentheses
@@ -40,8 +40,11 @@ final class NestedInput implements Relation
      * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
-    public function __construct(public readonly Relation $relation, public readonly ?Name $alias = null, public readonly bool $as = true)
+    public function __construct(public readonly Relation $relation, public readonly ?Name $alias = null, public readonly bool $as = true, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($as || $alias !== null, 'AS is left out only before an alias.');
     }
 

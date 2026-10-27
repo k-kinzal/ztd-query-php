@@ -21,9 +21,9 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze("CREATE PROCEDURE p() INSERT INTO t SET a=CAST(ROW(b,2) AT TIME ZONE 'invalid' AS DATETIME)");
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->statement->body);
-        $write = $operation->statement->body;
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->body);
+        $write = $operation->body;
         $session->text = 'unrelated invalid input';
         self::assertSame(1146, (new InsertUse())->error($write, $session)->getCode());
         $session->query('CREATE TABLE t(x INT)');
@@ -61,10 +61,10 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze('CREATE PROCEDURE p() INSERT INTO absent_schema.t VALUES (WEIGHT_STRING(ROW((TABLE no_table),2)))');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $session->text = 'unrelated invalid input';
-        $error = (new InsertUse())->error($operation->statement->body, $session);
+        $error = (new InsertUse())->error($operation->body, $session);
         self::assertSame(1049, $error->getCode());
         self::assertSame("Unknown database 'absent_schema'", $error->getMessage());
     }
@@ -73,15 +73,15 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze('CREATE PROCEDURE p() INSERT INTO d.t VALUES (WEIGHT_STRING(ROW((TABLE d.other),2)))');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
-        self::assertSame("Table 'd.t' doesn't exist", (new InsertUse())->error($operation->statement->body, $session)->getMessage());
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
+        self::assertSame("Table 'd.t' doesn't exist", (new InsertUse())->error($operation->body, $session)->getMessage());
         $session->query('CREATE TABLE t(a INT)');
-        self::assertSame("Table 'd.other' doesn't exist", (new InsertUse())->error($operation->statement->body, $session)->getMessage());
+        self::assertSame("Table 'd.other' doesn't exist", (new InsertUse())->error($operation->body, $session)->getMessage());
         $session->query('CREATE TABLE other(a INT); INSERT INTO other VALUES (7)');
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1241);
-        (new InsertUse())->raise($operation->statement->body, $session);
+        (new InsertUse())->raise($operation->body, $session);
     }
 
     public function testPrepareBindsValuesInTheirDestinationColumnScope(): void
@@ -89,18 +89,18 @@ final class InsertUseTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
         $operation = $session->analyze('CREATE PROCEDURE p() INSERT INTO d.t VALUES (WEIGHT_STRING(ROW(a,2)))');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1241);
-        (new InsertUse())->raise($operation->statement->body, $session);
+        (new InsertUse())->raise($operation->body, $session);
     }
 
     public function testWidthChecksAnEmptyDefaultsRowAgainstTheFirstRow(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
-        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1), ()')->statement;
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1), ()');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
         $table = $session->instance->dictionary->table('d', 't');
@@ -113,7 +113,7 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT, b INT)');
-        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (absent, 2), (3)')->statement;
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (absent, 2), (3)');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
         $session->text = 'unrelated invalid input';
@@ -127,7 +127,7 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
-        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t (absent) VALUES (1, 2)')->statement;
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t (absent) VALUES (1, 2)');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
         $error = (new InsertUse())->error($procedure->body, $session);
@@ -138,11 +138,11 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT, b INT)');
-        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3) ON DUPLICATE KEY UPDATE a = ROW(4, 5)')->statement;
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3) ON DUPLICATE KEY UPDATE a = ROW(4, 5)');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
         self::assertSame("Column count doesn't match value count at row 2", (new InsertUse())->error($procedure->body, $session)->getMessage());
-        $onlyUpdate = $session->analyze('CREATE PROCEDURE q() INSERT INTO t VALUES (1, 2) ON DUPLICATE KEY UPDATE a = ROW(4, 5)')->statement;
+        $onlyUpdate = $session->analyze('CREATE PROCEDURE q() INSERT INTO t VALUES (1, 2) ON DUPLICATE KEY UPDATE a = ROW(4, 5)');
         self::assertInstanceOf(CreateProcedure::class, $onlyUpdate);
         self::assertInstanceOf(DeferredInsertRows::class, $onlyUpdate->body);
         self::assertSame('Operand should contain 1 column(s)', (new InsertUse())->error($onlyUpdate->body, $session)->getMessage());
@@ -152,7 +152,7 @@ final class InsertUseTest extends TestCase
     {
         $session = (new Instance('5.6.51', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
-        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t(a) VALUES (unknown_value, 2)')->statement;
+        $procedure = $session->analyze('CREATE PROCEDURE p() INSERT INTO t(a) VALUES (unknown_value, 2)');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertInstanceOf(DeferredInsertRows::class, $procedure->body);
         self::assertSame("Unknown column 'unknown_value' in 'field list'", (new InsertUse())->error($procedure->body, $session)->getMessage());

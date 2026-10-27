@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
  * @visibility public
  * @example Reading which rule a query breaks
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables
+ *     $query->diagnostics()[0]->rule // => \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables
  */
 enum MisuseRule: string
 {

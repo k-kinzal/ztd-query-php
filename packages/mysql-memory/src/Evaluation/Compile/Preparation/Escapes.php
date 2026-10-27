@@ -8,7 +8,7 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -45,10 +45,10 @@ final class Escapes
     /**
      * Finds a default reference crossing the escape's query boundary.
      */
-    public function correlated(Node $node, Facts $facts, int $depth = 0): bool
+    public function correlated(Node $node, StatementSemantics $facts, int $depth = 0): bool
     {
-        if ($node instanceof DefaultOfColumn && $depth > 0 && $facts->covers($node->column)) {
-            $resolution = $facts->scalar($node->column)->resolution;
+        if ($node instanceof DefaultOfColumn && $depth > 0 && $node->column->hasBinding()) {
+            $resolution = $node->column->scalarInformation()->resolution;
             return $resolution instanceof ResolvedColumn && $resolution->depth >= $depth;
         }
         $children = [];

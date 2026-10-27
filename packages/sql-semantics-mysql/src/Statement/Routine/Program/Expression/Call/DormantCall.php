@@ -17,7 +17,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -35,7 +34,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DormantCall implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CallArgument|DeferredCallArgument> The complete written arguments
@@ -46,8 +46,11 @@ final class DormantCall implements DeferredOperand
      * @param Name $name The unqualified native function name
      * @param list<CallArgument|DeferredCallArgument> $arguments Written arguments and aliases
      */
-    public function __construct(public readonly Name $name, array $arguments = [])
+    public function __construct(public readonly Name $name, array $arguments = [], ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $items = [];
         foreach (Check::listOf($arguments, Node::class, 'A dormant call retains argument roles.') as $argument) {
             Check::input($argument instanceof CallArgument || $argument instanceof DeferredCallArgument, 'Dormant call arguments have an argument role.');

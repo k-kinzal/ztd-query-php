@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[STORAGE] ENGINE [=] name`: the storage engine of a tablespace, undo tablespace or log file group.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class EngineOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $engine The engine name
      */
-    public function __construct(public readonly Name $engine)
+    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

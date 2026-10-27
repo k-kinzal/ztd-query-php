@@ -26,9 +26,10 @@ final class GrantPrivilegesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $grant = $semantics->analyze('GRANT SELECT (a, b) ON t TO u', [$table]);
 
-        self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
-        self::assertInstanceOf(DeclaredTable::class, $grant->facts->relation($grant->statement->level)->table);
-        self::assertInstanceOf(UnknownGrantColumn::class, $grant->facts->diagnostics[0]);
+        self::assertInstanceOf(GrantPrivileges::class, $grant);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $grant->level);
+        self::assertInstanceOf(DeclaredTable::class, $grant->level->relationInformation()->table);
+        self::assertInstanceOf(UnknownGrantColumn::class, $grant->diagnostics()[0]);
     }
 
     public function testDeriveStatementRefusesAsOutsideTheGlobalLevel(): void

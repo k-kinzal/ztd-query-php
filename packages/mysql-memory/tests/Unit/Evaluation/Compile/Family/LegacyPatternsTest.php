@@ -50,10 +50,10 @@ final class LegacyPatternsTest extends TestCase
         $statement1 = (new Embedding())->statement($query);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         $operation1 = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-        $result = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), []);
+        $result = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), []);
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0']], $result->rows);
         self::assertCount($warnings, $session->diagnostics->conditions);

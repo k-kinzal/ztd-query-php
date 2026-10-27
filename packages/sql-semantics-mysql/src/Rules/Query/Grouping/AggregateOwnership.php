@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Grouping;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -39,7 +38,7 @@ final class AggregateOwnership
         }
         $initial = $environment->aggregatesAllowed ? $environment->aggregation : null;
         $owner = $initial;
-        $references = $this->references($call, $derivation->facts());
+        $references = $this->references($call);
         if ($references !== []) {
             for ($position = $environment; $position !== null; $position = $position->outer) {
                 $scope = $position->aggregation;
@@ -66,7 +65,7 @@ final class AggregateOwnership
      *
      * @return list<Relation>
      */
-    public function references(SetFunction $call, Facts $facts): array
+    public function references(SetFunction $call): array
     {
         $pending = array_values(get_object_vars($call));
         $relations = [];
@@ -79,8 +78,8 @@ final class AggregateOwnership
             if (!is_object($value) || $value instanceof Query) {
                 continue;
             }
-            if ($value instanceof Operand && $facts->covers($value)) {
-                $fact = $facts->scalar($value);
+            if ($value instanceof Operand && $value->hasBinding()) {
+                $fact = $value->scalarInformation();
                 if ($fact->replacement !== null) {
                     $pending[] = $fact->replacement;
                     continue;

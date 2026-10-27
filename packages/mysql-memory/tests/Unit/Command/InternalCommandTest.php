@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use Tests\Generator\Bindings;
 use Tests\Generator\Embedding;
 
@@ -60,7 +59,7 @@ final class InternalCommandTest extends TestCase
     public function testExecuteRejectsAnInternalClientRequest(Statement $statement, string $release, string $message): void
     {
         $session = (new Instance($release))->connect();
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1064);
@@ -71,7 +70,7 @@ final class InternalCommandTest extends TestCase
     public function testErrorHasTheNativeErrorNumberAndState(Statement $statement, string $release, string $message): void
     {
         $session = (new Instance($release))->connect();
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
         $error = (new InternalCommand())->error($operation);
         self::assertSame(1064, $error->getCode());
         self::assertSame('42000', $error->sqlState());
@@ -87,9 +86,9 @@ final class InternalCommandTest extends TestCase
         $statement1 = (new Embedding())->statement($statement);
         $session1->activity->begin();
         StatementCounters::received($session1);
-        $session1->hinted = [];
+
         $session1->dots = [];
         $operation1 = (new Binding())->operation($session1, $statement1, [], new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-        (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1->statement), []);
+        (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1), []);
     }
 }

@@ -18,11 +18,11 @@ final class DeferredPurgeTest extends TestCase
     public function testDeriveProgramRetainsDefinitionTimeVariableProblems(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() PURGE BINARY LOGS BEFORE ROW(@@missing,2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredPurge::class, $operation->statement->body);
-        self::assertNotEmpty(array_filter($operation->facts->diagnostics, static fn ($problem) => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredPurge::class, $operation->body);
+        self::assertNotEmpty(array_filter($operation->diagnostics(), static fn ($problem) => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable));
         self::assertSame('CREATE PROCEDURE p() PURGE BINARY LOGS BEFORE ROW(@@missing, 2)', $operation->toString());
-        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->statement->body);
+        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->body);
     }
     public function testRenderKeepsTheCutoffOperand(): void
     {

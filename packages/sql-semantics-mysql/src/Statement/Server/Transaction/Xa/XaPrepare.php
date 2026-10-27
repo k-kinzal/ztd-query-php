@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -31,9 +30,9 @@ use SqlSemantics\Statement\Source\Span;
  * @example Refusing a format identifier outside the selected release
  *     new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class XaPrepare implements TransactionStatement
+final class XaPrepare extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
     use TransactionSql;
 
     /**
@@ -42,8 +41,11 @@ final class XaPrepare implements TransactionStatement
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly Xid $xid, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(public readonly Xid $xid, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         (new Magnitudes())->identifier($xid, $profile->grammar);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

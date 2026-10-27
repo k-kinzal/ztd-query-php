@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment of a row value to a parenthesised list of columns of the written table.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a row assignment
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('UPDATE t SET (a, b) = (1, 2)');
- *     [count($update->statement->assignments[0]->columns), count($update->statement->assignments[0]->value->items)] // => [2, 2]
+ *     [count($update->assignments[0]->columns), count($update->assignments[0]->value->items)] // => [2, 2]
  */
 final class RowAssignment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The assigned columns in written order
@@ -35,7 +34,7 @@ final class RowAssignment implements Node
      * @param list<Name> $columns The assigned columns in written order; at least one
      * @param Scalar $value The row of new values
      */
-    public function __construct(array $columns, public readonly Scalar $value)
+    public function __construct(array $columns, public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A row assignment names at least one column.', 1);
     }

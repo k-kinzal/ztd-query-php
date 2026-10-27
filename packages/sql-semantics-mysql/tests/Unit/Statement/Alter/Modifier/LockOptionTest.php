@@ -17,12 +17,12 @@ final class LockOptionTest extends TestCase
 {
     public function testDeriveOptionAcceptsTheKnownLock(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t LOCK = SHARED')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t LOCK = SHARED')->diagnostics());
     }
 
     public function testDeriveCommandChecksTheLock(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t LOCK = `default`')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t LOCK = `default`')->diagnostics());
     }
 
     public function testRenderWritesTheLockOrDefault(): void

@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -45,15 +44,15 @@ final class Determination
      * @param array<int, true> $within The query blocks of derived tables whose dependencies are being found, which are not entered again
      * @return array<string, true>
      */
-    public function closure(Select $select, array $relations, Facts $facts, array $determined, array $within = []): array
+    public function closure(Select $select, array $relations, array $determined, array $within = []): array
     {
         $parts = new BlockParts();
         $dependencies = [];
         foreach ($parts->conjuncts($select->where) as $conjunct) {
-            [$determined, $dependencies] = $this->equality($conjunct, $relations, $facts, null, $determined, $dependencies);
+            [$determined, $dependencies] = $this->equality($conjunct, $relations, null, $determined, $dependencies);
         }
         foreach ($parts->joins($select->from) as $join) {
-            [$determined, $dependencies] = $this->joined($join, $relations, $facts, $determined, $dependencies);
+            [$determined, $dependencies] = $this->joined($join, $relations, $determined, $dependencies);
         }
         do {
             $before = count($determined);
@@ -62,7 +61,7 @@ final class Determination
                     $determined[$to] = true;
                 }
             }
-            $determined = $this->keyed($relations, $facts, $determined, $within);
+            $determined = $this->keyed($relations, $determined, $within);
         } while (count($determined) > $before);
 
         return $determined;
@@ -77,14 +76,14 @@ final class Determination
      * @param list<array{string, string}> $dependencies The pairs of columns where the first determines the second
      * @return array{array<string, true>, list<array{string, string}>}
      */
-    public function equality(Operand $conjunct, array $relations, Facts $facts, ?array $inner, array $determined, array $dependencies): array
+    public function equality(Operand $conjunct, array $relations, ?array $inner, array $determined, array $dependencies): array
     {
         if (!$conjunct instanceof Comparison || ($conjunct->operator !== ComparisonOperator::Equal && $conjunct->operator !== ComparisonOperator::NullSafeEqual)) {
             return [$determined, $dependencies];
         }
         $sides = [];
         foreach ([$conjunct->left, $conjunct->right] as $side) {
-            $columns = (new ColumnReads())->columns($side, $relations, $facts, true);
+            $columns = (new ColumnReads())->columns($side, $relations, true);
             $sides[] = [$columns, (new Matching())->unwrap($side) instanceof ColumnUse && count($columns) === 1 ? $columns[0] : null];
         }
         foreach ([[$sides[0], $sides[1]], [$sides[1], $sides[0]]] as [[$read, $from], [, $to]]) {
@@ -109,7 +108,7 @@ final class Determination
      * @param list<array{string, string}> $dependencies The pairs of columns where the first determines the second
      * @return array{array<string, true>, list<array{string, string}>}
      */
-    public function joined(JoinedTable $join, array $relations, Facts $facts, array $determined, array $dependencies): array
+    public function joined(JoinedTable $join, array $relations, array $determined, array $dependencies): array
     {
         $parts = new BlockParts();
         $reads = new ColumnReads();
@@ -117,7 +116,7 @@ final class Determination
         $right = $parts->members($join->right, $relations);
         $inner = $join->operator->keepsLeft() ? $right : ($join->operator->keepsRight() ? $left : null);
         foreach ($parts->conjuncts($join->on) as $conjunct) {
-            [$determined, $dependencies] = $this->equality($conjunct, $relations, $facts, $inner, $determined, $dependencies);
+            [$determined, $dependencies] = $this->equality($conjunct, $relations, $inner, $determined, $dependencies);
         }
         $names = array_map(static fn (Name $name): string => mb_strtolower($name->value), $join->using);
         if ($join->operator->natural()) {
@@ -149,12 +148,12 @@ final class Determination
      * @param array<int, true> $within The query blocks of derived tables whose dependencies are being found
      * @return array<string, true>
      */
-    public function keyed(array $relations, Facts $facts, array $determined, array $within = []): array
+    public function keyed(array $relations, array $determined, array $within = []): array
     {
         foreach ($relations as $id => $relation) {
-            $table = $relation->relation instanceof TableReference && $facts->covers($relation->relation) ? $facts->relation($relation->relation)->table : null;
+            $table = $relation->relation instanceof TableReference && $relation->relation->hasBinding() ? $relation->relation->relationInformation()->table : null;
             if (!$table instanceof DeclaredTable) {
-                $determined = $this->derived($relation, $facts, $determined, $within);
+                $determined = $this->derived($relation, $determined, $within);
 
                 continue;
             }
@@ -189,22 +188,22 @@ final class Determination
      * @param array<int, true> $within The query blocks of derived tables whose dependencies are being found
      * @return array<string, true>
      */
-    public function derived(VisibleRelation $relation, Facts $facts, array $determined, array $within): array
+    public function derived(VisibleRelation $relation, array $determined, array $within): array
     {
         $prefix = spl_object_id($relation->relation) . ':';
         if (array_filter(array_keys($determined), static fn (string $key): bool => str_starts_with($key, $prefix)) === []) {
             return $determined;
         }
-        $select = (new BlockParts())->block($relation->relation, $facts);
-        if ($select === null || isset($within[spl_object_id($select)]) || $select->groupBy?->modifier !== null || !$facts->covers($select)) {
+        $select = (new BlockParts())->block($relation->relation);
+        if ($select === null || isset($within[spl_object_id($select)]) || $select->groupBy?->modifier !== null || !$select->hasBinding()) {
             return $determined;
         }
-        $fields = $this->fields($relation, $facts->query($select)->projection);
+        $fields = $this->fields($relation, $select->queryInformation()->projection);
         if ($fields === null) {
             return $determined;
         }
         $reads = new ColumnReads();
-        $inner = (new BlockParts())->occurrences($select, $facts);
+        $inner = (new BlockParts())->occurrences($select);
         $seeds = [];
         $expressions = [];
         foreach ($fields as $position => $field) {
@@ -212,15 +211,15 @@ final class Determination
                 if ($field->expression !== null) {
                     $expressions[] = $field->expression;
                 }
-                foreach ($this->shown($field, $inner, $facts) as [$key]) {
+                foreach ($this->shown($field, $inner) as [$key]) {
                     $seeds[$key] = true;
                 }
             }
         }
-        $closed = $this->closure($select, $inner, $facts, $seeds, [...$within, spl_object_id($select) => true]);
-        $grouped = $this->grouped($select, $expressions, $closed, $inner, $facts);
+        $closed = $this->closure($select, $inner, $seeds, [...$within, spl_object_id($select) => true]);
+        $grouped = $this->grouped($select, $expressions, $closed, $inner);
         foreach ($fields as $position => $field) {
-            if ($grouped || $this->depends($field, $inner, $facts, $closed)) {
+            if ($grouped || $this->depends($field, $inner, $closed)) {
                 $determined[$reads->key(new ResolvedColumn($relation->relation, $relation->shape->slots[$position]))] = true;
             }
         }
@@ -254,10 +253,10 @@ final class Determination
      * @param array<int, VisibleRelation> $relations The occurrences of the block
      * @return list<array{string, ResolvedColumn}>
      */
-    public function shown(Field $field, array $relations, Facts $facts): array
+    public function shown(Field $field, array $relations): array
     {
         if ($field->expression !== null) {
-            return (new Matching())->unwrap($field->expression) instanceof ColumnUse ? (new ColumnReads())->columns($field->expression, $relations, $facts, true) : [];
+            return (new Matching())->unwrap($field->expression) instanceof ColumnUse ? (new ColumnReads())->columns($field->expression, $relations, true) : [];
         }
 
         return $field->resolution instanceof ResolvedColumn && isset($relations[spl_object_id($field->resolution->relation)]) ? [[(new ColumnReads())->key($field->resolution), $field->resolution]] : [];
@@ -270,15 +269,15 @@ final class Determination
      * @param array<string, true> $determined
      * @param array<int, VisibleRelation> $relations The occurrences of the block
      */
-    public function grouped(Select $select, array $expressions, array $determined, array $relations, Facts $facts): bool
+    public function grouped(Select $select, array $expressions, array $determined, array $relations): bool
     {
         if ($select->groupBy === null) {
             return false;
         }
         $matching = new Matching();
         foreach ($select->groupBy->items as $item) {
-            $expression = $matching->target($item->expression, $facts);
-            if (!$matching->listed($expression, $expressions, $facts) && $this->undetermined($expression, [], $determined, $relations, $facts) !== null) {
+            $expression = $matching->target($item->expression);
+            if (!$matching->listed($expression, $expressions) && $this->undetermined($expression, [], $determined, $relations) !== null) {
                 return false;
             }
         }
@@ -292,7 +291,7 @@ final class Determination
      * @param array<int, VisibleRelation> $relations
      * @param array<string, true> $determined
      */
-    public function depends(object $field, array $relations, Facts $facts, array $determined): bool
+    public function depends(object $field, array $relations, array $determined): bool
     {
         if (!$field instanceof Field) {
             return false;
@@ -303,7 +302,7 @@ final class Determination
         if ((new Aggregation())->aggregates([$field->expression])) {
             return false;
         }
-        foreach ((new ColumnReads())->columns($field->expression, $relations, $facts, true) as [$key]) {
+        foreach ((new ColumnReads())->columns($field->expression, $relations, true) as [$key]) {
             if (!isset($determined[$key])) {
                 return false;
             }
@@ -319,12 +318,12 @@ final class Determination
      * @param array<string, true> $determined
      * @param array<int, VisibleRelation> $relations
      */
-    public function undetermined(Operand $expression, array $groups, array $determined, array $relations, Facts $facts): ?ResolvedColumn
+    public function undetermined(Operand $expression, array $groups, array $determined, array $relations): ?ResolvedColumn
     {
-        if ((new Matching())->listed($expression, $groups, $facts)) {
+        if ((new Matching())->listed($expression, $groups)) {
             return null;
         }
-        foreach ((new ColumnReads())->columns($expression, $relations, $facts, false) as [$key, $column]) {
+        foreach ((new ColumnReads())->columns($expression, $relations, false) as [$key, $column]) {
             if (!isset($determined[$key])) {
                 return $column;
             }

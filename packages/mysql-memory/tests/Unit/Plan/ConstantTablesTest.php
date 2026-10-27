@@ -41,10 +41,10 @@ final class ConstantTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT PRIMARY KEY, a INT); CREATE TABLE u (id INT PRIMARY KEY, name VARCHAR(5) NOT NULL, UNIQUE KEY (name))');
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
 
-        self::assertSame($count, (new ConstantTables($operation->facts))->joined($operation->statement->query));
+        self::assertSame($count, (new ConstantTables($operation->statementInformation()))->joined($operation->query));
     }
 
     public function testTablesMarksTheInnerSideOfAnOuterJoin(): void
@@ -52,10 +52,10 @@ final class ConstantTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT)');
         $operation = $session->analyze('SELECT 1 FROM t AS a LEFT JOIN (t AS b, t AS c) ON 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
 
-        self::assertSame([false, true, true], array_map(static fn (array $entry): bool => $entry[1], (new ConstantTables($operation->facts))->tables($operation->statement->query->from, false)));
+        self::assertSame([false, true, true], array_map(static fn (array $entry): bool => $entry[1], (new ConstantTables($operation->statementInformation()))->tables($operation->query->from, false)));
     }
 
     public function testConstantsAnswersTheConstantTables(): void
@@ -63,11 +63,11 @@ final class ConstantTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT PRIMARY KEY)');
         $operation = $session->analyze('SELECT 1 FROM t AS a, t AS b WHERE b.id = 2');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $tables = (new ConstantTables($operation->facts))->tables($operation->statement->query->from, false);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $tables = (new ConstantTables($operation->statementInformation()))->tables($operation->query->from, false);
 
-        self::assertSame([spl_object_id($tables[1][0])], array_keys((new ConstantTables($operation->facts))->constants($operation->statement->query, $tables)));
+        self::assertSame([spl_object_id($tables[1][0])], array_keys((new ConstantTables($operation->statementInformation()))->constants($operation->query, $tables)));
     }
 
     public function testSingleHoldsForAQueryOfOneRow(): void
@@ -75,16 +75,16 @@ final class ConstantTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT)');
         $operation = $session->analyze('SELECT 1');
-        $constants = new ConstantTables($operation->facts);
-        $limited = $session->analyze('(SELECT id FROM t) LIMIT 1')->statement;
+        $constants = new ConstantTables($operation->statementInformation());
+        $limited = $session->analyze('(SELECT id FROM t) LIMIT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $limited);
         $limited = $limited->query;
-        $offset = $session->analyze('SELECT id FROM t LIMIT 1 OFFSET 1')->statement;
+        $offset = $session->analyze('SELECT id FROM t LIMIT 1 OFFSET 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $offset);
         $offset = $offset->query;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
 
-        self::assertSame([true, true, false], [$constants->single($operation->statement->query), $constants->single($limited), $constants->single($offset)]);
+        self::assertSame([true, true, false], [$constants->single($operation->query), $constants->single($limited), $constants->single($offset)]);
     }
 
     public function testKeyedHoldsWhenEveryColumnOfAKeyIsBound(): void
@@ -92,15 +92,15 @@ final class ConstantTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT, b INT, PRIMARY KEY (id, b))');
         $operation = $session->analyze('SELECT 1 FROM t');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
-        $table = $operation->facts->relation($operation->statement->query->from)->table;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        $table = $operation->query->from->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $table);
         [$id, $b] = $table->table->columns;
-        $constants = new ConstantTables($operation->facts);
+        $constants = new ConstantTables($operation->statementInformation());
 
-        self::assertSame([false, true], [$constants->keyed($operation->statement->query->from, [spl_object_id($id) => true]), $constants->keyed($operation->statement->query->from, [spl_object_id($id) => true, spl_object_id($b) => true])]);
+        self::assertSame([false, true], [$constants->keyed($operation->query->from, [spl_object_id($id) => true]), $constants->keyed($operation->query->from, [spl_object_id($id) => true, spl_object_id($b) => true])]);
     }
 
     public function testColumnAnswersTheColumnAnExpressionNames(): void
@@ -113,7 +113,7 @@ final class ConstantTablesTest extends TestCase
         self::assertNotNull($first);
         self::assertNotNull($second);
 
-        self::assertSame(['id', null], [(new ConstantTables($operation->facts))->column($first)?->slot->name?->value, (new ConstantTables($operation->facts))->column($second)]);
+        self::assertSame(['id', null], [(new ConstantTables($operation->statementInformation()))->column($first)?->slot->name?->value, (new ConstantTables($operation->statementInformation()))->column($second)]);
     }
 
     public function testFixedHoldsForAValueThatReadsOnlyConstantTables(): void
@@ -123,13 +123,13 @@ final class ConstantTablesTest extends TestCase
         $operation = $session->analyze('SELECT id + 1, 2 FROM t');
         $read = $operation->field(0)->expression;
         $value = $operation->field(1)->expression;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertNotNull($operation->statement->query->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertNotNull($operation->query->from);
         self::assertNotNull($read);
         self::assertNotNull($value);
-        $members = [spl_object_id($operation->statement->query->from) => true];
-        $constants = new ConstantTables($operation->facts);
+        $members = [spl_object_id($operation->query->from) => true];
+        $constants = new ConstantTables($operation->statementInformation());
 
         self::assertSame([false, true, true], [$constants->fixed($read, $members, []), $constants->fixed($read, $members, $members), $constants->fixed($value, $members, [])]);
     }
@@ -138,11 +138,11 @@ final class ConstantTablesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 WHERE (1 AND 2) AND 3 OR 4');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
 
-        self::assertCount(1, (new ConstantTables($operation->facts))->conjuncts($operation->statement->query->where));
-        self::assertCount(0, (new ConstantTables($operation->facts))->conjuncts(null));
+        self::assertCount(1, (new ConstantTables($operation->statementInformation()))->conjuncts($operation->query->where));
+        self::assertCount(0, (new ConstantTables($operation->statementInformation()))->conjuncts(null));
     }
 
     public function testJoinsAnswersTheConditionsOfTheInnerJoins(): void
@@ -150,10 +150,10 @@ final class ConstantTablesTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT)');
         $operation = $session->analyze('SELECT 1 FROM t AS a JOIN t AS b ON 1 AND 2 LEFT JOIN t AS c ON 3');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
 
-        self::assertCount(2, (new ConstantTables($operation->facts))->joins($operation->statement->query->from));
+        self::assertCount(2, (new ConstantTables($operation->statementInformation()))->joins($operation->query->from));
     }
 
     public function testUnwrapRemovesTheParentheses(): void
@@ -163,6 +163,6 @@ final class ConstantTablesTest extends TestCase
         $expression = $operation->field(0)->expression;
         self::assertNotNull($expression);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral::class, (new ConstantTables($operation->facts))->unwrap($expression));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral::class, (new ConstantTables($operation->statementInformation()))->unwrap($expression));
     }
 }

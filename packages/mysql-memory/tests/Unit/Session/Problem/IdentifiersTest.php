@@ -62,7 +62,7 @@ final class IdentifiersTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        (new Identifiers())->check($session->analyze('SELECT * FROM ' . str_repeat('d', 64) . '.t')->statement, GrammarRelease::MySql847);
+        (new Identifiers())->check($session->analyze('SELECT * FROM ' . str_repeat('d', 64) . '.t'), GrammarRelease::MySql847);
 
         $this->addToAssertionCount(1);
     }
@@ -87,7 +87,7 @@ final class IdentifiersTest extends TestCase
     public function testNamesChecksTheDatabaseOfAColumnOnlyFromMySql80(): void
     {
         $session = (new Instance())->connect();
-        $column = (new Walker())->find($session->analyze('SELECT d.t.a')->statement, ColumnUse::class)[0];
+        $column = (new Walker())->find($session->analyze('SELECT d.t.a'), ColumnUse::class)[0];
 
         self::assertSame([0, 1], [count((new Identifiers())->names($column, GrammarRelease::MySql5744)), count((new Identifiers())->names($column, GrammarRelease::MySql8044))]);
     }
@@ -95,7 +95,7 @@ final class IdentifiersTest extends TestCase
     public function testNamesLeavesDropFunctionIfExistsInMySql56(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $statement = $session->analyze('DROP FUNCTION IF EXISTS f')->statement;
+        $statement = $session->analyze('DROP FUNCTION IF EXISTS f');
 
         self::assertSame([[], 2], [(new Identifiers())->names($statement, GrammarRelease::MySql5651), count((new Identifiers())->names($statement, GrammarRelease::MySql5744))]);
     }
@@ -103,7 +103,7 @@ final class IdentifiersTest extends TestCase
     public function testDefinitionsAnswersTheConstraintThenTheIndexName(): void
     {
         $session = (new Instance())->connect();
-        $index = (new Walker())->find($session->analyze('CREATE TABLE t (a INT, CONSTRAINT c UNIQUE KEY k (a))')->statement, IndexDefinition::class)[0];
+        $index = (new Walker())->find($session->analyze('CREATE TABLE t (a INT, CONSTRAINT c UNIQUE KEY k (a))'), IndexDefinition::class)[0];
 
         self::assertSame(['c', 'k'], array_map(static fn ($name): ?string => $name?->value, (array) (new Identifiers())->definitions($index, false)));
     }
@@ -122,7 +122,7 @@ final class IdentifiersTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertSame(['d'], array_map(static fn ($name): ?string => $name?->value, (new Identifiers())->properties($session->analyze('SHOW TABLES FROM d')->statement)));
+        self::assertSame(['d'], array_map(static fn ($name): ?string => $name?->value, (new Identifiers())->properties($session->analyze('SHOW TABLES FROM d'))));
     }
 
     public function testCheckRefusesAColumnNameOfADefinition(): void

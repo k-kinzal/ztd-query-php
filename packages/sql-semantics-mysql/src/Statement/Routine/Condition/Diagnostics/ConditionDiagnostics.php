@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The information about one condition GET DIAGNOSTICS reads: `CONDITION number item, ...`.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the condition number
  *     $get = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT');
- *     [$get->statement->information->number->text, count($get->statement->information->items)] // => ['2', 1]
+ *     [$get->information->number->text, count($get->information->items)] // => ['2', 1]
  */
 final class ConditionDiagnostics implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<InformationItem> The assignments in written order
@@ -37,7 +36,7 @@ final class ConditionDiagnostics implements Node
      * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable $number The number of the condition, counted from 1: a literal, a variable or a name
      * @param list<InformationItem> $items The assignments; at least one, each of a condition information item
      */
-    public function __construct(public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $number, array $items)
+    public function __construct(public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $number, array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->items = Check::listOf($items, InformationItem::class, 'GET DIAGNOSTICS reads at least one item.', 1);
         foreach ($this->items as $item) {

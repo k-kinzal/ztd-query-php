@@ -76,9 +76,9 @@ final class DatabaseCommandTest extends TestCase
     public function testCollationPrefersTheCollationItNamesToTheCharacterSet(): void
     {
         $session = (new Instance())->connect();
-        $named = $session->analyze('CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1')->statement;
-        $charset = $session->analyze('CREATE DATABASE l CHARACTER SET latin1')->statement;
-        $plain = $session->analyze('CREATE DATABASE p')->statement;
+        $named = $session->analyze('CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1');
+        $charset = $session->analyze('CREATE DATABASE l CHARACTER SET latin1');
+        $plain = $session->analyze('CREATE DATABASE p');
         self::assertInstanceOf(CreateDatabase::class, $named);
         self::assertInstanceOf(CreateDatabase::class, $charset);
         self::assertInstanceOf(CreateDatabase::class, $plain);

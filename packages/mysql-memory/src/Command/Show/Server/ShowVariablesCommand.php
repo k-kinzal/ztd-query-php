@@ -15,12 +15,12 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\System\Performance\StatusVariables;
 use MySqlMemory\Variable\Scope;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Reach;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW VARIABLES and SHOW STATUS: the system or status variables of a scope, in name order.
@@ -53,8 +53,8 @@ final class ShowVariablesCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowVariables || $statement instanceof ShowStatus);
         $global = $statement->scope === VariableScope::Global;
         $oldest = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && in_array($session->variables->read('show_compatibility_56'), ['ON', 1], true));

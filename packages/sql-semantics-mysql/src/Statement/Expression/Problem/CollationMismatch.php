@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Applying a latin1 collation to a utf8mb4 string
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 'a' COLLATE latin1_bin");
- *     $query->facts->diagnostics[0]->message() // => "COLLATION 'latin1_bin' is not valid for CHARACTER SET 'utf8mb4'"
+ *     $query->diagnostics()[0]->message() // => "COLLATION 'latin1_bin' is not valid for CHARACTER SET 'utf8mb4'"
  */
 final class CollationMismatch implements Diagnostic
 {

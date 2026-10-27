@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredChar implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RowOperand|DeferredOperand> The complete character codes
@@ -45,8 +45,11 @@ final class DeferredChar implements DeferredOperand
      * @param list<Scalar|RowOperand|DeferredOperand> $arguments At least one retained preparation condition
      * @param CharsetName|null $charset The explicitly named character set
      */
-    public function __construct(array $arguments, public readonly ?CharsetName $charset = null)
+    public function __construct(array $arguments, public readonly ?CharsetName $charset = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($charset === null || $charset->name !== null, 'CHAR USING names a character set rather than DEFAULT.');
         $items = [];
         $deferred = false;

@@ -22,7 +22,7 @@ use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Statement;
 use WeakReference;
@@ -58,14 +58,13 @@ final class Statements
     /**
      * Resolves a statement of the program where it runs.
      */
-    public function operation(Statement $statement): Operation
+    public function operation(Statement $statement): MySqlStatement
     {
         $session = $this->session;
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
         $semantics = $session->semantics();
 
-        return new Operation($semantics->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution()), $statement);
+        return (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution()), $statement, new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     /**
@@ -77,7 +76,7 @@ final class Statements
     {
         $this->activation->sqlStatements++;
         \MySqlMemory\Session\State\StatementCounters::query($this->session);
-        $operation = $statement instanceof \SqlSemantics\Statement\AnalyzedStatement ? $statement : $this->operation($statement);
+        $operation = $this->operation($statement);
         $reply = (new \MySqlMemory\Session\Execution($this->session))->statement($operation, [], false, $this->activation->contained);
         $results = array_values(array_filter($reply instanceof Batch ? $reply->replies : [$reply], static fn (Reply $reply): bool => $reply instanceof ResultSet));
         if ($results !== [] && $this->activation->contained
@@ -131,6 +130,10 @@ final class Statements
         }
         $select = new Select([], [new SelectExpression($expression)]);
         $operation = $this->operation(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($select));
+        \SqlSemantics\Diagnostic\Check::invariant($operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $operation->query instanceof Select, 'Program expression binding preserves the scalar projection.');
+        $select = $operation->query;
+        $expression = $operation->field(0)->expression;
+        \SqlSemantics\Diagnostic\Check::invariant($expression instanceof Scalar, 'A program value has a resolved scalar expression.');
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $session->diagnostics->retain();
         } else {
@@ -140,7 +143,7 @@ final class Statements
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, microtime(true));
         $context->strict = ($target !== null || $assigned) && $context->modes->strict();
         $connection = new Connection($session->variables, $context, $session->user, $session->host, $session->id, [], $this->activation, WeakReference::create($session));
-        $planner = new Planner($select, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($select, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $compiled = $planner->compiler->compile($expression, new Scope());
         $value = $compiled->evaluate(new Frame($context));
         $target?->assign($value, $compiled->domain(), $context);

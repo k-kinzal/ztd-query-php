@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetTarget;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes the statements that control replication: START and STOP REPLICA, CHANGE REPLICATION SOURCE and FILTER, RESET BINARY LOGS AND GTIDS and RESET REPLICA, and START and STOP GROUP_REPLICATION.
@@ -78,8 +78,8 @@ final class ReplicaCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof StartGroupReplication || $statement instanceof StopGroupReplication) {
             throw $session->transaction->open ? StatementError::LockedOrActiveTransaction->error() : AdministrationError::GroupReplicationNotConfigured->error();

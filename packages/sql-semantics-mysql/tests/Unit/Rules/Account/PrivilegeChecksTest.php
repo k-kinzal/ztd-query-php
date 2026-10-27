@@ -25,28 +25,28 @@ final class PrivilegeChecksTest extends TestCase
 {
     public function testGrantRequiresTheTableWithoutCreate(): void
     {
-        self::assertInstanceOf(MissingTable::class, (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON t TO u', [])->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTable::class, (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON t TO u', [])->diagnostics()[0]);
     }
 
     public function testRevokeAcceptsAnAbsentTable(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE SELECT ON t FROM u', [])->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE SELECT ON t FROM u', [])->diagnostics());
     }
 
     public function testLevelReportsADynamicPrivilegeOutsideTheGlobalLevel(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics[0]);
-        self::assertSame([], $semantics->analyze('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE BACKUP_ADMIN ON db.* FROM u')->diagnostics()[0]);
+        self::assertSame([], $semantics->analyze('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->diagnostics());
     }
 
     public function testFitReportsAPrivilegeOutsideItsLevel(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE EXECUTE ON t FROM u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE SELECT ON PROCEDURE p FROM u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE EXECUTE ON t FROM u')->diagnostics()[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE SELECT ON PROCEDURE p FROM u')->diagnostics()[0]);
     }
 
     public function testColumnPrivilegesOnRoutinesAreRefusedBeforeDerivation(): void
@@ -63,8 +63,9 @@ final class PrivilegeChecksTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $grant = $semantics->analyze('GRANT SELECT ON t TO u', [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
 
-        self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
-        self::assertCount(2, $grant->facts->relation($grant->statement->level)->shape->slots);
+        self::assertInstanceOf(GrantPrivileges::class, $grant);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $grant->level);
+        self::assertCount(2, $grant->level->relationInformation()->shape->slots);
     }
 
     public function testDescribeNamesTheItem(): void
@@ -95,7 +96,7 @@ final class PrivilegeChecksTest extends TestCase
     public function testRevokeGlobalAllHasNoRoutineTargetInModernReleases(string $release): void
     {
         $semantics = new Semantics(Dialect::MySql, $release);
-        self::assertSame([], $semantics->analyze('REVOKE ALL ON FUNCTION *.* FROM u')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('REVOKE ALL ON FUNCTION *.* FROM u')->diagnostics());
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]

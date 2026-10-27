@@ -53,4 +53,17 @@ final class RefusedCreateRoleGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<bool> $ifNotExists The generated semantic operand
+     * @param ErisGenerator<list<AccountName>> $roles The generated semantic operand
+     * @return ErisGenerator<RefusedCreateRole>
+     */
+    public static function fromOperands(ErisGenerator $ifNotExists, ErisGenerator $roles): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): RefusedCreateRole => new RefusedCreateRole(ifNotExists: $parts[0], roles: $parts[1]), \Tests\Generator\Operands::tuple($ifNotExists, $roles));
+    }
+
+
 }

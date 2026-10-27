@@ -19,8 +19,8 @@ final class PurgeLogsBeforeTest extends TestCase
     {
         $purge = (new Semantics(Dialect::MySql))->analyze("PURGE BINARY LOGS BEFORE '2024-01-01'");
 
-        self::assertInstanceOf(PurgeLogsBefore::class, $purge->statement);
-        self::assertSame([], $purge->facts->diagnostics);
+        self::assertInstanceOf(PurgeLogsBefore::class, $purge);
+        self::assertSame([], $purge->diagnostics());
     }
 
     public function testDeriveStatementRequiresOneColumnForTheMoment(): void

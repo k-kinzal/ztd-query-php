@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -32,15 +31,19 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredArithmetic implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ArithmeticOperator $operator The arithmetic or bit operator
      * @param Scalar|RowOperand|DeferredOperand $left The first operand to prepare
      * @param Scalar|RowOperand|DeferredOperand $right The second operand to prepare
      */
-    public function __construct(public readonly ArithmeticOperator $operator, public readonly Scalar|RowOperand|DeferredOperand $left, public readonly Scalar|RowOperand|DeferredOperand $right)
+    public function __construct(public readonly ArithmeticOperator $operator, public readonly Scalar|RowOperand|DeferredOperand $left, public readonly Scalar|RowOperand|DeferredOperand $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$left instanceof Scalar || !$right instanceof Scalar, 'Deferred arithmetic retains a row-valued use.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left arithmetic operand needs grouping.');

@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,14 +38,18 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredSubquery implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The complete query with an intrinsic read-column constraint
      * @param bool $exists Whether only row existence is tested, allowing a tableless star
      */
-    public function __construct(public readonly Query $query, public readonly bool $exists = false)
+    public function __construct(public readonly Query $query, public readonly bool $exists = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new ReadColumns())->problem($query, $exists) !== null, 'A deferred subquery value retains an intrinsic read-column constraint.');
         (new SubqueryOptions())->check($query);
         (new Generations())->check($this);

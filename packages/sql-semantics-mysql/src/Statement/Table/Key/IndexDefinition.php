@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An index or key of a table definition: INDEX, PRIMARY KEY, UNIQUE, FULLTEXT or SPATIAL with its parts and options.
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT, UNIQUE KEY ab (a, b))');
- *     [$create->statement->elements[2]->kind, $create->statement->elements[2]->name->column->value, count($create->statement->elements[2]->parts)] // => [\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Unique, 'ab', 2]
+ *     [$create->elements[2]->kind, $create->elements[2]->name->column->value, count($create->elements[2]->parts)] // => [\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Unique, 'ab', 2]
  */
 final class IndexDefinition implements TableElement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<KeyPart> The key parts in order
@@ -63,6 +62,7 @@ final class IndexDefinition implements TableElement
         array $options = [],
         public readonly ?ConstraintName $constraint = null,
         public readonly bool $keyword = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');

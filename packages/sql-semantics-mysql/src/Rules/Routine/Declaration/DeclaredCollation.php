@@ -94,7 +94,7 @@ final class DeclaredCollation
             return $type;
         }
 
-        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Declared($named, $context->profile->grammar))->domain($type, $named);
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Declared($named, $context->profile->grammar, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($context)->realAsFloat))->domain($type, $named);
     }
 
     /**

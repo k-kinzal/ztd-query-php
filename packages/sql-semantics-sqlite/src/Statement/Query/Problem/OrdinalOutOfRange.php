@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of an ordinal beyond the result columns
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 ORDER BY 2');
- *     [$query->facts->diagnostics[0]->ordinal, $query->facts->diagnostics[0]->columns] // => [2, 1]
+ *     [$query->diagnostics()[0]->ordinal, $query->diagnostics()[0]->columns] // => [2, 1]
  */
 final class OrdinalOutOfRange implements Resolution, Diagnostic
 {

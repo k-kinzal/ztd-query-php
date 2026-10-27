@@ -89,6 +89,8 @@ final class SemanticGeneratorCoverageTest extends TestCase
         yield 'enum' => ['enum CoverageValue { case One; }', '', ['mysqlMemory.missingGenerator']];
         yield 'trait is not a semantic value type' => ['trait CoverageTrait {}', '', []];
         yield 'correct Eris type' => [$record, $generator, []];
+        yield 'role generator preserves its subtype' => ['interface CoverageValue {}', str_replace('/** @implements \\Eris\\Generator<\\SqlSemantics\\Statement\\CoverageValue> */', "/**\n * @template T of \\SqlSemantics\\Statement\\CoverageValue\n * @implements \\Eris\\Generator<T>\n */", $generator), []];
+        yield 'unbounded template does not establish a semantic type' => [$record, str_replace('/** @implements \\Eris\\Generator<\\SqlSemantics\\Statement\\CoverageValue> */', "/**\n * @template T\n * @implements \\Eris\\Generator<T>\n */", $generator), ['mysqlMemory.invalidGenerator']];
         yield 'wrong Eris result type' => [$record, str_replace('Generator<\SqlSemantics\Statement\CoverageValue>', 'Generator<\stdClass>', $generator), ['mysqlMemory.invalidGenerator']];
         yield 'generator name without Eris' => [$record, 'final class CoverageValueGenerator {}', ['mysqlMemory.invalidGenerator']];
         yield 'abstract generator' => [$record, str_replace('final class CoverageValueGenerator', 'abstract class CoverageValueGenerator', $generator), ['mysqlMemory.invalidGenerator']];

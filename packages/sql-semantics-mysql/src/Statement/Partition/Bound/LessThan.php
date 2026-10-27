@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition\Bound;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `VALUES LESS THAN (values)` or `VALUES LESS THAN MAXVALUE`: the exclusive upper bound of a RANGE partition.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class LessThan implements PartitionBound
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionRow|null $row The bound values, or null for the keyword MAXVALUE written without parentheses
      */
-    public function __construct(public readonly ?PartitionRow $row)
+    public function __construct(public readonly ?PartitionRow $row, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

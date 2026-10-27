@@ -18,17 +18,22 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ProgramText::class)]
 #[Small]
 final class ProgramTextTest extends TestCase
 {
-    public function testOfIgnoresUnrelatedSessionTextWithoutInputLocations(): void
+    public function testOfIgnoresUnrelatedSessionTextEvenWithGeneratedInputLocations(): void
     {
         $session = (new Instance())->connect();
-        $lowered = $session->analyze('CREATE FUNCTION d.f() RETURNS INT RETURN 7');
-        $constructed = new Operation($lowered->context, $lowered->statement);
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(
+            new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('f'), new Name('d')),
+            new ParameterList([]),
+            new Integral(IntegralKind::Int),
+            new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new ReturnStatement(new NumberLiteral('7'))),
+        );
+        $constructed = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $definition, new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($definition, 4, 12)]));
+        self::assertNotNull($constructed->source());
         $session->text = 'this is not SQL';
 
         $text = ProgramText::of($constructed, $session);

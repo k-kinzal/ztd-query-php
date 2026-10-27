@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The simple CASE statement: an operand compared for equality with the value of each WHEN.
@@ -31,11 +30,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a simple CASE statement
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE a WHEN 1 THEN SELECT 1; ELSE SELECT 2; END CASE');
- *     [count($create->statement->body->branches), count($create->statement->body->otherwise)] // => [1, 1]
+ *     [count($create->body->branches), count($create->body->otherwise)] // => [1, 1]
  */
 final class SimpleCase implements FunctionBody
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ConditionalBranch> The WHEN branches in written order
@@ -53,7 +52,7 @@ final class SimpleCase implements FunctionBody
      * @param list<ProgramStatement|Statement> $otherwise The statements of ELSE; empty without ELSE
      * @throws InvalidConstruction When there is no branch or a member is of another class
      */
-    public function __construct(public readonly Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, array $branches, array $otherwise = [])
+    public function __construct(public readonly Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, array $branches, array $otherwise = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->branches = Check::listOf($branches, ConditionalBranch::class, 'CASE holds at least one WHEN branch.', 1);
         $this->otherwise = (new StatementSequence())->members($otherwise);

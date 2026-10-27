@@ -18,7 +18,7 @@ final class ShowCreateTriggerTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE TRIGGER db.x');
-        self::assertInstanceOf(ShowCreateTrigger::class, $show->statement);
+        self::assertInstanceOf(ShowCreateTrigger::class, $show);
         self::assertSame('Trigger', $show->field(0)->name?->value);
     }
 

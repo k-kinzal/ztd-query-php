@@ -24,7 +24,7 @@ final class TableFields
      */
     public function apply(ExplicitTable $query, QueryPlan $input, Compiler $compiler, ?Scope $outer): QueryPlan
     {
-        $fields = $compiler->facts->query($query)->projection;
+        $fields = $query->queryInformation()->projection;
         if ($fields === [] || !$fields[0] instanceof Field || $fields[0]->expression === null) {
             return $input;
         }

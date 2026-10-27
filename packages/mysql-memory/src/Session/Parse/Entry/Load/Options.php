@@ -41,10 +41,10 @@ final class Options
         $derivation = new Derivation($session->semantics()->context(session: $session->resolution()));
         foreach ($problem->assignments as $assignment) {
             if (!$assignment->value instanceof DefaultRequest) {
-                $derivation->scalar($assignment->value, $derivation->environment());
+                $derivation->scalar(\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($assignment->value), $derivation->environment());
             }
         }
-        foreach ($derivation->facts()->diagnostics as $diagnostic) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic)) {
                 return (new Errors())->error($diagnostic, $session);
             }

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the removal of a dependency
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER INDEX i NO DEPENDS ON EXTENSION e');
- *     [$operation->statement->remove, $operation->statement->extension->value] // => [true, 'e']
+ *     [$operation->remove, $operation->extension->value] // => [true, 'e']
  */
-final class ExtensionDependency implements Statement
+final class ExtensionDependency extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ObjectKind $kind The kind of the object
@@ -39,8 +38,11 @@ final class ExtensionDependency implements Statement
      * @param Name $extension The extension
      * @param bool $remove Whether NO is written: the dependency is removed
      */
-    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly Name $extension, public readonly bool $remove = false)
+    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly Name $extension, public readonly bool $remove = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $forms = new ObjectForms();
         Check::input(in_array($forms->form($object), $forms->depends($kind), true), 'DEPENDS ON EXTENSION names the object as the grammar names objects of its kind.');
     }

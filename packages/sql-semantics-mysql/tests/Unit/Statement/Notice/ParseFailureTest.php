@@ -33,9 +33,9 @@ final class ParseFailureTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT BINARY ('a' COLLATE nope)");
 
-        self::assertInstanceOf(ParseFailure::class, $operation->facts->warnings[0]);
-        self::assertFalse($operation->facts->warnings[0]->aborts);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $operation->facts->warnings[0]->phase);
-        self::assertInstanceOf(Deprecation::class, $operation->facts->warnings[1]);
+        self::assertInstanceOf(ParseFailure::class, $operation->warnings()[0]);
+        self::assertFalse($operation->warnings()[0]->aborts);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $operation->warnings()[0]->phase);
+        self::assertInstanceOf(Deprecation::class, $operation->warnings()[1]);
     }
 }

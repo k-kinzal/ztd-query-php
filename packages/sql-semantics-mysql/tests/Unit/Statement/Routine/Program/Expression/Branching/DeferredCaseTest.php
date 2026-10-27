@@ -56,11 +56,11 @@ final class DeferredCaseTest extends TestCase
         $sql = 'CREATE PROCEDURE p() SELECT CASE WHEN 0 THEN (1, 2) ELSE NULL END';
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredSelection::class, $operation->statement->body);
-        $item = $operation->statement->body->items[0];
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredSelection::class, $operation->body);
+        $item = $operation->body->items[0];
         self::assertInstanceOf(DeferredProjection::class, $item);
-        self::assertEquals($value, $item->expression);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($value, $item->expression));
         self::assertSame($sql, $operation->toString());
         self::assertSame($sql, $semantics->analyze($operation->toString())->toString());
     }

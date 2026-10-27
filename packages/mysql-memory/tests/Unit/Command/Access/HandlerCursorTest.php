@@ -42,7 +42,7 @@ final class HandlerCursorTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $statement = $session->analyze('HANDLER h READ NEXT')->statement;
+        $statement = $session->analyze('HANDLER h READ NEXT');
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         self::assertInstanceOf(HandlerScan::class, $statement);
@@ -54,7 +54,7 @@ final class HandlerCursorTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, KEY ia (a)); INSERT INTO t VALUES (1),(2),(3)');
-        $statement = $session->analyze('HANDLER h READ ia > (1)')->statement;
+        $statement = $session->analyze('HANDLER h READ ia > (1)');
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         self::assertInstanceOf(HandlerIndexSeek::class, $statement);

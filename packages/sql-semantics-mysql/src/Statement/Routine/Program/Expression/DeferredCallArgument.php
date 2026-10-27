@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored call argument whose scalar requirement is deferred to invocation.
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredCallArgument implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $expression The argument expression
@@ -34,7 +33,7 @@ final class DeferredCallArgument implements Node
      * @param AliasMark $mark Whether the alias is written after AS
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the mark does not fit the alias
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($mark !== AliasMark::Equals && ($alias !== null || $mark === AliasMark::As), 'An argument alias is written with or without AS, and an argument without alias has no alias mark.');
     }

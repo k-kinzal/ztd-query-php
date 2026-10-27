@@ -47,7 +47,7 @@ final class DistinctOrderingTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, '8.4.7');
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        $diagnostics = $operation->facts->diagnostics;
+        $diagnostics = $operation->diagnostics();
 
         self::assertSame($expected, isset($diagnostics[0]) ? $diagnostics[0]::class : null);
     }
@@ -58,30 +58,30 @@ final class DistinctOrderingTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(n INT)');
         $plain = $semantics->analyze('SELECT DISTINCT n FROM t GROUP BY n', [$table]);
         $rollup = $semantics->analyze('SELECT DISTINCT n FROM t GROUP BY n WITH ROLLUP', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain->statement);
-        self::assertInstanceOf(Select::class, $plain->statement->query);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $rollup->statement);
-        self::assertInstanceOf(Select::class, $rollup->statement->query);
-        self::assertInstanceOf(SelectExpression::class, $plain->statement->query->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $rollup->statement->query->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
+        self::assertInstanceOf(Select::class, $plain->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $rollup);
+        self::assertInstanceOf(Select::class, $rollup->query);
+        self::assertInstanceOf(SelectExpression::class, $plain->query->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $rollup->query->items[0]);
 
-        self::assertTrue((new DistinctOrdering())->redundant($plain->statement->query, [$plain->statement->query->items[0]->expression], $plain->facts));
-        self::assertFalse((new DistinctOrdering())->redundant($rollup->statement->query, [$rollup->statement->query->items[0]->expression], $rollup->facts));
+        self::assertTrue((new DistinctOrdering())->redundant($plain->query, [$plain->query->items[0]->expression]));
+        self::assertFalse((new DistinctOrdering())->redundant($rollup->query, [$rollup->query->items[0]->expression]));
     }
 
     public function testMissingSkipsAliasReferencesButFindsWrittenAggregateCalls(): void
     {
         $semantics = new Semantics(Dialect::MySql, '8.4.7');
         $operation = $semantics->analyze('SELECT DISTINCT SUM(n) AS x FROM t GROUP BY n ORDER BY x+1, SUM(n)+1', [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
-        $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
+        $owned = array_fill_keys(array_map(spl_object_id(...), $select->queryInformation()->aggregates), true);
         $checker = new DistinctOrdering();
 
-        self::assertNull($checker->missing($select->orderBy[0]->expression, [], $operation->facts, [], $owned));
-        self::assertInstanceOf(Scalar::class, $checker->missing($select->orderBy[1]->expression, [], $operation->facts, [], $owned));
+        self::assertNull($checker->missing($select->orderBy[0]->expression, [], [], $owned));
+        self::assertInstanceOf(Scalar::class, $checker->missing($select->orderBy[1]->expression, [], [], $owned));
     }
 
     /**
@@ -103,7 +103,7 @@ final class DistinctOrderingTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $version);
         $operation = $semantics->analyze('SELECT DISTINCT ABS(n) FROM t GROUP BY n ORDER BY ' . $ordering, [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        $diagnostics = $operation->facts->diagnostics;
+        $diagnostics = $operation->diagnostics();
 
         self::assertSame($expected, isset($diagnostics[0]) ? $diagnostics[0]::class : null);
     }

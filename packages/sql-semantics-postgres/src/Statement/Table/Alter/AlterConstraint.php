@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER CONSTRAINT: changes the deferral attributes of a constraint.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AlterConstraint implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ConstraintAttribute> The attributes in the order written
@@ -38,7 +37,7 @@ final class AlterConstraint implements AlterCommand
      * @param Name $name The constraint
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      */
-    public function __construct(public readonly Name $name, array $attributes)
+    public function __construct(public readonly Name $name, array $attributes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->attributes = (new Attributes())->checked($attributes);
     }

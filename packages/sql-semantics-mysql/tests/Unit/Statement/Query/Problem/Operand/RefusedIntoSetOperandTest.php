@@ -15,7 +15,7 @@ final class RefusedIntoSetOperandTest extends TestCase
 {
     public function testMessageDescribesTheRetainedDestinationRole(): void
     {
-        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 INTO @x')->statement;
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 INTO @x');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->query);
         $problem = new RefusedIntoSetOperand($query->query, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union);

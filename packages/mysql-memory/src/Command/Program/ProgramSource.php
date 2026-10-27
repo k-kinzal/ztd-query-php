@@ -25,26 +25,48 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class ProgramSource
 {
-    /**
-     * @param string $text The statement text
-     * @param Node $tree The parse tree of the text
-     */
-    public function __construct(public readonly string $text, public readonly Node $tree)
-    {
-    }
+    /** @var array<string, string> Original display bodies by their input production */
+    private readonly array $bodies;
+
+    /** @var array<string, string> Parenthesized parameter text by its input production */
+    private readonly array $parameters;
+
+    private readonly string $triggerHeader;
 
     /**
-     * Answers the source of the statement a session executes.
+     * Extracts display strings at the input boundary without retaining the parser tree.
      *
-     * @throws \MySqlMemory\Error\SqlError When the text does not parse
+     * @param string $text The statement text
+     * @param Node $tree The tree already parsed by the input reader
      */
-    public static function of(Session $session): self
+    public function __construct(string $text, Node $tree)
     {
-        try {
-            return new self($session->text, $session->semantics()->parser()->parse($session->text));
-        } catch (\SqlParser\Lexer\SourceException $error) {
-            throw (new \MySqlMemory\Session\Syntax())->error($error, $session->text);
+        $bodies = [];
+        foreach (['stored_routine_body', 'sp_proc_stmt', 'ev_sql_stmt'] as $production) {
+            $span = ($tree->find($production)[0] ?? null)?->span();
+            if ($span !== null) {
+                $bodies[$production] = rtrim(substr($text, $span[0]));
+            }
         }
+        $parameters = [];
+        foreach (['sp_tail', 'sf_tail'] as $production) {
+            $node = $tree->find($production)[0] ?? null;
+            $open = null;
+            foreach ($node->children ?? [] as $child) {
+                if ($child instanceof Token && $child->text === '(' && $open === null) {
+                    $open = $child->end();
+                }
+                if ($child instanceof Token && $child->text === ')' && $open !== null) {
+                    $parameters[$production] = substr($text, $open, $child->offset - $open);
+                    break;
+                }
+            }
+        }
+        $this->bodies = $bodies;
+        $this->parameters = $parameters;
+        $start = ($tree->find('trigger_tail')[0] ?? null)?->span()[0] ?? null;
+        $order = ($tree->find('trigger_follows_precedes_clause')[0] ?? null)?->span();
+        $this->triggerHeader = $start === null ? '' : ($order === null ? rtrim(substr($text, $start)) : rtrim(substr($text, $start, $order[0] - $start)) . ' ' . trim(substr($text, $order[1])));
     }
 
     /**
@@ -52,50 +74,23 @@ final class ProgramSource
      */
     public function body(string $node): string
     {
-        $found = $this->tree->find($node);
-        $span = $found === [] ? null : $found[0]->span();
-
-        return $span === null ? '' : rtrim(substr($this->text, $span[0]));
+        return $this->bodies[$node] ?? '';
     }
 
     /**
-     * Answers the text of the first node of a name, as it was written.
-     */
-    public function text(string $node): string
-    {
-        $found = $this->tree->find($node);
-
-        return $found === [] ? '' : $found[0]->text($this->text);
-    }
-
-    /**
-     * Keeps the legacy trigger header's spelling while omitting FOLLOWS or PRECEDES.
-     * The result supplies display metadata only; execution consumes the typed body.
+     * Returns the legacy trigger header with its ordering clause omitted.
      */
     public function trigger(): string
     {
-        $start = ($this->tree->find('trigger_tail')[0] ?? null)?->span()[0] ?? 0;
-        $order = ($this->tree->find('trigger_follows_precedes_clause')[0] ?? null)?->span();
-        return $order === null ? rtrim(substr($this->text, $start)) : rtrim(substr($this->text, $start, $order[0] - $start)) . ' ' . trim(substr($this->text, $order[1]));
+        return $this->triggerHeader;
     }
 
     /**
-     * Answers the text between the parentheses that are tokens of the first node of a name.
+     * Answers the captured text between the parameter-list parentheses.
      */
     public function between(string $node): string
     {
-        $found = $this->tree->find($node);
-        $open = null;
-        foreach ($found === [] ? [] : $found[0]->children as $child) {
-            if ($child instanceof Token && $child->text === '(' && $open === null) {
-                $open = $child->end();
-            }
-            if ($child instanceof Token && $child->text === ')' && $open !== null) {
-                return substr($this->text, $open, $child->offset - $open);
-            }
-        }
-
-        return '';
+        return $this->parameters[$node] ?? '';
     }
 
     /**

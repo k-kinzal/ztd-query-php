@@ -19,13 +19,19 @@ use SqlSemantics\Statement\Node;
  */
 final class Conditions
 {
-    /** @var list<Diagnostic> */
+    /**
+ * @var list<Diagnostic>
+ */
     private array $diagnostics = [];
 
-    /** @var array<int, list<Diagnostic>> */
+    /**
+ * @var array<int, list<Diagnostic>>
+ */
     private array $withheld = [];
 
-    /** Start of the current definition's condition scope. */
+    /**
+ * Start of the current definition's condition scope.
+ */
     private int $boundary = 0;
 
     /**

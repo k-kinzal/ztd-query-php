@@ -72,9 +72,8 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: reconstruction, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php, emulate: '1' }
-          - { name: execution-text, package: mysql-memory, script: fuzz_mysql_execution.php, emulate: '1' }
-          - { name: execution-prepared, package: mysql-memory, script: fuzz_mysql_execution.php, emulate: '0' }
+          - { name: reconstruction, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php }
+          - { name: execution, package: mysql-memory, script: fuzz_mysql_execution.php }
         # Default corpora are complete; supplements follow the supplier's profile inventory.
         profile:
           - { version: '5.6.51', name: default, suffix: '', mode: '', diagnostics: '0' }
@@ -93,7 +92,6 @@ jobs:
       MYSQL_VERSION: ${{ matrix.profile.version }}
       SQLFAKER_SQL_MODE: ${{ matrix.profile.mode }}
       SQLFAKER_DIAGNOSTICS: ${{ matrix.profile.diagnostics }}
-      MYSQL_MEMORY_EMULATE: ${{ matrix.target.emulate }}
       FUZZ_SCRIPT: ${{ matrix.target.script }}
       SEED_SUFFIX: ${{ matrix.profile.suffix }}
     defaults:

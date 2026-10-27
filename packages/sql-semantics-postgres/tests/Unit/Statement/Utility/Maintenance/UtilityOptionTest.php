@@ -46,7 +46,7 @@ final class UtilityOptionTest extends TestCase
 
     public function testDeriveClauseRecordsNoProblemForAValue(): void
     {
-        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("VACUUM (TRUNCATE 'on', PARALLEL 2, INDEX_CLEANUP auto) t")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("VACUUM (TRUNCATE 'on', PARALLEL 2, INDEX_CLEANUP auto) t")->diagnostics());
     }
 
     public function testRenderQuotesFormatOnlyBeforeJson(): void

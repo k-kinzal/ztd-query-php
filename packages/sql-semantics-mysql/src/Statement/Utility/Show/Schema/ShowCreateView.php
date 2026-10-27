@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW CREATE VIEW: the statement that creates a view.
@@ -29,15 +28,18 @@ use SqlSemantics\Statement\Snapshot;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE VIEW v');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['View', 'SHOW CREATE VIEW v']
  */
-final class ShowCreateView implements Statement
+final class ShowCreateView extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param InspectedTable $view The view
      */
-    public function __construct(public readonly InspectedTable $view)
+    public function __construct(public readonly InspectedTable $view, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

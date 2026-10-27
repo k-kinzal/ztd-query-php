@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RENAME INDEX old TO new` (5.7 and later) or `RENAME COLUMN old TO new` (8.0 and later).
@@ -22,18 +21,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Renaming a column
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t RENAME COLUMN a TO b');
- *     [$alter->statement->commands[0]->to->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t RENAME COLUMN a TO b']
+ *     [$alter->commands[0]->to->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t RENAME COLUMN a TO b']
  */
 final class RenameElement implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ElementKind $kind A column or an index
      * @param ColumnName $from The current name
      * @param ColumnName $to The new name
      */
-    public function __construct(public readonly ElementKind $kind, public readonly ColumnName $from, public readonly ColumnName $to)
+    public function __construct(public readonly ElementKind $kind, public readonly ColumnName $from, public readonly ColumnName $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($kind === ElementKind::Column || $kind === ElementKind::Index, 'Only a column or an index is renamed by name.');
     }

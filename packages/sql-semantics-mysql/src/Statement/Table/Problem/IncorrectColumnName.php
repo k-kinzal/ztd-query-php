@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a selected column whose generated name ends in a space
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE TABLE t AS SELECT 'a '", []);
- *     $create->facts->diagnostics[0]->message() // => "Incorrect column name 'a '."
+ *     $create->diagnostics()[0]->message() // => "Incorrect column name 'a '."
  */
 final class IncorrectColumnName implements Diagnostic
 {

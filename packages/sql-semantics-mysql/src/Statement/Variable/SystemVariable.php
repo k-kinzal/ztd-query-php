@@ -16,7 +16,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -45,11 +44,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a scoped system variable
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @@GLOBAL.sort_buffer_size');
- *     [$query->statement->query->where->right->scope, $query->statement->query->where->right->name->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'sort_buffer_size']
+ *     [$query->query->where->right->scope, $query->query->where->right->name->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'sort_buffer_size']
  */
 final class SystemVariable implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The variables of a key cache, the only structured variables a server without components has.
@@ -61,8 +61,11 @@ final class SystemVariable implements Scalar
      * @param VariableScope|null $scope The read scope: GLOBAL, SESSION or the implicit scope
      * @param Name|null $instance The instance or component name of a structured variable
      */
-    public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null)
+    public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session], true), 'A system-variable read has an implicit, GLOBAL or SESSION scope.');
     }
 

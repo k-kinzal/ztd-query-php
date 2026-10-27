@@ -19,7 +19,7 @@ final class CreateRuleTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO SELECT new.b, old.a', $context);
         self::assertSame([
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveRelationResolvesTheTable(): void
@@ -28,9 +28,9 @@ final class CreateRuleTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE RULE r AS ON DELETE TO t DO NOTHING', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateRule::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($semantics->context($context)), new \SqlSemantics\Resolution\Environment($semantics->context($context)))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
@@ -43,6 +43,6 @@ final class CreateRuleTest extends TestCase
     public function testRefusesSeveralActionsWithoutParentheses(): void
     {
         $this->expectExceptionMessage('Several actions are written between parentheses.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateRule(new \SqlSemantics\Statement\Identifier\Name('r'), \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Insert, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1')->statement, (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 2')->statement]);
+        new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateRule(new \SqlSemantics\Statement\Identifier\Name('r'), \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Insert, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1'), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 2')]);
     }
 }

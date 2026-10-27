@@ -19,11 +19,11 @@ final class InsertRuleTest extends TestCase
     public function testSetRetainsItsHeadAndEveryAssignmentBeforeRefusal(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT LOW_PRIORITY INTO t SET a=DEFAULT, b=ROW(1,2) ON DUPLICATE KEY UPDATE c=3');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->statement->body);
-        self::assertCount(2, $operation->statement->body->assignments);
-        self::assertCount(1, $operation->statement->body->onDuplicate);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, $operation->statement->body->into->priority);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->body);
+        self::assertCount(2, $operation->body->assignments);
+        self::assertCount(1, $operation->body->onDuplicate);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, $operation->body->into->priority);
     }
     public function testStatementLowersEveryForm(): void
     {

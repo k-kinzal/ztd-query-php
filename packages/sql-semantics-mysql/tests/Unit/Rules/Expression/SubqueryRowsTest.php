@@ -62,10 +62,10 @@ final class SubqueryRowsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $rules = new SubqueryRows();
-        $tableless = $semantics->analyze('(SELECT 1 FROM DUAL WHERE 0) UNION ALL SELECT 2 HAVING 0')->statement;
+        $tableless = $semantics->analyze('(SELECT 1 FROM DUAL WHERE 0) UNION ALL SELECT 2 HAVING 0');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $tableless);
         $tableless = $tableless->query;
-        $tabled = $semantics->analyze('SELECT 1 FROM DUAL UNION ALL SELECT 2 FROM t')->statement;
+        $tabled = $semantics->analyze('SELECT 1 FROM DUAL UNION ALL SELECT 2 FROM t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $tabled);
         $tabled = $tabled->query;
 
@@ -268,8 +268,8 @@ final class SubqueryRowsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertSame($limited, (new SubqueryRows())->limited($operation->statement->query));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertSame($limited, (new SubqueryRows())->limited($operation->query));
     }
 
     #[DataProvider('providerLimits')]
@@ -277,15 +277,15 @@ final class SubqueryRowsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 IN (' . $sql . ')');
 
-        self::assertCount($limited ? 1 : 0, $operation->facts->diagnostics);
-        self::assertSame($limited ? "This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'." : null, ($operation->facts->diagnostics[0] ?? null)?->message());
+        self::assertCount($limited ? 1 : 0, $operation->diagnostics());
+        self::assertSame($limited ? "This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'." : null, ($operation->diagnostics()[0] ?? null)?->message());
     }
 
     public function testCheckLimitRecognizesALegacyLimitAfterALockingClause(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 IN (SELECT 1 FOR UPDATE LIMIT 1)');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertSame("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", $operation->facts->diagnostics[0]->message());
+        self::assertCount(1, $operation->diagnostics());
+        self::assertSame("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", $operation->diagnostics()[0]->message());
     }
 }

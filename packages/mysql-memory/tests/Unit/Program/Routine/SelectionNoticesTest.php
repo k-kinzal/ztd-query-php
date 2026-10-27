@@ -22,8 +22,8 @@ final class SelectionNoticesTest extends TestCase
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context([]));
         $selection->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
         $notices = new SelectionNotices();
-        $notices->start($selection, $derivation->facts(), $session);
-        $notices->start($selection, $derivation->facts(), $session);
+        $notices->start($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
+        $notices->start($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         self::assertSame([], $session->diagnostics->conditions);
     }
 
@@ -34,9 +34,9 @@ final class SelectionNoticesTest extends TestCase
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context([]));
         $selection->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
         $notices = new SelectionNotices();
-        $notices->start($selection, $derivation->facts(), $session);
+        $notices->start($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         $notices->failed($selection, $session);
-        $notices->start($selection, $derivation->facts(), $session);
+        $notices->start($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         self::assertSame([1287], array_column($session->diagnostics->conditions, 1));
     }
 }

@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -40,19 +39,23 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading one literal from either spelling
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
- *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->query->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
+ *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->query->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
  */
 final class RadixLiteral implements LiteralExpression
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Radix $radix The digit system
      * @param string $digits The digits exactly as written
      * @param Name|null $introducer The introduced character set, in lower case
      */
-    public function __construct(public readonly Radix $radix, public readonly string $digits, public readonly ?Name $introducer = null)
+    public function __construct(public readonly Radix $radix, public readonly string $digits, public readonly ?Name $introducer = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match($radix === Radix::Hexadecimal ? '/\A[0-9A-Fa-f]*\z/' : '/\A[01]*\z/', $digits) === 1, 'The digits belong to the digit system of the literal.');
         Check::input($introducer === null || (new Introducers())->known($introducer->value), 'An introducer names a character set of the server in lower case.');
     }

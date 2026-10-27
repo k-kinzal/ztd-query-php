@@ -25,13 +25,13 @@ use MySqlMemory\Storage\Writer;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CREATE TABLE ... SELECT: creates a table with the columns the statement declares and the columns of its query, and fills it with the rows of the query.
@@ -66,10 +66,10 @@ final class TableQueries
      *
      * @throws SqlError When a column, a key or a row is refused
      */
-    public function create(CreateTable $create, Operation $operation, Schema $schema): Completion
+    public function create(CreateTable $create, MySqlStatement $operation, Schema $schema): Completion
     {
         assert($create->query !== null);
-        $planner = new Planner($create, $operation->facts, $this->session->settings(), $this->connection, $this->session->instance->dictionary);
+        $planner = new Planner($create, $operation->statementInformation(), $this->session->settings(), $this->connection, $this->session->instance->dictionary, $this->session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($this->session));
         $plan = $planner->query($create->query->query, null);
         $seen = [];
         foreach ($plan->names as $name) {
@@ -95,13 +95,13 @@ final class TableQueries
         $layout = new TableLayout(new QualifiedName($create->name->name, new Name($schema->name)), $columns, $keys, $create->options, $create->temporaryWords);
         $layout->partitioning = $create->partitioning;
         $layout->implicitCollations = $this->implicitCollations($plan, $declared);
-        $layout->reportedLengths = $this->reportedLengths($plan, $declared, $operation->facts->query($create->query->query));
+        $layout->reportedLengths = $this->reportedLengths($plan, $declared, $create->query->query->queryInformation());
         $layout->inferredDefaults = $this->inferredDefaults($plan, $declared);
-        $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
+        $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, \MySqlMemory\Session\Statement\Catalog::declarations($this->session));
         $table = new StoredTable($definition, new Heap(), created: CreateTableCommand::created($this->context), clock: (int) floor($this->context->variables->clock()));
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
         $table->updated = $affected > 0 ? (int) floor($this->context->variables->clock()) : $table->updated;
-        $this->session->instance->dictionary->store($table);
+        $this->session->instance->dictionary->store($table, $this->session->temporaries);
         $warnings = $this->context->diagnostics->raised();
 
         return new Completion($affected, 0, $warnings, 'Records: ' . $records . '  Duplicates: ' . $duplicates . '  Warnings: ' . $warnings);
@@ -173,7 +173,7 @@ final class TableQueries
                 continue;
             }
             $origin = $plan->origins[$position] ?? null;
-            $table = $origin === null ? null : $this->session->instance->dictionary->table($origin->schema, $origin->originalTable);
+            $table = $origin === null ? null : $this->session->instance->dictionary->table($origin->schema, $origin->originalTable, $this->session->temporaries);
             $index = $table?->definition->position($origin->column ?? '');
             if ($index === null || ($table?->definition->columns[$index]->implicitCollation ?? false)) {
                 $implicit[mb_strtolower($name)] = true;
@@ -214,7 +214,7 @@ final class TableQueries
         if ($origin === null || $origin->column === '' || $origin->originalTable === '') {
             return null;
         }
-        $table = $this->session->instance->dictionary->table($origin->schema, $origin->originalTable);
+        $table = $this->session->instance->dictionary->table($origin->schema, $origin->originalTable, $this->session->temporaries);
         if ($table === null || $table->definition->statement === null) {
             return null;
         }

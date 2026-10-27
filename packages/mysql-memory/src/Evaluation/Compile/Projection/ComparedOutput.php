@@ -49,7 +49,7 @@ final class ComparedOutput
      */
     public function fixed(Query $query): bool
     {
-        $expressions = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ProjectionSources($this->compiler->facts))->expressions($query, 0, true);
+        $expressions = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ProjectionSources())->expressions($query, 0, true);
         return $expressions !== [] && !in_array(false, array_map(fn (?Scalar $expression): bool => $expression !== null && $this->compiler->constancy($expression) === Constancy::Resolved, $expressions), true);
     }
 
@@ -58,7 +58,7 @@ final class ComparedOutput
      */
     public function binary(Query $query): bool
     {
-        $expressions = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ProjectionSources($this->compiler->facts))->expressions($query, 0, false);
+        $expressions = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\ProjectionSources())->expressions($query, 0, false);
         return $expressions !== [] && !in_array(false, array_map(static fn (?Scalar $expression): bool => $expression instanceof RadixLiteral && $expression->introducer === null, $expressions), true);
     }
 
@@ -76,7 +76,7 @@ final class ComparedOutput
         if ($this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $query->where !== null && (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\ConstantTruth())->of($query->where) !== true) {
             return null;
         }
-        $field = $this->compiler->facts->query($query)->projection[0] ?? null;
+        $field = $query->queryInformation()->projection[0] ?? null;
         $expression = $field instanceof \SqlSemantics\Statement\Shape\Field ? $field->expression : null;
         return $expression !== null && $this->compiler->constancy($expression)->constant() ? $this->compiler->compile($expression, $scope) : null;
     }
@@ -91,7 +91,7 @@ final class ComparedOutput
         if (!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || $query->from === null || $query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual || $query->having === null) {
             return false;
         }
-        $field = $this->compiler->facts->query($query)->projection[0] ?? null;
+        $field = $query->queryInformation()->projection[0] ?? null;
         $expression = $field instanceof \SqlSemantics\Statement\Shape\Field ? $field->expression : null;
         return $expression !== null && ($this->compiler->constancy($expression) === Constancy::Resolved || (!$this->compiler->settings->legacy() && $this->compiler->constancy($expression)->constant())) && $this->compiler->domain($expression)->kind !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null;
     }

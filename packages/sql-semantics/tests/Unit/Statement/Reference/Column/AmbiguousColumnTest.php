@@ -31,7 +31,7 @@ final class AmbiguousColumnTest extends TestCase
         self::assertCount(2, $resolution->candidates);
         self::assertSame($declarations[0]->declarations()[0]->columns[0], $resolution->candidates[0]->declaration());
         self::assertSame($declarations[1]->declarations()[0]->columns[0], $resolution->candidates[1]->declaration());
-        self::assertSame([$resolution], $query->facts->diagnostics);
+        self::assertSame([$resolution], $query->diagnostics());
     }
 
     public function testMessageIsNotReachedWithFewerThanTwoCandidates(): void

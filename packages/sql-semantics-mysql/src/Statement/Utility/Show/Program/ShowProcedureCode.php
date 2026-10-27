@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW PROCEDURE CODE: the internal instructions of a stored procedure, in debug builds of the server.
@@ -30,17 +29,20 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PROCEDURE CODE shop.p');
- *     [$show->statement->name->schema?->value, $show->toString()] // => ['shop', 'SHOW PROCEDURE CODE shop.p']
+ *     [$show->name->schema?->value, $show->toString()] // => ['shop', 'SHOW PROCEDURE CODE shop.p']
  */
-final class ShowProcedureCode implements Statement
+final class ShowProcedureCode extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The name with its optional database
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($name);
         \SqlSemantics\Diagnostic\Check::input($name->catalog === null, 'A stored-program name has at most a database qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

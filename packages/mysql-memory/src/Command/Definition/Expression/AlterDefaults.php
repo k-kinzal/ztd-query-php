@@ -13,12 +13,10 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Program\Expression\RowUse;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use WeakReference;
 
@@ -33,12 +31,12 @@ final class AlterDefaults
     /**
      * Derives the complete instruction against the current dictionary.
      */
-    public function facts(AlterTable $definition, Session $session, string $database): Facts
+    public function bound(AlterTable $definition, Session $session, string $database): AlterTable
     {
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, new SearchPath($database), $session->resolution());
-        $derivation = new Derivation($context);
-        $definition->deriveStatement($derivation);
-        return $derivation->facts();
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, new SearchPath($database), $session->resolution());
+        $bound = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition);
+        \SqlSemantics\Diagnostic\Check::invariant($bound instanceof AlterTable, 'ALTER construction preserves its statement type.');
+        return $bound;
     }
 
     /**
@@ -52,7 +50,9 @@ final class AlterDefaults
         if ($commands === []) {
             return;
         }
-        $facts = $this->facts($definition, $session, $database);
+        $definition = $this->bound($definition, $session, $database);
+        $commands = array_values(array_filter($definition->commands, static fn ($command) => $command instanceof DeferredDefaultSetting));
+        $facts = $definition->statementInformation();
         foreach ($facts->diagnostics as $problem) {
             if ($problem instanceof MissingTable) {
                 throw (new Errors())->error($problem, $session);
@@ -60,7 +60,7 @@ final class AlterDefaults
         }
         $evaluation = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new Connection($session->variables, $evaluation, program: $session->program, session: WeakReference::create($session));
-        $planner = new Planner($commands[0]->expression, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($commands[0]->expression, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $scope = new Scope();
         $scope->clause = 'default value expression';
         $scope->place($definition, array_column($table->definition->columns, 'domain'), array_column($table->definition->columns, 'name'), $table->definition);

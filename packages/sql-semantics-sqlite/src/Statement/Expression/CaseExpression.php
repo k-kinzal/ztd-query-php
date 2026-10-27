@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -35,7 +34,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class CaseExpression implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CaseBranch> The branches in written order
@@ -47,8 +47,11 @@ final class CaseExpression implements Scalar
      * @param list<CaseBranch> $branches The branches in written order; at least one
      * @param Scalar|null $otherwise The ELSE result
      */
-    public function __construct(public readonly ?Scalar $base, array $branches, public readonly ?Scalar $otherwise = null)
+    public function __construct(public readonly ?Scalar $base, array $branches, public readonly ?Scalar $otherwise = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression has at least one branch.', 1);
     }
 

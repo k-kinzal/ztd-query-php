@@ -30,12 +30,12 @@ final class GroupingTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t GROUP BY b DESC, a');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertNotNull($operation->statement->query->groupBy);
-        self::assertSame(Direction::Descending, $operation->statement->query->groupBy->items[0]->direction);
-        self::assertNull($operation->statement->query->groupBy->items[1]->direction);
-        self::assertNull($operation->statement->query->groupBy->modifier);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertNotNull($operation->query->groupBy);
+        self::assertSame(Direction::Descending, $operation->query->groupBy->items[0]->direction);
+        self::assertNull($operation->query->groupBy->items[1]->direction);
+        self::assertNull($operation->query->groupBy->modifier);
     }
 
     public function testAnEmptyGroupingIsRejected(): void

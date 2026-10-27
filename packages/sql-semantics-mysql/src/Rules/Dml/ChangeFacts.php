@@ -128,10 +128,11 @@ final class ChangeFacts
     public function targets(array $targets, array $visible, Derivation $derivation, MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|null $statement = null): void
     {
         $projection = new Projection();
+        $resolutions = [];
         foreach ($targets as $target) {
             $found = null;
             foreach ($visible as $relation) {
-                if ($target->schema !== null && $derivation->facts()->relation($relation->relation)->table instanceof CommonTable) {
+                if ($target->schema !== null && $relation->relation->relationInformation()->table instanceof CommonTable) {
                     continue;
                 }
                 $name = $relation->alias === null ? new QualifiedName($target->name, $target->schema ?? $derivation->context->searchPath[0]) : $target;
@@ -142,10 +143,10 @@ final class ChangeFacts
             } elseif (!$this->updatable($found->relation, $derivation)) {
                 $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation), $statement));
             }
-            if ($found !== null) {
-                $derivation->bindReference($target, $found->relation);
-            }
+            \SqlSemantics\Diagnostic\Check::invariant($found === null || $found->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource, 'A DELETE target belongs to its table inputs.');
+            $resolutions[] = $found?->relation;
         }
+        $statement?->input->initializeResolutions($resolutions);
     }
 
     /**
@@ -157,7 +158,7 @@ final class ChangeFacts
             return false;
         }
 
-        return !$derivation->facts()->relation($relation)->table instanceof CommonTable;
+        return !$relation->relationInformation()->table instanceof CommonTable;
     }
 
     /**
@@ -170,14 +171,14 @@ final class ChangeFacts
     public function merged(Relation $relation, string $column, Derivation $derivation): ?WriteMisuse
     {
         $materialization = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
-        if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$relation instanceof DerivedTable || !$materialization->mergeable($relation->query, $derivation->context->profile->grammar, $derivation->facts(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge)) {
+        if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$relation instanceof DerivedTable || !$materialization->mergeable($relation->query, $derivation->context->profile->grammar, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge)) {
             return null;
         }
         $select = $this->block($relation->query);
         if ($select !== null && $this->computed($select, $column)) {
             return new WriteMisuse(WriteRule::NonUpdatableColumn, new Name($column));
         }
-        $first = $this->leading($select?->from, $derivation->facts());
+        $first = $this->leading($select?->from);
 
         return $first === null ? null : new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($first));
     }
@@ -214,7 +215,7 @@ final class ChangeFacts
      * The first table is found through table lists, the left side of joins, parentheses, escaped
      * references, and the derived tables MySQL 5.7 merges.
      */
-    public function leading(?Relation $from, ?\SqlSemantics\Statement\Fact\Facts $facts = null): ?NamedRelation
+    public function leading(?Relation $from): ?NamedRelation
     {
         $materialization = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
         while ($from !== null && !$from instanceof NamedRelation) {
@@ -222,7 +223,7 @@ final class ChangeFacts
                 $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList => $from->members[0] ?? null,
                 $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable => $from->left,
                 $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation, $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation => $from->relation,
-                $from instanceof DerivedTable && $materialization->mergeable($from->query, \SqlSemantics\Contract\GrammarRelease::MySql5744, $facts) => $this->block($from->query)?->from,
+                $from instanceof DerivedTable && $materialization->mergeable($from->query, \SqlSemantics\Contract\GrammarRelease::MySql5744) => $this->block($from->query)?->from,
                 default => null,
             };
         }

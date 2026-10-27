@@ -23,7 +23,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -41,7 +40,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredWindowAggregate implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var AggregateFunction|DeferredAggregateKind The aggregate operation
@@ -82,8 +82,11 @@ final class DeferredWindowAggregate implements DeferredOperand
      * @param Aggregate|GroupConcat|JsonObjectAggregate|DeferredJsonObjectAggregate $aggregate The aggregate without an OVER clause
      * @param Name|WindowSpecification $over The original window reference or specification
      */
-    public function __construct(Aggregate|GroupConcat|JsonObjectAggregate|DeferredJsonObjectAggregate $aggregate, public readonly Name|WindowSpecification $over)
+    public function __construct(Aggregate|GroupConcat|JsonObjectAggregate|DeferredJsonObjectAggregate $aggregate, public readonly Name|WindowSpecification $over, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($aggregate->over === null, 'A retained aggregate has one OVER clause.');
         $json = $aggregate instanceof JsonObjectAggregate || $aggregate instanceof DeferredJsonObjectAggregate;
         $this->function = $aggregate instanceof Aggregate ? $aggregate->function : ($aggregate instanceof GroupConcat ? DeferredAggregateKind::GroupConcat : DeferredAggregateKind::JsonObject);

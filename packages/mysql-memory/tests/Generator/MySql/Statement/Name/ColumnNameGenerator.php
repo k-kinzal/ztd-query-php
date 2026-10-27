@@ -83,4 +83,17 @@ final class ColumnNameGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<Name> $column The generated semantic operand
+     * @param ErisGenerator<QualifiedName|null> $table The generated semantic operand
+     * @param ErisGenerator<OptionalWords> $dot The generated semantic operand
+     * @return ErisGenerator<ColumnName>
+     */
+    public static function fromOperands(ErisGenerator $column, ErisGenerator $table, ErisGenerator $dot): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): ColumnName => new ColumnName(column: $parts[0], table: $parts[1], dot: $parts[2]), \Tests\Generator\Operands::tuple($column, $table, $dot));
+    }
+
 }

@@ -24,7 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -38,7 +37,7 @@ final class SelectTest extends TestCase
 {
     public function testInputIsTheFromRelation(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM t')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM t');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(TableInput::class, $statement->input());
@@ -48,7 +47,7 @@ final class SelectTest extends TestCase
 
     public function testInputIsNullWithoutFrom(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertNull($statement->input());
@@ -66,15 +65,15 @@ final class SelectTest extends TestCase
         self::assertSame('a+1', $query->field(2)->name?->value);
         self::assertSame($create->declarations()[0]->columns[0], $query->field('a')->column());
         self::assertSame(Nullability::Nullable, $query->field('x')->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT RAISE(IGNORE)');
 
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->diagnostics()[0]->rule);
     }
 
     public function testDeriveQueryLetsOrderByPreferABareAlias(): void
@@ -83,8 +82,8 @@ final class SelectTest extends TestCase
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        $resolution = $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution;
+        self::assertInstanceOf(Select::class, $query);
+        $resolution = $query->orderBy[0]->expression->scalarInformation()->resolution;
         self::assertInstanceOf(AliasTarget::class, $resolution);
         self::assertSame(1, $resolution->field->position);
         self::assertSame($query->field('a'), $resolution->field);
@@ -96,13 +95,13 @@ final class SelectTest extends TestCase
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a AS c, b AS a FROM t WHERE c > 1 AND a > 1', [$create]);
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        $where = $query->statement->where;
+        self::assertInstanceOf(Select::class, $query);
+        $where = $query->where;
         self::assertInstanceOf(Binary::class, $where);
         self::assertInstanceOf(Binary::class, $where->left);
         self::assertInstanceOf(Binary::class, $where->right);
-        $alias = $query->facts->scalar($where->left->left)->resolution;
-        $column = $query->facts->scalar($where->right->left)->resolution;
+        $alias = $where->left->left->scalarInformation()->resolution;
+        $column = $where->right->left->scalarInformation()->resolution;
         self::assertInstanceOf(AliasTarget::class, $alias);
         self::assertSame('c', $alias->field->name?->value);
         self::assertInstanceOf(ResolvedColumn::class, $column);
@@ -116,7 +115,7 @@ final class SelectTest extends TestCase
         $query = $semantics->analyze('SELECT a AS c, c FROM t', [$create]);
 
         self::assertInstanceOf(MissingColumn::class, $query->field(1)->resolution);
-        self::assertSame('Column c does not exist.', $query->facts->diagnostics[0]->message());
+        self::assertSame('Column c does not exist.', $query->diagnostics()[0]->message());
     }
 
     public function testDeriveQueryMakesEveryInputColumnNullableInAnAggregateQueryWithoutGroupBy(): void
@@ -138,7 +137,7 @@ final class SelectTest extends TestCase
 
         self::assertCount(0, $query->fields() ?? []);
         self::assertSame([], $query->shape()?->slots);
-        self::assertSame('no tables specified', $query->facts->diagnostics[0]->message());
+        self::assertSame('no tables specified', $query->diagnostics()[0]->message());
     }
 
     public function testDeriveQueryReportsARowValueInEveryClauseThatNeedsASingleValue(): void
@@ -147,8 +146,8 @@ final class SelectTest extends TestCase
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT (a, b) FROM t WHERE (a, b) GROUP BY (a, b) HAVING (a, b) ORDER BY (a, b)', [$create]);
 
-        self::assertCount(5, $query->facts->diagnostics);
-        self::assertSame(['row value misused'], array_unique(array_map(static fn (object $problem): string => $problem->message(), $query->facts->diagnostics)));
+        self::assertCount(5, $query->diagnostics());
+        self::assertSame(['row value misused'], array_unique(array_map(static fn (object $problem): string => $problem->message(), $query->diagnostics())));
     }
 
     public function testDeriveQueryGivesAnUndeclaredStarAnOpenProjection(): void
@@ -156,8 +155,8 @@ final class SelectTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT a, * FROM t');
 
         self::assertNull($query->fields());
-        self::assertInstanceOf(OpenStar::class, $query->facts->output?->projection[1]);
-        self::assertSame('the declaration of relation t', $query->facts->output->projection[1]->missing[0]->describe());
+        self::assertInstanceOf(OpenStar::class, $query->output()?->projection[1]);
+        self::assertSame('the declaration of relation t', $query->output()->projection[1]->missing[0]->describe());
         self::assertFalse($query->shape()?->complete());
     }
 
@@ -167,9 +166,9 @@ final class SelectTest extends TestCase
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a FROM t LIMIT a', [$create]);
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertNotNull($query->statement->limit);
-        self::assertInstanceOf(MissingColumn::class, $query->facts->scalar($query->statement->limit->count)->resolution);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertNotNull($query->limit);
+        self::assertInstanceOf(MissingColumn::class, $query->limit->count->scalarInformation()->resolution);
     }
 
     public function testRenderWritesEveryClauseInGrammarOrder(): void
@@ -183,7 +182,7 @@ final class SelectTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $select = new Select([new ResultColumn(new ColumnUse(new Name('a')), new Name('x')), new Star()], new TableInput(new QualifiedName(new Name('t'))), null, [new ColumnUse(new Name('a'))], null, [], [new SortTerm(new OutputOrdinal(new IntegerLiteral('1')))], null, SetQuantifier::All);
-        $operation = new Operation($semantics->context(), $select);
+        $operation = Semantics::fromStatement($semantics->context(), $select);
 
         self::assertSame('SELECT ALL a AS x, * FROM t GROUP BY a ORDER BY 1', $operation->toString());
         self::assertSame(SetQuantifier::All, $select->quantifier);

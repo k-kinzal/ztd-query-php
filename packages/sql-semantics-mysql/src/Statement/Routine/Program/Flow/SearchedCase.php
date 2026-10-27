@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The searched CASE statement: the statements of the first WHEN whose search condition is true run.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a searched CASE statement
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE WHEN a > 1 THEN SELECT 1; WHEN a < 0 THEN SELECT 2; END CASE');
- *     [count($create->statement->body->branches), $create->statement->body->otherwise] // => [2, []]
+ *     [count($create->body->branches), $create->body->otherwise] // => [2, []]
  */
 final class SearchedCase implements FunctionBody
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ConditionalBranch> The WHEN branches in written order
@@ -45,7 +44,7 @@ final class SearchedCase implements FunctionBody
      * @param list<ProgramStatement|Statement> $otherwise The statements of ELSE; empty without ELSE
      * @throws InvalidConstruction When there is no branch or a member is of another class
      */
-    public function __construct(array $branches, array $otherwise = [])
+    public function __construct(array $branches, array $otherwise = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->branches = Check::listOf($branches, ConditionalBranch::class, 'CASE holds at least one WHEN branch.', 1);
         $this->otherwise = (new StatementSequence())->members($otherwise);

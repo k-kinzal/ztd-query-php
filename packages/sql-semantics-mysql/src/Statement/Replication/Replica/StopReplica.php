@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `STOP REPLICA [threads] [FOR CHANNEL 'name']`, or STOP SLAVE.
@@ -30,9 +29,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Stopping the applier thread of a channel
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze("stop slave sql_thread for channel 'c'")->toString() // => "STOP SLAVE SQL_THREAD FOR CHANNEL 'c'"
  */
-final class StopReplica implements Statement
+final class StopReplica extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ReplicaThread> The threads in written order; empty for both
@@ -44,8 +43,11 @@ final class StopReplica implements Statement
      * @param list<ReplicaThread> $threads The threads in written order; empty for both
      * @param Text|null $channel The replication channel, when FOR CHANNEL is written
      */
-    public function __construct(public readonly Terminology $terminology, array $threads = [], public readonly ?Text $channel = null)
+    public function __construct(public readonly Terminology $terminology, array $threads = [], public readonly ?Text $channel = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->threads = Check::listOf($threads, ReplicaThread::class, 'STOP REPLICA names a list of threads.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

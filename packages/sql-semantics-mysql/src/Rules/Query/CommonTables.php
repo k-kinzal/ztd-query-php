@@ -83,7 +83,7 @@ final class CommonTables
                 }
 
                 $query = $derivation->query($table->query, $scope);
-                $materialized = !$recursive && (new Materialization())->mergeable($table->query, $derivation->context->profile->grammar, $derivation->facts(), Settings::of($derivation->context)->derivedMerge) ? null : $table->query;
+                $materialized = !$recursive && (new Materialization())->mergeable($table->query, $derivation->context->profile->grammar, Settings::of($derivation->context)->derivedMerge) ? null : $table->query;
 
                 return (new DerivedShapes())->shape($query, $table->columns, $derivation, $materialized);
             });

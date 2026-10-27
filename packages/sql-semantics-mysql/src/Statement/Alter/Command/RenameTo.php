@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\ConflictingTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RENAME [TO | AS] new`: a request to rename the table, possibly into another database.
@@ -32,12 +31,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RenameTo implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The new name with its optional database
      */
-    public function __construct(public readonly QualifiedName $table)
+    public function __construct(public readonly QualifiedName $table, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');

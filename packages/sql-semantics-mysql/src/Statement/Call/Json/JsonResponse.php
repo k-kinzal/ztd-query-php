@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The response of an ON EMPTY or ON ERROR clause: raise an error, return NULL, or return a default literal.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonResponse implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonResponseKind $kind The response
      * @param Literal|null $default The literal of DEFAULT; present exactly for DEFAULT
      */
-    public function __construct(public readonly JsonResponseKind $kind, public readonly ?Literal $default = null)
+    public function __construct(public readonly JsonResponseKind $kind, public readonly ?Literal $default = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$default instanceof Literal\NullLiteral, 'A JSON DEFAULT response holds a non-NULL literal; NULL is its own response.');
         Check::input(($default !== null) === ($kind === JsonResponseKind::Default), 'A response has a literal exactly when it is DEFAULT.');

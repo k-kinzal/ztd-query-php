@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER [COLUMN] c SET VISIBLE | INVISIBLE` (8.0.23 and later): a request to show a column to or hide it from `SELECT *`.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Hiding a column
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET INVISIBLE');
- *     [$alter->statement->commands[0]->visible, $alter->toString()] // => [false, 'ALTER TABLE t ALTER a SET INVISIBLE']
+ *     [$alter->commands[0]->visible, $alter->toString()] // => [false, 'ALTER TABLE t ALTER a SET INVISIBLE']
  */
 final class ColumnVisibility implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnName $column The column
      * @param bool $visible Whether VISIBLE (true) or INVISIBLE (false) is written
      */
-    public function __construct(public readonly ColumnName $column, public readonly bool $visible, public readonly bool $columnWritten = true)
+    public function __construct(public readonly ColumnName $column, public readonly bool $visible, public readonly bool $columnWritten = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

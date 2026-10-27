@@ -42,7 +42,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
-final class SchemaMember implements Statement
+final class SchemaMember
 {
     /**
      * The step each kind of element runs in; any other element (GRANT) runs last.
@@ -60,7 +60,7 @@ final class SchemaMember implements Statement
      * @param Statement $element The element
      * @param Name $schema The schema being created
      */
-    public function __construct(private readonly Statement $element, private readonly Name $schema)
+    public function __construct(public readonly Statement $element, private readonly Name $schema)
     {
     }
 
@@ -109,7 +109,7 @@ final class SchemaMember implements Statement
         if ($this->element instanceof SchemaElement) {
             $this->element->deriveElement($derivation, $this->schema);
         } else {
-            $derivation->statement($this->element);
+            $this->element->deriveStatement($derivation);
         }
     }
 

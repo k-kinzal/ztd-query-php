@@ -20,12 +20,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Statement\Operation;
 use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
 use Tests\Generator\MySql\Statement\Table\CreateTableGenerator;
-use Tests\Generator\Semantics\Statement\OperationGenerator;
+use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;
 
 /**
  * Checks that MemoryDB consumes generated column-definition names through CREATE TABLE execution.
@@ -43,19 +43,19 @@ final class CreateTableExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesCreatedColumnRetainsItsName(GrammarRelease $release): void
     {
-        $this->forAll(new OperationGenerator($release))->then(static function (Operation $operation) use ($release): void {
-            $database = $operation->context->declarationSchema->value;
+        $this->forAll(new AnalyzedStatementGenerator($release, new CreateTableGenerator(new ColumnNameGenerator($release))))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $operation) use ($release): void {
+            $database = ($operation instanceof CreateTable ? $operation->name->schema?->value : null) ?? 'pbt';
             $session = (new Instance(substr($release->value, 6), ['character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'collation_connection' => 'utf8mb4_unicode_ci'], [$database]))->connect(database: $database);
 
-            $reply = (new Execution($session))->perform($operation, (new Dispatcher())->command($operation->statement));
+            $reply = (new Execution($session))->perform($operation, (new Dispatcher())->command($operation));
 
             self::assertInstanceOf(Completion::class, $reply);
-            self::assertInstanceOf(CreateTable::class, $operation->statement);
-            $definition = $operation->statement->elements[0];
+            self::assertInstanceOf(CreateTable::class, $operation);
+            $definition = $operation->elements[0];
             self::assertInstanceOf(ColumnDefinition::class, $definition);
             $schema = $session->instance->dictionary->schema($database);
             self::assertNotNull($schema);
-            $table = $schema->table($operation->statement->name->name->value);
+            $table = $schema->table($operation->name->name->value);
             self::assertNotNull($table);
             self::assertCount(1, $table->definition->columns);
             self::assertSame($definition->name->column->value, $table->definition->columns[0]->name);
@@ -64,15 +64,14 @@ final class CreateTableExecutionProperties extends TestCase
 
     /**
      * Contradictory requests remain executable values and fail with their SQL condition.
-     * Operation is still the transitional publication boundary for table definitions.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     public function satisfiesDuplicateColumnsFailWithoutInstallingATable(GrammarRelease $release): void
     {
-        $requests = new OperationGenerator($release, new CreateTableGenerator(new ColumnNameGenerator($release), duplicateColumns: true, ifNotExists: true));
-        $this->forAll($requests)->then(static function (Operation $operation) use ($release): void {
-            $database = $operation->context->declarationSchema->value;
+        $requests = new AnalyzedStatementGenerator($release, new CreateTableGenerator(new ColumnNameGenerator($release), duplicateColumns: true, ifNotExists: true));
+        $this->forAll($requests)->then(static function (\SqlSemantics\Statement\AnalyzedStatement $operation) use ($release): void {
+            $database = ($operation instanceof CreateTable ? $operation->name->schema?->value : null) ?? 'pbt';
             $session = (new Instance(substr($release->value, 6), [], [$database]))->connect(database: $database);
             $session->text = 'generated duplicate-column request';
             try {
@@ -96,20 +95,20 @@ final class CreateTableExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesPreparedConditionalCreationUsesTheCurrentDestination(GrammarRelease $release): void
     {
-        $sequences = Generators::map(static function (Operation $operation): array {
-            $create = $operation->statement;
+        $sequences = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $operation): array {
+            $create = $operation;
             if (!$create instanceof CreateTable || !$create->elements[0] instanceof ColumnDefinition) {
                 throw new LogicException('The creation generator supplies a table and its column.');
             }
             $name = $create->elements[0]->name;
             $duplicate = new ColumnDefinition(new ColumnName($name->column, $name->table, $name->dot), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
-            return [$operation, new Operation($operation->context, new CreateTable($create->name, [$create->elements[0], $duplicate], ifNotExists: true))];
-        }, new OperationGenerator($release));
+            return [$operation, (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext($operation->profile(), [new \SqlSemantics\Statement\Identifier\Name('pbt')], session: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults($operation->profile()->grammar)), new CreateTable($create->name, [$create->elements[0], $duplicate], ifNotExists: true), new \SqlSemantics\Statement\Source\SourceMap())];
+        }, new AnalyzedStatementGenerator($release, new CreateTableGenerator(new ColumnNameGenerator($release))));
         $this->forAll($sequences)->then(static function (array $sequence) use ($release): void {
             [$prerequisite, $request] = $sequence;
-            self::assertInstanceOf(Operation::class, $prerequisite);
-            self::assertInstanceOf(Operation::class, $request);
-            $database = $prerequisite->context->declarationSchema->value;
+            self::assertInstanceOf(MySqlStatement::class, $prerequisite);
+            self::assertInstanceOf(MySqlStatement::class, $request);
+            $database = ($prerequisite instanceof CreateTable ? $prerequisite->name->schema?->value : null) ?? 'pbt';
             $session = (new Instance(substr($release->value, 6), [], [$database]))->connect(database: $database);
             (new \MySqlMemory\Session\Access\Preparation())->check($request, $session);
             $prepared = PreparedStatement::capture($request, $session);
@@ -124,7 +123,7 @@ final class CreateTableExecutionProperties extends TestCase
                 self::assertSame([1050], array_column($session->diagnostics->conditions, 1));
             }
             self::assertSame($tables, $session->instance->dictionary->schema($database)?->tables);
-            self::assertSame($request->statement, $prepared->statement);
+            self::assertSame($request, $prepared->statement);
             self::assertSame([], $session->transaction->statements->running);
             self::assertSame([], $session->running->using);
         });

@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(TableLayout::class)]
 #[Small]
@@ -39,7 +38,7 @@ final class TableLayoutTest extends TestCase
     public function testElementsIndexesColumnDefinitionsWithoutKeys(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE TABLE t(A DOUBLE, b INT, PRIMARY KEY(b))')->statement;
+        $statement = $session->analyze('CREATE TABLE t(A DOUBLE, b INT, PRIMARY KEY(b))');
         self::assertInstanceOf(CreateTable::class, $statement);
 
         self::assertSame(['a', 'b'], array_keys(TableLayout::elements($statement)));
@@ -69,7 +68,7 @@ final class TableLayoutTest extends TestCase
         self::assertNotNull($table);
         $layout = TableLayout::of($table->definition);
 
-        self::assertSame('CREATE TABLE d.t (a INT NOT NULL, b VARCHAR(5) COLLATE utf8mb4_0900_ai_ci, PRIMARY KEY (a), UNIQUE b (b)) COLLATE utf8mb4_0900_ai_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertSame('CREATE TABLE d.t (a INT NOT NULL, b VARCHAR(5) COLLATE utf8mb4_0900_ai_ci, PRIMARY KEY (a), UNIQUE b (b)) COLLATE utf8mb4_0900_ai_ci', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
         self::assertSame([0, 1], array_map(static fn (array $column): ?int => $column[1], $layout->columns));
         self::assertSame(['a', 'b'], $layout->names);
     }
@@ -102,20 +101,20 @@ final class TableLayoutTest extends TestCase
     public function testUnkeyedDropsTheKeyAttributes(): void
     {
         $session = (new Instance())->connect();
-        $create = $session->analyze('CREATE TABLE t (a INT PRIMARY KEY UNIQUE)')->statement;
+        $create = $session->analyze('CREATE TABLE t (a INT PRIMARY KEY UNIQUE)');
         self::assertInstanceOf(CreateTable::class, $create);
         $element = $create->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $element);
 
         $unkeyed = TableLayout::unkeyed($element, null, true);
 
-        self::assertSame('CREATE TABLE t (a INT NOT NULL)', (new Operation($session->semantics()->context(), new CreateTable(new QualifiedName(new Name('t')), [$unkeyed])))->toString());
+        self::assertSame('CREATE TABLE t (a INT NOT NULL)', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), new CreateTable(new QualifiedName(new Name('t')), [$unkeyed]), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testSpecifiedKeepsTheTypeOfAColumn(): void
     {
         $session = (new Instance())->connect();
-        $create = $session->analyze('CREATE TABLE t (a INT NULL)')->statement;
+        $create = $session->analyze('CREATE TABLE t (a INT NULL)');
         self::assertInstanceOf(CreateTable::class, $create);
         self::assertInstanceOf(ColumnDefinition::class, $create->elements[0]);
         $specification = $create->elements[0]->specification;
@@ -181,7 +180,7 @@ final class TableLayoutTest extends TestCase
         $layout = TableLayout::of($table->definition);
         array_splice($layout->columns, 1, 1);
 
-        self::assertSame('CREATE TABLE d.t (a INT) COLLATE utf8mb4_0900_ai_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertSame('CREATE TABLE d.t (a INT) COLLATE utf8mb4_0900_ai_ci', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testRenamedAnswersTheNewNameOfAColumn(): void

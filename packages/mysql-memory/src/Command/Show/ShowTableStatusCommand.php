@@ -15,10 +15,10 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\Value\Temporal;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW TABLE STATUS: one row for each base table of a database, in name order.
@@ -59,8 +59,8 @@ final class ShowTableStatusCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowTableStatus);
         $schema = (new Inspection())->database($statement->database, $session);
         $tables = array_filter($schema->tables, static fn (StoredTable $table): bool => !$table->definition->temporary);

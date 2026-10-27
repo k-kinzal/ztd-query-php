@@ -161,11 +161,11 @@ final class PluginCommandTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);

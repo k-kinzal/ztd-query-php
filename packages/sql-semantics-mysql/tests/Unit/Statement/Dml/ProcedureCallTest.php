@@ -19,10 +19,10 @@ final class ProcedureCallTest extends TestCase
     public function testDeriveStatementDerivesTheArguments(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CALL p(1, @x)');
-        self::assertInstanceOf(ProcedureCall::class, $operation->statement);
+        self::assertInstanceOf(ProcedureCall::class, $operation);
 
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->arguments[1])->type);
-        self::assertNull($operation->facts->output);
+        self::assertInstanceOf(Dependent::class, $operation->arguments[1]->scalarInformation()->type);
+        self::assertNull($operation->output());
     }
 
     public function testRenderWritesParenthesesOnlyForArguments(): void

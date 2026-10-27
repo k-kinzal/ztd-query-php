@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\NumberOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A table option whose value is a number, or DEFAULT for the options that accept it.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) AUTO_INCREMENT = 100');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption // => true
  */
 final class NumberOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param NumberOptionKind $kind The option
      * @param Numeral|null $value The number; null for DEFAULT
      */
-    public function __construct(public readonly NumberOptionKind $kind, public readonly ?Numeral $value)
+    public function __construct(public readonly NumberOptionKind $kind, public readonly ?Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($value !== null || $kind->defaultable(), 'Only PACK_KEYS and the STATS_ options accept DEFAULT.');
     }

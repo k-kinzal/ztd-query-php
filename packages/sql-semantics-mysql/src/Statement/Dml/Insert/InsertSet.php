@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * INSERT or REPLACE of one row written as SET assignments, with the optional row alias and ON DUPLICATE KEY UPDATE.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the assignments of an INSERT ... SET
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t SET a = 1, b = a + 1');
- *     [count($insert->statement->assignments), $insert->toString()] // => [2, 'INSERT INTO t SET a = 1, b = a + 1']
+ *     [count($insert->assignments), $insert->toString()] // => [2, 'INSERT INTO t SET a = 1, b = a + 1']
  */
-final class InsertSet implements Explainable
+final class InsertSet extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Assignment> The assignments in written order
@@ -46,8 +45,11 @@ final class InsertSet implements Explainable
      * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When the head has a column list, there is no assignment, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
-    public function __construct(public readonly InsertInto $into, array $assignments, public readonly ?RowAlias $alias = null, array $onDuplicate = [])
+    public function __construct(public readonly InsertInto $into, array $assignments, public readonly ?RowAlias $alias = null, array $onDuplicate = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($into->columns === null, 'INSERT ... SET names its columns in the assignments.');
         $this->assignments = Check::listOf($assignments, Assignment::class, 'SET holds at least one assignment.', 1);
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');

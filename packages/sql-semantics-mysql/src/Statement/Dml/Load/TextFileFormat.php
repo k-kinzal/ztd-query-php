@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The text file format of SELECT ... INTO OUTFILE: character set, FIELDS options and LINES options.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the format of INTO OUTFILE
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' CHARACTER SET utf8mb4 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY ';'");
- *     [$query->statement->query->into->format->charset->name->value, count($query->statement->query->into->format->fields), count($query->statement->query->into->format->lines)] // => ['utf8mb4', 2, 1]
+ *     [$query->query->into->format->charset->name->value, count($query->query->into->format->fields), count($query->query->into->format->lines)] // => ['utf8mb4', 2, 1]
  */
 final class TextFileFormat implements FileFormat
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FieldOption> The FIELDS options in written order; empty without FIELDS
@@ -43,7 +42,7 @@ final class TextFileFormat implements FileFormat
      * @param list<FieldOption> $fields The FIELDS options
      * @param list<LineOption> $lines The LINES options
      */
-    public function __construct(public readonly ?CharsetName $charset = null, array $fields = [], array $lines = [])
+    public function __construct(public readonly ?CharsetName $charset = null, array $fields = [], array $lines = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->fields = Check::listOf($fields, FieldOption::class, 'The FIELDS clause holds field options.');
         $this->lines = Check::listOf($lines, LineOption::class, 'The LINES clause holds line options.');

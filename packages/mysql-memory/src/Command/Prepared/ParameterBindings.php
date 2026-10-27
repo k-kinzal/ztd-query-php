@@ -7,9 +7,9 @@ namespace MySqlMemory\Command\Prepared;
 use LogicException;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Remembers parameter types between prepared executions to identify automatic repreparation.
@@ -39,38 +39,29 @@ final class ParameterBindings
      */
     public static function capture(\SqlSemantics\Statement\AnalyzedStatement $operation): self
     {
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
-            foreach ($operation->values->rows as $row) {
-                foreach ($row as $expression) {
-                    if (!$expression instanceof \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral) {
-                        throw new LogicException('Parameter capture has not implemented ' . $expression::class);
-                    }
-                }
-            }
-            return new self([]);
-        }
+
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
             return new self([]);
         }
-        if (!$operation instanceof Operation) {
+        if (!$operation instanceof MySqlStatement) {
             throw new LogicException('No parameter capture for ' . $operation::class);
         }
-        if (\MySqlMemory\Session\Problem\Stages::definitionCondition($operation->statement) && !($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->statement->query !== null)) {
-            return (new GenerationParameters())->capture($operation->statement, $operation->profile()->grammar);
+        if (\MySqlMemory\Session\Problem\Stages::definitionCondition($operation) && !($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->query !== null)) {
+            return (new GenerationParameters())->capture($operation, $operation->profile()->grammar);
         }
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $operation->statement->hasExecutionCondition()) {
-            $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, Parameter::class);
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $operation->hasExecutionCondition()) {
+            $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation, Parameter::class);
             return new self(array_map(static fn ($marker): array => [Domain::string(0, Collation::binary()), false], $markers));
         }
-        return new self(array_map(static fn (array $entry): array => [Domain::of($entry[0], true), $entry[1]], \SqlSemantics\Platform\MySql\Statement\Variable\ParameterInference::infer($operation)));
+        return new self(array_map(static fn (array $entry): array => [Domain::of($entry[0], true), $entry[1]], \SqlSemantics\Platform\MySql\Rules\Typing\Prepared\ParameterInference::infer($operation)));
     }
 
     /**
      * Reads the input slot SQL Semantics resolved for a marker occurrence.
      */
-    public static function position(Operation $operation, Parameter $parameter): int
+    public static function position(MySqlStatement $operation, Parameter $parameter): int
     {
-        $binding = $operation->facts->scalar($parameter)->resolution;
+        $binding = $parameter->scalarInformation()->resolution;
         \SqlSemantics\Diagnostic\Check::invariant($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding, 'A parameter occurrence has a resolved input slot.');
 
         return $binding->position;

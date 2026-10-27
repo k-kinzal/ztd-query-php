@@ -42,7 +42,7 @@ final class MaintainedTablesTest extends TestCase
 
     public function testDeriveAcceptsOneNameInTwoDatabases(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CHECKSUM TABLE a.t, b.t')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CHECKSUM TABLE a.t, b.t')->diagnostics());
     }
 
     public function testRenderWritesKeywordsOptionAndTables(): void

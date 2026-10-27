@@ -28,8 +28,8 @@ final class UpdateTest extends TestCase
     public function testValueRejectsAnOffsetInTheRowLimit(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a=1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $statement = $operation->statement;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        $statement = $operation;
         self::assertInstanceOf(Update::class, $statement);
         $limit = new M\Query\Clause\RowLimit(new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('1'), M\Query\Clause\OffsetSpelling::Comma);
         $this->expectExceptionMessage('UPDATE limits rows without an offset.');
@@ -49,27 +49,27 @@ final class UpdateTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('UPDATE t JOIN u ON t.a = u.x SET b = y WHERE a > 0', [$t, $u]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(Update::class, $operation->statement);
-        $column = $operation->facts->scalar($operation->statement->assignments[0]->column);
-        $value = $operation->facts->scalar($operation->statement->assignments[0]->value);
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(Update::class, $operation);
+        $column = $operation->assignments[0]->column->scalarInformation();
+        $value = $operation->assignments[0]->value->scalarInformation();
 
         self::assertInstanceOf(ResolvedColumn::class, $column->resolution);
         self::assertSame('b', $column->resolution->slot->name?->value);
         self::assertInstanceOf(ResolvedColumn::class, $value->resolution);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 
     public function testHasExecutionConditionRetainsMultiTableClauses(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t, u SET a = 1 ORDER BY a LIMIT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(Update::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition());
-        self::assertCount(2, $operation->statement->tables);
-        self::assertCount(1, $operation->statement->orderBy);
-        self::assertNotNull($operation->statement->limit);
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(Update::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
+        self::assertCount(2, $operation->tables);
+        self::assertCount(1, $operation->orderBy);
+        self::assertNotNull($operation->limit);
     }
 
     public function testHasExecutionConditionRetainsADerivedDestination(): void
@@ -123,9 +123,9 @@ final class UpdateTest extends TestCase
         self::assertSame($assignment, $write->assignments[0]);
         $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context([], true));
         $write->deriveStatement($derivation);
-        self::assertTrue($derivation->facts()->covers($table));
-        self::assertTrue($derivation->facts()->covers($column));
-        self::assertTrue($derivation->facts()->covers($value));
+        self::assertTrue($table->hasBinding());
+        self::assertTrue($column->hasBinding());
+        self::assertTrue($value->hasBinding());
         self::assertContains(M\Expression\Problem\OperandColumns::class, array_map(static fn ($problem): string => $problem::class, $derivation->facts()->diagnostics));
     }
 
@@ -133,8 +133,8 @@ final class UpdateTest extends TestCase
     public function testValueRejectsAnOffsetInTheStoredRowLimit(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() UPDATE t,u SET t.a=1 LIMIT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $statement = $operation->statement;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        $statement = $operation;
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $statement);
         $statement = $statement->body;
         self::assertInstanceOf(Update::class, $statement);
@@ -146,15 +146,15 @@ final class UpdateTest extends TestCase
     public function testDeriveStatementStoredRetainsTheCompleteWrite(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() UPDATE JSON_TABLE('[]', '$[*]' COLUMNS (b FOR ORDINALITY,b FOR ORDINALITY)) j SET b=1");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(Update::class, $operation->statement->body);
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(Update::class, $operation->body);
         self::assertStringContainsString('UPDATE JSON_TABLE', $operation->toString());
     }
     public function testRenderPreservesTheStoredUpdate(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() UPDATE LOW_PRIORITY IGNORE JSON_TABLE('[]', '$[*]' COLUMNS (b FOR ORDINALITY,b FOR ORDINALITY)) j SET b=1 WHERE 0 ORDER BY b LIMIT 2");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Statement::class, $operation);
         self::assertStringContainsString('UPDATE LOW_PRIORITY IGNORE', $operation->toString());
         self::assertStringContainsString('WHERE 0 ORDER BY b LIMIT 2', $operation->toString());
     }

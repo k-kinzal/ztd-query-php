@@ -63,4 +63,14 @@ final class IndexNamesTest extends TestCase
         $session->query('CREATE TABLE fresh(KEY `PRIMARY`(a),KEY ordinary(missing)) AS SELECT 1 AS a');
     }
 
+
+    public function testPreparationChecksAStandaloneCreateIndexName(): void
+    {
+        $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $this->expectExceptionCode(1280);
+        $this->expectExceptionMessage("Incorrect index name 'PRIMARY'");
+        $session->query('CREATE INDEX `PRIMARY` ON t(a)');
+    }
+
 }

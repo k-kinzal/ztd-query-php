@@ -19,10 +19,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
@@ -73,7 +73,7 @@ enum Constancy: int
      * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
+    public static function of(Node $node, StatementSemantics $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
         return self::within($node instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? $node->query : $node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
     }
@@ -89,7 +89,7 @@ enum Constancy: int
      * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
+    public static function within(Node $node, StatementSemantics $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
         if ($node instanceof DefaultOfColumn) {
             return self::Resolved;
@@ -106,7 +106,7 @@ enum Constancy: int
         if ($level > 0) {
             return $effects && self::uncacheable($node, $variableReadsVary, $release ?? ($legacy ? GrammarRelease::MySql5744 : GrammarRelease::MySql847)) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
         }
-        $merged = $node instanceof Scalar && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
+        $merged = $node instanceof Scalar && $node->hasBinding() ? $node->scalarInformation()->replacement : null;
         if ($merged !== null) {
             return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary, $release);
         }
@@ -142,7 +142,7 @@ enum Constancy: int
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
      */
-    public static function form(Node $node, Facts $facts, bool $correlation, array $assigned, bool $assignmentsVary, bool $legacy = false, ?GrammarRelease $release = null): self
+    public static function form(Node $node, StatementSemantics $facts, bool $correlation, array $assigned, bool $assignmentsVary, bool $legacy = false, ?GrammarRelease $release = null): self
     {
         return match (true) {
             $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, release: $release)),
@@ -161,12 +161,12 @@ enum Constancy: int
     /**
      * Answers how long a column read stays the same: a column of the block, or of a block outside the subquery it is read in, varies by row.
      */
-    public static function column(ColumnUse $use, Facts $facts, int $level): self
+    public static function column(ColumnUse $use, StatementSemantics $facts, int $level): self
     {
         if ($level === 0) {
             return self::Row;
         }
-        $resolution = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
+        $resolution = $use->hasBinding() ? $use->scalarInformation()->resolution : null;
 
         return ($resolution instanceof ResolvedColumn || $resolution instanceof AliasTarget) && $resolution->depth >= $level ? self::Row : self::Resolved;
     }
@@ -175,9 +175,9 @@ enum Constancy: int
      * Uses the NULL result Semantics assigns to VALUES outside an inserted-row scope.
      * The column still resolves before this value becomes constant.
      */
-    public static function inserted(InsertedColumn $node, Facts $facts): self
+    public static function inserted(InsertedColumn $node, StatementSemantics $facts): self
     {
-        $type = $facts->covers($node) ? $facts->scalar($node)->type : null;
+        $type = $node->hasBinding() ? $node->scalarInformation()->type : null;
         return $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $type->descriptor->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null ? self::Resolved : self::Row;
     }
 
@@ -202,7 +202,7 @@ enum Constancy: int
      * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
+    public static function children(Node $node, StatementSemantics $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true, ?GrammarRelease $release = null): self
     {
         $children = [];
         $properties = get_object_vars($node);

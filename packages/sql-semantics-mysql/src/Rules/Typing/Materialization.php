@@ -52,19 +52,19 @@ final class Materialization
      * assignments or dependent select-list queries. Unresolved subqueries are treated
      * conservatively when facts are unavailable; normal derivation supplies their bindings.
      */
-    public function mergeable(Query $query, GrammarRelease $release = GrammarRelease::MySql847, ?\SqlSemantics\Statement\Fact\Facts $facts = null, bool $enabled = true): bool
+    public function mergeable(Query $query, GrammarRelease $release = GrammarRelease::MySql847, bool $enabled = true): bool
     {
         if (!$enabled || $release === GrammarRelease::MySql5651) {
             return false;
         }
-        return $this->view($query, $release, $facts);
+        return $this->view($query, $release);
     }
 
     /**
      * Tests the query shape of a view, including releases that materialize derived tables.
      * View merging predates derived-table merging and retains the view's column identity.
      */
-    public function view(Query $query, GrammarRelease $release = GrammarRelease::MySql847, ?\SqlSemantics\Statement\Fact\Facts $facts = null): bool
+    public function view(Query $query, GrammarRelease $release = GrammarRelease::MySql847): bool
     {
         while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->orderBy === [] && $query->limit === null)) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
@@ -77,7 +77,7 @@ final class Materialization
         }
         $parts = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $query->items);
 
-        return !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems())->windowed($query) && !(new Aggregates())->aggregates([...$parts, ...array_map(static fn ($item): object => $item->expression, $query->orderBy)]) && !(new \SqlSemantics\Platform\MySql\Rules\Expression\MergeDependencies())->separate($parts, $release, $facts);
+        return !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems())->windowed($query) && !(new Aggregates())->aggregates([...$parts, ...array_map(static fn ($item): object => $item->expression, $query->orderBy)]) && !(new \SqlSemantics\Platform\MySql\Rules\Expression\MergeDependencies())->separate($parts, $release);
     }
 
     /**
@@ -159,8 +159,7 @@ final class Materialization
         if (!$query instanceof Select) {
             return $this->combined($domain, $narrows, $derivation->context->profile->grammar);
         }
-        $facts = $derivation->facts();
-        $field = $facts->covers($query) ? ($facts->query($query)->projection[$position] ?? null) : null;
+        $field = $query->hasBinding() ? ($query->queryInformation()->projection[$position] ?? null) : null;
         $expression = $field instanceof OutputField ? $field->expression : null;
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -176,9 +175,9 @@ final class Materialization
         if ($stored !== null) {
             return $stored;
         }
-        $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
+        $resolution = $expression !== null && $expression->hasBinding() ? $expression->scalarInformation()->resolution : ($field instanceof OutputField ? $field->resolution : null);
         $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        if (!$text || $resolution instanceof ResolvedColumn || (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->copied($expression, $facts)) {
+        if (!$text || $resolution instanceof ResolvedColumn || (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->copied($expression)) {
             return $this->column($domain, $narrows, $release);
         }
 
@@ -192,11 +191,10 @@ final class Materialization
      */
     public function windowProjection(Domain $domain, Select $query, Scalar $expression, Derivation $derivation, bool $narrows = true): Domain
     {
-        $facts = $derivation->facts();
         $release = $derivation->context->profile->grammar;
         $bare = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\SetFunction || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
-        $logical = $facts->covers($expression) ? (new Precision())->domain($facts->scalar($expression)->type) : null;
-        $reported = $logical === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->domain($query, $expression, $logical, $release, $facts);
+        $logical = $expression->hasBinding() ? (new Precision())->domain($expression->scalarInformation()->type) : null;
+        $reported = $logical === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->domain($query, $expression, $logical, $release);
         $domain = $reported !== $logical ? $domain : ($bare ? $this->windowed($domain, $release, $expression) : $this->windowParent($domain, $release, $expression));
         if ($bare && $domain->field->blob()) {
             return $this->stored($domain, $domain->metadataLength(), $domain->metadataLength());

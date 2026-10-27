@@ -14,13 +14,13 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrorCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW WARNINGS and SHOW ERRORS: the conditions of the diagnostics area.
@@ -52,8 +52,8 @@ final class WarningsCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $bounded = $statement instanceof ShowWarnings || $statement instanceof ShowErrors ? $statement->limit : null;
         (new \MySqlMemory\Session\Problem\Reading())->limited($bounded, $session);
         $errors = $statement instanceof ShowErrors || $statement instanceof ShowErrorCount;
@@ -71,7 +71,7 @@ final class WarningsCommand implements Command
         }
         $limit = $statement instanceof ShowWarnings || $statement instanceof ShowErrors ? $statement->limit : null;
         if ($limit instanceof RowLimit) {
-            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary));
+            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session)));
             $rows = array_slice($rows, $limit->offset === null ? 0 : $bounds->bound($limit->offset, null), $bounds->bound($limit->count, null));
         }
         return new ResultSet($this->columns($session), $rows);

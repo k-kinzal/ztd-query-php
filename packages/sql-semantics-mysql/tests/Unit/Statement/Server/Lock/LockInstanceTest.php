@@ -24,7 +24,7 @@ final class LockInstanceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('LOCK INSTANCE FOR BACKUP');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

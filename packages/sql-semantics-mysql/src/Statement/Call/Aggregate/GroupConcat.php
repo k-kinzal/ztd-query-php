@@ -24,7 +24,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\TypeFact;
@@ -55,7 +54,8 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class GroupConcat implements SetFunction
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The concatenated expressions in order
@@ -80,7 +80,12 @@ final class GroupConcat implements SetFunction
         array $order = [],
         public readonly ?Text $separator = null,
         public readonly Name|WindowSpecification|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($over === null, 'GROUP_CONCAT has no ordinary window invocation.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'GROUP_CONCAT takes at least one expression.', 1);
         $this->order = Check::listOf($order, OrderItem::class, 'An ordering is a list of ordering items.');

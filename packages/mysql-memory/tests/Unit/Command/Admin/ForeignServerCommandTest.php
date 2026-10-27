@@ -83,7 +83,7 @@ final class ForeignServerCommandTest extends TestCase
     public function testOptionsLetALaterOptionOverrideAnEarlierOne(): void
     {
         $instance = new Instance();
-        $statement = $instance->connect()->analyze("CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h', HOST 'i', PORT 3306)")->statement;
+        $statement = $instance->connect()->analyze("CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h', HOST 'i', PORT 3306)");
         self::assertInstanceOf(CreateServer::class, $statement);
 
         self::assertSame(['host' => 'i', 'port' => 3306], (new ForeignServerCommand())->options($statement->options));

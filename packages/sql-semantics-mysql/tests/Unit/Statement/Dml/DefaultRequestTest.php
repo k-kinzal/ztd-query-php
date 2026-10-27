@@ -31,21 +31,21 @@ final class DefaultRequestTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t (b, a) VALUES (DEFAULT, DEFAULT)', [$t]);
-        self::assertInstanceOf(InsertRows::class, $operation->statement);
-        $fact = $operation->facts->scalar($operation->statement->rows[0]->values[1]);
+        self::assertInstanceOf(InsertRows::class, $operation);
+        $fact = $operation->rows[0]->values[1]->scalarInformation();
 
         self::assertEquals(new Known(new Integral(IntegralKind::Int)), $fact->type);
         self::assertSame(Nullability::NotNull, $fact->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarReportsDefaultOutsideAnAssignment(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() VALUES ROW(DEFAULT)');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(WriteMisuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(WriteRule::DefaultOutsideInsert, $operation->facts->diagnostics[0]->rule);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(WriteMisuse::class, $operation->diagnostics()[0]);
+        self::assertSame(WriteRule::DefaultOutsideInsert, $operation->diagnostics()[0]->rule);
     }
 
     public function testRenderWritesTheKeyword(): void

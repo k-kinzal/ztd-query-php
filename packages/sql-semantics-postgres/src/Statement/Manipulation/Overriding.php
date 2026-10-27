@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation;
  * @visibility public
  * @example Reading the override of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t OVERRIDING SYSTEM VALUE VALUES (1)');
- *     $insert->statement->overriding // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding::System
+ *     $insert->overriding // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding::System
  */
 enum Overriding: string
 {

@@ -18,7 +18,7 @@ final class InvalidJsonDocumentTest extends TestCase
     public function testMessageDescribesTheDocumentTypeWithoutRetainingInputText(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT JSON_VALUE(1, '$')");
-        $problem = $operation->facts->diagnostics[0];
+        $problem = $operation->diagnostics()[0];
         self::assertInstanceOf(InvalidJsonDocument::class, $problem);
         self::assertSame('Invalid data type for JSON data in argument 1 to function json_value; a JSON string or JSON type is required.', $problem->message());
     }

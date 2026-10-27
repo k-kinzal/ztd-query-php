@@ -9,9 +9,9 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\Session\Statement\Binding;
 use SqlSemantics\Platform\MySql\Statement\Notice\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use WeakMap;
 
@@ -36,8 +36,8 @@ final class InspectionNotices
             return;
         }
         $operation = (new Binding())->operation($session, $routine->statement);
-        foreach ($operation->facts->warnings as $warning) {
-            $instruction = $operation->facts->warningInstruction($warning);
+        foreach ($operation->statementInformation()->warnings as $warning) {
+            $instruction = $operation->statementInformation()->warningInstruction($warning);
             if (($instruction instanceof ShowDatabases || $instruction instanceof ShowTables) && ($warning instanceof TrimmedName || $warning instanceof NameConversion)) {
                 $session->diagnostics->warning($warning->code(), $warning->message());
             }
@@ -48,15 +48,15 @@ final class InspectionNotices
      * Repeats preparation notices after an unresolved computed table label.
      * First execution consumes the notices already published when loading the definition.
      */
-    public function start(Operation $operation, Session $session): void
+    public function start(MySqlStatement $operation, Session $session): void
     {
-        if (!$operation->statement instanceof ShowTables || array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof MissingColumn) === []) {
+        if (!$operation instanceof ShowTables || array_filter($operation->statementInformation()->diagnostics, static fn ($problem): bool => $problem instanceof MissingColumn) === []) {
             return;
         }
         $cache = $session->preparation->inspections ??= new WeakMap();
-        $seen = isset($cache[$operation->statement]);
-        $cache[$operation->statement] = true;
-        foreach ($seen ? $operation->facts->warnings : [] as $warning) {
+        $seen = isset($cache[$operation]);
+        $cache[$operation] = true;
+        foreach ($seen ? $operation->statementInformation()->warnings : [] as $warning) {
             if ($warning instanceof TrimmedName) {
                 $session->diagnostics->warning($warning->code(), $warning->message());
             }

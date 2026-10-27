@@ -61,21 +61,21 @@ final class QueryExpressionTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t UNION SELECT c FROM u ORDER BY a LIMIT 1', [$t, $u]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->query->body);
-        self::assertSame($operation->facts->query($operation->statement->query->body), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        self::assertInstanceOf(SetOperation::class, $operation->query->body);
+        self::assertSame($operation->query->body->queryInformation(), $operation->output());
     }
 
     public function testDeriveQueryResolvesOrdinalsAgainstTheOutput(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 ORDER BY 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        $ordinal = $operation->statement->query instanceof QueryExpression ? $operation->statement->query->orderBy[0]->expression : null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $ordinal = $operation->query instanceof QueryExpression ? $operation->query->orderBy[0]->expression : null;
 
         self::assertInstanceOf(OutputOrdinal::class, $ordinal);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($ordinal)->resolution);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(AliasTarget::class, $ordinal->scalarInformation()->resolution);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveQueryBindsTheCommonTablesForTheBody(): void
@@ -83,11 +83,11 @@ final class QueryExpressionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c', []);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
-        self::assertNotNull($operation->statement->query->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        self::assertNotNull($operation->query->with);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheWithClauseTheBodyTheOrderingAndTheLimit(): void

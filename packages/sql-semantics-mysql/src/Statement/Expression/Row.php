@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -31,11 +30,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Comparing two rows
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE ROW(a, b) = (1, 2)');
- *     [count($query->statement->query->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
+ *     [count($query->query->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
  */
 final class Row implements RowOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RowOperand> The elements in order; at least two
@@ -46,8 +46,11 @@ final class Row implements RowOperand
      * @param list<Scalar|RowOperand> $elements The elements in order; at least two
      * @param OptionalWords $keyword Whether the optional ROW keyword is written
      */
-    public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted)
+    public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $checked = Check::listOf($elements, \SqlSemantics\Statement\Operand::class, 'A row constructor has at least two elements.', 2);
         $accepted = [];
         foreach ($checked as $element) {

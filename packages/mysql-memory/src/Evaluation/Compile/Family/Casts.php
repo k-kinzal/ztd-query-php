@@ -36,7 +36,6 @@ final class Casts
     /**
      * Compiles the conversion of an operand to a target type.
      *
-     * @throws \MySqlMemory\Error\SqlError When the target is not one the emulator converts to
      */
     public function cast(Evaluable $operand, CastTarget $target, Scalar $node): Evaluable
     {
@@ -56,10 +55,10 @@ final class Casts
         $walker = new \MySqlMemory\Evaluation\Compile\Walker();
         $bare = new \MySqlMemory\Typing\Quietness();
         foreach ($walker->find($this->compiler->planner->statement, \SqlSemantics\Statement\Query::class) as $query) {
-            if (!$this->compiler->facts->covers($query)) {
+            if (!$query->hasBinding()) {
                 continue;
             }
-            foreach ($this->compiler->facts->query($query)->fields() ?? [] as $field) {
+            foreach ($query->queryInformation()->fields() ?? [] as $field) {
                 if ($field->expression !== null && $bare->bare($field->expression) === $node) {
                     return $field->name->value ?? '(null)';
                 }

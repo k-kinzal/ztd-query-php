@@ -37,17 +37,17 @@ final class ProgramProblemsTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertSame([true, false], [ProgramProblems::stores($session->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1')->statement), ProgramProblems::stores($session->analyze('SELECT 1')->statement)]);
+        self::assertSame([true, false], [ProgramProblems::stores($session->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1')), ProgramProblems::stores($session->analyze('SELECT 1'))]);
     }
 
     public function testRaiseConsumesScopedVariableResolutionFromSemantics(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT n')->statement;
+        $statement = $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT n');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
-        self::assertSame([], $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT N')->facts->diagnostics);
-        self::assertSame(['Undeclared variable: m'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT m')->facts->diagnostics));
+        self::assertSame([], $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT N')->statementInformation()->diagnostics);
+        self::assertSame(['Undeclared variable: m'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT m')->statementInformation()->diagnostics));
     }
 
     public function testRaiseRaisesTheProblemsOfTheRulesFirst(): void
@@ -145,7 +145,7 @@ final class ProgramProblemsTest extends TestCase
     public function testTriggersRefusesADatabaseThatDoesNotExist(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SHOW TRIGGERS FROM nope WHERE x = 1')->statement;
+        $statement = $session->analyze('SHOW TRIGGERS FROM nope WHERE x = 1');
         self::assertInstanceOf(ShowTriggers::class, $statement);
 
         $this->expectExceptionCode(1049);
@@ -178,7 +178,7 @@ final class ProgramProblemsTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $operation = $session->analyze('CREATE EVENT e ON SCHEDULE AT (SELECT NOW() FROM t) DO SELECT 1');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateEvent::class, $statement);
 
         $this->expectExceptionCode(1235);
@@ -197,7 +197,7 @@ final class ProgramProblemsTest extends TestCase
         $this->expectExceptionCode(1054);
         $this->expectExceptionMessage("Unknown column 'zz' in 'NEW'");
 
-        (new ProgramProblems())->body($operation->statement, $operation, $session, new Problems());
+        (new ProgramProblems())->body($operation, $operation, $session, new Problems());
     }
 
 }

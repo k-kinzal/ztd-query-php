@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupKeys;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Type\Nullability;
@@ -26,13 +25,6 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class QuantifiedAttributes
 {
-    /**
-     * @param Facts $facts Resolved references and output attributes
-     */
-    public function __construct(public readonly Facts $facts)
-    {
-    }
-
     /**
      * Derives legacy attributes after distinguishing membership from ordered comparison.
      * MySQL 5.6's tableless nullable operand retains its attribute across WHERE.
@@ -54,7 +46,7 @@ final class QuantifiedAttributes
     public function modern(Query $query, Nullability $outer, Nullability $bound, GrammarRelease $release, bool $equality): Nullability
     {
         if ($release === GrammarRelease::MySql8044 && $outer === Nullability::Nullable) {
-            return $this->facts->query($query)->shape->slots[0]->nullability ?? $bound;
+            return $query->queryInformation()->shape->slots[0]->nullability ?? $bound;
         }
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
@@ -68,7 +60,7 @@ final class QuantifiedAttributes
      */
     public function nullable(Query $query): bool
     {
-        if (($this->facts->query($query)->shape->slots[0]->nullability ?? null) !== Nullability::NotNull || !(new ProjectionSources($this->facts))->constant($query)) {
+        if (($query->queryInformation()->shape->slots[0]->nullability ?? null) !== Nullability::NotNull || !(new ProjectionSources())->constant($query)) {
             return false;
         }
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
@@ -91,7 +83,7 @@ final class QuantifiedAttributes
     public function fixed(Node $node): bool
     {
         $keys = new GroupKeys();
-        if (!$keys->constant($node, $this->facts) || (new CallEffects())->uncacheable($node, GrammarRelease::MySql5744)) {
+        if (!$keys->constant($node) || (new CallEffects())->uncacheable($node, GrammarRelease::MySql5744)) {
             return false;
         }
         foreach ($keys->children($node) as $child) {

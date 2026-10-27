@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ChangeReplicationSource::class)]
 #[Medium]
@@ -29,7 +28,7 @@ final class ChangeReplicationSourceTest extends TestCase
 
         self::assertEquals([
             new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange),
-        ], $change->facts->diagnostics);
+        ], $change->diagnostics());
     }
 
     public function testDeriveStatementRejectsTheVocabularyOfAnotherRelease(): void
@@ -39,7 +38,7 @@ final class ChangeReplicationSourceTest extends TestCase
 
         $this->expectExceptionMessage('CHANGE REPLICATION SOURCE is written in the vocabulary of the release.');
 
-        new Operation($semantics->context([]), $change);
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([]), $change, new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testValueRejectsAnOptionOutsideTheVocabulary(): void

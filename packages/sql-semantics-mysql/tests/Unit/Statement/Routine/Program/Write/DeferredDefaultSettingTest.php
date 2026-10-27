@@ -19,20 +19,20 @@ final class DeferredDefaultSettingTest extends TestCase
     public function testDeriveCommandRetainsTheFullDefaultAndItsTarget(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t ALTER a SET DEFAULT (ROW(1,2)), FORCE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $alter = $operation->statement->body;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $alter = $operation->body;
         self::assertInstanceOf(M\Alter\AlterTable::class, $alter);
         $default = $alter->commands[0];
         self::assertInstanceOf(DeferredDefaultSetting::class, $default);
-        self::assertTrue($operation->facts->covers($default->expression));
+        self::assertTrue($default->expression->hasBinding());
         self::assertCount(2, $alter->commands);
     }
 
     public function testRenderRetainsTheOperandRoleAndCompleteOwner(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t ALTER a SET DEFAULT (ROW(1,2)), FORCE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Statement::class, $operation);
         self::assertSame('CREATE PROCEDURE p() ALTER TABLE t ALTER a SET DEFAULT (ROW(1, 2)), FORCE', $operation->toString());
     }
 }

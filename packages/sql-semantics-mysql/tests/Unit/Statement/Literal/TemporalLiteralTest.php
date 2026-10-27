@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -61,14 +60,14 @@ final class TemporalLiteralTest extends TestCase
     public function testDeriveScalarAnswersTheTemporalTypeThatIsNeverNull(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
         self::assertInstanceOf(TemporalLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame(TemporalForm::Timestamp, $literal->form);
         self::assertSame('2024-01-02 03:04:05.25', $literal->text);
@@ -81,13 +80,13 @@ final class TemporalLiteralTest extends TestCase
     public function testDeriveScalarAnswersDateForADateLiteral(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT DATE '2024-01-02'");
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
-        $fact = $operation->facts->scalar($item->expression);
+        $fact = $item->expression->scalarInformation();
 
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertInstanceOf(Domain::class, $fact->type->descriptor);
@@ -102,7 +101,13 @@ final class TemporalLiteralTest extends TestCase
         $plain = new Semantics(Dialect::MySql);
         $verbatim = new Semantics(Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('NO_BACKSLASH_ESCAPES'));
 
-        self::assertEquals((new Operation($plain->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement)))->facts->scalar($literal), (new Operation($verbatim->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement)))->facts->scalar($literal));
+        $first = Semantics::fromStatement($plain->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement));
+        $second = Semantics::fromStatement($verbatim->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement));
+        self::assertEquals($first->field(0)->type, $second->field(0)->type);
+        self::assertSame($first->field(0)->nullability, $second->field(0)->nullability);
+        self::assertSame("SELECT DATE '2024-01-02'", $first->toString());
+        self::assertSame($first->toString(), $second->toString());
+        self::assertFalse($literal->hasBinding());
     }
 
     public function testRenderWritesTheKeywordAndTheQuotedText(): void

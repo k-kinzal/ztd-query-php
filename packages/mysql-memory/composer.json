@@ -17,6 +17,7 @@
         "k-kinzal/sql-semantics-mysql": "dev-main"
     },
     "require-dev": {
+        "ext-mysqli": "*",
         "ext-pdo_mysql": "*",
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",

@@ -43,56 +43,56 @@ final class LockedTablesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t2 LOCK IN SHARE MODE LOCK IN SHARE MODE');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t2'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t2'))], $operation->diagnostics());
     }
 
     public function testCheckNamesATableOfAnOfListAsWritten(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t1 AS x FOR SHARE OF x FOR SHARE OF x');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('x')))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('x')))], $operation->diagnostics());
     }
 
     public function testCheckLocksTheTablesOfTheLastOperandOfASetOperation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t2 EXCEPT TABLE t1 FOR SHARE OF t2');
 
-        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t2')))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t2')))], $operation->diagnostics());
     }
 
     public function testCheckLeavesDistinctTablesAlone(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t1, t2 FOR SHARE OF t1 FOR UPDATE OF t2');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testCheckCountsAJsonTableAsLocked(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT * FROM JSON_TABLE('[1]', '$[*]' COLUMNS (x INT PATH '$')) AS j FOR SHARE");
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('j'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('j'))], $operation->diagnostics());
     }
 
     public function testCheckLeavesDerivedTablesAndCommonTablesOutOfAClauseWithoutOf(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) SELECT * FROM c, (SELECT 1) AS d FOR SHARE FOR SHARE');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testCheckCountsADerivedTableNamedByOfAsLocked(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT 1) AS d FOR SHARE OF d');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('d')))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('d')))], $operation->diagnostics());
     }
 
     public function testCheckCountsTheTablesOfAHighPriorityQueryAsLocked(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT HIGH_PRIORITY a FROM t1 UNION SELECT a FROM t2 FOR SHARE');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t2'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t2'))], $operation->diagnostics());
     }
 
     public function testApplyLocksTheTablesOfAClauseWithoutOf(): void
@@ -116,9 +116,9 @@ final class LockedTablesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT HIGH_PRIORITY 1 UNION SELECT 2 FOR SHARE');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryStatement::class, $operation->statement->query);
-        self::assertSame([SelectOption::HighPriority], (new LockedTables())->leading($operation->statement->query)?->options);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryStatement::class, $operation->query);
+        self::assertSame([SelectOption::HighPriority], (new LockedTables())->leading($operation->query)?->options);
     }
 
     public function testEntriesAnswersTheTablesOfTheBlock(): void
@@ -148,6 +148,6 @@ final class LockedTablesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT HIGH_PRIORITY * FROM t1 LOCK IN SHARE MODE');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

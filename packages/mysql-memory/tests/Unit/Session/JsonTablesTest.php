@@ -22,7 +22,7 @@ final class JsonTablesTest extends TestCase
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $inspect = static function (string $sql) use ($session): ?\MySqlMemory\Error\SqlError {
             $operation = $session->analyze($sql);
-            return (new JsonTables())->first($operation->statement, $operation->facts);
+            return (new JsonTables())->first($operation, $operation->statementInformation());
         };
         $update = $inspect("UPDATE JSON_TABLE('[]', 'text' COLUMNS (q FOR ORDINALITY)) AS j, t SET t.a = 1");
         $column = $inspect("SELECT * FROM t JOIN JSON_TABLE('[]', '$' COLUMNS (q INT PATH '$[')) AS j ON 1");
@@ -39,7 +39,7 @@ final class JsonTablesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $select = $session->analyze("SELECT 1 FROM (JSON_TABLE('[]', '$' COLUMNS (p FOR ORDINALITY)) AS x JOIN t ON 1), { OJ t AS u LEFT JOIN JSON_TABLE('[]', '$' COLUMNS (q FOR ORDINALITY)) AS y ON 1 }")->statement;
+        $select = $session->analyze("SELECT 1 FROM (JSON_TABLE('[]', '$' COLUMNS (p FOR ORDINALITY)) AS x JOIN t ON 1), { OJ t AS u LEFT JOIN JSON_TABLE('[]', '$' COLUMNS (q FOR ORDINALITY)) AS y ON 1 }");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -51,7 +51,7 @@ final class JsonTablesTest extends TestCase
     public function testPathsAnswersThePathsOfTheColumnsNestedOnesIncluded(): void
     {
         $session = (new Instance())->connect();
-        $select = $session->analyze("SELECT * FROM JSON_TABLE('[]', '$' COLUMNS (a INT PATH '$.a', NESTED PATH '$.b[*]' COLUMNS (c INT PATH '$.c', d FOR ORDINALITY))) AS j")->statement;
+        $select = $session->analyze("SELECT * FROM JSON_TABLE('[]', '$' COLUMNS (a INT PATH '$.a', NESTED PATH '$.b[*]' COLUMNS (c INT PATH '$.c', d FOR ORDINALITY))) AS j");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);

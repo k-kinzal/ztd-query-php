@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use Tests\Generator\Bindings;
 use Tests\Generator\Embedding;
 
@@ -33,7 +32,7 @@ final class LockNamesTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $node = new LockTables([new TableLock(new QualifiedName(new Name(str_repeat('a', 65))), null, LockMode::LowPriorityWrite)]);
-        $operation = new Operation($session->semantics()->context(), $node);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $node, new \SqlSemantics\Statement\Source\SourceMap());
         $failure = (new LockNames())->failure($operation, $session);
 
         self::assertNotNull($failure);
@@ -51,11 +50,11 @@ final class LockNamesTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);

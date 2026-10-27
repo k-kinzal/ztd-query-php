@@ -36,10 +36,10 @@ final class WithTextTest extends TestCase
     public function testClauseAndUsedRetainWrittenPositions(string $sql, string $expected, array $positions): void
     {
         $operation = (new Instance())->connect()->analyze($sql);
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        $query = $operation->statement->query;
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        $query = $operation->query;
         self::assertInstanceOf(QueryExpression::class, $query);
-        $writer = new WithText(new ViewText($operation->facts, '', ''));
+        $writer = new WithText(new ViewText($operation->statementInformation(), '', ''));
         self::assertSame($expected, $writer->clause($query));
         self::assertSame($positions, array_keys($writer->used($query)));
     }
@@ -47,9 +47,9 @@ final class WithTextTest extends TestCase
     public function testUsedReturnsNoDefinitionsWithoutAWithClause(): void
     {
         $operation = (new Instance())->connect()->analyze('SELECT 1 UNION SELECT 2 ORDER BY 1');
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
-        $writer = new WithText(new ViewText($operation->facts, '', ''));
-        self::assertSame([], $writer->used($operation->statement->query));
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        $writer = new WithText(new ViewText($operation->statementInformation(), '', ''));
+        self::assertSame([], $writer->used($operation->query));
     }
 }

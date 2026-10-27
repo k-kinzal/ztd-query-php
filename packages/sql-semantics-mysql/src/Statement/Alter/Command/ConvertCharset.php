@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CONVERT TO CHARACTER SET name | DEFAULT [COLLATE name]`: a request to convert every character column and the table default.
@@ -24,17 +23,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Converting a table to utf8mb4
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4');
- *     [$alter->statement->commands[0]->charset->name?->value, $alter->toString()] // => ['utf8mb4', 'ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4']
+ *     [$alter->commands[0]->charset->name?->value, $alter->toString()] // => ['utf8mb4', 'ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4']
  */
 final class ConvertCharset implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharsetName $charset The character set, or DEFAULT
      * @param CollationName|null $collation The COLLATE clause, when written
      */
-    public function __construct(public readonly CharsetName $charset, public readonly ?CollationName $collation = null)
+    public function __construct(public readonly CharsetName $charset, public readonly ?CollationName $collation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

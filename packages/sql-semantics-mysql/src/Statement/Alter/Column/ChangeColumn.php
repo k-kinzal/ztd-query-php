@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CHANGE [COLUMN] old definition` or `MODIFY [COLUMN] definition`, each with `[FIRST | AFTER column]`: a request to redefine a column.
@@ -27,18 +26,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Renaming and retyping a column
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b BIGINT FIRST');
- *     [$alter->statement->commands[0]->column?->column->value, $alter->toString()] // => ['a', 'ALTER TABLE t CHANGE a b BIGINT FIRST']
+ *     [$alter->commands[0]->column?->column->value, $alter->toString()] // => ['a', 'ALTER TABLE t CHANGE a b BIGINT FIRST']
  */
 final class ChangeColumn implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnName|null $column The column CHANGE redefines, or null for MODIFY
      * @param ColumnDefinition $definition The new definition with the new name
      * @param ColumnPosition|null $position Where the column goes, when written
      */
-    public function __construct(public readonly ?ColumnName $column, public readonly ColumnDefinition $definition, public readonly ?ColumnPosition $position = null, public readonly bool $columnWritten = true)
+    public function __construct(public readonly ?ColumnName $column, public readonly ColumnDefinition $definition, public readonly ?ColumnPosition $position = null, public readonly bool $columnWritten = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input($column === null || $definition->name->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted || $column->table?->schema !== null, 'A dot-prefixed CHANGE definition follows a fully qualified old name.');
     }

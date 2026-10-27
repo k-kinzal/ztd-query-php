@@ -53,7 +53,7 @@ final class UnaryTest extends TestCase
 
         self::assertInstanceOf(Unary::class, $node);
         self::assertSame($operator, $node->operator);
-        self::assertCount($warnings, $operation->facts->warnings);
+        self::assertCount($warnings, $operation->warnings());
         self::assertSame('SELECT ' . $expression, $operation->toString());
     }
 
@@ -67,7 +67,7 @@ final class UnaryTest extends TestCase
         self::assertInstanceOf(Unary::class, $field->expression);
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $field->resolution);
         self::assertSame('id', $field->column()?->name->value);
-        self::assertSame($field->expression->operand, $query->facts->scalar($field->expression)->replacement);
+        self::assertSame($field->expression->operand, $field->expression->scalarInformation()->replacement);
     }
 
     public function testDeriveScalarWarnsOnlyForTheSymbolicSpellingOfTightNegation(): void
@@ -75,8 +75,8 @@ final class UnaryTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('HIGH_NOT_PRECEDENCE'));
         $operation = $semantics->analyze('SELECT NOT 1, ! 1, NOT 2 = 1');
 
-        self::assertCount(1, $operation->facts->warnings);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, $operation->facts->warnings[0]->message());
+        self::assertCount(1, $operation->warnings());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, $operation->warnings()[0]->message());
         self::assertSame('SELECT NOT 1, ! 1, NOT 2 = 1', $operation->toString());
     }
 

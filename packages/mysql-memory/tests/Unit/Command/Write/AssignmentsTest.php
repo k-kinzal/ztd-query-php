@@ -35,9 +35,9 @@ final class AssignmentsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT, c INT)');
         $operation = $session->analyze('UPDATE t SET c = 1, A = 2');
-        $statement = $operation->statement;
+        $statement = $operation;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $table = $session->instance->dictionary->table('d', 't');
 
         self::assertInstanceOf(Update::class, $statement);
@@ -50,9 +50,9 @@ final class AssignmentsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TABLE u (x INT)');
         $operation = $session->analyze('UPDATE t, u SET u.x = 1');
-        $statement = $operation->statement;
+        $statement = $operation;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $table = $session->instance->dictionary->table('d', 't');
 
         self::assertInstanceOf(Update::class, $statement);

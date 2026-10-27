@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The argument list of an aggregate: `(*)`, `(args)`, `(ORDER BY args)` or `(args ORDER BY args)`.
@@ -29,7 +28,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AggregateArguments implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FunctionParameter> The direct arguments
@@ -45,7 +44,7 @@ final class AggregateArguments implements Clause
      * @param list<FunctionParameter> $direct The direct arguments; empty with neither ORDER BY nor arguments for `*`
      * @param list<FunctionParameter>|null $ordered The arguments after ORDER BY, at least one; null without ORDER BY
      */
-    public function __construct(array $direct, ?array $ordered = null)
+    public function __construct(array $direct, ?array $ordered = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->direct = Check::listOf($direct, FunctionParameter::class, 'Aggregate arguments are function parameters.');
         $this->ordered = $ordered === null ? null : Check::listOf($ordered, FunctionParameter::class, 'ORDER BY is followed by at least one aggregate argument.', 1);

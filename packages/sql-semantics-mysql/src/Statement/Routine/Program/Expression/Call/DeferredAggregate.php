@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredAggregate implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RowOperand|DeferredOperand> The complete arguments
@@ -48,8 +48,11 @@ final class DeferredAggregate implements DeferredOperand
      * @param bool $all Whether ALL is written
      * @param Name|WindowSpecification|null $over The optional window
      */
-    public function __construct(public readonly AggregateFunction $function, array $arguments, public readonly bool $distinct = false, public readonly bool $all = false, public readonly Name|WindowSpecification|null $over = null)
+    public function __construct(public readonly AggregateFunction $function, array $arguments, public readonly bool $distinct = false, public readonly bool $all = false, public readonly Name|WindowSpecification|null $over = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $arguments = Check::listOf($arguments, \SqlSemantics\Statement\Operand::class, 'A retained aggregate has a non-empty argument list.', 1);
         foreach ($arguments as $argument) {
             Check::input($argument instanceof Scalar || $argument instanceof RowOperand || $argument instanceof DeferredOperand, 'An aggregate retains typed operands.');

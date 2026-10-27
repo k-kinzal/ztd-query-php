@@ -22,7 +22,7 @@ final class ConstraintRunTest extends TestCase
     public function testRenderWritesTheConstraintsOfARunWithoutCommas(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a, constraint c check (a > 0) unique (a), check (a < 9))');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertCount(2, $statement->constraints);
@@ -37,7 +37,7 @@ final class ConstraintRunTest extends TestCase
     public function testRenderKeepsACommaThatCutsAConstraintNameOff(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertCount(2, $statement->constraints);

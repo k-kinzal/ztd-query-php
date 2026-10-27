@@ -28,9 +28,9 @@ final class DeferredJsonValueCallTest extends TestCase
         $fact = $derivation->scalar($call, $derivation->environment());
 
         self::assertInstanceOf(Invalid::class, $fact->type);
-        self::assertTrue($derivation->facts()->covers($row));
-        self::assertTrue($derivation->facts()->covers($path));
-        self::assertTrue($derivation->facts()->covers($fallback));
+        self::assertTrue($row->hasBinding());
+        self::assertTrue($path->hasBinding());
+        self::assertTrue($fallback->hasBinding());
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 

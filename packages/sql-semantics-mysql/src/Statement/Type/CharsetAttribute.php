@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The character set attribute of a character type: ASCII, UNICODE, BYTE, a named character set, BINARY, or a set with BINARY.
@@ -30,14 +29,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CharsetAttribute implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharsetForm $form How the character set is named
      * @param Name|null $charset The character set name of the named form
      * @param BinaryMark $mark Whether and where BINARY accompanies ASCII, UNICODE or a named character set
      */
-    public function __construct(public readonly CharsetForm $form, public readonly ?Name $charset = null, public readonly BinaryMark $mark = BinaryMark::Absent)
+    public function __construct(public readonly CharsetForm $form, public readonly ?Name $charset = null, public readonly BinaryMark $mark = BinaryMark::Absent, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($form->named() === ($charset !== null), 'Exactly the named forms hold a character set name.');
         Check::input($mark === BinaryMark::Absent || in_array($form, [CharsetForm::Ascii, CharsetForm::Unicode, CharsetForm::Named, CharsetForm::CharacterSet], true), 'BINARY accompanies ASCII, UNICODE or a named character set only.');

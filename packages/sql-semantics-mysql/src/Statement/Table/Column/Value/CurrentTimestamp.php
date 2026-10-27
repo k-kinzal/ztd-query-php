@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column timestamp clause, interpreted after later attributes have replaced it.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CurrentTimestamp implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral|null $precision The optional decimal NUM precision
      * @param OptionalWords $parentheses Whether empty parentheses are written
      */
-    public function __construct(public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written)
+    public function __construct(public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($precision === null || $precision->isIntegerToken(), 'A timestamp clause precision is a decimal NUM token.');
         Check::input($precision === null || $parentheses === OptionalWords::Written, 'A timestamp clause precision is written in parentheses.');

@@ -35,13 +35,13 @@ final class PartitionClauseTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $alter = $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (b) (PARTITION p VALUES LESS THAN (c))', [$table]);
 
-        self::assertSame(['Column b does not exist.', 'Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['Column b does not exist.', 'Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testDerivePartitioningReportsRequiredDefinitionsBeforeOpeningTheTable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS(a)');
-        $warning = $operation->facts->warnings[0];
+        $warning = $operation->warnings()[0];
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
         self::assertTrue($warning->aborts);

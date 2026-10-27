@@ -20,9 +20,8 @@ final class UpdateUseTest extends TestCase
     {
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze("CREATE PROCEDURE p() UPDATE t,JSON_TABLE('[]', '$[*]' COLUMNS (b FOR ORDINALITY,b FOR ORDINALITY)) j SET t.a=2");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $write = $operation->statement->body;
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $write = $operation->body;
         self::assertInstanceOf(M\Dml\Update::class, $write);
         $session->text = 'unrelated invalid input';
         self::assertSame(1146, (new UpdateUse())->error($write, $session)->getCode());

@@ -26,8 +26,8 @@ final class FlushTablesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('FLUSH TABLES t FOR EXPORT', [$table]);
-        self::assertInstanceOf(FlushTables::class, $operation->statement);
+        self::assertInstanceOf(FlushTables::class, $operation);
 
-        self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);
+        self::assertInstanceOf(DeclaredTable::class, $operation->tables[0]->relationInformation()->table);
     }
 }

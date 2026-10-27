@@ -33,10 +33,10 @@ final class TableResolutionTest extends TestCase
         $undeclared = $semantics->analyze('SELECT a FROM t');
         $conditional = $semantics->analyze('SELECT a FROM u', $semantics->context([$qualified], false));
 
-        self::assertInstanceOf(DeclaredTable::class, $declared->facts->relation($declared->singleNamedInput())->table);
-        self::assertInstanceOf(ConflictingTables::class, $conflicting->facts->relation($conflicting->singleNamedInput())->table);
-        self::assertInstanceOf(MissingTable::class, $missing->facts->relation($missing->singleNamedInput())->table);
-        self::assertInstanceOf(UndeclaredTable::class, $undeclared->facts->relation($undeclared->singleNamedInput())->table);
-        self::assertInstanceOf(ConditionalTable::class, $conditional->facts->relation($conditional->singleNamedInput())->table);
+        self::assertInstanceOf(DeclaredTable::class, $declared->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(ConflictingTables::class, $conflicting->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $missing->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(UndeclaredTable::class, $undeclared->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(ConditionalTable::class, $conditional->singleNamedInput()->relationInformation()->table);
     }
 }

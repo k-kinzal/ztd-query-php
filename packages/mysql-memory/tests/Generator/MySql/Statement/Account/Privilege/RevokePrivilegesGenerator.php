@@ -58,4 +58,76 @@ final class RevokePrivilegesGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<bool> $ifExists The generated semantic operand
+     * @param ErisGenerator<list<M\Account\Privilege\Item\Privilege>> $privileges The generated semantic operand
+     * @param ErisGenerator<M\Account\Privilege\Level\ObjectKind> $kind The generated semantic operand
+     * @param ErisGenerator<M\Account\Privilege\Level\PrivilegeLevel> $level The generated semantic operand
+     * @param ErisGenerator<list<M\Account\User\UserSpecification>> $users The generated semantic operand
+     * @param ErisGenerator<bool> $ignoreUnknownUser The generated semantic operand
+     * @return ErisGenerator<RevokePrivileges>
+     */
+    public static function fromOperands(ErisGenerator $ifExists, ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $users, ErisGenerator $ignoreUnknownUser): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): RevokePrivileges => new RevokePrivileges(ifExists: $parts[0], privileges: $parts[1], kind: $parts[2], level: $parts[3], users: $parts[4], ignoreUnknownUser: $parts[5]), \Tests\Generator\Operands::tuple($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser));
+    }
+
+    /**
+     * Composes the statement's SQL forms from typed operand generators.
+     *
+     * @return iterable<string, ErisGenerator<RevokePrivileges>>
+     */
+    public static function forms(): iterable
+    {
+        yield 'RevokePrivileges/396' => RevokePrivilegesGenerator::fromOperands(
+            ifExists: Generators::constant(false),
+            privileges: \Tests\Generator\Operands::tuple(
+                new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
+                    kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
+                    columns: Generators::constant([])
+                )])
+            ),
+            kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
+            level: new Level\PrivilegeLevelGenerator([new Level\CurrentDatabaseLevelGenerator()]),
+            users: \Tests\Generator\Operands::tuple(
+                new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
+                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
+                    )]),
+                    identification: Generators::constant(null),
+                    factors: Generators::constant([]),
+                    initial: Generators::constant(null),
+                    replace: Generators::constant(null),
+                    retainCurrent: Generators::constant(false),
+                    discardOld: Generators::constant(false)
+                )
+            ),
+            ignoreUnknownUser: Generators::constant(false)
+        );
+        yield 'RevokePrivileges/397' => RevokePrivilegesGenerator::fromOperands(
+            ifExists: Generators::constant(false),
+            privileges: \Tests\Generator\Operands::tuple(
+                new Item\PrivilegeGenerator([new Item\AllPrivilegesGenerator()])
+            ),
+            kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
+            level: new Level\PrivilegeLevelGenerator([new Level\CurrentDatabaseLevelGenerator()]),
+            users: \Tests\Generator\Operands::tuple(
+                new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
+                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
+                    )]),
+                    identification: Generators::constant(null),
+                    factors: Generators::constant([]),
+                    initial: Generators::constant(null),
+                    replace: Generators::constant(null),
+                    retainCurrent: Generators::constant(false),
+                    discardOld: Generators::constant(false)
+                )
+            ),
+            ignoreUnknownUser: Generators::constant(false)
+        );
+    }
+
 }

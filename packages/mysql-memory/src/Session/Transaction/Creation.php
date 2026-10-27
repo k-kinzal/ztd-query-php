@@ -51,7 +51,7 @@ final class Creation
     public function commit(): void
     {
         if ($this->table !== null) {
-            $this->transaction->dictionary->store($this->table);
+            $this->transaction->dictionary->store($this->table, $this->transaction->temporaryTables);
         }
         $this->rollback();
     }

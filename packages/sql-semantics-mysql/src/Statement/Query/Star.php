@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The unqualified `*` of a select list: every column of every table of the FROM clause.
@@ -17,11 +16,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a star item
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT * FROM t');
- *     $query->statement->query->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star // => true
+ *     $query->query->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star // => true
  */
 final class Star implements SelectItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes the star.
@@ -29,5 +28,11 @@ final class Star implements SelectItem
     public function render(Output $out): void
     {
         $out->symbol('*');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

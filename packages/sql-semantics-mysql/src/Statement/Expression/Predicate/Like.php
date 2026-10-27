@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A pattern match: `x [NOT] LIKE pattern [ESCAPE c]` (`Item_func_like`).
@@ -34,11 +33,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the escape character
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a LIKE 'x!%' ESCAPE '!'");
- *     $query->statement->query->where->escape->value() // => '!'
+ *     $query->query->where->escape->value() // => '!'
  */
 final class Like implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The matched expression
@@ -46,8 +46,11 @@ final class Like implements Scalar
      * @param Scalar|null $escape The escape character, when ESCAPE is written
      * @param bool $negated Whether NOT is written before LIKE
      */
-    public function __construct(public readonly Scalar $operand, public readonly Scalar $pattern, public readonly ?Scalar $escape = null, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, public readonly Scalar $pattern, public readonly ?Scalar $escape = null, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of LIKE needs a grouping to keep its place.');
         Check::input($precedence->admits($pattern, Precedence::SIMPLE_EXPR), 'The pattern of LIKE needs a grouping to keep its place.');

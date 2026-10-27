@@ -50,4 +50,15 @@ final class GrantedRoleGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<AccountName> $role The generated semantic operand
+     * @return ErisGenerator<GrantedRole>
+     */
+    public static function fromOperands(ErisGenerator $role): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): GrantedRole => new GrantedRole(role: $parts[0]), \Tests\Generator\Operands::tuple($role));
+    }
+
 }

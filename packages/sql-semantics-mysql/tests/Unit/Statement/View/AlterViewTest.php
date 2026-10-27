@@ -28,7 +28,8 @@ final class AlterViewTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a');
         $alter = $semantics->analyze('ALTER VIEW v AS SELECT 2 AS b', [$view]);
-        $fact = $alter->facts->relation($alter->statement)->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $alter);
+        $fact = $alter->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $fact);
         self::assertSame($view->declarations()[0], $fact->table);
@@ -46,7 +47,7 @@ final class AlterViewTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER VIEW t AS SELECT 1', [$table, $view])->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER VIEW v AS SELECT 1', [$table, $view])->facts->diagnostics));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER VIEW t AS SELECT 1', [$table, $view])->diagnostics()));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER VIEW v AS SELECT 1', [$table, $view])->diagnostics()));
     }
 }

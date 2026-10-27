@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A query template whose retained operands are checked when a read reaches it.
@@ -32,13 +31,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredBody implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DeferredSelection $selection All projection, input and clause operands
      */
-    public function __construct(public readonly DeferredSelection $selection)
+    public function __construct(public readonly DeferredSelection $selection, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
     }
 
     /**

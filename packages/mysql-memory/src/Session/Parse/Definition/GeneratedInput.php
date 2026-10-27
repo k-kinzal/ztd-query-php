@@ -27,7 +27,7 @@ final class GeneratedInput
         }
         if ($problem->expression !== null) {
             $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
-            $pending = [$problem->expression];
+            $pending = [\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($problem->expression)];
             while ($pending !== []) {
                 $node = array_pop($pending);
                 if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
@@ -35,7 +35,7 @@ final class GeneratedInput
                 }
                 array_push($pending, ...array_reverse((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->children($node)));
             }
-            foreach ($derivation->facts()->diagnostics as $dependency) {
+            foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $dependency) {
                 if (\MySqlMemory\Session\Problem\Stages::parsed($dependency) || \MySqlMemory\Session\Problem\Stages::characters($dependency, false)) {
                     return (new \MySqlMemory\Session\Problem\Errors())->error($dependency, $session);
                 }

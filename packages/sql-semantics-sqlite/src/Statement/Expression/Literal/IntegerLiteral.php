@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Keeping the exact digits of a literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 9223372036854775808');
- *     [$query->statement->columns[0]->expression->digits, $query->field(0)->type->descriptor] // => ['9223372036854775808', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Real]
+ *     [$query->columns[0]->expression->digits, $query->field(0)->type->descriptor] // => ['9223372036854775808', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Real]
  * @example Refusing text that is not a digit sequence
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1_000') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing an empty digit sequence
@@ -38,13 +37,17 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class IntegerLiteral implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $digits The decimal digits without sign or separators
      */
-    public function __construct(public readonly string $digits)
+    public function __construct(public readonly string $digits, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match('/\A[0-9]+\z/', $digits) === 1, 'An integer literal is a sequence of decimal digits.');
     }
 

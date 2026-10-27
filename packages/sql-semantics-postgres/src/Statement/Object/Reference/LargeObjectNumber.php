@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A large object named by its object identifier.
@@ -23,12 +22,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class LargeObjectNumber implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SignedNumber $identifier The object identifier as written
      */
-    public function __construct(public readonly SignedNumber $identifier)
+    public function __construct(public readonly SignedNumber $identifier, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

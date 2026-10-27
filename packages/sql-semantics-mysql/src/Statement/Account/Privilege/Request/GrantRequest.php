@@ -19,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\Grantee;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The privilege, target and account operands shared by immediate and stored GRANT.
@@ -30,12 +29,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping operands whose level is checked at stored invocation
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u')->statement;
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
  *     [$create->body->request instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest, $create->body->request->scopeProblem()->error] // => [true, 'ER_ILLEGAL_GRANT_FOR_TABLE']
  */
 final class GrantRequest implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Privilege> The granted privileges in order; ALL stands alone
@@ -69,6 +68,7 @@ final class GrantRequest implements Node
         public readonly ?TlsRequirement $tls = null,
         array $options = [],
         public readonly ?GrantAs $as = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->privileges = Check::listOf($privileges, Privilege::class, 'GRANT names at least one privilege.', 1);
         $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, Node::class, 'GRANT names at least one account.', 1));

@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,13 +37,14 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Keeping the exact text of a number
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 1.50');
- *     [$query->statement->query->where->right->text, $query->statement->query->where->right->form] // => ['1.50', \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal]
+ *     [$query->query->where->right->text, $query->query->where->right->form] // => ['1.50', \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal]
  * @example Rejecting a floating literal outside the finite DOUBLE domain
  *     new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2e381') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class NumberLiteral implements LiteralExpression
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var NumberForm The kind of number the text is
@@ -54,8 +54,11 @@ final class NumberLiteral implements LiteralExpression
     /**
      * @param string $text The number exactly as written, without sign
      */
-    public function __construct(public readonly string $text)
+    public function __construct(public readonly string $text, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $form = NumberForm::of($text);
         Check::input($form !== null, 'A number literal is an unsigned integer, decimal or floating-point number.');
         Check::input($form !== NumberForm::Float || is_finite((float) $text), 'A floating literal represents a finite DOUBLE value.');

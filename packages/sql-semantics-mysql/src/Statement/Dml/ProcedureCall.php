@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CALL of a stored procedure with its arguments.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a procedure call
  *     $call = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CALL shop.refresh(1, @x)');
- *     [$call->statement->procedure->name->value, count($call->statement->arguments), $call->toString()] // => ['refresh', 2, 'CALL shop.refresh(1, @x)']
+ *     [$call->procedure->name->value, count($call->arguments), $call->toString()] // => ['refresh', 2, 'CALL shop.refresh(1, @x)']
  */
-final class ProcedureCall implements Statement
+final class ProcedureCall extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in written order
@@ -41,8 +40,11 @@ final class ProcedureCall implements Statement
      * @param QualifiedName $procedure The procedure name with its optional database
      * @param list<Scalar> $arguments The arguments
      */
-    public function __construct(public readonly QualifiedName $procedure, array $arguments = [])
+    public function __construct(public readonly QualifiedName $procedure, array $arguments = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($procedure);
         Check::input($procedure->catalog === null, 'A procedure is qualified by at most a database.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'The arguments of CALL are expressions.');

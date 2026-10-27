@@ -20,7 +20,7 @@ final class HandlerTest extends TestCase
     public function testMarkKeepsWhatIsInScopeWhereTheHandlerRuns(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION SET @a = 1; END');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
         $block = $statement->body;
         self::assertInstanceOf(Block::class, $block);

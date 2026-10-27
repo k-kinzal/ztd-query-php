@@ -11,7 +11,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CREATE SERVER name FOREIGN DATA WRAPPER wrapper OPTIONS (option, …)`: a request to define a server for the FEDERATED engine.
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer(new \SqlSemantics\Statement\Identifier\Name(''), new \SqlSemantics\Statement\Identifier\Name('mysql'), [new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption(\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('localhost'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Defining a server
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create server s foreign data wrapper mysql options (host 'db', port 3307)");
- *     [$create->toString(), $create->statement->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
+ *     [$create->toString(), $create->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
  */
-final class CreateServer implements Statement
+final class CreateServer extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ServerOption> The options in written order; at least one
@@ -46,8 +45,11 @@ final class CreateServer implements Statement
      * @param list<ServerOption> $options The options in written order; at least one
      * @throws InvalidConstruction When there is no option
      */
-    public function __construct(public readonly Name $name, public readonly Name $wrapper, array $options)
+    public function __construct(public readonly Name $name, public readonly Name $wrapper, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($name->value !== '', 'A created foreign server has a nonempty name.');
         $this->options = Check::listOf($options, ServerOption::class, 'CREATE SERVER takes at least one option.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

@@ -32,13 +32,13 @@ final class RowLimitTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT 5, 10');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->query->limit);
-        self::assertInstanceOf(NumberLiteral::class, $operation->statement->query->limit->count);
-        self::assertSame('10', $operation->statement->query->limit->count->text);
-        self::assertSame(OffsetSpelling::Comma, $operation->statement->query->limit->spelling);
-        self::assertInstanceOf(Known::class, $operation->facts->scalar($operation->statement->query->limit->count)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(RowLimit::class, $operation->query->limit);
+        self::assertInstanceOf(NumberLiteral::class, $operation->query->limit->count);
+        self::assertSame('10', $operation->query->limit->count->text);
+        self::assertSame(OffsetSpelling::Comma, $operation->query->limit->spelling);
+        self::assertInstanceOf(Known::class, $operation->query->limit->count->scalarInformation()->type);
     }
 
     public function testAnExpressionAsAnOperandIsRejected(): void

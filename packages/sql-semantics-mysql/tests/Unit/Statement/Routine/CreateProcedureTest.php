@@ -49,11 +49,11 @@ final class CreateProcedureTest extends TestCase
         $create = $semantics->analyze('CREATE PROCEDURE p(x INT, OUT y INT) BEGIN DECLARE v INT DEFAULT x; '
             . 'UPDATE t SET b = x WHERE a = v; INSERT INTO t (a, b) VALUES (x, v); DELETE FROM t WHERE b = y; '
             . 'SET @w = x + v; SELECT a INTO y FROM t WHERE a = x LIMIT 1; SELECT x, v, a FROM t; END', [$table]);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementReportsAnUnknownNameInACompleteContext(): void
@@ -62,7 +62,7 @@ final class CreateProcedureTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE PROCEDURE p(x INT) UPDATE t SET b = x + zz', [$table]);
 
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementEndsTheScopeOfALocalVariableWithItsBlock(): void
@@ -71,7 +71,7 @@ final class CreateProcedureTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE z INT; SET @in = z; END; SELECT z; END', [$table]);
 
-        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementLetsALocalVariableHideAParameter(): void
@@ -80,7 +80,7 @@ final class CreateProcedureTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x INT DEFAULT x; SET @v = x; END', [$table]);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
@@ -136,7 +136,7 @@ final class CreateProcedureTest extends TestCase
     #[DataProvider('providerDeriveStatementAcceptsWhatOnlyAProcedureMayContain')]
     public function testDeriveStatementAcceptsWhatOnlyAProcedureMayContain(string $body): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body)->diagnostics());
     }
 
     /**

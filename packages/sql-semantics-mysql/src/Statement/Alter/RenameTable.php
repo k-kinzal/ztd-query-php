@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Renamings;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RENAME TABLE old TO new, …`: a request to rename tables, one rename after the other.
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Swapping two tables through a third name
  *     $rename = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('RENAME TABLES a TO tmp, b TO a, tmp TO b');
- *     [count($rename->statement->renamings), $rename->toString()] // => [3, 'RENAME TABLE a TO tmp, b TO a, tmp TO b']
+ *     [count($rename->renamings), $rename->toString()] // => [3, 'RENAME TABLE a TO tmp, b TO a, tmp TO b']
  */
-final class RenameTable implements Statement
+final class RenameTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TableRenaming> The renames in order; at least one
@@ -43,8 +42,11 @@ final class RenameTable implements Statement
     /**
      * @param list<TableRenaming> $renamings The renames in order; at least one
      */
-    public function __construct(array $renamings)
+    public function __construct(array $renamings, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($renamings !== [], 'RENAME TABLE renames at least one table.');
         $this->renamings = Check::listOf($renamings, TableRenaming::class, 'RENAME TABLE holds a list of renames.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

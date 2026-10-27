@@ -23,13 +23,13 @@ final class NameAssignmentTest extends TestCase
     public function testDeriveItemLeavesAnUnscopedWordToTheProgram(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET x = y, GLOBAL z = w');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
-        self::assertInstanceOf(NameAssignment::class, $set->statement->items[0]);
-        self::assertInstanceOf(NameAssignment::class, $set->statement->items[1]);
-        self::assertInstanceOf(BareName::class, $set->statement->items[0]->value);
-        self::assertInstanceOf(BareName::class, $set->statement->items[1]->value);
-        self::assertInstanceOf(Dependent::class, $set->facts->scalar($set->statement->items[0]->value)->type);
-        self::assertInstanceOf(Known::class, $set->facts->scalar($set->statement->items[1]->value)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set);
+        self::assertInstanceOf(NameAssignment::class, $set->items[0]);
+        self::assertInstanceOf(NameAssignment::class, $set->items[1]);
+        self::assertInstanceOf(BareName::class, $set->items[0]->value);
+        self::assertInstanceOf(BareName::class, $set->items[1]->value);
+        self::assertInstanceOf(Dependent::class, $set->items[0]->value->scalarInformation()->type);
+        self::assertInstanceOf(Known::class, $set->items[1]->value->scalarInformation()->type);
     }
 
     public function testDeriveItemReportsARowAsTheValue(): void
@@ -41,7 +41,7 @@ final class NameAssignmentTest extends TestCase
 
     public function testDeriveItemResolvesAnUnknownTargetBeforeItsValue(): void
     {
-        $diagnostics = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value')->facts->diagnostics;
+        $diagnostics = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value')->diagnostics();
 
         self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
         self::assertSame('unknown_target', $diagnostics[0]->name);
@@ -65,13 +65,13 @@ final class NameAssignmentTest extends TestCase
     public function testDeriveItemReportsAQualifiedNameThatIsNoKeyCacheVariable(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $unknown = $semantics->analyze('SET SESSION a.b = 1')->facts->diagnostics;
+        $unknown = $semantics->analyze('SET SESSION a.b = 1')->diagnostics();
 
         self::assertCount(1, $unknown);
         self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
         self::assertSame('a.b', $unknown[0]->name);
         self::assertTrue($unknown[0]->assigned);
         self::assertTrue($unknown[0]->structured);
-        self::assertSame([], $semantics->analyze('SET GLOBAL hot.key_buffer_size = 0')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SET GLOBAL hot.key_buffer_size = 0')->diagnostics());
     }
 }

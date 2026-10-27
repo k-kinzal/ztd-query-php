@@ -19,10 +19,10 @@ final class PrimaryRuleTest extends TestCase
 {
     public function testPrimaryLowersEveryPrimary(): void
     {
-        $root = (new Semantics(Dialect::MySql))->analyze('TABLE t')->statement;
+        $root = (new Semantics(Dialect::MySql))->analyze('TABLE t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
         self::assertInstanceOf(ExplicitTable::class, $root->query);
-        $root = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        $root = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
         self::assertInstanceOf(Select::class, $root->query);
     }
@@ -56,7 +56,7 @@ final class PrimaryRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@bogus)))) SELECT 9');
         self::assertSame('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@bogus)))) SELECT 9', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
 }

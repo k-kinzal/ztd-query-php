@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a view, or to replace one with OR REPLACE.
@@ -30,18 +29,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Declaring a view with a column list
  *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE OR REPLACE VIEW v (one, two) AS SELECT 1, 2');
- *     [$view->statement->orReplace, $view->declarations()[0]->columns[1]->name->value] // => [true, 'two']
+ *     [$view->orReplace, $view->declarations()[0]->columns[1]->name->value] // => [true, 'two']
  */
-final class CreateView implements Statement
+final class CreateView extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ViewDefinition $definition The view definition
      * @param bool $orReplace Whether OR REPLACE is written
      */
-    public function __construct(public readonly ViewDefinition $definition, public readonly bool $orReplace = false)
+    public function __construct(public readonly ViewDefinition $definition, public readonly bool $orReplace = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input(!$orReplace || !$definition->ifNotExists, 'CREATE VIEW cannot combine OR REPLACE with IF NOT EXISTS.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

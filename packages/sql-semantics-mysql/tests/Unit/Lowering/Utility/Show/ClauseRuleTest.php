@@ -128,13 +128,13 @@ final class ClauseRuleTest extends TestCase
     public function testInspectionRetainsEveryFilterOwner(string $release, string $header): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-' . $release);
-        $expected = $semantics->analyze($header)->statement;
+        $expected = $semantics->analyze($header);
         try {
             $semantics->analyze($header . ' WHERE (1,2)');
             self::fail('A row condition must retain its refused scalar role.');
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter::class, $failure->problem);
-            self::assertEquals($expected, $failure->problem->header);
+            self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($expected, $failure->problem->header));
         }
     }
 }

@@ -19,7 +19,7 @@ final class DeferredJsonObjectAggregateTest extends TestCase
     public function testDeriveScalarRetainsAnInvocationCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() SELECT JSON_OBJECTAGG('k', SUM(1))");
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testOperandsPreservesBothArguments(): void

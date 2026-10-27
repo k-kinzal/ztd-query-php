@@ -20,10 +20,10 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Raises the first problem the server finds while it reads a statement, before it checks the INTO variables and opens any table.
@@ -47,37 +47,39 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function read(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
+    public function read(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
-        if (Stages::definitionCondition($operation->statement) || ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $operation->statement->hasExecutionCondition())) {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        if (Stages::definitionCondition($statement) || (($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && ($statement)->hasExecutionCondition())) {
             return;
         }
-        if ($operation instanceof Operation && in_array($operation->statement::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
+        if ($operation instanceof MySqlStatement && in_array(($statement)::class, \MySqlMemory\Command\InternalCommand::STATEMENTS, true)) {
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
         }
-        (new \MySqlMemory\Command\Explain\ExplainCommand())->format($operation->statement);
+        (new \MySqlMemory\Command\Explain\ExplainCommand())->format($statement);
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
-            $this->targets($operation->statement, $session);
+            $this->targets($statement, $session);
         }
-        (new \MySqlMemory\Session\Access\DefaultDatabase())->write($operation->statement, $operation->facts, $session);
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->write($statement, $information, $session);
         $this->parsed($operation, $session);
-        if ($operation instanceof Operation) {
-            (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement, $session, true);
+        if ($operation instanceof MySqlStatement) {
+            (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation, $session, true);
         }
-        $this->targets($operation->statement, $session);
-        if ($operation instanceof Operation) {
+        $this->targets($statement, $session);
+        if ($operation instanceof MySqlStatement) {
             (new \MySqlMemory\Command\Access\HandlerPreparation())->database($operation, $session);
         }
         $this->grouping($operation, $session);
         $this->variables($operation, $session);
-        $this->legacyWrites($operation->statement, $operation->facts, $session);
+        $this->legacyWrites($statement, $information, $session);
         $this->diagnosed($operation, $session);
-        (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($operation->statement, $session);
-        if ($operation instanceof Operation && ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys)) {
+        (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($statement, $session);
+        if ($operation instanceof MySqlStatement && (($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys)) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
         }
-        (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session, $prepared);
-        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);
+        (new \MySqlMemory\Command\Show\Inspection())->check($statement, $session, $prepared);
+        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($statement, $session);
     }
 
     /**
@@ -85,17 +87,19 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function parsed(Operation|QueryPreparation $operation, Session $session): void
+    public function parsed(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
-        (new Identifiers())->check($operation->statement, $session->settings()->release(), $session);
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        (new Identifiers())->check($statement, $session->settings()->release(), $session);
+        foreach (($information)->diagnostics as $diagnostic) {
             if (Stages::characters($diagnostic, $session->settings()->legacy())) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($information)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RecursiveReferencePosition) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
     }
@@ -105,12 +109,13 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function grouping(Operation|QueryPreparation $operation, Session $session): void
+    public function grouping(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         if (!in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return;
         }
-        foreach ((new Walker())->find($operation->statement, Select::class) as $select) {
+        foreach ((new Walker())->find($statement, Select::class) as $select) {
             if ($select->groupBy?->modifier === GroupingModifier::WithCube) {
                 throw StatementError::NotSupportedYet->error('CUBE');
             }
@@ -129,23 +134,25 @@ final class Reading
      *
      * @throws SqlError When the operation names such a variable
      */
-    public function variables(Operation|QueryPreparation $operation, Session $session): void
+    public function variables(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
-        $reached = array_fill_keys(array_map(spl_object_id(...), (new \MySqlMemory\Session\Problems())->reached($operation->statement)), true);
-        $program = \MySqlMemory\Command\Dispatcher::program($operation->statement);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEvents || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents) {
-            $this->limited($operation->statement->limit, $session);
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        $reached = array_fill_keys(array_map(spl_object_id(...), (new \MySqlMemory\Session\Problems())->reached($statement)), true);
+        $program = \MySqlMemory\Command\Dispatcher::program($statement);
+        if (($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEvents || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents) {
+            $this->limited(($statement)->limit, $session);
         }
         if (!$program) {
-            (new \MySqlMemory\Session\Access\RelationEntry())->counts($operation->statement, $operation->facts, $session);
+            (new \MySqlMemory\Session\Access\RelationEntry())->counts($statement, $information, $session);
         }
-        (new Placement())->check($operation->statement, $session->settings()->release(), function (Select $select, bool $ended) use ($session, $operation, $reached, $program): void {
+        (new Placement())->check($statement, $session->settings()->release(), function (Select $select, bool $ended) use ($session, $operation, $reached, $program): void {
             if (!$program && isset($reached[spl_object_id($select)])) {
                 $this->declared($select, $ended, $session, $operation);
             }
         }, $reached);
-        if (!$program && in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && !$operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
-            $this->into($operation->statement, $session);
+        if (!$program && in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && !($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+            $this->into($statement, $session);
         }
     }
 
@@ -157,32 +164,33 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function diagnosed(Operation|QueryPreparation $operation, Session $session): void
+    public function diagnosed(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
-        (new \MySqlMemory\Session\Access\RelationEntry())->check($operation->statement, $operation->facts, $session);
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        (new \MySqlMemory\Session\Access\RelationEntry())->check($statement, $information, $session);
         $alias = null;
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && $operation instanceof Operation && Stages::selfChecked($operation->statement))) {
+        foreach (($information)->diagnostics as $diagnostic) {
+            if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && $operation instanceof MySqlStatement && Stages::selfChecked($operation))) {
                 if ($diagnostic instanceof UnknownSystemVariable) {
-                    (new \MySqlMemory\Session\Access\EventSchedule())->statement($operation->statement, $session);
+                    (new \MySqlMemory\Session\Access\EventSchedule())->statement($statement, $session);
                 }
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
             if (Stages::closing($diagnostic)) {
-                if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && in_array($diagnostic->rule, [\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownLockedTable, \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::RepeatedLockedTable], true)) {
+                if (Stages::locked($diagnostic)) {
                     (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
                 }
-                throw (new Errors())->error($alias ?? $diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($alias ?? $diagnostic, $session, 'field list', $statement);
             }
-            $insert = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
-            $alias ??= $diagnostic instanceof NonUniqueTable || $insert && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DuplicateAlias ? $diagnostic : null;
+            $alias ??= Stages::duplicateAlias($diagnostic, $statement) ? $diagnostic : null;
         }
         if ($alias !== null) {
-            throw (new Errors())->error($alias, $session, 'field list', $operation->statement);
+            throw (new Errors())->error($alias, $session, 'field list', $statement);
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($information)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownDeleteTable) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
     }
@@ -196,11 +204,12 @@ final class Reading
      *
      * @throws SqlError When the block names such a variable
      */
-    public function declared(Select $select, bool $ended, Session $session, Operation|QueryPreparation $operation): void
+    public function declared(Select $select, bool $ended, Session $session, MySqlStatement|QueryPreparation $operation): void
     {
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
         if ($ended) {
             $this->aliased($select, $operation, $session);
-            foreach ((new Walker())->resolved($select, $operation->facts, true) as $query) {
+            foreach ((new Walker())->resolved($select, $information, true) as $query) {
                 if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
                     $this->limited($query->limit, $session);
                 }
@@ -222,8 +231,10 @@ final class Reading
      *
      * @throws SqlError When the block names a table twice
      */
-    public function aliased(Select $select, Operation|QueryPreparation $operation, Session $session): void
+    public function aliased(Select $select, MySqlStatement|QueryPreparation $operation, Session $session): void
     {
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $aliases = [];
         $nodes = $select->from === null ? [] : (new Walker())->find($select->from, Node::class, false);
         foreach ($nodes as $node) {
@@ -234,17 +245,10 @@ final class Reading
             };
             $aliases[] = $alias === null ? '' : strtolower($alias->value);
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($information)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof NonUniqueTable && count(array_keys($aliases, strtolower($diagnostic->alias->value), true)) > 1) {
-                foreach ($session->settings()->legacy() || $session->variables->database !== '' ? [] : $nodes as $node) {
-                    if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $operation->facts->covers($node) && $operation->facts->relation($node)->table instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $node->name->schema === null) {
-                        throw QueryError::NoDatabase->error();
-                    }
-                    if ($node === $diagnostic->relation) {
-                        break;
-                    }
-                }
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                (new \MySqlMemory\Session\Access\DefaultDatabase())->beforeAlias($nodes, $diagnostic, $session);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
     }
@@ -294,7 +298,7 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function legacyWrites(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function legacyWrites(Node $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         $release = $session->settings()->release();
         if (\MySqlMemory\Command\Dispatcher::program($statement) || ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744)) {

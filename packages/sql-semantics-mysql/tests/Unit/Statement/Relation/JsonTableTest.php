@@ -26,7 +26,7 @@ final class JsonTableTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a, n FROM JSON_TABLE('[1]', '$[*]' COLUMNS (n FOR ORDINALITY, a INT PATH '$')) AS j", []);
 
         self::assertSame(['a', 'n'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testMissingAliasIsRefusedBeforePublishingAnInvalidRelation(): void

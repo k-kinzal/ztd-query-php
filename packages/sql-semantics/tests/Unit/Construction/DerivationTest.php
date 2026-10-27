@@ -48,17 +48,6 @@ final class DerivationTest extends TestCase
         self::assertNull($derivation->facts()->referencedRelation(new QualifiedName(new Name('t'))));
     }
 
-    public function testParameterPositionUsesOccurrenceIdentityAndWrittenOrder(): void
-    {
-        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
-        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
-        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]), parameters: [$first, $second]);
-
-        self::assertSame(1, $derivation->parameterPosition($second));
-        self::assertSame(0, $derivation->parameterPosition($first));
-        self::assertNull($derivation->parameterPosition(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()));
-    }
-
     public function testEnvironmentSeesNoRelationAndTheContext(): void
     {
         $context = (new Semantics(Dialect::Sqlite))->context([]);
@@ -75,7 +64,7 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $derivation = new Derivation($semantics->context([]));
 
-        $derivation->statement($semantics->analyze('SELECT 1 AS a')->statement);
+        $derivation->statement((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT 1 AS a')));
 
         $output = $derivation->facts()->output;
         self::assertNotNull($output);
@@ -86,12 +75,12 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $create = $table->statement;
-        $select = $semantics->analyze('SELECT b FROM t', [$table])->statement;
+        $create = $table;
+        $select = $semantics->analyze('SELECT b FROM t', [$table]);
         $derivation = new Derivation($semantics->context([$table]));
 
-        $derivation->inspected($create);
-        $derivation->inspected($select);
+        $derivation->inspected($create = (new \SqlSemantics\Construction\Occurrences())->copy($create));
+        $derivation->inspected($select = (new \SqlSemantics\Construction\Occurrences())->copy($select));
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ResultColumn::class, $select->columns[0]);
@@ -108,9 +97,9 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $derivation = new Derivation($semantics->context([]));
-        $derivation->statement($semantics->analyze('SELECT 1 AS first')->statement);
+        $derivation->statement((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT 1 AS first')));
 
-        $derivation->inspected($semantics->analyze('SELECT 2 AS second')->statement);
+        $derivation->inspected((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT 2 AS second')));
 
         self::assertSame('first', $derivation->facts()->output?->fields()?->at(0)->name?->value);
     }
@@ -142,7 +131,7 @@ final class DerivationTest extends TestCase
     public function testTargetRecordsATableUseThatIsNoRelationAndItsDiagnostic(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
-        $node = new Star();
+        $node = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t')));
         $missing = new MissingTable(new QualifiedName(new Name('t')));
 
         $fact = $derivation->target($node, new RelationFact(new RowShape([]), $missing));
@@ -156,10 +145,10 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $derivation = new Derivation($semantics->context([]));
-        $query = $semantics->analyze('SELECT 1, 2')->statement;
+        $query = $semantics->analyze('SELECT 1, 2');
 
         self::assertInstanceOf(Select::class, $query);
-        $fact = $derivation->query($query, $derivation->environment());
+        $fact = $derivation->query($query = (new \SqlSemantics\Construction\Occurrences())->copy($query), $derivation->environment());
 
         self::assertCount(2, $fact->projection);
         self::assertSame($fact, $derivation->facts()->query($query));
@@ -265,7 +254,7 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $derivation = new Derivation($semantics->context([]));
-        $derivation->statement($semantics->analyze('SELECT a FROM t WHERE a > 1')->statement);
+        $derivation->statement((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a FROM t WHERE a > 1')));
 
         $facts = $derivation->facts();
 
@@ -279,12 +268,12 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE aux.t (a INTEGER)');
         $context = $semantics->context([$table]);
-        $select = $semantics->analyze('SELECT a FROM t', $context)->statement;
+        $select = $semantics->analyze('SELECT a FROM t', $context);
         self::assertInstanceOf(Select::class, $select);
         $nested = new AnalysisContext($context->profile, [new Name('aux')], $context->tables, true, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive);
         $derivation = new Derivation($context);
 
-        $derivation->within($nested, $select);
+        $derivation->within($nested, $select = (new \SqlSemantics\Construction\Occurrences())->copy($select));
 
         self::assertInstanceOf(DeclaredTable::class, $derivation->facts()->relation($select->input() ?? $select)->table);
         self::assertSame($context, $derivation->context);
@@ -298,7 +287,7 @@ final class DerivationTest extends TestCase
 
         $this->expectExceptionMessage('A nested statement sees only the declarations of the enclosing context and of the statement itself.');
 
-        (new Derivation($context))->within($foreign, $semantics->analyze('SELECT 1')->statement);
+        (new Derivation($context))->within($foreign, $semantics->analyze('SELECT 1'));
     }
 
     public function testAdmitAcceptsTheDeclarationsTheStatementProvided(): void
@@ -306,7 +295,7 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $context = $semantics->context([]);
         $derivation = new Derivation($context);
-        $derivation->statement($semantics->analyze('CREATE TABLE t (a INTEGER)')->statement);
+        $derivation->statement((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('CREATE TABLE t (a INTEGER)')));
         $own = new AnalysisContext($context->profile, $context->searchPath, $derivation->facts()->declarations, true, $context->relationNames, $context->columnNames);
 
         $derivation->admit($own);
@@ -330,8 +319,8 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $derivation = new Derivation($semantics->context([]));
 
-        $derivation->member($semantics->analyze('SELECT 1 AS a')->statement);
-        $derivation->member($semantics->analyze('CREATE TABLE t (a INTEGER)')->statement);
+        $derivation->member((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT 1 AS a')));
+        $derivation->member((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('CREATE TABLE t (a INTEGER)')));
 
         self::assertNull($derivation->facts()->output);
         self::assertCount(1, $derivation->facts()->declarations);
@@ -341,11 +330,11 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $context = $semantics->context([]);
-        $select = $semantics->analyze('SELECT 1 AS a')->statement;
+        $select = $semantics->analyze('SELECT 1 AS a');
         $environment = new Environment($context);
         $derivation = new Derivation($context);
 
-        $derivation->inspected($select, $environment);
+        $derivation->inspected($select = (new \SqlSemantics\Construction\Occurrences())->copy($select), $environment);
 
         self::assertNull($derivation->facts()->output);
         self::assertTrue($derivation->facts()->covers($select));
@@ -357,7 +346,7 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testInProgramIsFalseOutsideAStoredProgram(): void
@@ -370,17 +359,19 @@ final class DerivationTest extends TestCase
     public function testStoredInstructionNoticesKeepTheirOwnersWithoutSourceLocations(): void
     {
         $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
-        $parsed = $semantics->analyze('CREATE PROCEDURE p() BEGIN ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin; ALTER TABLE t CONVERT TO CHARSET missing; END');
-        $operation = new \SqlSemantics\Statement\Operation($parsed->context, $parsed->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $operation->statement->body);
-        $instructions = $operation->statement->body->statements;
-        $warnings = $operation->facts->warnings;
+        $sql = 'CREATE PROCEDURE p() BEGIN ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin; ALTER TABLE t CONVERT TO CHARSET missing; END';
+        $parsed = $semantics->analyze($sql);
+        $lowered = (new \SqlSemantics\Platform\MySql\Platform())->lower($semantics->parser()->parse($sql), $semantics->profile(), new \SqlSemantics\Lowering\Leaves());
+        $operation = Semantics::fromStatement($semantics->context([]), $lowered[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $operation->body);
+        $instructions = $operation->body->statements;
+        $warnings = $operation->warnings();
 
-        self::assertSame([], $operation->sources->origins);
+        self::assertNull($operation->source());
         self::assertCount(2, $warnings);
-        self::assertSame($instructions, array_map($operation->facts->warningInstruction(...), $warnings));
-        self::assertSame(array_map(static fn ($warning): string => $warning->message(), $parsed->facts->warnings), array_map(static fn ($warning): string => $warning->message(), $warnings));
+        self::assertSame($instructions, array_map($operation->statementInformation()->warningInstruction(...), $warnings));
+        self::assertSame(array_map(static fn ($warning): string => $warning->message(), $parsed->warnings()), array_map(static fn ($warning): string => $warning->message(), $warnings));
     }
 
     public function testWritesRecordsTheColumnsTheRowsOfAQueryAreWrittenTo(): void
@@ -402,11 +393,12 @@ final class DerivationTest extends TestCase
     public function testReadingWarningsMergesSourceNoticesAtExplicitBoundaries(): void
     {
         $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
-        $operation = $semantics->analyze('SELECT !full, BINARY full');
-        $derivation = new Derivation($operation->context, $operation->sources);
-        $derivation->statement($operation->statement);
+        $origins = new \SqlSemantics\Construction\Origins();
+        $input = (new \SqlSemantics\Platform\MySql\Platform())->lower($semantics->parser()->parse('SELECT !full, BINARY full'), $semantics->profile(), new \SqlSemantics\Lowering\Leaves(), $origins);
+        $derivation = new Derivation($semantics->context([]), $origins->publish());
+        $derivation->statement($input[0]);
 
-        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->value], array_map(static fn ($warning): string => $warning->message(), $derivation->readingWarnings()));
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->value], array_map(static fn ($warning): string => $warning->message(), $derivation->facts()->warnings));
     }
 
     public function testOrderWarningsOrdersOnlyTheRequestedInputScope(): void
@@ -477,6 +469,22 @@ final class DerivationTest extends TestCase
         }, static fn (Warning $warning): bool => $warning === $kept);
         $derivation->warn($omitted);
         self::assertSame([$kept, $omitted], $derivation->facts()->warnings);
+    }
+
+
+    public function testStatementsRetainEachNestedResult(): void
+    {
+        $context = (new Semantics(Dialect::Sqlite))->context();
+        $first = new Select([new ResultColumn(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'), new Name('a'))]);
+        $second = new Select([new ResultColumn(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('2'), new Name('b'))]);
+        $derivation = new Derivation($context);
+        $derivation->statement(new \SqlSemantics\Statement\Script([$first, $second]));
+        $statements = $derivation->statements();
+        self::assertCount(3, $statements);
+        self::assertSame($first, $statements[0][0]);
+        self::assertSame($context, $statements[0][1]);
+        self::assertSame('a', $statements[0][2]->output?->fields()?->at(0)->name?->value);
+        self::assertSame('b', $statements[1][2]->output?->fields()?->at(0)->name?->value);
     }
 
 }

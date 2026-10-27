@@ -90,4 +90,20 @@ final class TargetsTest extends TestCase
         self::assertSame([['Error', 1273, "Unknown collation: 'absent'"]], $session->diagnostics->conditions);
     }
 
+
+    public function testFreshLeavesTheInputAvailableForAnotherDatabase(): void
+    {
+        $target = new QualifiedName(new Name('x'));
+        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'));
+        $original = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table]);
+        $targets = new Targets();
+        $copy = $targets->fresh($original);
+        self::assertNotSame($table, $copy->tables[0]);
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        self::assertSame(1046, $targets->unmatched($copy, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1109, $targets->unmatched($original, $session)->getCode());
+        self::assertFalse($table->hasBinding());
+    }
+
 }

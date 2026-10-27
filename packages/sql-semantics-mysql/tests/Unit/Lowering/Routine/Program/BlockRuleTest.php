@@ -67,16 +67,13 @@ final class BlockRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $release);
         $empty = $semantics->analyze('create procedure p() begin end');
-        self::assertInstanceOf(CreateProcedure::class, $empty->statement);
-        self::assertEquals(new Block(), $empty->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $empty);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Block(), $empty->body));
         self::assertSame('CREATE PROCEDURE p() BEGIN END', $empty->toString());
 
         $full = $semantics->analyze('create procedure p() begin declare x int; set x = 1; set x = 2; end');
-        self::assertInstanceOf(CreateProcedure::class, $full->statement);
-        self::assertEquals(new Block(
-            [new VariableDeclaration([new Name('x')], new Integral(IntegralKind::Int))],
-            [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('1'))]), new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('2'))])],
-        ), $full->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $full);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Block([new VariableDeclaration([new Name('x')], new Integral(IntegralKind::Int))], [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('1'))]), new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('2'))])]), $full->body));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE x INT; SET x = 1; SET x = 2; END', $full->toString());
     }
 
@@ -95,11 +92,11 @@ final class BlockRuleTest extends TestCase
     public function testBlockLowersALabeledBlock(string $release, string $sql, ?Name $endLabel, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
 
-        self::assertEquals(new Block([], [new Leave(new Name('b'))], new Name('b'), $endLabel), $operation->statement->body);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Block([], [new Leave(new Name('b'))], new Name('b'), $endLabel), $operation->body));
         self::assertSame($rendering, $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testBlockRefusesAnotherProduction(): void
@@ -128,11 +125,11 @@ final class BlockRuleTest extends TestCase
     public function testDeclarationLowersAVariableWithItsCollationAndDefault(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare s varchar(5) character set utf8mb4 collate utf8mb4_bin default 'a'; end");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([new VariableDeclaration([new Name('s')], new Character(CharacterKind::VarChar, '5', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), new StringLiteral(['a']))], $statement->body->declarations);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new VariableDeclaration([new Name('s')], new Character(CharacterKind::VarChar, '5', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), new StringLiteral(['a']))], $statement->body->declarations));
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE s VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'a'; END", $operation->toString());
     }
 
@@ -154,7 +151,7 @@ final class BlockRuleTest extends TestCase
     public function testDeclarationLowersACursor(string $release, string $query, string $class, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare c cursor for ' . $query . '; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         $declaration = $statement->body->declarations[0];
@@ -181,18 +178,18 @@ final class BlockRuleTest extends TestCase
     public function testDeclarationLowersAConditionAndAHandler(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare x int; declare e condition for sqlstate '22012'; declare exit handler for not found set x = 0; declare continue handler for sqlwarning begin end; end");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new VariableDeclaration([new Name('x')], new Integral(IntegralKind::Int)),
             new ConditionDeclaration(new Name('e'), new SqlState(new Text('22012'))),
             new HandlerDeclaration(HandlerAction::Exit, [new GeneralCondition(ConditionClass::NotFound)], new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('0'))])),
             new HandlerDeclaration(HandlerAction::Continue, [new GeneralCondition(ConditionClass::SqlWarning)], new Block()),
-        ], $statement->body->declarations);
+        ], $statement->body->declarations));
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE e CONDITION FOR SQLSTATE '22012'; DECLARE EXIT HANDLER FOR NOT FOUND SET x = 0; DECLARE CONTINUE HANDLER FOR SQLWARNING BEGIN END; END", $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
 
@@ -211,14 +208,14 @@ final class BlockRuleTest extends TestCase
     public function testNamesLowersTheDeclaredAndTheFetchedNames(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare a, b, c int; declare k cursor for select 1, 2, 3; fetch k into a, b, c; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         $variables = $statement->body->declarations[0];
         self::assertInstanceOf(VariableDeclaration::class, $variables);
 
         self::assertEquals([new Name('a'), new Name('b'), new Name('c')], $variables->names);
-        self::assertEquals([new FetchCursor(new Name('k'), [new Name('a'), new Name('b'), new Name('c')])], $statement->body->statements);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new FetchCursor(new Name('k'), [new Name('a'), new Name('b'), new Name('c')])], $statement->body->statements));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE a, b, c INT; DECLARE k CURSOR FOR SELECT 1, 2, 3; FETCH k INTO a, b, c; END', $operation->toString());
     }
 
@@ -237,11 +234,11 @@ final class BlockRuleTest extends TestCase
     public function testInitialLowersTheDefaultClause(string $release, string $declaration, ?Arithmetic $default, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin ' . $declaration . '; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([new VariableDeclaration([new Name('x')], new Integral(IntegralKind::Int), null, $default)], $statement->body->declarations);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new VariableDeclaration([new Name('x')], new Integral(IntegralKind::Int), null, $default)], $statement->body->declarations));
         self::assertSame('CREATE PROCEDURE p() BEGIN ' . $rendering . '; END', $operation->toString());
     }
 
@@ -260,18 +257,18 @@ final class BlockRuleTest extends TestCase
     public function testCursorLowersOpenFetchAndClose(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare a int; declare k cursor for select 1; open k; fetch next from k into a; fetch from k into a; fetch k into a; close k; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new OpenCursor(new Name('k')),
             new FetchCursor(new Name('k'), [new Name('a')]),
             new FetchCursor(new Name('k'), [new Name('a')]),
             new FetchCursor(new Name('k'), [new Name('a')]),
             new CloseCursor(new Name('k')),
-        ], $statement->body->statements);
+        ], $statement->body->statements));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE a INT; DECLARE k CURSOR FOR SELECT 1; OPEN k; FETCH k INTO a; FETCH k INTO a; FETCH k INTO a; CLOSE k; END', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

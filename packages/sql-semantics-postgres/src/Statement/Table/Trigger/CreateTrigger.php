@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a trigger.
@@ -34,9 +33,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR ROW WHEN (old.a <> new.a) EXECUTE PROCEDURE f()');
  *     $statement->toString() // => 'CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR EACH ROW WHEN (old.a <> new.a) EXECUTE FUNCTION f()'
  */
-final class CreateTrigger implements SchemaElement, Relation
+final class CreateTrigger extends \SqlSemantics\Statement\SqlStatement implements SchemaElement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TriggerEvent> The events
@@ -76,7 +76,16 @@ final class CreateTrigger implements SchemaElement, Relation
         array $transitions = [],
         public readonly ?Scalar $when = null,
         public readonly bool $replace = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->events = Check::listOf($events, TriggerEvent::class, 'A trigger fires on at least one event.', 1);
         $this->arguments = Check::listOf($arguments, TriggerArgument::class, 'Trigger arguments are trigger arguments.');
         $this->transitions = Check::listOf($transitions, TriggerTransition::class, 'REFERENCING items are transitions.');

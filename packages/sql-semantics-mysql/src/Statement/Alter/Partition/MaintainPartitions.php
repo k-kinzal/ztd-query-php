@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REBUILD | OPTIMIZE | ANALYZE | CHECK | REPAIR | TRUNCATE PARTITION ALL | p, …`: a maintenance operation on partitions.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Rebuilding every partition
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t REBUILD PARTITION ALL');
- *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
+ *     [$alter->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
  */
 final class MaintainPartitions implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CheckOption>|list<RepairOption> The options of CHECK or REPAIR in order
@@ -52,6 +51,7 @@ final class MaintainPartitions implements StandaloneCommand
         public readonly PartitionSelection $partitions,
         array $options = [],
         public readonly bool $ignoredLocal = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($kind->logged() || !$local, 'CHECK and TRUNCATE PARTITION take no NO_WRITE_TO_BINLOG.');
         Check::input(!$ignoredLocal || $kind === MaintenanceKind::Optimize, 'Only OPTIMIZE PARTITION reads NO_WRITE_TO_BINLOG after the partitions.');

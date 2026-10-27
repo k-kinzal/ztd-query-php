@@ -27,7 +27,7 @@ final class DelayedTest extends TestCase
         $this->expectExceptionCode(1616);
         $this->expectExceptionMessage("DELAYED option not supported for table 't'");
 
-        (new Delayed())->check($session->analyze('INSERT DELAYED INTO t VALUES (1)')->statement, $session);
+        (new Delayed())->check($session->analyze('INSERT DELAYED INTO t VALUES (1)'), $session);
     }
 
     public function testCheckTakesDelayedRowsOfAQueryOrOfAMyisamTable(): void

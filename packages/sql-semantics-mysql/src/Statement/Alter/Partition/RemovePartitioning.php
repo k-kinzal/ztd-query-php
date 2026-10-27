@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter\Partition;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REMOVE PARTITIONING`: a request to turn a partitioned table into an unpartitioned one.
@@ -21,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RemovePartitioning implements TrailingCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Derives nothing: the action holds no expression.
@@ -36,5 +35,11 @@ final class RemovePartitioning implements TrailingCommand
     public function render(Output $out): void
     {
         $out->keyword('REMOVE', 'PARTITIONING');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

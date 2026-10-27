@@ -27,9 +27,9 @@ use SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CALL of a stored procedure.
@@ -68,8 +68,8 @@ final class CallCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ProcedureCall);
         $routine = $this->routine($statement, $session);
         $caller = $session->program;
@@ -169,9 +169,9 @@ final class CallCommand implements Command
      *
      * @throws SqlError When an argument is refused
      */
-    public function arguments(ProcedureCall $statement, Routine $routine, Operation $operation, Session $session, Context $context, Connection $connection, array $targets): array
+    public function arguments(ProcedureCall $statement, Routine $routine, MySqlStatement $operation, Session $session, Context $context, Connection $connection, array $targets): array
     {
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $bound = [];
         foreach (\MySqlMemory\Program\Routine\Body::of($routine)->parameters->parameters as $index => $parameter) {
             $target = $targets[$index] ?? null;

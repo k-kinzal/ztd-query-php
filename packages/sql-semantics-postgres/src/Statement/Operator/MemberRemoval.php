@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `OPERATOR strategy (types)` or `FUNCTION support (types)`: a member ALTER OPERATOR FAMILY ... DROP removes.
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class MemberRemoval implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TypeName> The operand types
@@ -38,7 +37,7 @@ final class MemberRemoval implements Clause
      * @param IntegerConstant $number The strategy or support number
      * @param list<TypeName> $types The operand types; at least one
      */
-    public function __construct(public readonly MemberKind $kind, public readonly IntegerConstant $number, array $types)
+    public function __construct(public readonly MemberKind $kind, public readonly IntegerConstant $number, array $types, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->types = Check::listOf($types, TypeName::class, 'A removed member names at least one operand type.', 1);
     }

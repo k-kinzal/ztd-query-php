@@ -8,8 +8,8 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Formats semantic diagnostics that quote their occurrence in the original parser input.
@@ -24,25 +24,25 @@ final class LocatedErrors
     /**
      * Answers the original SQL tail and line of a forbidden construct, or null for another diagnostic.
      */
-    public function error(Diagnostic $problem, Operation $operation, Session $session): ?SqlError
+    public function error(Diagnostic $problem, MySqlStatement $operation, Session $session): ?SqlError
     {
-        return $this->located($problem, $operation->sources, $session);
+        return $this->located($problem, null, $session);
     }
 
     /**
      * Formats an occurrence from either an operation or a retained input refusal.
      */
-    public function located(Diagnostic $problem, \SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
+    public function located(Diagnostic $problem, ?\SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
     {
         if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
-            $origin = $sources->of($problem->operand);
+            $origin = $problem->operand->source() ?? $sources?->of($problem->operand);
             $offset = $this->subquery($problem->operand, $sources) ?? $origin?->offset;
             return $offset === null ? new SqlError(StatementError::ParseError, $problem->message()) : (new \MySqlMemory\Session\Syntax($session->resolution()->client))->near($offset, $session->text, $session->following, new \SqlSemantics\Construction\RejectedInput($problem, $offset));
         }
         if (!$problem instanceof InvalidPartitionExpression) {
             return null;
         }
-        $origin = $sources->of($problem->expression);
+        $origin = $problem->expression->source() ?? $sources?->of($problem->expression);
         if ($origin === null) {
             return new SqlError(StatementError::ParseError, $problem->message());
         }
@@ -69,12 +69,12 @@ final class LocatedErrors
     /**
      * Locates the first query occurrence rather than its enclosing scalar function.
      */
-    public function subquery(\SqlSemantics\Statement\Operand $operand, \SqlSemantics\Statement\Source\SourceMap $sources): ?int
+    public function subquery(\SqlSemantics\Statement\Operand $operand, ?\SqlSemantics\Statement\Source\SourceMap $sources): ?int
     {
         $offsets = [];
         $graph = new \SqlSemantics\Validation\ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
         foreach ($graph->objects($operand) as $part) {
-            $origin = $part instanceof \SqlSemantics\Statement\Query ? $sources->of($part) : null;
+            $origin = $part instanceof \SqlSemantics\Statement\Query ? ($part->source() ?? $sources?->of($part)) : null;
             if ($origin !== null) {
                 $offsets[] = $origin->offset;
             }

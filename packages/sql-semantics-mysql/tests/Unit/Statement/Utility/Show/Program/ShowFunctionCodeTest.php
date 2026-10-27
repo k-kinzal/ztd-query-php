@@ -18,7 +18,7 @@ final class ShowFunctionCodeTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW FUNCTION CODE db.x');
-        self::assertInstanceOf(ShowFunctionCode::class, $show->statement);
+        self::assertInstanceOf(ShowFunctionCode::class, $show);
         self::assertSame('Pos', $show->field(0)->name?->value);
     }
 

@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET with a list of assignments: variables, the connection character sets, and in MySQL 5.6 a password.
@@ -33,11 +32,11 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([new \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment($password)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the scope an assignment inherits
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET GLOBAL a = 1, b = ON');
- *     [$set->statement->scopeOf(1), $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'SET GLOBAL a = 1, b = ON']
+ *     [$set->scopeOf(1), $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'SET GLOBAL a = 1, b = ON']
  */
-final class SetVariables implements Statement
+final class SetVariables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SetItem> The assignments in order
@@ -47,8 +46,11 @@ final class SetVariables implements Statement
     /**
      * @param list<SetItem> $items The assignments in order; at least one
      */
-    public function __construct(array $items)
+    public function __construct(array $items, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, SetItem::class, 'SET assigns at least one item.', 1);
         Check::input(count($this->items) !== 1 || !$this->items[0] instanceof PasswordAssignment, 'A standalone password assignment is represented by SetPassword.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

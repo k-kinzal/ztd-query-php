@@ -19,6 +19,6 @@ final class DeferredValueRowTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (VALUES ROW(7, ROW(1,2), DEFAULT)) SELECT 9');
         self::assertSame('WITH c AS (VALUES ROW(7, ROW(1, 2), DEFAULT)) SELECT 9', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

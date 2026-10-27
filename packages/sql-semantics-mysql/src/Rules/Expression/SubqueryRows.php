@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
@@ -54,7 +53,7 @@ final class SubqueryRows
     /**
      * Answers the facts of a subquery used as a value.
      */
-    public function value(QueryFact $query, ?Facts $facts = null): ScalarFact
+    public function value(QueryFact $query): ScalarFact
     {
         if (!$query->shape->complete()) {
             return new ScalarFact(new Dependent($query->shape->missing), Nullability::Nullable);
@@ -71,7 +70,7 @@ final class SubqueryRows
                 while ($expression instanceof Grouped) {
                     $expression = $expression->operand;
                 }
-                $resolution = $expression !== null && $facts?->covers($expression) === true ? $facts->scalar($expression)->resolution : ($field instanceof Field ? $field->resolution : null);
+                $resolution = $expression !== null && $expression->hasBinding() ? $expression->scalarInformation()->resolution : ($field instanceof Field ? $field->resolution : null);
 
                 return new ScalarFact(new Known($this->string($domain, $expression, $resolution instanceof ResolvedColumn)), Nullability::Nullable);
             }
@@ -162,7 +161,7 @@ final class SubqueryRows
             return $nullability->propagate(Nullability::Dependent);
         }
         $operands = new Operands();
-        $operands->comparable([$operand, $this->value($query, $derivation->facts())], $derivation, $expression);
+        $operands->comparable([$operand, $this->value($query)], $derivation, $expression);
         foreach ($query->shape->slots as $slot) {
             $nullability = $nullability->propagate($slot->nullability);
         }
@@ -184,7 +183,7 @@ final class SubqueryRows
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $equal = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && in_array($expression->operator, [\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual], true));
         if (($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison) && ($equal ? (new ScalarReduction())->predicate($expression->query, $release) : (new ScalarReduction())->expression($expression->query, $release)) === null) {
-            $nullability = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison ? $this->unreduced($expression, $operand->nullability, $nullability, $release, $derivation->facts()) : Nullability::Nullable;
+            $nullability = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison ? $this->unreduced($expression, $operand->nullability, $nullability, $release) : Nullability::Nullable;
         }
         $wide = $legacy && !$negated && ((new Operands())->width($operand) > 1 || $this->stored($expression, $derivation->context->profile->grammar) !== null);
 
@@ -197,7 +196,7 @@ final class SubqueryRows
      * Ordered predicates over an unfiltered tableless set do so on modern servers;
      * legacy and early-modern profiles retain their distinct projection attributes.
      */
-    public function unreduced(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison $expression, Nullability $outer, Nullability $bound, GrammarRelease $release, Facts $facts): Nullability
+    public function unreduced(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison $expression, Nullability $outer, Nullability $bound, GrammarRelease $release): Nullability
     {
         $equal = $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal;
         $unequal = $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual;
@@ -206,9 +205,9 @@ final class SubqueryRows
             return Nullability::Nullable;
         }
         if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
-            return (new Preparation\QuantifiedAttributes($facts))->legacy($expression->query, $outer, $bound, $release, !$equal && !$unequal);
+            return (new Preparation\QuantifiedAttributes())->legacy($expression->query, $outer, $bound, $release, !$equal && !$unequal);
         }
-        return (new Preparation\QuantifiedAttributes($facts))->modern($expression->query, $outer, $bound, $release, $equal || $unequal);
+        return (new Preparation\QuantifiedAttributes())->modern($expression->query, $outer, $bound, $release, $equal || $unequal);
     }
 
     /**

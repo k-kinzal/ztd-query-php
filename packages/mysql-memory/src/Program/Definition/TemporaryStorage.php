@@ -39,7 +39,7 @@ final class TemporaryStorage
         if (!$seen) {
             return;
         }
-        $facts = (new \MySqlMemory\Program\Expression\TableUse())->bound($definition, $session)->facts;
+        $facts = (new \MySqlMemory\Program\Expression\TableUse())->bound($definition, $session)->statementInformation();
         foreach ($facts->warnings as $warning) {
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation && $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) {
                 $session->diagnostics->warning($warning->code(), $warning->message());

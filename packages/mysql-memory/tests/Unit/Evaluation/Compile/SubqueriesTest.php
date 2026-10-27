@@ -228,7 +228,7 @@ final class SubqueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT (SELECT 1), (VALUES ROW(2)), (SELECT MAX(3)), (SELECT 4 UNION SELECT 5)');
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $select = $operation->field(0)->expression;
         $values = $operation->field(1)->expression;
         $aggregate = $operation->field(2)->expression;
@@ -267,7 +267,7 @@ final class SubqueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT (SELECT 1 FROM DUAL WHERE 1), (SELECT MAX(1)), (SELECT 1 HAVING 1)');
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $where = $operation->field(0)->expression;
         $aggregate = $operation->field(1)->expression;
         $having = $operation->field(2)->expression;
@@ -283,7 +283,7 @@ final class SubqueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT ((SELECT 1)), (WITH c AS (SELECT 1) SELECT 2)');
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $parenthesized = $operation->field(0)->expression;
         $with = $operation->field(1)->expression;
         self::assertInstanceOf(ScalarSubquery::class, $parenthesized);
@@ -298,7 +298,7 @@ final class SubqueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT (SELECT 1), (SELECT 1 FROM DUAL WHERE 1), (SELECT MAX(3))');
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $plain = $operation->field(0)->expression;
         $where = $operation->field(1)->expression;
         $aggregate = $operation->field(2)->expression;
@@ -319,7 +319,7 @@ final class SubqueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT 1 + MAX(2), GROUP_CONCAT('a'), JSON_OBJECTAGG('k', 1), 1 + (SELECT MAX(2))");
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $maximum = $operation->field(0)->expression;
         $concatenation = $operation->field(1)->expression;
         $object = $operation->field(2)->expression;

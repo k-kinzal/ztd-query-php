@@ -69,6 +69,9 @@ final class SemanticGeneratorCoverageRule implements Rule
             }
             $class = $this->reflection->getClass($generator);
             $generated = $class->getAncestorWithClassName(Generator::class)?->getActiveTemplateTypeMap()->getType('T');
+            if ($generated instanceof \PHPStan\Type\Generic\TemplateType) {
+                $generated = $generated->getBound();
+            }
             if (!$class->getNativeReflection()->isInstantiable() || $generated === null || !$generated->equals(new ObjectType($model))) {
                 $errors[] = RuleErrorBuilder::message($generator . ' must be instantiable and implement Eris\\Generator<' . $model . '>.')
                     ->identifier('mysqlMemory.invalidGenerator')->file($location['file'])->line($location['line'])->build();

@@ -18,7 +18,7 @@ final class ShowErrorsTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW ERRORS');
-        self::assertInstanceOf(ShowErrors::class, $show->statement);
+        self::assertInstanceOf(ShowErrors::class, $show);
         self::assertSame('Level', $show->field(0)->name?->value);
     }
 

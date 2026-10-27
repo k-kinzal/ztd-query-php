@@ -24,6 +24,6 @@ final class CreateTablespaceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE TABLESPACE ts ADD DATAFILE 'f' NODEGROUP 65535 NODEGROUP 1");
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

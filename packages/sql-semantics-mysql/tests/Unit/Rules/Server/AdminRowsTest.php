@@ -19,7 +19,7 @@ final class AdminRowsTest extends TestCase
     public function testAdminRecordsTheMaintenanceResult(): void
     {
         $check = (new Semantics(Dialect::MySql))->analyze('CHECK TABLE t');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $check);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $check);
 
         self::assertSame(4, $check->fields()?->count());
         self::assertSame(Nullability::Nullable, $check->field('Msg_text')->slot->nullability);
@@ -28,7 +28,7 @@ final class AdminRowsTest extends TestCase
     public function testChecksumRecordsTableAndChecksum(): void
     {
         $checksum = (new Semantics(Dialect::MySql))->analyze('CHECKSUM TABLE t');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $checksum);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $checksum);
 
         self::assertSame(Nullability::Nullable, $checksum->field('Checksum')->slot->nullability);
     }
@@ -45,7 +45,7 @@ final class AdminRowsTest extends TestCase
     public function testRecordRecordsTheLayout(): void
     {
         $cache = (new Semantics(Dialect::MySql))->analyze('LOAD INDEX INTO CACHE t');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $cache);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $cache);
 
         self::assertSame('Op', $cache->field(1)->slot->name?->value);
     }

@@ -25,6 +25,6 @@ final class RepairTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, searchPath: new \SqlSemantics\Contract\SearchPath('db')))->analyze('REPAIR TABLE t, db.u, db.t');
 
-        self::assertInstanceOf(NonUniqueTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(NonUniqueTable::class, $operation->diagnostics()[0]);
     }
 }

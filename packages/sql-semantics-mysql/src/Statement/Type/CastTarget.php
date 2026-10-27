@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The target type of CAST, CONVERT and JSON_VALUE ... RETURNING: a closed set of kinds with length, scale and character set.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CastTarget implements TypeName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CastKind $kind The target kind
@@ -34,7 +33,7 @@ final class CastTarget implements TypeName
      * @param CharsetAttribute|null $charset The character set attribute of CHAR; BINARY alone for a national CHAR is not written
      * @param OptionalWords $words Whether the optional words are written: INT after SIGNED and UNSIGNED, PRECISION after DOUBLE, NATIONAL CHAR for NCHAR
      */
-    public function __construct(public readonly CastKind $kind, public readonly ?string $length = null, public readonly ?string $scale = null, public readonly ?CharsetAttribute $charset = null, public readonly OptionalWords $words = OptionalWords::Omitted)
+    public function __construct(public readonly CastKind $kind, public readonly ?string $length = null, public readonly ?string $scale = null, public readonly ?CharsetAttribute $charset = null, public readonly OptionalWords $words = OptionalWords::Omitted, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($words === OptionalWords::Omitted || in_array($kind, [CastKind::Signed, CastKind::Unsigned, CastKind::Double, CastKind::NationalChar], true), 'Only SIGNED, UNSIGNED, DOUBLE and NCHAR have optional words.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');

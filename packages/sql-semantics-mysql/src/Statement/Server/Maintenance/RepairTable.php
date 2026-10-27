@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REPAIR [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, … [QUICK] [EXTENDED] [USE_FRM]`: a request to repair possibly corrupted tables.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the request
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('repair table t quick use_frm');
- *     [$statement->toString(), $statement->statement->options[1] === \SqlSemantics\Platform\MySql\Statement\Server\RepairOption::UseFrm] // => ['REPAIR TABLE t QUICK USE_FRM', true]
+ *     [$statement->toString(), $statement->options[1] === \SqlSemantics\Platform\MySql\Statement\Server\RepairOption::UseFrm] // => ['REPAIR TABLE t QUICK USE_FRM', true]
  */
-final class RepairTable implements Statement
+final class RepairTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<MaintainedTable> The tables in written order; at least one
@@ -50,8 +49,11 @@ final class RepairTable implements Statement
      * @param list<RepairOption> $options The options in written order
      * @throws InvalidConstruction When the table list is empty or an option list holds a foreign value
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables, array $options = [])
+    public function __construct(public readonly bool $noWriteToBinlog, array $tables, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = (new MaintainedTables())->checked($tables);
         $this->options = Check::listOf($options, RepairOption::class, 'REPAIR TABLE takes a list of repair options.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

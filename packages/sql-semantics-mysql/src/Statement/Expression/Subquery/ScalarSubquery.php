@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A subquery used as a value: `(SELECT …)`, a scalar or row subquery (`Item_singlerow_subselect`).
@@ -55,7 +54,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Comparing with a scalar subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = (SELECT 1)');
- *     $query->statement->query->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
+ *     $query->query->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
  * @example Refusing an INTO destination after an expression subquery
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]);
  *     $destination = new \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDumpfile(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('file'));
@@ -63,13 +62,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ScalarSubquery implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input(((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query) ?? 1) === 1, 'A scalar subquery has one output column when its width is fixed.');
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery operand has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
@@ -82,7 +85,7 @@ final class ScalarSubquery implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $query = $derivation->query($this->query, $environment);
-        $value = (new SubqueryRows())->value($query, $derivation->facts());
+        $value = (new SubqueryRows())->value($query);
         $release = $derivation->context->profile->grammar;
         $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($value->type);
         if ($domain?->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {

@@ -27,9 +27,9 @@ use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 /**
@@ -57,10 +57,10 @@ final class MultipleChangeCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof Update || $statement instanceof MultipleDelete);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $context->strict = $context->modes->strict() && !($statement instanceof Update ? $statement->ignore : in_array(DeleteOption::Ignore, $statement->options, true));
         $scope = new Scope();
         $relation = count($statement->tables) === 1 ? $statement->tables[0] : new TableList($statement->tables);
@@ -80,7 +80,7 @@ final class MultipleChangeCommand implements Command
             $matches[] = [$row, $numbers];
         }
         if ($statement instanceof MultipleDelete) {
-            return $this->delete($statement, $scope, $matches, $session, $context, $operation->facts);
+            return $this->delete($statement, $scope, $matches, $session, $context, $operation->statementInformation());
         }
 
         return $this->update($statement, $planner, $scope, $matches, $session, $context);
@@ -91,11 +91,11 @@ final class MultipleChangeCommand implements Command
      *
      * @param list<array{list<int|float|string|null>, array<int, int|null>}> $matches
      */
-    public function delete(MultipleDelete $statement, Scope $scope, array $matches, Session $session, Context $context, Facts $facts): Reply
+    public function delete(MultipleDelete $statement, Scope $scope, array $matches, Session $session, Context $context, StatementSemantics $facts): Reply
     {
         $deleted = 0;
         foreach ($statement->targets as $target) {
-            $id = $this->occurrence($scope, $target, $facts);
+            $id = $this->occurrence($scope, $target, $statement->input);
             if ($id === null) {
                 throw QueryError::UnknownTable->error($target->name->value, 'MULTI DELETE');
             }
@@ -118,7 +118,7 @@ final class MultipleChangeCommand implements Command
         $written = [];
         if ($statement instanceof MultipleDelete) {
             foreach ($statement->targets as $target) {
-                $id = $this->occurrence($scope, $target, $planner->compiler->facts);
+                $id = $this->occurrence($scope, $target, $statement->input);
                 if ($id !== null) {
                     $written[$id] = true;
                 }
@@ -127,7 +127,7 @@ final class MultipleChangeCommand implements Command
             return $written;
         }
         foreach ($statement->assignments as $assignment) {
-            $resolution = $planner->compiler->facts->scalar($assignment->column)->resolution;
+            $resolution = $assignment->column->scalarInformation()->resolution;
             if ($resolution instanceof ResolvedColumn) {
                 $written[spl_object_id($resolution->relation)] = true;
             }
@@ -139,9 +139,9 @@ final class MultipleChangeCommand implements Command
     /**
      * Finds the scan of the occurrence Semantics bound the target to.
      */
-    public function occurrence(Scope $scope, QualifiedName $name, Facts $facts): ?int
+    public function occurrence(Scope $scope, QualifiedName $name, \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput $input): ?int
     {
-        $relation = $facts->referencedRelation($name);
+        $relation = $input->relation($name);
         $id = $relation === null ? null : spl_object_id($relation);
 
         return $id !== null && isset($scope->scans[$id]) ? $id : null;
@@ -156,7 +156,7 @@ final class MultipleChangeCommand implements Command
     {
         $assignments = [];
         foreach ($statement->assignments as $assignment) {
-            $resolution = $planner->compiler->facts->scalar($assignment->column)->resolution;
+            $resolution = $assignment->column->scalarInformation()->resolution;
             if (!$resolution instanceof ResolvedColumn || !isset($scope->scans[spl_object_id($resolution->relation)])) {
                 throw QueryError::BadField->error($assignment->column->name->value, 'field list');
             }

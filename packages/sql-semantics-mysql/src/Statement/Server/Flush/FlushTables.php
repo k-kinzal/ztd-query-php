@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] TABLES [t, …] [WITH READ LOCK | FOR EXPORT]`: a request to close open tables.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Flushing tables for export
  *     $flush = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('flush tables t, u for export');
- *     [$flush->toString(), $flush->statement->lock] // => ['FLUSH TABLE t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
+ *     [$flush->toString(), $flush->lock] // => ['FLUSH TABLE t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
  */
-final class FlushTables implements Statement
+final class FlushTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<MaintainedTable> The tables in written order; empty for every open table
@@ -45,8 +44,11 @@ final class FlushTables implements Statement
      * @param FlushLock|null $lock WITH READ LOCK or FOR EXPORT, when written
      * @throws InvalidConstruction When FOR EXPORT has no table list
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables = [], public readonly ?FlushLock $lock = null)
+    public function __construct(public readonly bool $noWriteToBinlog, array $tables = [], public readonly ?FlushLock $lock = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = Check::listOf($tables, MaintainedTable::class, 'FLUSH TABLES takes a list of tables.');
         Check::input($lock !== FlushLock::ForExport || $this->tables !== [], 'FLUSH TABLES ... FOR EXPORT names at least one table.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

@@ -19,7 +19,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -51,15 +50,19 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class Cast implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The cast expression
      * @param CastTarget $target The target type
      * @param bool $array Whether ARRAY follows the target type
      */
-    public function __construct(public readonly Scalar $operand, public readonly CastTarget $target, public readonly bool $array = false)
+    public function __construct(public readonly Scalar $operand, public readonly CastTarget $target, public readonly bool $array = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$array || (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->array($target) === null, 'An array cast needs a supported multi-valued index element type.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->size($target) === null, 'A CAST width, precision and scale must fit its target type.');

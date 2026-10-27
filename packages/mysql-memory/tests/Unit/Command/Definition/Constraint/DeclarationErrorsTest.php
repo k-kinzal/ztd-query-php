@@ -42,8 +42,7 @@ final class DeclarationErrorsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $programAnalysis = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(' . $elements . ')');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $programAnalysis);
-        $program = $programAnalysis->statement;
+        $program = $programAnalysis;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $program);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $program->body);
         $this->expectException(SqlError::class);
@@ -56,8 +55,7 @@ final class DeclarationErrorsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $createAnalysis = $session->analyze('CREATE TABLE t(a INT,KEY(a))');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $createAnalysis);
-        $create = $createAnalysis->statement;
+        $create = $createAnalysis;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $create);
 
         (new DeclarationErrors())->layout($create->elements);

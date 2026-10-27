@@ -189,7 +189,7 @@ final class HandlerCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); HANDLER t OPEN AS h');
-        $statement = $session->analyze('HANDLER H CLOSE')->statement;
+        $statement = $session->analyze('HANDLER H CLOSE');
         self::assertInstanceOf(HandlerClose::class, $statement);
 
         (new HandlerCommand())->close($statement, $session);

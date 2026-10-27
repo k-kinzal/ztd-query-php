@@ -20,7 +20,7 @@ final class ExpressionMethodTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
 
-        self::assertSame('Column q does not exist.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (q) (PARTITION p VALUES LESS THAN MAXVALUE)', [$table])->facts->diagnostics[0]->message());
+        self::assertSame('Column q does not exist.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (q) (PARTITION p VALUES LESS THAN MAXVALUE)', [$table])->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheKind(): void

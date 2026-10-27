@@ -10,8 +10,8 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\SearchPath;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Statement\Operation;
 use WeakReference;
 
 /**
@@ -120,8 +120,8 @@ final class TableUse
             return;
         }
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
-        $definition->partitioning->derivePartitioning($derivation, $derivation->environment());
-        foreach ($derivation->facts()->warnings as $warning) {
+        \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($definition->partitioning)->derivePartitioning($derivation, $derivation->environment());
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->warnings as $warning) {
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $warning->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
                 throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
             }
@@ -132,7 +132,7 @@ final class TableUse
                 $session->diagnostics->warning($warning->code(), $warning->message());
             }
         }
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem)) {
                 throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
             }
@@ -144,7 +144,7 @@ final class TableUse
      *
      * @throws SqlError When the header or the creation query cannot prepare
      */
-    public function prepare(CreateTable $definition, Session $session): ?Operation
+    public function prepare(CreateTable $definition, Session $session): ?MySqlStatement
     {
         $this->header($definition, $session, true);
         $query = $definition->query;
@@ -172,8 +172,8 @@ final class TableUse
             (new QueryUse())->raise(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery($query->query), $session, false);
         }
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
-        $operation = new Operation($context, new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query->query));
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query->query), new \SqlSemantics\Statement\Source\SourceMap());
         (new \MySqlMemory\Session\Problems())->raise($operation, $session);
         return $operation;
     }
@@ -181,9 +181,9 @@ final class TableUse
     /**
      * Binds the complete request through the existing table-statement boundary.
      */
-    public function bound(CreateTable $definition, Session $session): Operation
+    public function bound(CreateTable $definition, Session $session): MySqlStatement
     {
         $database = $session->variables->database;
-        return new Operation($session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution()), $definition);
+        return (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution()), $definition, new \SqlSemantics\Statement\Source\SourceMap());
     }
 }

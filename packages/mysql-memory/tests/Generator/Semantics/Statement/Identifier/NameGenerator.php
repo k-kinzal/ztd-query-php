@@ -9,7 +9,6 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use LogicException;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -31,11 +30,8 @@ final class NameGenerator implements ErisGenerator
     public function __construct(?ErisGenerator $values = null, ?ErisGenerator $quotes = null)
     {
         $this->delegate = Generators::map(static function (array $parts): Name {
-            if (!is_string($parts[0]) || ($parts[1] !== null && !$parts[1] instanceof \SqlSemantics\Statement\Identifier\NameQuote)) {
-                throw new LogicException('A name generator composes decoded text and an optional delimiter.');
-            }
             return new Name($parts[0], $parts[1]);
-        }, Generators::tuple(
+        }, \Tests\Generator\Operands::tuple(
             $values ?? Generators::map(static fn (int $number): string => 'name_' . abs($number), Generators::int()),
             $quotes ?? new NameQuoteGenerator(),
         ));
@@ -58,4 +54,16 @@ final class NameGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<string> $value The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\NameQuote|null> $quote The generated semantic operand
+     * @return ErisGenerator<Name>
+     */
+    public static function fromOperands(ErisGenerator $value, ErisGenerator $quote): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): Name => new Name(value: $parts[0], quote: $parts[1]), \Tests\Generator\Operands::tuple($value, $quote));
+    }
+
 }

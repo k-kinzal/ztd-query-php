@@ -23,13 +23,13 @@ final class ComponentSettingTest extends TestCase
     public function testStandaloneNamesHaveWordMeaningBeforePlanning(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'c' SET GLOBAL v=((word)), w=word+1");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent::class, $operation->statement);
-        $word = $operation->statement->settings[0]->value;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent::class, $operation);
+        $word = $operation->settings[0]->value;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName::class, $word);
         self::assertSame('word', $word->word->value);
-        $type = $operation->facts->scalar($word)->type;
+        $type = $word->scalarInformation()->type;
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
         self::assertSame('VARCHAR', $type->descriptor->name());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic::class, $operation->statement->settings[1]->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic::class, $operation->settings[1]->value);
     }
 }

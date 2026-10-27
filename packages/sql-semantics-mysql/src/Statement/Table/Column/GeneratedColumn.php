@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The specification of a generated column: its values are computed from an expression (MySQL 5.7 and later).
@@ -28,13 +27,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a generated column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED)');
- *     $create->statement->elements[1]->specification->storage // => \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored
+ *     $create->elements[1]->specification->storage // => \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored
  * @example Refusing a marker as an ordinary generation expression
  *     new \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GeneratedColumn implements ColumnSpecification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnAttribute> The attributes in written order
@@ -56,6 +55,7 @@ final class GeneratedColumn implements ColumnSpecification
         public readonly ?GeneratedStorage $storage = null,
         array $attributes = [],
         public readonly ?References $references = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($collation === null || $collation->name !== null, 'A generated column names an explicit collation.');
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');

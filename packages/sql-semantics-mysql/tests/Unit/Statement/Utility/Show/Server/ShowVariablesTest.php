@@ -18,16 +18,16 @@ final class ShowVariablesTest extends TestCase
     public function testDeriveStatementResolvesTheCondition(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW GLOBAL VARIABLES WHERE Value IS NULL');
-        self::assertInstanceOf(ShowVariables::class, $show->statement);
-        self::assertSame([], $show->facts->diagnostics);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, $show->statement->scope);
+        self::assertInstanceOf(ShowVariables::class, $show);
+        self::assertSame([], $show->diagnostics());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, $show->scope);
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW GLOBAL VARIABLES WHERE Value IS NULL');
-        self::assertInstanceOf(ShowVariables::class, $show->statement);
-        self::assertSame('Value', $show->facts->relation($show->statement)->shape->slots[1]->name?->value);
+        self::assertInstanceOf(ShowVariables::class, $show);
+        self::assertSame('Value', $show->relationInformation()->shape->slots[1]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

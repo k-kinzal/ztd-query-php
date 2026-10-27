@@ -27,7 +27,7 @@ final class HandlerDeclarationTest extends TestCase
     public function testRenderWritesTheActionTheConditionsAndTheStatement(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -37,7 +37,7 @@ final class HandlerDeclarationTest extends TestCase
         self::assertSame(HandlerAction::Continue, $handler->action);
         self::assertCount(3, $handler->conditions);
         self::assertInstanceOf(Block::class, $handler->statement);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END', $operation->toString());
     }
 

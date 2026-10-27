@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the options of a new role
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE USER joe WITH LOGIN ENCRYPTED PASSWORD 'secret'");
- *     [$operation->statement->name->value, $operation->statement->options[0]->option(), $operation->toString()] // => ['joe', 'canlogin', "CREATE USER joe login PASSWORD 'secret'"]
+ *     [$operation->name->value, $operation->options[0]->option(), $operation->toString()] // => ['joe', 'canlogin', "CREATE USER joe login PASSWORD 'secret'"]
  */
-final class CreateRole implements Statement
+final class CreateRole extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<RoleOption> The options in the order written
@@ -46,8 +45,11 @@ final class CreateRole implements Statement
      * @param Name $name The role name
      * @param list<RoleOption> $options The options in the order written
      */
-    public function __construct(public readonly RoleWord $word, public readonly Name $name, array $options = [])
+    public function __construct(public readonly RoleWord $word, public readonly Name $name, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, RoleOption::class, 'Role options are a list of role options.');
     }
 

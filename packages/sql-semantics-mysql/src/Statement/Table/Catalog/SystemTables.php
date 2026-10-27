@@ -73,7 +73,9 @@ final class SystemTables
             $files = glob($directory . substr($release->value, 0, 9) . '*.php');
             $major = glob($directory . substr($release->value, 0, 7) . '*.php');
             $file = is_array($files) && $files !== [] ? $files[0] : (is_array($major) && $major !== [] ? $major[count($major) - 1] : $directory . GrammarRelease::MySql847->value . '.php');
-            /** @var list<array{string, string, string, string|null, int|null, string|null, string|null, string, string, list<array{string, string, string, string, int, int, int, int, string, int, string, string, string|null, string, string, string, string|null}>}> $entries */
+            /**
+ * @var list<array{string, string, string, string|null, int|null, string|null, string|null, string, string, list<array{string, string, string, string, int, int, int, int, string, int, string, string, string|null, string, string, string, string|null}>}> $entries
+ */
             $entries = require $file;
             $profile = new LanguageProfile($release);
             $tables = [];

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON *`: the database level of the session's current database.
@@ -20,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CurrentDatabaseLevel implements PrivilegeLevel
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Describes the level.
@@ -36,5 +35,11 @@ final class CurrentDatabaseLevel implements PrivilegeLevel
     public function render(Output $out): void
     {
         $out->symbol('*');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

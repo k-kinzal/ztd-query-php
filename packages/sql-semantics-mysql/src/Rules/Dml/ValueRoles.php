@@ -47,7 +47,9 @@ final class ValueRoles
     {
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($root);
         Check::input($problem === null, $problem?->message() ?? 'Contextualized calls have valid identities and signatures.');
-        /** @var list<array{Node, bool, array<int, true>}> $pending */
+        /**
+ * @var list<array{Node, bool, array<int, true>}> $pending
+ */
         $pending = [[$root, false, []]];
         while ($pending !== []) {
             [$node, $inactive, $wrappers] = array_pop($pending);

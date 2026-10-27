@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `UPDATE HISTOGRAM ON column, … [WITH n BUCKETS] [MANUAL UPDATE | AUTO UPDATE]`: a request to build histograms from the column values.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the histogram request
  *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS");
- *     [$analyze->toString(), $analyze->statement->histogram->buckets?->text === '8'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS", true]
+ *     [$analyze->toString(), $analyze->histogram->buckets?->text === '8'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS", true]
  */
 final class UpdateHistogram implements Histogram
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The column names in written order; at least one
@@ -39,7 +38,7 @@ final class UpdateHistogram implements Histogram
      * @param HistogramUpdate|null $update MANUAL UPDATE or AUTO UPDATE, when written (MySQL 8.4 and later)
      * @throws InvalidConstruction When the column list is empty or the bucket count is not a decimal number
      */
-    public function __construct(array $columns, public readonly ?Numeral $buckets = null, public readonly ?HistogramUpdate $update = null)
+    public function __construct(array $columns, public readonly ?Numeral $buckets = null, public readonly ?HistogramUpdate $update = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A histogram request names at least one column.', 1);
         Check::input($buckets === null || preg_match('/\A[0-9]+\z/', $buckets->text) === 1, 'The bucket count is a decimal integer.');

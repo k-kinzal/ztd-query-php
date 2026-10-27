@@ -23,7 +23,7 @@ final class DatabaseRuleTest extends TestCase
     public function testUpgradeRetainsTheDirectoryRoleAndRejectsOrdinaryNames(): void
     {
         $semantics = new Semantics(Dialect::MySql, '5.7.44');
-        $statement = $semantics->analyze('ALTER DATABASE `#mysql50#old-name` UPGRADE DATA DIRECTORY NAME')->statement;
+        $statement = $semantics->analyze('ALTER DATABASE `#mysql50#old-name` UPGRADE DATA DIRECTORY NAME');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, $statement);
         self::assertSame('old-name', $statement->name->suffix->value);
@@ -59,10 +59,10 @@ final class DatabaseRuleTest extends TestCase
     {
         self::assertSame("CREATE DATABASE d DEFAULT ENCRYPTION 'Y'", (new Semantics(Dialect::MySql))->analyze("create database d encryption 'Y'")->toString());
         $operation = (new Semantics(Dialect::MySql))->analyze("ALTER DATABASE d ENCRYPTION 'n\\0ignored'");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, $operation->statement->options[0]);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled, $operation->statement->options[0]->encryption);
-        self::assertSame("n\0ignored", $operation->statement->options[0]->spelling?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption::class, $operation->options[0]);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled, $operation->options[0]->encryption);
+        self::assertSame("n\0ignored", $operation->options[0]->spelling?->value);
     }
 
     public function testEncryptionRefusesAnInvalidValueBeforePublishingAnOption(): void

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REVOKE [IF EXISTS] PROXY ON account FROM account, … [IGNORE UNKNOWN USER]`: a request to withdraw a proxy grant.
@@ -22,9 +21,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Revoking a proxy
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE PROXY ON root FROM app')->toString() // => 'REVOKE PROXY ON root FROM app'
  */
-final class RevokeProxy implements Statement, PrivilegeChange
+final class RevokeProxy extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<UserSpecification> The proxy accounts
@@ -37,8 +36,11 @@ final class RevokeProxy implements Statement, PrivilegeChange
      * @param list<UserSpecification> $users The proxy accounts; at least one
      * @param bool $ignoreUnknownUser Whether IGNORE UNKNOWN USER is written
      */
-    public function __construct(public readonly bool $ifExists, public readonly Account $proxied, array $users, public readonly bool $ignoreUnknownUser = false)
+    public function __construct(public readonly bool $ifExists, public readonly Account $proxied, array $users, public readonly bool $ignoreUnknownUser = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE PROXY names at least one account.', 1);
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');

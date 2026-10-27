@@ -133,7 +133,7 @@ final class SetOutput
 
             return $left === null || $right === null ? null : [...$left, ...$right];
         }
-        $slot = $derivation->facts()->query($query)->shape->slots[$position] ?? null;
+        $slot = $query->queryInformation()->shape->slots[$position] ?? null;
         $domain = $slot === null ? null : (new ResultSlots())->operand($slot->type, (new SetFacts())->combined($query));
 
         return $domain === null ? null : [$domain];
@@ -148,7 +148,7 @@ final class SetOutput
         if ($query instanceof SetOperation && $query->left instanceof Query) {
             return [...$this->fields($query->left, $position, $derivation), ...$this->fields($query->right, $position, $derivation)];
         }
-        $field = $derivation->facts()->query($query)->projection[$position] ?? null;
+        $field = $query->queryInformation()->projection[$position] ?? null;
         return [$field instanceof Field ? $field : null];
     }
 

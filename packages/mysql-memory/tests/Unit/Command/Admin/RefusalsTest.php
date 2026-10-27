@@ -170,7 +170,7 @@ final class RefusalsTest extends TestCase
 
     public function testOptionAnswersTheValueOfASourceOption(): void
     {
-        $statement = (new Instance())->connect()->analyze("CHANGE REPLICATION SOURCE TO SOURCE_DELAY = 2147483648, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = '3e11fa47-71ca-11e1-9e33-c80aa9429562'")->statement;
+        $statement = (new Instance())->connect()->analyze("CHANGE REPLICATION SOURCE TO SOURCE_DELAY = 2147483648, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = '3e11fa47-71ca-11e1-9e33-c80aa9429562'");
         $refusals = new Refusals();
 
         self::assertSame(['2147483648', '3e11fa47-71ca-11e1-9e33-c80aa9429562', ''], [$refusals->option($statement, SourceOptionKind::Delay), $refusals->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions), $refusals->option($statement, SourceOptionKind::Host)]);
@@ -178,7 +178,7 @@ final class RefusalsTest extends TestCase
 
     public function testFirstAnswersTheFileNumberOfReset(): void
     {
-        $statement = (new Instance())->connect()->analyze('RESET BINARY LOGS AND GTIDS TO 06344632')->statement;
+        $statement = (new Instance())->connect()->analyze('RESET BINARY LOGS AND GTIDS TO 06344632');
 
         self::assertSame(['6344632', '0'], [(new Refusals())->first($statement), (new Refusals())->first(null)]);
     }

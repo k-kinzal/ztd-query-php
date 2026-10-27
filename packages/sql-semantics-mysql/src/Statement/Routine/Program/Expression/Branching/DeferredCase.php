@@ -16,7 +16,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredCase implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CaseBranch|DeferredCaseBranch> The complete ordered branches
@@ -46,8 +46,11 @@ final class DeferredCase implements DeferredOperand
      * @param list<CaseBranch|DeferredCaseBranch> $branches The complete WHEN/result pairs
      * @param Scalar|RowOperand|DeferredOperand|null $else The ELSE result, when written
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand|null $operand, array $branches, public readonly Scalar|RowOperand|DeferredOperand|null $else = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand|null $operand, array $branches, public readonly Scalar|RowOperand|DeferredOperand|null $else = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $items = [];
         $deferred = ($operand !== null && !$operand instanceof Scalar) || ($else !== null && !$else instanceof Scalar);
         foreach (Check::listOf($branches, Node::class, 'A CASE expression has at least one WHEN branch.', 1) as $branch) {

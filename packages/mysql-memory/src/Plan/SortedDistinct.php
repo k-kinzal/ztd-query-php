@@ -87,7 +87,7 @@ final class SortedDistinct
             return false;
         }
         $first = $plan->origins[0] ?? null;
-        $table = $first === null ? null : $this->planner->dictionary->table($first->schema, $first->originalTable);
+        $table = $first === null ? null : $this->planner->dictionary->table($first->schema, $first->originalTable, $this->planner->temporaries);
         if ($table === null) {
             return false;
         }

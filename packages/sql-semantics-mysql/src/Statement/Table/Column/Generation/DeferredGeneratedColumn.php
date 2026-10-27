@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A complete generation declaration with operands retained until invocation.
@@ -34,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredGeneratedColumn implements ColumnSpecification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnAttribute> The attributes in written order
@@ -56,6 +55,7 @@ final class DeferredGeneratedColumn implements ColumnSpecification
         public readonly ?GeneratedStorage $storage = null,
         array $attributes = [],
         public readonly ?References $references = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($collation === null || $collation->name !== null, 'A generated column names an explicit collation.');
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');

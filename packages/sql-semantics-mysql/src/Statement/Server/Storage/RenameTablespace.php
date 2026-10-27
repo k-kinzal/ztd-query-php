@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER TABLESPACE name RENAME TO new_name`: a request to rename a general tablespace (MySQL 8.0 and later).
@@ -23,18 +22,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Renaming a tablespace
  *     $rename = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter tablespace a rename to b');
- *     [$rename->toString(), $rename->statement->target->value] // => ['ALTER TABLESPACE a RENAME TO b', 'b']
+ *     [$rename->toString(), $rename->target->value] // => ['ALTER TABLESPACE a RENAME TO b', 'b']
  */
-final class RenameTablespace implements Statement
+final class RenameTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The tablespace name
      * @param Name $target The new name
      */
-    public function __construct(public readonly Name $name, public readonly Name $target)
+    public function __construct(public readonly Name $name, public readonly Name $target, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

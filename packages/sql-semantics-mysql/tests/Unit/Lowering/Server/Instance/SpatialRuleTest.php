@@ -50,8 +50,8 @@ final class SpatialRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 4294967296');
         self::assertSame('DROP SPATIAL REFERENCE SYSTEM 4294967296', $operation->toString());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference::class, $operation->statement);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange, $operation->statement->problem?->rule);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference::class, $operation);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange, $operation->problem?->rule);
     }
 
 }

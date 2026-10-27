@@ -19,7 +19,7 @@ final class ResetTest extends TestCase
     {
         $reset = (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("RESET SLAVE FOR CHANNEL 'channel', MASTER TO 7");
 
-        self::assertSame([], $reset->facts->diagnostics);
+        self::assertSame([], $reset->diagnostics());
     }
 
     public function testRenderWritesTheItemsInOrder(): void

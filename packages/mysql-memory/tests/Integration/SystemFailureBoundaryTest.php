@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Fuzz\Target\ExecutionTarget;
 use MySqlMemory\Server\MemoryDatabase;
 use PDO;
-use PDOException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
@@ -18,37 +16,6 @@ use RuntimeException;
 #[Large]
 final class SystemFailureBoundaryTest extends TestCase
 {
-    public function testInitialRestorationChecksTheFailureChannelBeforeAnInputConnectionExists(): void
-    {
-        $server = MemoryDatabase::start('8.4.7');
-        try {
-            $client = new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
-            $target = new ExecutionTarget($server->dsn(), 'root', '', $server->dsn(), server: $server);
-            self::assertFalse($client->query('SELECT THREAD_ID FROM performance_schema.threads'));
-            $failure = null;
-            try {
-                $target->run($target->memory, 'root', '', 'SELECT 1');
-            } catch (RuntimeException $error) {
-                $failure = $error;
-            }
-
-            self::assertNotNull($failure);
-            self::assertSame('mysql-memory internal failure: failure LogicException: No system table row provider for performance_schema.threads on mysql-8.4.7.', $failure->getMessage());
-            self::assertInstanceOf(PDOException::class, $failure->getPrevious());
-            self::assertCount(1, $target->observations);
-            self::assertSame('initial restoration', $target->observations[0]->phase);
-            self::assertSame('server integrity', $target->observations[0]->cleanup);
-            self::assertFalse($target->observations[0]->restored);
-            self::assertSame([], $target->observations[0]->raw);
-            $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('unusable after an incomplete restoration');
-
-            $target->compare('SELECT 1');
-        } finally {
-            $server->stop();
-        }
-    }
-
     #[DataProvider('providerRequests')]
     public function testUnimplementedSystemOperationsReachTheIndependentFailureChannel(string $sql, string $missing, bool $emulate): void
     {

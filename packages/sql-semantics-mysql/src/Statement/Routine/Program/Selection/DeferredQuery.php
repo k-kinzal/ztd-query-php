@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored query whose fixed read constraint is checked when it is reached.
@@ -34,12 +33,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredQuery implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The stored query and every preparation dependency
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody, 'A single deferred block is a DeferredSelection instruction directly.');
         (new StatementQuery())->check($query);

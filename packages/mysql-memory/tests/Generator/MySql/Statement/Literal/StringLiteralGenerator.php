@@ -56,4 +56,20 @@ final class StringLiteralGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<array<array-key, string|int|bool|object|null>> $segments The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $introducer The generated semantic operand
+     * @param ErisGenerator<bool> $national The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation|null> $collation The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $location Generated input range
+     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated local meaning
+     * @return ErisGenerator<StringLiteral>
+     */
+    public static function fromOperands(ErisGenerator $segments, ErisGenerator $introducer, ErisGenerator $national, ErisGenerator $collation, ?ErisGenerator $location = null, ?ErisGenerator $scalarInformation = null): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): StringLiteral => new StringLiteral(segments: $parts[0], introducer: $parts[1], national: $parts[2], collation: $parts[3], location: $parts[4], scalarInformation: $parts[5]), \Tests\Generator\Operands::tuple($segments, $introducer, $national, $collation, $location ?? Generators::constant(null), $scalarInformation ?? Generators::constant(null)));
+    }
+
 }

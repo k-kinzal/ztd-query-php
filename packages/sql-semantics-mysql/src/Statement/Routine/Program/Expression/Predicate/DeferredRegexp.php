@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,15 +32,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredRegexp implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $operand The matched expression
      * @param Scalar|RowOperand|DeferredOperand $pattern The pattern
      * @param bool $negated Whether NOT precedes REGEXP
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $pattern, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $pattern, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input(!$operand instanceof Scalar || !$pattern instanceof Scalar, 'A deferred REGEXP contains a non-scalar operand.');
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The REGEXP operand requires grouping.');

@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One collation level of the LEVEL clause of WEIGHT_STRING in MySQL 5.6 and 5.7, with its order and reversal flags.
@@ -22,14 +21,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WeightLevel implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral $number The level
      * @param Direction|null $direction The written ASC or DESC
      * @param bool $reverse Whether REVERSE is written
      */
-    public function __construct(public readonly Numeral $number, public readonly ?Direction $direction = null, public readonly bool $reverse = false)
+    public function __construct(public readonly Numeral $number, public readonly ?Direction $direction = null, public readonly bool $reverse = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

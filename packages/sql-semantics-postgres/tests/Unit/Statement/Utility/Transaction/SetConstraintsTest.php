@@ -14,7 +14,7 @@ final class SetConstraintsTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CONSTRAINTS a IMMEDIATE')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CONSTRAINTS a IMMEDIATE')->diagnostics());
     }
 
     public function testRenderWritesAllOrTheNames(): void

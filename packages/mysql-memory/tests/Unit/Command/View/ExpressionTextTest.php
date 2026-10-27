@@ -40,7 +40,7 @@ final class ExpressionTextTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertSame(['1', 'NULL'], (new ExpressionText(new ViewText($session->analyze('SELECT 1')->facts, '', '')))->scalars([new NumberLiteral('1'), new NullLiteral()]));
+        self::assertSame(['1', 'NULL'], (new ExpressionText(new ViewText($session->analyze('SELECT 1')->statementInformation(), '', '')))->scalars([new NumberLiteral('1'), new NullLiteral()]));
     }
 
     public function testScalarWritesOperatorsInParenthesesAndNegativeNumbers(): void
@@ -61,14 +61,14 @@ final class ExpressionTextTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertSame('(1 + 2)', (new ExpressionText(new ViewText($session->analyze('SELECT 1')->facts, '', '')))->binary(new NumberLiteral('1'), '+', new NumberLiteral('2')));
+        self::assertSame('(1 + 2)', (new ExpressionText(new ViewText($session->analyze('SELECT 1')->statementInformation(), '', '')))->binary(new NumberLiteral('1'), '+', new NumberLiteral('2')));
     }
 
     public function testWrapPutsTheOperandBetweenTheTexts(): void
     {
         $session = (new Instance())->connect();
 
-        self::assertSame(['-(1)', null], [(new ExpressionText(new ViewText($session->analyze('SELECT 1')->facts, '', '')))->wrap(new NumberLiteral('1'), '-(', ')'), (new ExpressionText(new ViewText($session->analyze('SELECT 1')->facts, '', '')))->wrap(new NumberLiteral('1'), '', '', true)]);
+        self::assertSame(['-(1)', null], [(new ExpressionText(new ViewText($session->analyze('SELECT 1')->statementInformation(), '', '')))->wrap(new NumberLiteral('1'), '-(', ')'), (new ExpressionText(new ViewText($session->analyze('SELECT 1')->statementInformation(), '', '')))->wrap(new NumberLiteral('1'), '', '', true)]);
     }
 
     public function testNotNegatesAComparison(): void
@@ -103,12 +103,12 @@ final class ExpressionTextTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 IN (1, 2)');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertStringEndsWith('AS `1 IN (1, 2)`', (string) (new ViewText($operation->facts, '', ''))->select($select));
+        self::assertStringEndsWith('AS `1 IN (1, 2)`', (string) (new ViewText($operation->statementInformation(), '', ''))->select($select));
     }
 
     public function testCallAndAggregateWriteLowerCaseNames(): void
@@ -129,12 +129,12 @@ final class ExpressionTextTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT COUNT(*), COUNT(DISTINCT 1, 2)');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame('select count(0) AS `COUNT(*)`,count(distinct 1,2) AS `COUNT(DISTINCT 1, 2)`', (new ViewText($operation->facts, '', ''))->select($select));
+        self::assertSame('select count(0) AS `COUNT(*)`,count(distinct 1,2) AS `COUNT(DISTINCT 1, 2)`', (new ViewText($operation->statementInformation(), '', ''))->select($select));
     }
 
     public function testBranchesWriteTheCase(): void
@@ -168,7 +168,7 @@ final class ExpressionTextTest extends TestCase
     public function testLiteralWritesEachKindOfLiteral(): void
     {
         $session = (new Instance())->connect();
-        $text = new ExpressionText(new ViewText($session->analyze('SELECT 1')->facts, '', ''));
+        $text = new ExpressionText(new ViewText($session->analyze('SELECT 1')->statementInformation(), '', ''));
 
         self::assertSame(['1', '-(2)', '3', "'it\\'s'", 'NULL', 'false', null], [$text->literal(new NumberLiteral('1')), $text->literal(new SignedLiteral(true, new NumberLiteral('2'))), $text->literal(new SignedLiteral(false, new NumberLiteral('3'))), $text->literal(new StringLiteral(["it's"])), $text->literal(new NullLiteral()), $text->literal(new BooleanLiteral(false)), $text->literal(new Grouped(new NumberLiteral('4')))]);
     }
@@ -191,7 +191,7 @@ final class ExpressionTextTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertNull((new ExpressionText(new ViewText($session->analyze('SELECT 1')->facts, '', '')))->operator(new NumberLiteral('1')));
+        self::assertNull((new ExpressionText(new ViewText($session->analyze('SELECT 1')->statementInformation(), '', '')))->operator(new NumberLiteral('1')));
     }
 
     public function testUnaryWritesPlusAsItsOperandAndNotAsAComparisonWithZero(): void

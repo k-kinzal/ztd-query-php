@@ -129,7 +129,7 @@ final class Definitions
             (new Constraint\DeclarationErrors())->check($this->planner->compiler->facts);
         }
         $scope = new Scope();
-        $declared = new Declared($collation, $this->planner->settings->release());
+        $declared = new Declared($collation, $this->planner->settings->release(), $this->planner->settings->resolution()->realAsFloat);
         $columns = [];
         $keys = [];
         foreach ($elements as $position => $element) {

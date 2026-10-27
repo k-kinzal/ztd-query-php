@@ -27,7 +27,7 @@ final class WindowSpecificationTest extends TestCase
         $partition = new NumberLiteral('1');
         (new WindowSpec(null, [new OrderItem($partition)]))->deriveWindow($derivation, $derivation->environment());
 
-        self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($partition)->nullability);
+        self::assertSame(Nullability::NotNull, $partition->scalarInformation()->nullability);
         self::assertContains(WindowSpecification::class, class_implements(WindowSpec::class));
     }
 }

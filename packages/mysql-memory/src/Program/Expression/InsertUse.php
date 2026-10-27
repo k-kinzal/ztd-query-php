@@ -54,15 +54,15 @@ final class InsertUse
             \MySqlMemory\Session\State\StatementCounters::command($session, $write->into->replace ? 'Com_replace' : 'Com_insert');
             $session->diagnostics->clear();
         }
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         if ($write instanceof DeferredInsertSet && $database === '' && $write->into->table->name->schema === null) {
             throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
+        $write = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($write);
         $derivation = new Derivation($context);
         $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         (new \MySqlMemory\Session\Access\DefaultDatabase())->write($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
             if (Stages::parsed($problem) || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable) {
@@ -78,7 +78,7 @@ final class InsertUse
         }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $this->prepare($write, $planner, $session);
     }
 
@@ -91,7 +91,7 @@ final class InsertUse
     public function prepare(DeferredInsertRows|DeferredInsertSet|DeferredInsertQuery $write, \MySqlMemory\Plan\Planner $planner, Session $session): never
     {
         $schema = $write->into->table->name->schema->value ?? $session->variables->database;
-        $table = $session->instance->dictionary->table($schema, $write->into->table->name->name->value);
+        $table = $session->instance->dictionary->table($schema, $write->into->table->name->name->value, $session->temporaries);
         \SqlSemantics\Diagnostic\Check::invariant($table !== null, 'The write target was opened before value preparation.');
         if ($write instanceof DeferredInsertRows) {
             $this->rows($write, $planner, $session, $table);
@@ -179,6 +179,8 @@ final class InsertUse
 
     /**
      * Prepares first-row operands and written columns in the release's observed order.
+     *
+     * @throws SqlError When a column, row width or value cannot prepare
      */
     public function head(DeferredInsertRows $write, \MySqlMemory\Plan\Planner $planner, Session $session, \MySqlMemory\Evaluation\Scope $scope, \MySqlMemory\Dictionary\StoredTable $table): void
     {

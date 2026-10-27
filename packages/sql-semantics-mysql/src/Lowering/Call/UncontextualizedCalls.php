@@ -25,7 +25,9 @@ final class UncontextualizedCalls
     public function inactive(Node $tree, Lowering $lowering): array
     {
         $inactive = [];
-        /** @var list<array{Node, bool}> $pending */
+        /**
+ * @var list<array{Node, bool}> $pending
+ */
         $pending = [[$tree, false]];
         while ($pending !== []) {
             [$node, $retained] = array_pop($pending);

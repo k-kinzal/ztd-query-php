@@ -20,7 +20,7 @@ final class DeferredEvaluationTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DO *');
 
-        self::assertSame('No tables used', $operation->facts->diagnostics[0]->message());
+        self::assertSame('No tables used', $operation->diagnostics()[0]->message());
     }
 
     public function testProblemIdentifiesTheFirstWildcard(): void

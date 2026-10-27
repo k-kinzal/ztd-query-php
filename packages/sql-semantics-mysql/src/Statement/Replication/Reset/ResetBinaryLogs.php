@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET BINARY LOGS AND GTIDS [TO n]`, written RESET MASTER in the legacy vocabulary.
@@ -34,14 +33,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ResetBinaryLogs implements ResetTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Terminology $terminology The vocabulary of the release
      * @param Numeral|null $first The number of the first new binary log file, when TO is written
      * @param bool $synonym Whether MASTER is written where BINARY LOGS AND GTIDS is the current vocabulary
      */
-    public function __construct(public readonly Terminology $terminology, public readonly ?Numeral $first = null, public readonly bool $synonym = false)
+    public function __construct(public readonly Terminology $terminology, public readonly ?Numeral $first = null, public readonly bool $synonym = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$synonym || $terminology === Terminology::Current, 'The MASTER synonym applies to current binary-log terminology.');
         Check::input(self::problem($first) === null, 'A binary log index is an integer between 1 and 2000000000.');

@@ -34,7 +34,7 @@ final class CallsTest extends TestCase
         $session = (new Instance($release))->connect();
         $session->query('CREATE DATABASE d; USE d');
         $operation = $session->semantics()->analyze('SELECT D.f(0, absent_column)');
-        $locator = (new Locator(release: $session->settings()->release()))->statement($operation->statement);
+        $locator = (new Locator(release: $session->settings()->release()))->statement($operation);
         $observed = array_map(static function (string $setup) use ($session, $locator): array {
             $session->query($setup);
             return (new Calls())->located($locator, $session, []);

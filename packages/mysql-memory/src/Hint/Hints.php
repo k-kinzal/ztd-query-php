@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Lowering\Hint\HintReader;
 use SqlSemantics\Platform\MySql\Statement\Hint\Form\KeyHint;
 use SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint;
 use SqlSemantics\Statement\Node;
+use WeakMap;
 
 /**
  * Handles the optimizer hints of the statements a session runs, at the three moments the server reads them.
@@ -31,32 +32,7 @@ final class Hints
      */
     public const TYPING = ['div_precision_increment', 'group_concat_max_len'];
 
-    /**
-     * Answers the warnings about the problems of the hint comments of a statement, in written order, each with whether its comment follows the first keyword of the statement.
-     *
-     * @return list<array{string, bool}>
-     */
-    public function syntax(Tree $tree, string $text, Session $session): array
-    {
-        if (!str_contains($text, '/*+')) {
-            return [];
-        }
-        $first = null;
-        foreach ($tree->tokens() as $token) {
-            if ($token->text !== '(') {
-                $first = $token->offset;
-                break;
-            }
-        }
-        $messages = [];
-        foreach ((new HintReader($session->settings()->release(), $session->modes()->has('ANSI_QUOTES')))->comments($tree) as $offset => $comment) {
-            if ($comment->error !== null) {
-                $messages[] = [$comment->error->message($text), $offset === $first];
-            }
-        }
 
-        return $messages;
-    }
 
     /**
      * Applies the SET_VAR hints of a statement that change how it is typed, silently, while it is analyzed; the first hint of a variable counts.
@@ -67,7 +43,7 @@ final class Hints
         if (!str_contains($text, '/*+') || $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return $application;
         }
-        $registration = new Registration(new Blocks($session->instance->dictionary, $session->variables->database), $session->variables->catalog, new Printer());
+        $registration = new Registration(new Blocks($session->instance->dictionary, $session->variables->database, $session->temporaries), $session->variables->catalog, new Printer());
         foreach ((new HintReader($session->settings()->release()))->comments($tree) as $comment) {
             foreach ($comment->hints as $hint) {
                 $definition = $hint instanceof VariableHint ? $session->variables->catalog->find($hint->variable) : null;
@@ -153,7 +129,7 @@ final class Hints
         if (!$this->hinted($session)) {
             return '';
         }
-        $blocks = new Blocks($session->instance->dictionary, $session->variables->database);
+        $blocks = new Blocks($session->instance->dictionary, $session->variables->database, $session->temporaries);
         $blocks->resolved = $blocks->query($query, false);
         foreach ($blocks->blocks as $block) {
             $block->hints = array_values(array_filter($block->hints, static fn ($hint): bool => $hint instanceof KeyHint && in_array(Registration::kind($hint->hint), Registration::FAMILY, true)));
@@ -178,7 +154,7 @@ final class Hints
      */
     public function registration(Node $statement, Session $session): Registration
     {
-        $blocks = (new Blocks($session->instance->dictionary, $session->variables->database))->read($statement);
+        $blocks = (new Blocks($session->instance->dictionary, $session->variables->database, $session->temporaries))->read($statement);
 
         return (new Registration($blocks, $session->variables->catalog, new Printer($session->modes()->has('ANSI_QUOTES')), $session->program !== null))->register();
     }
@@ -190,4 +166,31 @@ final class Hints
     {
         return $session->program?->contained !== true && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651;
     }
+    /**
+     * Captures input-only hint spellings for later diagnostic display.
+     */
+    public function messages(\SqlSemantics\Platform\MySql\Statement\Statement $statement, string $input, Session $session): void
+    {
+        foreach ($statement->statementInformation()->warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError) {
+                $session->preparation->hintMessages ??= new WeakMap();
+                $session->preparation->hintMessages[$warning] = $warning->message($input);
+            }
+        }
+    }
+
+    /**
+     * Emits hint warnings at their leading or trailing position in the input.
+     *
+     * @param array<int, \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError> $hints Semantic hint conditions
+     */
+    public function warnings(array $hints, bool $leading, Session $session): void
+    {
+        foreach ($hints as $hint) {
+            if ($hint->leading === $leading) {
+                $session->diagnostics->warning($hint->code(), $session->preparation->hintMessages[$hint] ?? $hint->message());
+            }
+        }
+    }
+
 }

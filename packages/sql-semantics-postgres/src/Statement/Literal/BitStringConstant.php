@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The value of a bit-string constant: its notation and the digits between the quotes.
@@ -20,18 +19,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a hexadecimal bit string
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT X'1F'");
- *     $value = $query->statement->targets[0]->expression->value;
+ *     $value = $query->targets[0]->expression->value;
  *     [$value->radix, $value->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Literal\BitStringRadix::Hexadecimal, '1F']
  */
 final class BitStringConstant implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param BitStringRadix $radix The notation of the digits
      * @param string $digits The text between the quotes
      */
-    public function __construct(public readonly BitStringRadix $radix, public readonly string $digits)
+    public function __construct(public readonly BitStringRadix $radix, public readonly string $digits, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!str_contains($digits, "'") && !str_contains($digits, "\0"), 'A bit-string constant holds no quote and no zero byte.');
     }

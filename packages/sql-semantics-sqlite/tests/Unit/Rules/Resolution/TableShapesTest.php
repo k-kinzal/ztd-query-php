@@ -57,7 +57,7 @@ final class TableShapesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $with = $semantics->analyze('WITH w AS (SELECT a FROM t) SELECT 1', [$t])->statement;
+        $with = $semantics->analyze('WITH w AS (SELECT a FROM t) SELECT 1', [$t]);
         $derivation = new Derivation($semantics->context([$t]));
         $slot = new OutputSlot(new Name('q'), new Known(Storage::Integer), Nullability::NotNull);
 

@@ -21,7 +21,7 @@ use MySqlMemory\Storage\References;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes DROP TABLE and TRUNCATE TABLE.
@@ -54,8 +54,8 @@ final class DropTableCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $dictionary = $session->instance->dictionary;
         $database = $session->variables->database;
         if ($statement instanceof TruncateTable) {
@@ -70,7 +70,7 @@ final class DropTableCommand implements Command
             if ($name->schema === null && $database === '') {
                 throw QueryError::NoDatabase->error();
             }
-            $table = $statement->temporary ? ($dictionary->schema($schema) === null ? null : $session->temporaries->table($schema, $name->name->value)) : $dictionary->table($schema, $name->name->value);
+            $table = $statement->temporary ? ($dictionary->schema($schema) === null ? null : $session->temporaries->table($schema, $name->name->value)) : $dictionary->table($schema, $name->name->value, $session->temporaries);
             if ($table === null) {
                 $missing[] = $schema . '.' . $name->name->value;
             } else {
@@ -88,7 +88,7 @@ final class DropTableCommand implements Command
             $context->note(SchemaError::BadTable, (new DiagnosticText())->missingTables($name, $session->settings()->legacy()));
         }
         foreach ($found as [$schema, $name, $table]) {
-            $dictionary->release($table, $schema, $name);
+            $dictionary->release($table, $schema, $name, $session->temporaries);
             foreach ($session->handlers as $alias => $handler) {
                 if ($handler->schema === $schema && $handler->table === $name) {
                     unset($session->handlers[$alias]);
@@ -110,7 +110,7 @@ final class DropTableCommand implements Command
     public function truncate(TruncateTable $statement, Session $session, Context $context): Reply
     {
         $schema = $statement->table->schema->value ?? $session->variables->database;
-        $table = $session->instance->dictionary->table($schema, $statement->table->name->value);
+        $table = $session->instance->dictionary->table($schema, $statement->table->name->value, $session->temporaries);
         if ($table === null || !$table->definition->temporary) {
             $session->transaction->commit();
         }

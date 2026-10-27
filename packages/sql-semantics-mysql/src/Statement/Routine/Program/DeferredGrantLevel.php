@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored GRANT whose target condition is raised only when reached.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping a stored condition outside the standalone statement domain
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u')->statement;
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
  *     [$create->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel, $create->body instanceof \SqlSemantics\Platform\MySql\Statement\Statement] // => [true, false]
  */
 final class DeferredGrantLevel implements ProgramStatement, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param GrantRequest $request The instruction's typed privilege and account operands
      */
-    public function __construct(public readonly GrantRequest $request)
+    public function __construct(public readonly GrantRequest $request, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($request->as === null || $request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel, 'Non-global AS takes precedence and uses DeferredGrantAs.');
         Check::input($request->scopeProblem() !== null, 'A deferred grant level needs a contradictory privilege target.');

@@ -38,31 +38,31 @@ final class ViewColumnsTest extends TestCase
     public function testGeneratedTellsTheFieldsWithoutAliasThatAreNoColumns(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, b AS c, 1+1 FROM t');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame([false, false, true], (new ViewColumns($operation->context->profile, $operation->context->columnNames))->generated($select, $operation->fields()->items ?? []));
+        self::assertSame([false, false, true], (new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames))->generated($select, $operation->fields()->items ?? []));
     }
 
     public function testBlockAnswersTheFirstQueryBlock(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 AS a) UNION SELECT 2');
-        $values = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(1)')->statement;
+        $values = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(1)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $values);
         $values = $values->query;
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertSame('a', $columns->block($operation->statement->query)?->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertSame('a', $columns->block($operation->query)?->items[0]->alias?->value);
         self::assertNull($columns->block($values));
     }
 
     public function testUniqueAddsTheCounterWhenTheNameIsTaken(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames);
 
         self::assertSame('Name_exp_1_a', $columns->unique(['Name_exp_a', 'a', 'a'], 2, 2, 'a'));
     }
@@ -70,7 +70,7 @@ final class ViewColumnsTest extends TestCase
     public function testCutKeepsSixtyFourCharactersOrTheLegacyBytes(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames);
 
         self::assertSame(str_repeat('a', 64), $columns->cut(str_repeat('a', 70), false));
         self::assertSame(str_repeat('a', 191), $columns->cut(str_repeat('a', 200), true));

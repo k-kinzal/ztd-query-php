@@ -119,11 +119,11 @@ final class WindowingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1, 2 FROM (SELECT 3) t WHERE 4 ORDER BY 5.0');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $planner = new Planner($operation->query, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
 
-        self::assertCount(3, (new Windowing($planner))->roots($operation->statement->query));
+        self::assertCount(3, (new Windowing($planner))->roots($operation->query));
     }
 
     public function testWindowedHoldsForAnAggregateWithAWindowOnly(): void
@@ -154,24 +154,24 @@ final class WindowingTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE u (id INT)');
         $operation = $session->analyze('SELECT id, RANK() OVER () r FROM u ORDER BY r + 1, id');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $planner = new Planner($operation->query, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
 
-        self::assertSame([true, false], [(new Windowing($planner))->reads($operation->statement->query->orderBy[0]->expression), (new Windowing($planner))->reads($operation->statement->query->orderBy[1]->expression)]);
+        self::assertSame([true, false], [(new Windowing($planner))->reads($operation->query->orderBy[0]->expression), (new Windowing($planner))->reads($operation->query->orderBy[1]->expression)]);
     }
 
     public function testOrderingLeavesOutAKeyConstantForTheStatement(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 FROM (SELECT 2 a) t ORDER BY 3 + 0, a DESC');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
-        self::assertNotNull($operation->statement->query->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $planner = new Planner($operation->query, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertNotNull($operation->query->from);
         $scope = new Scope();
-        $planner->relations->plan($operation->statement->query->from, $scope);
+        $planner->relations->plan($operation->query->from, $scope);
 
-        self::assertSame([true], array_column((new Windowing($planner))->ordering($operation->statement->query, $scope), 1));
+        self::assertSame([true], array_column((new Windowing($planner))->ordering($operation->query, $scope), 1));
     }
 }

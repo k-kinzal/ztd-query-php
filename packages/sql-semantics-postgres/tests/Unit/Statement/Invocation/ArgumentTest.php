@@ -24,6 +24,7 @@ final class ArgumentTest extends TestCase
     {
         $value = new Constant(new IntegerConstant('1'));
         $argument = new class ($value) implements Argument {
+            use \SqlSemantics\Statement\Semantics\Occurrence;
             public function __construct(private readonly Scalar $value)
             {
             }
@@ -52,6 +53,7 @@ final class ArgumentTest extends TestCase
     public function testNameIsTheParameterNamedOrNull(): void
     {
         $argument = new class () implements Argument {
+            use \SqlSemantics\Statement\Semantics\Occurrence;
             public function value(): Scalar
             {
                 return new Constant(new IntegerConstant('1'));

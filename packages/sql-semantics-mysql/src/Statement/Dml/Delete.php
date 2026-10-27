@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DELETE from one table, with WHERE, ORDER BY and LIMIT.
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a single-table DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5');
- *     [$delete->statement->options, $delete->toString()] // => [[\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick], 'DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5']
+ *     [$delete->options, $delete->toString()] // => [[\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick], 'DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5']
  */
-final class Delete implements Explainable
+final class Delete extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
@@ -65,7 +64,12 @@ final class Delete implements Explainable
         array $orderBy = [],
         public readonly ?Limit $limit = null,
         array $hints = [],
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');

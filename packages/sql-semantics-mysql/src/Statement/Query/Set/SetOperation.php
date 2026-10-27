@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A set operation: UNION, EXCEPT or INTERSECT of two queries.
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the operands of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u');
- *     [$query->statement->query->left->from->name->name->value, $query->statement->query->right->from->name->name->value] // => ['t', 'u']
+ *     [$query->query->left->from->name->name->value, $query->query->right->from->name->name->value] // => ['t', 'u']
  * @example Refusing a right operand that would associate differently without parentheses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
@@ -54,7 +53,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SetOperation implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query|LeadingUnion $left The left operand: a query, or the operands of a 5.x union before this UNION when the last of them keeps its own clauses
@@ -62,8 +62,11 @@ final class SetOperation implements Query
      * @param SetQuantifier|null $quantifier The written DISTINCT or ALL
      * @param Query $right The right operand
      */
-    public function __construct(public readonly Query|LeadingUnion $left, public readonly SetOperator $operator, public readonly ?SetQuantifier $quantifier, public readonly Query $right)
+    public function __construct(public readonly Query|LeadingUnion $left, public readonly SetOperator $operator, public readonly ?SetQuantifier $quantifier, public readonly Query $right, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input(!$right instanceof self || $right->operator->tighter($operator), 'A set operation on the right of another is written in parentheses unless it binds more tightly.');
         Check::input(!$left instanceof self || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
         Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');

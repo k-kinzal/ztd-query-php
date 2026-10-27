@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DROP CONSTRAINT: removes a constraint.
@@ -24,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DropConstraint implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The constraint
@@ -35,6 +34,7 @@ final class DropConstraint implements AlterCommand
         public readonly Name $name,
         public readonly bool $ifExists = false,
         public readonly ?DropBehavior $behavior = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
     }
 

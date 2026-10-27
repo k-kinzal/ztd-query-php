@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,11 +32,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Declaring a virtual table without knowing its columns
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE VIRTUAL TABLE docs USING fts5(title, body)');
- *     [$create->statement->module->value, count($create->statement->arguments), $create->declarations()[0]->complete] // => ['fts5', 2, false]
+ *     [$create->module->value, count($create->arguments), $create->declarations()[0]->complete] // => ['fts5', 2, false]
  */
-final class CreateVirtualTable implements Statement
+final class CreateVirtualTable extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ModuleArgument>|null The module arguments in order, or null when no parentheses are written
@@ -50,8 +49,11 @@ final class CreateVirtualTable implements Statement
      * @param list<ModuleArgument>|null $arguments The module arguments in order; null when no parentheses are written, otherwise at least one, possibly empty, argument
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      */
-    public function __construct(public readonly QualifiedName $name, public readonly Name $module, ?array $arguments = null, public readonly bool $ifNotExists = false)
+    public function __construct(public readonly QualifiedName $name, public readonly Name $module, ?array $arguments = null, public readonly bool $ifNotExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($name->catalog === null, 'A table name has at most a schema qualifier.');
         $this->arguments = $arguments === null ? null : Check::listOf($arguments, ModuleArgument::class, 'Written parentheses hold at least one, possibly empty, module argument.', 1);
     }

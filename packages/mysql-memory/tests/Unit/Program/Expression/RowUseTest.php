@@ -118,7 +118,7 @@ final class RowUseTest extends TestCase
         $derivation->scalar($row, $derivation->environment());
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation);
-        $planner = new \MySqlMemory\Plan\Planner($row, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($row, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->settings(), $connection, $session->instance->dictionary);
         (new RowUse())->prepare($row, $planner->compiler, new \MySqlMemory\Evaluation\Scope());
 
         self::assertArrayHasKey('x', $session->variables->user);
@@ -134,7 +134,7 @@ final class RowUseTest extends TestCase
         $derivation->scalar($value, $derivation->environment());
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation);
-        $planner = new \MySqlMemory\Plan\Planner($value, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($value, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->settings(), $connection, $session->instance->dictionary);
         $this->expectExceptionCode(1241);
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         (new RowUse())->membership($value, $planner->compiler, new \MySqlMemory\Evaluation\Scope());

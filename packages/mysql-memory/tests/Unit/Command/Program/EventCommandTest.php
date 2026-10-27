@@ -264,10 +264,9 @@ final class EventCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00.5' DO SELECT 1");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context, 'root', 'localhost', 1, []), $session->instance->dictionary);
-        $statement = $operation->statement;
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context, 'root', 'localhost', 1, []), $session->instance->dictionary);
+        $statement = $operation;
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule::class, $statement->schedule);

@@ -93,7 +93,7 @@ final class ViewWriteCommandTest extends TestCase
         $session->query('CREATE VIEW v AS SELECT a FROM t');
         $writes = new ViewWrites(new QualifiedName(new Name('t'), new Name('d')), new Name('t'), null, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))]], null);
 
-        $reply = ViewWriteCommand::noted($session->analyze('DELETE FROM v LIMIT 1')->statement, $writes, new Completion(2, 0, 0), $session);
+        $reply = ViewWriteCommand::noted($session->analyze('DELETE FROM v LIMIT 1'), $writes, new Completion(2, 0, 0), $session);
 
         self::assertInstanceOf(Completion::class, $reply);
         self::assertSame([2, 1, [['Note', 1355, 'View being updated does not have complete key of underlying table in it']]], [$reply->affectedRows, $reply->warnings, $session->diagnostics->conditions]);
@@ -109,7 +109,7 @@ final class ViewWriteCommandTest extends TestCase
         $writes = new ViewWrites(new QualifiedName(new Name('t'), new Name('d')), new Name('t'), null, [['a', new Name('a'), new ColumnUse(new Name('a'), new QualifiedName(new Name('t')))]], null);
         $reply = new Completion(2, 0, 0);
 
-        self::assertSame($reply, ViewWriteCommand::noted($session->analyze('DELETE FROM v')->statement, $writes, $reply, $session));
+        self::assertSame($reply, ViewWriteCommand::noted($session->analyze('DELETE FROM v'), $writes, $reply, $session));
     }
 
     public function testLimitableReadsUpdatableViewsWithLimit(): void

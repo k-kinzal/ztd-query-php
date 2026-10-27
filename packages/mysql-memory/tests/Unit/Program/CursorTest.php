@@ -19,7 +19,7 @@ final class CursorTest extends TestCase
     public function testRowsAreNullUntilTheCursorIsOpened(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; END');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Block::class, $body);

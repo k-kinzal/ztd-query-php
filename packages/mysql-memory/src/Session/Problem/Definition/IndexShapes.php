@@ -10,10 +10,10 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity;
-use SqlSemantics\Statement\Fact\Facts;
 
 /**
  * Reaches bound spatial-key arity conditions after dependency and engine preparation.
@@ -46,7 +46,7 @@ final class IndexShapes
      * @param array<string, \MySqlMemory\Typing\Domain> $columns Folded column names and resolved domains
      * @throws \MySqlMemory\Error\SqlError When the spatial declaration cannot be stored
      */
-    public function definition(IndexDefinition $index, Facts $facts, GrammarRelease $release, string $engine, array $columns = []): void
+    public function definition(IndexDefinition $index, StatementSemantics $facts, GrammarRelease $release, string $engine, array $columns = []): void
     {
         foreach ($facts->diagnostics as $problem) {
             if ($problem instanceof FunctionalIndexKind && in_array($problem->owner, $index->parts, true)) {

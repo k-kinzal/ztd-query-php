@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The conflict target `ON CONSTRAINT constraint_name` that names the constraint ON CONFLICT arbitrates on.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the constraint name
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t VALUES (1) ON CONFLICT ON CONSTRAINT t_pkey DO NOTHING');
- *     $insert->statement->conflict->target->constraint->value // => 't_pkey'
+ *     $insert->conflict->target->constraint->value // => 't_pkey'
  */
 final class ConstraintInference implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $constraint The constraint name
      */
-    public function __construct(public readonly Name $constraint)
+    public function __construct(public readonly Name $constraint, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

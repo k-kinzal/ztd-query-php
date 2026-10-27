@@ -37,7 +37,7 @@ final class ProgramVariablesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT; SELECT a FROM t; UPDATE t SET a = a; END', [$table]);
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -47,7 +47,7 @@ final class ProgramVariablesTest extends TestCase
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $item);
-        $resolution = $operation->facts->scalar($item->expression)->resolution;
+        $resolution = $item->expression->scalarInformation()->resolution;
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertInstanceOf(VariableDeclaration::class, $resolution->relation);

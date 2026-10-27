@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparedStatementTest extends TestCase
 {
-    public function testExecuteMigratedInsertUsesValuesWithoutReadingItsLabel(): void
+    public function testExecuteInsertUsesValuesWithoutReadingItsLabel(): void
     {
         $session = (new Instance('8.4.7', databases: ['pbt', 'other']))->connect(database: 'pbt');
         $session->execute('CREATE TABLE t (a INT)');
@@ -25,7 +25,7 @@ final class PreparedStatementTest extends TestCase
         $session->execute('USE other');
         $reply = $prepared->execute($session, 'not a SQL statement', []);
         self::assertSame($statement, $prepared->statement);
-        self::assertNull($prepared->literals);
+        self::assertSame($statement->statementInformation()->connection, $prepared->literals->connection);
         self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
         self::assertSame(1, $reply->affectedRows);
         $table = $session->instance->dictionary->table('pbt', 't');
@@ -58,7 +58,7 @@ final class PreparedStatementTest extends TestCase
 
         $prepared = PreparedStatement::capture($operation, $session);
 
-        self::assertSame($operation->statement, $prepared->statement);
+        self::assertSame($operation, $prepared->statement);
         self::assertSame($operation->profile(), $prepared->profile);
         self::assertSame('d', $prepared->database);
         self::assertSame('utf8mb4', $prepared->literals->client?->name);

@@ -23,7 +23,7 @@ final class FromClauseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM (SELECT b FROM t WHERE c = 1) AS s JOIN t AS u ON u.a = 1')->statement;
+        $statement = $session->analyze('SELECT a FROM (SELECT b FROM t WHERE c = 1) AS s JOIN t AS u ON u.a = 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -38,7 +38,7 @@ final class FromClauseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM t')->statement;
+        $statement = $session->analyze('SELECT a FROM t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -53,7 +53,7 @@ final class FromClauseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT t.a FROM t JOIN t AS u ON u.c = 1 WHERE t.b = 1')->statement;
+        $statement = $session->analyze('SELECT t.a FROM t JOIN t AS u ON u.c = 1 WHERE t.b = 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -68,7 +68,7 @@ final class FromClauseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM (SELECT a FROM t AS x JOIN t AS y ON x.b = y.b) AS s')->statement;
+        $statement = $session->analyze('SELECT a FROM (SELECT a FROM t AS x JOIN t AS y ON x.b = y.b) AS s');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);

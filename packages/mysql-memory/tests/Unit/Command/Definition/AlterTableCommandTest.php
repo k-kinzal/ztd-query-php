@@ -167,9 +167,8 @@ final class AlterTableCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('CREATE PROCEDURE p() ALTER TABLE t WITH VALIDATION, FORCE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        $statement = $operation->statement->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        $statement = $operation->body;
         self::assertInstanceOf(AlterTable::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -195,8 +194,7 @@ final class AlterTableCommandTest extends TestCase
         $session = (new Instance())->connect();
 
         $statementAnalysis = $session->analyze('DROP INDEX i ON t LOCK = NONE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
-        $statement = $statementAnalysis->statement;
+        $statement = $statementAnalysis;
         self::assertInstanceOf(DropIndex::class, $statement);
 
         [$table, $commands] = (new AlterTableCommand())->request($statement);
@@ -291,7 +289,6 @@ final class AlterTableCommandTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $operation = $session->analyze('ALTER TABLE t ADD COLUMN b INT DEFAULT (zz())');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1305);
@@ -307,8 +304,7 @@ final class AlterTableCommandTest extends TestCase
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         $statementAnalysis = $session->analyze('ALTER TABLE t MODIFY a BIGINT');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
-        $statement = $statementAnalysis->statement;
+        $statement = $statementAnalysis;
         self::assertInstanceOf(AlterTable::class, $statement);
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, 't', 'd', GrammarRelease::MySql847);
@@ -326,8 +322,7 @@ final class AlterTableCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statementAnalysis = $session->analyze('ALTER TABLE t ADD COLUMN b INT, ADD INDEX i (a), ADD UNIQUE KEY j (b)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statementAnalysis);
-        $statement = $statementAnalysis->statement;
+        $statement = $statementAnalysis;
         self::assertInstanceOf(AlterTable::class, $statement);
 
         $indexes = (new AlterTableCommand())->indexes($statement->commands);
@@ -424,10 +419,9 @@ final class AlterTableCommandTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze('CREATE FULLTEXT INDEX i ON t (a DESC)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateIndex::class, $statement);
-        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation->facts, true);
+        (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation->statementInformation(), true);
         self::assertSame('i', $statement->name->value);
     }
 

@@ -16,9 +16,9 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\System\Server\Processlist;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowProcesslist;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW [FULL] PROCESSLIST: the sessions connected, by connection id.
@@ -48,8 +48,8 @@ final class ShowProcesslistCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowProcesslist);
         $legacy = $session->settings()->legacy();
         if (!$legacy && $session->settings()->release() !== GrammarRelease::MySql810) {

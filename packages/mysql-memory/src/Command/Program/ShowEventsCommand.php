@@ -14,9 +14,9 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW EVENTS: the events of a database, by name.
@@ -48,8 +48,8 @@ final class ShowEventsCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowEvents);
         $database = ProgramSource::database($statement->database, $session);
         $events = $session->instance->dictionary->schema($database)->events ?? [];

@@ -37,7 +37,7 @@ final class TableNames
     /**
      * Records the resolution of each table at its node and reports a repeated alias or name.
      *
-     * @param list<array{Node, QualifiedName, Name|null}> $tables Each node, the table name it holds and its alias
+     * @param list<array{\SqlSemantics\Statement\TableUse, QualifiedName, Name|null}> $tables Each node, the table name it holds and its alias
      * @return list<RelationFact> The facts of the tables in order
      */
     public function record(Derivation $derivation, array $tables): array

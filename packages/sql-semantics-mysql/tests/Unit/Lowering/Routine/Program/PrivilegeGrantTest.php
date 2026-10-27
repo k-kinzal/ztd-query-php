@@ -19,7 +19,7 @@ final class PrivilegeGrantTest extends TestCase
 {
     public function testSelectKeepsContradictoryTargetsOnlyInProgramMembers(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON PROCEDURE *.* TO u')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON PROCEDURE *.* TO u');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel::class, $create->body);
     }
@@ -28,8 +28,8 @@ final class PrivilegeGrantTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        $deferred = $semantics->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER')->statement;
-        $ordinary = $semantics->analyze('CREATE PROCEDURE p() GRANT ALL ON *.* TO u AS CURRENT_USER')->statement;
+        $deferred = $semantics->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER');
+        $ordinary = $semantics->analyze('CREATE PROCEDURE p() GRANT ALL ON *.* TO u AS CURRENT_USER');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $deferred);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $ordinary);
         self::assertInstanceOf(DeferredGrantAs::class, $deferred->body);

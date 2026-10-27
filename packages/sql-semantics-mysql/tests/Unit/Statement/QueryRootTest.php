@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(QueryRoot::class)]
 #[Medium]
@@ -28,10 +27,12 @@ final class QueryRootTest extends TestCase
     {
         $body = new ValuesQuery([new ValueRow([new NumberLiteral('1')])]);
         $root = new QueryRoot($body);
-        $operation = new Operation((new Semantics(Dialect::MySql))->context(), $root);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context(), $root, new \SqlSemantics\Statement\Source\SourceMap());
 
-        self::assertSame($operation->facts->query($body), $operation->facts->output);
-        self::assertSame('column_0', $operation->facts->output->fields()?->at(0)->name?->value);
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        self::assertFalse($body->hasBinding());
+        self::assertSame($operation->query->queryInformation(), $operation->output());
+        self::assertSame('column_0', $operation->output()->fields()?->at(0)->name?->value);
     }
 
     public function testInputDelegatesToTheQueryBody(): void
@@ -84,9 +85,10 @@ final class QueryRootTest extends TestCase
     public function testRenderRetainsTheQueryBody(): void
     {
         $root = new QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))]));
-        $operation = new Operation((new Semantics(Dialect::MySql))->context(), $root);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context(), $root, new \SqlSemantics\Statement\Source\SourceMap());
 
         self::assertSame('SELECT 1', $operation->toString());
-        self::assertSame($root, $operation->statement);
+        self::assertNotSame($root, $operation);
+        self::assertFalse($root->hasBinding());
     }
 }

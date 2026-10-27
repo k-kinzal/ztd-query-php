@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET with a sequence option of an identity column.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Setting a sequence option of an identity
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ALTER a SET CYCLE');
- *     $statement->statement->commands[0]->options[0]->option->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::Cycle
+ *     $statement->commands[0]->options[0]->option->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::Cycle
  */
 final class IdentitySetting implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SequenceOption $option The option
      */
-    public function __construct(public readonly SequenceOption $option)
+    public function __construct(public readonly SequenceOption $option, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

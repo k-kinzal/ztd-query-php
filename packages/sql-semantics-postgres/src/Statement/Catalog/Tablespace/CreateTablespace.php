@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the location of a new tablespace
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE TABLESPACE fast OWNER app LOCATION '/ssd' WITH (random_page_cost = 1)");
- *     [$operation->statement->location->value, $operation->statement->options[0]->name->value] // => ['/ssd', 'random_page_cost']
+ *     [$operation->location->value, $operation->options[0]->name->value] // => ['/ssd', 'random_page_cost']
  */
-final class CreateTablespace implements Statement
+final class CreateTablespace extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Definition> The tablespace parameters
@@ -43,8 +42,11 @@ final class CreateTablespace implements Statement
      * @param StringConstant $location The directory
      * @param list<Definition> $options The tablespace parameters
      */
-    public function __construct(public readonly Name $name, public readonly ?RoleSpec $owner, public readonly StringConstant $location, array $options = [])
+    public function __construct(public readonly Name $name, public readonly ?RoleSpec $owner, public readonly StringConstant $location, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'Tablespace parameters are a list of definitions.');
     }
 

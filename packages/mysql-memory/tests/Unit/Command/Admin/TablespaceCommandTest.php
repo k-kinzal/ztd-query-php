@@ -65,7 +65,7 @@ final class TablespaceCommandTest extends TestCase
 
     public function testCreateRefusesAnExistingName(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE TABLESPACE mysql_x')->statement;
+        $statement = (new Instance())->connect()->analyze('CREATE TABLESPACE mysql_x');
         self::assertInstanceOf(CreateTablespace::class, $statement);
         $registry = new Registry();
         $registry->tablespaces['mysql_x'] = new Tablespace('mysql_x', false, '');
@@ -117,7 +117,7 @@ final class TablespaceCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu'");
-        $statement = $session->analyze("CREATE UNDO TABLESPACE v ADD DATAFILE 'u.ibu'")->statement;
+        $statement = $session->analyze("CREATE UNDO TABLESPACE v ADD DATAFILE 'u.ibu'");
         self::assertInstanceOf(CreateUndoTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -131,7 +131,7 @@ final class TablespaceCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE TABLESPACE t');
-        $statement = $session->analyze('ALTER TABLESPACE t RENAME TO mysql')->statement;
+        $statement = $session->analyze('ALTER TABLESPACE t RENAME TO mysql');
         self::assertInstanceOf(RenameTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -156,7 +156,7 @@ final class TablespaceCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE TABLESPACE t');
-        $statement = $session->analyze("ALTER TABLESPACE t ENCRYPTION = 'X'")->statement;
+        $statement = $session->analyze("ALTER TABLESPACE t ENCRYPTION = 'X'");
         self::assertInstanceOf(AlterTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -180,7 +180,7 @@ final class TablespaceCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE TABLESPACE t');
-        $statement = $session->analyze("ALTER TABLESPACE t DROP DATAFILE 'x.ibd'")->statement;
+        $statement = $session->analyze("ALTER TABLESPACE t DROP DATAFILE 'x.ibd'");
         self::assertInstanceOf(AlterTablespaceDatafile::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -205,7 +205,7 @@ final class TablespaceCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE TABLESPACE t');
-        $statement = $session->analyze('ALTER UNDO TABLESPACE t SET INACTIVE')->statement;
+        $statement = $session->analyze('ALTER UNDO TABLESPACE t SET INACTIVE');
         self::assertInstanceOf(AlterUndoTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -219,7 +219,7 @@ final class TablespaceCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE TABLESPACE t');
-        $statement = $session->analyze('DROP TABLESPACE t ENGINE=InnoDB')->statement;
+        $statement = $session->analyze('DROP TABLESPACE t ENGINE=InnoDB');
         self::assertInstanceOf(DropTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -258,7 +258,7 @@ final class TablespaceCommandTest extends TestCase
 
     public function testDropUndoChecksTheEngineFirst(): void
     {
-        $statement = (new Instance())->connect()->analyze('DROP UNDO TABLESPACE u STORAGE ENGINE PROXY')->statement;
+        $statement = (new Instance())->connect()->analyze('DROP UNDO TABLESPACE u STORAGE ENGINE PROXY');
         self::assertInstanceOf(DropUndoTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -270,7 +270,7 @@ final class TablespaceCommandTest extends TestCase
 
     public function testEngineNamesTheEngineAnAliasStandsFor(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE TABLESPACE t ENGINE = heap')->statement;
+        $statement = (new Instance())->connect()->analyze('CREATE TABLESPACE t ENGINE = heap');
         self::assertInstanceOf(CreateTablespace::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -342,7 +342,7 @@ final class TablespaceCommandTest extends TestCase
 
     public function testSizeReadsTheMultiplier(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE TABLESPACE t FILE_BLOCK_SIZE = 16K INITIAL_SIZE = 1024')->statement;
+        $statement = (new Instance())->connect()->analyze('CREATE TABLESPACE t FILE_BLOCK_SIZE = 16K INITIAL_SIZE = 1024');
         self::assertInstanceOf(CreateTablespace::class, $statement);
         $first = $statement->options[0];
         $second = $statement->options[1];

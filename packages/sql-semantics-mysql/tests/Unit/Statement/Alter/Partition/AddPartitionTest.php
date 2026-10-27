@@ -17,7 +17,7 @@ final class AddPartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (x))')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

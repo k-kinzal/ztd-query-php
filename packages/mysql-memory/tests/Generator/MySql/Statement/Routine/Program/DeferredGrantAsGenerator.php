@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Generator\MySql\Statement\Routine\Program;
+
+use Eris\Generator as ErisGenerator;
+use Eris\Generators;
+use Tests\Generator\Composition;
+
+/**
+ * Composes DeferredGrantAs values and preserves their operand generators when shrinking.
+ *
+ * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs>
+ */
+final class DeferredGrantAsGenerator implements ErisGenerator
+{
+    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs> */
+    use Composition;
+
+    /**
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest> $grant Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs> $as Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     */
+    public function __construct(ErisGenerator $grant, ErisGenerator $as, ?ErisGenerator $inputSource = null)
+    {
+        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs(grant: $parts[0], as: $parts[1], inputSource: $parts[2]);
+        }, \Tests\Generator\Operands::tuple(
+            $grant,
+            $as,
+            $inputSource ?? Generators::constant(null)
+        ));
+    }
+}

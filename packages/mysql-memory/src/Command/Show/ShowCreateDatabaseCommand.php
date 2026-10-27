@@ -13,10 +13,10 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW CREATE DATABASE: the statement that creates a database with its default character set and collation.
@@ -47,8 +47,8 @@ final class ShowCreateDatabaseCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowCreateDatabase);
         $name = $statement->name->value;
         $schema = $session->instance->dictionary->schema($name);

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON db.*`: the database level of a named database.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the database
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT ON shop.* TO u')->statement->level->database->value // => 'shop'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT ON shop.* TO u')->level->database->value // => 'shop'
  */
 final class DatabaseLevel implements PrivilegeLevel
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $database The database name
      */
-    public function __construct(public readonly Name $database)
+    public function __construct(public readonly Name $database, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

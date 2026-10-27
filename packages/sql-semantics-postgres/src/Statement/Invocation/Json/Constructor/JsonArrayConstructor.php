@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -35,7 +34,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class JsonArrayConstructor implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<JsonValueExpression> The elements
@@ -47,8 +47,11 @@ final class JsonArrayConstructor implements Scalar, OutputNaming
      * @param JsonNullHandling|null $nulls The NULL clause written
      * @param JsonReturning|null $returning The RETURNING clause
      */
-    public function __construct(array $values, public readonly ?JsonNullHandling $nulls = null, public readonly ?JsonReturning $returning = null)
+    public function __construct(array $values, public readonly ?JsonNullHandling $nulls = null, public readonly ?JsonReturning $returning = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->values = Check::listOf($values, JsonValueExpression::class, 'JSON_ARRAY takes JSON values.');
         Check::input($this->values !== [] || $nulls === null, 'JSON_ARRAY without values takes no NULL clause.');
     }

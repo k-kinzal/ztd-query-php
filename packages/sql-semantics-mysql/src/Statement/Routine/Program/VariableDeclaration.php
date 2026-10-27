@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -44,12 +43,13 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the variables of a declaration
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a, b INT DEFAULT 0; END');
- *     $declaration = $create->statement->body->declarations[0];
+ *     $declaration = $create->body->declarations[0];
  *     [count($declaration->names), $declaration->type->name(), $declaration->default !== null] // => [2, 'INT', true]
  */
-final class VariableDeclaration implements Declaration, Relation
+final class VariableDeclaration implements Declaration, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The variable names in written order
@@ -62,8 +62,11 @@ final class VariableDeclaration implements Declaration, Relation
      * @param CollationName|null $collation The COLLATE clause; a named override requires a character set carried by the type, and known names must be compatible
      * @param Scalar|RowOperand|Expression\DeferredOperand|null $default The DEFAULT value
      */
-    public function __construct(array $names, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly Scalar|RowOperand|Expression\DeferredOperand|null $default = null)
+    public function __construct(array $names, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly Scalar|RowOperand|Expression\DeferredOperand|null $default = null, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->names = Check::listOf($names, Name::class, 'DECLARE names at least one variable.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($type, $collation);
     }

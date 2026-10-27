@@ -20,7 +20,7 @@ final class ColumnStorageChangeTest extends TestCase
         $statement = $semantics->analyze('ALTER TABLE t ALTER zz SET COMPRESSION lz4', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

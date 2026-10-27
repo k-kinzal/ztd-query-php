@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER [COLUMN] c SET DEFAULT value`, `SET DEFAULT (expression)` or `DROP DEFAULT`: a request to change the default of a column.
@@ -31,17 +30,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Setting a literal default
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
- *     [$alter->statement->commands[0]->default instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral, $alter->toString()] // => [true, 'ALTER TABLE t ALTER a SET DEFAULT 1']
+ *     [$alter->commands[0]->default instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral, $alter->toString()] // => [true, 'ALTER TABLE t ALTER a SET DEFAULT 1']
  */
 final class DefaultSetting implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnName $column The column
      * @param DefaultLiteral|DefaultExpression|null $default The replacement default, or null for DROP DEFAULT
      */
-    public function __construct(public readonly ColumnName $column, public readonly DefaultLiteral|DefaultExpression|null $default, public readonly bool $columnWritten = true)
+    public function __construct(public readonly ColumnName $column, public readonly DefaultLiteral|DefaultExpression|null $default, public readonly bool $columnWritten = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$default instanceof DefaultLiteral || $default->value instanceof Literal, 'ALTER COLUMN SET DEFAULT accepts a literal or a parenthesized expression; a bare timestamp clause belongs to a column definition.');
     }

@@ -17,7 +17,7 @@ final class GrantProxyTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('GRANT PROXY ON a TO b')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('GRANT PROXY ON a TO b')->diagnostics());
     }
 
     public function testRenderWritesTheGrantOption(): void

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The UNTIL clause of START REPLICA: an optional GTID or gap condition first, then log positions, in written order.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ReplicaUntil implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SourceOption> The log positions in written order
@@ -42,7 +41,7 @@ final class ReplicaUntil implements Node
      * @param Text|null $gtids The GTID set of a GTID condition
      * @param list<SourceOption> $positions The log file and position options in written order
      */
-    public function __construct(public readonly ?UntilPoint $point, public readonly ?Text $gtids = null, array $positions = [])
+    public function __construct(public readonly ?UntilPoint $point, public readonly ?Text $gtids = null, array $positions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($gtids === null || $gtids->radix === null, 'A GTID set is quoted text.');
         $this->positions = Check::listOf($positions, SourceOption::class, 'UNTIL lists log positions.');

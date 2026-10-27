@@ -17,7 +17,7 @@ final class DropRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP ROLE r')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP ROLE r')->diagnostics());
     }
 
     public function testRenderWritesTheRoles(): void

@@ -46,7 +46,7 @@ final class JoinedTableTest extends TestCase
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
         self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
         self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationMergesTheCommonColumnsOfANaturalJoin(): void
@@ -63,7 +63,7 @@ final class JoinedTableTest extends TestCase
         $operation = $semantics->analyze('SELECT * FROM t NATURAL JOIN u', [$t, $u]);
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationReportsAUsingColumnAnOperandLacks(): void
@@ -79,8 +79,8 @@ final class JoinedTableTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1 FROM t JOIN u USING (c)', [$t, $u]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveRelationNestsLikeTheParseOfTheRelease(): void
@@ -97,15 +97,15 @@ final class JoinedTableTest extends TestCase
         $modern = $semantics->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern->statement);
-        self::assertInstanceOf(Select::class, $modern->statement->query);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->query->from);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->query->from->right);
-        self::assertCount(1, $modern->facts->diagnostics);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy->statement);
-        self::assertInstanceOf(Select::class, $legacy->statement->query);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->query->from);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->query->from->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern);
+        self::assertInstanceOf(Select::class, $modern->query);
+        self::assertInstanceOf(JoinedTable::class, $modern->query->from);
+        self::assertInstanceOf(JoinedTable::class, $modern->query->from->right);
+        self::assertCount(1, $modern->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy);
+        self::assertInstanceOf(Select::class, $legacy->query);
+        self::assertInstanceOf(JoinedTable::class, $legacy->query->from);
+        self::assertInstanceOf(JoinedTable::class, $legacy->query->from->left);
     }
 
     public function testRenderWritesTheOperatorAndTheCondition(): void

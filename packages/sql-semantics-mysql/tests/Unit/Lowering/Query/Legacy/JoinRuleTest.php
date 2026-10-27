@@ -36,10 +36,10 @@ final class JoinRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM t JOIN u JOIN v');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(JoinedTable::class, $operation->statement->query->from);
-        self::assertInstanceOf(JoinedTable::class, $operation->statement->query->from->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(JoinedTable::class, $operation->query->from);
+        self::assertInstanceOf(JoinedTable::class, $operation->query->from->left);
     }
 
     public function testStepLowersEveryJoinForm(): void

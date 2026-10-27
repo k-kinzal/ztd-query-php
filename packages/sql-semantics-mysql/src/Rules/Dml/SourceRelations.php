@@ -54,10 +54,10 @@ final class SourceRelations
                 $pending = [...$nested, ...$pending];
                 continue;
             }
-            if (!$facts->covers($relation)) {
+            if (!$relation->hasBinding()) {
                 continue;
             }
-            $fact = $facts->relation($relation);
+            $fact = $relation->relationInformation();
             $shape = $fact->shape;
             if ($relation instanceof NamedRelation) {
                 $visible[] = new VisibleRelation($relation, $shape, $relation->alias(), $relation->name(), [], (new TableShapes())->implicit($fact));

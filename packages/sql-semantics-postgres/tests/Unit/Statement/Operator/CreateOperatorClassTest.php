@@ -22,7 +22,7 @@ final class CreateOperatorClassTest extends TestCase
     public function testDeriveStatementRecordsNothingForAPlainClass(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE OPERATOR CLASS c FOR TYPE int4 USING btree AS STORAGE int4', []);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderDropsRecheck(): void

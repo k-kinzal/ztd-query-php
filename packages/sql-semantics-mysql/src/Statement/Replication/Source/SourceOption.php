@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `option = value` of CHANGE REPLICATION SOURCE TO, or one log position of the UNTIL condition of START REPLICA.
@@ -39,7 +38,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SourceOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Terminology $terminology The vocabulary of the statement the option belongs to
@@ -52,6 +51,7 @@ final class SourceOption implements Node
         public readonly SourceOptionKind $kind,
         public readonly Text|Numeral|NumberLiteral|ServerIds|AccountName|PrimaryKeyCheck|AnonymousGtids|null $value,
         public readonly bool $synonym = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($terminology !== Terminology::Legacy || (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->option(\SqlSemantics\Contract\GrammarRelease::MySql5744, $kind), 'A legacy replication option exists in MySQL 5.6 or 5.7.');
         Check::input(!$synonym || ($terminology === Terminology::Current && $kind->renamed()), 'A replication option synonym is a MASTER spelling of a current SOURCE option.');

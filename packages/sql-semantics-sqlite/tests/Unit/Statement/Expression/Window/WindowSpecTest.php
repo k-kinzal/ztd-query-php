@@ -20,7 +20,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(WindowSpec::class)]
 #[Medium]
@@ -31,7 +30,7 @@ final class WindowSpecTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT rank() OVER (w PARTITION BY a ORDER BY b DESC NULLS LAST ROWS 1 PRECEDING) FROM t WINDOW w AS ()', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -45,7 +44,7 @@ final class WindowSpecTest extends TestCase
         self::assertNull($statement->windows[0]->window->base);
         self::assertSame([], $statement->windows[0]->window->partition);
         self::assertNull($statement->windows[0]->window->frame);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testExpressionsListsPartitionOrderingAndOffsetsInWrittenOrder(): void
@@ -53,7 +52,7 @@ final class WindowSpecTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT sum(a) OVER (PARTITION BY b ORDER BY a ROWS BETWEEN 1 PRECEDING AND 2 FOLLOWING) FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -68,8 +67,8 @@ final class WindowSpecTest extends TestCase
         self::assertSame($window->order[0]->expression, $expressions[1]);
         self::assertSame($window->frame->start->offset, $expressions[2]);
         self::assertSame($window->frame->end->offset, $expressions[3]);
-        self::assertTrue($operation->facts->covers($expressions[2]));
-        self::assertTrue($operation->facts->covers($expressions[3]));
+        self::assertTrue($expressions[2]->hasBinding());
+        self::assertTrue($expressions[3]->hasBinding());
     }
 
     public function testExpressionsIsEmptyForAnEmptyWindow(): void
@@ -89,7 +88,7 @@ final class WindowSpecTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $window = new WindowSpec(null, [new IntegerLiteral('1')], [new SortTerm(new IntegerLiteral('2'))], new Frame(FrameUnit::Groups, new FrameBound(FrameBoundKind::CurrentRow)));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, $window))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, $window))]));
 
         self::assertSame('SELECT sum(1) OVER (PARTITION BY 1 ORDER BY 2 GROUPS CURRENT ROW)', $operation->toString());
     }

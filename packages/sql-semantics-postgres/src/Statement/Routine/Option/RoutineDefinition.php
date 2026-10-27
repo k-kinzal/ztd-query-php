@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `AS 'definition'` or `AS 'object_file', 'link_symbol'`: the routine's definition as unanalysed text of its language.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RoutineDefinition implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RoutineSource $source The definition in its language, or the object file of a C function
      * @param StringConstant|null $symbol The link symbol of a C function, if written
      */
-    public function __construct(public readonly RoutineSource $source, public readonly ?StringConstant $symbol = null)
+    public function __construct(public readonly RoutineSource $source, public readonly ?StringConstant $symbol = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

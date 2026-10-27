@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 /**
@@ -91,16 +91,16 @@ final class Levels
      *
      * @throws SqlError When the statement has such a problem
      */
-    public function parsed(Operation $operation, Session $session): void
+    public function parsed(MySqlStatement $operation, Session $session): void
     {
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof RoleOrPrivilegeMismatch) {
                 $near = $this->near($session->text, $diagnostic->item);
 
                 throw new SqlError(StatementError::ParseError, ($diagnostic->roleExpected ? 'Illegal authorization identifier' : 'Illegal privilege identifier') . " near '" . mb_strcut($near, 0, 80, 'UTF-8') . "' at line 1");
             }
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_UNSUPPORTED_USE_OF_GRANT_AS') {
                 throw AccountError::UnsupportedGrantAs->error();
             }
@@ -136,9 +136,9 @@ final class Levels
      *
      * @throws SqlError When an object does not exist or a privilege does not fit
      */
-    public function objects(Operation $operation, Session $session, array $privileges, array $target): void
+    public function objects(MySqlStatement $operation, Session $session, array $privileges, array $target): void
     {
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable) {
                 $database = $diagnostic->name->schema->value ?? $session->variables->database;
                 if ($this->read($privileges, $target[0])[1] !== [] && $session->instance->dictionary->schema($database) === null) {
@@ -155,7 +155,7 @@ final class Levels
             }
         }
         $this->dynamic($privileges, $target, $session, false);
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownGrantColumn) {
                 throw QueryError::BadField->error($diagnostic->column->value, $target[2]);
             }
@@ -192,9 +192,9 @@ final class Levels
      *
      * @throws SqlError When a privilege does not fit
      */
-    public function usage(Operation $operation): void
+    public function usage(MySqlStatement $operation): void
     {
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_WRONG_USAGE') {
                 throw StatementError::WrongUsage->error('DB GRANT', 'GLOBAL PRIVILEGES');
             }

@@ -19,9 +19,9 @@ final class ExecuteTest extends TestCase
     public function testDeriveStatementDerivesTheVariables(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('EXECUTE s USING @a');
-        self::assertInstanceOf(Execute::class, $operation->statement);
+        self::assertInstanceOf(Execute::class, $operation);
 
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->variables[0])->type);
+        self::assertInstanceOf(Dependent::class, $operation->variables[0]->scalarInformation()->type);
     }
 
     public function testRenderWritesTheVariables(): void

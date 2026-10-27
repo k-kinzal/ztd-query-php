@@ -24,8 +24,8 @@ final class InstallPluginTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("INSTALL PLUGIN p SONAME 'p.so'");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 
     public function testValueRejectsIncompatibleLibrary(): void

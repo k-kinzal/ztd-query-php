@@ -39,14 +39,14 @@ final class ComparisonTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t WHERE b = 1', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        $fact = $operation->facts->scalar($operation->statement->query->where);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        $fact = $operation->query->where->scalarInformation();
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame('BIGINT', $fact->type->descriptor->name());
         self::assertSame(Nullability::Nullable, $fact->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarNeverYieldsNullWhenBothOperandsCannot(): void
@@ -57,12 +57,12 @@ final class ComparisonTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t WHERE 1 < a', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->query->where)->nullability);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->query->where->left)->nullability);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->query->where->right)->nullability);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        self::assertSame(Nullability::NotNull, $operation->query->where->scalarInformation()->nullability);
+        self::assertSame(Nullability::NotNull, $operation->query->where->left->scalarInformation()->nullability);
+        self::assertSame(Nullability::NotNull, $operation->query->where->right->scalarInformation()->nullability);
     }
 
     public function testDeriveScalarNeverYieldsNullForTheNullSafeEquality(): void
@@ -73,25 +73,25 @@ final class ComparisonTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT b FROM t WHERE b <=> NULL', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        self::assertSame(ComparisonOperator::NullSafeEqual, $operation->statement->query->where->operator);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->query->where)->nullability);
-        self::assertSame(Nullability::Nullable, $operation->facts->scalar($operation->statement->query->where->left)->nullability);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        self::assertSame(ComparisonOperator::NullSafeEqual, $operation->query->where->operator);
+        self::assertSame(Nullability::NotNull, $operation->query->where->scalarInformation()->nullability);
+        self::assertSame(Nullability::Nullable, $operation->query->where->left->scalarInformation()->nullability);
     }
 
     public function testDeriveScalarDependsOnTheOperandsOfAnUndeclaredTable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a >= 10');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        $fact = $operation->facts->scalar($operation->statement->query->where);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        $fact = $operation->query->where->scalarInformation();
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame(Nullability::Dependent, $fact->nullability);
-        $left = $operation->facts->scalar($operation->statement->query->where->left);
+        $left = $operation->query->where->left->scalarInformation();
         self::assertInstanceOf(Dependent::class, $left->type);
         self::assertSame('the declaration of relation t', $left->type->missing[0]->describe());
     }
@@ -107,11 +107,11 @@ final class ComparisonTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select a from t where 10 <= a');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        self::assertInstanceOf(NumberLiteral::class, $operation->statement->query->where->left);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->query->where->right);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        self::assertInstanceOf(NumberLiteral::class, $operation->query->where->left);
+        self::assertInstanceOf(ColumnUse::class, $operation->query->where->right);
         self::assertSame('SELECT a FROM t WHERE 10 <= a', $operation->toString());
     }
 
@@ -119,10 +119,10 @@ final class ComparisonTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a != 1');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        self::assertSame(ComparisonOperator::NotEqual, $operation->statement->query->where->operator);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        self::assertSame(ComparisonOperator::NotEqual, $operation->query->where->operator);
         self::assertSame('SELECT a FROM t WHERE a <> 1', $operation->toString());
     }
 
@@ -130,12 +130,12 @@ final class ComparisonTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE 1 < a = 2');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where);
-        self::assertSame(ComparisonOperator::Equal, $operation->statement->query->where->operator);
-        self::assertInstanceOf(Comparison::class, $operation->statement->query->where->left);
-        self::assertSame(ComparisonOperator::Less, $operation->statement->query->where->left->operator);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        self::assertSame(ComparisonOperator::Equal, $operation->query->where->operator);
+        self::assertInstanceOf(Comparison::class, $operation->query->where->left);
+        self::assertSame(ComparisonOperator::Less, $operation->query->where->left->operator);
         self::assertSame('SELECT a FROM t WHERE 1 < a = 2', $operation->toString());
     }
 

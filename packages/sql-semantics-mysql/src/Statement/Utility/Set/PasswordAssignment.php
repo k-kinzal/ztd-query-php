@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Account\Password;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A password assignment among other assignments of a MySQL 5.6 SET: `SET @a = 1, PASSWORD FOR u = PASSWORD('x')`.
@@ -26,17 +25,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a password item of a list
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze("SET @a = 1, PASSWORD FOR u = 'x'");
- *     [$set->statement->items[1]->user?->user->value, $set->toString()] // => ['u', "SET @a = 1, PASSWORD FOR u = 'x'"]
+ *     [$set->items[1]->user?->user->value, $set->toString()] // => ['u', "SET @a = 1, PASSWORD FOR u = 'x'"]
  */
 final class PasswordAssignment implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Password $password The new password
      * @param Account|null $user The account, or null for the current user
      */
-    public function __construct(public readonly Password $password, public readonly ?Account $user = null)
+    public function __construct(public readonly Password $password, public readonly ?Account $user = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

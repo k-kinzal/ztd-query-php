@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\TypeFact;
 
 /**
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class DecimalDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The modifier expressions in order
@@ -42,7 +41,7 @@ final class DecimalDesignation implements TypeDesignation
      * @param DecimalKeyword $keyword The spelling
      * @param list<Scalar> $modifiers The modifier expressions in order
      */
-    public function __construct(public readonly DecimalKeyword $keyword, array $modifiers = [])
+    public function __construct(public readonly DecimalKeyword $keyword, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->modifiers = Check::listOf($modifiers, Scalar::class, 'Type modifiers are expressions.');
     }

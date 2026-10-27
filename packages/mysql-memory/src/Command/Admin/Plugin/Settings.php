@@ -16,8 +16,8 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Prepares component assignment values before attempting to load their libraries.
@@ -36,11 +36,11 @@ final class Settings
      *
      * @throws SqlError When a value cannot be prepared or is NULL
      */
-    public function prepare(Operation $operation, Session $session, Context $context, Connection $connection): void
+    public function prepare(MySqlStatement $operation, Session $session, Context $context, Connection $connection): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof InstallComponent);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         foreach ($statement->settings as $setting) {
             $value = $setting->value;
             if ($value instanceof OnWord) {

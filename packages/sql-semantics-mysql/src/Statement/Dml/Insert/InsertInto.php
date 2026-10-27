@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
 use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The head of INSERT and REPLACE: the verb, its modifiers, the table and the optional column list.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the head of a REPLACE
  *     $replace = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REPLACE LOW_PRIORITY t VALUES (1)');
- *     [$replace->statement->into->replace, $replace->statement->into->priority, $replace->toString()] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, 'REPLACE LOW_PRIORITY t VALUES (1)']
+ *     [$replace->into->replace, $replace->into->priority, $replace->toString()] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, 'REPLACE LOW_PRIORITY t VALUES (1)']
  */
 final class InsertInto implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
@@ -54,6 +53,7 @@ final class InsertInto implements Node
         public readonly ?ColumnList $columns = null,
         array $hints = [],
         public readonly bool $intoWritten = true,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         Check::input(!$replace || (!$ignore && $priority !== InsertPriority::High), 'REPLACE takes neither IGNORE nor HIGH_PRIORITY.');

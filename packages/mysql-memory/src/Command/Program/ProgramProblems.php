@@ -25,11 +25,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 /**
@@ -66,9 +66,9 @@ final class ProgramProblems
      *
      * @throws SqlError When the body has a problem the server finds while parsing it
      */
-    public function raise(Operation $operation, Session $session, Problems $problems, bool $prepared = false): bool
+    public function raise(MySqlStatement $operation, Session $session, Problems $problems, bool $prepared = false): bool
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\View\DropView || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView) {
             return true;
         }
@@ -128,12 +128,12 @@ final class ProgramProblems
      *
      * @throws SqlError When the query has such a problem
      */
-    public function view(CreateView|AlterView $statement, Operation $operation, Session $session, Problems $problems): void
+    public function view(CreateView|AlterView $statement, MySqlStatement $operation, Session $session, Problems $problems): void
     {
         $name = $statement->definition->name;
         $named = static fn (Diagnostic $diagnostic): bool => ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name->name->value === $name->name->value && $diagnostic->name->schema?->value === $name->schema?->value)
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
-        $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
+        $others = array_values(array_filter($operation->statementInformation()->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
             && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
         ProgramSource::database($name->schema, $session);
         (new \MySqlMemory\Session\Problem\Reading())->read($operation, $session);
@@ -156,7 +156,7 @@ final class ProgramProblems
      *
      * @throws SqlError When the schedule reads a table or calls a stored function (ER_NOT_SUPPORTED_YET)
      */
-    public function schedule(CreateEvent|AlterEvent $statement, Operation $operation): void
+    public function schedule(CreateEvent|AlterEvent $statement, MySqlStatement $operation): void
     {
         $schedule = $statement->schedule;
         if ($schedule === null) {
@@ -164,8 +164,8 @@ final class ProgramProblems
         }
         $walker = new Walker();
         foreach ((new \SqlSemantics\Platform\MySql\Rules\Routine\Event\Dependencies())->sources($schedule) as $source) {
-            if (!$source instanceof FunctionCall || !$source->native($operation->context->profile->grammar)) {
-                throw StatementError::NotSupportedYet->error(\SqlSemantics\Platform\MySql\Rules\Routine\Event\Dependencies::feature($operation->context->profile->grammar));
+            if (!$source instanceof FunctionCall || !$source->native($operation->profile()->grammar)) {
+                throw StatementError::NotSupportedYet->error(\SqlSemantics\Platform\MySql\Rules\Routine\Event\Dependencies::feature($operation->profile()->grammar));
             }
         }
         foreach ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::class) as $cast) {
@@ -180,9 +180,9 @@ final class ProgramProblems
      *
      * @throws SqlError When the body has such a problem
      */
-    public function body(\SqlSemantics\Statement\Statement $statement, Operation $operation, Session $session, Problems $problems): void
+    public function body(\SqlSemantics\Statement\Statement $statement, MySqlStatement $operation, Session $session, Problems $problems): void
     {
-        $diagnostics = $operation->facts->diagnostics;
+        $diagnostics = $operation->statementInformation()->diagnostics;
         usort($diagnostics, static fn (Diagnostic $left, Diagnostic $right): int => ($left instanceof ProgramProblem ? 0 : 1) <=> ($right instanceof ProgramProblem ? 0 : 1));
         foreach ($diagnostics as $diagnostic) {
             if (!$this->parsed($diagnostic, $statement instanceof CreateTrigger)) {

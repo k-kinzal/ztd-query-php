@@ -24,6 +24,6 @@ final class AlterTablespaceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLESPACE ts ENGINE a');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

@@ -60,23 +60,20 @@ final class FunctionalQueriesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $indexed = $session->analyze("CREATE PROCEDURE p() CREATE TABLE t(a INT,PRIMARY KEY ((CAST(a AT TIME ZONE '+00:00' AS DATETIME))))");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $indexed);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $indexed->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $indexed);
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
         $selected = $session->analyze("SELECT CAST(a AT TIME ZONE '+00:00' AS DATETIME) FROM t");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $selected);
-        $owned = array_values(array_filter($indexed->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion));
+        $owned = array_values(array_filter($indexed->statementInformation()->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion));
         self::assertCount(1, $owned);
-        self::assertTrue((new FunctionalQueries())->deferred($owned[0], $indexed->statement->body));
-        self::assertFalse((new FunctionalQueries())->deferred($selected->facts->diagnostics[0], $selected->statement));
+        self::assertTrue((new FunctionalQueries())->deferred($owned[0], $indexed->body));
+        self::assertFalse((new FunctionalQueries())->deferred($selected->statementInformation()->diagnostics[0], $selected));
     }
 
     public function testForbiddenReportsTheIndexNameBeforeMissingKeyColumns(): void
     {
         $session = (new Instance())->connect();
         $routineAnalysis = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,INDEX i(missing,((TABLE present))))');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $routineAnalysis);
-        $routine = $routineAnalysis->statement;
+        $routine = $routineAnalysis;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
         $statement = $routine->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);

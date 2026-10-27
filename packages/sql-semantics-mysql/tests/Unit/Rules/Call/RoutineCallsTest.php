@@ -90,7 +90,7 @@ final class RoutineCallsTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), functions: ['d.f' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
         $operation = $semantics->analyze('SELECT f(1), g(1)', $semantics->context(null, true, new \SqlSemantics\Contract\SearchPath('d'), $settings));
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
@@ -99,7 +99,7 @@ final class RoutineCallsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $first);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $second);
 
-        self::assertSame([Known::class, Dependent::class], [$operation->facts->scalar($first->expression)->type::class, $operation->facts->scalar($second->expression)->type::class]);
+        self::assertSame([Known::class, Dependent::class], [$first->expression->scalarInformation()->type::class, $second->expression->scalarInformation()->type::class]);
     }
 
     public function testSignatureReportsNativeConstraintsWithoutDerivingOperands(): void

@@ -21,7 +21,7 @@ final class HashMethodTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $alter = $semantics->analyze('ALTER TABLE t PARTITION BY HASH (a)', [$table]);
 
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testRenderWritesTheExpression(): void

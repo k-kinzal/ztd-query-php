@@ -1,36 +1,29 @@
 # Model
 
-`Semantics::analyze()` returns `SqlSemantics\Statement\AnalyzedStatement`. The MySQL package returns concrete values for transaction control and its migrated INSERT form; its other families, PostgreSQL and SQLite currently return `Operation`. This page describes that Operation API. See the [MySQL package](../../sql-semantics-mysql/README.md#usage) for concrete operands, local conditions and source spans. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
+`Semantics::analyze()` declares the `SqlSemantics\Statement\AnalyzedStatement` interface and returns the concrete SQL statement. MySQL queries return `QueryRoot`, whose `query` is the query body; a MySQL INSERT of written rows returns `Dml\Insert\InsertRows`. PostgreSQL and SQLite return their own concrete statement classes. A dialect accepting several statements in one input returns `Script`.
 
-## Operations
-
-An operation is one analyzed root:
+## Analyzed statements
 
 | Member | Content |
 |--------|---------|
-| `$operation->context` | The `AnalysisContext` the facts were derived against: the language profile and the declarations. See [Contexts](contexts.md). |
-| `$operation->statement` | The statement structure: a concrete class of the database package, or a `Script` of several statements. |
-| `$operation->facts` | Every fact derived for the structure against the context. |
-| `$operation->sources` | Recorded byte ranges of particular occurrences in the original parser input. Coverage is partial; `sources->of($node)` returns null when that rule does not record a location. |
-| `toString()` | SQL rendered from the structure and checked against it. See [Rendering](rendering.md). |
-| `profile()` | The language profile: grammar release, lexical settings, parameter style. |
-| `declarations()` | The `Table` declarations the statement provides, for example those of a CREATE TABLE or CREATE VIEW. |
-| `shape()`, `fields()`, `field()`, `lookupField()` | The rows the statement returns, when it returns rows. |
-| `inputRelation()`, `singleNamedInput()` | The input relation of a statement that reads rows. |
+| Concrete constructor operands | The SQL form, its expressions, relation uses, clauses and written alternatives. |
+| `toString()` | SQL reconstructed from those values. See [Rendering](rendering.md). |
+| `profile()` | Grammar release, lexical settings and parameter style. |
+| `declarations()` | Tables or views introduced by a definition. |
+| `output()`, `shape()`, `fields()`, `field()`, `lookupField()` | Result columns, including incomplete shapes and ambiguous names. |
+| `inputRelation()`, `singleNamedInput()` | The input relation of a selection. |
+| `diagnostics()`, `warnings()`, `notices()` | Statement conditions and warning ownership. |
+| `source()` | An optional byte offset and length belonging to this occurrence. |
 
-The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and publication uses it for statement families that retain this representation. All facts are established in the constructor; nothing is filled in later. An optional third argument supplies a `SourceMap`. Direct construction defaults to an empty map; source locations are never inherited implicitly from another operation.
+The result retains neither its `AnalysisContext` nor an index of every occurrence. To construct a statement from typed operands, call `Semantics::fromStatement($context, $statement)`. Construction makes fresh SQL occurrences, resolves them against that context and returns the concrete result. No SQL renderer or parser participates. Declaration objects retain their identity. Construction supplies each private binding slot once; the public SQL operands are readonly. Cloning, dynamic properties and serialization are refused.
 
-Input locations are separate from both the semantic structure and its rendering. An `Origin` holds the exact node occurrence, a byte `offset`, and a byte `length`, measured from the first through the last token. Comments and whitespace between those tokens remain within the range; empty synthetic tokens do not. Offsets refer to the input passed to the parser, including when `analyze()` receives an already parsed tree. Keep that input if you need to show the original text in a diagnostic. The MySQL lowering records statement, query, expression and data type ranges, including partition functions and bounds; rules without tracking may still return no origin.
+Source ranges refer to the input passed to the parser. They contain offsets and lengths, not input bytes; keep the original input separately if a diagnostic must display it. A nested expression has its own `source()`, independently of its enclosing statement. Directly constructed values may have no location. A `SourceMap` can supply locations and spelling notices during construction, but is not retained by the result. Copying an occurrence preserves its own range unless an explicit replacement changes it.
 
-A `SourceMap` also holds `notices`: spelling-dependent warnings attached to a node or decoded `Name` by identity. Each `SourceNotice` records the warning and the byte boundary after that spelling. For example, MySQL deprecates an unquoted `FULL` identifier but accepts the same decoded name in backticks. These notices enter `facts->warnings`; they do not change lookup or canonical SQL. When notices are present, located warnings are merged by their recorded boundaries; warnings without a location follow in derivation order. A map supplied to direct construction must describe that statement and its original analysis profile. Reusing a structure without the map does not retain input spelling warnings.
+## Local semantic information
 
-## Statement structure and facts
+Each concrete occurrence owns the information for its SQL role. `scalarInformation()` returns an expression's type, nullability and name resolution. `relationInformation()` returns the shape and table binding of a relation or table use. `queryInformation()` returns a query body's projection, aggregate ownership and conditions. These values need no enclosing statement index. A fresh occurrence must be resolved before those accessors are used.
 
-An operation separates two kinds of information.
-
-The **structure** describes what the SQL requests: the operation, its operands and its input relations, as concrete classes of the database package (for example `SqlSemantics\Platform\Sqlite\Statement\Query\Select`, `...\Mutation\InsertRows`, `...\Schema\CreateTable`). It holds decoded names (`Name`, `QualifiedName`), exact literal values (digits as strings, decoded text, hexadecimal digits; never a PHP float), enum cases for closed choices, and lists in written order. It holds no parser node, no token and no binding: which declaration a name denotes is not part of the structure. It holds no source text either, except the checked spelling of a result column that the database names after its text (a `Layout`, see [Rendering](rendering.md#spelled-regions)). A structure value may occur at one position of a statement only.
-
-The **facts** are everything that depends on the context: name resolutions, row shapes, output fields, types, NULL facts and diagnostics. They are kept in `$operation->facts`, keyed by the identity of the structure node they are about.
+The operands retain decoded identifiers, exact literal values, enum alternatives and ordered clauses. They contain no parser nodes. A result-column spelling layout is part of that column's name semantics; it does not replace the expression structure. See [Rendering](rendering.md#spelled-regions).
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -44,48 +37,19 @@ $semantics = new Semantics(Dialect::Sqlite);
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $query = $semantics->analyze('SELECT name FROM users WHERE id > 10', [$users]);
 
-$where = $query->statement->where;
+$where = $query->where;
 $where instanceof Binary; // => true
 $where->operator; // => BinaryOperator::Greater
 $where->right->digits; // => '10'
-$query->facts->scalar($where->left)->resolution instanceof ResolvedColumn; // => true
+$where->left->scalarInformation()->resolution instanceof ResolvedColumn; // => true
 
 $sum = $semantics->analyze('SELECT 1 + NULL');
-$sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly; // => true
+$sum->field(0)->expression->right->scalarInformation()->type instanceof NullOnly; // => true
 ```
 
-`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries.
+`QueryFact::$aggregates` lists aggregate occurrences assigned to that query block by platforms that resolve ownership (currently MySQL). An occurrence can be written inside a nested query while aggregating rows of an enclosing query. Window functions are not in this list.
 
-`QueryFact::$aggregates` lists the aggregate occurrences assigned to that query block by platforms that resolve ownership (currently MySQL). An occurrence can be written inside a nested query while aggregating the rows of an enclosing query. Window functions are not in this list.
-
-`$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
-
-`$facts->warningSubject($warning)` identifies the semantic occurrence that raised
-a warning, when one was recorded. `$facts->warningInstruction($warning)` identifies
-its enclosing stored instruction. Both references use semantic object identity;
-they retain no source text, byte positions or parser objects. Subjects remain
-available when a statement is constructed directly without a `SourceMap`.
-MySQL distinguishes syntax, contextualization and resolution notices: a consumer
-can report a resolution notice only after reaching its subject, without parsing
-the input again or reconstructing which expression produced the notice.
-
-A scalar fact can also publish a `replacement`: a bound expression evaluated in place of that occurrence. It is a strict descendant in the same operation, with its own facts and original name bindings. Consumers may compile it directly; the original statement and its rendered SQL stay intact. For example, MySQL resolves `(SELECT 1 LIMIT 0)` to its selected expression and returns `1`. A scalar subquery that reads table rows still needs query execution and can return NULL or raise a multiple-row error. Which forms are reduced depends on the dialect and release.
-
-An expression's `type` describes its logical result for use by parent expressions. MySQL window expressions keep that type through scalar subqueries. Storing a result in a temporary column can change its reported field type, width and flags; an executor applies those storage rules when planning materialization. A derived table exposes its stored column types to the query that reads it. These boundaries keep expression inference independent of a temporary column's representation.
-
-The structure classes and their properties are documented in each database package. The core defines the roles they play:
-
-| Interface | Role |
-|-----------|------|
-| `Statement` | A statement root. |
-| `Query` | Something that produces rows: a SELECT, VALUES, a set operation, a WITH query. |
-| `Relation` | A relation in an input: a named table, a join, a derived table, a table function. |
-| `NamedRelation` | A relation that is one named table, view or common table; `name()` and `alias()`. |
-| `Selection` | A statement or query that reads from an input relation; `input()`. |
-| `Scalar` | An expression. |
-| `Node` | Any structure value. |
-
-A `Script` holds the statements of an input with several statements, in order. Its diagnostics and declarations are those of all its members; it returns no rows itself.
+The root's `output()` is its result `QueryFact`, or null when it produces no row set. Its conditions are available through `diagnostics()` and `warnings()`. Each `Notice` pairs a warning with its optional semantic subject and enclosing stored instruction. These references remain usable without source SQL. MySQL's `statementInformation()` additionally exposes client character-set and connection-collation settings, and offers warning-owner lookups.
 
 ## Fields and lookups
 
@@ -103,7 +67,7 @@ A `Field` has:
 | `slot` | The `OutputSlot` of the position. |
 | `column()` | The declared `Column` the field directly returns, when it is one. |
 
-`Operation::field($key)` takes a position or a name. By name, it answers the field only when exactly one field has that name, and throws `InvalidConstruction` otherwise; it never picks the first of several. `Operation::lookupField($name)` answers one of:
+`AnalyzedStatement::field($key)` takes a position or a name. By name, it answers the field only when exactly one field has that name, and throws `InvalidConstruction` otherwise; it never picks the first of several. `AnalyzedStatement::lookupField($name)` answers one of:
 
 | Result | Meaning |
 |--------|---------|
@@ -169,7 +133,7 @@ $open = $semantics->analyze('SELECT * FROM users');
 $open->fields(); // => null
 $open->shape()->complete(); // => false
 $open->shape()->missing[0]->describe(); // => 'the declaration of relation users'
-$open->facts->output->projection[0] instanceof OpenStar; // => true
+$open->output()->projection[0] instanceof OpenStar; // => true
 
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 count($semantics->analyze('SELECT * FROM users', [$users])->fields()); // => 2
@@ -200,18 +164,18 @@ $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name T
 $orders = $semantics->analyze('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER)');
 
 $sorted = $semantics->analyze('SELECT name AS label FROM users ORDER BY label', [$users]);
-$use = $sorted->facts->scalar($sorted->statement->orderBy[0]->expression)->resolution;
+$use = $sorted->orderBy[0]->expression->scalarInformation()->resolution;
 $use instanceof AliasTarget; // => true
 $use->field === $sorted->field('label'); // => true
 
 $correlated = $semantics->analyze('SELECT name, (SELECT count(*) FROM orders WHERE orders.user_id = users.id) AS n FROM users', [$users, $orders]);
-$outer = $correlated->facts->scalar($correlated->statement->columns[1]->expression->query->where->right)->resolution;
+$outer = $correlated->columns[1]->expression->query->where->right->scalarInformation()->resolution;
 $outer->depth; // => 1
 $outer->relation === $correlated->inputRelation(); // => true
 
 $both = $semantics->analyze('SELECT id FROM users, orders', [$users, $orders]);
 $both->field('id')->resolution instanceof AmbiguousColumn; // => true
-$both->facts->diagnostics[0]->message(); // => 'Column id is ambiguous.'
+$both->diagnostics()[0]->message(); // => 'Column id is ambiguous.'
 ```
 
 A relation name resolves to one of the following (namespace `SqlSemantics\Statement\Reference\Table`), read from `$facts->relation($occurrence)->table`:
@@ -272,8 +236,8 @@ $semantics = new Semantics(Dialect::Sqlite);
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $insert = $semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]);
 
-$insert->facts->diagnostics[0] instanceof ArityMismatch; // => true
-$insert->facts->diagnostics[0]->message(); // => '2 values for 1 columns.'
+$insert->diagnostics()[0] instanceof ArityMismatch; // => true
+$insert->diagnostics()[0]->message(); // => '2 values for 1 columns.'
 ```
 
 A diagnostic is not an analysis failure: the operation is complete, and `toString()` renders the statement as requested.

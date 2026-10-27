@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CREATE TABLESPACE name [ADD DATAFILE 'file'] [USE LOGFILE GROUP group] [option …]`: a request to create a general tablespace.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Creating a tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create tablespace ts add datafile 'ts.ibd' engine = InnoDB");
- *     [$statement->toString(), $statement->statement->datafile?->value] // => ["CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd' ENGINE InnoDB", 'ts.ibd']
+ *     [$statement->toString(), $statement->datafile?->value] // => ["CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd' ENGINE InnoDB", 'ts.ibd']
  */
-final class CreateTablespace implements Statement
+final class CreateTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -43,8 +42,11 @@ final class CreateTablespace implements Statement
      * @param Name|null $logfileGroup The log file group of USE LOGFILE GROUP, when written
      * @param list<StorageOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, public readonly ?Text $datafile = null, public readonly ?Name $logfileGroup = null, array $options = [])
+    public function __construct(public readonly Name $name, public readonly ?Text $datafile = null, public readonly ?Name $logfileGroup = null, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::TABLESPACE);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

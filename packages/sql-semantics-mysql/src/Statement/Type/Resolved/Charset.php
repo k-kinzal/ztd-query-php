@@ -46,6 +46,24 @@ final class Charset
     }
 
     /**
+     * Reports whether the selected release provides this character set.
+     */
+    public function availableIn(GrammarRelease $release): bool
+    {
+        return isset(Catalog::shared()->defaults[$release->value][$this->name]);
+    }
+
+    /**
+     * Lists the character sets provided by the selected release.
+     *
+     * @return list<self>
+     */
+    public static function all(GrammarRelease $release): array
+    {
+        return array_map(self::known(...), array_keys(Catalog::shared()->defaults[$release->value] ?? []));
+    }
+
+    /**
      * Answers the binary character set.
      */
     public static function binary(): self

@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
  *
  * @visibility public
  * @example Reading the firing state of an event trigger
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EVENT TRIGGER e ENABLE ALWAYS')->statement->state // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\FiringState::EnableAlways
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EVENT TRIGGER e ENABLE ALWAYS')->state // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\FiringState::EnableAlways
  */
 enum FiringState: string
 {

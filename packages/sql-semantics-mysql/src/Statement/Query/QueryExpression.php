@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A query expression: a WITH clause, or an ORDER BY and LIMIT that apply to a whole set operation or parenthesized query.
@@ -37,13 +36,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the ordering of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');
- *     [count($query->statement->query->orderBy), $query->statement->query->limit !== null] // => [1, true]
+ *     [count($query->query->orderBy), $query->query->limit !== null] // => [1, true]
  * @example Refusing a wrapper that adds nothing
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class QueryExpression implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> The ORDER BY items in written order
@@ -56,8 +56,11 @@ final class QueryExpression implements Query
      * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items
      * @param Limit|null $limit The LIMIT clause
      */
-    public function __construct(public readonly ?WithClause $with, public readonly Query $body, array $orderBy = [], public readonly ?Limit $limit = null)
+    public function __construct(public readonly ?WithClause $with, public readonly Query $body, array $orderBy = [], public readonly ?Limit $limit = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input(!$body instanceof With\DeferredBody || ($orderBy === [] && $limit === null), 'A deferred block retains its own ordering and limit.');
         $this->orderBy = (new SortScopes())->items($orderBy);
         Check::input($with !== null || $orderBy !== [] || $limit !== null, 'A query expression holds a WITH clause, an ordering or a limit.');

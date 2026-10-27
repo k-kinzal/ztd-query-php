@@ -18,7 +18,7 @@ final class ShowReplicaStatusTest extends TestCase
     public function testDeriveStatementNamesTheColumnsAfterTheSpelling(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('SHOW SLAVE STATUS');
-        self::assertInstanceOf(ShowReplicaStatus::class, $show->statement);
+        self::assertInstanceOf(ShowReplicaStatus::class, $show);
         self::assertSame('Slave_IO_State', $show->field(0)->name?->value);
         self::assertSame('Network_Namespace', $show->field(59)->name?->value);
     }

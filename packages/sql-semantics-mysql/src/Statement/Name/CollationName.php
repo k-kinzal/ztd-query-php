@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A collation at a position that names one: a collation name or the keyword DEFAULT.
@@ -29,12 +28,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CollationName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $name The collation name, or null for the keyword DEFAULT
      */
-    public function __construct(public readonly ?Name $name)
+    public function __construct(public readonly ?Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

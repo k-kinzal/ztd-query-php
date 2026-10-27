@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\AliasSpelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * USING (columns) [AS alias]: a join on equal columns of both sides, merged into one column each.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a USING clause with an alias
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM a JOIN b USING (id) AS j');
- *     [$query->statement->from->condition->columns[0]->value, $query->statement->from->condition->alias->value] // => ['id', 'j']
+ *     [$query->from->condition->columns[0]->value, $query->from->condition->alias->value] // => ['id', 'j']
  */
 final class JoinUsing implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The merged columns in written order
@@ -37,7 +36,7 @@ final class JoinUsing implements Node
      * @param list<Name> $columns The merged columns in written order; at least one
      * @param Name|null $alias The name the merged columns are qualified with
      */
-    public function __construct(array $columns, public readonly ?Name $alias = null)
+    public function __construct(array $columns, public readonly ?Name $alias = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'USING names at least one column.', 1);
     }

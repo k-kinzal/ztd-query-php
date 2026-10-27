@@ -36,22 +36,22 @@ final class ChangeFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('DELETE t FROM other.t, t');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertSame($statement->tables[1], $operation->facts->referencedRelation($statement->targets[0]));
-        self::assertInstanceOf(UnknownDeleteTable::class, $semantics->analyze('DELETE t FROM other.t')->facts->diagnostics[0]);
+        self::assertSame([], $operation->diagnostics());
+        self::assertSame($statement->tables[1], $statement->input->relation($statement->targets[0]));
+        self::assertInstanceOf(UnknownDeleteTable::class, $semantics->analyze('DELETE t FROM other.t')->diagnostics()[0]);
     }
 
     public function testDeleteMultipleBindsAnAliasAcrossSchemas(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DELETE x FROM other.t AS x');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertSame($statement->tables[0], $operation->facts->referencedRelation($statement->targets[0]));
+        self::assertSame([], $operation->diagnostics());
+        self::assertSame($statement->tables[0], $statement->input->relation($statement->targets[0]));
     }
 
     public function testUpdateSeesEveryTable(): void
@@ -61,7 +61,7 @@ final class ChangeFactsTest extends TestCase
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('UPDATE t, u SET t.b = u.y WHERE a = x', [$t, $u]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeleteSeesTheTable(): void
@@ -70,7 +70,7 @@ final class ChangeFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('DELETE FROM t WHERE z = 1', [$t]);
 
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testTargetsChecksTheContextualNames(): void
@@ -79,7 +79,7 @@ final class ChangeFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('DELETE X FROM t AS x', [$t]);
 
-        self::assertInstanceOf(UnknownDeleteTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(UnknownDeleteTable::class, $operation->diagnostics()[0]);
     }
 
     public function testUpdateReportsItsOneTableThatIsNotUpdatableBeforeTheAssignments(): void
@@ -87,7 +87,7 @@ final class ChangeFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE p() UPDATE (SELECT 1 AS a) AS d SET nosuch = 1');
 
-        self::assertSame([WriteRule::NonUpdatableTarget, null], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->facts->diagnostics));
+        self::assertSame([WriteRule::NonUpdatableTarget, null], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->diagnostics()));
     }
 
     public function testUpdatableRefusesDerivedAndCommonTables(): void
@@ -96,14 +96,14 @@ final class ChangeFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) UPDATE t, c, (SELECT 2 AS m) AS d SET c.k = 1, d.m = 2, t.a = 3', [$t]);
 
-        self::assertSame([WriteRule::NonUpdatableTarget, WriteRule::NonUpdatableTarget], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->facts->diagnostics));
+        self::assertSame([WriteRule::NonUpdatableTarget, WriteRule::NonUpdatableTarget], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->diagnostics()));
     }
 
     public function testBaseBindsTheCommonTables(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS k) DELETE t FROM t JOIN c ON t.a = c.k');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testReferencesLetLaterTablesSeeEarlierOnes(): void
@@ -112,7 +112,7 @@ final class ChangeFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('UPDATE t, LATERAL (SELECT t.a AS k) AS d SET t.b = d.k', [$t]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testClausesDeriveLimitWithoutTables(): void
@@ -120,15 +120,15 @@ final class ChangeFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('DELETE FROM t ORDER BY b LIMIT ?', [$t]);
-        self::assertInstanceOf(Delete::class, $operation->statement);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
+        self::assertInstanceOf(Delete::class, $operation);
+        self::assertInstanceOf(RowLimit::class, $operation->limit);
 
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->limit->count)->type);
+        self::assertInstanceOf(Dependent::class, $operation->limit->count->scalarInformation()->type);
     }
 
     public function testLabelAnswersTheCorrelationNameOrTheTableName(): void
     {
-        $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
 
@@ -142,9 +142,9 @@ final class ChangeFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) DELETE z FROM c AS z');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete::class, $operation->statement->body);
-        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->statement->body)], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete::class, $operation->body);
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->body)], $operation->diagnostics());
     }
 
     public function testDeleteFindsTheInvisibleColumnsOfTheTable(): void
@@ -152,14 +152,14 @@ final class ChangeFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations();
 
-        self::assertSame([], $semantics->analyze('DELETE FROM v WHERE e = 1 ORDER BY e', $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('DELETE FROM v WHERE e = 1 ORDER BY e', $tables)->diagnostics());
     }
 
     public function testMergedNamesTheFirstTableOfADerivedTableMySql57Merges(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $tables = [...$semantics->analyze('CREATE TABLE t1 (a INT)')->declarations(), ...$semantics->analyze('CREATE TABLE t2 (a INT)')->declarations()];
-        $facts = static fn (string $sql): array => $semantics->analyze('CREATE PROCEDURE p() ' . $sql, $tables)->facts->diagnostics;
+        $facts = static fn (string $sql): array => $semantics->analyze('CREATE PROCEDURE p() ' . $sql, $tables)->diagnostics();
 
         self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('x'))], $facts('UPDATE t1, (SELECT * FROM (SELECT * FROM t2 AS x) e) d SET d.a = 1'));
         self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableColumn, new Name('a'))], $facts('UPDATE t1, (SELECT a + 1 AS a FROM t2) d SET d.a = 1'));
@@ -168,7 +168,7 @@ final class ChangeFactsTest extends TestCase
 
     public function testComputedTellsAnItemThatIsNotAColumn(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT a + 1 AS a, b, (c) AS d FROM t')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT a + 1 AS a, b, (c) AS d FROM t');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $statement);
@@ -179,9 +179,9 @@ final class ChangeFactsTest extends TestCase
     public function testLeadingFindsTheFirstTableThroughJoinsAndMergedDerivedTables(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $joined = $semantics->analyze('SELECT * FROM (t1 AS x JOIN t2) JOIN t3')->statement;
-        $derived = $semantics->analyze('SELECT * FROM (SELECT * FROM t2 AS y) AS e, t1')->statement;
-        $grouped = $semantics->analyze('SELECT * FROM (SELECT a FROM t2 GROUP BY a) AS e')->statement;
+        $joined = $semantics->analyze('SELECT * FROM (t1 AS x JOIN t2) JOIN t3');
+        $derived = $semantics->analyze('SELECT * FROM (SELECT * FROM t2 AS y) AS e, t1');
+        $grouped = $semantics->analyze('SELECT * FROM (SELECT a FROM t2 GROUP BY a) AS e');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $joined);
         $joined = $joined->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $joined);
@@ -200,7 +200,7 @@ final class ChangeFactsTest extends TestCase
 
     public function testBlockAnswersTheQueryBlockThroughParentheses(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
@@ -210,7 +210,7 @@ final class ChangeFactsTest extends TestCase
     public function testTargetsCannotDatabaseQualifyACommonTableOccurrence(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS(SELECT 1 AS a) DELETE d.c FROM c');
-        self::assertInstanceOf(UnknownDeleteTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(UnknownDeleteTable::class, $operation->diagnostics()[0]);
     }
 
 }

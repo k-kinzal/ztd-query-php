@@ -12,7 +12,6 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -23,17 +22,17 @@ final class NullLiteralTest extends TestCase
     public function testDeriveScalarGivesTheNullOnlyType(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT NULL', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
         self::assertInstanceOf(NullLiteral::class, $statement->columns[0]->expression);
-        $fact = $operation->facts->scalar($statement->columns[0]->expression);
+        $fact = $statement->columns[0]->expression->scalarInformation();
         self::assertInstanceOf(NullOnly::class, $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheKeywordInUpperCase(): void
@@ -44,7 +43,7 @@ final class NullLiteralTest extends TestCase
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new NullLiteral())]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new NullLiteral())]));
 
         self::assertSame('SELECT NULL', $operation->toString());
     }

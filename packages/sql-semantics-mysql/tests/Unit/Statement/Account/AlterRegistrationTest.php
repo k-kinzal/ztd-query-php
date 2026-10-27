@@ -17,7 +17,7 @@ final class AlterRegistrationTest extends TestCase
 {
     public function testDeriveStatementDeclaresNoRelationOrOutput(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER USER u 2 FACTOR UNREGISTER')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER USER u 2 FACTOR UNREGISTER')->diagnostics());
     }
 
     public function testRenderWritesTheStep(): void

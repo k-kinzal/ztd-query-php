@@ -20,8 +20,8 @@ final class DependenciesTest extends TestCase
     public function testSourcesIgnoreUnusedDefinitionsButKeepTheirReferences(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $unused = $semantics->analyze("ALTER EVENT e ON SCHEDULE AT (WITH c AS (SELECT missing() FROM absent) SELECT '2030-01-01')")->statement;
-        $used = $semantics->analyze('ALTER EVENT e ON SCHEDULE AT (WITH c AS (SELECT 1) SELECT * FROM c)')->statement;
+        $unused = $semantics->analyze("ALTER EVENT e ON SCHEDULE AT (WITH c AS (SELECT missing() FROM absent) SELECT '2030-01-01')");
+        $used = $semantics->analyze('ALTER EVENT e ON SCHEDULE AT (WITH c AS (SELECT 1) SELECT * FROM c)');
         self::assertInstanceOf(AlterEvent::class, $unused);
         self::assertInstanceOf(AlterEvent::class, $used);
         self::assertNotNull($unused->schedule);

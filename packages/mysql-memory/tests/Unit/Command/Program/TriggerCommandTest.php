@@ -143,8 +143,8 @@ final class TriggerCommandTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $session->query('CREATE TRIGGER z1 BEFORE INSERT ON t FOR EACH ROW SET @a = 1');
         $session->query('CREATE TRIGGER z2 BEFORE INSERT ON t FOR EACH ROW SET @a = 2');
-        $precedes = $session->analyze('CREATE TRIGGER z3 BEFORE INSERT ON t FOR EACH ROW PRECEDES Z2 SET @a = 3')->statement;
-        $last = $session->analyze('CREATE TRIGGER z3 BEFORE INSERT ON t FOR EACH ROW SET @a = 3')->statement;
+        $precedes = $session->analyze('CREATE TRIGGER z3 BEFORE INSERT ON t FOR EACH ROW PRECEDES Z2 SET @a = 3');
+        $last = $session->analyze('CREATE TRIGGER z3 BEFORE INSERT ON t FOR EACH ROW SET @a = 3');
         self::assertInstanceOf(CreateTrigger::class, $precedes);
         self::assertInstanceOf(CreateTrigger::class, $last);
         $schema = $session->instance->dictionary->schema('d');
@@ -159,7 +159,7 @@ final class TriggerCommandTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
-        $statement = $session->analyze('CREATE TRIGGER z3 BEFORE INSERT ON t FOR EACH ROW FOLLOWS nope SET @a = 3')->statement;
+        $statement = $session->analyze('CREATE TRIGGER z3 BEFORE INSERT ON t FOR EACH ROW FOLLOWS nope SET @a = 3');
         self::assertInstanceOf(CreateTrigger::class, $statement);
 
         $this->expectExceptionCode(3011);
@@ -192,11 +192,11 @@ final class TriggerCommandTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -209,11 +209,11 @@ final class TriggerCommandTest extends TestCase
         $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
-            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), $parameters2);
+            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -226,11 +226,11 @@ final class TriggerCommandTest extends TestCase
         $parameters3 = array_fill(0, (new Bindings())->count($statement3), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation3 = (new Binding())->operation($session, $statement3, $parameters3, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
-            $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3->statement), $parameters3);
+            $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3), $parameters3);
         } catch (SqlError $executionError) {
             $result3 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -240,11 +240,11 @@ final class TriggerCommandTest extends TestCase
         $parameters4 = array_fill(0, (new Bindings())->count($statement4), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation4 = (new Binding())->operation($session, $statement4, $parameters4, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement4)));
-            $result4 = (new Execution($session))->perform($operation4, (new Dispatcher())->command($operation4->statement), $parameters4);
+            $result4 = (new Execution($session))->perform($operation4, (new Dispatcher())->command($operation4), $parameters4);
         } catch (SqlError $executionError) {
             $result4 = $executionError;
             (new Execution($session))->failed($executionError);

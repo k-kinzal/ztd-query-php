@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * LEAVE: leaves the block or loop that has the label.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the label of the statement
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP');
- *     [$create->statement->body->statements[0]->label->value, $create->facts->diagnostics] // => ['again', []]
+ *     [$create->body->statements[0]->label->value, $create->diagnostics()] // => ['again', []]
  */
 final class Leave implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $label The label of the enclosing statement
      */
-    public function __construct(public readonly Name $label)
+    public function __construct(public readonly Name $label, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

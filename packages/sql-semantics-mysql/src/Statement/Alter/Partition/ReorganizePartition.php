@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REORGANIZE PARTITION [NO_WRITE_TO_BINLOG] [p, … INTO (definitions)]`: a request to redistribute rows into new partitions.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Splitting a partition
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t REORGANIZE PARTITION p0 INTO (PARTITION a VALUES LESS THAN (5), PARTITION b VALUES LESS THAN (10))');
- *     count($alter->statement->commands[0]->definitions) // => 2
+ *     count($alter->commands[0]->definitions) // => 2
  */
 final class ReorganizePartition implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionDefinition> The new partitions in order
@@ -40,7 +39,7 @@ final class ReorganizePartition implements StandaloneCommand
      * @param NamedPartitions|null $partitions The partitions to reorganize, or null for none written
      * @param list<PartitionDefinition> $definitions The new partitions in order; at least one exactly when partitions are named
      */
-    public function __construct(public readonly bool $local, public readonly ?NamedPartitions $partitions = null, array $definitions = [])
+    public function __construct(public readonly bool $local, public readonly ?NamedPartitions $partitions = null, array $definitions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'REORGANIZE PARTITION holds a list of partition definitions.');
         (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions);

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment to a user-defined variable: `SET @x = expr`.
@@ -24,17 +23,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a user variable assignment
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET @total := 1 + 2');
- *     [$set->statement->items[0]->variable->name->value, $set->toString()] // => ['total', 'SET @total = 1 + 2']
+ *     [$set->items[0]->variable->name->value, $set->toString()] // => ['total', 'SET @total = 1 + 2']
  */
 final class UserAssignment implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param UserVariable $variable The assigned variable
      * @param Scalar $value The assigned value
      */
-    public function __construct(public readonly UserVariable $variable, public readonly Scalar $value)
+    public function __construct(public readonly UserVariable $variable, public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

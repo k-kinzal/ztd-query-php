@@ -23,7 +23,7 @@ final class LoopTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; l: LOOP SET x = x + 1; LEAVE l; END LOOP l; END');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -35,7 +35,7 @@ final class LoopTest extends TestCase
         $actual = (static function () use ($sql): array {
             try {
                 $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
                 return [$failure->problem->message()];

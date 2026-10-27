@@ -19,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Column\DefaultSetting;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ColumnChange::class)]
 #[Small]
@@ -42,7 +41,7 @@ final class ColumnChangeTest extends TestCase
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         $layout = TableLayout::of($table->definition->withColumnDisplays(['a' => 12]));
-        $alter = $session->analyze('ALTER TABLE t RENAME COLUMN a TO b')->statement;
+        $alter = $session->analyze('ALTER TABLE t RENAME COLUMN a TO b');
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
         self::assertInstanceOf(RenameElement::class, $command);
@@ -81,7 +80,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ADD b INT AFTER zz')->statement;
+        $alter = $session->analyze('ALTER TABLE t ADD b INT AFTER zz');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -98,7 +97,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $create = $session->analyze('CREATE TABLE u (a INT NOT NULL DEFAULT 1)')->statement;
+        $create = $session->analyze('CREATE TABLE u (a INT NOT NULL DEFAULT 1)');
         self::assertNotNull($table);
         self::assertInstanceOf(CreateTable::class, $create);
         self::assertInstanceOf(ColumnDefinition::class, $create->elements[0]);
@@ -111,7 +110,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $create = $session->analyze('CREATE TABLE u (a INT NOT NULL)')->statement;
+        $create = $session->analyze('CREATE TABLE u (a INT NOT NULL)');
         self::assertNotNull($table);
         self::assertInstanceOf(CreateTable::class, $create);
         self::assertInstanceOf(ColumnDefinition::class, $create->elements[0]);
@@ -125,7 +124,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t CHANGE a c BIGINT')->statement;
+        $alter = $session->analyze('ALTER TABLE t CHANGE a c BIGINT');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -143,7 +142,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t MODIFY a BIGINT AFTER b')->statement;
+        $alter = $session->analyze('ALTER TABLE t MODIFY a BIGINT AFTER b');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -161,7 +160,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT DEFAULT 1)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ALTER COLUMN a DROP DEFAULT')->statement;
+        $alter = $session->analyze('ALTER TABLE t ALTER COLUMN a DROP DEFAULT');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -171,7 +170,7 @@ final class ColumnChangeTest extends TestCase
         (new ColumnChange($layout, 't'))->alterDefault($command);
 
         self::assertSame(['a' => true], $layout->undefaulted);
-        self::assertSame('CREATE TABLE d.t (a INT) COLLATE utf8mb4_0900_ai_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertSame('CREATE TABLE d.t (a INT) COLLATE utf8mb4_0900_ai_ci', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testAlterVisibilityHidesAColumn(): void
@@ -179,7 +178,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ALTER COLUMN b SET INVISIBLE')->statement;
+        $alter = $session->analyze('ALTER TABLE t ALTER COLUMN b SET INVISIBLE');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];
@@ -188,7 +187,7 @@ final class ColumnChangeTest extends TestCase
 
         (new ColumnChange($layout, 't'))->alterVisibility($command);
 
-        self::assertSame('CREATE TABLE d.t (a INT, b INT INVISIBLE) COLLATE utf8mb4_0900_ai_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
+        self::assertSame('CREATE TABLE d.t (a INT, b INT INVISIBLE) COLLATE utf8mb4_0900_ai_ci', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testRenameKeepsADroppedDefaultDropped(): void
@@ -196,7 +195,7 @@ final class ColumnChangeTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t RENAME COLUMN a TO b')->statement;
+        $alter = $session->analyze('ALTER TABLE t RENAME COLUMN a TO b');
         self::assertNotNull($table);
         self::assertInstanceOf(AlterTable::class, $alter);
         $command = $alter->commands[0];

@@ -32,27 +32,27 @@ final class SelectionUse
      */
     public function raise(DeferredSelection $selection, Session $session, bool $instruction = true, bool $viewDefinition = false): never
     {
+        $selection = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($selection);
         if ($instruction) {
             \MySqlMemory\Session\State\StatementCounters::query($session);
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_select');
             $session->diagnostics->clear();
         }
         (new \MySqlMemory\Session\Problem\Identifiers())->check($selection, $session->settings()->release());
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($selection, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
         $selection->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         if ($instruction) {
-            (new \MySqlMemory\Program\Routine\SelectionNotices())->start($selection, $derivation->facts(), $session);
+            (new \MySqlMemory\Program\Routine\SelectionNotices())->start($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         }
-        $this->diagnosed($derivation->facts(), $session, $selection, viewDefinition: $viewDefinition);
+        $this->diagnosed((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session, $selection, viewDefinition: $viewDefinition);
         if ($instruction) {
             (new \MySqlMemory\Program\Routine\SelectionNotices())->failed($selection, $session);
         }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session), viewDefinition: $viewDefinition);
-        $planner = new \MySqlMemory\Plan\Planner($selection, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         (new \MySqlMemory\Evaluation\Compile\Selections())->bound($selection, $planner);
     }
 
@@ -63,7 +63,7 @@ final class SelectionUse
      * @param bool $viewDefinition Whether repeated relation aliases belong to a stored view definition
      * @throws \MySqlMemory\Error\SqlError When a retained diagnostic precedes preparation
      */
-    public function diagnosed(\SqlSemantics\Statement\Fact\Facts $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true, bool $viewDefinition = false): void
+    public function diagnosed(\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true, bool $viewDefinition = false): void
     {
         if ($selection !== null) {
             (new \MySqlMemory\Session\Access\RelationEntry())->check($selection, $facts, $session);

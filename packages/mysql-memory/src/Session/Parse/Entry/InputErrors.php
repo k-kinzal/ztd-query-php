@@ -31,6 +31,8 @@ final class InputErrors
 
     /**
      * Formats a refusal whose excerpt boundary belongs to the input exception.
+     *
+     * @throws SqlError When an earlier declaration or definer condition fails
      */
     public function refused(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): SqlError
     {
@@ -49,6 +51,8 @@ final class InputErrors
 
     /**
      * Formats an input refusal, or leaves other diagnostics to their semantic family.
+     *
+     * @throws SqlError When an earlier declaration or definer condition fails
      */
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
@@ -81,6 +85,8 @@ final class InputErrors
 
     /**
      * Maps typed query-input conditions before resolving other input families.
+     *
+     * @throws SqlError When an earlier declaration or definer condition fails
      */
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
@@ -109,6 +115,8 @@ final class InputErrors
 
     /**
      * Opens read dependencies and the ALTER target before preparing a refused view body.
+     *
+     * @throws SqlError When an earlier declaration or definer condition fails
      */
     public function view(\SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery $problem, Session $session): SqlError
     {
@@ -121,10 +129,15 @@ final class InputErrors
         if ($database === '') {
             return \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $session->variables->database === '' ? null : new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
         $derivation = new \SqlSemantics\Construction\Derivation($context);
+        $query = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($query);
         $query->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
-        (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed($derivation->facts(), $session, qualifiers: false, viewDefinition: true);
+        try {
+            (new \MySqlMemory\Program\Expression\SelectionUse())->diagnosed((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session, qualifiers: false, viewDefinition: true);
+        } catch (SqlError $error) {
+            return $error;
+        }
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
             return \MySqlMemory\Error\Family\QueryError::BadDatabase->error($database);

@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `POSITION (substring IN string)`: where a substring first occurs.
@@ -33,14 +32,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Position implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $substring The substring searched for
      * @param Scalar $string The string searched
      */
-    public function __construct(public readonly Scalar $substring, public readonly Scalar $string)
+    public function __construct(public readonly Scalar $substring, public readonly Scalar $string, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->restricted($substring) && $precedence->restricted($string), 'The operands of POSITION are restricted expressions; group an operand that is not.');
     }

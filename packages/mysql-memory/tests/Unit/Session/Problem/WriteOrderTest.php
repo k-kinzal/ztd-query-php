@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(WriteOrder::class)]
 #[Small]
@@ -29,9 +28,7 @@ final class WriteOrderTest extends TestCase
 
         $delete = $session->analyze('DELETE FROM t WHERE a = 1');
         $select = $session->analyze('SELECT a FROM t');
-        self::assertInstanceOf(Operation::class, $delete);
-        self::assertInstanceOf(Operation::class, $select);
-        self::assertSame([true, false], [(new WriteOrder($locator))->locate($delete->statement), (new WriteOrder($locator))->locate($select->statement)]);
+        self::assertSame([true, false], [(new WriteOrder($locator))->locate($delete), (new WriteOrder($locator))->locate($select)]);
         self::assertSame([['where clause', [2, 1]]], array_values($locator->places));
     }
 
@@ -40,8 +37,7 @@ final class WriteOrderTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
         $operation = $session->analyze("DELETE t FROM t JOIN JSON_TABLE(missing, '$' COLUMNS (n FOR ORDINALITY)) j");
-        self::assertInstanceOf(Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         $locator = new Locator();
         self::assertTrue((new WriteOrder($locator))->locate($statement));
         self::assertSame(['a table function argument'], array_column(array_values($locator->places), 0));
@@ -52,8 +48,7 @@ final class WriteOrderTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
         $operation = $session->analyze('UPDATE t SET a = b WHERE c = 1 ORDER BY a');
-        self::assertInstanceOf(Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(Update::class, $statement);
         $locator = new Locator();
 
@@ -67,8 +62,7 @@ final class WriteOrderTest extends TestCase
         $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('INSERT INTO t (a) VALUES (b), (b)');
-        self::assertInstanceOf(Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(InsertRows::class, $statement);
         $locator = new Locator(false, GrammarRelease::MySql5651);
 
@@ -81,11 +75,10 @@ final class WriteOrderTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze('UPDATE t SET a = ROW(b, c)');
-        self::assertInstanceOf(Operation::class, $operation);
-        self::assertInstanceOf(Update::class, $operation->statement);
+        self::assertInstanceOf(Update::class, $operation);
         $locator = new Locator();
 
-        (new WriteOrder($locator))->update($operation->statement);
+        (new WriteOrder($locator))->update($operation);
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn ($node): ?string => $node instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse ? $node->name->value : null, $locator->nodes()));
         self::assertSame([5, 6, 6], array_map(static fn (array $place): int => $place[1][0], array_values($locator->places)));
@@ -96,8 +89,7 @@ final class WriteOrderTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
         $operation = $session->analyze('INSERT INTO t (a) SELECT b FROM t ON DUPLICATE KEY UPDATE c = 1');
-        self::assertInstanceOf(Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(InsertQuery::class, $statement);
         $locator = new Locator();
 
@@ -111,8 +103,7 @@ final class WriteOrderTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, c INT)');
         $operation = $session->analyze('DELETE FROM t WHERE c = 1 ORDER BY a');
-        self::assertInstanceOf(Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(Delete::class, $statement);
         $locator = new Locator();
 

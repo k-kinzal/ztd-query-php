@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The query of CREATE TABLE ... SELECT, with the handling of rows that duplicate a unique key.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the query part
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t IGNORE AS SELECT 1 AS a');
- *     $create->statement->query->duplicate // => \SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Ignore
+ *     $create->query->duplicate // => \SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Ignore
  */
 final class TableQuery implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query whose rows fill the table
      * @param DuplicateHandling|null $duplicate IGNORE or REPLACE, when written
      */
-    public function __construct(public readonly Query $query, public readonly ?DuplicateHandling $duplicate = null)
+    public function __construct(public readonly Query $query, public readonly ?DuplicateHandling $duplicate = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

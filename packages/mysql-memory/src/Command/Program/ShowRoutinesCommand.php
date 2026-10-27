@@ -14,10 +14,10 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW PROCEDURE STATUS and SHOW FUNCTION STATUS: the routines of every database, by database and name.
@@ -45,8 +45,8 @@ final class ShowRoutinesCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowProcedureStatus || $statement instanceof ShowFunctionStatus);
         $function = $statement instanceof ShowFunctionStatus;
         $language = !in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true);
@@ -58,7 +58,7 @@ final class ShowRoutinesCommand implements Command
         }
         usort($rows, static fn (array $left, array $right): int => [$left[0], strtolower($left[1])] <=> [$right[0], strtolower($right[1])]);
 
-        $listing = new Listing($this->headings($language, $session->settings()->release(), RoutineLookup::single($statement->filter, $operation->facts)));
+        $listing = new Listing($this->headings($language, $session->settings()->release(), RoutineLookup::single($statement->filter, $operation->statementInformation())));
         $result = $listing->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
 
         return $listing->constantEmpty ? (new Listing($this->emptyHeadings($language, $session->settings()->release())))->sent([], $context) : $result;

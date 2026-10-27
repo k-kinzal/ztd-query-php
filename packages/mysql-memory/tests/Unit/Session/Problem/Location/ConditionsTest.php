@@ -24,9 +24,9 @@ final class ConditionsTest extends TestCase
         $operation = $session->analyze('UPDATE t,u SET t.a=missing_function(missing_column)');
         $calls = (new Problems())->calls($operation);
         self::assertCount(1, $calls);
-        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertCount(1, $operation->statementInformation()->diagnostics);
 
-        (new Conditions())->check($operation, $session, $calls, $operation->facts->diagnostics, true);
+        (new Conditions())->check($operation, $session, $calls, $operation->statementInformation()->diagnostics, true);
 
         self::assertSame([], $session->diagnostics->conditions);
     }
@@ -43,6 +43,6 @@ final class ConditionsTest extends TestCase
         $this->expectExceptionCode(1054);
         $this->expectExceptionMessage($message);
 
-        (new Conditions())->check($operation, $session, [], $operation->facts->diagnostics, $prepared);
+        (new Conditions())->check($operation, $session, [], $operation->statementInformation()->diagnostics, $prepared);
     }
 }

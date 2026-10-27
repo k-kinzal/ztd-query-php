@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One parameter of a routine definition or signature: mode, name, type and default value.
@@ -32,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FunctionParameter implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $type The parameter type
@@ -49,6 +48,7 @@ final class FunctionParameter implements Clause
         public readonly bool $nameFirst = false,
         public readonly ?Scalar $default = null,
         public readonly ?DefaultSpelling $defaultSpelling = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         Check::input(!$nameFirst || ($name !== null && $mode !== null), 'A parameter name is written before the mode only when both are written.');
         Check::input(($default === null) === ($defaultSpelling === null), 'A default spelling is given exactly with a default value.');

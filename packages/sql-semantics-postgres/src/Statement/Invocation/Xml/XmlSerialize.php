@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -40,7 +39,8 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class XmlSerialize implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param XmlOption $option Whether a document or content is serialized
@@ -48,8 +48,11 @@ final class XmlSerialize implements Scalar, OutputNaming
      * @param TypeName $type The character string type of the result
      * @param XmlIndent|null $indent The indentation written
      */
-    public function __construct(public readonly XmlOption $option, public readonly Scalar $value, public readonly TypeName $type, public readonly ?XmlIndent $indent = null)
+    public function __construct(public readonly XmlOption $option, public readonly Scalar $value, public readonly TypeName $type, public readonly ?XmlIndent $indent = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

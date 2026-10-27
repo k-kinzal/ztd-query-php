@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A multi-valued index part: one JSON document expression and its element type.
@@ -38,15 +37,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ArrayPart implements KeyPart, Operand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The JSON document whose elements supply the key entries
      * @param CastTarget $target The SQL type of each indexed element
      * @param Direction|null $direction The written ordering, which a created multi-valued index refuses
      */
-    public function __construct(public readonly Scalar $expression, public readonly CastTarget $target, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Scalar $expression, public readonly CastTarget $target, public readonly ?Direction $direction = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new CastProblems())->target($target, true) === null, 'A multi-valued index needs a supported element type and precision.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

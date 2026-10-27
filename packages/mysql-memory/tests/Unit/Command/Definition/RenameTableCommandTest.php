@@ -69,7 +69,7 @@ final class RenameTableCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); CREATE VIEW v AS SELECT a FROM t');
-        $statement = $session->analyze('RENAME TABLE v TO x, x TO u')->statement;
+        $statement = $session->analyze('RENAME TABLE v TO x, x TO u');
         self::assertInstanceOf(RenameTable::class, $statement);
         [$names, $moves] = (new RenameTableCommand())->prepare($statement, $session->instance->dictionary, 'd', false);
         self::assertCount(2, $moves);
@@ -117,7 +117,7 @@ final class RenameTableCommandTest extends TestCase
 
     public function testWrittenChecksEveryNewNameBeforeTheDatabase(): void
     {
-        $statement = (new Instance())->connect()->analyze('RENAME TABLE t TO u, v TO ` `')->statement;
+        $statement = (new Instance())->connect()->analyze('RENAME TABLE t TO u, v TO ` `');
         self::assertInstanceOf(RenameTable::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -128,7 +128,7 @@ final class RenameTableCommandTest extends TestCase
 
     public function testWrittenRefusesAnUnqualifiedNameWithoutADatabase(): void
     {
-        $statement = (new Instance())->connect()->analyze('RENAME TABLE d.t TO u')->statement;
+        $statement = (new Instance())->connect()->analyze('RENAME TABLE d.t TO u');
         self::assertInstanceOf(RenameTable::class, $statement);
 
         $this->expectException(SqlError::class);

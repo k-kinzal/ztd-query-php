@@ -24,7 +24,7 @@ final class CreateUndoTablespaceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a");
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testValueRejectsAnUnquotedDatafile(): void

@@ -33,8 +33,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
@@ -63,9 +63,10 @@ final class Locations
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
      * @return array{array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
-    public function located(Operation|QueryPreparation $operation, array $calls, array $diagnostics, Session $session, bool $prepared = false): array
+    public function located(MySqlStatement|QueryPreparation $operation, array $calls, array $diagnostics, Session $session, bool $prepared = false): array
     {
-        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release(), $prepared))->statement($operation->statement);
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release(), $prepared))->statement($statement);
         [$located, $matched] = $this->names($operation, $locator, $calls, $diagnostics);
         $located = (new Location\Calls())->located($locator, $session, $located);
         foreach ($locator->arrays as [$cast, $clause, $at]) {
@@ -73,15 +74,15 @@ final class Locations
             $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
         }
         $located = (new Location\Owned())->located($locator, $diagnostics, $located);
-        $located = (new Location\WriteFunctions())->located($operation->statement, $locator, $located);
-        $located = (new Location\SetEncodings())->located($operation->statement, $locator, $session, $located);
+        $located = (new Location\WriteFunctions())->located($statement, $locator, $located);
+        $located = (new Location\SetEncodings())->located($statement, $locator, $session, $located);
         $located = $this->defaults($operation, $locator, $session, $located);
         $located = $this->wildcards($locator, $diagnostics, $located);
         $located = $this->stars($operation, $locator, $diagnostics, $located);
         $located = $this->windows($locator, $diagnostics, $located);
-        $located = $this->misplaced($locator, $located, $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore);
+        $located = $this->misplaced($locator, $located, ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore);
         $located = $this->sets($operation, $locator, $diagnostics, $located);
-        $common = (new IndexHints())->common($operation->statement);
+        $common = (new IndexHints())->common($statement);
         foreach ($locator->hinted as [$reference, $order]) {
             $refusal = (new IndexHints())->refusal($reference, $common, $session);
             if ($refusal !== null) {
@@ -101,11 +102,13 @@ final class Locations
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
      * @return array{array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>, array<int, true>}
      */
-    public function names(Operation|QueryPreparation $operation, Locator $locator, array $calls, array $diagnostics): array
+    public function names(MySqlStatement|QueryPreparation $operation, Locator $locator, array $calls, array $diagnostics): array
     {
-        $dropped = array_diff(array_map(spl_object_id(...), $operation->facts->diagnostics), array_map(spl_object_id(...), $diagnostics));
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $dropped = array_diff(array_map(spl_object_id(...), ($information)->diagnostics), array_map(spl_object_id(...), $diagnostics));
         $searched = [];
-        foreach ([...(new Walker())->find($operation->statement, FullTextSearch::class), ...(new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch::class)] as $search) {
+        foreach ([...(new Walker())->find($statement, FullTextSearch::class), ...(new Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch::class)] as $search) {
             foreach ($search->columns as $column) {
                 $searched[spl_object_id($column)] = true;
             }
@@ -113,9 +116,9 @@ final class Locations
         $located = [];
         $matched = [];
         foreach ([...$locator->nodes(), ...$locator->clocks()] as $node) {
-            $problem = $operation->facts->covers($node) ? $this->problem($node, $operation) : null;
+            $problem = $node->hasBinding() ? $this->problem($node, $operation) : null;
             $problem = $problem instanceof FunctionCall && !in_array($problem, $calls, true) ? null : $problem;
-            $problem = $problem instanceof Diagnostic && !in_array($problem, $operation->facts->diagnostics, true) ? null : $problem;
+            $problem = $problem instanceof Diagnostic && !in_array($problem, ($information)->diagnostics, true) ? null : $problem;
             $place = $locator->place($node);
             if ($problem !== null && $place !== null && !in_array(spl_object_id($problem), $dropped, true)) {
                 $previous = $located[spl_object_id($problem)] ?? null;
@@ -137,9 +140,10 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
-    public function defaults(Operation|QueryPreparation $operation, Locator $locator, Session $session, array $located): array
+    public function defaults(MySqlStatement|QueryPreparation $operation, Locator $locator, Session $session, array $located): array
     {
-        foreach ($operation instanceof QueryPreparation || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? (new Walker())->find($operation->statement, DefaultOfColumn::class) : [] as $default) {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        foreach ($operation instanceof QueryPreparation || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? (new Walker())->find($statement, DefaultOfColumn::class) : [] as $default) {
             $place = $locator->place($default->column);
             $name = $place === null ? null : $this->undefaulted($default, $operation, $session);
             if ($place !== null && $name !== null) {
@@ -185,7 +189,7 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
-    public function stars(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
+    public function stars(MySqlStatement|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
         $misuses = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables));
         if ($misuses === []) {
@@ -207,10 +211,11 @@ final class Locations
      *
      * @return list<\SqlSemantics\Platform\MySql\Statement\Query\Select>
      */
-    public static function existing(Operation|QueryPreparation $operation): array
+    public static function existing(MySqlStatement|QueryPreparation $operation): array
     {
-        $blocks = $operation instanceof QueryPreparation && $operation->exists ? (new \MySqlMemory\Session\Placement())->blocks($operation->statement) : [];
-        foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class) as $exists) {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $blocks = $operation instanceof QueryPreparation && $operation->exists ? (new \MySqlMemory\Session\Placement())->blocks($statement) : [];
+        foreach ((new Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class) as $exists) {
             array_push($blocks, ...(new \MySqlMemory\Session\Placement())->blocks($exists->query));
         }
 
@@ -277,12 +282,12 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
-    public function sets(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
+    public function sets(MySqlStatement|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
         $claimed = [];
         foreach ($locator->sets as [$set, $at]) {
-            $left = $set->left instanceof Query && $operation->facts->covers($set->left) ? $operation->facts->query($set->left)->shape : null;
-            $right = $operation->facts->covers($set->right) ? $operation->facts->query($set->right)->shape : null;
+            $left = $set->left instanceof Query && $set->left->hasBinding() ? $set->left->queryInformation()->shape : null;
+            $right = $set->right->hasBinding() ? $set->right->queryInformation()->shape : null;
             if ($left === null || $right === null || !$left->complete() || !$right->complete()) {
                 continue;
             }
@@ -305,7 +310,7 @@ final class Locations
      * @param array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}> $located
      * @return array<int, array{Diagnostic|FunctionCall|SqlError, array{string, list<int>}}>
      */
-    public function widths(Operation|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
+    public function widths(MySqlStatement|QueryPreparation $operation, Locator $locator, array $diagnostics, array $located): array
     {
         $claimed = [];
         foreach ($locator->predicates as [$predicate, $clause, $at]) {
@@ -340,12 +345,12 @@ final class Locations
     /**
      * Tells whether a call names a function that is neither native nor declared: a stored function the server does not find.
      */
-    public static function undeclared(FunctionCall $call, Operation|QueryPreparation|\MySqlMemory\Session\Resolution\IndexPreparation $operation): bool
+    public static function undeclared(FunctionCall $call, MySqlStatement|QueryPreparation|\MySqlMemory\Session\Resolution\IndexPreparation $operation): bool
     {
-        if (!$operation->facts->covers($call)) {
+        if (!$call->hasBinding()) {
             return false;
         }
-        $type = $operation->facts->scalar($call)->type;
+        $type = $call->scalarInformation()->type;
         if (!$type instanceof Dependent) {
             return false;
         }
@@ -361,7 +366,7 @@ final class Locations
     /**
      * Answers the problem of a located node: the diagnostic a name or an ordinal resolves to, a call of a function the server does not find, or a clock call whose precision is above 6.
      */
-    public function problem(ColumnUse|OutputOrdinal|FunctionCall|ClockCall $node, Operation|QueryPreparation $operation): Diagnostic|FunctionCall|null
+    public function problem(ColumnUse|OutputOrdinal|FunctionCall|ClockCall $node, MySqlStatement|QueryPreparation $operation): Diagnostic|FunctionCall|null
     {
         if ($node instanceof FunctionCall) {
             return self::undeclared($node, $operation) ? $node : null;
@@ -369,7 +374,7 @@ final class Locations
         if ($node instanceof ClockCall) {
             return null;
         }
-        $fact = $operation->facts->scalar($node);
+        $fact = $node->scalarInformation();
         if ($fact->resolution instanceof Diagnostic) {
             return $fact->resolution;
         }
@@ -383,9 +388,9 @@ final class Locations
      * The server refuses such a DEFAULT() where it resolves it (ER_NO_DEFAULT_FOR_FIELD), whether
      * any row is read or not; an AUTO_INCREMENT column reads as 0 (verified on a live 8.4 server).
      */
-    public function undefaulted(DefaultOfColumn $default, Operation|QueryPreparation $operation, Session $session): ?string
+    public function undefaulted(DefaultOfColumn $default, MySqlStatement|QueryPreparation $operation, Session $session): ?string
     {
-        $resolution = $operation->facts->covers($default->column) ? $operation->facts->scalar($default->column)->resolution : null;
+        $resolution = $default->column->hasBinding() ? $default->column->scalarInformation()->resolution : null;
         $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
         if ($declaration === null) {
             return null;
@@ -415,7 +420,7 @@ final class Locations
      * @param list<Diagnostic> $claimed The problems already answered for another predicate
      * @return array{OperandColumns, bool}|null
      */
-    public function width(InQuery|QuantifiedComparison $predicate, Operation|QueryPreparation $operation, array $diagnostics, array $claimed): ?array
+    public function width(InQuery|QuantifiedComparison $predicate, MySqlStatement|QueryPreparation $operation, array $diagnostics, array $claimed): ?array
     {
         $early = Locator::early($predicate, $operation->profile()->grammar);
         foreach ($diagnostics as $diagnostic) {
@@ -427,10 +432,10 @@ final class Locations
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
-        if ($operand instanceof Row || !$operation->facts->covers($predicate->query)) {
+        if ($operand instanceof Row || !$predicate->query->hasBinding()) {
             return null;
         }
-        $shape = $operation->facts->query($predicate->query)->shape;
+        $shape = $predicate->query->queryInformation()->shape;
         $width = count($shape->slots);
         if (!$shape->complete() || $width < 2) {
             return null;

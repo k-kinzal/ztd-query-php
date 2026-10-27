@@ -71,8 +71,16 @@ final class Origins
     {
         $range = $this->ranges->span($source, true);
         if ($range !== null) {
-            $this->notices[] = new \SqlSemantics\Statement\Source\SourceNotice($subject, $warning, $range[1]);
+            $this->noticeAt($subject, $warning, $range[1]);
         }
+    }
+
+    /**
+     * Records a notice whose boundary is inside an input comment or token.
+     */
+    public function noticeAt(Node|\SqlSemantics\Statement\Identifier\Name $subject, \SqlSemantics\Statement\Fact\Warning $warning, int $offset): void
+    {
+        $this->notices[] = new \SqlSemantics\Statement\Source\SourceNotice($subject, $warning, $offset);
     }
 
     /**

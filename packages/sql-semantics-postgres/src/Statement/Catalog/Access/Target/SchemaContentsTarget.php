@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Every object of one kind in the named schemas as the objects of a GRANT or REVOKE, such as ALL TABLES IN SCHEMA.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the schemas whose tables are granted
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe');
- *     [$operation->statement->target->object()->value, $operation->statement->target->schemas[0]->value] // => ['TABLE', 'app']
+ *     [$operation->target->object()->value, $operation->target->schemas[0]->value] // => ['TABLE', 'app']
  */
 final class SchemaContentsTarget implements PrivilegeTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The kinds that can be granted for whole schemas.
@@ -41,7 +40,7 @@ final class SchemaContentsTarget implements PrivilegeTarget
      * @param PrivilegeObjectKind $object The kind: tables, sequences, functions, procedures or routines
      * @param list<Name> $schemas The schemas in the order written, at least one
      */
-    public function __construct(public readonly PrivilegeObjectKind $object, array $schemas)
+    public function __construct(public readonly PrivilegeObjectKind $object, array $schemas, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(in_array($object, self::KINDS, true), 'The kind can be granted for whole schemas.');
         $this->schemas = Check::listOf($schemas, Name::class, 'A grant names at least one schema.', 1);

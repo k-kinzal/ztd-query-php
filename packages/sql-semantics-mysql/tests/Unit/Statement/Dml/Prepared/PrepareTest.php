@@ -20,10 +20,10 @@ final class PrepareTest extends TestCase
     public function testDeriveStatementDerivesTheVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('PREPARE s FROM @q');
-        self::assertInstanceOf(Prepare::class, $operation->statement);
-        self::assertInstanceOf(UserVariable::class, $operation->statement->source);
+        self::assertInstanceOf(Prepare::class, $operation);
+        self::assertInstanceOf(UserVariable::class, $operation->source);
 
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->source)->type);
+        self::assertInstanceOf(Dependent::class, $operation->source->scalarInformation()->type);
     }
 
     public function testRenderWritesTheSource(): void

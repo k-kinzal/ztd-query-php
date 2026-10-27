@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LOCK [=] DEFAULT | name`: how much concurrent access a table change must allow.
@@ -31,12 +30,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class LockOption implements AlterOption, AlterModifier
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $lock The lock level, or null for the keyword DEFAULT
      */
-    public function __construct(public readonly ?Name $lock)
+    public function __construct(public readonly ?Name $lock, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input((new Choices())->known($lock, true), 'The lock is a known table-change option.');
     }

@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored prefix operator around an operand with an invocation-time condition.
@@ -27,13 +26,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredUnary implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Retains the operator's typed operands and observable spelling.
      */
-    public function __construct(public readonly \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator $operator, public readonly DeferredOperand|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, public readonly bool $keyword = false)
+    public function __construct(public readonly \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator $operator, public readonly DeferredOperand|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, public readonly bool $keyword = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$keyword || $operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Not, 'Only tight negation has a keyword spelling.');
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of a prefix operator needs grouping.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

@@ -41,14 +41,14 @@ final class GroupKeysTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $query = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $keys = new GroupKeys();
 
-        self::assertSame($direct, $keys->direct($select, $query->facts));
-        self::assertSame($varying, $keys->varying($select, $query->facts));
+        self::assertSame($direct, $keys->direct($select));
+        self::assertSame($varying, $keys->varying($select));
     }
 
     public function testConstantReadsReducedExpressionsAndRejectsChangingCalls(): void
@@ -59,16 +59,16 @@ final class GroupKeysTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $query->field(0)->expression);
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $query->field(1)->expression);
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $query->field(2)->expression);
-        self::assertTrue($keys->constant($query->field(0)->expression, $query->facts));
-        self::assertFalse($keys->constant($query->field(1)->expression, $query->facts));
-        self::assertFalse($keys->constant($query->field(2)->expression, $query->facts, ['x']));
+        self::assertTrue($keys->constant($query->field(0)->expression));
+        self::assertFalse($keys->constant($query->field(1)->expression));
+        self::assertFalse($keys->constant($query->field(2)->expression, ['x']));
     }
 
     public function testAssignedCollectsWritesAcrossNestedQueries(): void
     {
         $query = (new Semantics(Dialect::MySql))->analyze('SELECT @X:=1,(SELECT @Y:=2 LIMIT 1)');
 
-        self::assertSame(['x', 'y'], (new GroupKeys())->assigned($query->statement));
+        self::assertSame(['x', 'y'], (new GroupKeys())->assigned($query));
     }
 
     public function testChildrenPreservesTheOrderOfSyntaxChildren(): void
@@ -83,11 +83,11 @@ final class GroupKeysTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $query = $semantics->analyze('SELECT MIN(n) FROM t GROUP BY 1+1,n', [$semantics->analyze('CREATE TABLE t(n INT)')]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query->statement);
-        self::assertInstanceOf(Select::class, $query->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        self::assertInstanceOf(Select::class, $query->query);
 
-        self::assertTrue((new GroupKeys())->varying($query->statement->query, $query->facts));
-        self::assertTrue((new GroupKeys())->varying($query->statement->query));
+        self::assertTrue((new GroupKeys())->varying($query->query));
+        self::assertTrue((new GroupKeys())->varying($query->query));
     }
 
 }

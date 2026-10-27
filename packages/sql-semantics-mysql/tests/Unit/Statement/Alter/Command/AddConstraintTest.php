@@ -22,7 +22,7 @@ final class AddConstraintTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t ADD CHECK (a > x)', [$table]);
 
-        self::assertSame('Column x does not exist.', $alter->facts->diagnostics[0]->message());
+        self::assertSame('Column x does not exist.', $alter->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheElement(): void
@@ -48,8 +48,8 @@ final class AddConstraintTest extends TestCase
     {
         $sql = 'ALTER TABLE t ADD ' . $element;
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
-        $command = $operation->statement->commands[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        $command = $operation->commands[0];
         self::assertInstanceOf(AddConstraint::class, $command);
         self::assertInstanceOf($class, $command->element);
         self::assertSame($sql, $operation->toString());

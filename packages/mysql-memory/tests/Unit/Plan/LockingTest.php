@@ -29,12 +29,12 @@ final class LockingTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
         $operation = $session->analyze('SELECT * FROM t, u AS v WHERE t.a = v.a FOR SHARE OF v SKIP LOCKED');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $root = $planner->query($statement, null)->root;
         self::assertInstanceOf(\MySqlMemory\Plan\Path\Transform\Project::class, $root);
         $path = $root->input;
@@ -48,7 +48,7 @@ final class LockingTest extends TestCase
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $operation = $session->analyze('SELECT 1');
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $input = new SingleRow();
 
         self::assertSame($input, (new Locking($planner))->lock(null, new Scope(), $input, null));
@@ -70,12 +70,12 @@ final class LockingTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM t FOR UPDATE NOWAIT');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $scope = new Scope();
         self::assertNotNull($statement->from);
         $planner->relations->plan($statement->from, $scope);
@@ -100,12 +100,12 @@ final class LockingTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT * FROM t FOR UPDATE NOWAIT');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $scope = new Scope();
         self::assertNotNull($statement->from);
         $planner->relations->plan($statement->from, $scope);
@@ -122,8 +122,8 @@ final class LockingTest extends TestCase
         $select = $session->analyze('SELECT * FROM t');
 
         self::assertSame([true, false], [
-            (new Locking(new Planner($insert->statement, $insert->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary)))->writes(),
-            (new Locking(new Planner($select->statement, $select->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary)))->writes(),
+            (new Locking(new Planner($insert, $insert->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary)))->writes(),
+            (new Locking(new Planner($select, $select->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary)))->writes(),
         ]);
     }
 
@@ -132,7 +132,7 @@ final class LockingTest extends TestCase
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $operation = $session->analyze('SELECT 1');
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         self::assertSame($session->transaction, (new Locking($planner))->transaction());
     }

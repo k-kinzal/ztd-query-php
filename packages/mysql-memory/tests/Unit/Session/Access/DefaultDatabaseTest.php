@@ -64,7 +64,7 @@ final class DefaultDatabaseTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1046);
 
-        (new DefaultDatabase())->write($operation->statement, $operation->facts, $session);
+        (new DefaultDatabase())->write($operation, $operation->statementInformation(), $session);
     }
 
     public function testWriteLeavesACommonTableReferenceInItsLexicalNamespace(): void
@@ -73,7 +73,7 @@ final class DefaultDatabaseTest extends TestCase
         $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT)');
         $operation = $session->analyze('WITH c AS (SELECT 1 AS a) UPDATE d.t JOIN c SET t.a=c.a');
 
-        (new DefaultDatabase())->write($operation->statement, $operation->facts, $session);
+        (new DefaultDatabase())->write($operation, $operation->statementInformation(), $session);
 
         self::assertSame('', $session->variables->database);
     }
@@ -89,11 +89,11 @@ final class DefaultDatabaseTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -105,11 +105,11 @@ final class DefaultDatabaseTest extends TestCase
         $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
-            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), $parameters2);
+            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -212,4 +212,13 @@ final class DefaultDatabaseTest extends TestCase
         self::assertInstanceOf(SqlError::class, $answer);
         self::assertSame(1046, $answer->getCode());
     }
+
+    public function testBeforeAliasResolvesAnEarlierImplicitTableDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        $session->query('SELECT 1 FROM t AS repeated, t AS repeated');
+    }
+
 }

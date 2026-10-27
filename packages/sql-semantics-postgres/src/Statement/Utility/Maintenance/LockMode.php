@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
  * @visibility public
  * @example Reading the mode of a LOCK
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('LOCK t IN SHARE ROW EXCLUSIVE MODE');
- *     $operation->statement->mode // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::ShareRowExclusive
+ *     $operation->mode // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::ShareRowExclusive
  */
 enum LockMode: string
 {

@@ -19,8 +19,8 @@ final class HandlerScanTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ NEXT LIMIT 2');
 
-        self::assertNotNull($operation->facts->output);
-        self::assertFalse($operation->facts->output->shape->complete());
+        self::assertNotNull($operation->output());
+        self::assertFalse($operation->output()->shape->complete());
     }
 
     public function testRenderWritesTheRead(): void

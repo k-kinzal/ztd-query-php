@@ -94,7 +94,7 @@ final class MathResults
     public function absolute(Invocation $call): Domain
     {
         $node = $call->nodes[0] ?? null;
-        $source = $node !== null && $this->legacy($call) ? (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($call->derivation->facts()->scalar($node)->type) : null;
+        $source = $node !== null && $this->legacy($call) ? (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($node->scalarInformation()->type) : null;
 
         return $this->same($source ?? $call->domain(0));
     }
@@ -166,7 +166,7 @@ final class MathResults
         while ($node instanceof Grouped || ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && in_array($node->operator, [\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus], true))) {
             $node = $node->operand;
         }
-        return $node === $call->nodes[0] ? $domain : ((new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($call->derivation->facts()->scalar($node)->type) ?? $domain);
+        return $node === $call->nodes[0] ? $domain : ((new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($node->scalarInformation()->type) ?? $domain);
     }
 
     /**

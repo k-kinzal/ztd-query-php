@@ -16,7 +16,7 @@ final class ColumnUniqueTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int UNIQUE)', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns::class, $n2);
@@ -31,7 +31,7 @@ final class ColumnUniqueTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int UNIQUE WITH (fillfactor = 70))', []);
-        self::assertSame(0, count($statement->facts->diagnostics));
+        self::assertSame(0, count($statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

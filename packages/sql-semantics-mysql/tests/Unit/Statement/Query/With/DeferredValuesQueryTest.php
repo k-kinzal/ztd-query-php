@@ -40,6 +40,6 @@ final class DeferredValuesQueryTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (TABLE t EXCEPT VALUES ROW(1), ROW(CHAR((SELECT *)))) SELECT 9');
         self::assertSame('WITH c AS (TABLE t EXCEPT VALUES ROW(1), ROW(CHAR((SELECT *)))) SELECT 9', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

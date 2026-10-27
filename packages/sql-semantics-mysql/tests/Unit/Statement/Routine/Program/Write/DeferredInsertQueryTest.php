@@ -19,20 +19,20 @@ final class DeferredInsertQueryTest extends TestCase
     public function testDeriveProgramRetainsTheTargetBeforeSourceDependencies(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT q.* FROM missing');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(M\Dml\Insert\InsertQuery::class, $operation->statement->body);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(M\Dml\Insert\InsertQuery::class, $operation->body);
         $deferred = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT *');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $deferred->statement);
-        self::assertInstanceOf(DeferredInsertQuery::class, $deferred->statement->body);
-        self::assertSame('t', $deferred->statement->body->into->table->name->name->value);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $deferred);
+        self::assertInstanceOf(DeferredInsertQuery::class, $deferred->body);
+        self::assertSame('t', $deferred->body->into->table->name->name->value);
     }
 
     public function testProblemDescribesTheRetainedReadCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT *');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertQuery::class, $operation->statement->body);
-        self::assertSame('No tables used', $operation->statement->body->problem()->message());
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertQuery::class, $operation->body);
+        self::assertSame('No tables used', $operation->body->problem()->message());
     }
 
     public function testRenderKeepsTheDestinationAndDuplicateKeyAssignments(): void

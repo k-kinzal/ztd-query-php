@@ -29,7 +29,7 @@ final class GranteeTest extends TestCase
         $authentication = new Identification(null, Credential::Password, new Text('pw'));
         $grantee = Grantee::from(new UserSpecification($user, $authentication));
 
-        self::assertSame(['user' => $user, 'identification' => $authentication], get_object_vars($grantee));
+        self::assertSame(['user' => $user, 'identification' => $authentication, 'inputSource' => null], get_object_vars($grantee));
         self::assertSame($grantee, Grantee::from($grantee));
     }
 

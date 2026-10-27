@@ -18,7 +18,8 @@ final class StoredHintsTest extends TestCase
     public function testLoadPublishesConditionsFromTheRetainedDefinition(): void
     {
         $session = (new Instance())->connect();
-        $definition = $session->semantics()->analyze('CREATE PROCEDURE p() SELECT /*+ RESOURCE_GROUP(a) */ 1')->statement;
+        $definition = $session->semantics()->analyze('CREATE PROCEDURE p() SELECT /*+ RESOURCE_GROUP(a) */ 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $definition);
         self::assertInstanceOf(CreateProcedure::class, $definition);
         $session->text = 'unrelated invalid input';
         (new StoredHints())->load($definition, $session);

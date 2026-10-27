@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The LIKE clause of a SHOW: the rows whose name matches a pattern.
@@ -21,16 +20,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the pattern
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW DATABASES LIKE 'shop%'");
- *     $show->statement->filter->pattern->value // => 'shop%'
+ *     $show->filter->pattern->value // => 'shop%'
  */
 final class ShowLike implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $pattern The pattern
      */
-    public function __construct(public readonly Text $pattern)
+    public function __construct(public readonly Text $pattern, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input($pattern->radix === null, 'A SHOW LIKE pattern is quoted text.');
     }

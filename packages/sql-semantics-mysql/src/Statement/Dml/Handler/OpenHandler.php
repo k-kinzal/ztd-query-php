@@ -13,7 +13,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The open handler a HANDLER ... READ reads from, named by the alias or table name of its HANDLER ... OPEN.
@@ -27,17 +26,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the handler of a read
  *     $read = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h READ FIRST');
- *     $read->statement->handler->name->value // => 'h'
+ *     $read->handler->name->value // => 'h'
  */
-final class OpenHandler implements Relation
+final class OpenHandler implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The name of the handler
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check(new \SqlSemantics\Statement\Identifier\QualifiedName($name));
     }
 

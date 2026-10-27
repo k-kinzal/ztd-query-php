@@ -33,19 +33,19 @@ final class RowUse
      */
     public function raise(RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Session $session, bool $invocation = true): never
     {
+        $operand = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($operand);
         (new \MySqlMemory\Session\Problem\Identifiers())->check($operand, $session->settings()->release());
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         if ($invocation && $session->settings()->release() === GrammarRelease::MySql5651) {
             $session->diagnostics->retain();
         } elseif ($invocation) {
             $session->diagnostics->clear();
         }
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($operand, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
         $derivation->scalar($operand, $derivation->environment());
-        $problems = $derivation->facts()->diagnostics;
-        (new \MySqlMemory\Session\Access\RelationEntry())->check($operand, $derivation->facts(), $session);
+        $problems = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics;
+        (new \MySqlMemory\Session\Access\RelationEntry())->check($operand, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         foreach ($problems as $problem) {
             if (Stages::parsed($problem)) {
                 throw (new Errors())->error($problem, $session);
@@ -59,7 +59,7 @@ final class RowUse
         }
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($operand, $derivation->facts(), $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operand, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $this->prepare($operand, $planner->compiler, new \MySqlMemory\Evaluation\Scope());
         foreach ($problems as $problem) {
             throw (new Errors())->error($problem, $session);

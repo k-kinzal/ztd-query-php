@@ -33,7 +33,7 @@ final class ProblemsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $node = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName(new Name('missing')));
-        $operation = new \SqlSemantics\Statement\Operation($session->semantics()->context(), $node);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $node, new \SqlSemantics\Statement\Source\SourceMap());
         $session->text = 'unrelated invalid input';
 
         $this->expectExceptionCode(1319);
@@ -82,7 +82,7 @@ final class ProblemsTest extends TestCase
         $operation = $session->analyze("ALTER USER nobody ATTRIBUTE '[1]'");
         (new Problems())->raise($operation, $session);
 
-        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertCount(1, $operation->statementInformation()->diagnostics);
     }
 
     public function testRaiseLeavesAStatementWithoutDiagnostics(): void
@@ -92,7 +92,7 @@ final class ProblemsTest extends TestCase
         $operation = $session->analyze('SELECT a FROM t');
         (new Problems())->raise($operation, $session);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->statementInformation()->diagnostics);
     }
 
     public function testRaiseRaisesAnUndeclaredVariable(): void
@@ -261,7 +261,7 @@ final class ProblemsTest extends TestCase
     public function testReachedLeavesOutACommonTableNoReferenceNames(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('WITH c AS (SELECT 1 QUALIFY 1), e AS (SELECT 2) SELECT * FROM e')->statement;
+        $statement = $session->analyze('WITH c AS (SELECT 1 QUALIFY 1), e AS (SELECT 2) SELECT * FROM e');
         $reached = (new Problems())->reached($statement);
         $result = $session->query('WITH c AS (SELECT 1 QUALIFY 1) SELECT 1')[0];
 
@@ -342,7 +342,7 @@ final class ProblemsTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1146);
 
-        (new Problems())->paths($operation, $session, $operation->facts->diagnostics);
+        (new Problems())->paths($operation, $session, $operation->statementInformation()->diagnostics);
     }
 
     public function testPathsRaisesTheInvalidPath(): void
@@ -353,7 +353,7 @@ final class ProblemsTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3143);
 
-        (new Problems())->paths($operation, $session, $operation->facts->diagnostics);
+        (new Problems())->paths($operation, $session, $operation->statementInformation()->diagnostics);
     }
 
     public function testUnlocatedRaisesAProblemBeforeTheFirstLocatedOneButAWindowDefinedTwice(): void
@@ -361,12 +361,12 @@ final class ProblemsTest extends TestCase
         $session = (new Instance())->connect();
         $twice = new Misuse(MisuseRule::DuplicateWindow, new Name('w'));
         $located = new Misuse(MisuseRule::StarWithoutTables);
-        (new Problems())->unlocated([$twice, $located, new Misuse(MisuseRule::DerivedWithoutAlias)], [spl_object_id($located) => [$located, ['field list', [1]]]], $session, $session->analyze('SELECT 1')->statement);
+        (new Problems())->unlocated([$twice, $located, new Misuse(MisuseRule::DerivedWithoutAlias)], [spl_object_id($located) => [$located, ['field list', [1]]]], $session, $session->analyze('SELECT 1'));
 
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage("Window name 'v' is not defined.");
 
-        (new Problems())->unlocated([$twice, new Misuse(MisuseRule::UnknownWindow, new Name('v'))], [], $session, $session->analyze('SELECT 1')->statement);
+        (new Problems())->unlocated([$twice, new Misuse(MisuseRule::UnknownWindow, new Name('v'))], [], $session, $session->analyze('SELECT 1'));
     }
 
     public function testOpenedRaisesAMissingTableOfASubqueryBeforeAnyName(): void
@@ -398,12 +398,13 @@ final class ProblemsTest extends TestCase
         $session = (new Instance())->connect();
 
         self::assertTrue((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *)')));
-        $routine = $session->analyze('CREATE PROCEDURE p() SELECT EXISTS (SELECT *) FROM (SELECT * FROM DUAL) AS d')->statement;
+        $routine = $session->analyze('CREATE PROCEDURE p() SELECT EXISTS (SELECT *) FROM (SELECT * FROM DUAL) AS d');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $routine->body);
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
-        $routine->body->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
-        $preparation = new \MySqlMemory\Session\Resolution\QueryPreparation($routine->body->query, $derivation->facts(), $session->semantics()->profile());
+        $body = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($routine->body);
+        $body->deriveProgram($derivation, new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope($derivation->environment()));
+        $preparation = new \MySqlMemory\Session\Resolution\QueryPreparation($body->query, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session->semantics()->profile());
         self::assertFalse((new Problems())->tested($preparation));
         self::assertFalse((new Problems())->tested($session->analyze('SELECT 1')));
     }

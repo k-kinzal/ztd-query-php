@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the action of ALTER INSTANCE
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER INSTANCE RELOAD KEYRING')->statement->action instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring // => true
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER INSTANCE RELOAD KEYRING')->action instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring // => true
  */
 interface InstanceAction extends Node
 {

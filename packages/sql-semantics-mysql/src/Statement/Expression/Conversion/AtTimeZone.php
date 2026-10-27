@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -45,7 +44,7 @@ use SqlSemantics\Statement\Type\Known;
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone($source, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::ZeroOffset) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the zone
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CAST(a AT TIME ZONE 'UTC' AS DATETIME(6))");
- *     [$query->statement->query->where->zone->value, $query->statement->query->where->precision] // => ['UTC', '6']
+ *     [$query->query->where->zone->value, $query->query->where->precision] // => ['UTC', '6']
  * @example Refusing an impossible fractional precision
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::ZeroOffset, precision: '7') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a fixed predicate result even when its operands are unresolved
@@ -54,7 +53,8 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class AtTimeZone implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The converted TIMESTAMP value
@@ -62,8 +62,11 @@ final class AtTimeZone implements Scalar
      * @param bool $interval Whether INTERVAL is written before the zone
      * @param string|null $precision The fractional seconds precision of the DATETIME exactly as written
      */
-    public function __construct(public readonly Scalar $operand, public readonly TimeZone $zone, public readonly bool $interval = false, public readonly ?string $precision = null)
+    public function __construct(public readonly Scalar $operand, public readonly TimeZone $zone, public readonly bool $interval = false, public readonly ?string $precision = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
         Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) !== false, 'An AT TIME ZONE operand must admit a TIMESTAMP or NULL input role.');

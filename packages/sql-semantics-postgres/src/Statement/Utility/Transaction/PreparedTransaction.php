@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,18 +21,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the identifier of a prepared transaction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("PREPARE TRANSACTION 'tx-1'");
- *     [$operation->statement->identifier->value, $operation->toString()] // => ['tx-1', "PREPARE TRANSACTION 'tx-1'"]
+ *     [$operation->identifier->value, $operation->toString()] // => ['tx-1', "PREPARE TRANSACTION 'tx-1'"]
  */
-final class PreparedTransaction implements Statement
+final class PreparedTransaction extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PreparedAction $action The step
      * @param StringConstant $identifier The identifier of the prepared transaction
      */
-    public function __construct(public readonly PreparedAction $action, public readonly StringConstant $identifier)
+    public function __construct(public readonly PreparedAction $action, public readonly StringConstant $identifier, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

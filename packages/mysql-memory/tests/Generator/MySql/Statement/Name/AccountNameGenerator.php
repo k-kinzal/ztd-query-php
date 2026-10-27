@@ -31,7 +31,7 @@ final class AccountNameGenerator implements ErisGenerator
     {
         $users ??= Generators::map(static fn (int $number): string => 'u' . $number, Generators::choose(0, 999999));
         $hosts ??= Generators::oneOf(Generators::constant(null), new NameGenerator(Generators::elements('%', 'localhost', '10.0.%'), Generators::constant(null)));
-        $this->delegate = Generators::bind(new NameGenerator($users, Generators::constant(null)), static fn (Name $user): ErisGenerator => Generators::map(static fn (?Name $host): AccountName => new AccountName($user, $host), $hosts));
+        $this->delegate = \Tests\Generator\Operands::bind(new NameGenerator($users, Generators::constant(null)), static fn (Name $user): ErisGenerator => Generators::map(static fn (?Name $host): AccountName => new AccountName($user, $host), $hosts));
     }
 
     /**
@@ -51,4 +51,16 @@ final class AccountNameGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<Name> $user The generated semantic operand
+     * @param ErisGenerator<Name|null> $host The generated semantic operand
+     * @return ErisGenerator<AccountName>
+     */
+    public static function fromOperands(ErisGenerator $user, ErisGenerator $host): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): AccountName => new AccountName(user: $parts[0], host: $parts[1]), \Tests\Generator\Operands::tuple($user, $host));
+    }
+
 }

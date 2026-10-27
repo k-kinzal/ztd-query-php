@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,14 +32,15 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the arms and the ordering of a compound query
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1');
- *     [count($query->statement->steps), count($query->statement->orderBy), $query->statement->steps[0]->query->orderBy, $query->toString()] // => [1, 1, [], 'SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1']
+ *     [count($query->steps), count($query->orderBy), $query->steps[0]->query->orderBy, $query->toString()] // => [1, 1, [], 'SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1']
  * @example Refusing an ordering left on the last arm
- *     $ordered = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS a ORDER BY a')->statement;
+ *     $ordered = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS a ORDER BY a');
  *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Compound(new \SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause([new \SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()])]), [new \SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep(\SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator::Union, $ordered)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Compound implements Statement, Query
+final class Compound extends \SqlSemantics\Statement\SqlStatement implements Statement, Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CompoundStep> The further arms in written order
@@ -58,8 +58,14 @@ final class Compound implements Statement, Query
      * @param list<SortTerm> $orderBy The ORDER BY terms of the combined rows
      * @param Limit|null $limit The LIMIT clause of the combined rows
      */
-    public function __construct(public readonly Select|ValuesClause $first, array $steps, array $orderBy = [], public readonly ?Limit $limit = null)
+    public function __construct(public readonly Select|ValuesClause $first, array $steps, array $orderBy = [], public readonly ?Limit $limit = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->steps = Check::listOf($steps, CompoundStep::class, 'A compound query has at least two arms.', 1);
         $this->orderBy = Check::listOf($orderBy, SortTerm::class, 'ORDER BY terms are ordering terms.');
         $last = $this->steps[count($this->steps) - 1]->query;

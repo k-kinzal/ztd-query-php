@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a sequence.
@@ -29,9 +28,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TEMP SEQUENCE IF NOT EXISTS s AS bigint INCREMENT BY 2 START WITH 10 OWNED BY t.id');
  *     [$statement->declarations()[0]->name->schema->value, $statement->declarations()[0]->columns[0]->name->value, $statement->toString()] // => ['pg_temp', 'last_value', 'CREATE TEMP SEQUENCE IF NOT EXISTS s AS BIGINT INCREMENT 2 START 10 OWNED BY t.id']
  */
-final class CreateSequence implements SchemaElement
+final class CreateSequence extends \SqlSemantics\Statement\SqlStatement implements SchemaElement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SequenceOption> The options in the order written
@@ -49,7 +48,12 @@ final class CreateSequence implements SchemaElement
         array $options = [],
         public readonly Persistence $persistence = Persistence::Permanent,
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, SequenceOption::class, 'Sequence options are sequence options.');
     }
 

@@ -20,7 +20,9 @@ use SqlSemantics\Statement\Shape\Field;
  */
 final class ProjectionScope
 {
-    /** @var array<int, Field> */
+    /**
+ * @var array<int, Field>
+ */
     private array $fields = [];
 
     /**

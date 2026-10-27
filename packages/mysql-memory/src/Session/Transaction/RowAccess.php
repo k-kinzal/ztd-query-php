@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Transaction;
 
-use Closure;
 use MySqlMemory\Concurrency\Isolation;
 use MySqlMemory\Concurrency\LockMode;
 use MySqlMemory\Dictionary\StoredTable;
@@ -32,11 +31,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction;
  */
 final class RowAccess
 {
-    /**
-     * Restores what the session sets for the statement it runs, once a statement that waited for a lock goes on, or null.
-     */
-    public ?Closure $resumed = null;
-
     /**
      * @param Transaction $transaction The transaction that reads and locks the rows
      */
@@ -163,9 +157,6 @@ final class RowAccess
             $transaction->system->scheduler->pause();
         } finally {
             unset($locks->waits[$transaction->id]);
-            if ($this->resumed !== null) {
-                ($this->resumed)();
-            }
         }
         if (($transaction->variables?->instance->sessions[$transaction->id] ?? null)?->get()?->interrupted === true) {
             throw \MySqlMemory\Error\Family\StatementError::QueryInterrupted->error();

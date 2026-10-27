@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP TABLESPACE name [option …]`: a request to remove a tablespace.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop tablespace ts engine ndb");
- *     [$statement->toString(), $statement->statement->name->value] // => ["DROP TABLESPACE ts ENGINE ndb", 'ts']
+ *     [$statement->toString(), $statement->name->value] // => ["DROP TABLESPACE ts ENGINE ndb", 'ts']
  */
-final class DropTablespace implements Statement
+final class DropTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -40,8 +39,11 @@ final class DropTablespace implements Statement
      * @param Name $name The tablespace name
      * @param list<StorageOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, array $options = [])
+    public function __construct(public readonly Name $name, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::DROP);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

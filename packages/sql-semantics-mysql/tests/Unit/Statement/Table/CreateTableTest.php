@@ -26,11 +26,11 @@ final class CreateTableTest extends TestCase
     public function testTemporaryTellsWhetherTemporaryIsWritten(): void
     {
         $twiceAnalysis = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE TEMPORARY TEMPORARY TABLE t (a INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $twiceAnalysis);
-        $twice = $twiceAnalysis->statement;
+        self::assertInstanceOf(M\Statement::class, $twiceAnalysis);
+        $twice = $twiceAnalysis;
         $neverAnalysis = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $neverAnalysis);
-        $never = $neverAnalysis->statement;
+        self::assertInstanceOf(M\Statement::class, $neverAnalysis);
+        $never = $neverAnalysis;
         self::assertInstanceOf(CreateTable::class, $twice);
         self::assertInstanceOf(CreateTable::class, $never);
 
@@ -42,14 +42,14 @@ final class CreateTableTest extends TestCase
     public function testDeriveStatementDerivesTheElementsInTheTable(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT, CHECK (a < b))');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $statement = $create->statement;
+        self::assertInstanceOf(M\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $check = $statement->elements[2];
 
         self::assertInstanceOf(M\Table\Key\CheckConstraint::class, $check);
         self::assertInstanceOf(M\Expression\Comparison::class, $check->condition);
-        $resolution = $create->facts->scalar($check->condition->right)->resolution;
+        $resolution = $check->condition->right->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($create->declarations()[0]->columns[1], $resolution->slot->column);
     }
@@ -57,22 +57,22 @@ final class CreateTableTest extends TestCase
     public function testDeriveStatementReportsTheProblemsOfOrdinaryAndStoredDefinitions(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t ENGINE = InnoDB');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
+        self::assertInstanceOf(M\Statement::class, $create);
         $keys = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $keys);
+        self::assertInstanceOf(M\Statement::class, $keys);
 
-        self::assertInstanceOf(NoColumns::class, $create->facts->diagnostics[0]);
-        self::assertInstanceOf(MultiplePrimaryKeys::class, $keys->facts->diagnostics[0]);
+        self::assertInstanceOf(NoColumns::class, $create->diagnostics()[0]);
+        self::assertInstanceOf(MultiplePrimaryKeys::class, $keys->diagnostics()[0]);
     }
 
     public function testDeriveRelationProvidesTheDeclaration(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (b INT NOT NULL, c TEXT) SELECT 1 AS a, 2 AS b');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $statement = $create->statement;
+        self::assertInstanceOf(M\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $table = $create->declarations()[0];
-        $fact = $create->facts->relation($statement);
+        $fact = $statement->relationInformation();
 
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertSame($table, $fact->table->table);
@@ -107,28 +107,28 @@ final class CreateTableTest extends TestCase
     public function testDeriveProgramRetainsCompleteHeaderAndQueryOperands(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) CREATE TABLE t(a INT, CHECK(a>0)) UNION=() AS SELECT x AS v');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $definition = $operation->statement->body;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $definition = $operation->body;
         self::assertInstanceOf(CreateTable::class, $definition);
         self::assertCount(2, $definition->elements);
         self::assertNotNull($definition->query);
-        self::assertTrue($operation->facts->covers($definition->query->query));
+        self::assertTrue($definition->query->query->hasBinding());
     }
 
     public function testDeriveRelationRetainsTheProjectedColumnShape(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t UNION=() AS SELECT 1 AS v');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(CreateTable::class, $operation->statement->body);
-        self::assertEquals(new Name('v'), $operation->facts->relation($operation->statement->body)->shape->slots[0]->name);
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(CreateTable::class, $operation->body);
+        self::assertEquals(new Name('v'), $operation->body->relationInformation()->shape->slots[0]->name);
     }
 
     public function testRenderPreservesDeferredRowsAndMergeSources(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TEMPORARY TABLE IF NOT EXISTS t(a INT) ENGINE=InnoDB UNION=(s) AS SELECT ROW(1,2)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Statement::class, $operation);
         self::assertSame('CREATE PROCEDURE p() CREATE TEMPORARY TABLE IF NOT EXISTS t (a INT) ENGINE InnoDB UNION (s) AS SELECT ROW(1, 2)', $operation->toString());
     }
 }

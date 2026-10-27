@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the roles and the behavior
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP OWNED BY joe, CURRENT_USER CASCADE');
- *     [count($operation->statement->roles), $operation->statement->behavior?->value] // => [2, 'CASCADE']
+ *     [count($operation->roles), $operation->behavior?->value] // => [2, 'CASCADE']
  */
-final class DropOwned implements Statement
+final class DropOwned extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RoleSpec> The roles in the order written
@@ -40,8 +39,11 @@ final class DropOwned implements Statement
      * @param list<RoleSpec> $roles The roles in the order written, at least one
      * @param DropBehavior|null $behavior CASCADE or RESTRICT, when written
      */
-    public function __construct(array $roles, public readonly ?DropBehavior $behavior = null)
+    public function __construct(array $roles, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = Check::listOf($roles, RoleSpec::class, 'A role list names at least one role.', 1);
     }
 

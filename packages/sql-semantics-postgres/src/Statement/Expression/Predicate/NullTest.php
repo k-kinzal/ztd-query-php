@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -32,15 +31,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class NullTest implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested value
      * @param bool $negated Whether the test is for a value that is not NULL
      * @param NullTestSpelling $spelling How the test is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly bool $negated, public readonly NullTestSpelling $spelling = NullTestSpelling::Keywords)
+    public function __construct(public readonly Scalar $operand, public readonly bool $negated, public readonly NullTestSpelling $spelling = NullTestSpelling::Keywords, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->before($operand, Precedence::IS), 'The tested value needs parentheses to keep its place.');
     }
 

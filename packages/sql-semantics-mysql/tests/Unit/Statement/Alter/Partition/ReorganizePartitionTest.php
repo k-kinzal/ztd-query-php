@@ -17,7 +17,7 @@ final class ReorganizePartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q VALUES LESS THAN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q VALUES LESS THAN (x))')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a SET with several values
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET LOCAL search_path = app, 'Public'");
- *     [$operation->statement->parameter->text(), count($operation->statement->values), $operation->toString()] // => ['search_path', 2, "SET LOCAL search_path TO app, 'Public'"]
+ *     [$operation->parameter->text(), count($operation->values), $operation->toString()] // => ['search_path', 2, "SET LOCAL search_path TO app, 'Public'"]
  * @example Refusing a SET without a value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Statement\Identifier\Name('a')]), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetParameter implements Statement
+final class SetParameter extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<OptionArgument> The values in order
@@ -44,8 +43,11 @@ final class SetParameter implements Statement
      * @param list<OptionArgument> $values The values in order; at least one
      * @param bool $local Whether the change lasts for the current transaction only
      */
-    public function __construct(public readonly ParameterName $parameter, array $values, public readonly bool $local = false)
+    public function __construct(public readonly ParameterName $parameter, array $values, public readonly bool $local = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->values = Check::listOf($values, OptionArgument::class, 'SET takes at least one value.', 1);
     }
 

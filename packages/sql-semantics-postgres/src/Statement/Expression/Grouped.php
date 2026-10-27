@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An expression written in parentheses: `( a_expr )`.
@@ -35,13 +34,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Grouped implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The enclosed expression; not a scalar subquery
      */
-    public function __construct(public readonly Scalar $operand)
+    public function __construct(public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$operand instanceof ScalarSubquery, 'Parentheses around a scalar subquery belong to its query.');
     }
 

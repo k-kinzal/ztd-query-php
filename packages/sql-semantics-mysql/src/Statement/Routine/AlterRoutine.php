@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER PROCEDURE or ALTER FUNCTION: changes the characteristics of a stored routine.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an ALTER FUNCTION
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER FUNCTION shop.f NO SQL');
- *     [$alter->statement->kind, count($alter->statement->characteristics)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function, 1]
+ *     [$alter->kind, count($alter->characteristics)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function, 1]
  */
-final class AlterRoutine implements Statement
+final class AlterRoutine extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Characteristic> The characteristics in written order
@@ -44,8 +43,11 @@ final class AlterRoutine implements Statement
      * @param QualifiedName $name The routine name with its optional database
      * @param list<Characteristic> $characteristics The new characteristics; may be empty
      */
-    public function __construct(public readonly ProgramKind $kind, public readonly QualifiedName $name, array $characteristics = [])
+    public function __construct(public readonly ProgramKind $kind, public readonly QualifiedName $name, array $characteristics = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($kind === ProgramKind::Procedure || $kind === ProgramKind::Function, 'ALTER of a routine names a procedure or a function.');
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');

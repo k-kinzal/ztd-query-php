@@ -21,7 +21,7 @@ final class ChangeReplicationFilterTest extends TestCase
     {
         $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('a%', 'a.b')");
 
-        self::assertEquals([new RefusedSetting(ReplicationError::WildPattern)], $change->facts->diagnostics);
+        self::assertEquals([new RefusedSetting(ReplicationError::WildPattern)], $change->diagnostics());
     }
 
     public function testRenderWritesTheChannel(): void

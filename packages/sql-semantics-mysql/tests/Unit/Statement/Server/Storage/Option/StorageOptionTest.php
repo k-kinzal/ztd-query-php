@@ -19,8 +19,8 @@ final class StorageOptionTest extends TestCase
     public function testKeywordNamesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE TABLESPACE ts ADD DATAFILE 'f' ENGINE ndb NO_WAIT");
-        self::assertInstanceOf(CreateTablespace::class, $create->statement);
+        self::assertInstanceOf(CreateTablespace::class, $create);
 
-        self::assertSame(['ENGINE', 'WAIT'], [$create->statement->options[0]->keyword(), $create->statement->options[1]->keyword()]);
+        self::assertSame(['ENGINE', 'WAIT'], [$create->options[0]->keyword(), $create->options[1]->keyword()]);
     }
 }

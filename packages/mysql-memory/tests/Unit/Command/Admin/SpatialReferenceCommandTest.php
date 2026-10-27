@@ -23,7 +23,7 @@ final class SpatialReferenceCommandTest extends TestCase
     public function testAttributesRetainsOrganizationAndDescription(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze("CREATE SPATIAL REFERENCE SYSTEM 500001 NAME 'local' ORGANIZATION 'custom' IDENTIFIED BY 7 DEFINITION 'definition' DESCRIPTION 'description'")->statement;
+        $statement = $session->analyze("CREATE SPATIAL REFERENCE SYSTEM 500001 NAME 'local' ORGANIZATION 'custom' IDENTIFIED BY 7 DEFINITION 'definition' DESCRIPTION 'description'");
         self::assertInstanceOf(CreateSpatialReference::class, $statement);
         self::assertSame(['local', 'definition', 'custom', 7, 'description'], (new SpatialReferenceCommand())->attributes($statement));
     }
@@ -143,7 +143,7 @@ final class SpatialReferenceCommandTest extends TestCase
     {
         $instance = new Instance();
         $session = $instance->connect();
-        $statement = $session->analyze("CREATE SPATIAL REFERENCE SYSTEM 1000000202 NAME 'b' DEFINITION '" . 'GEOGCS["x",DATUM["d",SPHEROID["s",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.017453292519943278],AXIS["Lat",NORTH],AXIS["Lon",EAST]]' . "'")->statement;
+        $statement = $session->analyze("CREATE SPATIAL REFERENCE SYSTEM 1000000202 NAME 'b' DEFINITION '" . 'GEOGCS["x",DATUM["d",SPHEROID["s",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.017453292519943278],AXIS["Lat",NORTH],AXIS["Lon",EAST]]' . "'");
         self::assertInstanceOf(CreateSpatialReference::class, $statement);
 
         (new SpatialReferenceCommand())->create($statement, $session);
@@ -154,7 +154,7 @@ final class SpatialReferenceCommandTest extends TestCase
     public function testDropWarnsOfAnSridWithoutSystemUnderIfExists(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 1000000203')->statement;
+        $statement = $session->analyze('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 1000000203');
         self::assertInstanceOf(DropSpatialReference::class, $statement);
 
         (new SpatialReferenceCommand())->drop($statement, $session);

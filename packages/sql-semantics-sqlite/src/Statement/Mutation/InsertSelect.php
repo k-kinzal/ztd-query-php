@@ -18,7 +18,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -32,14 +31,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the query of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('INSERT INTO t (a) SELECT b FROM u');
- *     [$insert->statement->query->from->name->name->value, $insert->toString()] // => ['u', 'INSERT INTO t (a) SELECT b FROM u']
+ *     [$insert->query->from->name->name->value, $insert->toString()] // => ['u', 'INSERT INTO t (a) SELECT b FROM u']
  * @example Refusing a bare VALUES clause as the query
- *     $rows = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('VALUES (1)')->statement;
+ *     $rows = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('VALUES (1)');
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), $rows) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class InsertSelect implements Statement
+final class InsertSelect extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Upsert> The ON CONFLICT clauses in written order
@@ -58,8 +57,11 @@ final class InsertSelect implements Statement
      * @param list<ResultColumn|Star|TableStar> $returning The RETURNING columns
      * @throws InvalidConstruction When a RETURNING column is of no result column class
      */
-    public function __construct(public readonly InsertInto $into, public readonly Query $query, array $upserts = [], array $returning = [])
+    public function __construct(public readonly InsertInto $into, public readonly Query $query, array $upserts = [], array $returning = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(!$query instanceof ValuesClause, 'An INSERT of a bare VALUES clause is an insert of written rows.');
         $this->upserts = Check::listOf($upserts, Upsert::class, 'The ON CONFLICT clauses of an INSERT are upsert clauses.');
         foreach ($this->upserts as $position => $upsert) {

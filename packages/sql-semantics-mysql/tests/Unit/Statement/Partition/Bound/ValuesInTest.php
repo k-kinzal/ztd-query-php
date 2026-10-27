@@ -19,7 +19,7 @@ final class ValuesInTest extends TestCase
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, b))');
 
-        self::assertCount(1, $alter->facts->diagnostics);
+        self::assertCount(1, $alter->diagnostics());
     }
 
     public function testRenderWritesOneRow(): void

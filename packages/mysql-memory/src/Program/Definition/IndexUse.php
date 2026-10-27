@@ -30,10 +30,11 @@ final class IndexUse
         if ($database === '') {
             throw QueryError::NoDatabase->error();
         }
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, new SearchPath($database), $session->resolution());
+        $definition = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($definition);
         $derivation = new Derivation($context);
         $definition->deriveStatement($derivation);
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || \MySqlMemory\Session\Problem\Stages::characters($problem, $session->settings()->legacy())) {
                 throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);

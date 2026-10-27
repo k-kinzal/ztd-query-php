@@ -37,6 +37,15 @@ final class EquivalenceTest extends TestCase
         self::assertNull($comparison->difference([$shared, $shared], [$first, $first], true));
     }
 
+    public function testExactComparisonIncludesInheritedStatementInformation(): void
+    {
+        $first = new \SqlSemantics\Statement\Script([], statementInformation: new \SqlSemantics\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847)));
+        $second = new \SqlSemantics\Statement\Script([], statementInformation: new \SqlSemantics\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql910)));
+        $comparison = new Equivalence();
+        self::assertNull($comparison->difference($first, $second));
+        self::assertNotNull($comparison->difference($first, $second, true));
+    }
+
     public function testExactComparisonRetainsBindingsBetweenRelatedRoots(): void
     {
         $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
@@ -102,9 +111,7 @@ final class EquivalenceTest extends TestCase
 
         $left = $semantics->analyze('select a, b from t where a > 1');
         $right = $semantics->analyze('SELECT a, b FROM t WHERE a > 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $left);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $right);
-        $difference = (new Equivalence())->difference($left->statement, $right->statement);
+        $difference = (new Equivalence())->difference($left, $right);
 
         self::assertNull($difference);
     }

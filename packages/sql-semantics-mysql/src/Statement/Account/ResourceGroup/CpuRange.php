@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One CPU number or range `n-m` of the VCPU option of a resource group.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CpuRange implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var int<0, 2147483647> The CPU number, or the first of the range
@@ -39,7 +38,7 @@ final class CpuRange implements Node
      * @param int $first The CPU index, within the unsigned NUM token domain
      * @param int|null $last The last CPU index, within the same domain
      */
-    public function __construct(int $first, ?int $last = null)
+    public function __construct(int $first, ?int $last = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($first >= 0 && $first <= 2147483647 && ($last === null || ($last >= 0 && $last <= 2147483647)), 'A CPU index is an integer from 0 through 2147483647.');
         $this->first = $first;

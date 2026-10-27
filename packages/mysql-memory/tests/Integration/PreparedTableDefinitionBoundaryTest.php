@@ -20,7 +20,7 @@ final class PreparedTableDefinitionBoundaryTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE t(a INT) PARTITION BY HASH(ROW(1,2))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         self::assertSame([], ParameterBindings::capture($operation)->types);
         $prepared = PreparedStatement::capture($operation, $session);
@@ -38,7 +38,7 @@ final class PreparedTableDefinitionBoundaryTest extends TestCase
         $session = (new Instance())->connect();
         $session->query("SET sql_mode=''");
         $operation = (new Preparation())->read('CREATE TABLE later.t(a INT) ENGINE=missing PARTITION BY HASH(ROW(1,2))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $definition = PreparedStatement::capture($operation, $session);
         self::assertSame([['Warning', 1286, "Unknown storage engine 'missing'"], ['Warning', 1266, "Using storage engine InnoDB for table 't'"]], $session->diagnostics->conditions);
@@ -60,7 +60,7 @@ final class PreparedTableDefinitionBoundaryTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');
         $operation = (new Preparation())->read('CREATE TABLE t(a INT) PARTITION BY HASH(ROW(1,2))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $definition = PreparedStatement::capture($operation, $session);
         $session->query('DROP DATABASE d');
@@ -73,7 +73,7 @@ final class PreparedTableDefinitionBoundaryTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE t UNION=() SELECT ? AS v', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         self::assertCount(1, ParameterBindings::capture($operation)->types);
     }
@@ -81,7 +81,7 @@ final class PreparedTableDefinitionBoundaryTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d', 'other']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(a INT) PARTITION BY KEY()', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $prepared = PreparedStatement::capture($operation, $session);
         $header = $prepared->statement;

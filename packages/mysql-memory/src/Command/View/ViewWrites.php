@@ -56,7 +56,7 @@ final class ViewWrites
      */
     public static function of(View $view, Session $session): ?self
     {
-        \MySqlMemory\Session\Resolution\Views::refresh($view, $session->instance->dictionary, $session->settings());
+        $binding = \MySqlMemory\Session\Statement\Catalog::view($view, $session);
         $query = self::block($view);
         if ($query === null || !$query->from instanceof TableReference) {
             return null;
@@ -68,7 +68,7 @@ final class ViewWrites
             throw StatementError::NotSupportedYet->error('writing through a view of a view');
         }
         $qualifier = $from->alias ?? $from->name->name;
-        $columns = self::columns($view, $query, $from, $qualifier);
+        $columns = self::columns($binding, $query, $from, $qualifier);
         if ($columns === null) {
             return null;
         }
@@ -103,18 +103,18 @@ final class ViewWrites
      * @param Name $qualifier The name the columns of the table are read through
      * @return list<array{string, Name|null, Scalar}>|null
      */
-    public static function columns(View $view, Select $query, TableReference $from, Name $qualifier): ?array
+    public static function columns(\MySqlMemory\Dictionary\Binding\ViewBinding $binding, Select $query, TableReference $from, Name $qualifier): ?array
     {
         $columns = [];
-        $projection = $view->operation->facts->query($query)->projection;
-        $positions = $view->positions === [] ? array_keys($view->declaration->columns) : $view->positions;
+        $projection = $query->queryInformation()->projection;
+        $positions = $binding->positions;
         foreach ($positions as $position => $source) {
             $field = $projection[$source] ?? null;
             if (!$field instanceof Field) {
                 return null;
             }
-            $name = $view->declaration->columns[$position]->name->value ?? '';
-            $resolution = $field->expression === null || $field->expression instanceof ColumnUse ? ($field->expression === null ? $field->resolution : $view->operation->facts->scalar($field->expression)->resolution) : null;
+            $name = $binding->declaration->columns[$position]->name->value ?? '';
+            $resolution = $field->expression === null || $field->expression instanceof ColumnUse ? ($field->expression === null ? $field->resolution : $field->expression->scalarInformation()->resolution) : null;
             if ($resolution instanceof ResolvedColumn && $resolution->relation === $from && $resolution->slot->name !== null) {
                 $column = $resolution->slot->name;
                 $columns[] = [$name, $column, new ColumnUse($column, new QualifiedName($qualifier))];

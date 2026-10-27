@@ -20,7 +20,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -80,9 +79,9 @@ final class UnaryTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT -(1, 2)', []);
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::TooManyValueColumns, $query->facts->diagnostics[0]->rule);
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::TooManyValueColumns, $query->diagnostics()[0]->rule);
     }
 
     public function testRenderWritesNotAsAKeywordAndTheOthersAsSymbols(): void
@@ -111,7 +110,7 @@ final class UnaryTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $sum = new Binary(BinaryOperator::Add, new IntegerLiteral('1'), new IntegerLiteral('2'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Unary(UnaryOperator::Not, $sum))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new Unary(UnaryOperator::Not, $sum))]));
 
         self::assertSame('SELECT NOT 1 + 2', $operation->toString());
         self::assertInstanceOf(Known::class, $operation->field(0)->type);

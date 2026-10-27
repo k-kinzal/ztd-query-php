@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A conditional expression: `CASE [operand] WHEN … THEN … [ELSE …] END`.
@@ -36,7 +35,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CaseExpression implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CaseBranch> The branches in order
@@ -48,8 +48,11 @@ final class CaseExpression implements Scalar, OutputNaming
      * @param list<CaseBranch> $branches The branches in order; at least one
      * @param Scalar|null $default The ELSE result, or null when none is written
      */
-    public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $default = null)
+    public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $default = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression has at least one WHEN branch.', 1);
     }
 

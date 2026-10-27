@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A complete window whose partitioning, ordering or frame retains a non-scalar operand.
@@ -34,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredWindowSpec implements WindowSpecification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OrderItem|DeferredOrderItem> The partitioning in written order
@@ -50,7 +49,7 @@ final class DeferredWindowSpec implements WindowSpecification
      * @param list<OrderItem|DeferredOrderItem> $partition The complete partitioning
      * @param list<OrderItem|DeferredOrderItem> $order The complete ordering
      */
-    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly Frame|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame|null $frame = null)
+    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly Frame|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame|null $frame = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $clauses = [];
         foreach ([$partition, $order] as $items) {

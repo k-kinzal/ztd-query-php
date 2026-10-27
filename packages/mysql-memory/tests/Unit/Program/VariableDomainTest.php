@@ -21,7 +21,7 @@ final class VariableDomainTest extends TestCase
     public function testDeclaredTypesAStringInTheCollationOfTheDatabaseWithoutDecimals(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a VARCHAR(5); DECLARE b TINYINT UNSIGNED; END');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
         $block = $statement->body;
         self::assertInstanceOf(Block::class, $block);

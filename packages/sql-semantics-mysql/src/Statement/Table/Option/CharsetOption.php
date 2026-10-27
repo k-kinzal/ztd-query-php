@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Option;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The default character set of the table: [DEFAULT] CHARACTER SET or CHARSET.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) CHARSET = utf8mb4');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption // => true
  */
 final class CharsetOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharsetName $charset The character set, or DEFAULT
      */
-    public function __construct(public readonly CharsetName $charset)
+    public function __construct(public readonly CharsetName $charset, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -33,7 +33,7 @@ final class AnalysisExceptionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT b FROM t', []);
 
-        self::assertCount(2, $operation->facts->diagnostics);
+        self::assertCount(2, $operation->diagnostics());
         self::assertSame('SELECT b FROM t', $operation->toString());
     }
 }

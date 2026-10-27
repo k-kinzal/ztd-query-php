@@ -58,7 +58,7 @@ final class CreationQueryUse
         $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->readProblem($definition->query);
         if ($problem === null) {
             $prepared = (new \MySqlMemory\Program\Expression\TableUse())->bound($definition, $session);
-            (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added((new \MySqlMemory\Evaluation\Compile\Walker())->find($definition, \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class), $prepared->facts, $session);
+            (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added((new \MySqlMemory\Evaluation\Compile\Walker())->find($definition, \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class), $prepared->statementInformation(), $session);
             (new \MySqlMemory\Session\Problem\Definition\IndexNames())->creation($prepared, $session);
             (new ColumnlessUse())->columns($definition, $schema, $session);
             $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, $definition->query);
@@ -72,13 +72,13 @@ final class CreationQueryUse
      */
     public function bound(CreateTable $definition, Session $session): QueryPreparation
     {
-        $query = $definition->query;
+        $query = $definition->query === null ? null : \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($definition->query);
         Check::invariant($query !== null, 'A deferred creation read retains its complete query.');
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
-        $derivation->query($query->query, $derivation->environment());
-        return new QueryPreparation($query->query, $derivation->facts(), $context->profile);
+        $body = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($query->query);
+        $derivation->query($body, $derivation->environment());
+        return new QueryPreparation($body, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $context->profile);
     }
 }

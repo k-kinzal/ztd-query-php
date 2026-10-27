@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -28,21 +27,25 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a NULL test
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a ISNULL FROM t');
- *     [$query->statement->columns[0]->expression->form, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::IsNull, \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->columns[0]->expression->form, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::IsNull, \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing an operand that the test would not cover when written
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t');
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest($query->statement->columns[0]->expression, \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::IsNull) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest($query->columns[0]->expression, \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::IsNull) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class NullTest implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested expression
      * @param NullTestForm $form The spelling of the test
      */
-    public function __construct(public readonly Scalar $operand, public readonly NullTestForm $form)
+    public function __construct(public readonly Scalar $operand, public readonly NullTestForm $form, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->closing($operand) >= Precedence::EQUALITY, 'The operand needs parentheses to keep its place.');
     }
 

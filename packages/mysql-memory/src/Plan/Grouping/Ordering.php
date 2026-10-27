@@ -45,7 +45,7 @@ final class Ordering
         $directions = [];
         foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $position => $item) {
             $group = $select->groupBy->items[$position] ?? null;
-            if ($group === null || !$matching->same($grouping->target($group->expression), $grouping->target($item->expression), $this->planner->compiler->facts)) {
+            if ($group === null || !$matching->same($grouping->target($group->expression), $grouping->target($item->expression))) {
                 return [];
             }
             $directions[] = $item->direction?->value === 'DESC';
@@ -72,6 +72,6 @@ final class Ordering
             }
             $expressions[] = $item->expression;
         }
-        return $select->orderBy !== [] || ($select->late->orderBy ?? []) !== [] || !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\DistinctOrdering())->redundant($select, $expressions, $this->planner->compiler->facts);
+        return $select->orderBy !== [] || ($select->late->orderBy ?? []) !== [] || !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\DistinctOrdering())->redundant($select, $expressions);
     }
 }

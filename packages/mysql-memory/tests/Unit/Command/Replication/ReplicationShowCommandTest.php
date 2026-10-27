@@ -205,7 +205,7 @@ final class ReplicationShowCommandTest extends TestCase
 
     public function testLimitRefusesAVariable(): void
     {
-        $statement = (new Instance())->connect()->analyze("SHOW BINLOG EVENTS IN 'text' LIMIT x")->statement;
+        $statement = (new Instance())->connect()->analyze("SHOW BINLOG EVENTS IN 'text' LIMIT x");
         self::assertInstanceOf(ShowBinlogEvents::class, $statement);
 
         $this->expectException(SqlError::class);

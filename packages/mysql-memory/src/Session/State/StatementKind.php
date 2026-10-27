@@ -22,7 +22,6 @@ final class StatementKind
      * @var array<class-string<\SqlSemantics\Statement\Node>, string>
      */
     public const KINDS = [
-        MySql\Dml\Insert\InsertStatement::class => 'Com_insert',
         MySql\Dml\Delete::class => 'Com_delete',
         MySql\Dml\MultipleDelete::class => 'Com_delete_multi',
         MySql\Dml\Evaluation::class => 'Com_do',

@@ -21,10 +21,10 @@ final class ValuesClausesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t(id INT)')->declarations();
         $operation = $semantics->analyze('INSERT INTO t VALUES ROW(1) ORDER BY ROW(2,3) LIMIT absent', $tables);
-        self::assertInstanceOf(M\Dml\Insert\InsertQuery::class, $operation->statement);
-        self::assertInstanceOf(ValuesClauses::class, $operation->statement->source);
-        self::assertCount(1, $operation->facts->query($operation->statement->source)->shape->slots);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(M\Dml\Insert\InsertQuery::class, $operation);
+        self::assertInstanceOf(ValuesClauses::class, $operation->source);
+        self::assertCount(1, $operation->source->queryInformation()->shape->slots);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderPreservesEveryClause(): void

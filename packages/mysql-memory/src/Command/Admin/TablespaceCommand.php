@@ -33,7 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\RenameTablespace;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes the statements on InnoDB general and undo tablespaces: CREATE, ALTER, RENAME and DROP TABLESPACE, and CREATE, ALTER and DROP UNDO TABLESPACE.
@@ -81,8 +81,8 @@ final class TablespaceCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $registry = $session->instance->registry;
         $session->transaction->commit();
         (new Storage\LegacySupport())->check($statement, $session, $context);

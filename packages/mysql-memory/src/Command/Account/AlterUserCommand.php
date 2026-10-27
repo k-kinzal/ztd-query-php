@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes ALTER USER.
@@ -57,8 +57,8 @@ final class AlterUserCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if ($statement instanceof ExpireUserPasswords) {
             return $this->expire($statement, $session, $context);
         }

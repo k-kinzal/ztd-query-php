@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW PROCESSLIST: the threads running in the server.
@@ -24,17 +23,20 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW FULL PROCESSLIST');
- *     [$show->statement->full, $show->toString()] // => [true, 'SHOW FULL PROCESSLIST']
+ *     [$show->full, $show->toString()] // => [true, 'SHOW FULL PROCESSLIST']
  */
-final class ShowProcesslist implements Statement
+final class ShowProcesslist extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $full Whether FULL is written
      */
-    public function __construct(public readonly bool $full = false)
+    public function __construct(public readonly bool $full = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

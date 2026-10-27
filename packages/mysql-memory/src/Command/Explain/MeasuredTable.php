@@ -12,8 +12,8 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes an explained TABLE scan and reports the memory iterator's measurements.
@@ -27,14 +27,14 @@ final class MeasuredTable
     /**
      * Reports a single TABLE scan; other plan shapes retain their own reporting path.
      */
-    public function report(Operation $operation, Session $session, Context $context, Connection $connection): ?string
+    public function report(MySqlStatement $operation, Session $session, Context $context, Connection $connection): ?string
     {
-        $explain = $operation->statement;
+        $explain = $operation;
         if (!$explain instanceof Explain || !$explain->analyze || !$explain->statement instanceof QueryRoot || !$explain->statement->query instanceof ExplicitTable) {
             return null;
         }
         $query = $explain->statement->query;
-        $planner = new Planner($query, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($query, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $iterator = (new Builder())->build($planner->query($query, null)->root);
         $rows = 0;
         $first = null;

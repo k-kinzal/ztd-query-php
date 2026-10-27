@@ -17,7 +17,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -37,7 +36,7 @@ use SqlSemantics\Statement\Type\Invalid;
  * @visibility public
  * @example Reading the parts of an aggregate call
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT count(DISTINCT a) FILTER (WHERE b > 0) FROM t');
- *     $call = $query->statement->columns[0]->expression;
+ *     $call = $query->columns[0]->expression;
  *     [$call->name->value, $call->quantifier, count($call->arguments), $call->filter !== null, $query->field(0)->nullability] // => ['count', \SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier::Distinct, 1, true, \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing arguments next to the star
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('count'), [new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()], true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -46,7 +45,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class FunctionCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in order
@@ -75,7 +75,12 @@ final class FunctionCall implements Scalar
         array $order = [],
         public readonly ?Scalar $filter = null,
         public readonly WindowSpec|Name|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Function arguments are expressions.');
         $this->order = Check::listOf($order, SortTerm::class, 'An argument ordering is a list of ordering terms.');
         Check::input(!$star || ($arguments === [] && $quantifier === null && $order === []), 'The star form takes no argument, quantifier or ordering.');

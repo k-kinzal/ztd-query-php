@@ -47,11 +47,11 @@ final class NumbersTest extends TestCase
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ' . $sql);
         $expression = $operation->field(0)->expression;
         self::assertNotNull($expression);
-        $type = $operation->facts->scalar($expression)->type;
+        $type = $expression->scalarInformation()->type;
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
         self::assertInstanceOf(Domain::class, $type->descriptor);
 
-        self::assertSame($expected, (new Numbers())->signed($expression, $type->descriptor, $operation->facts)->length);
+        self::assertSame($expected, (new Numbers())->signed($expression, $type->descriptor)->length);
     }
 
     public function testQuotientReservesAStringDividendSignFrom80(): void

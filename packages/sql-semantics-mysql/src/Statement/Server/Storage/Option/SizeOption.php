@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A size option: `INITIAL_SIZE [=] size`, `MAX_SIZE [=] size`, `FILE_BLOCK_SIZE [=] size`, ….
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SizeOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SizeOptionKind $kind The option
      * @param ByteSize $size The size
      */
-    public function __construct(public readonly SizeOptionKind $kind, public readonly ByteSize $size)
+    public function __construct(public readonly SizeOptionKind $kind, public readonly ByteSize $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

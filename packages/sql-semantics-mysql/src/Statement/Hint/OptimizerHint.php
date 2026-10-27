@@ -17,7 +17,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Hint;
  * @visibility public
  * @example Reading the hints of a query block
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT /*+ BKA(t) MAX_EXECUTION_TIME(5) *' . '/ 1');
- *     array_map(static fn ($hint) => $hint->name(), $query->statement->query->hints) // => [\SqlSemantics\Platform\MySql\Statement\Hint\HintName::Bka, \SqlSemantics\Platform\MySql\Statement\Hint\HintName::MaxExecutionTime]
+ *     array_map(static fn ($hint) => $hint->name(), $query->query->hints) // => [\SqlSemantics\Platform\MySql\Statement\Hint\HintName::Bka, \SqlSemantics\Platform\MySql\Statement\Hint\HintName::MaxExecutionTime]
  */
 interface OptimizerHint
 {

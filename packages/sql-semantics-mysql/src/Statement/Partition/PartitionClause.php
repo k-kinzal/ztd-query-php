@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PARTITION BY method [PARTITIONS n] [SUBPARTITION BY …] [(definitions)]`: how a table is partitioned.
@@ -33,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionClause implements Partitioning
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionDefinition> The partition definitions in order
@@ -51,6 +50,7 @@ final class PartitionClause implements Partitioning
         public readonly ?Numeral $partitions,
         public readonly ?Subpartitioning $subpartitioning,
         array $definitions,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'Partition definitions are a list of partition definitions.');
         Check::input($partitions === null || (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($partitions), 'A partition count is an integer token.');

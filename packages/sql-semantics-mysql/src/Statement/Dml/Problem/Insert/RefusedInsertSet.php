@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping the rejected write outside the ordinary statement domain
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=ROW(1,2)');
- *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet($operation->statement->body))->message() // => 'Operand should contain 1 column(s), not 2.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet($operation->body))->message() // => 'Operand should contain 1 column(s), not 2.'
  */
 final class RefusedInsertSet implements Diagnostic
 {

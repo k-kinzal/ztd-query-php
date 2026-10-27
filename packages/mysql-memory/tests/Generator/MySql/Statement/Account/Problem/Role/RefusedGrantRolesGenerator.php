@@ -55,4 +55,17 @@ final class RefusedGrantRolesGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<list<GrantedRole>> $roles The generated semantic operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\Account>> $users The generated semantic operand
+     * @return ErisGenerator<RefusedGrantRoles>
+     */
+    public static function fromOperands(ErisGenerator $roles, ErisGenerator $users): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): RefusedGrantRoles => new RefusedGrantRoles(roles: $parts[0], users: $parts[1]), \Tests\Generator\Operands::tuple($roles, $users));
+    }
+
+
 }

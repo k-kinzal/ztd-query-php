@@ -23,10 +23,12 @@ final class AccountGenerator implements ErisGenerator
 
     /**
      * Composes each account alternative through Eris.
+     *
+     * @param non-empty-list<ErisGenerator<Account>>|null $alternatives Account spellings valid for the consuming SQL role
      */
-    public function __construct()
+    public function __construct(?array $alternatives = null)
     {
-        $this->delegate = Generators::oneOf(new AccountNameGenerator(), new CurrentUserGenerator());
+        $this->delegate = Generators::oneOf(...($alternatives ?? [new AccountNameGenerator(), new CurrentUserGenerator()]));
     }
 
     /**

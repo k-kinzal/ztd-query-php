@@ -169,7 +169,7 @@ final class SyntaxWarningsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51');
         $operation = $semantics->analyze('(SELECT 1) UNION SELECT 2');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion::class, $operation->diagnostics()[0]);
         self::assertSame('(SELECT 1) UNION SELECT 2', $operation->toString());
     }
 

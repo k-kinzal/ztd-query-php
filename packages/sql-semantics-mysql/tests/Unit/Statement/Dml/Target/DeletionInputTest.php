@@ -32,4 +32,22 @@ final class DeletionInputTest extends TestCase
         $this->expectExceptionMessage('Every DELETE target must name a possible input occurrence.');
         new DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [new QualifiedName(new Name('x'))]);
     }
+
+    public function testInitializeResolutionsKeepsTheBoundInputOccurrence(): void
+    {
+        $table = new TableReference(new QualifiedName(new Name('t')));
+        $input = new DeletionInput([$table]);
+        $input->initializeResolutions([$table]);
+        self::assertSame($table, $input->relation($input->targets[0]));
+        $this->expectExceptionMessage('A deletion input is resolved once.');
+        $input->initializeResolutions([null]);
+    }
+
+    public function testRelationRetainsAnUnresolvedTarget(): void
+    {
+        $table = new TableReference(new QualifiedName(new Name('t')));
+        $input = new DeletionInput([$table], resolutions: [null]);
+        self::assertNull($input->relation($input->targets[0]));
+    }
+
 }

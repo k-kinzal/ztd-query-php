@@ -18,7 +18,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes FLUSH and FLUSH TABLES.
@@ -54,8 +54,8 @@ final class FlushCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $session->transaction->commit();
         if ($statement instanceof FlushTables) {
             $this->tables($statement, $session);
@@ -70,7 +70,7 @@ final class FlushCommand implements Command
                 if ($session->instance->dictionary->schema($schema) === null) {
                     throw QueryError::BadDatabase->error($schema);
                 }
-                if ($session->instance->dictionary->table($schema, $table->name->name->value) === null) {
+                if ($session->instance->dictionary->table($schema, $table->name->name->value, $session->temporaries) === null) {
                     throw QueryError::NoSuchTable->error($schema, $table->name->name->value);
                 }
                 $locks[] = [$schema, $table->name->name->value, $table->name->name->value, false];

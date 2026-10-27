@@ -19,8 +19,8 @@ final class LegacyGrantRuleTest extends TestCase
     public function testRequestKeepsInvalidRoutineLevelsOnlyAsProgramInstructions(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel::class, $operation->body);
     }
 
     public function testGrantLowersEveryCommand(): void

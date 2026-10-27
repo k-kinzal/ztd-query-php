@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP {DATABASE | SCHEMA} [IF EXISTS] name`: a request to remove a database and every table in it.
@@ -22,18 +21,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a database
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('drop schema if exists shop');
- *     [$drop->toString(), $drop->statement->ifExists] // => ['DROP DATABASE IF EXISTS shop', true]
+ *     [$drop->toString(), $drop->ifExists] // => ['DROP DATABASE IF EXISTS shop', true]
  */
-final class DropDatabase implements Statement
+final class DropDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Name $name The database name
      */
-    public function __construct(public readonly bool $ifExists, public readonly Name $name)
+    public function __construct(public readonly bool $ifExists, public readonly Name $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

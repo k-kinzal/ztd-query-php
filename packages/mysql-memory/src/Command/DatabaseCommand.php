@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CREATE DATABASE, DROP DATABASE and USE.
@@ -49,8 +49,8 @@ final class DatabaseCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $dictionary = $session->instance->dictionary;
         if ($statement instanceof UseDatabase) {
             $session->use($statement->database->value);

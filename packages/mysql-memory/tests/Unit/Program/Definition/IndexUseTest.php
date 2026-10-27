@@ -15,13 +15,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class IndexUseTest extends TestCase
 {
-    public function testHeaderBindsTheSameInstructionWithoutRequiringItsTarget(): void
+    public function testHeaderBindsFreshOccurrencesWithoutRequiringItsTarget(): void
     {
         $definition = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), [new M\Table\Key\Deferred\ExpressionPart(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $prepared = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
-        self::assertSame($definition, $prepared->statement);
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $prepared->facts->relation($definition)->table);
+        self::assertNotSame($definition, $prepared->statement);
+        self::assertFalse($definition->hasBinding());
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $prepared->statement->relationInformation()->table);
     }
 
     public function testRaiseChecksThePopulatedTargetBeforeItsRetainedKeyRole(): void

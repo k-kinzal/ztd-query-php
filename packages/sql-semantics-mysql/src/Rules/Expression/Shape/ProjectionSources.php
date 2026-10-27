@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query as M;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -27,20 +26,13 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 final class ProjectionSources
 {
     /**
-     * @param Facts $facts The bound facts of the statement
-     */
-    public function __construct(public readonly Facts $facts)
-    {
-    }
-
-    /**
      * Tells whether every source is independent of input rows.
      */
     public function constant(Query $query): bool
     {
         $expressions = $this->expressions($query, 0, true);
         $keys = new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupKeys();
-        return $expressions !== [] && !in_array(false, array_map(fn (?Scalar $expression): bool => $expression !== null && $keys->constant($expression, $this->facts), $expressions), true);
+        return $expressions !== [] && !in_array(false, array_map(fn (?Scalar $expression): bool => $expression !== null && $keys->constant($expression), $expressions), true);
     }
 
     /**
@@ -67,7 +59,7 @@ final class ProjectionSources
         if ($query instanceof M\ValuesQuery) {
             return array_map(static fn (M\ValueRow $row): ?Scalar => ($row->values[$position] ?? null) instanceof Scalar ? $row->values[$position] : null, $query->rows);
         }
-        $field = $this->facts->query($query)->projection[$position] ?? null;
+        $field = $query->queryInformation()->projection[$position] ?? null;
         return $field instanceof Field ? $this->field($field, $columns, $visited) : [null];
     }
 
@@ -86,7 +78,7 @@ final class ProjectionSources
         if (!$columns || ($expression !== null && !$expression instanceof ColumnUse)) {
             return [$expression];
         }
-        $resolution = $expression instanceof ColumnUse ? $this->facts->scalar($expression)->resolution : $field->resolution;
+        $resolution = $expression instanceof ColumnUse ? $expression->scalarInformation()->resolution : $field->resolution;
         if ($resolution instanceof AliasTarget) {
             return $this->field($resolution->field, true, $visited);
         }
@@ -102,7 +94,7 @@ final class ProjectionSources
     public function column(ResolvedColumn $column, array $visited): array
     {
         $relation = $column->relation;
-        $fact = $this->facts->relation($relation);
+        $fact = $relation->relationInformation();
         $common = $fact->table;
         $query = match (true) {
             $relation instanceof DerivedTable => $relation->query,

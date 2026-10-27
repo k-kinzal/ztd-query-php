@@ -12,8 +12,17 @@ namespace SqlSemantics\Platform\MySql\Statement;
  *
  * @visibility public
  * @example Identifying a MySQL statement
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1')->statement instanceof \SqlSemantics\Platform\MySql\Statement\Statement // => true
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1') instanceof \SqlSemantics\Platform\MySql\Statement\Statement // => true
  */
-interface Statement extends \SqlSemantics\Statement\Statement
+interface Statement extends \SqlSemantics\Statement\Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
+    /**
+     * Returns the language, result and conditions owned by this statement.
+     */
+    public function statementInformation(): StatementSemantics;
+
+    /**
+     * Completes this statement during construction, before it is published.
+     */
+    public function initializeStatementInformation(StatementSemantics $information): void;
 }

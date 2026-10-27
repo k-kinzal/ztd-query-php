@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Scalar;
 use WeakReference;
 
@@ -61,18 +61,26 @@ final class HandlerInput
      */
     public function resolve(RefusedRead $read, Session $session): never
     {
+        $read = new RefusedRead(
+            \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($read->handler),
+            $read->mode,
+            $read->index,
+            array_map(static fn ($value) => \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($value), $read->values),
+            $read->where === null ? null : \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($read->where),
+            $read->limit === null ? null : \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($read->limit),
+        );
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         (new HandlerFacts())->read($read->handler, $read->values, $read->where, $read->limit, $derivation);
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         $this->early($read, $facts, $session);
         if ($session->preparation->inputPrepared) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }
         $command = new HandlerCommand();
         $handler = $command->handler($session, $read->handler->name->value);
-        $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        $table = $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries);
         assert($table !== null);
         $scope = (new \MySqlMemory\Command\Access\HandlerKeys())->scope($read->handler, $table);
         if ($read->where !== null) {
@@ -97,7 +105,7 @@ final class HandlerInput
      *
      * @throws SqlError When an input condition precedes opening the handler
      */
-    public function early(RefusedRead $read, Facts $facts, Session $session): void
+    public function early(RefusedRead $read, StatementSemantics $facts, Session $session): void
     {
         $operands = [...$read->values, ...($read->where === null ? [] : [$read->where])];
         foreach ($operands as $operand) {
@@ -130,11 +138,11 @@ final class HandlerInput
      *
      * @throws SqlError When a dependency or the operand's scalar role fails
      */
-    public function prepare(Scalar|RowOperand|DeferredOperand $operand, Facts $facts, Scope $scope, Session $session): void
+    public function prepare(Scalar|RowOperand|DeferredOperand $operand, StatementSemantics $facts, Scope $scope, Session $session): void
     {
         $evaluation = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new Planner($operand, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($operand, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         if ($operand instanceof Scalar) {
             $planner->compiler->compile($operand, $scope);
             return;

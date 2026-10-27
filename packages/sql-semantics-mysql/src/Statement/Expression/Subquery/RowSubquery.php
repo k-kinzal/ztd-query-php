@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A subquery whose explicit output contains several columns.
@@ -33,13 +32,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RowSubquery implements RowOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query A query with an explicit multi-column projection
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new QueryWidth())->of($query) > 1, 'A row subquery has a fixed output of at least two columns.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery operand has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
@@ -53,7 +56,7 @@ final class RowSubquery implements RowOperand
     {
         $query = $derivation->query($this->query, $environment);
         $rows = new SubqueryRows();
-        $value = $rows->value($query, $derivation->facts());
+        $value = $rows->value($query);
         return new ScalarFact($value->type, $rows->attribute($this->query, $query, $derivation->context->profile->grammar));
     }
 

@@ -34,6 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
@@ -41,7 +42,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes EXPLAIN of a statement: the plan the server would execute it by.
@@ -136,8 +136,8 @@ final class ExplainCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof Explain || $statement instanceof ExplainConnection);
         if ($statement instanceof ExplainConnection) {
             return $this->connection($statement, $session, $context);
@@ -146,7 +146,7 @@ final class ExplainCommand implements Command
         $format = $statement->analyze ? 'TREE' : strtoupper($statement->format->value ?? (string) ($session->variables->read('explain_format') ?? 'TRADITIONAL'));
         $database = $statement->database->value ?? $session->variables->database;
         $tables = $this->tables($statement->statement, $database);
-        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement->statement, $operation->facts, $session->settings(), $session->instance->dictionary);
+        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement->statement, $operation->statementInformation(), $session->settings(), $session->instance->dictionary);
         if ($statement->into !== null) {
             $session->variables->assign($statement->into->name->value, $this->document($tables), Domain::string(50331645, Collation::known('utf8mb3_general_ci'), Field::MediumBlob));
 
@@ -178,9 +178,9 @@ final class ExplainCommand implements Command
     /**
      * Publishes rewritten-query notes for the release and output format.
      */
-    public function note(Operation $operation, Session $session, Connection $connection, string $format, bool $impossible): void
+    public function note(MySqlStatement $operation, Session $session, Connection $connection, string $format, bool $impossible): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         if (!$statement instanceof Explain) {
             return;
         }
@@ -263,7 +263,7 @@ final class ExplainCommand implements Command
             return $rows;
         }
         foreach ($this->tables($statement, $database) as [$alias, $schema, $name]) {
-            $scan = PrimaryScan::of($statement, $session->instance->dictionary->table($schema, $name)?->definition);
+            $scan = PrimaryScan::of($statement, $session->instance->dictionary->table($schema, $name, $session->temporaries)?->definition);
             $rows[] = [1, $kind, $alias, null, $scan[0] ?? 'ALL', null, $scan[1] ?? null, $scan[2] ?? null, null, $this->count($session, new QualifiedName(new Name($name), new Name($schema)), $database), '100.00', $scan[3] ?? ($where === null ? null : 'Using where')];
         }
         if ($rows === []) {
@@ -289,9 +289,9 @@ final class ExplainCommand implements Command
      * Resolves a selection or DELETE predicate known before reading any table rows.
      * Uses semantic facts and the expression compiler; EXPLAIN never deletes rows.
      */
-    public function impossible(Operation $operation, Session $session, Context $context, Connection $connection): bool
+    public function impossible(MySqlStatement $operation, Session $session, Context $context, Connection $connection): bool
     {
-        $explain = $operation->statement;
+        $explain = $operation;
         if (!$explain instanceof Explain) {
             return false;
         }
@@ -299,7 +299,7 @@ final class ExplainCommand implements Command
         if ((!$statement instanceof Delete && !$statement instanceof MultipleDelete && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) || $statement->where === null) {
             return false;
         }
-        $compiler = (new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;
+        $compiler = (new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session)))->compiler;
         if ($compiler->constancy($statement->where) !== Constancy::Resolved) {
             return false;
         }
@@ -348,7 +348,7 @@ final class ExplainCommand implements Command
      */
     public function count(Session $session, QualifiedName $name, string $database): int
     {
-        $table = $session->instance->dictionary->table($name->schema->value ?? $database, $name->name->value);
+        $table = $session->instance->dictionary->table($name->schema->value ?? $database, $name->name->value, $session->temporaries);
 
         return max(1, $table === null ? 1 : count($table->data->rows));
     }

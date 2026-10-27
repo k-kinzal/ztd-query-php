@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,7 +37,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class CharCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The character codes in order
@@ -49,8 +49,11 @@ final class CharCall implements Scalar
      * @param list<Scalar> $arguments The character codes in order; at least one
      * @param CharsetName|null $charset The character set written after USING
      */
-    public function __construct(array $arguments, public readonly ?CharsetName $charset = null)
+    public function __construct(array $arguments, public readonly ?CharsetName $charset = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($charset === null || $charset->name !== null, 'CHAR USING names a character set rather than DEFAULT.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'CHAR() takes at least one expression.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

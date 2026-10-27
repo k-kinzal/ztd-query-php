@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,7 +38,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class Substring implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $string The string
@@ -47,8 +47,11 @@ final class Substring implements Scalar, OutputNaming
      * @param Scalar|null $count The number of characters, after FOR
      * @param bool $countFirst Whether FOR is written before FROM
      */
-    public function __construct(public readonly Scalar $string, public readonly ?Scalar $start = null, public readonly ?Scalar $count = null, public readonly bool $countFirst = false)
+    public function __construct(public readonly Scalar $string, public readonly ?Scalar $start = null, public readonly ?Scalar $count = null, public readonly bool $countFirst = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($start !== null || $count !== null, 'SUBSTRING takes FROM, FOR or both.');
         Check::input(!$countFirst || ($start !== null && $count !== null), 'FOR is written before FROM only when both are written.');
     }

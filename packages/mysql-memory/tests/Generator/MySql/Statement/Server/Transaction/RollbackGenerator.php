@@ -9,7 +9,6 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
@@ -31,11 +30,8 @@ final class RollbackGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $data) use ($release): Rollback {
             [$choices, $work] = $data;
-            if (!is_array($choices) || !is_bool($work)) {
-                throw new LogicException('Completion generators provide two optional flags and WORK.');
-            }
             return new Rollback($choices[0], $choices[1], $work, profile: new LanguageProfile($release));
-        }, Generators::tuple(Generators::elements([null, null], [null, false], [null, true], [false, null], [false, false], [false, true], [true, null], [true, false]), Generators::bool()));
+        }, \Tests\Generator\Operands::tuple(Generators::elements([null, null], [null, false], [null, true], [false, null], [false, false], [false, true], [true, null], [true, false]), Generators::bool()));
     }
 
     /**
@@ -55,4 +51,41 @@ final class RollbackGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<bool|null> $chain The generated semantic operand
+     * @param ErisGenerator<bool|null> $release The generated semantic operand
+     * @param ErisGenerator<bool> $work The generated semantic operand
+     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
+     * @return ErisGenerator<Rollback>
+     */
+    public static function fromOperands(ErisGenerator $chain, ErisGenerator $release, ErisGenerator $work, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): Rollback => new Rollback(chain: $parts[0], release: $parts[1], work: $parts[2], profile: $parts[3], client: $parts[4]), \Tests\Generator\Operands::tuple($chain, $release, $work, $profile, $client));
+    }
+
+    /**
+     * Composes the statement's SQL forms from typed operand generators.
+     *
+     * @return iterable<string, ErisGenerator<Rollback>>
+     */
+    public static function forms(): iterable
+    {
+        yield 'Rollback/69' => RollbackGenerator::fromOperands(
+            chain: Generators::constant(null),
+            release: Generators::constant(null),
+            work: Generators::constant(false),
+            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
+                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
+                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
+                    settings: Generators::constant('')
+                ),
+                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
+            ),
+            client: Generators::constant(null)
+        );
+    }
+
 }

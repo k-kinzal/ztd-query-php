@@ -37,10 +37,10 @@ final class GrantRolesTest extends TestCase
     public function testDeriveProgramKeepsAnUnreachedDefinition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() GRANT r, '' TO u");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(GrantRoles::class, $operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(GrantRoles::class, $operation->body);
     }
 
     public function testRenderPreservesTheCompleteDefinition(): void

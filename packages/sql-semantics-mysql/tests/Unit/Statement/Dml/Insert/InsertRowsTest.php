@@ -32,17 +32,17 @@ final class InsertRowsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t (a, b, a) VALUES (1, 2, 3), (4, 5, 6)', [$t]);
 
-        self::assertSame(["Column 'a' specified twice"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(["Column 'a' specified twice"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testDeriveStatementAcceptsAnEmptyRowWithoutColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = new \SqlSemantics\Statement\Operation($semantics->context([$t]), new InsertRows(new InsertInto(false, null, false, new WriteTarget(new QualifiedName(new Name('t')))), [new InsertedRow([]), new InsertedRow([])]));
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$t]), new InsertRows(new InsertInto(false, null, false, new WriteTarget(new QualifiedName(new Name('t')))), [new InsertedRow([]), new InsertedRow([])]), new \SqlSemantics\Statement\Source\SourceMap());
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 
     public function testRenderWritesValuesAndUpdates(): void

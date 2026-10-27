@@ -19,8 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments;
-use SqlSemantics\Statement\Fact\Facts;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 /**
@@ -67,11 +67,11 @@ final class LoadDataCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof LoadTable);
         $input = $statement->input;
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if (Stages::answered($statement, $diagnostic)) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
@@ -101,11 +101,11 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the input is unavailable or incompatible
      */
-    public function prepare(Operation $operation, Session $session): void
+    public function prepare(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof LoadTable);
-        $this->entry($statement, $operation->facts, $session);
+        $this->entry($statement, $operation->statementInformation(), $session);
     }
 
     /**
@@ -113,7 +113,7 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When entry or relation conditions prevent preparation
      */
-    public function entry(LoadTable|RefusedLoadAssignments $statement, Facts $facts, Session $session): void
+    public function entry(LoadTable|RefusedLoadAssignments $statement, StatementSemantics $facts, Session $session): void
     {
         $legacy = $session->settings()->legacy();
         if ($legacy) {
@@ -154,11 +154,11 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When options require the bulk algorithm or bulk loading is requested
      */
-    public function algorithm(Operation $operation, Session $session): void
+    public function algorithm(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof LoadTable);
-        $this->options($statement, $operation->facts, $session);
+        $this->options($statement, $operation->statementInformation(), $session);
     }
 
     /**
@@ -166,7 +166,7 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When bulk input cannot be used
      */
-    public function options(LoadTable|RefusedLoadAssignments $statement, Facts $facts, Session $session): void
+    public function options(LoadTable|RefusedLoadAssignments $statement, StatementSemantics $facts, Session $session): void
     {
         if (version_compare($session->instance->version, '8.2.0', '<')) {
             return;
@@ -196,7 +196,7 @@ final class LoadDataCommand implements Command
         }
         $schema = $statement->table->name->schema->value ?? $session->variables->database;
         $name = $statement->table->name->name->value;
-        $table = $session->instance->dictionary->table($schema, $name);
+        $table = $session->instance->dictionary->table($schema, $name, $session->temporaries);
         if ($table === null) {
             return [[1146, QueryError::NoSuchTable->message($schema, $name)]];
         }

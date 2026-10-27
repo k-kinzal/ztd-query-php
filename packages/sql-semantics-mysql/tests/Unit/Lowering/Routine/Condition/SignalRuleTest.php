@@ -74,7 +74,7 @@ final class SignalRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate '45000'");
 
-        self::assertEquals(new Signal(new SqlState(new Text('45000'))), $operation->statement);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('45000'))), $operation));
         self::assertSame("SIGNAL SQLSTATE '45000'", $operation->toString());
     }
 
@@ -94,7 +94,7 @@ final class SignalRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertEquals($expected, $operation->statement);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($expected, $operation));
         self::assertSame($rendering, $operation->toString());
     }
 
@@ -123,20 +123,20 @@ final class SignalRuleTest extends TestCase
     public function testConditionLowersAConditionName(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare c condition for sqlstate '45000'; signal c; resignal c; end");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([new Signal(new ConditionName(new Name('c'))), new Resignal(new ConditionName(new Name('c')))], $statement->body->statements);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new Signal(new ConditionName(new Name('c'))), new Resignal(new ConditionName(new Name('c')))], $statement->body->statements));
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c; RESIGNAL c; END", $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testConditionLowersAnSqlstateWithTheWordValue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("signal sqlstate value '01000'");
 
-        self::assertEquals(new Signal(new SqlState(new Text('01000'))), $operation->statement);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('01000'))), $operation));
         self::assertSame("SIGNAL SQLSTATE '01000'", $operation->toString());
     }
 
@@ -155,7 +155,7 @@ final class SignalRuleTest extends TestCase
     public function testItemsLowersEveryItemNameInOrder(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate '45000' set class_origin = 1, subclass_origin = 1, constraint_catalog = 1, constraint_schema = 1, constraint_name = 1, catalog_name = 1, schema_name = 1, table_name = 1, column_name = 1, cursor_name = 1, message_text = 1, mysql_errno = 1");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(Signal::class, $statement);
 
         self::assertSame([
@@ -168,7 +168,7 @@ final class SignalRuleTest extends TestCase
 
     public function testItemsLowersAnAbsentClauseAsEmpty(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze("signal sqlstate '45000'")->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze("signal sqlstate '45000'");
         self::assertInstanceOf(Signal::class, $statement);
 
         self::assertSame([], $statement->items);
@@ -189,19 +189,19 @@ final class SignalRuleTest extends TestCase
     public function testOperandLowersLiteralsVariablesAndNames(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.sql_mode, table_name = null, mysql_errno = 1000, column_name = 'c'");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Signal::class, $statement->body);
 
-        self::assertEquals([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new SignalItem(ConditionItemName::MessageText, new ColumnUse(new Name('m'))),
             new SignalItem(ConditionItemName::ClassOrigin, new UserVariable(new Name('a'))),
             new SignalItem(ConditionItemName::SubclassOrigin, new SystemVariable(new Name('sql_mode'), VariableScope::Session)),
             new SignalItem(ConditionItemName::TableName, new NullLiteral()),
             new SignalItem(ConditionItemName::MysqlErrno, new NumberLiteral('1000')),
             new SignalItem(ConditionItemName::ColumnName, new StringLiteral(['c'])),
-        ], $statement->body->items);
+        ], $statement->body->items));
         self::assertSame("CREATE PROCEDURE p(m TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = m, CLASS_ORIGIN = @a, SUBCLASS_ORIGIN = @@SESSION.sql_mode, TABLE_NAME = NULL, MYSQL_ERRNO = 1000, COLUMN_NAME = 'c'", $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

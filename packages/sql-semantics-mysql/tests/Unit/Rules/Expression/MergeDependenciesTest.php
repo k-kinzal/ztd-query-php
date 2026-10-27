@@ -51,7 +51,7 @@ final class MergeDependenciesTest extends TestCase
         $selected = $operation->field(0)->expression;
         self::assertNotNull($selected);
 
-        self::assertSame($separate, (new MergeDependencies())->separate([$selected], $release, $operation->facts));
+        self::assertSame($separate, (new MergeDependencies())->separate([$selected], $release));
     }
 
     public function testChangingFindsEffectsAcrossNestedQueries(): void
@@ -59,11 +59,11 @@ final class MergeDependenciesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $pure = $semantics->analyze('SELECT 1 FROM t');
         $changing = $semantics->analyze('SELECT (SELECT RAND(1)) FROM t');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $pure->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $changing->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $pure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $changing);
 
-        self::assertFalse((new MergeDependencies())->changing($pure->statement->query, GrammarRelease::MySql847));
-        self::assertTrue((new MergeDependencies())->changing($changing->statement->query, GrammarRelease::MySql847));
+        self::assertFalse((new MergeDependencies())->changing($pure->query, GrammarRelease::MySql847));
+        self::assertTrue((new MergeDependencies())->changing($changing->query, GrammarRelease::MySql847));
     }
 
     public function testExternalCountsQueryBlocksThroughNestedWrappers(): void
@@ -77,8 +77,8 @@ final class MergeDependenciesTest extends TestCase
         self::assertInstanceOf(ScalarSubquery::class, $localQuery);
         self::assertInstanceOf(ScalarSubquery::class, $outerQuery);
 
-        self::assertFalse((new MergeDependencies())->external($localQuery->query, $local->facts));
-        self::assertTrue((new MergeDependencies())->external($outerQuery->query, $outer->facts));
+        self::assertFalse((new MergeDependencies())->external($localQuery->query));
+        self::assertTrue((new MergeDependencies())->external($outerQuery->query));
     }
 
     public function testSeparateRetainsAnUnresolvedSubqueryConservatively(): void
@@ -87,6 +87,6 @@ final class MergeDependenciesTest extends TestCase
         $expression = $operation->field(0)->expression;
         self::assertNotNull($expression);
 
-        self::assertTrue((new MergeDependencies())->separate([$expression], GrammarRelease::MySql847));
+        self::assertTrue((new MergeDependencies())->separate([\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($expression)], GrammarRelease::MySql847));
     }
 }

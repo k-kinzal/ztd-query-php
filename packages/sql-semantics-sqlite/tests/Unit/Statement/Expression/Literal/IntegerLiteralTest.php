@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,24 +37,24 @@ final class IntegerLiteralTest extends TestCase
     public function testDeriveScalarGivesIntegerWhenTheValueFits(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1_000, 9223372036854775807', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
         self::assertInstanceOf(IntegerLiteral::class, $statement->columns[0]->expression);
         self::assertSame('1000', $statement->columns[0]->expression->digits);
-        $fact = $operation->facts->scalar($statement->columns[0]->expression);
+        $fact = $statement->columns[0]->expression->scalarInformation();
         self::assertEquals(new Known(Storage::Integer), $fact->type);
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertEquals(new Known(Storage::Integer), $operation->field(1)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarGivesRealForALargerValue(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 9223372036854775808', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -73,7 +72,7 @@ final class IntegerLiteralTest extends TestCase
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('42')), new ResultColumn(new IntegerLiteral('0'))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('42')), new ResultColumn(new IntegerLiteral('0'))]));
 
         self::assertSame('SELECT 42, 0', $operation->toString());
     }

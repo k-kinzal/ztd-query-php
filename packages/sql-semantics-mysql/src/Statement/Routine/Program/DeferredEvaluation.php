@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored DO instruction retaining wildcard or non-scalar preparation until invocation.
@@ -32,11 +31,11 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Keeping a deferred wildcard in a stored procedure
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() DO *');
- *     $create->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation // => true
+ *     $create->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation // => true
  */
 final class DeferredEvaluation implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SelectExpression|DeferredProjection|Star|TableWildcard> The program instruction's items
@@ -46,7 +45,7 @@ final class DeferredEvaluation implements ProgramStatement
     /**
      * @param list<SelectExpression|DeferredProjection|Star|TableWildcard> $items Items including a wildcard or non-scalar whose check is deferred
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $list = [];
         foreach (Check::listOf($items, \SqlSemantics\Statement\Node::class, 'A deferred DO has at least one item.', 1) as $position => $item) {

@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredInterval implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $operand The date operand
@@ -43,8 +43,11 @@ final class DeferredInterval implements DeferredOperand
      * @param bool $subtract Whether to subtract the trailing interval
      * @param bool $leading Whether the interval is written before the date
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $quantity, public readonly IntervalUnit $unit, public readonly bool $subtract = false, public readonly bool $leading = false)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $quantity, public readonly IntervalUnit $unit, public readonly bool $subtract = false, public readonly bool $leading = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$operand instanceof Scalar || !$quantity instanceof Scalar, 'A deferred interval retains a non-scalar operand.');
         Check::input(!$leading || !$subtract, 'A leading interval permits addition only.');
         Check::input(!$quantity instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Row || $quantity->keyword === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, 'An interval row quantity needs grouping or the ROW keyword to distinguish it from the INTERVAL function.');

@@ -48,6 +48,7 @@ final class InputPrefix
      */
     public function before(Node $tree, int $end): ?RejectedInput
     {
+        $this->lowering->parameters($tree->tokens());
         $frame = new PrefixFrame();
         $parameters = new ParameterList([]);
         $ranges = new SourceRanges();
@@ -172,6 +173,8 @@ final class InputPrefix
      */
     public function diagnostic(Block $body, ParameterList $parameters, bool $scopeComplete = true): ?Diagnostic
     {
+        $body = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($body);
+        $parameters = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($parameters);
         $derivation = new Derivation(new AnalysisContext($this->lowering->profile, [new Name(SessionDatabase::UNNAMED)], complete: false, columnNames: Comparison::AsciiInsensitive));
         (new ProgramFacts())->routine($parameters, $body, ProgramKind::Procedure, new QualifiedName(new Name('prefix')), $derivation, scopeComplete: $scopeComplete);
         foreach ($derivation->facts()->diagnostics as $problem) {

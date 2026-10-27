@@ -23,13 +23,13 @@ final class HistogramsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $analyze = $semantics->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON a, b', [$table]);
 
-        self::assertCount(1, $analyze->facts->diagnostics);
-        self::assertInstanceOf(UnknownHistogramColumn::class, $analyze->facts->diagnostics[0]);
+        self::assertCount(1, $analyze->diagnostics());
+        self::assertInstanceOf(UnknownHistogramColumn::class, $analyze->diagnostics()[0]);
     }
 
     public function testDeriveAcceptsAnUndeclaredTable(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE u DROP HISTOGRAM ON x')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE u DROP HISTOGRAM ON x')->diagnostics());
     }
 
     public function testBucketsTellsWhetherTheCountIsInRange(): void

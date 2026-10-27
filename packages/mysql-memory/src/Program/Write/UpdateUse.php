@@ -54,17 +54,15 @@ final class UpdateUse
     public function check(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $prepared = false, array $parameters = []): void
     {
         $database = $session->variables->database;
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution((new \MySqlMemory\Session\Statement\Binding())->parameters($session, $parameters)));
-        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($session->settings()->release()));
-        $write->render($output);
-        $derivation = new Derivation($context, parameters: $output->parameters());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution((new \MySqlMemory\Session\Statement\Binding())->parameters($session, $parameters)));
+        $write = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($write);
+        $derivation = new Derivation($context);
         if ($write instanceof Update) {
             $write->deriveStatement($derivation);
         } else {
             $write->derive($derivation);
         }
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         (new \MySqlMemory\Session\Access\RelationEntry())->counts($write, $facts, $session);
         (new \MySqlMemory\Session\Access\DefaultDatabase())->write($write, $facts, $session);
         foreach ($facts->diagnostics as $problem) {
@@ -101,7 +99,7 @@ final class UpdateUse
      *
      * @throws SqlError When a reached input has no database or repeats a fixed name
      */
-    public function names(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function names(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         $collisions = [];
         foreach ($facts->diagnostics as $problem) {
@@ -112,8 +110,8 @@ final class UpdateUse
         $inputs = [...$write->tables, ...$write->assignments, ...($write->where === null ? [] : [$write->where]), ...$write->orderBy];
         foreach ($inputs as $input) {
             foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->resolved($input, $facts, true) as $node) {
-                if ($session->variables->database === '' && ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $facts->covers($node)) {
-                    $table = $facts->relation($node)->table;
+                if ($session->variables->database === '' && ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $node instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $node->hasBinding()) {
+                    $table = $node->relationInformation()->table;
                     if ($table instanceof MissingTable && $table->name->schema === null) {
                         throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
                     }

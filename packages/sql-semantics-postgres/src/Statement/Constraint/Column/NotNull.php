@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A NOT NULL column constraint: the column never holds NULL. Mirrors `CONSTR_NOTNULL`.
@@ -21,16 +20,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int CONSTRAINT nn NOT NULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->name?->value // => 'nn'
+ *     $create->definition->elements[0]->qualifiers[0]->name?->value // => 'nn'
  */
 final class NotNull implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly ?Name $name = null)
+    public function __construct(public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

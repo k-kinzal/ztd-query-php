@@ -16,7 +16,6 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -31,19 +30,26 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Resolving the refreshed view
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA', []);
- *     [$statement->facts->diagnostics[0]->message(), $statement->toString()] // => ['Relation m does not exist.', 'REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA']
+ *     [$statement->diagnostics()[0]->message(), $statement->toString()] // => ['Relation m does not exist.', 'REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA']
  */
-final class RefreshMaterializedView implements Statement, Relation
+final class RefreshMaterializedView extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The materialized view
      * @param bool $concurrently Whether CONCURRENTLY is written
      * @param bool|null $withData True for WITH DATA, false for WITH NO DATA, null when not written
      */
-    public function __construct(public readonly QualifiedName $name, public readonly bool $concurrently = false, public readonly ?bool $withData = null)
+    public function __construct(public readonly QualifiedName $name, public readonly bool $concurrently = false, public readonly ?bool $withData = null, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

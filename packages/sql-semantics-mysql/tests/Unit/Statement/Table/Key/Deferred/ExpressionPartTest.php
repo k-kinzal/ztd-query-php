@@ -22,10 +22,10 @@ final class ExpressionPartTest extends TestCase
     public function testDeriveKeyPartPreservesTheDeclarationScope(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT, KEY (((a,2))))');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        self::assertInstanceOf(CreateProcedure::class, $create->statement);
-        self::assertInstanceOf(CreateTable::class, $create->statement->body);
-        $index = $create->statement->body->elements[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        self::assertInstanceOf(CreateProcedure::class, $create);
+        self::assertInstanceOf(CreateTable::class, $create->body);
+        $index = $create->body->elements[1];
         self::assertInstanceOf(IndexDefinition::class, $index);
         $part = $index->parts[0];
         self::assertInstanceOf(DeferredExpressionPart::class, $part);
@@ -33,20 +33,20 @@ final class ExpressionPartTest extends TestCase
         $fields = (new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->parts($part->expression);
         self::assertNotNull($fields);
         self::assertInstanceOf(\SqlSemantics\Statement\Operand::class, $fields[0]);
-        self::assertInstanceOf(ResolvedColumn::class, $create->facts->scalar($fields[0])->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $fields[0]->scalarInformation()->resolution);
     }
 
     public function testDeriveKeyPartPreservesTheBareColumnDependency(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE IF NOT EXISTS t(a INT, KEY ((a)))');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        self::assertInstanceOf(CreateProcedure::class, $create->statement);
-        self::assertInstanceOf(CreateTable::class, $create->statement->body);
-        $index = $create->statement->body->elements[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        self::assertInstanceOf(CreateProcedure::class, $create);
+        self::assertInstanceOf(CreateTable::class, $create->body);
+        $index = $create->body->elements[1];
         self::assertInstanceOf(IndexDefinition::class, $index);
         $part = $index->parts[0];
         self::assertInstanceOf(DeferredExpressionPart::class, $part);
-        self::assertInstanceOf(ResolvedColumn::class, $create->facts->scalar($part->expression)->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $part->expression->scalarInformation()->resolution);
     }
 
     public function testAnOrdinaryScalarCannotBeDeferredAsAColumnKey(): void

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\IndexElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One element of an exclusion constraint: a key and the operator no two rows may satisfy together.
@@ -23,17 +22,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the operator of an exclusion element
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH &&))');
- *     $create->statement->definition->elements[1]->elements[0]->operator->name->value // => '&&'
+ *     $create->definition->elements[1]->elements[0]->operator->name->value // => '&&'
  */
 final class ExclusionElement implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IndexElement $element The key
      * @param OperatorName $operator The operator
      */
-    public function __construct(public readonly IndexElement $element, public readonly OperatorName $operator)
+    public function __construct(public readonly IndexElement $element, public readonly OperatorName $operator, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

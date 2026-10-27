@@ -50,9 +50,9 @@ final class DeferredCastTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $sql = "CREATE PROCEDURE p() SELECT CAST(CAST(1 AT TIME ZONE '+00:00' AS DATETIME) AS CHAR)";
         $operation = $semantics->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body);
-        $item = $operation->statement->body->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->body);
+        $item = $operation->body->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $item);
         self::assertInstanceOf(DeferredCast::class, $item->expression);
         self::assertSame(CastKind::Char, $item->expression->target->kind);

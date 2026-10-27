@@ -42,9 +42,9 @@ final class RelationKindsTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a INTEGER); CREATE VIEW v (x) AS SELECT a FROM t; CREATE TRIGGER vi INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
 
-        self::assertInstanceOf(WrongRelationKind::class, $operation->facts->diagnostics[0] ?? null);
-        self::assertSame($refusal, $operation->facts->diagnostics[0]->refusal);
-        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertInstanceOf(WrongRelationKind::class, $operation->diagnostics()[0] ?? null);
+        self::assertSame($refusal, $operation->diagnostics()[0]->refusal);
+        self::assertCount(1, $operation->diagnostics());
         $this->expectException(PDOException::class);
         $database->exec($sql);
     }
@@ -64,7 +64,7 @@ final class RelationKindsTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a INTEGER); CREATE VIEW v (x) AS SELECT a FROM t; CREATE TRIGGER vi INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         self::assertNotFalse($database->exec($sql));
     }
 
@@ -72,8 +72,8 @@ final class RelationKindsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertSame([], $semantics->analyze('DROP TABLE v')->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('DROP VIEW v', $semantics->context([$semantics->analyze('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('DROP TABLE v', $semantics->context([$semantics->analyze('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('DROP TABLE v')->diagnostics());
+        self::assertSame([], $semantics->analyze('DROP VIEW v', $semantics->context([$semantics->analyze('CREATE VIEW main.v AS SELECT 1')], false))->diagnostics());
+        self::assertSame([], $semantics->analyze('DROP TABLE v', $semantics->context([$semantics->analyze('CREATE VIEW main.v AS SELECT 1')], false))->diagnostics());
     }
 }

@@ -19,26 +19,26 @@ final class SetVariablesTest extends TestCase
     public function testScopeOfAnswersTheInheritedScope(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST a = 1, b = 2, @@SESSION.c = 3, @d = 4, e = 5');
-        self::assertInstanceOf(SetVariables::class, $set->statement);
-        self::assertSame(VariableScope::Persist, $set->statement->scopeOf(1));
-        self::assertSame(VariableScope::Session, $set->statement->scopeOf(2));
-        self::assertNull($set->statement->scopeOf(3));
-        self::assertSame(VariableScope::Persist, $set->statement->scopeOf(4));
+        self::assertInstanceOf(SetVariables::class, $set);
+        self::assertSame(VariableScope::Persist, $set->scopeOf(1));
+        self::assertSame(VariableScope::Session, $set->scopeOf(2));
+        self::assertNull($set->scopeOf(3));
+        self::assertSame(VariableScope::Persist, $set->scopeOf(4));
     }
 
     public function testScopeOfRefusesAPositionOutsideTheItems(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET a = 1');
-        self::assertInstanceOf(SetVariables::class, $set->statement);
+        self::assertInstanceOf(SetVariables::class, $set);
         $this->expectExceptionMessage('The position is one of the items.');
-        $set->statement->scopeOf(1);
+        $set->scopeOf(1);
     }
 
     public function testDeriveStatementDerivesEveryItem(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET @a = b, @@sort_buffer_size = c', []);
-        self::assertInstanceOf(SetVariables::class, $set->statement);
-        self::assertCount(1, $set->facts->diagnostics);
+        self::assertInstanceOf(SetVariables::class, $set);
+        self::assertCount(1, $set->diagnostics());
         self::assertNull($set->shape());
     }
 

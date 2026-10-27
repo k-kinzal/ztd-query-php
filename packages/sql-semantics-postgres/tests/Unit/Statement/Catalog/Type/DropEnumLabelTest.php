@@ -19,6 +19,6 @@ final class DropEnumLabelTest extends TestCase
 
     public function testDeriveStatementReportsTheRejection(): void
     {
-        self::assertSame('dropping an enum value is not implemented', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE mood DROP VALUE \'sad\'')->facts->diagnostics[0]->message());
+        self::assertSame('dropping an enum value is not implemented', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE mood DROP VALUE \'sad\'')->diagnostics()[0]->message());
     }
 }

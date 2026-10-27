@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One locking clause of a query: `FOR UPDATE|SHARE [OF tables] [NOWAIT|SKIP LOCKED]` or `LOCK IN SHARE MODE`.
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class LockingClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<QualifiedName> The locked tables in written order; empty for every table of the query
@@ -49,7 +48,7 @@ final class LockingClause implements Node
      * @param LockedRowAction|null $action What to do with a row locked elsewhere
      * @param list<OptionalWords> $wildcards For each locked table, whether it is written with `.*`; empty when none is
      */
-    public function __construct(public readonly LockStrength $strength, array $tables = [], public readonly ?LockedRowAction $action = null, array $wildcards = [])
+    public function __construct(public readonly LockStrength $strength, array $tables = [], public readonly ?LockedRowAction $action = null, array $wildcards = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->tables = Check::listOf($tables, QualifiedName::class, 'A locking clause names tables.');
         $listed = Check::listOf($wildcards, OptionalWords::class, 'The wildcard forms of a locking clause are a list.');

@@ -18,7 +18,7 @@ final class ShowEngineCatalogTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW STORAGE ENGINES');
-        self::assertInstanceOf(ShowEngineCatalog::class, $show->statement);
+        self::assertInstanceOf(ShowEngineCatalog::class, $show);
         self::assertSame('Engine', $show->field(0)->name?->value);
     }
 

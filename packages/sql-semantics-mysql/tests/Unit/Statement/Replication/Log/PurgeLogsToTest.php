@@ -17,7 +17,7 @@ final class PurgeLogsToTest extends TestCase
 {
     public function testDeriveStatementRecordsNoDiagnostic(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("PURGE BINARY LOGS TO 'b.000001'")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("PURGE BINARY LOGS TO 'b.000001'")->diagnostics());
     }
 
     public function testRenderWritesBinaryLogs(): void

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CHANGE REPLICATION SOURCE TO option = value, … [FOR CHANNEL 'name']`, written `CHANGE MASTER TO` in the legacy vocabulary.
@@ -34,11 +33,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the options of the legacy spelling as their current synonyms
  *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44'))->analyze("CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'");
- *     [$change->toString(), $change->statement->options[1]->kind] // => ["CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'", \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port]
+ *     [$change->toString(), $change->options[1]->kind] // => ["CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'", \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port]
  */
-final class ChangeReplicationSource implements Statement
+final class ChangeReplicationSource extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SourceOption> The options in written order; at least one
@@ -51,8 +50,11 @@ final class ChangeReplicationSource implements Statement
      * @param Text|null $channel The replication channel, when FOR CHANNEL is written
      * @param bool $synonym Whether the statement is written CHANGE MASTER where the release reads it as its synonym CHANGE REPLICATION SOURCE, which MySQL 8.0 to 8.3 warn deprecated
      */
-    public function __construct(public readonly Terminology $terminology, array $options, public readonly ?Text $channel = null, public readonly bool $synonym = false)
+    public function __construct(public readonly Terminology $terminology, array $options, public readonly ?Text $channel = null, public readonly bool $synonym = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(!$synonym || $terminology === Terminology::Current, 'CHANGE MASTER is a synonym only in the current replication vocabulary.');
         (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->options = Check::listOf($options, SourceOption::class, 'CHANGE REPLICATION SOURCE sets a list of options.', 1);

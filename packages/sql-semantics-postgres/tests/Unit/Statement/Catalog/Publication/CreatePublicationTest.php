@@ -24,12 +24,12 @@ final class CreatePublicationTest extends TestCase
 
     public function testDeriveStatementReportsAListWithoutKeywords(): void
     {
-        self::assertSame('invalid publication object list', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR t')->facts->diagnostics[0]->message());
+        self::assertSame('invalid publication object list', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR t')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsCurrentSchemaAfterATable(): void
     {
-        self::assertSame('invalid table name', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA')->facts->diagnostics[0]->message());
+        self::assertSame('invalid table name', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE t, CURRENT_SCHEMA')->diagnostics()[0]->message());
     }
 
     public function testRejectsObjectsWithAllTables(): void

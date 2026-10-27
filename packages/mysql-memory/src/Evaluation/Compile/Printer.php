@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
@@ -43,10 +43,10 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 final class Printer
 {
     /**
-     * @param Facts|null $facts The facts of the statement, which resolve its columns; without them a column is printed as written
+     * @param StatementSemantics|null $facts The facts of the statement, which resolve its columns; without them a column is printed as written
      * @param string $database The current database, which holds a table named without one
      */
-    public function __construct(public readonly ?Facts $facts = null, public readonly string $database = '')
+    public function __construct(public readonly ?StatementSemantics $facts = null, public readonly string $database = '')
     {
     }
 
@@ -95,10 +95,10 @@ final class Printer
     public function column(ColumnUse $node): string
     {
         $written = ($node->qualifier === null ? '' : '`' . $node->qualifier->name->value . '`.') . '`' . $node->name->value . '`';
-        if ($this->facts === null || !$this->facts->covers($node)) {
+        if ($this->facts === null || !$node->hasBinding()) {
             return $written;
         }
-        $resolution = $this->facts->scalar($node)->resolution;
+        $resolution = $node->scalarInformation()->resolution;
         if ($resolution instanceof AliasTarget) {
             return $this->field($resolution->field) ?? $written;
         }
@@ -124,7 +124,7 @@ final class Printer
     public function resolved(ResolvedColumn $resolution): string
     {
         $relation = $resolution->relation;
-        $table = $this->facts !== null && $this->facts->covers($relation) ? $this->facts->relation($relation)->table : null;
+        $table = $this->facts !== null && $relation->hasBinding() ? $relation->relationInformation()->table : null;
         if ($table instanceof DeclaredTable && $relation instanceof NamedRelation) {
             return $this->tableColumn($resolution, $table, $relation);
         }
@@ -157,7 +157,7 @@ final class Printer
         if ($query === null || $this->facts === null || !(new Materialization())->mergeable($query)) {
             return null;
         }
-        $field = $this->facts->query($query)->projection[$this->position($resolution)] ?? null;
+        $field = $query->queryInformation()->projection[$this->position($resolution)] ?? null;
 
         return $field instanceof Field ? $this->field($field) : null;
     }
@@ -185,7 +185,7 @@ final class Printer
         if ($this->facts === null) {
             return -1;
         }
-        $slots = $this->facts->relation($resolution->relation)->shape->slots;
+        $slots = $resolution->relation->relationInformation()->shape->slots;
         for ($slot = $resolution->slot; $slot instanceof OutputSlot; $slot = $slot->origin) {
             $position = array_search($slot, $slots, true);
             if (is_int($position)) {

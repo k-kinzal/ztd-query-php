@@ -32,6 +32,7 @@ final class SyntaxCalls
         $tokens = (new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($parser, $statement);
         $statement = substr($statement, 0, $tokens[count($tokens) - 1]->offset);
         $lowering = new Lowering(\SqlSemantics\Lowering\Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $lowering->parameters($tokens);
         $dependencies = [];
         try {
             $parser->parse($statement, static function (Node $node) use ($lowering, $end, $enclosing, &$dependencies): void {

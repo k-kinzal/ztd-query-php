@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * EXECUTE: runs a prepared statement with user variables for its parameter markers.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an EXECUTE
  *     $execute = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXECUTE stmt USING @a, @b');
- *     [count($execute->statement->variables), $execute->toString()] // => [2, 'EXECUTE stmt USING @a, @b']
+ *     [count($execute->variables), $execute->toString()] // => [2, 'EXECUTE stmt USING @a, @b']
  */
-final class Execute implements Statement
+final class Execute extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<UserVariable> The variables in written order
@@ -40,8 +39,11 @@ final class Execute implements Statement
      * @param Name $name The name of the prepared statement
      * @param list<UserVariable> $variables The variables that supply the parameter values
      */
-    public function __construct(public readonly Name $name, array $variables = [])
+    public function __construct(public readonly Name $name, array $variables = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->variables = Check::listOf($variables, UserVariable::class, 'EXECUTE ... USING takes user variables.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

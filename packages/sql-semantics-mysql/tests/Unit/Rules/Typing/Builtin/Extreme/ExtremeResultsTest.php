@@ -48,11 +48,11 @@ final class ExtremeResultsTest extends TestCase
     public function testExtremeTypesGreatestAndLeast(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT GREATEST(1, 2.5), GREATEST(1, 'a'), LEAST(NULL, NULL), GREATEST(DATE'2020-01-01', TIMESTAMP'2020-01-01 10:00:00')");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
-        $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $operation->facts->scalar($item->expression)->type : null, $statement->items);
+        $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $item->expression->scalarInformation()->type : null, $statement->items);
 
         self::assertEquals([
             new Known(Domain::decimal(2, 1)),

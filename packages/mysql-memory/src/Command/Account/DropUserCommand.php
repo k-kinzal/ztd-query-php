@@ -15,7 +15,7 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Account\DropRole;
 use SqlSemantics\Platform\MySql\Statement\Account\DropUser;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes DROP USER and DROP ROLE.
@@ -48,8 +48,8 @@ final class DropUserCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof DropUser || $statement instanceof DropRole);
         $session->transaction->commit();
         $names = new Names($session->settings()->release());

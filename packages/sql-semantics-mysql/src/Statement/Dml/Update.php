@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrde
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * UPDATE of one table or of several tables, with SET assignments, WHERE, ORDER BY and LIMIT.
@@ -37,7 +36,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an UPDATE
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10');
- *     [count($update->statement->assignments), $update->statement->where !== null, $update->toString()] // => [1, true, 'UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10']
+ *     [count($update->assignments), $update->where !== null, $update->toString()] // => [1, true, 'UPDATE LOW_PRIORITY t SET a = a + 1 WHERE b = 2 ORDER BY a LIMIT 10']
  * @example Retaining contradictory input columns as an execution condition
  *     $table = new \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), [new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('b')), new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('B'))], new \SqlSemantics\Statement\Identifier\Name('j'));
  *     $assignment = new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('b')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
@@ -47,9 +46,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $assignment = new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral());
  *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Update(null, false, false, [$table], [$assignment]))->hasExecutionCondition() // => true
  */
-final class Update implements Explainable
+final class Update extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
@@ -93,7 +92,12 @@ final class Update implements Explainable
         array $orderBy = [],
         public readonly ?Limit $limit = null,
         array $hints = [],
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $members = [];
         foreach (Check::listOf($tables, Relation::class, 'UPDATE names at least one table reference.', 1) as $table) {

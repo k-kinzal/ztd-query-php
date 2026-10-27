@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,18 +19,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Disabling a subscription
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s DISABLE');
- *     $operation->statement->enable // => false
+ *     $operation->enable // => false
  */
-final class EnableSubscription implements Statement
+final class EnableSubscription extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The subscription name
      * @param bool $enable Whether the subscription is enabled instead of disabled
      */
-    public function __construct(public readonly Name $name, public readonly bool $enable)
+    public function __construct(public readonly Name $name, public readonly bool $enable, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

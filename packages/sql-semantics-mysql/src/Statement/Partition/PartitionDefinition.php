@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionBound;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PARTITION name [VALUES …] [options] [(subpartitions)]`: one partition of a partitioned table.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionDefinition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionOption> The options in order
@@ -48,7 +47,7 @@ final class PartitionDefinition implements Node
      * @param list<PartitionOption> $options The options in order
      * @param list<SubpartitionDefinition> $subpartitions The subpartitions in order
      */
-    public function __construct(public readonly Name $name, public readonly ?PartitionBound $values, array $options, array $subpartitions)
+    public function __construct(public readonly Name $name, public readonly ?PartitionBound $values, array $options, array $subpartitions, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) <= 64, 'A partition definition name has at most 64 characters.');
         $this->options = Check::listOf($options, PartitionOption::class, 'Partition options are a list of partition options.');

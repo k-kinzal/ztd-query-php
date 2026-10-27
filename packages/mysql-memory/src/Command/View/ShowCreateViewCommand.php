@@ -18,9 +18,9 @@ use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW CREATE VIEW: the statement that creates a view, with its query as the server stores it.
@@ -52,8 +52,8 @@ final class ShowCreateViewCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowCreateView);
         $name = $statement->view->name;
         $database = ProgramSource::database($name->schema, $session);
@@ -85,12 +85,12 @@ final class ShowCreateViewCommand implements Command
             throw $syntax;
         }
         try {
-            \MySqlMemory\Session\Resolution\Views::refresh($view, $session->instance->dictionary, $session->settings());
+            \MySqlMemory\Session\Statement\Catalog::view($view, $session);
         } catch (SqlError $error) {
             $context->diagnostics->warning($error->error, $error->getMessage());
         }
         $current = $session->variables->database;
-        $text = (new ViewText($view->created->facts, $current, $view->database, $session->settings()->legacy()))->query($view->definition, true, $view->hints) ?? $view->querySql();
+        $text = (new ViewText($view->created->statementInformation(), $current, $view->database, $session->settings()->legacy()))->query($view->definition, true, $view->hints) ?? $view->querySql();
         $create = $view->create(($view->schema === $current ? '' : Routine::quoted($view->schema) . '.') . Routine::quoted($view->name), $text);
         $flag = ColumnFlag::NotNull->value;
 

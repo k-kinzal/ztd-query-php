@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One assignment of INSTALL COMPONENT … SET: `[GLOBAL | PERSIST] [component.]variable = value`.
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Persisting a component variable
  *     $install = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("INSTALL COMPONENT 'file://c' SET PERSIST c.v = 4");
- *     [$install->statement->settings[0]->variable->scope, $install->statement->settings[0]->variable->instance?->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'c']
+ *     [$install->settings[0]->variable->scope, $install->settings[0]->variable->instance?->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'c']
  */
 final class ComponentSetting implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The assigned expression or word. A standalone name is a word, not a column lookup.
@@ -45,7 +44,7 @@ final class ComponentSetting implements Node
      * @param Scalar|BareName|OnWord $value The value: an expression, a standalone word, or OnWord
      * @throws InvalidConstruction When the scope is neither absent, GLOBAL nor PERSIST
      */
-    public function __construct(public readonly SystemTarget $variable, Scalar|BareName|OnWord $value)
+    public function __construct(public readonly SystemTarget $variable, Scalar|BareName|OnWord $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(in_array($variable->scope, [null, VariableScope::Global, VariableScope::Persist], true), 'A component variable is set GLOBAL or PERSIST.');
         $unwrapped = $value;

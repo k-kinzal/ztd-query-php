@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * HANDLER ... READ FIRST|NEXT: reads rows of an open handler in natural row order.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a scan of a handler
  *     $read = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h READ NEXT WHERE a > 1 LIMIT 5');
- *     [$read->statement->direction, $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::Next, 'HANDLER h READ NEXT WHERE a > 1 LIMIT 5']
+ *     [$read->direction, $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::Next, 'HANDLER h READ NEXT WHERE a > 1 LIMIT 5']
  */
-final class HandlerScan implements Statement
+final class HandlerScan extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param OpenHandler $handler The handler read from
@@ -33,8 +32,11 @@ final class HandlerScan implements Statement
      * @param Scalar|null $where The condition rows must meet
      * @param Limit|null $limit The most rows read
      */
-    public function __construct(public readonly OpenHandler $handler, public readonly ScanDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null)
+    public function __construct(public readonly OpenHandler $handler, public readonly ScanDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->check($this);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Relation;
@@ -47,14 +47,14 @@ final class ViewText
     public readonly ExpressionText $expressions;
 
     /**
-     * @param Facts $facts The facts the query was resolved with
+     * @param StatementSemantics $facts The facts the query was resolved with
      * @param string $current The current database, which the names of its tables are written without
      * @param string $database The database the unqualified names of the query are in
      * @param bool $legacy Whether the stored expression uses the MySQL 5.x representation
      * @param QueryExpression|null $afterWith The nested body whose diagnostic start is marked
      * @param string $boundary A marker chosen outside the generated stored text
      */
-    public function __construct(public readonly Facts $facts, public readonly string $current, public readonly string $database, public readonly bool $legacy = false, public readonly ?QueryExpression $afterWith = null, public readonly string $boundary = '')
+    public function __construct(public readonly StatementSemantics $facts, public readonly string $current, public readonly string $database, public readonly bool $legacy = false, public readonly ?QueryExpression $afterWith = null, public readonly string $boundary = '')
     {
         $this->expressions = new ExpressionText($this);
     }
@@ -100,7 +100,7 @@ final class ViewText
     public function explicit(\SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable $query, bool $named): ?string
     {
         $items = [];
-        foreach ($this->facts->query($query)->projection as $field) {
+        foreach ($query->queryInformation()->projection as $field) {
             $value = $field instanceof Field ? $this->column($field->resolution) : null;
             if ($value === null) {
                 return null;
@@ -118,7 +118,7 @@ final class ViewText
     public function select(Select $select, bool $named = true): ?string
     {
         $items = [];
-        foreach ($this->facts->query($select)->projection as $field) {
+        foreach ($select->queryInformation()->projection as $field) {
             if (!$field instanceof Field) {
                 return null;
             }
@@ -263,7 +263,7 @@ final class ViewText
      */
     public function table(?string $schema, string $name, ?\SqlSemantics\Statement\NamedRelation $reference = null): string
     {
-        $resolution = $reference !== null && $this->facts->covers($reference) ? $this->facts->relation($reference)->table : null;
+        $resolution = $reference !== null && $reference->hasBinding() ? $reference->relationInformation()->table : null;
         if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable) {
             return Routine::quoted($name);
         }

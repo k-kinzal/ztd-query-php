@@ -38,7 +38,7 @@ final class ErrorCodeTest extends TestCase
     public function testRenderWritesTheCodesOfADeclarationAndAHandler(): void
     {
         $create = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052 BEGIN END; END');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);
@@ -52,7 +52,7 @@ final class ErrorCodeTest extends TestCase
 
         self::assertSame('1051', $declaration->value->code->text);
         self::assertSame('1052', $handler->conditions[1]->code->text);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052 BEGIN END; END', $create->toString());
     }
 

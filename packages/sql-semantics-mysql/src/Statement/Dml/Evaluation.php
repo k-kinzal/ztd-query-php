@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DO: evaluates expressions and returns no rows.
@@ -32,11 +31,11 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the expressions of DO
  *     $do = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DO SLEEP(1), @a := 2');
- *     [count($do->statement->items), $do->facts->output, $do->toString()] // => [2, null, 'DO SLEEP(1), @a := 2']
+ *     [count($do->items), $do->output(), $do->toString()] // => [2, null, 'DO SLEEP(1), @a := 2']
  */
-final class Evaluation implements Statement
+final class Evaluation extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SelectExpression> The items in written order
@@ -47,8 +46,11 @@ final class Evaluation implements Statement
      * @param list<SelectExpression> $items The items; at least one
      * @throws InvalidConstruction When there is no item, or an item is of no select item class
      */
-    public function __construct(array $items)
+    public function __construct(array $items, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = \SqlSemantics\Diagnostic\Check::listOf($items, SelectExpression::class, 'DO evaluates one or more expressions, not table wildcards.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

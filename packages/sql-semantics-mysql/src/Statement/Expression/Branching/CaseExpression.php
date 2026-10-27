@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -40,11 +39,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing a CASE by its results
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
- *     [$query->facts->scalar($query->statement->query->where)->type->descriptor->name(), $query->facts->scalar($query->statement->query->where)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->query->where->scalarInformation()->type->descriptor->name(), $query->query->where->scalarInformation()->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
  */
 final class CaseExpression implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CaseBranch> The branches in order
@@ -56,8 +56,11 @@ final class CaseExpression implements Scalar
      * @param list<CaseBranch> $branches The branches in order; at least one
      * @param Scalar|null $else The result after ELSE, when written
      */
-    public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $else = null)
+    public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $else = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression has at least one WHEN branch.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

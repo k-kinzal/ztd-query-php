@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ROTATE {INNODB | BINLOG} MASTER KEY`: rotate the master encryption key of InnoDB or of the binary log.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RotateMasterKey implements InstanceAction
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $keyring The name INNODB or BINLOG, in any letter case
      * @throws InvalidConstruction When the name is neither
      */
-    public function __construct(public readonly Name $keyring)
+    public function __construct(public readonly Name $keyring, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(in_array(strtoupper($keyring->value), ['INNODB', 'BINLOG'], true), 'ALTER INSTANCE ROTATE names INNODB or BINLOG.');
     }

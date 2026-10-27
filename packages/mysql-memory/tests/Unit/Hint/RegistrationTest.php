@@ -32,7 +32,7 @@ final class RegistrationTest extends TestCase
     public function testRegisterReadsInnerBlocksFirst(): void
     {
         $session = (new Instance())->connect();
-        $blocks = (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SELECT /*+ QB_NAME(qq) */ 1 WHERE 1 IN (SELECT /*+ QB_NAME(QQ) */ 1)')->statement);
+        $blocks = (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SELECT /*+ QB_NAME(qq) */ 1 WHERE 1 IN (SELECT /*+ QB_NAME(QQ) */ 1)'));
         $registration = (new Registration($blocks, SystemVariables::of(GrammarRelease::MySql847), new Printer()))->register();
 
         self::assertSame([[3126, 'Hint QB_NAME(`qq`) is ignored as conflicting/duplicated']], $registration->warnings);
@@ -42,7 +42,7 @@ final class RegistrationTest extends TestCase
     public function testRegisterLooksUpTheBlockOfIndexAfterEveryHint(): void
     {
         $session = (new Instance())->connect();
-        $blocks = (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SELECT /*+ INDEX(@qq t ka) INDEX(t@qq ka) BKA(@qq) QB_NAME(qq) */ 1 FROM t')->statement);
+        $blocks = (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SELECT /*+ INDEX(@qq t ka) INDEX(t@qq ka) BKA(@qq) QB_NAME(qq) */ 1 FROM t'));
         $registration = (new Registration($blocks, SystemVariables::of(GrammarRelease::MySql847), new Printer()))->register();
 
         self::assertSame([[3126, 'Hint INDEX(`t`@`qq`  `ka`) is ignored as conflicting/duplicated'], [3127, 'Query block name `qq` is not found for BKA hint']], $registration->warnings);

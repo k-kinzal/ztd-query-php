@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignmen
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The action UPDATE SET of a MERGE WHEN clause: the target row is updated.
@@ -21,13 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an update action
  *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN UPDATE SET b = DEFAULT');
- *     count($merge->statement->clauses[0]->action->assignments) // => 1
+ *     count($merge->clauses[0]->action->assignments) // => 1
  * @example Refusing an update without assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeUpdate([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class MergeUpdate implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Assignment|RowAssignment> The SET items in written order
@@ -39,7 +38,7 @@ final class MergeUpdate implements Node
      *
      * @throws InvalidConstruction When there is no SET item
      */
-    public function __construct(array $assignments)
+    public function __construct(array $assignments, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->assignments = (new ClosedList())->of($assignments, [Assignment::class, RowAssignment::class], 'UPDATE SET holds at least one assignment.', 1);
     }

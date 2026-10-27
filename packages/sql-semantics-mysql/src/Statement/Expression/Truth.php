@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  * @visibility public
  * @example Reading the tested truth value
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a IS NOT UNKNOWN');
- *     $query->statement->query->where->truth // => \SqlSemantics\Platform\MySql\Statement\Expression\Truth::Unknown
+ *     $query->query->where->truth // => \SqlSemantics\Platform\MySql\Statement\Expression\Truth::Unknown
  */
 enum Truth: string
 {

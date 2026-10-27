@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LOCK INSTANCE FOR BACKUP`: a request to take the backup lock of the server instance (MySQL 8.0 and later).
@@ -21,9 +20,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading the request
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('lock instance for backup')->toString() // => 'LOCK INSTANCE FOR BACKUP'
  */
-final class LockInstance implements Statement
+final class LockInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Has nothing to derive: the request names no relation and no value.
@@ -38,5 +37,14 @@ final class LockInstance implements Statement
     public function render(Output $out): void
     {
         $out->keyword('LOCK', 'INSTANCE', 'FOR', 'BACKUP');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 }

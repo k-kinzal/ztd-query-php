@@ -43,7 +43,7 @@ final class Declared
     /**
      * @param Collation $collation The collation of a string type that names none
      */
-    public function __construct(public readonly Collation $collation, public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    public function __construct(public readonly Collation $collation, public readonly GrammarRelease $release = GrammarRelease::MySql847, public readonly bool $realAsFloat = false)
     {
     }
 
@@ -88,7 +88,7 @@ final class Declared
      */
     public function floating(Floating $type): Domain
     {
-        $single = $type->kind === FloatingKind::Float && ($type->precision === null || $type->scale !== null || (int) $type->precision <= 24);
+        $single = ($type->kind === FloatingKind::Float || ($type->kind === FloatingKind::Real && $this->realAsFloat)) && ($type->precision === null || $type->scale !== null || (int) $type->precision <= 24);
         $unsigned = in_array(NumericModifier::Unsigned, $type->modifiers, true);
         $decimals = $type->scale === null ? Domain::NOT_FIXED : (int) $type->scale;
         $length = $type->scale !== null ? (int) $type->precision : ($single ? 12 : 22);

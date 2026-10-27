@@ -53,7 +53,7 @@ final class BranchInference
                 }
                 continue;
             }
-            $binding = $node !== null && $facts->covers($node) ? $facts->scalar($node)->resolution : null;
+            $binding = $node !== null && $node->hasBinding() ? $node->scalarInformation()->resolution : null;
             if ($binding instanceof UserVariableBinding && !$binding->exists) {
                 $absent[] = $position;
             }

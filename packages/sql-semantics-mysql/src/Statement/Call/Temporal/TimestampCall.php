@@ -20,7 +20,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -44,7 +43,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class TimestampCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TimestampOperation $operation The function
@@ -52,8 +52,11 @@ final class TimestampCall implements Scalar
      * @param Scalar $first The number of units to add, or the start
      * @param Scalar $second The date or time to add to, or the end
      */
-    public function __construct(public readonly TimestampOperation $operation, public readonly IntervalUnit $unit, public readonly Scalar $first, public readonly Scalar $second)
+    public function __construct(public readonly TimestampOperation $operation, public readonly IntervalUnit $unit, public readonly Scalar $first, public readonly Scalar $second, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(in_array($unit->canonical(), [IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true), 'TIMESTAMPADD and TIMESTAMPDIFF take a simple interval unit.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

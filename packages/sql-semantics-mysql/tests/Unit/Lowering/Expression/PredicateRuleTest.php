@@ -107,7 +107,7 @@ final class PredicateRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operation = $semantics->analyze('WITH x AS (SELECT ROW(1,2) BETWEEN 3 AND 4) SELECT 7');
         self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testSoundsRetainsDeferredDependenciesOfAnUnusedCte(): void
@@ -115,7 +115,7 @@ final class PredicateRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operation = $semantics->analyze('WITH x AS (SELECT ROW(1,2) SOUNDS LIKE 3) SELECT 7');
         self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
 }

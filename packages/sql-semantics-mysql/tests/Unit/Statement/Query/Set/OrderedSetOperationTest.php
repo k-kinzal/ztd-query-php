@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 
 #[CoversClass(OrderedSetOperation::class)]
@@ -31,7 +30,7 @@ final class OrderedSetOperationTest extends TestCase
     public function testDeriveQueryOrdersTheResultAndKeepsTheClausesOfTheLastSelect(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT 1 AS x UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x LIMIT 3)', []);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -45,8 +44,8 @@ final class OrderedSetOperationTest extends TestCase
         self::assertInstanceOf(Select::class, $union->right);
         self::assertNotNull($union->right->limit);
         self::assertNotNull($union->limit);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($union->orderBy[0]->expression)->resolution);
-        self::assertSame('x', $operation->facts->query($union)->projection[0]->name?->value);
+        self::assertInstanceOf(AliasTarget::class, $union->orderBy[0]->expression->scalarInformation()->resolution);
+        self::assertSame('x', $union->queryInformation()->projection[0]->name?->value);
     }
 
     public function testDeriveQueryNeedsMySql56(): void
@@ -57,7 +56,7 @@ final class OrderedSetOperationTest extends TestCase
 
         $this->expectExceptionMessage('A set operation ordered after the clauses of its last SELECT needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ScalarSubquery($union))])));
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new ScalarSubquery($union))])), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheOrderingAfterTheLockingClauseOfTheLastSelect(): void
@@ -65,7 +64,7 @@ final class OrderedSetOperationTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
 
         self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->analyze('select (select 1 union select a from t for update order by 1) as v')->toString());
-        $root = $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement;
+        $root = $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
         self::assertInstanceOf(QueryExpression::class, $root->query);
     }

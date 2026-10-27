@@ -26,6 +26,7 @@ final class Targets
      */
     public function unmatched(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets $problem, Session $session): SqlError
     {
+        $problem = $this->fresh($problem);
         $database = $problem->program->schema->value ?? $session->variables->database;
         if ($problem->program !== null && $database === '') {
             return QueryError::NoDatabase->error();
@@ -34,10 +35,10 @@ final class Targets
         if ($missingDatabase && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return QueryError::NoDatabase->error();
         }
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new \SqlSemantics\Contract\SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new \SqlSemantics\Contract\SearchPath($database), $session->resolution());
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $problem->derive($derivation);
-        foreach ($derivation->facts()->diagnostics as $diagnostic) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $diagnostic) {
             if (\MySqlMemory\Session\Problem\Stages::characters($diagnostic, $session->settings()->legacy())) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
             }
@@ -46,7 +47,7 @@ final class Targets
             return QueryError::NoDatabase->error();
         }
         $alias = null;
-        foreach ($derivation->facts()->diagnostics as $diagnostic) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $diagnostic) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($diagnostic)) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
             }
@@ -58,7 +59,7 @@ final class Targets
         if ($alias !== null) {
             return (new \MySqlMemory\Session\Problem\Errors())->error($alias, $session);
         }
-        foreach ($derivation->facts()->diagnostics as $diagnostic) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable) {
                 return (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
             }
@@ -90,5 +91,18 @@ final class Targets
         }
 
         throw new LogicException('A refused DELETE prefix must contain a repeated target.');
+    }
+    /**
+     * Copies retained DELETE dependencies before binding them in another scope.
+     */
+    public function fresh(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets $problem): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets
+    {
+        return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets(
+            $problem->targets,
+            array_map(static fn ($table) => \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($table), $problem->tables),
+            $problem->with === null ? null : \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($problem->with),
+            $problem->where === null ? null : \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($problem->where),
+            $problem->program,
+        );
     }
 }

@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Writing the warning of a problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError(\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintFailure::Syntax, 11))->message('SELECT /*+ FOO *' . '/ 1') // => "Optimizer hint syntax error near 'FOO *" . "/ 1' at line 1"
  */
-final class HintError
+final class HintError implements \SqlSemantics\Platform\MySql\Statement\Notice\CodedWarning
 {
     use Snapshot;
 
@@ -29,17 +29,29 @@ final class HintError
      * @param HintFailure $failure Why the comment is not read further
      * @param int $offset The byte offset in the statement text the server reports the problem at
      * @param bool $closing Whether the problem is that the comment ends there
+     * @param bool $leading Whether the comment follows the statement's first keyword
      */
-    public function __construct(public readonly HintFailure $failure, public readonly int $offset, public readonly bool $closing = false)
+    public function __construct(public readonly HintFailure $failure, public readonly int $offset, public readonly bool $closing = false, public readonly bool $leading = false)
     {
         Check::input($offset >= 0, 'An offset is not negative.');
     }
 
     /**
+     * Returns the syntax warning number without consulting input text.
+     */
+    public function code(): int
+    {
+        return 1064;
+    }
+
+    /**
      * Answers the text of the warning the server raises, for the statement text the offset is in.
      */
-    public function message(string $statement): string
+    public function message(?string $statement = null): string
     {
+        if ($statement === null) {
+            return $this->failure->value;
+        }
         $line = substr_count(substr($statement, 0, $this->offset), "\n") + 1;
 
         $near = $this->closing ? '*/' : mb_strcut(substr($statement, $this->offset), 0, 80, 'UTF-8');

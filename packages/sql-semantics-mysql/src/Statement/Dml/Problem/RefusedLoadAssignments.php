@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A complete LOAD request with an intrinsic input or SET assignment constraint.
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RefusedLoadAssignments implements Diagnostic, Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FieldOption> The FIELDS options in written order
@@ -89,6 +88,7 @@ final class RefusedLoadAssignments implements Diagnostic, Node
         array $columns = [],
         array $assignments = [],
         public readonly ?BulkOptions $bulk = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($table->alias === null, 'The table of LOAD has no correlation name.');
         Check::input($compression === null || $compression->radix === null, 'A LOAD compression algorithm is quoted text.');

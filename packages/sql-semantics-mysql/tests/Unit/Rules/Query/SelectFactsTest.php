@@ -44,10 +44,10 @@ final class SelectFactsTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a AS x FROM t WHERE b = 1 GROUP BY a HAVING x > 1 ORDER BY x', [$t]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->resolution);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(AliasTarget::class, $operation->query->orderBy[0]->expression->scalarInformation()->resolution);
         self::assertSame($t->columns[0], $operation->field('x')->column());
     }
 
@@ -75,53 +75,53 @@ final class SelectFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 FROM t WINDOW w AS (), w AS ()');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
     }
 
     public function testAliasesAnswersTheFieldsNamedByAnAliasOrAfterTheirText(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x, 2, a, 1+1, 3 AS y FROM t');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame(['x', '2', '1+1', 'y'], array_map(static fn (Field $field): ?string => $field->name?->value, (new SelectFacts())->aliases($select, $operation->fields()->items ?? [], $operation->context->profile)));
+        self::assertSame(['x', '2', '1+1', 'y'], array_map(static fn (Field $field): ?string => $field->name?->value, (new SelectFacts())->aliases($select, $operation->fields()->items ?? [], (new Semantics(Dialect::MySql))->context([])->profile)));
     }
 
     public function testDeriveResolvesAnOrderingByTheTextAnItemIsNamedAfter(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1+1 FROM t ORDER BY `1+1`', []);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($select->orderBy[0]->expression)->resolution);
+        self::assertInstanceOf(AliasTarget::class, $select->orderBy[0]->expression->scalarInformation()->resolution);
     }
 
     public function testWindowsNamesTheFirstDefinitionOfAWindowDefinedTwice(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 WINDOW X AS (), x AS (), x AS ()');
 
-        self::assertEquals([new Misuse(MisuseRule::DuplicateWindow, new Name('X')), new Misuse(MisuseRule::DuplicateWindow, new Name('X'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::DuplicateWindow, new Name('X')), new Misuse(MisuseRule::DuplicateWindow, new Name('X'))], $operation->diagnostics());
     }
 
     public function testDeriveWarnsOfAGroupingDirectionAndProcedureAnalyseIn57(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_NO_CACHE 1 FROM t GROUP BY 1 DESC, 1 ASC PROCEDURE ANALYSE()');
 
-        self::assertSame([Deprecated::NoCache->value, Deprecated::GroupByDirection->value, Deprecated::GroupByDirection->value, Deprecated::ProcedureAnalyse->value], array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
-        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 FROM t GROUP BY 1 DESC PROCEDURE ANALYSE()')->facts->warnings);
+        self::assertSame([Deprecated::NoCache->value, Deprecated::GroupByDirection->value, Deprecated::GroupByDirection->value, Deprecated::ProcedureAnalyse->value], array_map(static fn (Warning $warning): string => $warning->message(), $operation->warnings()));
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 FROM t GROUP BY 1 DESC PROCEDURE ANALYSE()')->warnings());
     }
 
     public function testTabledMakesATemporalValueBinaryInAGroupedBlock(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = $semantics->analyze('CREATE TABLE t (e DATE)');
-        $grouped = $semantics->analyze('SELECT IFNULL(e, e) FROM t GROUP BY e', [$t])->facts->output?->fields()?->at(0)->type;
-        $plain = $semantics->analyze('SELECT IFNULL(e, e) FROM t', [$t])->facts->output?->fields()?->at(0)->type;
+        $grouped = $semantics->analyze('SELECT IFNULL(e, e) FROM t GROUP BY e', [$t])->output()?->fields()?->at(0)->type;
+        $plain = $semantics->analyze('SELECT IFNULL(e, e) FROM t', [$t])->output()?->fields()?->at(0)->type;
 
         self::assertInstanceOf(Known::class, $grouped);
         self::assertInstanceOf(Domain::class, $grouped->descriptor);

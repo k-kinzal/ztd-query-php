@@ -23,7 +23,7 @@ final class SetOperationFactsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT 1 UNION SELECT TRUE');
-        self::assertSame('UNION types integer and boolean cannot be matched.', $query->facts->diagnostics[0]->message());
+        self::assertSame('UNION types integer and boolean cannot be matched.', $query->diagnostics()[0]->message());
     }
 
     public function testReboundBindsTheRecursiveTable(): void

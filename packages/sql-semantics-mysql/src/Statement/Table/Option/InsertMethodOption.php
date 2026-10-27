@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Option;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\InsertMethod;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The INSERT_METHOD option of a MERGE table.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) INSERT_METHOD = LAST');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\InsertMethodOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\InsertMethodOption // => true
  */
 final class InsertMethodOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param InsertMethod $method The table that receives inserted rows
      */
-    public function __construct(public readonly InsertMethod $method)
+    public function __construct(public readonly InsertMethod $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

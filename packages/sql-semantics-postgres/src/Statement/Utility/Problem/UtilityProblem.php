@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of an unknown EXPLAIN option
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('EXPLAIN (fast) SELECT 1');
- *     $operation->facts->diagnostics[0]->message() // => 'unrecognized EXPLAIN option "fast"'
+ *     $operation->diagnostics()[0]->message() // => 'unrecognized EXPLAIN option "fast"'
  */
 final class UtilityProblem implements Diagnostic
 {

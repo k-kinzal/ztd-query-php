@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Identification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Applies the authentication and the options of CREATE USER and ALTER USER to an account.
@@ -53,9 +53,9 @@ final class Options
      *
      * @throws SqlError When an option is refused
      */
-    public function parsed(Operation $operation, string $text): void
+    public function parsed(MySqlStatement $operation, string $text): void
     {
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof NumberOutOfRange) {
                 $at = strpos($text, $diagnostic->number);
                 throw $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . mb_strcut($at === false ? '' : substr($text, $at), 0, 80, 'UTF-8') . "' at line 1");

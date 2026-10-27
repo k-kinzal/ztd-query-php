@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * FETCH: reads the next row of an open cursor into local variables.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the targets of a FETCH
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH NEXT FROM c INTO a; END');
- *     [$create->statement->body->statements[0]->targets[0]->value, $create->toString()] // => ['a', 'CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO a; END']
+ *     [$create->body->statements[0]->targets[0]->value, $create->toString()] // => ['a', 'CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO a; END']
  */
 final class FetchCursor implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The variables that receive the row, in written order
@@ -39,7 +38,7 @@ final class FetchCursor implements ProgramStatement
      * @param Name $cursor The cursor name
      * @param list<Name> $targets The variables that receive the row; at least one
      */
-    public function __construct(public readonly Name $cursor, array $targets)
+    public function __construct(public readonly Name $cursor, array $targets, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->targets = Check::listOf($targets, Name::class, 'FETCH names at least one variable.', 1);
     }

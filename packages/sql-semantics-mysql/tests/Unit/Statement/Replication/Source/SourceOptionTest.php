@@ -41,8 +41,8 @@ final class SourceOptionTest extends TestCase
         $change = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("change replication source to master_host = 'h', source_port = 1, get_master_public_key = 1");
 
         self::assertSame("CHANGE REPLICATION SOURCE TO MASTER_HOST = 'h', SOURCE_PORT = 1, GET_MASTER_PUBLIC_KEY = 1", $change->toString());
-        self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
-        self::assertSame([true, false, true], array_column($change->statement->options, 'synonym'));
+        self::assertInstanceOf(ChangeReplicationSource::class, $change);
+        self::assertSame([true, false, true], array_column($change->options, 'synonym'));
     }
     public function testValueRejectsUnrenamedSynonyms(): void
     {

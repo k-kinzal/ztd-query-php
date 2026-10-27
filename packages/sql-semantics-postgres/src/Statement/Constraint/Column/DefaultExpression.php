@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DEFAULT column constraint: the value a column takes when none is given.
@@ -32,13 +31,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DefaultExpression implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The default expression; a `b_expr`
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly Scalar $value, public readonly ?Name $name = null)
+    public function __construct(public readonly Scalar $value, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new Precedence())->restricted($value), 'A default is an expression without boolean, IS, pattern or subquery operators outside parentheses.');
     }

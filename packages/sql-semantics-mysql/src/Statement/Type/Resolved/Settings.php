@@ -95,6 +95,7 @@ final class Settings implements Session
      * @param Collation|null $databaseCollation The session collation_database, which SET may override independently of schema defaults
      * @param int|null $replicaNetTimeout The global replication network timeout in seconds; null selects the release default
      * @param list<Name>|null $fullTextParsers The available full-text parser plugins; null leaves plugin availability unresolved
+     * @param bool $realAsFloat Whether REAL denotes FLOAT rather than DOUBLE (REAL_AS_FLOAT)
      * @param array<array-key, int> $unboundParameters Positions whose domains describe preparation placeholders, with no value bound yet
      */
     public function __construct(
@@ -122,6 +123,7 @@ final class Settings implements Session
         public readonly ?int $replicaNetTimeout = null,
         ?array $fullTextParsers = null,
         array $unboundParameters = [],
+        public readonly bool $realAsFloat = false,
     ) {
         Check::input(array_is_list($unboundParameters), 'Unbound parameter positions form a list.');
         foreach ($unboundParameters as $position) {
@@ -158,7 +160,7 @@ final class Settings implements Session
      */
     public function withParameters(array $parameters, array $unboundParameters = []): self
     {
-        return new self($this->connection, $this->divPrecisionIncrement, $this->server, $this->schemas, $this->groupConcatMaxLen, $this->userVariables, $parameters, $this->unsignedSubtraction, $this->client, $this->program, $this->functions, $this->timeNames, $this->blockEncryptionMode, $this->derivedMerge, $this->strict, $this->explicitDefaultsForTimestamp, $this->noZeroDate, $this->noZeroInDate, $this->allowInvalidDates, $this->handlers, $this->databaseCollation, $this->replicaNetTimeout, $this->fullTextParsers, $unboundParameters);
+        return new self($this->connection, $this->divPrecisionIncrement, $this->server, $this->schemas, $this->groupConcatMaxLen, $this->userVariables, $parameters, $this->unsignedSubtraction, $this->client, $this->program, $this->functions, $this->timeNames, $this->blockEncryptionMode, $this->derivedMerge, $this->strict, $this->explicitDefaultsForTimestamp, $this->noZeroDate, $this->noZeroInDate, $this->allowInvalidDates, $this->handlers, $this->databaseCollation, $this->replicaNetTimeout, $this->fullTextParsers, $unboundParameters, $this->realAsFloat);
     }
 
     /**

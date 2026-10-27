@@ -17,10 +17,12 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Copying to the client
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t TO STDOUT');
- *     $copy->statement->file // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout
+ *     $copy->file // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout
  */
 enum CopyStream: string implements Node
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Stdin = 'STDIN';
     case Stdout = 'STDOUT';
 

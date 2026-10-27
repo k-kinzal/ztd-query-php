@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A BEGIN ... END compound statement with its declarations, statements and optional label.
@@ -27,12 +26,12 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: [new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading a labeled block
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work');
- *     $block = $create->statement->body;
+ *     $block = $create->body;
  *     [$block->label->value, count($block->declarations), count($block->statements)] // => ['work', 1, 1]
  */
 final class Block implements Flow\FunctionBody
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Declaration> The declarations in written order
@@ -51,7 +50,7 @@ final class Block implements Flow\FunctionBody
      * @param Name|null $endLabel The label written after END; only a labeled block has one
      * @throws InvalidConstruction When a member is of another class, or an end label is given without a label
      */
-    public function __construct(array $declarations = [], array $statements = [], public readonly ?Name $label = null, public readonly ?Name $endLabel = null)
+    public function __construct(array $declarations = [], array $statements = [], public readonly ?Name $label = null, public readonly ?Name $endLabel = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->declarations = Check::listOf($declarations, Declaration::class, 'A block declares variables, conditions, cursors and handlers.');
         $this->statements = (new StatementSequence())->members($statements);

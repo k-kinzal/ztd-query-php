@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
  * @visibility public
  * @example Reading which counts disagree
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 UNION SELECT 2, 3');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule::CompoundArms
+ *     $query->diagnostics()[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule::CompoundArms
  */
 enum ArityRule
 {

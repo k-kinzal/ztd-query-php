@@ -21,7 +21,7 @@ final class GenerationMetadataTest extends TestCase
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
         $operation = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(g INT AS (ROW(1,2)))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         self::assertNotNull($pending->generation);
@@ -33,7 +33,7 @@ final class GenerationMetadataTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE missing.t(g INT AS (ROW(1,2)))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         $reply = $pending->run($session, 'opaque request', [])[0];
@@ -46,7 +46,7 @@ final class GenerationMetadataTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d', 'other']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TEMPORARY TABLE IF NOT EXISTS t(g INT AS (ROW(1,2)))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         self::assertNotNull($pending->generation);
@@ -61,7 +61,7 @@ final class GenerationMetadataTest extends TestCase
         $session = $instance->connect(database: 'd');
         $other = $instance->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(g INT AS (ROW(1,2)))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         $header = $pending->statement;
@@ -83,7 +83,7 @@ final class GenerationMetadataTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (SUM(a)))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         self::assertNotNull($pending->generation);
@@ -102,7 +102,7 @@ final class GenerationMetadataTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(a INT,g INT AS (SUM(a)))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         self::assertNotNull($pending->generation);
@@ -123,7 +123,7 @@ final class GenerationMetadataTest extends TestCase
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect(database: 'd');
         $operation = (new Preparation())->read('CREATE TABLE IF NOT EXISTS t(g INT AS (@@version))', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new Preparation())->check($operation, $session);
         $pending = PreparedStatement::capture($operation, $session);
         self::assertNotNull($pending->generation);

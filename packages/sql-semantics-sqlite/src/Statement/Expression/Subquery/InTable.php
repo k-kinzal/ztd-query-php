@@ -21,7 +21,6 @@ use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -45,11 +44,14 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
  *     $query = $semantics->analyze('SELECT 1 IN t', [$table]);
- *     [$query->statement->columns[0]->expression->table->name->value, $query->facts->relation($query->statement->columns[0]->expression)->table->table === $table->declarations()[0], $query->field(0)->nullability] // => ['t', true, \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->columns[0]->expression->table->name->value, $query->columns[0]->expression->relationInformation()->table->table === $table->declarations()[0], $query->field(0)->nullability] // => ['t', true, \SqlSemantics\Statement\Type\Nullability::NotNull]
  */
-final class InTable implements Scalar
+final class InTable implements Scalar, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar>|null The arguments of a table-valued function; null when no argument list is written
@@ -62,8 +64,14 @@ final class InTable implements Scalar
      * @param list<Scalar>|null $arguments The arguments of a table-valued function; null when no argument list is written
      * @param bool $negated Whether NOT is written before IN
      */
-    public function __construct(public readonly Scalar $operand, public readonly QualifiedName $table, ?array $arguments = null, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, public readonly QualifiedName $table, ?array $arguments = null, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = $arguments === null ? null : Check::listOf($arguments, Scalar::class, 'The arguments of a table-valued function are expressions.');
         Check::input((new Precedence())->closing($operand) >= Precedence::EQUALITY, 'The operand needs parentheses to keep its place.');
     }

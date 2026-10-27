@@ -35,17 +35,17 @@ final class ResultReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL, b INT)');
         $operation = $semantics->analyze('SELECT b AS a FROM t GROUP BY a HAVING a > 0', [$table]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
-        $resolution = $operation->facts->scalar($select->having->left)->resolution;
+        $resolution = $select->having->left->scalarInformation()->resolution;
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame('a', $resolution->slot->name?->value);
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(NonGroupedColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(NonGroupedColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testGroupingSkipsAColumnOfAnotherOccurrenceAndReportsTwoDifferentColumns(): void
@@ -54,22 +54,22 @@ final class ResultReferencesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
         $other = $semantics->analyze('SELECT u.a AS a FROM t, t AS u GROUP BY t.a HAVING u.a > 0', [$table]);
         $ambiguous = $semantics->analyze('SELECT 1 FROM t, t AS u GROUP BY t.a, u.a HAVING a > 0', [$table]);
-        $select = $other->statement;
+        $select = $other;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
-        $resolution = $other->facts->scalar($select->having->left)->resolution;
-        $selected = $other->facts->scalar($item->expression)->resolution;
+        $resolution = $select->having->left->scalarInformation()->resolution;
+        $selected = $item->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertInstanceOf(ResolvedColumn::class, $selected);
 
         self::assertSame($selected->relation, $resolution->relation);
-        self::assertInstanceOf(NonGroupedColumn::class, $other->facts->diagnostics[0]);
-        self::assertCount(1, $ambiguous->facts->diagnostics);
-        self::assertInstanceOf(AmbiguousColumn::class, $ambiguous->facts->diagnostics[0]);
+        self::assertInstanceOf(NonGroupedColumn::class, $other->diagnostics()[0]);
+        self::assertCount(1, $ambiguous->diagnostics());
+        self::assertInstanceOf(AmbiguousColumn::class, $ambiguous->diagnostics()[0]);
     }
 
     public function testSelectedResolvesAColumnItemToItsColumnAndAnotherItemToTheItem(): void
@@ -80,13 +80,13 @@ final class ResultReferencesTest extends TestCase
         $computed = $semantics->analyze('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
         $hidden = $semantics->analyze('SELECT t.a AS x FROM t HAVING a > 0', [$table]);
         $ambiguous = $semantics->analyze('SELECT a, b AS a FROM t HAVING a > 0', [$table]);
-        $columnSelect = $column->statement;
+        $columnSelect = $column;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $columnSelect);
         $columnSelect = $columnSelect->query;
-        $computedSelect = $computed->statement;
+        $computedSelect = $computed;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $computedSelect);
         $computedSelect = $computedSelect->query;
-        $hiddenSelect = $hidden->statement;
+        $hiddenSelect = $hidden;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $hiddenSelect);
         $hiddenSelect = $hiddenSelect->query;
         self::assertInstanceOf(Select::class, $columnSelect);
@@ -95,17 +95,17 @@ final class ResultReferencesTest extends TestCase
         self::assertInstanceOf(Comparison::class, $columnSelect->having);
         self::assertInstanceOf(Comparison::class, $computedSelect->having);
         self::assertInstanceOf(Comparison::class, $hiddenSelect->having);
-        $alias = $computed->facts->scalar($computedSelect->having->left)->resolution;
+        $alias = $computedSelect->having->left->scalarInformation()->resolution;
 
-        self::assertInstanceOf(ResolvedColumn::class, $column->facts->scalar($columnSelect->having->left)->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $columnSelect->having->left->scalarInformation()->resolution);
         self::assertInstanceOf(AliasTarget::class, $alias);
         self::assertSame($computed->field('x'), $alias->field);
-        $outer = (new ResultReferences())->selected(new GroupedRow([$computed->field('x')], [], false), new Environment($computed->context), new Name('x'), null, 2);
+        $outer = (new ResultReferences())->selected(new GroupedRow([$computed->field('x')], [], false), new Environment($semantics->context([$table])), new Name('x'), null, 2);
         self::assertInstanceOf(AliasTarget::class, $outer);
         self::assertSame(2, $outer->depth);
-        self::assertInstanceOf(ResolvedColumn::class, $hidden->facts->scalar($hiddenSelect->having->left)->resolution);
-        self::assertCount(1, $ambiguous->facts->diagnostics);
-        self::assertInstanceOf(AmbiguousColumn::class, $ambiguous->facts->diagnostics[0]);
+        self::assertInstanceOf(ResolvedColumn::class, $hiddenSelect->having->left->scalarInformation()->resolution);
+        self::assertCount(1, $ambiguous->diagnostics());
+        self::assertInstanceOf(AmbiguousColumn::class, $ambiguous->diagnostics()[0]);
     }
 
     public function testNamedComparesTheColumnNameByTheColumnComparisonOfTheContext(): void
@@ -114,7 +114,7 @@ final class ResultReferencesTest extends TestCase
         $operation = $semantics->analyze('SELECT a FROM t', [$semantics->analyze('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
-        $environment = new Environment($operation->context);
+        $environment = new Environment($semantics->context([$semantics->analyze('CREATE TABLE t (a INT)')]));
 
         self::assertTrue((new ResultReferences())->named($environment, $resolution, new Name('A')));
         self::assertFalse((new ResultReferences())->named($environment, $resolution, new Name('b')));
@@ -126,7 +126,7 @@ final class ResultReferencesTest extends TestCase
         $operation = $semantics->analyze('SELECT a FROM t', [$semantics->analyze('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('a')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
-        $environment = new Environment($operation->context, null, [new VisibleRelation($resolution->relation, $operation->facts->relation($resolution->relation)->shape, null, new QualifiedName(new Name('t')))]);
+        $environment = new Environment($semantics->context([$semantics->analyze('CREATE TABLE t (a INT)')]), null, [new VisibleRelation($resolution->relation, $resolution->relation->relationInformation()->shape, null, new QualifiedName(new Name('t')))]);
 
         self::assertTrue((new ResultReferences())->admitted($environment, $resolution, new Name('a'), new QualifiedName(new Name('t'))));
         self::assertFalse((new ResultReferences())->admitted($environment, $resolution, new Name('a'), new QualifiedName(new Name('u'))));
@@ -156,7 +156,7 @@ final class ResultReferencesTest extends TestCase
         self::assertSame($resolution->depth + 2, (new ResultReferences())->deeper($resolution, 2)->depth);
         self::assertSame($resolution->slot, (new ResultReferences())->deeper($resolution, 2)->slot);
         self::assertTrue((new ResultReferences())->deeper($resolution, 2)->resultReference);
-        self::assertNull((new ResultReferences())->find(new GroupedRow([], [], true), new Environment($operation->context), new Name('a'), null, 0));
+        self::assertNull((new ResultReferences())->find(new GroupedRow([], [], true), new Environment($semantics->context([$semantics->analyze('CREATE TABLE t (a INT)')])), new Name('a'), null, 0));
     }
 
     public function testUnaliasedMatchesAColumnItemByItsColumnInAnAdmittedOccurrence(): void
@@ -165,7 +165,7 @@ final class ResultReferencesTest extends TestCase
         $operation = $semantics->analyze('SELECT a AS x FROM t', [$semantics->analyze('CREATE TABLE t (a INT)')]);
         $resolution = $operation->field('x')->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
-        $environment = new Environment($operation->context, null, [new VisibleRelation($resolution->relation, $operation->facts->relation($resolution->relation)->shape, null, new QualifiedName(new Name('t')))]);
+        $environment = new Environment($semantics->context([$semantics->analyze('CREATE TABLE t (a INT)')]), null, [new VisibleRelation($resolution->relation, $resolution->relation->relationInformation()->shape, null, new QualifiedName(new Name('t')))]);
 
         self::assertTrue((new ResultReferences())->unaliased($environment, $resolution, new Name('a'), null));
         self::assertTrue((new ResultReferences())->unaliased($environment, $resolution, new Name('a'), new QualifiedName(new Name('t'))));
@@ -196,7 +196,7 @@ final class ResultReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, q INT)')->declarations();
         $operation = $semantics->analyze("SELECT 'é', a AS q, 1 AS r FROM t HAVING q > 0 AND r > 0", $table);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -204,24 +204,24 @@ final class ResultReferencesTest extends TestCase
         self::assertInstanceOf(Logical::class, $having);
         self::assertInstanceOf(Comparison::class, $having->left);
         self::assertInstanceOf(Comparison::class, $having->right);
-        $q = $operation->facts->scalar($having->left->left)->resolution;
-        $r = $operation->facts->scalar($having->right->left)->resolution;
+        $q = $having->left->left->scalarInformation()->resolution;
+        $r = $having->right->left->scalarInformation()->resolution;
 
         self::assertInstanceOf(ConditionalColumn::class, $q);
         self::assertCount(1, $q->candidates);
         self::assertInstanceOf(ConditionalColumn::class, $r);
         self::assertSame([], $r->candidates);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testUnnamedStopsAtTheItemTheNameNames(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze("SELECT 'é', 1 AS r, 'ü' FROM DUAL HAVING r > 0");
-        $output = $operation->facts->output;
+        $output = $operation->output();
         self::assertNotNull($output);
         $row = new GroupedRow($output->projection, [], false);
-        $scope = new Environment($operation->context);
+        $scope = new Environment($semantics->context([]));
 
         self::assertCount(1, (new ResultReferences())->unnamed($row, $scope, new Name('r'), null));
         self::assertCount(2, (new ResultReferences())->unnamed($row, $scope, new Name('s'), null));

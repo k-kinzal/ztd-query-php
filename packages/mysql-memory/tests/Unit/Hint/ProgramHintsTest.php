@@ -18,7 +18,8 @@ final class ProgramHintsTest extends TestCase
     public function testWarningsKeepIndependentBlockNamesAndOneTrailingResourceCondition(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->semantics()->analyze('CREATE PROCEDURE p() BEGIN SELECT /*+ NO_ICP(t@x i) MAX_EXECUTION_TIME(2) RESOURCE_GROUP(a) */ 1; SELECT /*+ NO_ICP(t@y i) RESOURCE_GROUP(b) */ 2; END')->statement;
+        $statement = $session->semantics()->analyze('CREATE PROCEDURE p() BEGIN SELECT /*+ NO_ICP(t@x i) MAX_EXECUTION_TIME(2) RESOURCE_GROUP(a) */ 1; SELECT /*+ NO_ICP(t@y i) RESOURCE_GROUP(b) */ 2; END');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $session->text = 'unrelated invalid SQL';
         self::assertSame([3127, 3125, 3127, 3515], array_column((new ProgramHints())->warnings($statement, $session), 0));
@@ -28,7 +29,8 @@ final class ProgramHintsTest extends TestCase
     public function testBlocksPreserveSeparateNamespacesForEachInstruction(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->semantics()->analyze('CREATE PROCEDURE p() BEGIN SELECT /*+ QB_NAME(x) */ 1; SELECT /*+ NO_ICP(t@x i) */ 2; END')->statement;
+        $statement = $session->semantics()->analyze('CREATE PROCEDURE p() BEGIN SELECT /*+ QB_NAME(x) */ 1; SELECT /*+ NO_ICP(t@x i) */ 2; END');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $blocks = (new ProgramHints())->blocks($statement->body, $session);
         self::assertCount(2, $blocks);

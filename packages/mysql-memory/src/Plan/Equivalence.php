@@ -36,7 +36,7 @@ final class Equivalence
     public function sameColumn(ResolvedColumn $resolution, ColumnUse $use): bool
     {
         $facts = $this->planner->compiler->facts;
-        $other = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
+        $other = $use->hasBinding() ? $use->scalarInformation()->resolution : null;
 
         return $other instanceof ResolvedColumn && $other->relation === $resolution->relation && $this->column($other) === $this->column($resolution);
     }
@@ -72,8 +72,8 @@ final class Equivalence
             return false;
         }
         $facts = $this->planner->compiler->facts;
-        if ($left instanceof ColumnUse && $right instanceof ColumnUse && $facts->covers($left) && $facts->covers($right)) {
-            $first = $facts->scalar($left)->resolution;
+        if ($left instanceof ColumnUse && $right instanceof ColumnUse && $left->hasBinding() && $right->hasBinding()) {
+            $first = $left->scalarInformation()->resolution;
             if ($first instanceof ResolvedColumn) {
                 return $this->sameColumn($first, $right);
             }
@@ -97,6 +97,9 @@ final class Equivalence
         $values = [[], []];
         foreach ([$left, $right] as $side => $object) {
             $properties = get_object_vars($object);
+            if ($object instanceof \SqlSemantics\Statement\Node) {
+                unset($properties['inputSource'], $properties['location']);
+            }
             array_walk_recursive($properties, static function ($value, $key) use (&$values, $side): void {
                 $values[$side][] = [$key, $value];
             });

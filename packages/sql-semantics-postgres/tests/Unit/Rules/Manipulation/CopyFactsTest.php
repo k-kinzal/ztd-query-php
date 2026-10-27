@@ -19,7 +19,7 @@ final class CopyFactsTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('COPY t TO STDOUT WHERE a = 1', [$t, $u]);
-        self::assertSame(['WHERE clause not allowed with COPY TO'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['WHERE clause not allowed with COPY TO'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testQueryReportsSelectInto(): void
@@ -29,7 +29,7 @@ final class CopyFactsTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('COPY (SELECT 1 INTO x) TO STDOUT', [$t, $u]);
-        self::assertSame(['COPY (SELECT INTO) is not supported'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['COPY (SELECT INTO) is not supported'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testColumnsReportsUnknownAndRepeatedColumns(): void
@@ -39,7 +39,7 @@ final class CopyFactsTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('COPY t (a, z, a) FROM STDIN', [$t, $u]);
-        self::assertSame(['column "z" of relation "t" does not exist', 'column "a" specified more than once'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['column "z" of relation "t" does not exist', 'column "a" specified more than once'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testProgramReportsTheClient(): void
@@ -49,30 +49,30 @@ final class CopyFactsTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('COPY t FROM PROGRAM STDIN', [$t, $u]);
-        self::assertSame(['STDIN/STDOUT not allowed with PROGRAM'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['STDIN/STDOUT not allowed with PROGRAM'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testKindReportsARelationCopyCannotRead(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['cannot copy from view "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY v TO STDOUT', $context)->facts->diagnostics));
-        self::assertSame(['cannot copy to sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY s FROM STDIN', $context)->facts->diagnostics));
-        self::assertSame([], $semantics->analyze('COPY v FROM STDIN', $context)->facts->diagnostics);
+        self::assertSame(['cannot copy from view "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY v TO STDOUT', $context)->diagnostics()));
+        self::assertSame(['cannot copy to sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY s FROM STDIN', $context)->diagnostics()));
+        self::assertSame([], $semantics->analyze('COPY v FROM STDIN', $context)->diagnostics());
     }
 
     public function testColumnsReportsAGeneratedColumn(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED, c int)');
-        self::assertSame(['column "b" is a generated column'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g (c, b) TO STDOUT', $table->declarations())->facts->diagnostics));
+        self::assertSame(['column "b" is a generated column'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g (c, b) TO STDOUT', $table->declarations())->diagnostics()));
     }
 
     public function testGeneratedAnswersTheGeneratedColumns(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6');
         $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED, c text)');
-        self::assertSame(['FORCE_QUOTE column "c" not referenced by COPY'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g (a) TO STDOUT CSV FORCE QUOTE c', $table->declarations())->facts->diagnostics));
-        self::assertSame(['column "b" is a generated column'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g TO STDOUT CSV FORCE QUOTE b, c', $table->declarations())->facts->diagnostics));
+        self::assertSame(['FORCE_QUOTE column "c" not referenced by COPY'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g (a) TO STDOUT CSV FORCE QUOTE c', $table->declarations())->diagnostics()));
+        self::assertSame(['column "b" is a generated column'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g TO STDOUT CSV FORCE QUOTE b, c', $table->declarations())->diagnostics()));
     }
 }

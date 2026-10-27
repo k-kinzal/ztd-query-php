@@ -23,12 +23,12 @@ final class AlterTableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $check = $semantics->analyze('ALTER TABLE missing CHECK PARTITION ALL');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $check);
+        self::assertInstanceOf(M\Statement::class, $check);
 
         self::assertSame(4, $check->fields()?->count());
         self::assertSame('Msg_text', $check->field(3)->slot->name?->value);
         $rebuild = $semantics->analyze('ALTER TABLE missing REBUILD PARTITION ALL');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $rebuild);
+        self::assertInstanceOf(M\Statement::class, $rebuild);
         self::assertNull($rebuild->fields());
     }
 
@@ -37,9 +37,9 @@ final class AlterTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $alter = $semantics->analyze('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE t', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
+        self::assertInstanceOf(M\Statement::class, $alter);
 
-        self::assertSame(["Not unique table/alias: 't'."], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(["Not unique table/alias: 't'."], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testDeriveStatementReportsTheColumnProblems(): void
@@ -47,9 +47,9 @@ final class AlterTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t DROP c, RENAME COLUMN a TO b', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
+        self::assertInstanceOf(M\Statement::class, $alter);
 
-        self::assertSame(['Column c does not exist in the table.', 'Column b would be defined more than once.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['Column c does not exist in the table.', 'Column b would be defined more than once.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testDeriveRelationAnswersTheColumnsAfterTheChange(): void
@@ -57,8 +57,9 @@ final class AlterTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t DROP a, ADD c BIGINT FIRST, RENAME COLUMN b TO d', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
-        $fact = $alter->facts->relation($alter->statement);
+        self::assertInstanceOf(M\Statement::class, $alter);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $alter);
+        $fact = $alter->relationInformation();
 
         self::assertSame(['c', 'd'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $fact->shape->slots));
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
@@ -78,8 +79,8 @@ final class AlterTableTest extends TestCase
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
         $alter = $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertInstanceOf(M\Statement::class, $alter);
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testDeriveStatementWarnsOfIgnoreIn56(): void
@@ -88,8 +89,8 @@ final class AlterTableTest extends TestCase
         $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
 
         $alter = $semantics->analyze('ALTER IGNORE TABLE t ADD b INT', $tables);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
-        self::assertSame(["'IGNORE' is deprecated and will be removed in a future release."], array_map(static fn ($warning): string => $warning->message(), $alter->facts->warnings));
+        self::assertInstanceOf(M\Statement::class, $alter);
+        self::assertSame(["'IGNORE' is deprecated and will be removed in a future release."], array_map(static fn ($warning): string => $warning->message(), $alter->warnings()));
     }
     public function testDeriveStatementChecksAddedAndChangedTypesAfterTheirNotices(): void
     {
@@ -104,18 +105,18 @@ final class AlterTableTest extends TestCase
     public function testDeriveProgramAndDeriveRelationKeepTheTargetAndCompleteActions(): void
     {
         $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER()), ADD a INT');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $alter = $operation->statement->body;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $alter = $operation->body;
         self::assertInstanceOf(AlterTable::class, $alter);
         self::assertCount(2, $alter->commands);
-        self::assertTrue($operation->facts->covers($alter));
+        self::assertTrue($alter->hasBinding());
     }
 
     public function testRenderRetainsColumnAttributesAndActionOrder(): void
     {
         $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER()) STORED NOT NULL, ADD a INT');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(M\Statement::class, $operation);
         self::assertSame('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS (USER()) STORED NOT NULL, ADD a INT', $operation->toString());
     }
 
@@ -128,11 +129,11 @@ final class AlterTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, '5.7.44');
         $table = $semantics->analyze('CREATE TABLE t(g INT)');
         $operation = $semantics->analyze('CREATE PROCEDURE p() ALTER TABLE t MODIFY g INT AS(USER())', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $alter = $operation->statement->body;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $alter = $operation->body;
         self::assertInstanceOf(AlterTable::class, $alter);
-        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context([$table]));
         self::assertInstanceOf(DeclaredTable::class, $alter->deriveRelation($derivation, $derivation->environment())->table);
     }
 }

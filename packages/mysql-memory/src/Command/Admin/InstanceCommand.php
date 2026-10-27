@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\AlterInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes ALTER INSTANCE, instance locks, CLONE, SHUTDOWN and RESTART.
@@ -52,8 +52,8 @@ final class InstanceCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown) {
             $session->instance->shutdown();
 

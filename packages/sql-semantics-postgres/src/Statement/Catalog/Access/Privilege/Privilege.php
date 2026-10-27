@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One privilege of a GRANT or REVOKE, optionally limited to columns; in a role grant, the granted role.
@@ -24,13 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a column privilege
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT UPDATE (price) ON items TO joe');
- *     [$operation->statement->privileges[0]->privilege(), $operation->statement->privileges[0]->columns[0]->value] // => ['update', 'price']
+ *     [$operation->privileges[0]->privilege(), $operation->privileges[0]->columns[0]->value] // => ['update', 'price']
  * @example Rejecting ALL without a column list as a privilege of its own
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::All) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Privilege implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns the privilege is limited to; empty when no column list is written
@@ -41,7 +40,7 @@ final class Privilege implements Node
      * @param PrivilegeKeyword|Name $name The keyword spelling or the identifier that names the privilege
      * @param list<Name> $columns The columns the privilege is limited to; empty when no column list is written
      */
-    public function __construct(public readonly PrivilegeKeyword|Name $name, array $columns = [])
+    public function __construct(public readonly PrivilegeKeyword|Name $name, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'The columns of a privilege are names.');
         Check::input($name !== PrivilegeKeyword::All || $this->columns !== [], 'ALL is a privilege of its own only with a column list.');

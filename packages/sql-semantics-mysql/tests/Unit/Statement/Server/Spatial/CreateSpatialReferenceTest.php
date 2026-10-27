@@ -24,16 +24,16 @@ final class CreateSpatialReferenceTest extends TestCase
     public function testDeriveStatementLeavesCatalogConditionsToTheConsumer(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n' DEFINITION 'd'");
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testInputPreservesARequestWithAMissingDefinition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
         self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'", $operation->toString());
-        self::assertInstanceOf(CreateSpatialReference::class, $operation->statement);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition, $operation->statement->problem?->attribute);
-        self::assertSame($operation->statement->problem?->message(), $operation->facts->diagnostics[0]->message());
+        self::assertInstanceOf(CreateSpatialReference::class, $operation);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition, $operation->problem?->attribute);
+        self::assertSame($operation->problem->message(), $operation->diagnostics()[0]->message());
     }
     /**
      * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Literal\Numeral}>

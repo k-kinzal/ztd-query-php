@@ -41,16 +41,16 @@ final class RoutineLookupTest extends TestCase
     public function testSingleRequiresBothIdentityPartsFixed(string $filter, bool $single): void
     {
         $operation = (new Instance())->connect()->analyze('SHOW FUNCTION STATUS ' . $filter);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(ShowFunctionStatus::class, $statement);
 
-        self::assertSame($single, RoutineLookup::single($statement->filter, $operation->facts));
+        self::assertSame($single, RoutineLookup::single($statement->filter, $operation->statementInformation()));
     }
 
     public function testColumnDistinguishesAColumnFromItsConstantValue(): void
     {
         $operation = (new Instance())->connect()->analyze("SHOW FUNCTION STATUS WHERE Db='sys'");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(ShowFunctionStatus::class, $statement);
         self::assertInstanceOf(ShowWhere::class, $statement->filter);
         $condition = $statement->filter->condition;
@@ -58,7 +58,7 @@ final class RoutineLookupTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $condition->left);
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $condition->right);
 
-        self::assertSame('db', RoutineLookup::column($condition->left, $condition->right, $operation->facts));
-        self::assertSame('', RoutineLookup::column($condition->right, $condition->left, $operation->facts));
+        self::assertSame('db', RoutineLookup::column($condition->left, $condition->right, $operation->statementInformation()));
+        self::assertSame('', RoutineLookup::column($condition->right, $condition->left, $operation->statementInformation()));
     }
 }

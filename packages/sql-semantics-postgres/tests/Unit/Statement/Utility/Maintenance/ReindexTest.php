@@ -20,8 +20,8 @@ final class ReindexTest extends TestCase
     public function testDeriveStatementResolvesTheTableOfReindexTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('REINDEX TABLE s.t');
-        self::assertInstanceOf(Reindex::class, $operation->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
+        self::assertInstanceOf(Reindex::class, $operation);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->relationInformation()->table);
     }
 
     public function testDeriveStatementReportsSystemCatalogsRebuiltConcurrently(): void
@@ -30,16 +30,16 @@ final class ReindexTest extends TestCase
         self::assertSame(
             [['cannot reindex system catalogs concurrently'], ['cannot reindex system catalogs concurrently'], []],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('REINDEX SYSTEM CONCURRENTLY')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('REINDEX (CONCURRENTLY) SYSTEM d')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('REINDEX (CONCURRENTLY false) SYSTEM')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('REINDEX SYSTEM CONCURRENTLY')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('REINDEX (CONCURRENTLY) SYSTEM d')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('REINDEX (CONCURRENTLY false) SYSTEM')->diagnostics()),
             ],
         );
     }
 
     public function testDeriveStatementReportsATablespaceWithoutAName(): void
     {
-        self::assertSame(['tablespace requires a parameter'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('REINDEX (TABLESPACE) INDEX i')->facts->diagnostics));
+        self::assertSame(['tablespace requires a parameter'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('REINDEX (TABLESPACE) INDEX i')->diagnostics()));
     }
 
     public function testRenderWritesEachTarget(): void
@@ -55,6 +55,6 @@ final class ReindexTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['"s" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('REINDEX TABLE s', $context)->facts->diagnostics));
+        self::assertSame(['"s" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('REINDEX TABLE s', $context)->diagnostics()));
     }
 }

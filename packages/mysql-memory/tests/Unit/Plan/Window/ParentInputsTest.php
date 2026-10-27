@@ -91,11 +91,11 @@ final class ParentInputsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT @target:=@read+SUM(@aggregate)+SUM(@window) OVER ()+(SELECT @subquery)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $planner = new Planner($operation->query, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
         $variables = [];
-        (new ParentInputs($planner))->visit((new Windowing($planner))->roots($operation->statement->query)[0], $variables);
+        (new ParentInputs($planner))->visit((new Windowing($planner))->roots($operation->query)[0], $variables);
 
         self::assertSame(['read'], array_values(array_map(static fn ($variable): string => $variable->name->value, $variables)));
     }

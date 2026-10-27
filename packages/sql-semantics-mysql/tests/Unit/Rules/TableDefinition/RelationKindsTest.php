@@ -67,8 +67,8 @@ final class RelationKindsTest extends TestCase
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
         $context = [$table, $view];
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($d): string => $d->message(), $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', $context)->facts->diagnostics));
-        self::assertSame(['t is not VIEW.'], array_map(static fn ($d): string => $d->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', $context)->facts->diagnostics));
-        self::assertSame([], $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', $context)->facts->diagnostics);
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($d): string => $d->message(), $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', $context)->diagnostics()));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($d): string => $d->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', $context)->diagnostics()));
+        self::assertSame([], $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', $context)->diagnostics());
     }
 }

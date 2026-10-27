@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -32,19 +31,27 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a column rename
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ALTER TABLE t RENAME COLUMN a TO b');
- *     [$alter->statement->column->value, $alter->statement->newName->value, $alter->toString()] // => ['a', 'b', 'ALTER TABLE t RENAME a TO b']
+ *     [$alter->column->value, $alter->newName->value, $alter->toString()] // => ['a', 'b', 'ALTER TABLE t RENAME a TO b']
  */
-final class AlterRenameColumn implements Statement
+final class AlterRenameColumn extends \SqlSemantics\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table to change
      * @param Name $column The column to rename
      * @param Name $newName The new column name
      */
-    public function __construct(public readonly QualifiedName $table, public readonly Name $column, public readonly Name $newName)
+    public function __construct(public readonly QualifiedName $table, public readonly Name $column, public readonly Name $newName, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($table->catalog === null, 'A table name has at most a schema qualifier.');
     }
 

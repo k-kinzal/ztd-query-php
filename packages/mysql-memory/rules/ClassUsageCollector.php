@@ -54,7 +54,7 @@ final class ClassUsageCollector implements Collector
      */
     public function processNode(Node $node, Scope $scope): ?array
     {
-        $from = $scope->getTraitReflection()?->getName() ?? $scope->getClassReflection()?->getName();
+        $from = $scope->getClassReflection()?->getName() ?? $scope->getTraitReflection()?->getName();
         if ($node instanceof ClassLike) {
             $from = $node->namespacedName?->toString() ?? $from;
             $names = [];

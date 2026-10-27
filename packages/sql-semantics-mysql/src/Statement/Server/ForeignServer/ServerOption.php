@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of CREATE SERVER or ALTER SERVER: `USER 'name'`, `PORT 3306`, ….
@@ -24,14 +23,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ServerOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ServerOptionKind $kind The option
      * @param Text|Numeral $value A number for PORT, a string for the other options
      * @throws InvalidConstruction When the value does not fit the option
      */
-    public function __construct(public readonly ServerOptionKind $kind, public readonly Text|Numeral $value)
+    public function __construct(public readonly ServerOptionKind $kind, public readonly Text|Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$value instanceof Text || $value->radix === null, 'A server option string is quoted text.');
         Check::input(($kind === ServerOptionKind::Port) === ($value instanceof Numeral), 'PORT takes a number and the other server options a string.');

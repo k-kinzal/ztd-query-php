@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A number at a position that is not an expression: an option value, a count, a size, an identifier of a thread or server.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Numeral implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $text The number exactly as written, or the digits of a hexadecimal literal
      * @param bool $hexadecimal Whether the text is the digits of a hexadecimal literal
      */
-    public function __construct(public readonly string $text, public readonly bool $hexadecimal = false)
+    public function __construct(public readonly string $text, public readonly bool $hexadecimal = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(
             preg_match($hexadecimal ? '/\A[0-9A-Fa-f]*\z/' : '/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/', $text) === 1,

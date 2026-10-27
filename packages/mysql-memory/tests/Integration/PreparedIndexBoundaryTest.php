@@ -31,7 +31,7 @@ final class PreparedIndexBoundaryTest extends TestCase
         $after = $prepared->run($session, 'a different label', []);
         self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $after[0]);
         self::assertSame(3800, $after[0]->getCode());
-        self::assertSame($definition, $prepared->statement);
+        self::assertSame($operation, $prepared->statement);
         self::assertSame('other', $session->variables->database);
         self::assertSame('a different label', $session->text);
     }
@@ -50,7 +50,7 @@ final class PreparedIndexBoundaryTest extends TestCase
         $operation = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $definition);
         $prepared = \MySqlMemory\Command\Prepared\PreparedStatement::capture($operation, $session);
         self::assertCount(1, \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation)->types);
-        self::assertSame($definition, $prepared->statement);
+        self::assertSame($operation, $prepared->statement);
     }
 
     public function testExecuteChecksTheRetainedPreparationDatabase(): void
@@ -60,7 +60,7 @@ final class PreparedIndexBoundaryTest extends TestCase
         $session->query('CREATE TABLE other.t(a INT)');
         $this->expectExceptionMessage("Table 'd.t' doesn't exist");
         $operation = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $definition);
-        $prepared = new \MySqlMemory\Command\Prepared\PreparedStatement($definition, $operation->profile(), M\Type\Resolved\Settings::of($operation->context), 'd');
+        $prepared = new \MySqlMemory\Command\Prepared\PreparedStatement($operation, $operation->profile(), $session->resolution(), 'd');
         $prepared->execute($session, 'opaque request label', []);
     }
 

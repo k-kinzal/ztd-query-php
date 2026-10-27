@@ -20,9 +20,9 @@ final class AddColumnTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t ADD c INT AS (a + d), ADD d INT', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $alter);
 
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testRenderWritesTheDefinitionAndThePosition(): void

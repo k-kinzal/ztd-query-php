@@ -44,7 +44,8 @@ final class PlatformTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
         $statement = new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin(true, profile: $semantics->profile());
         $published = (new Platform())->publish($semantics->context([]), $statement, new \SqlSemantics\Statement\Source\SourceMap());
-        self::assertSame($statement, $published);
+        self::assertNotSame($statement, $published);
+        self::assertSame($statement::class, $published::class);
         self::assertSame('BEGIN WORK', $published->toString());
     }
 

@@ -33,7 +33,8 @@ final class IndexShapesTest extends TestCase
         $definition = new M\Table\CreateIndex(new Name('i'), new QualifiedName(new Name('t')), $parts, M\Table\Key\IndexKind::Spatial);
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $prepared = (new \MySqlMemory\Program\Definition\IndexUse())->header($definition, $session);
-        $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Spatial, $parts);
+        self::assertInstanceOf(M\Table\CreateIndex::class, $prepared->statement);
+        $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Spatial, $prepared->statement->parts);
         $this->expectExceptionCode(1070);
         $this->expectExceptionMessage('Too many key parts specified; max 1 parts allowed');
         (new IndexShapes())->definition($index, $prepared->facts, GrammarRelease::MySql847, 'InnoDB');

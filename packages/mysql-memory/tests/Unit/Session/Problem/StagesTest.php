@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Stages::class)]
 #[Small]
@@ -89,12 +88,10 @@ final class StagesTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $show = $session->analyze('SHOW CREATE TABLE nosuch');
         $select = $session->analyze('SELECT * FROM nosuch');
-        self::assertInstanceOf(Operation::class, $show);
-        self::assertInstanceOf(Operation::class, $select);
         $missing = new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('nosuch')));
 
-        self::assertTrue(Stages::answered($show->statement, $missing));
-        self::assertFalse(Stages::answered($select->statement, $missing));
+        self::assertTrue(Stages::answered($show, $missing));
+        self::assertFalse(Stages::answered($select, $missing));
     }
 
     #[DataProvider('providerAnswered')]
@@ -102,10 +99,9 @@ final class StagesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(Operation::class, $operation);
         $missing = new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('nosuch')));
 
-        self::assertSame($expected, Stages::answered($operation->statement, $missing));
+        self::assertSame($expected, Stages::answered($operation, $missing));
     }
 
     public function testParsedHoldsForTheProblemsOfTheParser(): void
@@ -144,9 +140,8 @@ final class StagesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame($expected, Stages::selfChecked($operation->statement));
+        self::assertSame($expected, Stages::selfChecked($operation));
     }
 
     #[DataProvider('providerOpensTableFirst')]
@@ -154,9 +149,8 @@ final class StagesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame($expected, Stages::opensTableFirst($operation->statement));
+        self::assertSame($expected, Stages::opensTableFirst($operation));
     }
 
     #[DataProvider('providerAdministers')]
@@ -164,9 +158,8 @@ final class StagesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame($expected, Stages::administers($operation->statement));
+        self::assertSame($expected, Stages::administers($operation));
     }
 
     #[DataProvider('providerExplains')]
@@ -174,9 +167,8 @@ final class StagesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze($sql);
-        self::assertInstanceOf(Operation::class, $operation);
 
-        self::assertSame($expected, Stages::explains($operation->statement));
+        self::assertSame($expected, Stages::explains($operation));
     }
 
     public function testParsedHoldsForASystemVariableTheServerDoesNotKnow(): void
@@ -199,8 +191,7 @@ final class StagesTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('CREATE VIEW v AS SELECT 1');
-        self::assertInstanceOf(Operation::class, $operation);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $statement);
         $target = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind($statement->definition->name, \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView);
         $other = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(new QualifiedName(new Name('v')), \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView);
@@ -209,8 +200,7 @@ final class StagesTest extends TestCase
         self::assertTrue(Stages::answered($statement, $target));
         self::assertFalse(Stages::viewTarget($statement, $other));
         $select = $session->analyze('SELECT 1');
-        self::assertInstanceOf(Operation::class, $select);
-        self::assertFalse(Stages::viewTarget($select->statement, $target));
+        self::assertFalse(Stages::viewTarget($select, $target));
     }
 
     public function testParsedRetainsRoutineIdentityConditionsBeforeOpeningTables(): void
@@ -292,6 +282,26 @@ final class StagesTest extends TestCase
             ['EXPLAIN FOR CONNECTION 1', true],
             ['SELECT 1', false],
         ];
+    }
+
+
+    public function testLockedDistinguishesLockTargetsFromQueryAliases(): void
+    {
+        self::assertTrue(Stages::locked(new Misuse(MisuseRule::UnknownLockedTable, new Name('t'))));
+        self::assertTrue(Stages::locked(new Misuse(MisuseRule::RepeatedLockedTable, new Name('t'))));
+        self::assertFalse(Stages::locked(new Misuse(MisuseRule::DuplicateAlias, new Name('t'))));
+    }
+
+    public function testDuplicateAliasIncludesTheInsertRowNamespace(): void
+    {
+        $session = (new Instance())->connect();
+        $insert = $session->analyze('INSERT INTO t VALUES (1) AS t');
+        $query = $session->analyze('SELECT 1');
+        $alias = new Misuse(MisuseRule::DuplicateAlias, new Name('t'));
+        self::assertTrue(Stages::duplicateAlias($alias, $insert));
+        self::assertFalse(Stages::duplicateAlias($alias, $query));
+        self::assertTrue(Stages::duplicateAlias(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable(new Name('t')), $query));
+        self::assertFalse(Stages::duplicateAlias(new Misuse(MisuseRule::UnknownLockedTable, new Name('t')), $insert));
     }
 
 }

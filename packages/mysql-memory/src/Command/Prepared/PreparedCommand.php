@@ -17,9 +17,9 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes PREPARE, EXECUTE and DEALLOCATE PREPARE: the prepared statements of a session, named in SQL.
@@ -52,8 +52,8 @@ final class PreparedCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if ($statement instanceof Deallocate) {
             if (!isset($session->preparation->named[strtolower($statement->name->value)])) {
                 throw StatementError::UnknownStatementHandler->error($statement->name->value, 'DEALLOCATE PREPARE');
@@ -92,11 +92,10 @@ final class PreparedCommand implements Command
             $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
             return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
         }
-        if ($prepared instanceof Operation && ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate)) {
+        if ($prepared instanceof MySqlStatement && ($prepared instanceof Prepare || $prepared instanceof Execute || $prepared instanceof Deallocate)) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }
-        $node = $prepared instanceof Operation ? $prepared->statement : $prepared;
-        assert($node instanceof \SqlSemantics\Statement\Node);
+        $node = $prepared;
         (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         $bindings = ParameterBindings::capture($prepared);

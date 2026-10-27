@@ -59,4 +59,18 @@ final class DateArithmeticGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<bool> $subtract The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $date The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $quantity The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit> $unit The generated semantic operand
+     * @return ErisGenerator<DateArithmetic>
+     */
+    public static function fromOperands(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $parts[0], date: $parts[1], quantity: $parts[2], unit: $parts[3]), \Tests\Generator\Operands::tuple($subtract, $date, $quantity, $unit));
+    }
+
 }

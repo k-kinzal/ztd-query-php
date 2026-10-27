@@ -21,14 +21,14 @@ final class SelectOptionsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('CREATE PROCEDURE p() SELECT ALL DISTINCT ROW(1,2)');
 
-        self::assertContains('Incorrect usage of ALL and DISTINCT', array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertContains('Incorrect usage of ALL and DISTINCT', array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testRaiseLeavesLegacyExpressionQuantifiersToTheirQueryRole(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT ALL DISTINCT 1)');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testNoticesStopsAtAConflictingCacheModifier(): void
@@ -45,8 +45,8 @@ final class SelectOptionsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE SQL_CACHE SQL_NO_CACHE 1');
 
-        self::assertSame(["'SQL_CACHE' is deprecated and will be removed in a future release.", "'SQL_CACHE' is deprecated and will be removed in a future release.", "Option 'SQL_CACHE' used twice in statement"], array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
-        self::assertSame(["Option 'SQL_CACHE' used twice in statement"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(["'SQL_CACHE' is deprecated and will be removed in a future release.", "'SQL_CACHE' is deprecated and will be removed in a future release.", "Option 'SQL_CACHE' used twice in statement"], array_map(static fn (Warning $warning): string => $warning->message(), $operation->warnings()));
+        self::assertSame(["Option 'SQL_CACHE' used twice in statement"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testRaiseSeparatesTheModifiersOf57ByAnotherOneAndNotThoseOf56(): void
@@ -54,8 +54,8 @@ final class SelectOptionsTest extends TestCase
         $modern = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_NO_CACHE ALL SQL_CACHE 1');
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT SQL_NO_CACHE ALL SQL_CACHE 1');
 
-        self::assertSame([], $modern->facts->diagnostics);
-        self::assertSame(['Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $legacy->facts->diagnostics));
-        self::assertSame(['Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], array_map(static fn (Warning $warning): string => $warning->message(), $legacy->facts->warnings));
+        self::assertSame([], $modern->diagnostics());
+        self::assertSame(['Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $legacy->diagnostics()));
+        self::assertSame(['Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], array_map(static fn (Warning $warning): string => $warning->message(), $legacy->warnings()));
     }
 }

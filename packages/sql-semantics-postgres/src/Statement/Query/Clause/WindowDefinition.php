@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One named window of a WINDOW clause.
@@ -23,17 +22,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a named window
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 WINDOW w AS ()');
- *     $query->statement->windows[0]->name->value // => 'w'
+ *     $query->windows[0]->name->value // => 'w'
  */
 final class WindowDefinition implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The window name
      * @param WindowSpecification $window The window it names
      */
-    public function __construct(public readonly Name $name, public readonly WindowSpecification $window)
+    public function __construct(public readonly Name $name, public readonly WindowSpecification $window, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

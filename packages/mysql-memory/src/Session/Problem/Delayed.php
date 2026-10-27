@@ -51,7 +51,7 @@ final class Delayed
             return;
         }
         $name = $into->table->name;
-        $table = $session->instance->dictionary->table($name->schema->value ?? $session->variables->database, $name->name->value);
+        $table = $session->instance->dictionary->table($name->schema->value ?? $session->variables->database, $name->name->value, $session->temporaries);
         if ($table !== null && $into->table->partitions !== []) {
             throw \MySqlMemory\Error\Family\SchemaError::PartitionClauseOnNonpartitioned->error();
         }

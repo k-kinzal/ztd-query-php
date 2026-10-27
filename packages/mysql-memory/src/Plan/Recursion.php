@@ -64,7 +64,7 @@ final class Recursion
     public function refers(Query $query, CommonTableExpression $definition): bool
     {
         foreach ((new Walker())->find($query, TableReference::class) as $reference) {
-            $resolution = $this->planner->compiler->facts->relation($reference)->table;
+            $resolution = $reference->relationInformation()->table;
             if ($resolution instanceof CommonTable && $resolution->definition === $definition) {
                 return true;
             }

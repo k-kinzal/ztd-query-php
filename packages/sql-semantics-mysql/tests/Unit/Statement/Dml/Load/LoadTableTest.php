@@ -39,8 +39,8 @@ final class LoadTableTest extends TestCase
     public function testRenderKeepsARadixLiteralAsARowTag(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t ROWS IDENTIFIED BY 0x0f");
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, $operation->statement->rowTag?->radix);
+        self::assertInstanceOf(LoadTable::class, $operation);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, $operation->rowTag?->radix);
         self::assertStringContainsString('ROWS IDENTIFIED BY', $operation->toString());
     }
 
@@ -63,11 +63,11 @@ final class LoadTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t (a, @v) SET b = @v + a, a = DEFAULT", [$t]);
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertInstanceOf(LoadTable::class, $operation);
 
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($operation->statement->assignments[0]->column)->resolution);
-        self::assertEquals(new Known(new Integral(IntegralKind::Int)), $operation->facts->scalar($operation->statement->assignments[1]->value)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(ResolvedColumn::class, $operation->assignments[0]->column->scalarInformation()->resolution);
+        self::assertEquals(new Known(new Integral(IntegralKind::Int)), $operation->assignments[1]->value->scalarInformation()->type);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void
@@ -86,9 +86,9 @@ final class LoadTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET DEFAULT");
 
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
-        self::assertNotNull($operation->statement->charset);
-        self::assertNull($operation->statement->charset->name);
+        self::assertInstanceOf(LoadTable::class, $operation);
+        self::assertNotNull($operation->charset);
+        self::assertNull($operation->charset->name);
         self::assertSame("LOAD DATA INFILE 'f' INTO TABLE t CHARSET DEFAULT", $operation->toString());
     }
 

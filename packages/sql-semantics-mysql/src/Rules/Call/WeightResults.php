@@ -47,7 +47,7 @@ final class WeightResults
         $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $count = $cast === WeightCast::Char ? $castLength ?? 0 : $weights;
         $length = match (true) {
-            $cast !== WeightCast::Binary && $this->stored($fact, $derivation->facts(), $derivation->context->profile->grammar, Settings::of($derivation->context)->derivedMerge) && ($operand->kind->temporal() || (!$legacy && $operand->kind === Kind::Year)) => $legacy ? $this->temporalLength($operand) : 8,
+            $cast !== WeightCast::Binary && $this->stored($fact, $derivation->context->profile->grammar, Settings::of($derivation->context)->derivedMerge) && ($operand->kind->temporal() || (!$legacy && $operand->kind === Kind::Year)) => $legacy ? $this->temporalLength($operand) : 8,
             $resultLength > 0 => $resultLength,
             $cast === WeightCast::Binary => $castLength ?? 0,
             $operand->kind === Kind::Json => $this->jsonLength($operand, $count, $legacy),
@@ -73,7 +73,7 @@ final class WeightResults
     /**
      * Tells whether the operand reads a stored field instead of a merged expression.
      */
-    public function stored(ScalarFact $fact, \SqlSemantics\Statement\Fact\Facts $facts, GrammarRelease $release, bool $derivedMerge): bool
+    public function stored(ScalarFact $fact, GrammarRelease $release, bool $derivedMerge): bool
     {
         $reference = $fact->resolution;
         $domain = (new Precision())->domain($fact->type);
@@ -81,10 +81,10 @@ final class WeightResults
             return false;
         }
         $relation = $reference->relation;
-        $input = $facts->relation($relation)->table;
+        $input = $relation->relationInformation()->table;
         $query = $relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable ? $relation->query : ($input instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $input->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression ? $input->definition->query : null);
 
-        return $query === null ? !($reference->declaration()->expression ?? false) : !(new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $release, $facts, $derivedMerge);
+        return $query === null ? !($reference->declaration()->expression ?? false) : !(new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $release, $derivedMerge);
     }
 
     /**
@@ -119,7 +119,9 @@ final class WeightResults
      */
     public function capacity(Collation $collation, int $bytes, int $count = 0): int
     {
-        /** @var array<string, array{int, int}> $lengths */
+        /**
+ * @var array<string, array{int, int}> $lengths
+ */
         $lengths = require dirname(__DIR__, 3) . '/resources/weight-lengths.php';
         [$factor, $overhead] = $lengths[$collation->name] ?? [$collation->charset->maxLength, 0];
 

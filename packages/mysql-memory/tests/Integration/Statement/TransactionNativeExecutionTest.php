@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Tests\Integration\Statement;
 
 use Container\Endpoint;
-use Fuzz\Container\DisposableMySql;
-use Fuzz\Observation\Observer;
+use Container\MySqlRelease;
 use MySqlMemory\Server\MemoryDatabase;
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use Testcontainers\Containers\ReuseMode;
 use Testcontainers\Testcontainers;
 
 #[CoversNothing]
@@ -22,7 +23,17 @@ final class TransactionNativeExecutionTest extends TestCase
     #[DataProvider('providerVersions')]
     public function testTransactionFamiliesAgreeWithNativeRepliesAndStoredRows(string $version): void
     {
-        $native = Testcontainers::run(new DisposableMySql($version));
+        $reply = static function (PDO $connection, string $sql): array {
+            $statement = $connection->query($sql);
+            self::assertInstanceOf(PDOStatement::class, $statement);
+            $rows = $statement->columnCount() === 0 ? [] : $statement->fetchAll(PDO::FETCH_NUM);
+            $affected = $statement->rowCount();
+            $statement->closeCursor();
+            $warnings = $connection->query('SHOW WARNINGS');
+            self::assertInstanceOf(PDOStatement::class, $warnings);
+            return [$affected, $rows, $warnings->fetchAll(PDO::FETCH_NUM)];
+        };
+        $native = Testcontainers::run((new (MySqlRelease::container($version))())->withReuseMode(ReuseMode::ADD()));
         $memory = null;
         try {
             $memory = MemoryDatabase::start($version);
@@ -37,56 +48,55 @@ final class TransactionNativeExecutionTest extends TestCase
             $emulated->exec('USE transaction_fixture');
             $emulated->exec('CREATE TABLE items (value INT) ENGINE=InnoDB');
             $emulated->exec('INSERT INTO items VALUES (0)');
-            $observer = new Observer();
-            self::assertSame($observer->observe($real, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE', true), $observer->observe($emulated, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE', true), $version . ': ' . 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE');
+            self::assertSame($reply($real, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE'), $reply($emulated, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE'), $version . ': ' . 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'BEGIN WORK', true), $observer->observe($emulated, 'BEGIN WORK', true), $version . ': ' . 'BEGIN WORK');
+            self::assertSame($reply($real, 'BEGIN WORK'), $reply($emulated, 'BEGIN WORK'), $version . ': ' . 'BEGIN WORK');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'UPDATE items SET value = 1', true), $observer->observe($emulated, 'UPDATE items SET value = 1', true), $version . ': ' . 'UPDATE items SET value = 1');
+            self::assertSame($reply($real, 'UPDATE items SET value = 1'), $reply($emulated, 'UPDATE items SET value = 1'), $version . ': ' . 'UPDATE items SET value = 1');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'SAVEPOINT FULL', true), $observer->observe($emulated, 'SAVEPOINT FULL', true), $version . ': ' . 'SAVEPOINT FULL');
+            self::assertSame($reply($real, 'SAVEPOINT FULL'), $reply($emulated, 'SAVEPOINT FULL'), $version . ': ' . 'SAVEPOINT FULL');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'UPDATE items SET value = 2', true), $observer->observe($emulated, 'UPDATE items SET value = 2', true), $version . ': ' . 'UPDATE items SET value = 2');
+            self::assertSame($reply($real, 'UPDATE items SET value = 2'), $reply($emulated, 'UPDATE items SET value = 2'), $version . ': ' . 'UPDATE items SET value = 2');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'ROLLBACK WORK TO SAVEPOINT FULL', true), $observer->observe($emulated, 'ROLLBACK WORK TO SAVEPOINT FULL', true), $version . ': ' . 'ROLLBACK WORK TO SAVEPOINT FULL');
+            self::assertSame($reply($real, 'ROLLBACK WORK TO SAVEPOINT FULL'), $reply($emulated, 'ROLLBACK WORK TO SAVEPOINT FULL'), $version . ': ' . 'ROLLBACK WORK TO SAVEPOINT FULL');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'SELECT value FROM items', true), $observer->observe($emulated, 'SELECT value FROM items', true), $version . ': ' . 'SELECT value FROM items');
+            self::assertSame($reply($real, 'SELECT value FROM items'), $reply($emulated, 'SELECT value FROM items'), $version . ': ' . 'SELECT value FROM items');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'RELEASE SAVEPOINT FULL', true), $observer->observe($emulated, 'RELEASE SAVEPOINT FULL', true), $version . ': ' . 'RELEASE SAVEPOINT FULL');
+            self::assertSame($reply($real, 'RELEASE SAVEPOINT FULL'), $reply($emulated, 'RELEASE SAVEPOINT FULL'), $version . ': ' . 'RELEASE SAVEPOINT FULL');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'COMMIT AND CHAIN NO RELEASE', true), $observer->observe($emulated, 'COMMIT AND CHAIN NO RELEASE', true), $version . ': ' . 'COMMIT AND CHAIN NO RELEASE');
+            self::assertSame($reply($real, 'COMMIT AND CHAIN NO RELEASE'), $reply($emulated, 'COMMIT AND CHAIN NO RELEASE'), $version . ': ' . 'COMMIT AND CHAIN NO RELEASE');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'SELECT value FROM items', true), $observer->observe($emulated, 'SELECT value FROM items', true), $version . ': ' . 'SELECT value FROM items');
+            self::assertSame($reply($real, 'SELECT value FROM items'), $reply($emulated, 'SELECT value FROM items'), $version . ': ' . 'SELECT value FROM items');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'ROLLBACK WORK AND NO CHAIN NO RELEASE', true), $observer->observe($emulated, 'ROLLBACK WORK AND NO CHAIN NO RELEASE', true), $version . ': ' . 'ROLLBACK WORK AND NO CHAIN NO RELEASE');
+            self::assertSame($reply($real, 'ROLLBACK WORK AND NO CHAIN NO RELEASE'), $reply($emulated, 'ROLLBACK WORK AND NO CHAIN NO RELEASE'), $version . ': ' . 'ROLLBACK WORK AND NO CHAIN NO RELEASE');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT', true), $observer->observe($emulated, 'START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT', true), $version . ': ' . 'START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT');
+            self::assertSame($reply($real, 'START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT'), $reply($emulated, 'START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT'), $version . ': ' . 'START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'ROLLBACK', true), $observer->observe($emulated, 'ROLLBACK', true), $version . ': ' . 'ROLLBACK');
+            self::assertSame($reply($real, 'ROLLBACK'), $reply($emulated, 'ROLLBACK'), $version . ': ' . 'ROLLBACK');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA START 'g', 'b', 7", true), $observer->observe($emulated, "XA START 'g', 'b', 7", true), $version . ': ' . "XA START 'g', 'b', 7");
+            self::assertSame($reply($real, "XA START 'g', 'b', 7"), $reply($emulated, "XA START 'g', 'b', 7"), $version . ': ' . "XA START 'g', 'b', 7");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'UPDATE items SET value = 3', true), $observer->observe($emulated, 'UPDATE items SET value = 3', true), $version . ': ' . 'UPDATE items SET value = 3');
+            self::assertSame($reply($real, 'UPDATE items SET value = 3'), $reply($emulated, 'UPDATE items SET value = 3'), $version . ': ' . 'UPDATE items SET value = 3');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA END 'g', 'b', 7", true), $observer->observe($emulated, "XA END 'g', 'b', 7", true), $version . ': ' . "XA END 'g', 'b', 7");
+            self::assertSame($reply($real, "XA END 'g', 'b', 7"), $reply($emulated, "XA END 'g', 'b', 7"), $version . ': ' . "XA END 'g', 'b', 7");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA PREPARE 'g', 'b', 7", true), $observer->observe($emulated, "XA PREPARE 'g', 'b', 7", true), $version . ': ' . "XA PREPARE 'g', 'b', 7");
+            self::assertSame($reply($real, "XA PREPARE 'g', 'b', 7"), $reply($emulated, "XA PREPARE 'g', 'b', 7"), $version . ': ' . "XA PREPARE 'g', 'b', 7");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'XA RECOVER', true), $observer->observe($emulated, 'XA RECOVER', true), $version . ': ' . 'XA RECOVER');
+            self::assertSame($reply($real, 'XA RECOVER'), $reply($emulated, 'XA RECOVER'), $version . ': ' . 'XA RECOVER');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA COMMIT 'g', 'b', 7", true), $observer->observe($emulated, "XA COMMIT 'g', 'b', 7", true), $version . ': ' . "XA COMMIT 'g', 'b', 7");
+            self::assertSame($reply($real, "XA COMMIT 'g', 'b', 7"), $reply($emulated, "XA COMMIT 'g', 'b', 7"), $version . ': ' . "XA COMMIT 'g', 'b', 7");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'SELECT value FROM items', true), $observer->observe($emulated, 'SELECT value FROM items', true), $version . ': ' . 'SELECT value FROM items');
+            self::assertSame($reply($real, 'SELECT value FROM items'), $reply($emulated, 'SELECT value FROM items'), $version . ': ' . 'SELECT value FROM items');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA START 'rollback'", true), $observer->observe($emulated, "XA START 'rollback'", true), $version . ': ' . "XA START 'rollback'");
+            self::assertSame($reply($real, "XA START 'rollback'"), $reply($emulated, "XA START 'rollback'"), $version . ': ' . "XA START 'rollback'");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'UPDATE items SET value = 4', true), $observer->observe($emulated, 'UPDATE items SET value = 4', true), $version . ': ' . 'UPDATE items SET value = 4');
+            self::assertSame($reply($real, 'UPDATE items SET value = 4'), $reply($emulated, 'UPDATE items SET value = 4'), $version . ': ' . 'UPDATE items SET value = 4');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA END 'rollback'", true), $observer->observe($emulated, "XA END 'rollback'", true), $version . ': ' . "XA END 'rollback'");
+            self::assertSame($reply($real, "XA END 'rollback'"), $reply($emulated, "XA END 'rollback'"), $version . ': ' . "XA END 'rollback'");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, "XA ROLLBACK 'rollback'", true), $observer->observe($emulated, "XA ROLLBACK 'rollback'", true), $version . ': ' . "XA ROLLBACK 'rollback'");
+            self::assertSame($reply($real, "XA ROLLBACK 'rollback'"), $reply($emulated, "XA ROLLBACK 'rollback'"), $version . ': ' . "XA ROLLBACK 'rollback'");
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
-            self::assertSame($observer->observe($real, 'SELECT value FROM items', true), $observer->observe($emulated, 'SELECT value FROM items', true), $version . ': ' . 'SELECT value FROM items');
+            self::assertSame($reply($real, 'SELECT value FROM items'), $reply($emulated, 'SELECT value FROM items'), $version . ': ' . 'SELECT value FROM items');
             self::assertSame($real->inTransaction(), $emulated->inTransaction());
 
         } finally {

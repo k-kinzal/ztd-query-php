@@ -64,14 +64,14 @@ final class InspectionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
 
-        self::assertTrue((new Inspection())->inspects($session->analyze('SHOW CREATE TABLE t')->statement));
-        self::assertFalse((new Inspection())->inspects($session->analyze('SELECT 1')->statement));
+        self::assertTrue((new Inspection())->inspects($session->analyze('SHOW CREATE TABLE t')));
+        self::assertFalse((new Inspection())->inspects($session->analyze('SELECT 1')));
     }
 
     public function testWarnWarnsOfAPatternThatIsNoUtf8mb4String(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('DESC PERSIST._sqlfaker_identifier 0b01000011101101001010110010000000')->statement;
+        $statement = $session->analyze('DESC PERSIST._sqlfaker_identifier 0b01000011101101001010110010000000');
         (new Inspection())->warn($statement, $session);
 
         self::assertSame(1, $session->diagnostics->count());

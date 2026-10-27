@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the warning of BINARY
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT BINARY 1');
- *     [$query->facts->warnings[0]->construct, $query->facts->warnings[0]->code()] // => [\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator, 1287]
+ *     [$query->warnings()[0]->construct, $query->warnings()[0]->code()] // => [\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator, 1287]
  */
 final class Deprecation implements CodedWarning
 {
@@ -56,7 +56,7 @@ final class Deprecation implements CodedWarning
      */
     public static function variable(string $name, Derivation $derivation): void
     {
-        $text = (new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\DeprecatedVariables())->warning($name, $derivation->context->profile->grammar);
+        $text = (new \SqlSemantics\Platform\MySql\Rules\Utility\DeprecatedVariables())->warning($name, $derivation->context->profile->grammar);
         if ($text !== null) {
             $derivation->warn(new self(Deprecated::SystemVariable, $text));
         }

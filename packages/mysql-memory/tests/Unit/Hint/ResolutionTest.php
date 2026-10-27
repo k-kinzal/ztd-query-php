@@ -25,7 +25,7 @@ final class ResolutionTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT, KEY ka (a))');
-        $blocks = (new Blocks($session->instance->dictionary, 'd'))->read($session->analyze('SELECT /*+ MRR(x ka) MRR(x) INDEX(t KA, kz) JOIN_ORDER(y, t@`select#1`, z@`select#1`) QB_NAME(Qq) BKA(@QQ w) */ 1 FROM t')->statement);
+        $blocks = (new Blocks($session->instance->dictionary, 'd'))->read($session->analyze('SELECT /*+ MRR(x ka) MRR(x) INDEX(t KA, kz) JOIN_ORDER(y, t@`select#1`, z@`select#1`) QB_NAME(Qq) BKA(@QQ w) */ 1 FROM t'));
         $registration = (new Registration($blocks, SystemVariables::of(GrammarRelease::MySql847), new Printer()))->register();
 
         self::assertSame([
@@ -40,7 +40,7 @@ final class ResolutionTest extends TestCase
     public function testResolveFollowsTheBlocksInTheOrderTheServerSetsThemUp(): void
     {
         $session = (new Instance())->connect();
-        $blocks = (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SELECT /*+ BKA(x1) */ (SELECT /*+ BKA(x2) */ 1) FROM (SELECT /*+ BKA(x3) */ 1) d')->statement);
+        $blocks = (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SELECT /*+ BKA(x1) */ (SELECT /*+ BKA(x2) */ 1) FROM (SELECT /*+ BKA(x3) */ 1) d'));
         $registration = (new Registration($blocks, SystemVariables::of(GrammarRelease::MySql847), new Printer()))->register();
 
         self::assertSame(['`x1`@`select#1`', '`x3`@`select#3`', '`x2`@`select#2`'], array_map(static fn (array $warning): string => explode(' ', $warning[1])[2], (new Resolution($registration, new Printer()))->resolve()->warnings));

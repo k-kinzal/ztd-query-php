@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  * @visibility public
  * @example Reading the source of a SET ... FROM CURRENT
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET search_path FROM CURRENT');
- *     $operation->statement->source // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Current
+ *     $operation->source // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Current
  */
 enum ParameterSource
 {

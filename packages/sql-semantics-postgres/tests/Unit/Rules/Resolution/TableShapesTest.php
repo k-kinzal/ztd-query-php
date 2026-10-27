@@ -24,7 +24,7 @@ final class TableShapesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('WITH x AS (INSERT INTO t VALUES (1)) SELECT * FROM x');
-        self::assertSame('WITH query "x" does not have a RETURNING clause', $query->facts->diagnostics[0]->message());
+        self::assertSame('WITH query "x" does not have a RETURNING clause', $query->diagnostics()[0]->message());
     }
 
     public function testImplicitIsEmptyWithoutADeclaration(): void
@@ -36,7 +36,7 @@ final class TableShapesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['TABLESAMPLE clause can only be applied to tables and materialized views'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM v TABLESAMPLE system (1)', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM m TABLESAMPLE system (1)', $context)->facts->diagnostics));
+        self::assertSame(['TABLESAMPLE clause can only be applied to tables and materialized views'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM v TABLESAMPLE system (1)', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM m TABLESAMPLE system (1)', $context)->diagnostics()));
     }
 }

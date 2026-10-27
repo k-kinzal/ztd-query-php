@@ -28,14 +28,18 @@ final class AlterDefaultsTest extends TestCase
     }
 
     #[DataProvider('providerDefinitions')]
-    public function testFactsBindTheSameTargetAfterItsDeclarationAppears(M\Alter\AlterTable $definition): void
+    public function testBoundResolvesFreshOccurrencesAfterTheDeclarationAppears(M\Alter\AlterTable $definition): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $preparation = new AlterDefaults();
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $preparation->facts($definition, $session, 'd')->relation($definition)->table);
+        $absent = $preparation->bound($definition, $session, 'd');
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $absent->relationInformation()->table);
         $session->query('CREATE TABLE t(a INT)');
         $session->text = 'unrelated invalid input';
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $preparation->facts($definition, $session, 'd')->relation($definition)->table);
+        $present = $preparation->bound($definition, $session, 'd');
+        self::assertNotSame($absent, $present);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $present->relationInformation()->table);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $absent->relationInformation()->table);
         self::assertSame('unrelated invalid input', $session->text);
     }
 

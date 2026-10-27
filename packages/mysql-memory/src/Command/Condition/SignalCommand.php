@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes SIGNAL and RESIGNAL.
@@ -81,8 +81,8 @@ final class SignalCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation && ($operation->statement instanceof Signal || $operation->statement instanceof Resignal));
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement && ($operation instanceof Signal || $operation instanceof Resignal));
+        $statement = $operation;
         if ($statement instanceof Signal) {
             $session->diagnostics->signalCount++;
         }
@@ -90,7 +90,7 @@ final class SignalCommand implements Command
         if ($statement instanceof Resignal && $stacked === []) {
             throw ProgramError::ResignalWithoutHandler->error();
         }
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $values = [];
         foreach ($statement->items as $item) {
             $values[$item->name->value] = $planner->compiler->compile($item->value, new Scope());

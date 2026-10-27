@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored INSERT or REPLACE retaining every value, target and duplicate-key clause.
@@ -32,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredInsertRows implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<InsertedRow|DeferredInsertedRow> The rows in written order
@@ -51,7 +50,7 @@ final class DeferredInsertRows implements ProgramStatement
      * @param list<Assignment|DeferredColumnAssignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
-    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [])
+    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $items = [];
         foreach (Check::listOf($rows, \SqlSemantics\Statement\Node::class, 'VALUES holds at least one row.', 1) as $row) {

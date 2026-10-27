@@ -90,7 +90,7 @@ final class OutputFieldsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(n INT,s VARCHAR(10))');
         $query = $semantics->analyze('SELECT GROUP_CONCAT(s) FROM t GROUP BY n', [$table]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
@@ -98,8 +98,8 @@ final class OutputFieldsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $expression);
         $fields = new OutputFields();
 
-        self::assertFalse($fields->stored($select, $expression, $query->facts, \SqlSemantics\Contract\GrammarRelease::MySql5651));
-        self::assertFalse($fields->stored($select, $expression, $query->facts, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertFalse($fields->stored($select, $expression, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertFalse($fields->stored($select, $expression, \SqlSemantics\Contract\GrammarRelease::MySql5744));
     }
 
     public function testAggregateKeepsGroupedAggregateFieldsSeparateFromComputedParents(): void
@@ -147,7 +147,7 @@ final class OutputFieldsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (s VARCHAR(10),n INT)');
         $query = $semantics->analyze('SELECT DISTINCT CONCAT(MIN(s)),MIN(s),CONCAT(MIN(MIN(s)) OVER ()),MIN(MIN(s)) OVER () FROM t GROUP BY n WITH ROLLUP', [$table]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
@@ -164,15 +164,15 @@ final class OutputFieldsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(n INT,s VARCHAR(10))');
         $query = $semantics->analyze('SELECT DISTINCT CONCAT(GROUP_CONCAT(s)),GROUP_CONCAT(s),CONCAT(MIN(s)),CONCAT(JSON_ARRAYAGG(n)),CONCAT(JSON_ARRAYAGG(n) OVER ()),COUNT(*) OVER () FROM t GROUP BY n,s', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->query);
         $fields = new OutputFields();
 
-        self::assertTrue($fields->deferred($query->statement->query, $query->field(0)->expression, $query->facts));
-        self::assertFalse($fields->deferred($query->statement->query, $query->field(1)->expression, $query->facts));
-        self::assertFalse($fields->deferred($query->statement->query, $query->field(2)->expression, $query->facts));
-        self::assertTrue($fields->deferred($query->statement->query, $query->field(3)->expression, $query->facts));
-        self::assertFalse($fields->deferred($query->statement->query, $query->field(4)->expression, $query->facts));
+        self::assertTrue($fields->deferred($query->query, $query->field(0)->expression));
+        self::assertFalse($fields->deferred($query->query, $query->field(1)->expression));
+        self::assertFalse($fields->deferred($query->query, $query->field(2)->expression));
+        self::assertTrue($fields->deferred($query->query, $query->field(3)->expression));
+        self::assertFalse($fields->deferred($query->query, $query->field(4)->expression));
     }
 
     /**
@@ -206,12 +206,14 @@ final class OutputFieldsTest extends TestCase
         $query = $semantics->analyze('SELECT MIN(s),MAX((s)),MIN(CONCAT(s)),MIN(MIN(s)) OVER () FROM t GROUP BY n', [$table]);
         $fields = new OutputFields();
 
-        self::assertTrue($fields->copied($query->field(0)->expression, $query->facts));
-        self::assertTrue($fields->copied($query->field(1)->expression, $query->facts));
-        self::assertFalse($fields->copied($query->field(2)->expression, $query->facts));
-        self::assertFalse($fields->copied($query->field(3)->expression, $query->facts));
-        self::assertFalse($fields->copied($query->field(0)->expression, null));
-        self::assertFalse($fields->copied(null, $query->facts));
+        self::assertTrue($fields->copied($query->field(0)->expression));
+        self::assertTrue($fields->copied($query->field(1)->expression));
+        self::assertFalse($fields->copied($query->field(2)->expression));
+        self::assertFalse($fields->copied($query->field(3)->expression));
+        $expression = $query->field(0)->expression;
+        self::assertNotNull($expression);
+        self::assertFalse($fields->copied(\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($expression)));
+        self::assertFalse($fields->copied(null));
     }
 
     /**
@@ -244,12 +246,12 @@ final class OutputFieldsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $query = $semantics->analyze('SELECT MIN(s) FROM t GROUP BY 1+1', [$semantics->analyze('CREATE TABLE t(s VARCHAR(10))')]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->query);
         $fields = new OutputFields();
 
-        self::assertTrue($fields->direct($query->statement->query, \SqlSemantics\Contract\GrammarRelease::MySql847, $query->facts));
-        self::assertFalse($fields->direct($query->statement->query, \SqlSemantics\Contract\GrammarRelease::MySql5744, $query->facts));
+        self::assertTrue($fields->direct($query->query, \SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($fields->direct($query->query, \SqlSemantics\Contract\GrammarRelease::MySql5744));
     }
 
 

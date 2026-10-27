@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Telling the kinds of schedule apart
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1');
- *     $create->statement->schedule instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule // => true
+ *     $create->schedule instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule // => true
  */
 interface Schedule extends Node
 {

@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -30,7 +29,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredTimestamp implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TimestampOperation $operation The timestamp function
@@ -38,8 +38,11 @@ final class DeferredTimestamp implements DeferredOperand
      * @param Scalar|RowOperand|DeferredOperand $first The quantity or start
      * @param Scalar|RowOperand|DeferredOperand $second The date or end
      */
-    public function __construct(public readonly TimestampOperation $operation, public readonly IntervalUnit $unit, public readonly Scalar|RowOperand|DeferredOperand $first, public readonly Scalar|RowOperand|DeferredOperand $second)
+    public function __construct(public readonly TimestampOperation $operation, public readonly IntervalUnit $unit, public readonly Scalar|RowOperand|DeferredOperand $first, public readonly Scalar|RowOperand|DeferredOperand $second, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$first instanceof Scalar || !$second instanceof Scalar, 'A deferred timestamp call retains a non-scalar operand.');
         Check::input(in_array($unit->canonical(), [IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true), 'TIMESTAMPADD and TIMESTAMPDIFF take a simple interval unit.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

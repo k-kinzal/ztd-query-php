@@ -31,7 +31,7 @@ final class DeferredWindowSpecTest extends TestCase
         $window = new DeferredWindowSpec(order: [new M\Routine\Program\Selection\DeferredOrderItem($row)]);
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
         $window->deriveWindow($derivation, $derivation->environment());
-        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $derivation->facts()->scalar($value)->nullability);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $value->scalarInformation()->nullability);
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 

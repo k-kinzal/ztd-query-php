@@ -40,7 +40,7 @@ final class Routine
      * @param bool $deterministic Whether the routine is declared DETERMINISTIC
      * @param string $security The security context: DEFINER or INVOKER
      * @param string $comment The comment
-     * @param string $mode The sql_mode the routine was created under
+     * @param string $mode The normalized sql_mode the routine was created under, with combination modes expanded
      * @param string $created When the routine was created, as `YYYY-MM-DD hh:mm:ss`
      * @param string $modified When the routine was last changed, as `YYYY-MM-DD hh:mm:ss`
      * @param array{string, string, string} $charsets The character_set_client, collation_connection and database collation the routine was created with
@@ -80,7 +80,7 @@ final class Routine
         if ($this->installed !== null) {
             return $this->returnType = $this->installed->returned();
         }
-        $declared = new \MySqlMemory\Typing\Declared(Collation::named($this->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'), $this->release);
+        $declared = new \MySqlMemory\Typing\Declared(Collation::named($this->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'), $this->release, in_array('REAL_AS_FLOAT', explode(',', $this->mode), true));
         $statement = $this->statement;
         if (!$statement instanceof CreateFunction) {
             return $this->returnType = \MySqlMemory\Typing\Domain::null();

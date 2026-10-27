@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A date and time type with its optional fractional seconds precision, or YEAR with its display width.
@@ -24,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Temporal implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<NumericModifier> The numeric attributes written after YEAR, in the order written
@@ -36,7 +35,7 @@ final class Temporal implements DeclaredName
      * @param string|null $precision The fractional seconds precision, or the display width of YEAR, exactly as written; DATE takes none
      * @param list<NumericModifier> $modifiers The numeric attributes written after YEAR
      */
-    public function __construct(public readonly TemporalKind $kind, public readonly ?string $precision = null, array $modifiers = [])
+    public function __construct(public readonly TemporalKind $kind, public readonly ?string $precision = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($precision === null || $kind !== TemporalKind::Date, 'DATE takes no precision.');
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');

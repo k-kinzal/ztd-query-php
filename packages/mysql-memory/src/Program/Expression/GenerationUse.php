@@ -66,7 +66,7 @@ final class GenerationUse
         $name = $definition->name->name->value;
         $columns = array_values(array_filter($definition->elements, static fn ($element): bool => $element instanceof ColumnDefinition));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
-            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, $definition->temporary(), (new TableUse())->bound($definition, $session)->facts, $session);
+            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, $definition->temporary(), (new TableUse())->bound($definition, $session)->statementInformation(), $session);
         }
         $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();
         $reply = $execution->run($definition, $session, $database);

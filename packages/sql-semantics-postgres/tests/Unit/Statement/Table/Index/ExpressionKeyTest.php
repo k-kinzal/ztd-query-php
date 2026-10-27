@@ -18,11 +18,11 @@ final class ExpressionKeyTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE INDEX ON t ((a + 1))', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         $n2 = $n1->elements[0]->key;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey::class, $n2);
-        $n3 = $statement->facts->scalar($n2)->type;
+        $n3 = $n2->scalarInformation()->type;
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $n3);
         self::assertSame('integer', $n3->descriptor->name());
     }

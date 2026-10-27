@@ -27,7 +27,7 @@ final class AssignmentFactsTest extends TestCase
         $fields = (new AssignmentFacts())->derive([$first, $second], $derivation, $derivation->environment());
         self::assertCount(2, $fields);
         self::assertSame([MissingColumn::class, MissingColumn::class, M\Expression\Problem\OperandColumns::class, MissingColumn::class], array_map(static fn ($problem): string => $problem::class, $derivation->facts()->diagnostics));
-        self::assertTrue($derivation->facts()->covers($first->value));
-        self::assertTrue($derivation->facts()->covers($second->value));
+        self::assertTrue($first->value->hasBinding());
+        self::assertTrue($second->value->hasBinding());
     }
 }

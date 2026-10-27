@@ -24,6 +24,6 @@ final class AlterLogfileGroupTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE a");
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

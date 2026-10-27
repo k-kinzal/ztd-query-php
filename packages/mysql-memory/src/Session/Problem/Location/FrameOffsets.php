@@ -6,8 +6,8 @@ namespace MySqlMemory\Session\Problem\Location;
 
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
@@ -45,7 +45,7 @@ final class FrameOffsets
     /**
      * @return array<int, true> Conditions that the retained frame will check
      */
-    public function conditions(Node $statement, Facts $facts): array
+    public function conditions(Node $statement, StatementSemantics $facts): array
     {
         $owned = $this->nodes($statement);
         if ($owned === []) {
@@ -53,12 +53,12 @@ final class FrameOffsets
         }
         $conditions = [];
         foreach ((new Walker())->find($statement, Node::class) as $node) {
-            if (!isset($owned[spl_object_id($node)]) || !$facts->covers($node)) {
+            if (!isset($owned[spl_object_id($node)]) || !$node->hasBinding()) {
                 continue;
             }
-            $problems = $node instanceof Query ? $facts->query($node)->diagnostics : [];
+            $problems = $node instanceof Query ? $node->queryInformation()->diagnostics : [];
             if ($node instanceof Operand) {
-                $fact = $facts->scalar($node);
+                $fact = $node->scalarInformation();
                 $problems = [$fact->resolution, $fact->type instanceof Invalid ? $fact->type->cause : null];
             }
             foreach ($problems as $problem) {

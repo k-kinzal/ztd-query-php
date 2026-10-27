@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LOAD INDEX INTO CACHE t [INDEX (…)] [IGNORE LEAVES], …`: a request to preload the indexes of MyISAM tables into their key caches.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Preloading indexes
  *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('load index into cache t partition (all) ignore leaves');
- *     [$load->toString(), $load->statement->tables[0]->ignoreLeaves] // => ['LOAD INDEX INTO CACHE t PARTITION (ALL) IGNORE LEAVES', true]
+ *     [$load->toString(), $load->tables[0]->ignoreLeaves] // => ['LOAD INDEX INTO CACHE t PARTITION (ALL) IGNORE LEAVES', true]
  */
-final class LoadIndex implements Statement
+final class LoadIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<PreloadedTable> The tables in written order; at least one
@@ -43,8 +42,11 @@ final class LoadIndex implements Statement
      * @param list<PreloadedTable> $tables The tables in written order; at least one
      * @throws InvalidConstruction When the list is empty, or a table with partitions is not the only one
      */
-    public function __construct(array $tables)
+    public function __construct(array $tables, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = Check::listOf($tables, PreloadedTable::class, 'LOAD INDEX INTO CACHE names at least one table.', 1);
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of LOAD INDEX INTO CACHE.');

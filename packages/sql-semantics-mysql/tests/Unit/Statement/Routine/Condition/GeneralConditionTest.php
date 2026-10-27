@@ -57,7 +57,7 @@ final class GeneralConditionTest extends TestCase
     public function testRenderWritesTheClassesAHandlerNames(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);
@@ -68,7 +68,7 @@ final class GeneralConditionTest extends TestCase
             [new GeneralCondition(ConditionClass::SqlWarning), new GeneralCondition(ConditionClass::NotFound), new GeneralCondition(ConditionClass::SqlException)],
             $handler->conditions,
         );
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLWARNING, NOT FOUND, SQLEXCEPTION BEGIN END; END', $create->toString());
     }
 }

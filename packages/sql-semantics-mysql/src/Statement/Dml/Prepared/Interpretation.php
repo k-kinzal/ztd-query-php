@@ -9,7 +9,6 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\LexicalSettings;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Snapshot;
 
@@ -39,7 +38,7 @@ final class Interpretation
     public function __construct(public readonly LanguageProfile $language, public readonly Charset $client)
     {
         Check::input($language->grammar->database() === 'mysql', 'A MySQL preparation uses a MySQL grammar.');
-        Check::input(isset(Catalog::shared()->defaults[$language->grammar->value][$client->name]) && $client->minLength() === 1, 'A preparation uses a client character set available in its release.');
+        Check::input($client->availableIn($language->grammar) && $client->minLength() === 1, 'A preparation uses a client character set available in its release.');
         Check::input(Charset::known($client->name)->maxLength === $client->maxLength, 'A client character set has its catalog width.');
     }
 
@@ -70,8 +69,7 @@ final class Interpretation
                 }
             }
             $language = new LanguageProfile($release, new LexicalSettings(implode(',', $flags)), $parameters);
-            foreach (Catalog::shared()->defaults[$release->value] as $name => $_) {
-                $client = Charset::known($name);
+            foreach (Charset::all($release) as $client) {
                 if ($client->minLength() === 1) {
                     $interpretations[] = new self($language, $client);
                 }

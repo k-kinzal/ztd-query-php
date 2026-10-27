@@ -18,7 +18,7 @@ final class DeferredDeleteTest extends TestCase
 {
     public function testValueRejectsAnOffsetInTheRowLimit(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1) DELETE FROM c')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1) DELETE FROM c');
         self::assertInstanceOf(M\Routine\CreateProcedure::class, $statement);
         $statement = $statement->body;
         self::assertInstanceOf(DeferredDelete::class, $statement);
@@ -30,10 +30,10 @@ final class DeferredDeleteTest extends TestCase
     public function testDeriveProgramPreservesTheCommonTableAndReadDependencies(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS(SELECT * FROM source) DELETE FROM c WHERE a>1 ORDER BY a LIMIT 2');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredDelete::class, $operation->statement->body);
-        self::assertTrue($operation->facts->covers($operation->statement->body->table));
-        self::assertNotEmpty($operation->facts->diagnostics);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredDelete::class, $operation->body);
+        self::assertTrue($operation->body->table->hasBinding());
+        self::assertNotEmpty($operation->diagnostics());
     }
 
     public function testRenderKeepsSingleTableClausesInTheirOriginalRole(): void

@@ -20,7 +20,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -36,18 +35,22 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the character set
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CONVERT(a USING utf8mb4) = 'x'");
- *     $query->statement->query->where->left->charset->name->value // => 'utf8mb4'
+ *     $query->query->where->left->charset->name->value // => 'utf8mb4'
  */
 final class CharsetConversion implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The converted expression
      * @param CharsetName $charset The character set; not DEFAULT
      */
-    public function __construct(public readonly Scalar $operand, public readonly CharsetName $charset)
+    public function __construct(public readonly Scalar $operand, public readonly CharsetName $charset, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($charset->name !== null, 'CONVERT … USING names a character set.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

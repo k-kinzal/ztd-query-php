@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Changing what is published
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER PUBLICATION p SET (publish = 'update')");
- *     $operation->statement->options[0]->name->value // => 'publish'
+ *     $operation->options[0]->name->value // => 'publish'
  */
-final class AlterPublicationOptions implements Statement
+final class AlterPublicationOptions extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Definition> The parameters
@@ -38,8 +37,11 @@ final class AlterPublicationOptions implements Statement
      * @param Name $name The publication name
      * @param list<Definition> $options The parameters; at least one
      */
-    public function __construct(public readonly Name $name, array $options)
+    public function __construct(public readonly Name $name, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'ALTER PUBLICATION SET changes at least one parameter.', 1);
     }
 

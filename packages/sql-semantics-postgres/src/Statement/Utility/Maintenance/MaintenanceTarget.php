@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A table VACUUM or ANALYZE processes, with the columns to analyze when some are listed.
@@ -23,11 +22,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the columns of an analyzed table
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ANALYZE app.t (a, b)');
- *     [$operation->statement->targets[0]->table->schema->value, count($operation->statement->targets[0]->columns)] // => ['app', 2]
+ *     [$operation->targets[0]->table->schema->value, count($operation->targets[0]->columns)] // => ['app', 2]
  */
-final class MaintenanceTarget implements Node
+final class MaintenanceTarget implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns to analyze; none stands for every column
@@ -38,8 +39,11 @@ final class MaintenanceTarget implements Node
      * @param QualifiedName $table The table name
      * @param list<Name> $columns The columns to analyze; none stands for every column
      */
-    public function __construct(public readonly QualifiedName $table, array $columns = [])
+    public function __construct(public readonly QualifiedName $table, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'The columns of a maintenance target are names.');
     }
 

@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An approximate numeric type: FLOAT, REAL or DOUBLE with its optional precision and scale.
@@ -31,7 +30,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Floating implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<NumericModifier> The attributes in the order written; an attribute may repeat
@@ -44,7 +43,7 @@ final class Floating implements DeclaredName
      * @param string|null $scale The number of decimals exactly as written; requires a precision
      * @param list<NumericModifier> $modifiers The attributes in the order written
      */
-    public function __construct(public readonly FloatingKind $kind, public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [])
+    public function __construct(public readonly FloatingKind $kind, public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($scale === null || ($precision !== null && preg_match('/\A[0-9]+\z/', $scale) === 1), 'A scale is an unsigned integer written after a precision.');

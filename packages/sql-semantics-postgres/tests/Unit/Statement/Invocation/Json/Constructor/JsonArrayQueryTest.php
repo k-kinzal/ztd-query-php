@@ -26,7 +26,7 @@ final class JsonArrayQueryTest extends TestCase
     public function testOutputNameIsJsonArray(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
         self::assertInstanceOf(ExpressionTarget::class, $target);
@@ -38,20 +38,20 @@ final class JsonArrayQueryTest extends TestCase
     public function testDeriveScalarReportsAQueryOfSeveralColumns(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
         self::assertInstanceOf(ExpressionTarget::class, $target);
         $node = $target->expression;
         self::assertInstanceOf(JsonArrayQuery::class, $node);
-        self::assertEquals(new ScalarFact(new Known(Builtin::Text), Nullability::NotNull), $operation->facts->scalar($node));
-        self::assertEquals([new JsonProblem(JsonProblemKind::SubqueryColumns)], $operation->facts->diagnostics);
+        self::assertEquals(new ScalarFact(new Known(Builtin::Text), Nullability::NotNull), $node->scalarInformation());
+        self::assertEquals([new JsonProblem(JsonProblemKind::SubqueryColumns)], $operation->diagnostics());
     }
 
     public function testRenderWritesTheQueryWithoutParentheses(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
         self::assertInstanceOf(ExpressionTarget::class, $target);

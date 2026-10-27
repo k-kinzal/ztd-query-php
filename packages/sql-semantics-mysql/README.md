@@ -51,13 +51,12 @@ $query->toString(); // => 'SELECT id, upper(`name`) AS label FROM users WHERE id
 $query->field('label')->type instanceof Known; // => true
 $query->field('label')->type->descriptor->name(); // => 'VARCHAR'
 $query->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('SELECT missing FROM users', [$users])->facts->diagnostics[0]->message(); // => 'Column missing does not exist.'
+$semantics->analyze('SELECT missing FROM users', [$users])->diagnostics()[0]->message(); // => 'Column missing does not exist.'
 ```
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
 
-`analyze()` returns the shared `AnalyzedStatement` interface. Transaction control
-returns its concrete class directly: `Begin`, `StartTransaction`, `Commit`,
+`analyze()` declares the shared `AnalyzedStatement` interface and returns a concrete MySQL `Statement`. Transaction control returns `Begin`, `StartTransaction`, `Commit`,
 `Rollback`, the three savepoint commands, the six XA commands, or `SetTransaction`.
 These implement `Statement\Server\Transaction\TransactionStatement`; they retain
 their operands, selected language profile, optional client encoding and optional
@@ -72,12 +71,7 @@ $begin->work; // => true
 $begin->toString(); // => 'BEGIN WORK'
 ```
 
-Concrete values can also be constructed directly with a matching `LanguageProfile`.
-Constructors enforce structural alternatives and release-dependent XA identifier
-limits. Rendering uses the retained operands and profile. This API migration also
-includes the documented concrete `InsertStatement` form and the account statements
-`RenameUser`, `CreateRole` and `Privilege\GrantRoles`. Other statement families
-still return `Operation` and expose their structure through `statement`.
+Construct typed SQL operands and pass them to `Semantics::fromStatement($context, $statement)` to resolve a fresh concrete result. Constructors enforce structural alternatives and release-dependent XA identifier limits. Every MySQL statement family uses this model, including DDL, DML, account administration and stored programs. Expressions and table uses own their local type and name-resolution information.
 
 These account statements retain their ordered operands even when the request has
 an intrinsic contradiction, such as creating the same role twice or granting a
@@ -91,9 +85,7 @@ A SELECT, TABLE, VALUES or set-operation statement has a `Statement\QueryRoot`
 root. Its `query` property holds the query body (`Statement\Query\Select`, for
 example). Query bodies also appear directly in subqueries, INSERT sources and
 view definitions. They implement the shared `Query` role, not `Statement`.
-Construct a standalone query as `new QueryRoot($body)` before passing it to
-`Operation`. The wrapper enforces constraints of the statement position;
-`inputRelation()`, result fields and rendered SQL remain available on the operation.
+Construct a standalone query as `new QueryRoot($body)` and pass it to `Semantics::fromStatement()`. The root enforces constraints of the statement position; `inputRelation()`, result fields and rendered SQL remain available on that concrete result.
 
 `Statement\Dml\Insert\InsertRows` requires equal written row widths and, when a
 nonempty column list is explicit, the same number of values as listed columns.
@@ -133,6 +125,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 ### Session modes
 
 Five `sql_mode` settings change tokenization: `ANSI_QUOTES`, `PIPES_AS_CONCAT`, `HIGH_NOT_PRECEDENCE`, `NO_BACKSLASH_ESCAPES` and `IGNORE_SPACE`. Pass a `Mode` as the third argument of `Semantics`. `Mode::fromString()` reads a value as `SELECT @@SESSION.sql_mode` reports it: a combination mode such as `ANSI` turns on the settings it includes, and every other mode name is accepted and not recorded, because it changes no token.
+
+Pass `Statement\Type\Resolved\Settings` with `realAsFloat: true` when `REAL_AS_FLOAT` is enabled. It resolves REAL declarations and CAST targets as FLOAT; the default is DOUBLE. This setting changes types rather than tokenization, so passing `Mode::fromString()` alone does not select it.
 
 Also pass `Statement\Type\Resolved\Settings` with `strict: false` when neither `STRICT_TRANS_TABLES` nor `STRICT_ALL_TABLES` is enabled. This changes the reported nullability of string calls such as `HEX`, `CONCAT` and `LOWER`, even for constant non-null arguments. `Settings::defaults()` follows the release's default strict mode; its MySQL 5.6 settings start with strict mode disabled.
 
@@ -176,7 +170,7 @@ $semantics = new Semantics(Dialect::MySql, null, null, ParameterStyle::Native, n
 $users = $semantics->analyze('CREATE TABLE users (id INT)');
 $query = $semantics->analyze('SELECT id FROM shop.users', [$users]);
 
-$query->facts->relation($query->inputRelation())->table instanceof DeclaredTable; // => true
+$query->inputRelation()->relationInformation()->table instanceof DeclaredTable; // => true
 (new Semantics(Dialect::MySql))->analyze('SHOW TABLES')->shape()->missing[0]->describe(); // => 'the session state: the current database'
 new Semantics(Dialect::MySql, null, null, ParameterStyle::Native, new SearchPath('shop', 'other')); // throws InvalidArgumentException
 ```
@@ -213,7 +207,7 @@ $users = $semantics->analyze('CREATE TABLE users (id INT)');
 
 $semantics->analyze('SELECT ID FROM users', [$users])->field(0)->resolution instanceof ResolvedColumn; // => true
 $upper = $semantics->analyze('SELECT id FROM USERS', [$users]);
-$upper->facts->relation($upper->inputRelation())->table instanceof MissingTable; // => true
+$upper->inputRelation()->relationInformation()->table instanceof MissingTable; // => true
 $semantics->analyze('SELECT @total')->field(0)->type->missing[0]->describe(); // => 'the session state: user variable @total'
 ```
 
@@ -338,8 +332,7 @@ complete requests. `RevokePrivileges::hasExecutionCondition($release)` accounts
 for the release-specific meaning of global ALL; modern account flags still
 constrain the request's language domain. `CreateTrigger` retains its body when
 the explicit trigger and table databases differ. Catalog lookup and protocol
-restrictions belong to the consumer. These families still publish through
-Operation and Facts; they have not migrated to concrete analyzed statements.
+restrictions belong to the consumer. These concrete statement types own their conditions and resolved operands.
 These retained conditions do not cover every grammar-valid refusal: unknown
 index algorithms and invalid JSON ENGINE_ATTRIBUTE still fail during lowering.
 
@@ -429,7 +422,7 @@ produces `NonGroupedColumn`. Selecting every grouping expression makes `DISTINCT
 redundant unless the block uses `ROLLUP`. A sorting subquery cannot read an outer
 aggregate through its result alias.
 
-Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.
+Aggregate ownership is available through `$query->queryInformation()->aggregates`.
 For `SELECT (SELECT SUM(t.a)) FROM t`, the outer block owns `SUM(t.a)` because its
 argument reads only the outer table. `COUNT(*)` and constant arguments stay in the
 inner block. Clause visibility also matters: an enclosing WHERE cannot own an
@@ -452,7 +445,7 @@ The `derivedMerge` session setting controls that exception.
 ### Constant JSON paths
 
 `Statement\Call\Json\JsonValueCall::pathValue` exposes the interpreted constant
-path before an `Operation` is derived. A `Json\Path` holds typed member, wildcard,
+path before the statement is resolved. A `Json\Path` holds typed member, wildcard,
 array-cell, array-range and recursive-descent steps. Its constructors exclude
 missing or contradictory step operands. `Json\Path\Invalid` instead holds the
 byte position of an invalid decoded path operand; it is an SQL condition, not
@@ -477,7 +470,7 @@ $table = $semantics->analyze('CREATE TABLE t (a INT)');
 $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
 $semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->value; // => 'Create View'
-$semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->facts->diagnostics[0]->message(); // => 'v is not BASE TABLE.'
+$semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->diagnostics()[0]->message(); // => 'v is not BASE TABLE.'
 ```
 
 ### Generated columns
@@ -492,15 +485,15 @@ $semantics = new Semantics(Dialect::MySql);
 $table = $semantics->analyze('CREATE TABLE t (a INT, total INT AS (a * 2) STORED)');
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table])->facts->diagnostics; // => []
-$semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->message(); // => "The value specified for generated column 'total' in table 't' is not allowed."
+$semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table])->diagnostics(); // => []
+$semantics->analyze('UPDATE t SET total = 3', [$table])->diagnostics()[0]->message(); // => "The value specified for generated column 'total' in table 't' is not allowed."
 ```
 
 ## Declared type checks
 
 `CREATE TABLE` columns, routine parameters and function return types share checks for numeric widths, precision and scale, and temporal fractional precision. Invalid sizes appear as `InvalidTypeSize` diagnostics; an accompanying `ParseFailure` records where the server stops reading, so an executor can preserve warning order. Parameter and return-type errors use an empty column name, as MySQL reports them. MySQL 5.6 accepts `BIT(0)`; later supported releases reject it.
 
-The original spelling of an unquoted `FULL` identifier produces warning 4119 in the supported MySQL 8.x and 9.x releases. Quoted names, string aliases and names lexed as parts of a qualified identifier do not produce that warning. Savepoint commands own this condition as `nameWarning`, computed from the name's explicit delimiter and selected release, including for directly constructed values. Other statement families retain the notice in `Operation::$sources` and merge it into `facts->warnings`.
+The original spelling of an unquoted `FULL` identifier produces warning 4119 in the supported MySQL 8.x and 9.x releases. Quoted names, string aliases and names lexed as parts of a qualified identifier do not produce that warning. Savepoint commands own this condition as `nameWarning`, computed from the name's explicit delimiter and selected release, including for directly constructed values. Other statement families expose ordered notices through `notices()` and their conditions through `warnings()`. Each notice identifies its owning occurrence.
 
 Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
 
@@ -609,7 +602,7 @@ by the Latin-1 rule.
 
 Structural publication checks names in the model's canonical representation. It
 must not reject a valid decoded name merely because the current client character
-set cannot spell it. `Operation::toString()` reports `UnrepresentableName` if
+set cannot spell it. `toString()` reports `UnrepresentableName` if
 rendering would replace identifier characters. This does not prevent direct
 structure consumers from resolving or executing the same object. Result labels
 and origin metadata follow the session's result character set independently.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rendering;
 
+use Override;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
@@ -22,6 +23,7 @@ trait TransactionSql
     /**
      * Reconstructs this statement from its values and selected language.
      */
+    #[Override]
     public function toString(): string
     {
         $out = new Output(new Codec($this->profile->grammar, $this->profile->lexical, $this->client));
@@ -32,6 +34,7 @@ trait TransactionSql
     /**
      * Answers the selected language without retaining an analysis environment.
      */
+    #[Override]
     public function profile(): LanguageProfile
     {
         return $this->profile;
@@ -42,6 +45,7 @@ trait TransactionSql
      *
      * @return list<\SqlSemantics\Statement\Declaration\Table>
      */
+    #[Override]
     public function declarations(): array
     {
         return [];

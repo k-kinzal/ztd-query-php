@@ -15,6 +15,7 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Storage\Heap;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
@@ -23,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CREATE TABLE ... LIKE: creates an empty table with the columns, indexes and options of another.
@@ -56,8 +56,8 @@ final class CreateTableLikeCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $create = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $create = $operation;
         assert($create instanceof CreateTableLike);
         $database = $session->variables->database;
         $dictionary = $session->instance->dictionary;
@@ -80,8 +80,8 @@ final class CreateTableLikeCommand implements Command
             return new Completion(0, 0, $context->diagnostics->raised());
         }
         $layout = $this->layout($source, new QualifiedName(new Name($name), new Name($schema)), $create->temporaryWords);
-        $definition = (new TableRebuild($session, $context, $connection))->definition($layout, $dictionary->declarations(), false);
-        $dictionary->store(new StoredTable($definition, new Heap(), created: CreateTableCommand::created($context), clock: (int) floor($context->variables->clock())));
+        $definition = (new TableRebuild($session, $context, $connection))->definition($layout, \MySqlMemory\Session\Statement\Catalog::declarations($session), false);
+        $dictionary->store(new StoredTable($definition, new Heap(), created: CreateTableCommand::created($context), clock: (int) floor($context->variables->clock())), $session->temporaries);
         if ($definition->temporary && $session->transaction->open) {
             $session->transaction->temporaries['created'] = true;
         }
@@ -111,7 +111,7 @@ final class CreateTableLikeCommand implements Command
         if ($dictionary->schema($sourceSchema) === null) {
             throw QueryError::BadDatabase->error($sourceSchema);
         }
-        $source = $dictionary->table($sourceSchema, $create->source->name->value);
+        $source = $dictionary->table($sourceSchema, $create->source->name->value, $session->temporaries);
         if ($source === null && isset($dictionary->schema($sourceSchema)?->views[$create->source->name->value])) {
             throw SchemaError::WrongObject->error($sourceSchema, $create->source->name->value, 'BASE TABLE');
         }

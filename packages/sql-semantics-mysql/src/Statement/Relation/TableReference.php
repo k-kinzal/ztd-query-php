@@ -20,7 +20,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One occurrence of a named table, view or common table as query input, with its partition selection, index hints and sampling.
@@ -39,11 +38,12 @@ use SqlSemantics\Statement\Snapshot;
  *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['shop', 't', 'x']
  * @example Reading the partitions of a table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0, p1)');
- *     count($query->statement->query->from->partitions) // => 2
+ *     count($query->query->from->partitions) // => 2
  */
-final class TableReference implements NamedRelation, TableSource
+final class TableReference implements NamedRelation, TableSource, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The selected partitions in written order; empty for every partition
@@ -64,8 +64,11 @@ final class TableReference implements NamedRelation, TableSource
      * @param AliasMark $mark What is written before the alias
      * @param OptionalWords $dot Whether the name is written after a leading dot, `.t` (MySQL 5.6 and 5.7)
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], array $indexHints = [], public readonly ?TableSample $sample = null, public readonly AliasMark $mark = AliasMark::As, public readonly OptionalWords $dot = OptionalWords::Omitted)
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], array $indexHints = [], public readonly ?TableSample $sample = null, public readonly AliasMark $mark = AliasMark::As, public readonly OptionalWords $dot = OptionalWords::Omitted, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($dot === OptionalWords::Omitted || $name->schema === null, 'Only a table name without database is written after a leading dot.');
         Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');

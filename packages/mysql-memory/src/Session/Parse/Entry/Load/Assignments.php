@@ -47,6 +47,7 @@ final class Assignments
      */
     public function raise(RefusedLoadAssignments $load, Session $session): never
     {
+        $load = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($load);
         $charset = $load->charset?->name;
         if ($charset !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset->value) === null) {
             throw (new Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($charset->value), $session);
@@ -59,10 +60,10 @@ final class Assignments
         if ($database === '' && $load->table->name->schema === null) {
             throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadFacts())->derive($load, $derivation);
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         foreach ($facts->diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic)) {
                 throw (new Errors())->error($diagnostic, $session);
@@ -71,7 +72,7 @@ final class Assignments
         $entry->entry($load, $facts, $session);
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($load, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($load, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $this->prepare($load, $planner, $session);
     }
 
@@ -83,7 +84,7 @@ final class Assignments
      */
     public function prepare(RefusedLoadAssignments $load, \MySqlMemory\Plan\Planner $planner, Session $session): never
     {
-        $table = $session->instance->dictionary->table($load->table->name->schema->value ?? $session->variables->database, $load->table->name->name->value);
+        $table = $session->instance->dictionary->table($load->table->name->schema->value ?? $session->variables->database, $load->table->name->name->value, $session->temporaries);
         \SqlSemantics\Diagnostic\Check::invariant($table !== null, 'The LOAD destination was opened before assignment preparation.');
         $scope = new \MySqlMemory\Evaluation\Scope();
         $scope->place($load->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);

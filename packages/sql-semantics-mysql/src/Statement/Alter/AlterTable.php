@@ -21,7 +21,6 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER [IGNORE] TABLE t action, …`: a request to change the structure of a table.
@@ -52,11 +51,12 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
  *     $alter = $semantics->analyze('ALTER TABLE t DROP COLUMN b, ALGORITHM = INPLACE', [$table]);
- *     [count($alter->statement->commands), $alter->facts->diagnostics[0]->message()] // => [2, 'Column b does not exist in the table.']
+ *     [count($alter->commands), $alter->diagnostics()[0]->message()] // => [2, 'Column b does not exist in the table.']
  */
-final class AlterTable implements Statement, Relation
+final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<AlterCommand> The actions in the order written
@@ -68,8 +68,14 @@ final class AlterTable implements Statement, Relation
      * @param list<AlterCommand> $commands The actions in the order written
      * @param bool $ignore Whether IGNORE is written (5.6)
      */
-    public function __construct(public readonly QualifiedName $table, array $commands, public readonly bool $ignore = false)
+    public function __construct(public readonly QualifiedName $table, array $commands, public readonly bool $ignore = false, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
         $this->commands = Check::listOf($commands, AlterCommand::class, 'ALTER TABLE holds a list of actions.');

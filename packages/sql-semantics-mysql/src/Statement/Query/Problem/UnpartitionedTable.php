@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Selecting a partition of a plain table
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
- *     $semantics->analyze('SELECT a FROM t PARTITION (p0)', [$table])->facts->diagnostics[0]->message() // => 'PARTITION () clause on non partitioned table'
+ *     $semantics->analyze('SELECT a FROM t PARTITION (p0)', [$table])->diagnostics()[0]->message() // => 'PARTITION () clause on non partitioned table'
  */
 final class UnpartitionedTable implements Diagnostic
 {

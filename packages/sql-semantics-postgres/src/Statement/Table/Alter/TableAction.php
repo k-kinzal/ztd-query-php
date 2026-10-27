@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A relation action without an operand.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a relation action
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ENABLE ROW LEVEL SECURITY');
- *     $statement->statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind::EnableRowSecurity
+ *     $statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind::EnableRowSecurity
  */
 final class TableAction implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TableActionKind $kind The action
      */
-    public function __construct(public readonly TableActionKind $kind)
+    public function __construct(public readonly TableActionKind $kind, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

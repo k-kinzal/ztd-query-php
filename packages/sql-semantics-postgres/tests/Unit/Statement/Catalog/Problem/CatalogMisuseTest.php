@@ -14,12 +14,12 @@ final class CatalogMisuseTest extends TestCase
 {
     public function testMessageNamesTheSubject(): void
     {
-        self::assertSame('unacceptable schema name "pg_app"', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA pg_app')->facts->diagnostics[0]->message());
+        self::assertSame('unacceptable schema name "pg_app"', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA pg_app')->diagnostics()[0]->message());
     }
 
     public function testMessageWithoutSubject(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d OWNER a OWNER b')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d OWNER a OWNER b')->diagnostics()[0]->message());
     }
 
     public function testRejectsAMissingSubject(): void

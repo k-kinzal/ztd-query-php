@@ -17,7 +17,7 @@ final class PreparedUpdateBoundaryTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.6.51', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
         $operation = (new \MySqlMemory\Session\Access\Preparation())->read('UPDATE t JOIN u ON t.a=? SET t.a=?+NOW(9)', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
         $pending = \MySqlMemory\Command\Prepared\PreparedStatement::capture($operation, $session);
         self::assertCount(2, \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation)->types);
@@ -28,7 +28,7 @@ final class PreparedUpdateBoundaryTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.6.51', [], ['d', 'other']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
         $operation = (new \MySqlMemory\Session\Access\Preparation())->read('UPDATE t,u SET t.a=NOW(9)', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
         $pending = \MySqlMemory\Command\Prepared\PreparedStatement::capture($operation, $session);
         $session->variables->database = 'other';
@@ -46,7 +46,7 @@ final class PreparedUpdateBoundaryTest extends TestCase
         $session = (new \MySqlMemory\Instance('5.6.51', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT)');
         $operation = (new \MySqlMemory\Session\Access\Preparation())->read('UPDATE t,u SET t.a=?+NOW(9) WHERE u.a=?', $session);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);
         $pending = \MySqlMemory\Command\Prepared\PreparedStatement::capture($operation, $session);
         $request = $pending->statement;

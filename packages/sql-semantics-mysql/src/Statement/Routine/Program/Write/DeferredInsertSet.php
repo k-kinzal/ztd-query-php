@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored INSERT or REPLACE SET retaining a non-scalar assignment and its context.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining a SET assignment until its stored instruction is reached
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=ROW(1,2)');
- *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet // => true
+ *     $operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet // => true
  */
 final class DeferredInsertSet implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Assignment|DeferredColumnAssignment> The complete SET list
@@ -50,7 +49,7 @@ final class DeferredInsertSet implements ProgramStatement
      * @param RowAlias|null $alias The alias of the new row
      * @param list<Assignment|DeferredColumnAssignment> $onDuplicate The duplicate-key assignments
      */
-    public function __construct(public readonly InsertInto $into, array $assignments, public readonly ?RowAlias $alias = null, array $onDuplicate = [])
+    public function __construct(public readonly InsertInto $into, array $assignments, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($into->columns === null, 'INSERT ... SET names its columns in the assignments.');
         $items = [];

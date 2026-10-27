@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP SERVER [IF EXISTS] name`: a request to remove a FEDERATED server definition.
@@ -21,18 +20,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a server
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop server if exists 's'");
- *     [$drop->toString(), $drop->statement->name->value] // => ['DROP SERVER IF EXISTS s', 's']
+ *     [$drop->toString(), $drop->name->value] // => ['DROP SERVER IF EXISTS s', 's']
  */
-final class DropServer implements Statement
+final class DropServer extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Name $name The server name
      */
-    public function __construct(public readonly bool $ifExists, public readonly Name $name)
+    public function __construct(public readonly bool $ifExists, public readonly Name $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

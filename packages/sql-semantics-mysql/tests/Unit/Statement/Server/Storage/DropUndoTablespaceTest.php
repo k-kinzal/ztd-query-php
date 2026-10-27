@@ -24,6 +24,6 @@ final class DropUndoTablespaceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP UNDO TABLESPACE u ENGINE a');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

@@ -18,9 +18,9 @@ final class DeferredGroupStartTest extends TestCase
     public function testDeriveProgramRetainsCredentialsWithoutReportingAnInvocationCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() START GROUP_REPLICATION PASSWORD = 'p'");
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredGroupStart::class, $operation->statement->body);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredGroupStart::class, $operation->body);
     }
 
     public function testRenderKeepsEveryCredential(): void

@@ -12,11 +12,11 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW [FULL] COLUMNS and DESCRIBE: one row for each column of a table, in the order of its columns.
@@ -52,8 +52,8 @@ final class ShowColumnsCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowColumns || $statement instanceof DescribeTable);
         (new Inspection())->warn($statement, $session);
         $full = $statement instanceof ShowColumns && $statement->listing?->full() === true;
@@ -117,9 +117,9 @@ final class ShowColumnsCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the condition fails
      */
-    public function system(\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable $table, bool $full, Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function system(\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable $table, bool $full, MySqlStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof ShowColumns || $statement instanceof DescribeTable);
         $legacy = $session->settings()->legacy();
         $rows = [];

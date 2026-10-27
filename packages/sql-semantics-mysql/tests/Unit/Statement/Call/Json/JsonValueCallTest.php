@@ -41,6 +41,22 @@ final class JsonValueCallTest extends TestCase
         self::assertSame(1, $call->pathValue->legs[0]->from->offset);
     }
 
+    public function testPathValueRetainsExplicitSelectionSteps(): void
+    {
+        $path = new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path([
+            new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Leg(\SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Cell, from: new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Index(false, 1)),
+        ]);
+        $call = new JsonValueCall(new StringLiteral(['[10,20]']), new StringLiteral(['$[1]']), pathValue: $path);
+        self::assertSame($path, $call->pathValue);
+        self::assertSame($path, \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($call)->pathValue);
+    }
+
+    public function testPathValueRejectsStepsThatDisagreeWithTheLiteral(): void
+    {
+        $this->expectExceptionMessage('JSON path steps must agree with the decoded path literal.');
+        new JsonValueCall(new StringLiteral(['[10,20]']), new StringLiteral(['$[1]']), pathValue: new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path([]));
+    }
+
     public function testInvalidDocumentTypeIsOwnedByItsCall(): void
     {
         $platform = new Platform();

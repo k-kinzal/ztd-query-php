@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the characteristics of a routine
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ALTER PROCEDURE p COMMENT 'x' SQL SECURITY INVOKER");
- *     $alter->statement->characteristics[1] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic // => true
+ *     $alter->characteristics[1] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic // => true
  */
 interface Characteristic extends Node
 {

@@ -18,7 +18,7 @@ final class ShowPrivilegesTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW PRIVILEGES');
-        self::assertInstanceOf(ShowPrivileges::class, $show->statement);
+        self::assertInstanceOf(ShowPrivileges::class, $show);
         self::assertSame('Privilege', $show->field(0)->name?->value);
     }
 

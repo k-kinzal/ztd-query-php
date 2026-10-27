@@ -12,7 +12,7 @@ namespace SqlSemantics\Statement\Reference\Table;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
  *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
- *     $query->facts->relation($query->inputRelation())->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable // => true
+ *     $query->inputRelation()->relationInformation()->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable // => true
  */
 interface TableResolution
 {

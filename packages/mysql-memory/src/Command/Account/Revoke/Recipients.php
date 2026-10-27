@@ -14,7 +14,7 @@ use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Applies a privilege REVOKE to each account occurrence, preserving diagnostic order.
@@ -37,7 +37,7 @@ final class Recipients
      * @param array{string, string, string} $target
      * @throws SqlError When any account occurrence is refused
      */
-    public function run(RevokePrivileges $statement, Operation $operation, array $target, Session $session): void
+    public function run(RevokePrivileges $statement, MySqlStatement $operation, array $target, Session $session): void
     {
         $names = new Names($session->settings()->release());
         $identities = array_map(static fn ($user): Identity => $names->identity($user, $session), $names->users($statement->users));
@@ -62,7 +62,7 @@ final class Recipients
      * @param array{string, string, string} $target
      * @throws SqlError When the account is missing or holds no matching grant
      */
-    public function apply(Identity $identity, RevokePrivileges $statement, Operation $operation, array $target, Session $session, bool $failed): void
+    public function apply(Identity $identity, RevokePrivileges $statement, MySqlStatement $operation, array $target, Session $session, bool $failed): void
     {
         $levels = new Levels($session->settings()->release());
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);

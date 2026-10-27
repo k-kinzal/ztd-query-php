@@ -36,7 +36,7 @@ final class RoutineCommentTest extends TestCase
     public function testRenderWritesTheCommentText(string $release, string $sql, string $expected, string $text): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineComment::class, $characteristic);

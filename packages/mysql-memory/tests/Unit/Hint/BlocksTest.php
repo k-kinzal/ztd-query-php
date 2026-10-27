@@ -38,7 +38,8 @@ final class BlocksTest extends TestCase
     public function testWriteReadsRetainedInstructionsWithoutResolvingTheirTables(string $sql): void
     {
         $session = (new Instance())->connect();
-        $definition = $session->semantics()->analyze('CREATE PROCEDURE p() ' . $sql)->statement;
+        $definition = $session->semantics()->analyze('CREATE PROCEDURE p() ' . $sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $definition);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition);
         $blocks = new Blocks($session->instance->dictionary, '');
         self::assertTrue($blocks->write($definition->body));
@@ -53,7 +54,7 @@ final class BlocksTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT, KEY ka (a))');
-        $blocks = (new Blocks($session->instance->dictionary, 'd'))->read($session->analyze('SELECT (SELECT 1) FROM t JOIN (SELECT 1 a) d ON d.a IN (SELECT 2) WHERE 1 IN (SELECT 3)')->statement);
+        $blocks = (new Blocks($session->instance->dictionary, 'd'))->read($session->analyze('SELECT (SELECT 1) FROM t JOIN (SELECT 1 a) d ON d.a IN (SELECT 2) WHERE 1 IN (SELECT 3)'));
 
         self::assertSame([1, 2, 3, 4, 5], array_keys($blocks->blocks));
         self::assertSame([2, 3, 4, 5, 1], $blocks->contextualized);
@@ -65,21 +66,21 @@ final class BlocksTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertSame([1], (new Blocks($session->instance->dictionary, ''))->read($session->analyze('EXPLAIN SELECT 1')->statement)->resolved);
-        self::assertSame([], (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SHOW TABLES FROM mysql')->statement)->blocks);
+        self::assertSame([1], (new Blocks($session->instance->dictionary, ''))->read($session->analyze('EXPLAIN SELECT 1'))->resolved);
+        self::assertSame([], (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SHOW TABLES FROM mysql'))->blocks);
     }
 
     public function testReadGivesSetItsOwnBlock(): void
     {
         $session = (new Instance())->connect();
 
-        self::assertSame([1, 2], (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SET @x = (SELECT /*+ BKA(x) */ 1)')->statement)->resolved);
+        self::assertSame([1, 2], (new Blocks($session->instance->dictionary, ''))->read($session->analyze('SET @x = (SELECT /*+ BKA(x) */ 1)'))->resolved);
     }
 
     public function testInsertSharesBlock1WithTheFirstBlockOfItsQuery(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('INSERT /*+ BKA(i) */ INTO t SELECT /*+ BKA(s) */ a FROM u UNION SELECT 2')->statement;
+        $statement = $session->analyze('INSERT /*+ BKA(i) */ INTO t SELECT /*+ BKA(s) */ a FROM u UNION SELECT 2');
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(InsertQuery::class, $statement);
@@ -92,7 +93,7 @@ final class BlocksTest extends TestCase
     public function testChangeReadsTheTablesOfUpdate(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('UPDATE /*+ BKA(t) */ t, u SET t.a = (SELECT 1)')->statement;
+        $statement = $session->analyze('UPDATE /*+ BKA(t) */ t, u SET t.a = (SELECT 1)');
         $blocks = new Blocks($session->instance->dictionary, '');
 
         self::assertInstanceOf(Update::class, $statement);
@@ -104,7 +105,7 @@ final class BlocksTest extends TestCase
     public function testQueryReadsAReferenceToACommonTableExpressionAsANewBlock(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('WITH c AS (SELECT 1) SELECT * FROM c, c AS c2')->statement;
+        $statement = $session->analyze('WITH c AS (SELECT 1) SELECT * FROM c, c AS c2');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
@@ -118,7 +119,7 @@ final class BlocksTest extends TestCase
     public function testSelectPutsTheHintsOfTheBlockFirst(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT /*+ QB_NAME(q) */ 1')->statement;
+        $statement = $session->analyze('SELECT /*+ QB_NAME(q) */ 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
@@ -131,7 +132,7 @@ final class BlocksTest extends TestCase
     public function testRelationAnswersTheBlocksOfDerivedTablesAndOfOnConditions(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT 1 FROM (SELECT 1 a) d JOIN JSON_TABLE(\'[]\', \'$[*]\' COLUMNS (b INT PATH \'$\')) j ON j.b IN (SELECT 2)')->statement;
+        $statement = $session->analyze('SELECT 1 FROM (SELECT 1 a) d JOIN JSON_TABLE(\'[]\', \'$[*]\' COLUMNS (b INT PATH \'$\')) j ON j.b IN (SELECT 2)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
@@ -146,7 +147,7 @@ final class BlocksTest extends TestCase
     public function testSubqueriesReadTheQueriesInsideNodes(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT (SELECT 1), (SELECT 2)')->statement;
+        $statement = $session->analyze('SELECT (SELECT 1), (SELECT 2)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
@@ -177,7 +178,7 @@ final class BlocksTest extends TestCase
     public function testCommonFindsTheExpressionInScopeUnlessItIsBeingRead(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('WITH c AS (SELECT 1) SELECT 1')->statement;
+        $statement = $session->analyze('WITH c AS (SELECT 1) SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
@@ -194,7 +195,7 @@ final class BlocksTest extends TestCase
     public function testEnterBringsTheExpressionsIntoScope(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('WITH c AS (SELECT 1), e AS (SELECT 2) SELECT 1')->statement;
+        $statement = $session->analyze('WITH c AS (SELECT 1), e AS (SELECT 2) SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');
@@ -209,7 +210,7 @@ final class BlocksTest extends TestCase
     public function testLeaveTakesTheExpressionsOutOfScope(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('WITH c AS (SELECT 1) SELECT 1')->statement;
+        $statement = $session->analyze('WITH c AS (SELECT 1) SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         $blocks = new Blocks($session->instance->dictionary, '');

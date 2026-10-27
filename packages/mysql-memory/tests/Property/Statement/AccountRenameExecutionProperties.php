@@ -43,7 +43,7 @@ final class AccountRenameExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesGeneratedRequestsExecuteWithoutSourceOrPriorAccounts(GrammarRelease $release): void
     {
-        $this->forAll(new RenameUserGenerator($release))->withMaxSize(10)->then(static function (RenameUser $statement) use ($release): void {
+        $this->forAll(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new RenameUserGenerator($release)))->withMaxSize(10)->then(static function (RenameUser $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'Generated account request without SQL input';
             self::assertNull($statement->source);
@@ -74,7 +74,7 @@ final class AccountRenameExecutionProperties extends TestCase
     {
         $sequences = Generators::map(static function (AccountName $target) use ($release): array {
             $profile = new LanguageProfile($release);
-            return [new RenameUser([new UserRenaming(new CurrentUser(), $target)], $profile), new RenameUser([new UserRenaming($target, new AccountName(new Name('root'), new Name('%')))], $profile)];
+            return array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Statement $statement): \SqlSemantics\Platform\MySql\Statement\Statement => (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext($profile, [new Name('pbt')]), $statement), [new RenameUser([new UserRenaming(new CurrentUser(), $target)], $profile), new RenameUser([new UserRenaming($target, new AccountName(new Name('root'), new Name('%')))], $profile)]);
         }, new AccountNameGenerator());
         $this->forAll($sequences)->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
             [$first, $second] = $sequence;
@@ -82,7 +82,7 @@ final class AccountRenameExecutionProperties extends TestCase
             self::assertInstanceOf(RenameUser::class, $second);
             $target = $first->renamings[0]->to;
             self::assertInstanceOf(AccountName::class, $target);
-            self::assertSame($target, $second->renamings[0]->from);
+            self::assertEquals($target, $second->renamings[0]->from);
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'Generated dependent account sequence';
             $identity = new Identity($target->username(), $target->hostname() ?? '%');

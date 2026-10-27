@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALGORITHM [=] DEFAULT | name`: the algorithm the server must use for a table change.
@@ -32,12 +31,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AlgorithmOption implements AlterOption, AlterModifier
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $algorithm The algorithm name, or null for the keyword DEFAULT
      */
-    public function __construct(public readonly ?Name $algorithm)
+    public function __construct(public readonly ?Name $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input((new Choices())->known($algorithm, false), 'The algorithm is a known table-change option.');
     }

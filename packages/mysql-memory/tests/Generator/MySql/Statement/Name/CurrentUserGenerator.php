@@ -47,4 +47,15 @@ final class CurrentUserGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<OptionalWords> $parentheses The generated semantic operand
+     * @return ErisGenerator<CurrentUser>
+     */
+    public static function fromOperands(ErisGenerator $parentheses): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): CurrentUser => new CurrentUser(parentheses: $parts[0]), \Tests\Generator\Operands::tuple($parentheses));
+    }
+
 }

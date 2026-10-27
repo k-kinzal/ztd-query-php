@@ -15,8 +15,8 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\View\DropView;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes DROP VIEW.
@@ -45,8 +45,8 @@ final class DropViewCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof DropView);
         $session->transaction->commit();
         $dictionary = $session->instance->dictionary;

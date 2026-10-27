@@ -20,7 +20,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Frame::class)]
 #[Medium]
@@ -30,7 +29,7 @@ final class FrameTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW EXCLUDE TIES), sum(a) OVER (RANGE UNBOUNDED PRECEDING) FROM t', [$create])->statement;
+        $statement = $semantics->analyze('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW EXCLUDE TIES), sum(a) OVER (RANGE UNBOUNDED PRECEDING) FROM t', [$create]);
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -65,9 +64,9 @@ final class FrameTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $frame = new Frame(FrameUnit::Range, new FrameBound(FrameBoundKind::UnboundedPreceding), new FrameBound(FrameBoundKind::Following, new IntegerLiteral('2')), FrameExclusion::NoOthers);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame)))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame)))]));
 
         self::assertSame('SELECT sum(1) OVER (RANGE BETWEEN UNBOUNDED PRECEDING AND 2 FOLLOWING EXCLUDE NO OTHERS)', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

@@ -19,14 +19,14 @@ final class QueryRootsTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT a, b INTO n FROM t', [$t, $u]);
-        self::assertSame([null, 'n', 2], [$query->facts->output, $query->declarations()[0]->name->name->value, count($query->declarations()[0]->columns)]);
+        self::assertSame([null, 'n', 2], [$query->output(), $query->declarations()[0]->name->name->value, count($query->declarations()[0]->columns)]);
     }
 
     public function testFirstFindsTheFirstSelection(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('(SELECT 1 AS a INTO n) UNION SELECT 2');
-        $operation = $query->statement;
+        $operation = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation::class, $operation);
         self::assertSame('n', (new \SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\QueryRoots())->first($operation)?->into?->table->name->value);
     }

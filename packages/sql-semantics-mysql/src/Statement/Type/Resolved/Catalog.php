@@ -32,7 +32,9 @@ final class Catalog
     public static function locales(): array
     {
         if (self::$locales === null) {
-            /** @var list<array{string, list<string>, list<string>, list<string>, list<string>}> $rows */
+            /**
+ * @var list<array{string, list<string>, list<string>, list<string>, list<string>}> $rows
+ */
             $rows = require dirname(__DIR__, 4) . '/resources/locales.php';
             self::$locales = array_map(static fn (array $row): Locale => new Locale($row[0], $row[1], $row[2], $row[3], $row[4]), $rows);
         }
@@ -100,7 +102,9 @@ final class Catalog
             foreach (GrammarRelease::cases() as $release) {
                 $file = dirname(__DIR__, 4) . '/resources/collations/' . $release->value . '.php';
                 if (is_file($file)) {
-                    /** @var array{charsets: array<string, array{string, int}>, collations: array<string, array{string, int, bool}>} $catalog */
+                    /**
+ * @var array{charsets: array<string, array{string, int}>, collations: array<string, array{string, int, bool}>} $catalog
+ */
                     $catalog = require $file;
                     $catalogs[$release->value] = $catalog;
                 }

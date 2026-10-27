@@ -37,7 +37,7 @@ final class ExtendedColumnsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query($sql);
-        $table = $session->instance->dictionary->table('d', 't');
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         self::assertNotNull($table);
         $rows = (new ExtendedColumns())->rows($table->definition, true);
         self::assertSame($names, array_column($rows, 0));

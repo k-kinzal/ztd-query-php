@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Collation;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -19,17 +18,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the collation
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER COLLATION "de_DE" REFRESH VERSION');
- *     $operation->statement->name->last()->value // => 'de_DE'
+ *     $operation->name->last()->value // => 'de_DE'
  */
-final class RefreshCollationVersion implements Statement
+final class RefreshCollationVersion extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The collation name
      */
-    public function __construct(public readonly DottedName $name)
+    public function __construct(public readonly DottedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RANGE (expression)` or `LIST (expression)`: partitioning by the value of an expression compared with the partition values.
@@ -30,13 +29,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ExpressionMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionKind $kind RANGE or LIST
      * @param Scalar $expression The partitioning expression
      */
-    public function __construct(public readonly PartitionKind $kind, public readonly Scalar $expression)
+    public function __construct(public readonly PartitionKind $kind, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
         Check::input($rules->possible($expression), 'A partition method cannot depend on session state or stored functions.');

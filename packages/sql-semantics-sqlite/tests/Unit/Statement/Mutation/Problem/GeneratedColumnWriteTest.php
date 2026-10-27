@@ -29,7 +29,7 @@ final class GeneratedColumnWriteTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a, Total AS (a * 2) STORED)');
-        $problem = $semantics->analyze('UPDATE t SET total = 1', [$table])->facts->diagnostics[0] ?? null;
+        $problem = $semantics->analyze('UPDATE t SET total = 1', [$table])->diagnostics()[0] ?? null;
 
         self::assertInstanceOf(GeneratedColumnWrite::class, $problem);
         self::assertSame(WriteKind::Update, $problem->write);

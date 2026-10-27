@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrde
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The complete input of an UPDATE with an intrinsically conflicting table namespace.
@@ -36,7 +35,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ConflictingUpdate implements \SqlSemantics\Statement\Fact\Diagnostic, \SqlSemantics\Statement\Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
@@ -80,6 +79,7 @@ final class ConflictingUpdate implements \SqlSemantics\Statement\Fact\Diagnostic
         array $orderBy = [],
         public readonly ?Limit $limit = null,
         array $hints = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $members = [];

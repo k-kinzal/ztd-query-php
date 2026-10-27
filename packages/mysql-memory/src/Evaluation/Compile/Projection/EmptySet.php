@@ -84,7 +84,7 @@ final class EmptySet
                 default => $first->body,
             };
         }
-        $slots = $this->compiler->facts->query($first)->shape->slots;
+        $slots = $first->queryInformation()->shape->slots;
         $result = [];
         foreach ($plan->domains as $position => $domain) {
             $type = $slots[$position]->type;

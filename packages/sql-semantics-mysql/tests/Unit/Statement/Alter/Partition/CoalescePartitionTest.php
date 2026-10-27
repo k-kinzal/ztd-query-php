@@ -17,7 +17,7 @@ final class CoalescePartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION 1')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION 1')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

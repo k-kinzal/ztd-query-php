@@ -64,8 +64,8 @@ final class LegacyDatabaseNameTest extends TestCase
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '5.7.44'))->analyze('ALTER DATABASE `#mysql50#🦄` UPGRADE DATA DIRECTORY NAME');
         self::assertSame('ALTER DATABASE `#mysql50#🦄` UPGRADE DATA DIRECTORY NAME', $operation->toString());
-        self::assertSame("Invalid utf8mb4 character string: '#mysql...'", $operation->facts->warnings[0]->message());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->facts->warnings[1]);
+        self::assertSame("Invalid utf8mb4 character string: '#mysql...'", $operation->warnings()[0]->message());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->warnings()[1]);
     }
 
     public function testIdentifierSuppliesTheMarkerFromTheNameRole(): void

@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -40,18 +39,22 @@ use SqlSemantics\Statement\Type\Nullability;
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval($row, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')) // throws \TypeError
  * @example Adding an interval written first
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE INTERVAL 1 DAY + DATE '2024-01-31'");
- *     $query->facts->scalar($query->statement->query->where)->type->descriptor->name() // => 'DATE'
+ *     $query->query->where->scalarInformation()->type->descriptor->name() // => 'DATE'
  */
 final class IntervalAddition implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Interval $interval The interval added
      * @param Scalar $operand The date or time value
      */
-    public function __construct(public readonly Interval $interval, public readonly Scalar $operand)
+    public function __construct(public readonly Interval $interval, public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->opening($operand) >= Precedence::NEGATION, 'The operand of a leading interval needs a grouping to keep its place.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -28,9 +28,9 @@ final class WritePreparationTest extends TestCase
         $session->query('CREATE TABLE t(a INT)');
         $session->query('CREATE TABLE u(a INT)');
         $operation = $session->analyze('UPDATE t JOIN u ON missing_join SET t.a=missing_value WHERE missing_filter');
-        [$located] = (new Locations())->located($operation, (new Problems())->calls($operation), $operation->facts->diagnostics, $session, $prepared);
+        [$located] = (new Locations())->located($operation, (new Problems())->calls($operation), $operation->statementInformation()->diagnostics, $session, $prepared);
 
-        $deferred = (new WritePreparation())->deferred($operation->statement, $session, $prepared, $located);
+        $deferred = (new WritePreparation())->deferred($operation, $session, $prepared, $located);
 
         self::assertCount(3, $located);
         self::assertCount($count, $deferred);
@@ -54,7 +54,7 @@ final class WritePreparationTest extends TestCase
         $operation = $session->analyze('UPDATE t,u SET t.a=1');
         $error = QueryError::InvalidGroupFunctionUse->error();
 
-        $reported = (new WritePreparation())->reported($error, $operation->statement, $session, $prepared, $order);
+        $reported = (new WritePreparation())->reported($error, $operation, $session, $prepared, $order);
 
         self::assertSame($error->getCode(), $reported->getCode());
         self::assertSame($error->getMessage(), $reported->getMessage());

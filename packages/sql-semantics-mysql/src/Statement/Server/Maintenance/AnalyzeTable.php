@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ANALYZE [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, … [histogram]`: a request to update the key distribution statistics of tables, or their histograms.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the request
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('analyze local tables t, shop.u');
- *     [$statement->toString(), $statement->statement->noWriteToBinlog] // => ['ANALYZE NO_WRITE_TO_BINLOG TABLE t, shop.u', true]
+ *     [$statement->toString(), $statement->noWriteToBinlog] // => ['ANALYZE NO_WRITE_TO_BINLOG TABLE t, shop.u', true]
  */
-final class AnalyzeTable implements Statement
+final class AnalyzeTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<MaintainedTable> The tables in written order; at least one
@@ -42,8 +41,11 @@ final class AnalyzeTable implements Statement
      * @param list<MaintainedTable> $tables The tables in written order; at least one
      * @param Histogram|null $histogram The histogram request, when written (MySQL 8.0 and later)
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables, public readonly ?Histogram $histogram = null)
+    public function __construct(public readonly bool $noWriteToBinlog, array $tables, public readonly ?Histogram $histogram = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = (new MaintainedTables())->checked($tables);
 
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

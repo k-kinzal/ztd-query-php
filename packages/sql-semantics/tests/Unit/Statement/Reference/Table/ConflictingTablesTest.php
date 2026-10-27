@@ -24,13 +24,13 @@ final class ConflictingTablesTest extends TestCase
         $second = $semantics->analyze('CREATE TABLE t (b TEXT)');
         $query = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
 
-        $resolution = $query->facts->relation($query->singleNamedInput())->table;
+        $resolution = $query->singleNamedInput()->relationInformation()->table;
 
         self::assertInstanceOf(ConflictingTables::class, $resolution);
         self::assertSame('Relation t has conflicting declarations.', $resolution->message());
         self::assertSame([$first->declarations()[0], $second->declarations()[0]], $resolution->candidates);
         self::assertSame('t', $resolution->name->name->value);
-        self::assertSame([$resolution], $query->facts->diagnostics);
+        self::assertSame([$resolution], $query->diagnostics());
     }
 
     public function testMessageIsNotReachedWithFewerThanTwoDeclarations(): void

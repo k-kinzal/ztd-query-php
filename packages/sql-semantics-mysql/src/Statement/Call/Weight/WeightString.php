@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of WEIGHT_STRING(): the binary weight string of a string under its collation.
@@ -44,7 +43,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WeightString implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<WeightLevel> The levels of the LEVEL clause
@@ -64,7 +64,12 @@ final class WeightString implements Scalar
         public readonly ?Numeral $length = null,
         array $levels = [],
         public readonly ?WeightLevelRange $range = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->levels = Check::listOf($levels, WeightLevel::class, 'A LEVEL clause is a list of levels.');
         Check::input(($cast === null) === ($length === null), 'A cast of WEIGHT_STRING has a length, and only a cast has one.');
         $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();

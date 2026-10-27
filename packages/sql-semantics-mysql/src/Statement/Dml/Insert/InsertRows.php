@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Explainable;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * INSERT or REPLACE of rows written in a VALUES clause, with the optional row alias and ON DUPLICATE KEY UPDATE.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the rows of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)");
- *     [count($insert->statement->rows), count($insert->statement->onDuplicate), $insert->toString()] // => [2, 1, "INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)"]
+ *     [count($insert->rows), count($insert->onDuplicate), $insert->toString()] // => [2, 1, "INSERT IGNORE INTO t (a, b) VALUE (1, 'x'), (2, DEFAULT) ON DUPLICATE KEY UPDATE b = VALUES(b)"]
  */
-final class InsertRows implements Explainable
+final class InsertRows extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<InsertedRow> The rows in written order
@@ -46,8 +45,11 @@ final class InsertRows implements Explainable
      * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When written widths contradict each other, there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
-    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ValuesKeyword $keyword = ValuesKeyword::Values, public readonly ?\SqlSemantics\Statement\Source\Span $valuesSource = null)
+    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ValuesKeyword $keyword = ValuesKeyword::Values, public readonly ?\SqlSemantics\Statement\Source\Span $valuesSource = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->rows = Check::listOf($rows, InsertedRow::class, 'VALUES holds at least one row.', 1);
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\InsertWidths())->problem($into, $this->rows) === null, 'INSERT rows agree with each other and any explicit column count.');
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');

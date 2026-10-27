@@ -36,7 +36,7 @@ final class ProgramStatementTest extends TestCase
 {
     public function testDeriveProgramIsNotImplementedByAQueryOfABody(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN SELECT 1; END')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN SELECT 1; END');
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);

@@ -32,36 +32,6 @@ use Tests\Generator\Embedding;
 #[Small]
 final class HintsTest extends TestCase
 {
-    public function testSyntaxWarnsAboutTheProblemOfEachHintComment(): void
-    {
-        $session = (new Instance())->connect();
-        $sql = "SELECT /*+ BKA(t) FOO */ 1 FROM (SELECT /*+ */ 1) d\nWHERE 1 IN (SELECT /*+ MAX_EXECUTION_TIME(4294967296 ) */ 1)";
-
-        self::assertSame([
-            ["Optimizer hint syntax error near 'FOO */ 1 FROM (SELECT /*+ */ 1) d\nWHERE 1 IN (SELECT /*+ MAX_EXECUTION_TIME(4294' at line 1", true],
-            ["Optimizer hint syntax error near '*/' at line 1", false],
-            ["Unsupported MAX_EXECUTION_TIME near ') */ 1)' at line 2", false],
-        ], (new Hints())->syntax($session->semantics()->parser()->parse($sql), $sql, $session));
-    }
-
-    public function testSyntaxReadsTheCommentAfterTheFirstKeywordFirst(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('SELECT SQL_NO_CACHE 1 FROM (SELECT /*+ FOO */ 1) d');
-        $first = array_column($session->diagnostics->conditions, 1);
-        $session->query('SELECT /*+ FOO */ SQL_NO_CACHE 1');
-
-        self::assertSame([[1681, 1064], [1064, 1681]], [$first, array_column($session->diagnostics->conditions, 1)]);
-    }
-
-    public function testSyntaxAnswersNothingInMySql56(): void
-    {
-        $session = (new Instance('5.6.51'))->connect();
-        $session->query('SELECT /*+ FOO */ 1');
-
-        self::assertSame([], $session->diagnostics->conditions);
-    }
-
     public function testTypingTypesTheStatementWithTheValuesOfSetVar(): void
     {
         $session = (new Instance())->connect();
@@ -183,7 +153,7 @@ final class HintsTest extends TestCase
     public function testRegistrationReadsTheHintsOfAStatement(): void
     {
         $session = (new Instance())->connect();
-        $registration = (new Hints())->registration($session->analyze('SELECT /*+ MAX_EXECUTION_TIME(5) RESOURCE_GROUP(g) */ 1')->statement, $session);
+        $registration = (new Hints())->registration($session->analyze('SELECT /*+ MAX_EXECUTION_TIME(5) RESOURCE_GROUP(g) */ 1'), $session);
 
         self::assertSame(['5', 'g', []], [$registration->time?->milliseconds, $registration->group?->group, $registration->warnings]);
     }
@@ -221,14 +191,40 @@ final class HintsTest extends TestCase
         $statement2 = (new Embedding())->statement($query);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         $operation2 = (new Binding())->operation($session, $statement2, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
-        $reply = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), []);
-        self::assertSame($query, $operation->statement);
+        $reply = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), []);
+        self::assertNotSame($query, $operation);
+        self::assertFalse($query->hasBinding());
         self::assertInstanceOf(ResultSet::class, $reply);
         self::assertSame([[$precision === 0 ? '0' : '0.' . str_repeat('3', $precision)]], $reply->rows);
         self::assertSame($precision, $reply->columns[0]->decimals);
         self::assertSame(4, $session->variables->read('div_precision_increment'));
     }
+
+    public function testMessagesCapturesDisplayTextWithoutChangingTheSemanticWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $input = 'SELECT /*+ FOO */ 1';
+        $statement = $session->semantics()->analyze($input);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        (new Hints())->messages($statement, $input, $session);
+        $warning = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError::class, $warning);
+        self::assertSame("Optimizer hint syntax error near 'FOO */ 1' at line 1", $session->preparation->hintMessages[$warning] ?? null);
+        self::assertSame('Optimizer hint syntax error', $warning->message());
+    }
+
+    public function testWarningsEmitsGeneratedConditionsAtTheirRetainedStage(): void
+    {
+        $session = (new Instance())->connect();
+        $first = new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError(\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintFailure::Syntax, 0, leading: true);
+        $last = new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError(\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintFailure::Syntax, 0);
+        (new Hints())->warnings([$first, $last], true, $session);
+        self::assertSame([['Warning', 1064, 'Optimizer hint syntax error']], $session->diagnostics->conditions);
+        (new Hints())->warnings([$first, $last], false, $session);
+        self::assertCount(2, $session->diagnostics->conditions);
+    }
+
 }

@@ -19,9 +19,9 @@ final class AssignmentTest extends TestCase
     public function testRenderWritesColumnAndValue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t SET t.a := 1');
-        self::assertInstanceOf(Update::class, $operation->statement);
+        self::assertInstanceOf(Update::class, $operation);
 
-        self::assertSame('a', $operation->statement->assignments[0]->column->name->value);
+        self::assertSame('a', $operation->assignments[0]->column->name->value);
         self::assertSame('UPDATE t SET t.a = 1', $operation->toString());
     }
 }

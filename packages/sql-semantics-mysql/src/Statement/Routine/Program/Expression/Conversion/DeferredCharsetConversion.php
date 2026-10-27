@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -30,14 +29,18 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredCharsetConversion implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $operand The retained preparation dependency
      * @param CharsetName $charset The explicitly named character set
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CharsetName $charset)
+    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CharsetName $charset, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($charset->name !== null, 'CONVERT … USING names a character set.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

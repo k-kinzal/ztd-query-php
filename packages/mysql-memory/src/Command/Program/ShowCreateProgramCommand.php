@@ -17,12 +17,12 @@ use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateTrigger;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW CREATE PROCEDURE, SHOW CREATE FUNCTION, SHOW CREATE TRIGGER and SHOW CREATE EVENT.
@@ -54,14 +54,14 @@ final class ShowCreateProgramCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowCreateProcedure || $statement instanceof ShowCreateFunction || $statement instanceof ShowCreateTrigger || $statement instanceof ShowCreateEvent);
         $name = $statement->name->name->value;
         $database = ProgramSource::database($statement->name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
         if ($statement instanceof ShowCreateTrigger) {
-            return $this->trigger($schema, $database, $name, $context, $operation->lookupField('Created') instanceof \SqlSemantics\Statement\Shape\UniqueField);
+            return $this->trigger($schema, $database, $name, $context, $operation->statementInformation()->output?->lookup('Created') instanceof \SqlSemantics\Statement\Shape\UniqueField);
         }
         if ($statement instanceof ShowCreateEvent) {
             return $this->event($schema, $name, $context);

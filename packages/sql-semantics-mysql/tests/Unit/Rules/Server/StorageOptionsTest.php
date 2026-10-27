@@ -36,7 +36,7 @@ final class StorageOptionsTest extends TestCase
 
     public function testDeriveAcceptsARepeatedNoWaitInMysql8(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP TABLESPACE ts NO_WAIT NO_WAIT')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP TABLESPACE ts NO_WAIT NO_WAIT')->diagnostics());
     }
 
     public function testUnsetTellsTheServersUnsetValues(): void
@@ -64,7 +64,7 @@ final class StorageOptionsTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLESPACE ts INITIAL_SIZE 2147483647K MAX_SIZE 0 EXTENT_SIZE 2147483647G');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheOptionsInOrder(): void

@@ -22,21 +22,21 @@ final class RetainedUpdatesTest extends TestCase
     public function testAssignmentsKeepsTheCompleteLegacySetList(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=1, b=DEFAULT, c=ROW(1,2)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->statement->body);
-        self::assertCount(3, $operation->statement->body->assignments);
-        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->statement->body->assignments[2]);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->body);
+        self::assertCount(3, $operation->body->assignments);
+        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->body->assignments[2]);
     }
     public function testReadKeepsEveryDuplicateKeyOperandInItsWrittenRole(): void
     {
         $sql = 'CREATE PROCEDURE p() INSERT INTO t VALUES (1) ON DUPLICATE KEY UPDATE a = 2, b = DEFAULT, c = ROW(3, 4)';
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
-        self::assertCount(3, $operation->statement->body->onDuplicate);
-        self::assertInstanceOf(Assignment::class, $operation->statement->body->onDuplicate[0]);
-        self::assertInstanceOf(Assignment::class, $operation->statement->body->onDuplicate[1]);
-        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->statement->body->onDuplicate[2]);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
+        self::assertCount(3, $operation->body->onDuplicate);
+        self::assertInstanceOf(Assignment::class, $operation->body->onDuplicate[0]);
+        self::assertInstanceOf(Assignment::class, $operation->body->onDuplicate[1]);
+        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->body->onDuplicate[2]);
         self::assertSame($sql, $operation->toString());
     }
 
@@ -44,10 +44,10 @@ final class RetainedUpdatesTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() INSERT INTO t VALUES (1) ON DUPLICATE KEY UPDATE a = ROW((SELECT b FROM other), 2)';
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze($sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
-        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->statement->body->onDuplicate[0]);
-        self::assertSame('a', $operation->statement->body->onDuplicate[0]->column->name->value);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
+        self::assertInstanceOf(DeferredColumnAssignment::class, $operation->body->onDuplicate[0]);
+        self::assertSame('a', $operation->body->onDuplicate[0]->column->name->value);
         self::assertSame($sql, $operation->toString());
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use MySqlMemory\Dictionary\Binding\ViewBinding;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\View;
 use MySqlMemory\Error\Family\QueryError;
@@ -18,9 +19,9 @@ use MySqlMemory\Plan\Path\Transform\Materialize;
 use MySqlMemory\Plan\Path\Transform\Project;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
@@ -53,9 +54,10 @@ final class Views
      */
     public function plan(TableReference $reference, View $view, Scope $scope, Relations $relations): AccessPath
     {
-        $plan = $this->query($view);
-        $names = array_map(static fn ($column): string => $column->name->value, $view->declaration->columns);
-        $merged = $view->algorithm !== 'TEMPTABLE' && ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $this->planner->settings->resolution()->derivedMerge) && (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->view($view->query, $this->planner->settings->release(), $view->operation->facts);
+        $binding = $this->planner->declarations->view($view);
+        $plan = $this->query($view, $binding);
+        $names = array_map(static fn ($column): string => $column->name->value, $binding->declaration->columns);
+        $merged = $view->algorithm !== 'TEMPTABLE' && ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $this->planner->settings->resolution()->derivedMerge) && (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->view($view->query, $this->planner->settings->release());
         $placed = array_map(static fn (Domain $domain): Domain => !$merged && $domain->kind === Kind::Null ? new Domain(Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), true) : $domain, $relations->shaped($reference, $plan->domains));
         $scope->place($reference, $placed, $names);
         $scope->merged[spl_object_id($reference)] = $this->origins($view, $plan, $merged);
@@ -92,14 +94,15 @@ final class Views
      *
      * @throws SqlError When the view is invalid
      */
-    public function query(View $view): QueryPlan
+    public function query(View $view, ?ViewBinding $binding = null): QueryPlan
     {
         $syntax = (new \MySqlMemory\Session\Access\StoredViewSyntax())->error($view);
         if ($syntax !== null) {
             throw $syntax;
         }
-        if (!$view->valid) {
-            foreach ($this->planner->settings->legacy() ? $view->operation->facts->diagnostics : [] as $diagnostic) {
+        $binding ??= $this->planner->declarations->view($view);
+        if (!$binding->valid) {
+            foreach ($this->planner->settings->legacy() ? $binding->operation->statementInformation()->diagnostics : [] as $diagnostic) {
                 if ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable) {
                     $this->planner->compiler->connection->context->diagnostics->error(1146, QueryError::NoSuchTable->message($diagnostic->name->schema->value ?? $view->database, $diagnostic->name->name->value));
                     break;
@@ -107,11 +110,11 @@ final class Views
             }
             throw SchemaError::ViewInvalid->error($view->schema, $view->name);
         }
-        $positions = $view->positions === [] ? array_keys($view->declaration->columns) : $view->positions;
+        $positions = $binding->positions;
         $settings = new Settings($this->planner->settings->connectionCollation, $this->planner->settings->modes, $this->planner->settings->divPrecisionIncrement, $view->database, $this->planner->settings->version, $this->planner->settings->resolution);
-        $planner = new Planner($view->operation->statement, $view->operation->facts, $settings, $this->planner->compiler->connection, $this->planner->dictionary);
+        $planner = new Planner($binding->operation, $binding->operation->statementInformation(), $settings, $this->planner->compiler->connection, $this->planner->dictionary, null, $this->planner->declarations);
         try {
-            $plan = $planner->query($view->query, null);
+            $plan = $planner->query($binding->query(), null);
         } catch (SqlError $error) {
             if ($error->error === QueryError::NoSuchTable || $error->error === QueryError::BadField || $error->error === SchemaError::ViewInvalid) {
                 throw new SqlError(SchemaError::ViewInvalid, SchemaError::ViewInvalid->message($view->schema, $view->name), $error);
@@ -137,8 +140,9 @@ final class Views
      */
     public function table(View $view): QueryPlan
     {
-        $plan = $this->query($view);
-        $names = array_map(static fn ($column): string => $column->name->value, $view->declaration->columns);
+        $binding = $this->planner->declarations->view($view);
+        $plan = $this->query($view, $binding);
+        $names = array_map(static fn ($column): string => $column->name->value, $binding->declaration->columns);
         $origins = array_map(static fn (?ColumnOrigin $origin, string $name): ColumnOrigin => new ColumnOrigin($origin !== null && $origin->originalTable !== '' ? $view->schema : '', $view->name, $view->name, $name, $origin->flags ?? 0), array_pad($plan->origins, count($plan->domains), null), $names);
 
         return new QueryPlan(new Materialize($plan), $plan->domains, $names, $origins);
@@ -152,20 +156,21 @@ final class Views
      * value of its type, and another none; a column of NULL alone is a VARBINARY(0) (verified on
      * a live 8.4 server).
      */
-    public static function stored(View $view, Dictionary $dictionary): \MySqlMemory\Dictionary\StoredTable
+    public static function stored(ViewBinding $binding, Dictionary $dictionary): \MySqlMemory\Dictionary\StoredTable
     {
+        $view = $binding->view;
         $columns = [];
-        foreach ($view->declaration->columns as $index => $column) {
+        foreach ($binding->declaration->columns as $index => $column) {
             $type = $column->type;
             $nullable = $column->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull;
             $domain = $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $type->kind !== Kind::Null ? Domain::of($type, $nullable) : new Domain(Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), true);
-            $read = self::base($view, $dictionary, $view->positions[$index] ?? $index);
+            $read = self::base($binding, $dictionary, $binding->positions[$index] ?? $index);
             $base = $read === null || $read->autoIncrement ? null : $read->default;
             $default = $base ?? ($nullable ? \MySqlMemory\Dictionary\Fill::none() : \MySqlMemory\Dictionary\Fill::constant(self::zero($domain), null));
             $columns[] = new \MySqlMemory\Dictionary\ColumnDefinition($column->name->value, $domain, $default, false, false, null, false, $column, $read->comment ?? '');
         }
 
-        return new \MySqlMemory\Dictionary\StoredTable(new \MySqlMemory\Dictionary\TableDefinition($view->schema, $view->name, $columns, [], $view->declaration, ''), new \MySqlMemory\Storage\Heap());
+        return new \MySqlMemory\Dictionary\StoredTable(new \MySqlMemory\Dictionary\TableDefinition($view->schema, $view->name, $columns, [], $binding->declaration, ''), new \MySqlMemory\Storage\Heap());
     }
 
     /**
@@ -174,9 +179,9 @@ final class Views
      *
      * @param int $position The position of the column in the output of the query
      */
-    public static function baseDefault(View $view, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\Fill
+    public static function baseDefault(ViewBinding $binding, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\Fill
     {
-        return self::base($view, $dictionary, $position)?->default;
+        return self::base($binding, $dictionary, $position)?->default;
     }
 
     /**
@@ -184,10 +189,11 @@ final class Views
      *
      * @param int $position The position of the column in the output of the query
      */
-    public static function base(View $view, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\ColumnDefinition
+    public static function base(ViewBinding $binding, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\ColumnDefinition
     {
-        $field = $view->operation->facts->query($view->query)->projection[$position] ?? null;
-        $resolution = $field instanceof \SqlSemantics\Statement\Shape\Field && ($field->expression === null || $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) ? ($field->expression === null ? $field->resolution : $view->operation->facts->scalar($field->expression)->resolution) : null;
+        $view = $binding->view;
+        $field = $binding->query()->queryInformation()->projection[$position] ?? null;
+        $resolution = $field instanceof \SqlSemantics\Statement\Shape\Field && ($field->expression === null || $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) ? ($field->expression === null ? $field->resolution : $field->expression->scalarInformation()->resolution) : null;
         if (!$resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn || !$resolution->relation instanceof TableReference || $resolution->slot->name === null) {
             return null;
         }
@@ -220,24 +226,23 @@ final class Views
      *
      * @return list<string>
      */
-    public static function outputs(Operation $operation, Query $query): array
+    public static function outputs(MySqlStatement $operation, Query $query): array
     {
-        return array_map(static fn ($slot): string => strtolower($slot->name->value ?? ''), $operation->facts->query($query)->shape->slots);
+        return array_map(static fn ($slot): string => strtolower($slot->name->value ?? ''), $query->queryInformation()->shape->slots);
     }
 
     /**
-     * Answers the declarations of the tables and views a resolved query reads, by `database.name`.
+     * Answers the distinct declarations of the tables and views a resolved query reads.
      *
-     * @return array<string, Table>
+     * @return list<Table>
      */
-    public static function tables(Operation $operation, Query $query, string $database): array
+    public static function tables(MySqlStatement $operation, Query $query): array
     {
         $tables = [];
         foreach ((new Walker())->find($query, TableReference::class) as $reference) {
-            $resolution = $operation->facts->covers($reference) ? $operation->facts->relation($reference)->table : null;
-            if ($resolution instanceof DeclaredTable) {
-                $name = $resolution->table->name;
-                $tables[($name->schema->value ?? $database) . '.' . $name->name->value] = $resolution->table;
+            $resolution = $reference->hasBinding() ? $reference->relationInformation()->table : null;
+            if ($resolution instanceof DeclaredTable && !in_array($resolution->table, $tables, true)) {
+                $tables[] = $resolution->table;
             }
         }
 

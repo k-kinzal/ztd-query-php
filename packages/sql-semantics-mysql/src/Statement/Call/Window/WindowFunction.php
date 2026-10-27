@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -53,7 +52,8 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class WindowFunction implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar|RoutineVariable> The arguments in order
@@ -73,7 +73,12 @@ final class WindowFunction implements Scalar
         public readonly Name|WindowSpecification $over,
         public readonly ?NullTreatment $nulls = null,
         public readonly ?CountingEdge $edge = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $values = [];
         foreach ((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->checked($kind, $arguments, $nulls, $edge) as $argument) {
             Check::input($argument instanceof Scalar || $argument instanceof RoutineVariable, 'An ordinary window call requires scalar arguments.');

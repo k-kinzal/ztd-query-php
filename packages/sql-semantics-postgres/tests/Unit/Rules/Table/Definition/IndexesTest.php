@@ -21,7 +21,7 @@ final class IndexesTest extends TestCase
         self::assertSame([
           0 => 'Column zz does not exist.',
           1 => 'Column yy does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testLocatedPutsAnUnqualifiedNameInTheSchema(): void
@@ -40,7 +40,7 @@ final class IndexesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['cannot create index on relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE INDEX i ON v (a)', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE INDEX i ON m (a)', $context)->facts->diagnostics));
+        self::assertSame(['cannot create index on relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE INDEX i ON v (a)', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE INDEX i ON m (a)', $context)->diagnostics()));
     }
 }

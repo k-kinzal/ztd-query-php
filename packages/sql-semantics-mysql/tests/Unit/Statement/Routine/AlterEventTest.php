@@ -34,7 +34,7 @@ final class AlterEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER EVENT e ON SCHEDULE EVERY 1 HOUR DO BEGIN DECLARE v INT DEFAULT 1; UPDATE t SET b = v WHERE a = v; END', [$table]);
 
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testDeriveStatementReportsUnknownNamesOfTheScheduleAndTheBody(): void
@@ -43,7 +43,7 @@ final class AlterEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER EVENT e ON SCHEDULE AT a DO DELETE FROM t WHERE zz = 1', [$table]);
 
-        self::assertSame(['Column a does not exist.', 'Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['Column a does not exist.', 'Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testDeriveStatementRejectsAnAlterationWithoutClauses(): void
@@ -72,7 +72,7 @@ final class AlterEventTest extends TestCase
 
     public function testDeriveStatementAcceptsANestedAlterationWithoutABody(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ALTER EVENT f ENABLE')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ALTER EVENT f ENABLE')->diagnostics());
     }
 
     /**
@@ -129,9 +129,9 @@ final class AlterEventTest extends TestCase
 
     public function testDeriveStatementWarnsOfDisableOnSlave(): void
     {
-        $facts = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DISABLE ON SLAVE')->facts;
+        $facts = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DISABLE ON SLAVE');
 
-        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
     }
     public function testAnEmptyChangeIsRejectedEvenWithADefiner(): void
     {

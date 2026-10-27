@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\Generator as ErisGenerator;
 use Eris\Generators;
 use Eris\TestTrait;
 use MySqlMemory\Account\Identity;
@@ -45,7 +44,7 @@ final class RoleExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesCreationIsAtomicWithoutPriorAccounts(GrammarRelease $release): void
     {
-        $this->forAll(new CreateRoleGenerator($release))->withMaxSize(10)->then(static function (CreateRole $statement) use ($release): void {
+        $this->forAll(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new CreateRoleGenerator($release)))->withMaxSize(10)->then(static function (CreateRole $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'Generated role creation without SQL input';
             $accounts = array_keys($session->instance->accounts->accounts);
@@ -81,7 +80,7 @@ final class RoleExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesAbsentRoleStateIsAnOrdinarySqlRefusal(GrammarRelease $release): void
     {
-        $this->forAll(new GrantRolesGenerator($release))->withMaxSize(10)->then(static function (GrantRoles $statement) use ($release): void {
+        $this->forAll(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new GrantRolesGenerator($release)))->withMaxSize(10)->then(static function (GrantRoles $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'Generated role grant without SQL input';
             $accounts = array_keys($session->instance->accounts->accounts);
@@ -110,25 +109,26 @@ final class RoleExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesGeneratedDefinitionsSupplyPreparedRoleEdgesWhileShrinking(GrammarRelease $release): void
     {
-        $sequences = Generators::bind(Generators::bool(), static fn (bool $admin): ErisGenerator => Generators::map(static function (AccountName $name) use ($admin, $release): array {
+        $sequences = Generators::map(static function (array $parts) use ($release): array {
+            [$name, $admin] = $parts;
             $profile = new LanguageProfile($release);
             $role = new AccountName(new Name('r' . $name->username()), $name->host);
             $recipient = new AccountName(new Name('g' . $name->username()), $name->host);
-            return [
+            return array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Statement $statement): \SqlSemantics\Platform\MySql\Statement\Statement => (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext($profile, [new Name('pbt')]), $statement), [
                 new CreateRole(true, [$role, $recipient], $profile),
                 new GrantRoles([new GrantedRole($role)], [$recipient], $admin, $profile),
                 new GrantRoles([new GrantedRole($recipient)], [$role], false, $profile),
                 new GrantRoles([new GrantedRole($role)], [$recipient], false, $profile),
-            ];
-        }, new AccountNameGenerator()));
+            ]);
+        }, \Tests\Generator\Operands::tuple(new AccountNameGenerator(), Generators::bool()));
         $this->forAll($sequences)->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
             [$definition, $grant, $cycle, $repeated] = $sequence;
             self::assertInstanceOf(CreateRole::class, $definition);
             self::assertInstanceOf(GrantRoles::class, $grant);
             self::assertInstanceOf(GrantRoles::class, $cycle);
             self::assertInstanceOf(GrantRoles::class, $repeated);
-            self::assertSame($definition->roles[0], $grant->roles[0]->role);
-            self::assertSame($definition->roles[1], $grant->users[0]);
+            self::assertEquals($definition->roles[0], $grant->roles[0]->role);
+            self::assertEquals($definition->roles[1], $grant->users[0]);
             $role = new Identity($definition->roles[0]->username(), $definition->roles[0]->hostname() ?? '%');
             $recipient = new Identity($definition->roles[1]->username(), $definition->roles[1]->hostname() ?? '%');
             $session = (new Instance(substr($release->value, 6)))->connect();

@@ -66,8 +66,8 @@ final class ResultSlotsTest extends TestCase
     public function testValuesNumbersTheRowOfAnotherLengthAndReportsAnEmptyRow(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $longer = $semantics->analyze('CREATE PROCEDURE p() VALUES ROW(1), ROW(2), ROW(3, 4)')->facts->diagnostics;
-        $empty = $semantics->analyze('CREATE PROCEDURE p() VALUES ROW(), ROW(1)')->facts->diagnostics;
+        $longer = $semantics->analyze('CREATE PROCEDURE p() VALUES ROW(1), ROW(2), ROW(3, 4)')->diagnostics();
+        $empty = $semantics->analyze('CREATE PROCEDURE p() VALUES ROW(), ROW(1)')->diagnostics();
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch::class, $longer[0]);
         self::assertSame(3, $longer[0]->row);
@@ -89,14 +89,14 @@ final class ResultSlotsTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
 
         self::assertSame([], $derivation->facts()->diagnostics);
-        self::assertSame([], $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(DEFAULT, 1))', [$t])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(DEFAULT, 1))', [$t])->diagnostics());
     }
 
     public function testValuesStillChecksTheFirstRowWidthWhenTheTargetWidthMatches(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $diagnostics = $semantics->analyze('INSERT INTO t (VALUES ROW(), ROW(1, 2))', [$table])->facts->diagnostics;
+        $diagnostics = $semantics->analyze('INSERT INTO t (VALUES ROW(), ROW(1, 2))', [$table])->diagnostics();
 
         self::assertCount(1, $diagnostics);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch::class, $diagnostics[0]);
@@ -108,8 +108,8 @@ final class ResultSlotsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = $semantics->analyze('CREATE TABLE t (b TEXT)');
-        $once = $semantics->analyze('SELECT b FROM t UNION SELECT b FROM t', [$t])->facts->output?->fields()?->at(0)->type;
-        $nested = $semantics->analyze('SELECT b FROM t UNION SELECT b FROM t EXCEPT SELECT b FROM t', [$t])->facts->output?->fields()?->at(0)->type;
+        $once = $semantics->analyze('SELECT b FROM t UNION SELECT b FROM t', [$t])->output()?->fields()?->at(0)->type;
+        $nested = $semantics->analyze('SELECT b FROM t UNION SELECT b FROM t EXCEPT SELECT b FROM t', [$t])->output()?->fields()?->at(0)->type;
 
         self::assertInstanceOf(Known::class, $once);
         self::assertEquals($once, $nested);
@@ -138,13 +138,13 @@ final class ResultSlotsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT x FROM (SELECT 'é' UNION SELECT 1) AS d");
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertInstanceOf(Dependent::class, $operation->field(0)->type);
     }
 
     public function testSettledLeavesOutAColumnNullInEveryRowOfANestedOperation(): void
     {
-        $type = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT NULL INTERSECT SELECT NULL)')->facts->output?->fields()?->at(0)->type;
+        $type = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT NULL INTERSECT SELECT NULL)')->output()?->fields()?->at(0)->type;
 
         self::assertInstanceOf(Known::class, $type);
         self::assertInstanceOf(Domain::class, $type->descriptor);

@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER EVENT: changes the schedule, name, status, comment or statement of an event.
@@ -40,11 +39,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the changes of an event
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
- *     [$alter->statement->newName->name->value, $alter->statement->status, $alter->statement->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
+ *     [$alter->newName->name->value, $alter->status, $alter->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
  */
-final class AlterEvent implements Statement
+final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var ProgramStatement|Statement|null The new statement of the event, when written
@@ -71,7 +70,12 @@ final class AlterEvent implements Statement
         public readonly ?Text $comment = null,
         ?Node $body = null,
         public readonly ?Account $definer = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         ProgramNames::check($name);
         if ($newName !== null) {
             ProgramNames::check($newName);

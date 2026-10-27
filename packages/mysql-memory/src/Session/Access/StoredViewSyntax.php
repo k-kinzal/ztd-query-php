@@ -29,7 +29,7 @@ final class StoredViewSyntax
      */
     public function error(View $view): ?SqlError
     {
-        $text = new ViewText($view->created->facts, '', $view->database);
+        $text = new ViewText($view->created->statementInformation(), '', $view->database);
         $stored = $text->query($view->definition);
         $with = new WithText($text);
         foreach ((new ReadDependencies())->nodes($view->definition) as $node) {
@@ -45,7 +45,7 @@ final class StoredViewSyntax
                 while (str_contains($stored, $boundary)) {
                     $boundary .= "\0";
                 }
-                $marked = (new ViewText($view->created->facts, '', $view->database, afterWith: $node, boundary: $boundary))->query($view->definition);
+                $marked = (new ViewText($view->created->statementInformation(), '', $view->database, afterWith: $node, boundary: $boundary))->query($view->definition);
                 $offset = $marked === null ? false : strpos($marked, $boundary);
                 if ($offset !== false) {
                     return StatementError::ParseError->error(mb_strcut(substr($marked, $offset + strlen($boundary)), 0, 80, 'UTF-8'), 1);

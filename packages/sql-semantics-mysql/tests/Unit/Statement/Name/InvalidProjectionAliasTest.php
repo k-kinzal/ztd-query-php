@@ -19,7 +19,7 @@ final class InvalidProjectionAliasTest extends TestCase
     public function testMessagePreservesAForwardReferenceAndItsUnresolvedCandidate(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (SELECT x), 1 AS x');
-        $problem = $operation->facts->diagnostics[0];
+        $problem = $operation->diagnostics()[0];
 
         self::assertInstanceOf(InvalidProjectionAlias::class, $problem);
         self::assertSame(AliasRule::Forward, $problem->rule);

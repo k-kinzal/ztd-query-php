@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,15 +37,16 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a negated LIKE with an escape character
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT a NOT LIKE 'x!%' ESCAPE '!' FROM t");
- *     $match = $query->statement->columns[0]->expression;
+ *     $match = $query->columns[0]->expression;
  *     [$match->operator, $match->negated, $match->escape->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, true, '!']
  * @example Refusing a pattern that the rendered SQL would associate differently
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
+ *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral(), $or) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class PatternMatch implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PatternOperator $operator The operator
@@ -61,7 +61,12 @@ final class PatternMatch implements Scalar
         public readonly Scalar $right,
         public readonly bool $negated = false,
         public readonly ?Scalar $escape = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->closing($left) >= Precedence::EQUALITY, 'The matched operand needs parentheses to keep its place.');
         Check::input($precedence->opening($right) > Precedence::EQUALITY, 'The pattern needs parentheses to keep its place.');

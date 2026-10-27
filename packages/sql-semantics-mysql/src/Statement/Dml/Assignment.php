@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One assignment `column = value` of SET, ON DUPLICATE KEY UPDATE, UPDATE or LOAD DATA.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an assignment of UPDATE
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('UPDATE t SET a = a + 1');
- *     $update->statement->assignments[0]->column->name->value // => 'a'
+ *     $update->assignments[0]->column->name->value // => 'a'
  */
 final class Assignment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnUse $column The column assigned to
      * @param Scalar|DefaultRequest $value The value: an expression or DEFAULT
      */
-    public function __construct(public readonly ColumnUse $column, public readonly Scalar|DefaultRequest $value)
+    public function __construct(public readonly ColumnUse $column, public readonly Scalar|DefaultRequest $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

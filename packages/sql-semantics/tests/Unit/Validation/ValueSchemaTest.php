@@ -7,7 +7,7 @@ namespace Tests\Unit\Validation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Script;
 use SqlSemantics\Validation\ValueSchema;
 use stdClass;
 
@@ -17,14 +17,12 @@ final class ValueSchemaTest extends TestCase
 {
     public function testFieldsDescribesEveryRetainedRootField(): void
     {
-        self::assertSame(['context', 'facts', 'sources', 'statement'], array_keys((new ValueSchema())->fields(Operation::class)));
+        self::assertSame(['SqlSemantics\\Statement\\SqlStatement::$requestInformation', 'inputSource', 'statements'], array_keys((new ValueSchema())->fields(Script::class)));
     }
 
-    public function testFieldsRefusesInheritedHiddenState(): void
+    public function testFieldsIncludesInheritedStatementMeaning(): void
     {
-        $this->expectExceptionMessage('Semantic value classes do not inherit hidden state.');
-
-        (new ValueSchema())->fields(\SqlSemantics\Diagnostic\InvalidConstruction::class);
+        self::assertSame('?SqlSemantics\\Statement\\StatementSemantics', (new ValueSchema())->fields(Script::class)['SqlSemantics\\Statement\\SqlStatement::$requestInformation']);
     }
 
     public function testCheckRefusesAnUnregisteredClass(): void
@@ -37,9 +35,9 @@ final class ValueSchemaTest extends TestCase
     public function testSchemaMatchesTheRootWithoutSqlOrParserStorage(): void
     {
         $audit = new ValueSchema();
-        $audit->check(Operation::class);
+        $audit->check(Script::class);
 
-        self::assertSame($audit->fields(Operation::class), $audit->schema($audit->directory(Operation::class))[Operation::class]);
+        self::assertSame($audit->fields(Script::class), $audit->schema($audit->directory(Script::class))[Script::class]);
     }
 
     public function testDirectoryFindsThePackageOfADialectValue(): void

@@ -106,11 +106,11 @@ final class MathResultsTest extends TestCase
     public function testLegacyMakesAbsOfAnIntegerABigintAndFloorAsLongAsItsArgumentIn57(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ABS(CAST(1 AS UNSIGNED)), FLOOR(1.5)');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
-        $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $operation->facts->scalar($item->expression)->type : null, $statement->items);
+        $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $item->expression->scalarInformation()->type : null, $statement->items);
 
         self::assertEquals([new Known(Domain::integer(Field::LongLong, 1, true)), new Known(Domain::integer(Field::LongLong, 4))], $items);
     }

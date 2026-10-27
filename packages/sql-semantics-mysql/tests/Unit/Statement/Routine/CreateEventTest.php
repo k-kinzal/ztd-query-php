@@ -32,11 +32,11 @@ final class CreateEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY STARTS NOW() DO BEGIN DECLARE v INT DEFAULT 1; '
             . 'UPDATE t SET b = v WHERE a = v; INSERT INTO t (a) VALUES (v); DELETE FROM t WHERE b = v; SET @w = v; SELECT a, v FROM t; END', [$table]);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementReportsAnUnknownNameOfTheBody(): void
@@ -45,7 +45,7 @@ final class CreateEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO DELETE FROM t WHERE zz = 1', [$table]);
 
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementReportsAColumnInTheSchedule(): void
@@ -54,7 +54,7 @@ final class CreateEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY a DAY DO SELECT 1', [$table]);
 
-        self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementReportsANestedEventDefinition(): void
@@ -96,12 +96,12 @@ final class CreateEventTest extends TestCase
     #[DataProvider('providerDeriveStatementAcceptsWhatAnEventMayContain')]
     public function testDeriveStatementAcceptsWhatAnEventMayContain(string $body): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body)->diagnostics());
     }
 
     public function testDeriveStatementKeepsTheClauses(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO SELECT 1")->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO SELECT 1");
         self::assertInstanceOf(CreateEvent::class, $statement);
 
         self::assertSame(Completion::Preserve, $statement->completion);
@@ -159,8 +159,8 @@ final class CreateEventTest extends TestCase
 
     public function testDeriveStatementWarnsOfDisableOnSlave(): void
     {
-        $facts = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DISABLE ON SLAVE DO SELECT 1")->facts;
+        $facts = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DISABLE ON SLAVE DO SELECT 1");
 
-        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
     }
 }

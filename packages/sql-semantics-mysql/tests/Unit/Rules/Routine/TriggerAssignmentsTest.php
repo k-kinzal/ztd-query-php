@@ -24,7 +24,7 @@ final class TriggerAssignmentsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->diagnostics());
     }
 
     /**
@@ -48,7 +48,7 @@ final class TriggerAssignmentsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->diagnostics()));
     }
 
     /**
@@ -74,7 +74,7 @@ final class TriggerAssignmentsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -105,7 +105,7 @@ final class TriggerAssignmentsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, $release);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -123,7 +123,7 @@ final class TriggerAssignmentsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testCheckReportsAProgramProblemOfTheRule(): void
@@ -131,6 +131,6 @@ final class TriggerAssignmentsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
 
-        self::assertEquals([new ProgramProblem(ProgramRule::AfterRowUpdate)], $operation->facts->diagnostics);
+        self::assertEquals([new ProgramProblem(ProgramRule::AfterRowUpdate)], $operation->diagnostics());
     }
 }

@@ -19,4 +19,20 @@ final class StatementTest extends TestCase
         self::assertContains(Statement::class, class_implements(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class));
         self::assertNotContains(Statement::class, class_implements(Script::class));
     }
+
+    public function testInitializeStatementInformationAttachesTheSelectedLanguage(): void
+    {
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart();
+        $information = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $statement->initializeStatementInformation($information);
+        self::assertSame(\SqlSemantics\Contract\GrammarRelease::MySql847, $statement->profile()->grammar);
+    }
+
+    public function testStatementInformationContainsTheResultOfTheQuery(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 AS n');
+        self::assertInstanceOf(Statement::class, $statement);
+        self::assertSame($statement->field(0), $statement->statementInformation()->output?->projection[0]);
+    }
+
 }

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -31,13 +30,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a COPY of a table
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COPY t (a) FROM PROGRAM 'cat x' WITH (format csv) WHERE a > 0");
- *     [$copy->statement->program, $copy->statement->file->value, $copy->toString()] // => [true, 'cat x', "COPY t (a) FROM PROGRAM 'cat x' (format csv) WHERE a > 0"]
+ *     [$copy->program, $copy->file->value, $copy->toString()] // => [true, 'cat x', "COPY t (a) FROM PROGRAM 'cat x' (format csv) WHERE a > 0"]
  * @example Refusing both kinds of options
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable(false, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), [], \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::To, false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout, null, [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyFlag::Csv], [new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyOption(new \SqlSemantics\Statement\Identifier\Name('header'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class CopyTable implements Statement
+final class CopyTable extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns copied, in written order; none is every column
@@ -79,7 +78,12 @@ final class CopyTable implements Statement
         array $legacy = [],
         array $options = [],
         public readonly ?Scalar $where = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(!$table->table->only && $table->alias === null, 'COPY names a table without ONLY and alias.');
         $this->columns = Check::listOf($columns, Name::class, 'The column list of COPY holds names.');
         $this->legacy = (new ClosedList())->of($legacy, [CopyFlag::class, CopyText::class, CopyForce::class], 'The old COPY options are keyword, string and FORCE options.');

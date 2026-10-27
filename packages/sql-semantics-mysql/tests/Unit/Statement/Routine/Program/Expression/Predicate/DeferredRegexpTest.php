@@ -35,9 +35,9 @@ final class DeferredRegexpTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE p() KILL ROW(1,2) REGEXP 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill::class, $operation->statement->body);
-        self::assertInstanceOf(DeferredRegexp::class, $operation->statement->body->process);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill::class, $operation->body);
+        self::assertInstanceOf(DeferredRegexp::class, $operation->body->process);
         self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
     }
     public function testOperandsKeepsTheWrittenOrder(): void

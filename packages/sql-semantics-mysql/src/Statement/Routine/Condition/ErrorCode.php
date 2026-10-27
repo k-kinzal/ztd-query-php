@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A MySQL error code as a condition value.
@@ -30,12 +29,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ErrorCode implements Condition
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral $code The error code
      */
-    public function __construct(public readonly Numeral $code)
+    public function __construct(public readonly Numeral $code, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(self::accepts($code), 'A condition error code has a nonzero integer prefix.');
     }

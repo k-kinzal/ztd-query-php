@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER USER [IF EXISTS] account [auth], … [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to change accounts.
@@ -40,9 +39,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $user = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('*0123456789012345678901234567890123456789')));
  *     new \SqlSemantics\Platform\MySql\Statement\Account\AlterUser(false, [$user]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class AlterUser implements Statement
+final class AlterUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<UserAlteration> The account entries in order
@@ -74,7 +73,12 @@ final class AlterUser implements Statement
         array $resources = [],
         array $options = [],
         public readonly ?UserComment $comment = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->users = Check::listOf($users, UserAlteration::class, 'ALTER USER names at least one account.', 1);
         $this->resources = Check::listOf($resources, ResourceLimit::class, 'The WITH clause lists resource limits.');
         $this->options = Check::listOf($options, AccountOption::class, 'The account options are a list.');

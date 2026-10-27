@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Notice\NameConversion;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A resource-group identifier of at most 64 bytes after conversion to utf8mb3.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ResourceGroupName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The group identity after character conversion, with case preserved.
@@ -37,7 +36,7 @@ final class ResourceGroupName implements Node
     /**
      * @param Name $spelling The decoded identifier before character conversion
      */
-    public function __construct(public readonly Name $spelling)
+    public function __construct(public readonly Name $spelling, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!str_contains($spelling->value, "\0"), 'A resource-group identifier cannot contain NUL.');
         Check::input(self::accepts($spelling), 'A resource-group name occupies at most 64 utf8mb3 bytes.');

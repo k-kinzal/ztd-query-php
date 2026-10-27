@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,17 +25,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the target of a reindex
  *     $reindex = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('REINDEX main.users');
- *     [$reindex->statement->target?->schema?->value, $reindex->statement->target?->name->value] // => ['main', 'users']
+ *     [$reindex->target?->schema?->value, $reindex->target?->name->value] // => ['main', 'users']
  */
-final class Reindex implements Statement
+final class Reindex extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName|null $target The collation, table or index name; null rebuilds every index
      */
-    public function __construct(public readonly ?QualifiedName $target = null)
+    public function __construct(public readonly ?QualifiedName $target = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($target?->catalog === null, 'A reindex target has at most a schema qualifier.');
     }
 

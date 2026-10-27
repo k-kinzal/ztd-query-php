@@ -20,7 +20,9 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class InputLocals
 {
-    /** @var array<int, Name> Variable declarations at their input offsets */
+    /**
+ * @var array<int, Name> Variable declarations at their input offsets
+ */
     private array $names = [];
 
     /**

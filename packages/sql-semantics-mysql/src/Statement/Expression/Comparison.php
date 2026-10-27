@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -35,19 +34,23 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading both operands
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a >= 10');
- *     [$query->statement->query->where->left->name->value, $query->statement->query->where->right->text] // => ['a', '10']
+ *     [$query->query->where->left->name->value, $query->query->where->right->text] // => ['a', '10']
  */
 final class Comparison implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ComparisonOperator $operator The operator
      * @param Scalar|RowOperand $left The left operand
      * @param Scalar|RowOperand $right The right operand
      */
-    public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar|RowOperand $left, public readonly Scalar|RowOperand $right)
+    public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar|RowOperand $left, public readonly Scalar|RowOperand $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->problem($left, $right) === null, 'Compared operands have compatible nested row shapes.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The left operand of a comparison needs a grouping to keep its place.');

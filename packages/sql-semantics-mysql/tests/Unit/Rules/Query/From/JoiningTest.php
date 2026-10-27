@@ -56,7 +56,7 @@ final class JoiningTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t NATURAL JOIN u');
 
         self::assertNull($operation->fields());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testLocateReportsAColumnSelectedTwice(): void
@@ -65,9 +65,9 @@ final class JoiningTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
         $operation = $semantics->analyze('SELECT 1 FROM (t AS x, t AS y) JOIN t USING (a)', [$t]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::AmbiguousJoinColumn, $operation->facts->diagnostics[0]->rule);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
+        self::assertSame(MisuseRule::AmbiguousJoinColumn, $operation->diagnostics()[0]->rule);
     }
 
     public function testExtendMakesEveryColumnNullable(): void
@@ -98,14 +98,14 @@ final class JoiningTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
 
-        self::assertSame([], $semantics->analyze("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->diagnostics());
     }
 
     public function testLocateNamesTheAmbiguousColumnAsItsRelationNamesIt(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM ((SELECT 1 a) d JOIN (SELECT 2 a) e ON 1) JOIN (SELECT 3 a) f USING (A)');
 
-        self::assertEquals([new Misuse(MisuseRule::AmbiguousJoinColumn, new Name('a'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::AmbiguousJoinColumn, new Name('a'))], $operation->diagnostics());
     }
 
     public function testJoinSelectsAnInvisibleUsingColumnAmongTheMergedColumns(): void
@@ -118,7 +118,7 @@ final class JoiningTest extends TestCase
         self::assertSame(['e', 'a', 'f', 'c'], $names('SELECT * FROM v JOIN x USING (e)'));
         self::assertSame(['a', 'f'], $names('SELECT v.* FROM v JOIN u USING (e)'));
         self::assertSame(['e', 'a', 'f', 'c', 'b'], $names('SELECT * FROM v JOIN x USING (e) JOIN u USING (e)'));
-        self::assertSame([], $semantics->analyze('SELECT e, x.e FROM v JOIN x USING (e)', $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SELECT e, x.e FROM v JOIN x USING (e)', $tables)->diagnostics());
     }
 
     public function testDeclaredLeavesOutTheInvisibleColumnsAnOperandOfANaturalJoinMerged(): void

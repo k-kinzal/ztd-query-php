@@ -27,13 +27,13 @@ final class SignalTest extends TestCase
     public function testDeriveStatementAcceptsAnSqlStateValueAndItsItems(): void
     {
         $signal = (new Semantics(Dialect::MySql))->analyze("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
-        $statement = $signal->statement;
+        $statement = $signal;
         self::assertInstanceOf(Signal::class, $statement);
         self::assertInstanceOf(SqlState::class, $statement->condition);
 
         self::assertSame('45000', $statement->condition->state->value);
         self::assertSame([ConditionItemName::MessageText, ConditionItemName::MysqlErrno], array_map(static fn (SignalItem $item): ConditionItemName => $item->name, $statement->items));
-        self::assertSame([], $signal->facts->diagnostics);
+        self::assertSame([], $signal->diagnostics());
     }
 
     /**
@@ -48,10 +48,10 @@ final class SignalTest extends TestCase
     public function testDeriveStatementReportsTheBrokenRule(string $sql, ProgramRule $rule, string $message): void
     {
         $signal = (new Semantics(Dialect::MySql))->analyze($sql);
-        $problem = $signal->facts->diagnostics[0] ?? null;
+        $problem = $signal->diagnostics()[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
-        self::assertCount(1, $signal->facts->diagnostics);
+        self::assertCount(1, $signal->diagnostics());
         self::assertSame($rule, $problem->rule);
         self::assertSame($message, $problem->message());
     }
@@ -59,7 +59,7 @@ final class SignalTest extends TestCase
     public function testDeriveProgramResolvesADeclaredConditionAndTheVariablesOfTheItems(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p(m TEXT) BEGIN DECLARE v INT; DECLARE gone CONDITION FOR SQLSTATE '45000'; SIGNAL gone SET MESSAGE_TEXT = m, MYSQL_ERRNO = v; END");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);
@@ -69,7 +69,7 @@ final class SignalTest extends TestCase
 
         self::assertSame('gone', $signal->condition->name->value);
         self::assertCount(2, $signal->items);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**
@@ -150,7 +150,7 @@ final class SignalTest extends TestCase
     {
         $signal = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertInstanceOf(Signal::class, $signal->statement);
+        self::assertInstanceOf(Signal::class, $signal);
         self::assertSame($expected, $signal->toString());
     }
 

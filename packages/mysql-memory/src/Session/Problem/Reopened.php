@@ -34,7 +34,7 @@ final class Reopened
      *
      * @throws SqlError When it does
      */
-    public function check(Node $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
+    public function check(Node $statement, Session $session, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): void
     {
         if ($session->temporaries->tables === [] || ($statement instanceof \SqlSemantics\Statement\Statement && \MySqlMemory\Command\Program\ProgramProblems::stores($statement))) {
             return;
@@ -63,10 +63,10 @@ final class Reopened
      *
      * @return list<TableReference>
      */
-    public function reads(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, array $active = []): array
+    public function reads(Node $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, array $active = []): array
     {
         if ($statement instanceof TableReference) {
-            $resolution = $facts->covers($statement) ? $facts->relation($statement)->table : null;
+            $resolution = $statement->hasBinding() ? $statement->relationInformation()->table : null;
             if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression) {
                 $id = spl_object_id($resolution->definition);
                 return isset($active[$id]) ? [] : $this->reads($resolution->definition->query, $facts, $active + [$id => true]);

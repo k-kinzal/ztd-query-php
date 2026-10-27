@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Grouping;
 
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
@@ -35,10 +34,10 @@ final class Matching
      *
      * @param list<Operand> $expressions
      */
-    public function listed(Operand $expression, array $expressions, ?Facts $facts = null): bool
+    public function listed(Operand $expression, array $expressions): bool
     {
         foreach ($expressions as $candidate) {
-            if ($this->same($this->unwrap($expression), $this->unwrap($candidate), $facts)) {
+            if ($this->same($this->unwrap($expression), $this->unwrap($candidate))) {
                 return true;
             }
         }
@@ -52,7 +51,7 @@ final class Matching
      * The parts are compared property by property, through lists and nested parts; an enum case
      * is the same only as itself, and any other value only as an identical one.
      */
-    public function same(Node $left, Node $right, ?Facts $facts = null): bool
+    public function same(Node $left, Node $right): bool
     {
         $pending = [[$left, $right]];
         while ($pending !== []) {
@@ -77,12 +76,17 @@ final class Matching
 
                 continue;
             }
-            $alike = $this->alike($first, $second, $facts);
+            $alike = $this->alike($first, $second);
             if ($alike === false) {
                 return false;
             }
             if ($alike === null) {
-                $pending[] = [get_object_vars($first), get_object_vars($second)];
+                $left = get_object_vars($first);
+                $right = get_object_vars($second);
+                if ($first instanceof Node && $second instanceof Node) {
+                    unset($left['inputSource'], $right['inputSource']);
+                }
+                $pending[] = [$left, $right];
             }
         }
 
@@ -96,7 +100,7 @@ final class Matching
      * without regard to case, and two column names the facts resolve to columns are the same when
      * they name the same column of the same occurrence.
      */
-    public function alike(object $first, object $second, ?Facts $facts): ?bool
+    public function alike(object $first, object $second): ?bool
     {
         if ($first::class !== $second::class || $first instanceof UnitEnum) {
             return $first === $second;
@@ -105,19 +109,19 @@ final class Matching
             return strcasecmp($first->value, $second->value) === 0;
         }
 
-        return $first instanceof ColumnUse && $second instanceof ColumnUse ? $this->column($first, $second, $facts) : null;
+        return $first instanceof ColumnUse && $second instanceof ColumnUse ? $this->column($first, $second) : null;
     }
 
     /**
      * Tells whether two column names resolve to the same column of the same occurrence, or answers null when the facts do not resolve both to a column.
      */
-    public function column(ColumnUse $first, ColumnUse $second, ?Facts $facts): ?bool
+    public function column(ColumnUse $first, ColumnUse $second): ?bool
     {
-        if ($facts === null || !$facts->covers($first) || !$facts->covers($second)) {
+        if (!$first->hasBinding() || !$second->hasBinding()) {
             return null;
         }
-        $one = $facts->scalar($first)->resolution;
-        $two = $facts->scalar($second)->resolution;
+        $one = $first->scalarInformation()->resolution;
+        $two = $second->scalarInformation()->resolution;
         if (!$one instanceof ResolvedColumn || !$two instanceof ResolvedColumn) {
             return null;
         }
@@ -129,11 +133,11 @@ final class Matching
     /**
      * Answers the expression a GROUP BY or ORDER BY key reads: the select item an alias or a position names, or the key itself.
      */
-    public function target(Operand $key, Facts $facts): Operand
+    public function target(Operand $key): Operand
     {
         $node = $this->unwrap($key);
-        if ($facts->covers($node)) {
-            $resolution = $facts->scalar($node)->resolution;
+        if ($node->hasBinding()) {
+            $resolution = $node->scalarInformation()->resolution;
             if ($resolution instanceof AliasTarget && $resolution->field->expression !== null) {
                 return $resolution->field->expression;
             }

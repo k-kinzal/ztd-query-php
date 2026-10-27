@@ -263,8 +263,8 @@ final class RowsTest extends TestCase
         $table = $session->instance->dictionary->table('d', 't');
         $operation = $session->analyze('INSERT INTO t VALUES (1, 1)');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $statement = $operation->statement;
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $statement = $operation;
 
         self::assertNotNull($table);
         self::assertInstanceOf(InsertRows::class, $statement);

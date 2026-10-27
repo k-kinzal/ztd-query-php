@@ -38,9 +38,9 @@ final class FrameOffsetsTest extends TestCase
         $window = new M\Routine\Program\Selection\DeferredWindowSpec(frame: new M\Routine\Program\Selection\Frame\DeferredFrame(M\Call\Window\FrameUnit::Rows, $bound));
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([], true));
         $window->deriveWindow($derivation, $derivation->environment());
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         $deferred = (new FrameOffsets())->conditions($window, $facts);
-        $resolution = $facts->scalar($column)->resolution;
+        $resolution = $column->scalarInformation()->resolution;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\MissingColumn::class, $resolution);
         self::assertSame([spl_object_id($resolution) => true], $deferred);
         self::assertCount(2, $facts->diagnostics);

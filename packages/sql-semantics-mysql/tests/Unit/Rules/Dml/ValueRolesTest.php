@@ -18,7 +18,7 @@ final class ValueRolesTest extends TestCase
     public function testCheckKeepsDormantOperandsInsideUnusedWriteClauses(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES ROW(1) ORDER BY ABS()');
-        (new ValueRoles())->check($operation->statement);
+        (new ValueRoles())->check($operation);
         self::assertSame('INSERT INTO t VALUES ROW(1) ORDER BY ABS()', $operation->toString());
     }
 }

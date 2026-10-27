@@ -7,8 +7,8 @@ namespace MySqlMemory\Command\View;
 use LogicException;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Compile\Walker;
-use SqlSemantics\Construction\Reconstruction;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Construction\Occurrences as Reconstruction;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList;
@@ -24,9 +24,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
@@ -48,12 +48,12 @@ final class ViewRewrite
      *
      * @throws LogicException When a retained predicate condition bypasses preparation
      */
-    public function operation(Operation $operation, ViewWrites $writes, TableReference|WriteTarget $target): Operation
+    public function operation(MySqlStatement $operation, ViewWrites $writes, TableReference|WriteTarget $target, \MySqlMemory\Session\Session $session): MySqlStatement
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         $names = [];
         foreach ((new Walker())->find($statement, Query::class) as $query) {
-            foreach ($operation->facts->query($query)->projection as $field) {
+            foreach ($query->queryInformation()->projection as $field) {
                 if ($field instanceof Field && $field->expression !== null && $field->name !== null) {
                     $names[spl_object_id($field->expression)] = $field->name;
                 }
@@ -78,7 +78,7 @@ final class ViewRewrite
             assert($rewritten instanceof Statement);
         }
 
-        return new Operation($operation->context, $rewritten);
+        return (new \MySqlMemory\Session\Statement\Binding())->operation($session, $rewritten, profile: $operation->profile());
     }
 
     /**
@@ -86,9 +86,9 @@ final class ViewRewrite
      *
      * @param array<int, Name> $names
      */
-    public function replacement(Node $node, Operation $operation, ViewWrites $writes, TableReference|WriteTarget $target, Reconstruction $copy, array $names): ?Node
+    public function replacement(Node $node, MySqlStatement $operation, ViewWrites $writes, TableReference|WriteTarget $target, Reconstruction $copy, array $names): ?Node
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         $insert = $statement instanceof InsertRows || $statement instanceof InsertSet || $statement instanceof InsertQuery;
         if ($node === $target) {
             return $target instanceof TableReference
@@ -114,8 +114,8 @@ final class ViewRewrite
                 ? new SelectExpression($value, $node->alias, $node->layout, $node->mark, $node->spellingProfile)
                 : new SelectExpression($value, $names[spl_object_id($node->expression)] ?? $node->alias);
         }
-        if ($node instanceof ColumnUse && $operation->facts->covers($node)) {
-            $resolution = $operation->facts->scalar($node)->resolution;
+        if ($node instanceof ColumnUse && $node->hasBinding()) {
+            $resolution = $node->scalarInformation()->resolution;
             if ($resolution instanceof ResolvedColumn && $resolution->relation === $target) {
                 return $writes->column($node->name->value)[2] ?? null;
             }

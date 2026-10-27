@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
  * @visibility public
  * @example Reading the syntax of a VACUUM written with words
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('VACUUM FULL VERBOSE');
- *     $operation->statement->syntax // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words
+ *     $operation->syntax // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words
  */
 enum OptionSyntax
 {

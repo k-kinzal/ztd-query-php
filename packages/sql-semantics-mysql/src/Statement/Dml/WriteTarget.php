@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The one table INSERT, REPLACE, LOAD DATA or a single-table DELETE writes, with its correlation name and partition selection.
@@ -36,11 +35,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the table a DELETE writes
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE FROM shop.t AS x PARTITION (p0) WHERE x.a = 1');
- *     [$delete->statement->table->name()->schema?->value, $delete->statement->table->alias()?->value, count($delete->statement->table->partitions)] // => ['shop', 'x', 1]
+ *     [$delete->table->name()->schema?->value, $delete->table->alias()?->value, count($delete->table->partitions)] // => ['shop', 'x', 1]
  */
-final class WriteTarget implements NamedRelation
+final class WriteTarget implements NamedRelation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The selected partitions in written order; empty for every partition
@@ -53,8 +53,11 @@ final class WriteTarget implements NamedRelation
      * @param list<Name> $partitions The selected partitions
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], public readonly AliasMark $mark = AliasMark::As, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($mark !== AliasMark::Equals, 'A write target alias uses AS or no marker.');

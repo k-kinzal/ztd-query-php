@@ -18,7 +18,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -32,7 +31,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredGroupConcat implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The complete argument list
@@ -51,8 +51,11 @@ final class DeferredGroupConcat implements DeferredOperand
      * @param Text|null $separator The explicit separator
      * @param Name|WindowSpecification|null $over The optional window
      */
-    public function __construct(array $arguments, public readonly bool $distinct = false, array $order = [], public readonly ?Text $separator = null, public readonly Name|WindowSpecification|null $over = null)
+    public function __construct(array $arguments, public readonly bool $distinct = false, array $order = [], public readonly ?Text $separator = null, public readonly Name|WindowSpecification|null $over = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Scalar::class, 'GROUP_CONCAT takes at least one expression.', 1);
         $this->order = Check::listOf($order, OrderItem::class, 'A concatenation ordering contains ordering items.');
         foreach ($this->order as $item) {

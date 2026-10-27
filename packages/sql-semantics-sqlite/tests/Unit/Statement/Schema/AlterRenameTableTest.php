@@ -22,7 +22,8 @@ final class AlterRenameTableTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a)');
         $operation = $semantics->analyze('ALTER TABLE t RENAME TO u', [$table]);
-        $resolution = $operation->facts->relation($operation->statement)->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        $resolution = $operation->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table->declarations()[0], $resolution->table);
@@ -34,15 +35,15 @@ final class AlterRenameTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('ALTER TABLE t RENAME TO u', []);
 
-        self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTable::class, $operation->diagnostics()[0]);
     }
 
     public function testRenderWritesTheOldAndTheNewName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('alter table main.t rename to "new name"');
 
-        self::assertInstanceOf(AlterRenameTable::class, $operation->statement);
-        self::assertSame('new name', $operation->statement->newName->value);
+        self::assertInstanceOf(AlterRenameTable::class, $operation);
+        self::assertSame('new name', $operation->newName->value);
         self::assertSame('ALTER TABLE main.t RENAME TO `new name`', $operation->toString());
     }
 }

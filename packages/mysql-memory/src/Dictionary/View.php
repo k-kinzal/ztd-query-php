@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 
 /**
- * A view: its query, the columns it declares, and the attributes SHOW CREATE VIEW writes.
+ * The immutable stored definition of a view.
  *
- * Views share the namespace of the tables of their database. The query is kept resolved, with
- * the tables it read when it was resolved; a query whose tables have changed since is resolved
- * again before it is read, in the database that was current when the view was created.
+ * Views share the namespace of the tables of their database. Binding against a later catalog
+ * produces a separate ViewBinding; analysis never replaces this definition or its declarations.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-view.html.
  *
  * @visibility MySqlMemory
@@ -23,27 +22,12 @@ final class View
     /**
      * The statement the view was created with, which SHOW CREATE VIEW writes the query of.
      */
-    public readonly Operation $created;
+    public readonly MySqlStatement $created;
 
     /**
      * The query as the view was created with it.
      */
     public readonly Query $definition;
-
-    /**
-     * @var list<int> The position in the output of the query of each column of the view, when the query was resolved again and returns them in another order; empty for their own order
-     */
-    public array $positions = [];
-
-    /**
-     * Whether catalog refresh resolved the view successfully.
-     */
-    public bool $valid = true;
-
-    /**
-     * The index-level hints the query of the view keeps, as SHOW CREATE VIEW writes them after its first SELECT, or the empty string.
-     */
-    public string $hints = '';
 
     /**
      * @param string $schema The database of the view
@@ -53,11 +37,12 @@ final class View
      * @param string $security DEFINER or INVOKER
      * @param string $check The check option: empty for none, CASCADED or LOCAL
      * @param string $database The database that was current when the view was created, where the unqualified names of the query are looked up
-     * @param Operation $operation The resolved statement the query belongs to
+     * @param MySqlStatement $operation The resolved statement the query belongs to
      * @param Query $query The resolved query
      * @param Table $declaration The declaration statements are bound against
-     * @param array<string, Table> $tables The declarations of the tables and views the query read when it was resolved, by `database.name`
+     * @param list<Table> $tables The declarations of the tables and views the query read when it was resolved
      * @param array{string, string} $charsets The character_set_client and collation_connection the view was created with
+     * @param string $hints The retained index-level hints, or the empty string
      */
     public function __construct(
         public readonly string $schema,
@@ -67,30 +52,25 @@ final class View
         public readonly string $security,
         public readonly string $check,
         public readonly string $database,
-        public Operation $operation,
-        public Query $query,
-        public Table $declaration,
-        public array $tables,
+        public readonly MySqlStatement $operation,
+        public readonly Query $query,
+        public readonly Table $declaration,
+        public readonly array $tables,
         public readonly array $charsets,
+        public readonly string $hints = '',
     ) {
         $this->created = $operation;
         $this->definition = $query;
     }
 
     /**
-     * Retains the stored definition and binding state under a new name in the same database.
+     * Retains the stored definition under a new name in the same database.
      */
     public function renamed(string $name): self
     {
         $old = $this->declaration;
         $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($name), new \SqlSemantics\Statement\Identifier\Name($this->schema)), $old->profile, $old->columns, $old->implicit, $old->complete, $old->kind, $old->keys, $old->partitions);
-        $view = new self($this->schema, $name, $this->definer, $this->algorithm, $this->security, $this->check, $this->database, $this->created, $this->definition, $declaration, $this->tables, $this->charsets);
-        $view->operation = $this->operation;
-        $view->query = $this->query;
-        $view->positions = $this->positions;
-        $view->valid = $this->valid;
-        $view->hints = $this->hints;
-        return $view;
+        return new self($this->schema, $name, $this->definer, $this->algorithm, $this->security, $this->check, $this->database, $this->created, $this->definition, $declaration, $this->tables, $this->charsets, $this->hints);
     }
 
     /**
@@ -114,7 +94,7 @@ final class View
      */
     public function create(string $name, string $text): string
     {
-        $statement = $this->created->statement;
+        $statement = $this->created;
         $columns = $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView ? $statement->definition->columns : null;
         $list = $columns === null ? '' : ' (' . implode(',', array_map(static fn ($column): string => Routine::quoted($column->value), $columns)) . ')';
 

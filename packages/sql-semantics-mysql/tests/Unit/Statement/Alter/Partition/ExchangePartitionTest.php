@@ -24,8 +24,9 @@ final class ExchangePartitionTest extends TestCase
         $u = $semantics->analyze('CREATE TABLE u (a INT)');
         $alter = $semantics->analyze('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE u', [$t, $u]);
 
-        self::assertInstanceOf(AlterTable::class, $alter->statement);
-        self::assertEquals(new DeclaredTable($u->declarations()[0]), $alter->facts->relation($alter->statement->commands[0])->table);
+        self::assertInstanceOf(AlterTable::class, $alter);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $alter->commands[0]);
+        self::assertEquals(new DeclaredTable($u->declarations()[0], $semantics->context()->searchPath[0]), $alter->commands[0]->relationInformation()->table);
     }
 
     public function testRenderWritesTheAction(): void

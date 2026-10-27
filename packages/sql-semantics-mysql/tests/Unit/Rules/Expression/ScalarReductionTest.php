@@ -62,7 +62,7 @@ final class ScalarReductionTest extends TestCase
         $expression = (new ScalarReduction())->expression($subquery->query);
 
         self::assertSame($reduced, $expression !== null);
-        self::assertSame($expression, $operation->facts->scalar($subquery)->replacement);
+        self::assertSame($expression, $subquery->scalarInformation()->replacement);
     }
 
     public function testExpressionRetainsMultipleColumnsAsARow(): void
@@ -73,7 +73,7 @@ final class ScalarReductionTest extends TestCase
         $subquery = $comparison->right;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery::class, $subquery);
         self::assertNull((new ScalarReduction())->expression($subquery->query));
-        self::assertNull($operation->facts->scalar($subquery)->replacement);
+        self::assertNull($subquery->scalarInformation()->replacement);
     }
 
     public function testPredicateRetainsTheMySql56EqualityReductionAcrossWhere(): void
@@ -104,7 +104,7 @@ final class ScalarReductionTest extends TestCase
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
 
         self::assertNull((new ScalarReduction())->expression($subquery->query, \SqlSemantics\Contract\GrammarRelease::MySql5651));
-        self::assertNull($operation->facts->scalar($subquery)->replacement);
+        self::assertNull($subquery->scalarInformation()->replacement);
         self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $operation->field(0)->nullability);
     }
 
@@ -143,7 +143,7 @@ final class ScalarReductionTest extends TestCase
         $subquery = $operation->field(0)->expression;
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
 
-        self::assertNotNull($operation->facts->scalar($subquery)->replacement);
+        self::assertNotNull($subquery->scalarInformation()->replacement);
         self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, $operation->field(0)->nullability);
     }
     public function testExpressionRetainsATrueFilterOnMySql57(): void
@@ -152,7 +152,7 @@ final class ScalarReductionTest extends TestCase
         $subquery = $operation->field(0)->expression;
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
 
-        self::assertNull($operation->facts->scalar($subquery)->replacement);
+        self::assertNull($subquery->scalarInformation()->replacement);
         self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, $operation->field(0)->nullability);
     }
 

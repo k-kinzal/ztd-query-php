@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Counting the removed members
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER OPERATOR FAMILY f USING btree DROP FUNCTION 1 (int4, int8)');
- *     count($operation->statement->members) // => 1
+ *     count($operation->members) // => 1
  */
-final class OperatorFamilyRemoval implements Statement
+final class OperatorFamilyRemoval extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<MemberRemoval> The removed members in written order
@@ -38,8 +37,11 @@ final class OperatorFamilyRemoval implements Statement
      * @param Name $method The index access method
      * @param list<MemberRemoval> $members The removed members; at least one
      */
-    public function __construct(public readonly DottedName $name, public readonly Name $method, array $members)
+    public function __construct(public readonly DottedName $name, public readonly Name $method, array $members, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->members = Check::listOf($members, MemberRemoval::class, 'DROP names at least one member.', 1);
     }
 

@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `INSTALL COMPONENT 'urn', … [SET assignment, …]`: a request to load server components (MySQL 8.0 and later).
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Installing a component with a variable value
  *     $install = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("install component 'file://a', 'file://b' set global a.size = 2 * 8");
- *     [$install->toString(), count($install->statement->components)] // => ["INSTALL COMPONENT 'file://a', 'file://b' SET GLOBAL a.size = 2 * 8", 2]
+ *     [$install->toString(), count($install->components)] // => ["INSTALL COMPONENT 'file://a', 'file://b' SET GLOBAL a.size = 2 * 8", 2]
  */
-final class InstallComponent implements Statement
+final class InstallComponent extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Text> The component URNs in written order; at least one
@@ -48,8 +47,11 @@ final class InstallComponent implements Statement
      * @param list<ComponentSetting> $settings The variable assignments in written order
      * @throws InvalidConstruction When no component is named
      */
-    public function __construct(array $components, array $settings = [])
+    public function __construct(array $components, array $settings = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->components = Check::listOf($components, Text::class, 'INSTALL COMPONENT names at least one component.', 1);
         foreach ($this->components as $component) {
             Check::input($component->radix === null, 'A component URN is a quoted string.');

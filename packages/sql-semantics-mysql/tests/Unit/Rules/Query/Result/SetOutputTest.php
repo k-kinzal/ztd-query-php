@@ -39,9 +39,9 @@ final class SetOutputTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $sql = "SELECT GROUP_CONCAT(CONVERT('x' USING latin1)) AS q UNION ALL SELECT _latin1'y'";
         $operation = $semantics->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         $reported = $operation->field(0)->type;
-        $stored = $operation->facts->query($operation->statement->query)->shape->slots[0]->type;
+        $stored = $operation->query->queryInformation()->shape->slots[0]->type;
         $scalar = $semantics->analyze("SELECT ({$sql} LIMIT 1)")->field(0)->type;
 
         self::assertInstanceOf(Known::class, $reported);
@@ -60,9 +60,9 @@ final class SetOutputTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $table = $semantics->analyze('CREATE TABLE t (a DATETIME(3))');
         $operation = $semantics->analyze('SELECT NULLIF(a,NULL) x FROM t UNION ALL SELECT NULLIF(a,NULL) FROM t', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         $returned = $operation->field(0)->type;
-        $stored = $operation->facts->query($operation->statement->query)->shape->slots[0]->type;
+        $stored = $operation->query->queryInformation()->shape->slots[0]->type;
         self::assertInstanceOf(Known::class, $returned);
         self::assertInstanceOf(Known::class, $stored);
         self::assertInstanceOf(Domain::class, $returned->descriptor);
@@ -77,20 +77,20 @@ final class SetOutputTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $distinct = $semantics->analyze("SELECT 'x' AS q UNION SELECT 'y'");
         $ordered = $semantics->analyze("SELECT 'x' AS q UNION ALL SELECT 'y' ORDER BY q");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $distinct->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $ordered->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $distinct);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $ordered);
 
-        self::assertSame($distinct->facts->query($distinct->statement->query), $distinct->facts->output);
-        self::assertSame($ordered->facts->query($ordered->statement->query), $ordered->facts->output);
+        self::assertSame($distinct->query->queryInformation(), $distinct->output());
+        self::assertSame($ordered->query->queryInformation(), $ordered->output());
     }
 
     public function testBodyUnwrapsALimitButRetainsGlobalOrdering(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
-        $limited = $semantics->analyze("SELECT 'x' AS q UNION ALL SELECT 'y' LIMIT 1")->statement;
+        $limited = $semantics->analyze("SELECT 'x' AS q UNION ALL SELECT 'y' LIMIT 1");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $limited);
         $limited = $limited->query;
-        $ordered = $semantics->analyze("SELECT 'x' AS q UNION ALL SELECT 'y' ORDER BY q")->statement;
+        $ordered = $semantics->analyze("SELECT 'x' AS q UNION ALL SELECT 'y' ORDER BY q");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $ordered);
         $ordered = $ordered->query;
 
@@ -101,10 +101,10 @@ final class SetOutputTest extends TestCase
     public function testStreamedRequiresAllOfTheSetChainToKeepDuplicates(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
-        $all = $semantics->analyze('SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3')->statement;
+        $all = $semantics->analyze('SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $all);
         $all = $all->query;
-        $mixed = $semantics->analyze('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3')->statement;
+        $mixed = $semantics->analyze('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $mixed);
         $mixed = $mixed->query;
 
@@ -114,11 +114,11 @@ final class SetOutputTest extends TestCase
 
     public function testDomainsRetainOriginalOperandBoundsBeforeStorageAllocation(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT GROUP_CONCAT(CONVERT('x' USING latin1)) UNION ALL SELECT _latin1'y'");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        $derivation = new Derivation($operation->context);
-        $derivation->query($operation->statement->query, $derivation->environment());
-        $domains = (new SetOutput())->domains($operation->statement->query, 0, $derivation);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT GROUP_CONCAT(CONVERT('x' USING latin1)) UNION ALL SELECT _latin1'y'"));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $derivation->query($operation->query, $derivation->environment());
+        $domains = (new SetOutput())->domains($operation->query, 0, $derivation);
 
         self::assertNotNull($domains);
         self::assertCount(2, $domains);
@@ -126,11 +126,11 @@ final class SetOutputTest extends TestCase
     }
     public function testFieldsRetainsTheInterpretedExpressionOfEachOperand(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 2147483648 UNION ALL SELECT 1.25');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        $derivation = new Derivation($operation->context);
-        $derivation->query($operation->statement->query, $derivation->environment());
-        $fields = (new SetOutput())->fields($operation->statement->query, 0, $derivation);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 2147483648 UNION ALL SELECT 1.25'));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $derivation->query($operation->query, $derivation->environment());
+        $fields = (new SetOutput())->fields($operation->query, 0, $derivation);
 
         self::assertCount(2, $fields);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral::class, $fields[0]?->expression);

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CREATE USER [IF NOT EXISTS] account [auth], … [DEFAULT ROLE …] [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to create accounts.
@@ -32,9 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Creating an account with a password and a lock
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create user if not exists app@'%' identified by 'pw' account lock")->toString() // => "CREATE USER IF NOT EXISTS app@`%` IDENTIFIED BY 'pw' ACCOUNT LOCK"
  */
-final class CreateUser implements Statement
+final class CreateUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<UserSpecification> The accounts in order
@@ -73,7 +72,12 @@ final class CreateUser implements Statement
         array $resources = [],
         array $options = [],
         public readonly ?UserComment $comment = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->users = Check::listOf($users, UserSpecification::class, 'CREATE USER names at least one account.', 1);
         $this->defaultRoles = Check::listOf($defaultRoles, AccountName::class, 'DEFAULT ROLE names roles.');
         $this->resources = Check::listOf($resources, ResourceLimit::class, 'The WITH clause lists resource limits.');

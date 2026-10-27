@@ -37,7 +37,7 @@ final class PreparationTest extends TestCase
         $same = new Interpretation(new LanguageProfile(GrammarRelease::MySql847), Charset::known('ascii'));
         self::assertSame($definition->select($initial)->statement, $definition->select($same)->statement);
         $objects = (new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']))->objects($definition);
-        self::assertSame([], array_filter($objects, static fn (object $object): bool => $object instanceof \SqlSemantics\Contract\AnalysisContext || $object instanceof \SqlSemantics\Statement\Fact\Facts || $object instanceof \SqlParser\Parser\Node));
+        self::assertSame([], array_filter($objects, static fn (object $object): bool => $object instanceof \SqlSemantics\Contract\AnalysisContext || $object instanceof \SqlSemantics\Construction\Facts || $object instanceof \SqlParser\Parser\Node));
     }
 
     public function testAlternativeRespectsTheNamedParameterProfile(): void

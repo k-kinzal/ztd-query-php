@@ -17,7 +17,9 @@ use SqlSemantics\Statement\Scalar;
  */
 final class AggregationScope
 {
-    /** @var array<int, Scalar> */
+    /**
+ * @var array<int, Scalar>
+ */
     private array $expressions = [];
 
     /**

@@ -81,7 +81,7 @@ final class AggregateTest extends TestCase
 
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame(TypeClass::Decimal, TypeClass::of($fact->type->descriptor));
-        self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($order)->nullability);
+        self::assertSame(Nullability::NotNull, $order->scalarInformation()->nullability);
     }
 
     public function testRenderWritesTheQuantifiersAndTheWindow(): void

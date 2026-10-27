@@ -35,7 +35,7 @@ final class DefaultWordTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b DEFAULT a)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheQuotingThatDecidesTheMeaning(): void
@@ -43,8 +43,8 @@ final class DefaultWordTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $truth = $semantics->analyze('create table t (a default true)');
         $text = $semantics->analyze('create table t (a default "true")');
-        $statement = $truth->statement;
-        $other = $text->statement;
+        $statement = $truth;
+        $other = $text;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(CreateTable::class, $other);

@@ -16,7 +16,7 @@ final class RangeLimitTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (MAXVALUE)', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf::class, $n2);
@@ -24,7 +24,7 @@ final class RangeLimitTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\RangeBound::class, $n3);
         $n4 = $n3->from[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\RangeLimit::class, $n4);
-        $n5 = $statement->statement;
+        $n5 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n5);
         $n6 = $n5->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf::class, $n6);

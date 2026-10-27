@@ -35,10 +35,10 @@ final class PreparationTest extends TestCase
         $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
         $operation = $session->analyze('SELECT (0,1) IN (SELECT s,id FROM t) LIMIT 0');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $plan = $planner->query($operation->statement->query, null);
+        $planner = new Planner($operation->query, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $plan = $planner->query($operation->query, null);
 
         self::assertInstanceOf(Prepare::class, $plan->root);
         self::assertTrue($plan->root->early);
@@ -51,10 +51,10 @@ final class PreparationTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
         $operation = $session->analyze('SELECT (0,1) IN (SELECT s,id FROM t) FROM t WHERE id=99');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement->query, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $plan = $planner->query($operation->statement->query, null);
+        $planner = new Planner($operation->query, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $plan = $planner->query($operation->query, null);
 
         self::assertInstanceOf(Prepare::class, $plan->root);
         self::assertInstanceOf(KeyLookup::class, $plan->root->guard);

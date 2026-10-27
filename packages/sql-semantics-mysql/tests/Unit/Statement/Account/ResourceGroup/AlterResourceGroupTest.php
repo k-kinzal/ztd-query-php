@@ -17,7 +17,7 @@ final class AlterResourceGroupTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g ENABLE')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g ENABLE')->diagnostics());
     }
 
     public function testRenderWritesEveryOption(): void

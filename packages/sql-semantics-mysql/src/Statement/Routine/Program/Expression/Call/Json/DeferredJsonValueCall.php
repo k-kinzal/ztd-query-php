@@ -19,7 +19,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -34,11 +33,12 @@ use SqlSemantics\Statement\Type\Invalid;
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Retaining a document condition in an unexecuted instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() DO JSON_VALUE((1,2), '$')");
- *     $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
+ *     $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
  */
 final class DeferredJsonValueCall implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $document The non-scalar primary expression
@@ -47,8 +47,11 @@ final class DeferredJsonValueCall implements DeferredOperand
      * @param JsonResponse|null $onEmpty The empty-path response
      * @param JsonResponse|null $onError The conversion-error response
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $document, public readonly StringLiteral $path, public readonly ?CastTarget $returning = null, public readonly ?JsonResponse $onEmpty = null, public readonly ?JsonResponse $onError = null)
+    public function __construct(public readonly RowOperand|DeferredOperand $document, public readonly StringLiteral $path, public readonly ?CastTarget $returning = null, public readonly ?JsonResponse $onEmpty = null, public readonly ?JsonResponse $onError = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->admits($document, Precedence::SIMPLE_EXPR), 'The document of JSON_VALUE needs a grouping.');
         Check::input((new CastProblems())->returning($returning) === null, 'JSON_VALUE needs a nonspatial return type with valid width, precision and scale.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

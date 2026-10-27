@@ -22,7 +22,7 @@ final class ConditionDeclarationTest extends TestCase
     public function testRenderWritesTheNameAndTheErrorCode(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);

@@ -23,12 +23,12 @@ final class WithClauseTest extends TestCase
         $recursive = $semantics->analyze('with recursive c as (select 1), d as (select 2) select * from c, d');
         $plain = $semantics->analyze('with c as (select 1) select * from c');
 
-        self::assertInstanceOf(WithQuery::class, $recursive->statement);
-        self::assertTrue($recursive->statement->with->recursive);
-        self::assertCount(2, $recursive->statement->with->tables);
+        self::assertInstanceOf(WithQuery::class, $recursive);
+        self::assertTrue($recursive->with->recursive);
+        self::assertCount(2, $recursive->with->tables);
         self::assertSame('WITH RECURSIVE c AS (SELECT 1), d AS (SELECT 2) SELECT * FROM c, d', $recursive->toString());
-        self::assertInstanceOf(WithQuery::class, $plain->statement);
-        self::assertFalse($plain->statement->with->recursive);
+        self::assertInstanceOf(WithQuery::class, $plain);
+        self::assertFalse($plain->with->recursive);
         self::assertSame('WITH c AS (SELECT 1) SELECT * FROM c', $plain->toString());
     }
 
@@ -37,7 +37,7 @@ final class WithClauseTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT * FROM c');
 
         self::assertSame('WITH c AS (SELECT 1), c AS (SELECT 2) SELECT * FROM c', $query->toString());
-        self::assertSame(MisuseRule::DuplicateCommonTable->value, $query->facts->diagnostics[0]->message());
+        self::assertSame(MisuseRule::DuplicateCommonTable->value, $query->diagnostics()[0]->message());
     }
 
     public function testRenderRefusesAClauseWithoutTables(): void

@@ -38,11 +38,11 @@ final class InsertFactsTest extends TestCase
     public function testRowsChecksEveryRowAgainstTheFirst(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3)'));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $derivation = new Derivation($semantics->context([], false));
-        (new InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+        (new InsertFacts())->rows($operation->body, $derivation, $derivation->environment());
 
         self::assertSame(["Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics));
     }
@@ -52,11 +52,11 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
         $messages = static function (string $sql) use ($semantics, $tables): array {
-            $operation = $semantics->analyze('CREATE PROCEDURE p() ' . $sql);
-            self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-            self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+            $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('CREATE PROCEDURE p() ' . $sql));
+            self::assertInstanceOf(CreateProcedure::class, $operation);
+            self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
             $derivation = new Derivation($semantics->context($tables));
-            (new InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+            (new InsertFacts())->rows($operation->body, $derivation, $derivation->environment());
             return array_map(static fn ($diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics);
         };
 
@@ -89,7 +89,7 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
 
-        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('INSERT INTO t SELECT 1', $tables)->facts->diagnostics));
+        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('INSERT INTO t SELECT 1', $tables)->diagnostics()));
     }
 
     public function testSetDerivesTheAssignments(): void
@@ -97,9 +97,9 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t SET a = 1, b = a', [$t]);
-        self::assertInstanceOf(InsertSet::class, $operation->statement);
+        self::assertInstanceOf(InsertSet::class, $operation);
 
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($operation->statement->assignments[1]->value)->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $operation->assignments[1]->value->scalarInformation()->resolution);
     }
 
     public function testQueryDerivesTheSourceWithoutTheTable(): void
@@ -108,35 +108,35 @@ final class InsertFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t (a) SELECT b', [$t]);
 
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testOpenReportsAQualifiedStar(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('INSERT INTO t (t.*) VALUES (1)');
 
-        self::assertSame("Unknown column '*' in 'field list'", $operation->facts->diagnostics[0]->message());
+        self::assertSame("Unknown column '*' in 'field list'", $operation->diagnostics()[0]->message());
     }
 
     public function testColumnDependsOnAnUndeclaredTable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES (DEFAULT)');
-        self::assertInstanceOf(InsertRows::class, $operation->statement);
+        self::assertInstanceOf(InsertRows::class, $operation);
 
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->rows[0]->values[0])->type);
+        self::assertInstanceOf(Dependent::class, $operation->rows[0]->values[0]->scalarInformation()->type);
     }
 
     public function testColumnIsInvalidBeyondTheWrittenColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (a) VALUES (1, DEFAULT)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (a) VALUES (1, DEFAULT)'));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $derivation = new Derivation($semantics->context([$t]));
-        (new InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+        (new InsertFacts())->rows($operation->body, $derivation, $derivation->environment());
 
-        self::assertInstanceOf(Invalid::class, $derivation->facts()->scalar($operation->statement->body->rows[0]->values[1])->type);
+        self::assertInstanceOf(Invalid::class, $operation->body->rows[0]->values[1]->scalarInformation()->type);
     }
 
     public function testDuplicatesReportsAnAliasThatIsTheTableName(): void
@@ -145,29 +145,29 @@ final class InsertFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t VALUES (1, 2) AS t ON DUPLICATE KEY UPDATE a = 1', [$t]);
 
-        self::assertSame('Not unique table/alias', $operation->facts->diagnostics[0]->message());
+        self::assertSame('Not unique table/alias', $operation->diagnostics()[0]->message());
     }
 
     public function testQueryChecksEachRowOfAValuesSourceAgainstTheWrittenColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = $semantics->analyze('CREATE TABLE t (a INT, b INT NOT NULL DEFAULT 0)');
-        $second = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, 2), ROW(3)) LIMIT 1', [$t])->facts->diagnostics;
-        $empty = $semantics->analyze('INSERT INTO t () WITH x AS (SELECT 1) VALUES ROW(), ROW()', [$t])->facts->diagnostics;
-        $listed = $semantics->analyze('INSERT INTO t (a) (VALUES ROW())', [$t])->facts->diagnostics;
+        $second = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, 2), ROW(3)) LIMIT 1', [$t])->diagnostics();
+        $empty = $semantics->analyze('INSERT INTO t () WITH x AS (SELECT 1) VALUES ROW(), ROW()', [$t])->diagnostics();
+        $listed = $semantics->analyze('INSERT INTO t (a) (VALUES ROW())', [$t])->diagnostics();
         $default = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, DEFAULT))', [$t]);
 
         self::assertSame(["Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $second));
         self::assertSame([], $empty);
         self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $listed));
-        self::assertSame([], $default->facts->diagnostics);
+        self::assertSame([], $default->diagnostics());
     }
 
     public function testDefaultedHoldsForEmptyRowsWithoutAColumnList(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $empty = $semantics->analyze('INSERT INTO t VALUES ROW(), ROW() LOCK IN SHARE MODE')->statement;
-        $listed = $semantics->analyze('INSERT INTO t (a) VALUES ROW()')->statement;
+        $empty = $semantics->analyze('INSERT INTO t VALUES ROW(), ROW() LOCK IN SHARE MODE');
+        $listed = $semantics->analyze('INSERT INTO t (a) VALUES ROW()');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $empty);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $listed);
 
@@ -177,7 +177,7 @@ final class InsertFactsTest extends TestCase
 
     public function testDuplicatesNamesARowAliasThatIsTheTableName(): void
     {
-        $diagnostics = (new Semantics(Dialect::MySql))->analyze('INSERT INTO w VALUES (1) AS w ON DUPLICATE KEY UPDATE a = 1')->facts->diagnostics;
+        $diagnostics = (new Semantics(Dialect::MySql))->analyze('INSERT INTO w VALUES (1) AS w ON DUPLICATE KEY UPDATE a = 1')->diagnostics();
 
         self::assertContainsEquals(new Misuse(MisuseRule::DuplicateAlias, new Name('w')), $diagnostics);
     }
@@ -204,8 +204,8 @@ final class InsertFactsTest extends TestCase
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('REPLACE DELAYED INTO t VALUES (1)');
         $modern = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('INSERT DELAYED INTO t VALUES (1)');
 
-        self::assertSame(["'REPLACE DELAYED' is deprecated and will be removed in a future release. Please use REPLACE instead"], array_map(static fn (Warning $warning): string => $warning->message(), $legacy->facts->warnings));
-        self::assertSame(['INSERT DELAYED is no longer supported. The statement was converted to INSERT.'], array_map(static fn (Warning $warning): string => $warning->message(), $modern->facts->warnings));
+        self::assertSame(["'REPLACE DELAYED' is deprecated and will be removed in a future release. Please use REPLACE instead"], array_map(static fn (Warning $warning): string => $warning->message(), $legacy->warnings()));
+        self::assertSame(['INSERT DELAYED is no longer supported. The statement was converted to INSERT.'], array_map(static fn (Warning $warning): string => $warning->message(), $modern->warnings()));
     }
 
     public function testRowsCountsTheFirstRowBeforeTheColumnsInMySql57(): void
@@ -213,11 +213,11 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
 
-        $operation = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (z) VALUES (1, 2)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (z) VALUES (1, 2)'));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $derivation = new Derivation($semantics->context($tables));
-        (new InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+        (new InsertFacts())->rows($operation->body, $derivation, $derivation->environment());
         self::assertSame("Column count doesn't match value count at row 1", $derivation->facts()->diagnostics[0]->message());
     }
 
@@ -226,7 +226,7 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
         $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
 
-        self::assertSame("Column count doesn't match value count at row 1", $semantics->analyze('INSERT INTO t (z) SELECT 1, 2', $tables)->facts->diagnostics[0]->message());
+        self::assertSame("Column count doesn't match value count at row 1", $semantics->analyze('INSERT INTO t (z) SELECT 1, 2', $tables)->diagnostics()[0]->message());
     }
 
     public function testTargetAnswersTheWrittenTableAndItsFact(): void
@@ -234,18 +234,18 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
 
-        self::assertSame([], $semantics->analyze('INSERT INTO t (b) VALUES (1)', $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('INSERT INTO t (b) VALUES (1)', $tables)->diagnostics());
     }
 
     public function testLateTellsMySql56And57(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
 
-        $operation = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (z, y) VALUES (1)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (z, y) VALUES (1)'));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $derivation = new Derivation($semantics->context([], false));
-        (new InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+        (new InsertFacts())->rows($operation->body, $derivation, $derivation->environment());
         self::assertSame("Column count doesn't match value count at row 1", $derivation->facts()->diagnostics[0]->message());
     }
 
@@ -254,11 +254,11 @@ final class InsertFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
 
-        $operation = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (z) VALUES (1, 2)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertRows::class, $operation->statement->body);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('CREATE PROCEDURE p() INSERT INTO t (z) VALUES (1, 2)'));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertRows::class, $operation->body);
         $derivation = new Derivation($semantics->context($tables));
-        (new InsertFacts())->rows($operation->statement->body, $derivation, $derivation->environment());
+        (new InsertFacts())->rows($operation->body, $derivation, $derivation->environment());
         self::assertCount(2, $derivation->facts()->diagnostics);
     }
 
@@ -266,10 +266,10 @@ final class InsertFactsTest extends TestCase
     {
         $legacy = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $modern = new Semantics(Dialect::MySql);
-        $procedure = $legacy->analyze('CREATE PROCEDURE p() INSERT INTO t (a) VALUES (1, 2)')->statement;
+        $procedure = $legacy->analyze('CREATE PROCEDURE p() INSERT INTO t (a) VALUES (1, 2)');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $listed = $procedure->body;
-        $unlisted = $legacy->analyze('INSERT INTO t VALUES (1, 2)')->statement;
+        $unlisted = $legacy->analyze('INSERT INTO t VALUES (1, 2)');
         self::assertInstanceOf(DeferredInsertRows::class, $listed);
         self::assertInstanceOf(InsertRows::class, $unlisted);
 
@@ -281,7 +281,7 @@ final class InsertFactsTest extends TestCase
     public function testMismatchChecksARowAgainstTheColumnsAndTheFirstRow(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $procedure = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3), ()')->statement;
+        $procedure = $semantics->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES (1, 2), (3), ()');
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $insert = $procedure->body;
         self::assertInstanceOf(DeferredInsertRows::class, $insert);

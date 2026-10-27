@@ -12,8 +12,8 @@ use MySqlMemory\Session\Execution;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\Statement\Binding;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -35,7 +35,7 @@ final class PreparedStatement
      * @param string|null $engine The selected table engine, resolved during preparation
      * @param GenerationMetadata|null $generation Destination changes observed by generation declarations
      */
-    public function __construct(public readonly Statement|\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement $statement, public readonly LanguageProfile $profile, public readonly ?Settings $literals, public readonly string $database, public readonly ?string $engine = null, public readonly ?GenerationMetadata $generation = null)
+    public function __construct(public readonly Statement $statement, public readonly LanguageProfile $profile, public readonly Settings $literals, public readonly string $database, public readonly ?string $engine = null, public readonly ?GenerationMetadata $generation = null)
     {
     }
 
@@ -46,15 +46,13 @@ final class PreparedStatement
      */
     public static function capture(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): self
     {
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
-            return new self($operation, $operation->profile(), null, $session->variables->database);
-        }
-        if (!$operation instanceof Operation) {
+
+        if (!$operation instanceof MySqlStatement) {
             throw new LogicException('No prepared statement implementation for ' . $operation::class);
         }
-        $engine = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && array_filter($operation->statement->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) !== [] ? (new \MySqlMemory\Command\Definition\StorageOptions())->engine($operation->statement, $session->variables) : null;
-        $generation = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? GenerationMetadata::capture($operation->statement, $session->variables->database, $session) : null;
-        return new self($operation->statement, $operation->profile(), Settings::of($operation->context), $session->variables->database, $engine, $generation);
+        $engine = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && array_filter($operation->options, static fn ($option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption) !== [] ? (new \MySqlMemory\Command\Definition\StorageOptions())->engine($operation, $session->variables) : null;
+        $generation = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? GenerationMetadata::capture($operation, $session->variables->database, $session) : null;
+        return new self($operation, $operation->profile(), $session->resolution(), $session->variables->database, $engine, $generation);
     }
 
     /**
@@ -62,7 +60,6 @@ final class PreparedStatement
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @throws SqlError When the statement fails
-     * @throws LogicException When an unmigrated statement is missing its literal settings
      */
     public function execute(Session $session, string $label, array $parameters): Reply
     {
@@ -73,21 +70,17 @@ final class PreparedStatement
         $database = $session->variables->database;
         $replayed = $session->replayed;
         $engines = $session->variables->preparedEngines;
-        $session->variables->preparedEngines = $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? [spl_object_id($this->statement) => $this->engine] : [];
+        $session->variables->preparedEngines = [];
         $session->variables->database = $this->database;
         $session->replayed = true;
         $session->text = $label;
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $this->generation?->refresh($session);
-            if ($this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $this->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
-                return (new Execution($session))->statement($this->statement, $parameters);
-            }
-            if ($this->literals === null) {
-                throw new LogicException('An unmigrated prepared statement requires its literal settings.');
-            }
+
             $operation = (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals);
+            $session->variables->preparedEngines = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? [spl_object_id($operation) => $this->engine] : [];
             return (new Execution($session))->statement($operation, $parameters);
         } finally {
             $session->variables->preparedEngines = $engines;

@@ -22,9 +22,9 @@ final class AmbiguousAliasTest extends TestCase
         $fields = $operation->fields()->items ?? [];
 
         self::assertSame('Column x is ambiguous.', (new AmbiguousAlias(new Name('x'), $fields))->message());
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(AmbiguousAlias::class, $operation->facts->diagnostics[0]);
-        self::assertSame($fields, $operation->facts->diagnostics[0]->candidates);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(AmbiguousAlias::class, $operation->diagnostics()[0]);
+        self::assertSame($fields, $operation->diagnostics()[0]->candidates);
     }
 
     public function testRejectsASingleCandidate(): void

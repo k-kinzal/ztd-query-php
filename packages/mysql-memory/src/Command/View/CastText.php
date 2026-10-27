@@ -30,7 +30,7 @@ final class CastText
             return null;
         }
         $operand = $this->expressions->scalar($cast->operand);
-        $domain = (new Precision())->domain($this->expressions->text->facts->scalar($cast)->type);
+        $domain = (new Precision())->domain($cast->scalarInformation()->type);
         if ($operand === null || $domain === null) {
             return null;
         }

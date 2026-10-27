@@ -11,8 +11,8 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes HELP: the topics and categories of the help tables that match a search string.
@@ -40,8 +40,8 @@ final class HelpCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        assert($operation->statement instanceof Help);
-        return (new Search($session->instance->help))->find($operation->statement->topic->value, $context)->sent($context);
+        assert($operation instanceof MySqlStatement);
+        assert($operation instanceof Help);
+        return (new Search($session->instance->help))->find($operation->topic->value, $context)->sent($context);
     }
 }

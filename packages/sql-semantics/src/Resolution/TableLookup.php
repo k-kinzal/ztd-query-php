@@ -44,7 +44,7 @@ final class TableLookup
                 return new ConditionalTable($matches, new UndeclaredRelation($name));
             }
 
-            return count($matches) === 1 ? new DeclaredTable($matches[0]) : new ConflictingTables($name, $matches);
+            return count($matches) === 1 ? new DeclaredTable($matches[0], $schema) : new ConflictingTables($name, $matches);
         }
 
         return $context->complete ? new MissingTable($name) : new UndeclaredTable(new UndeclaredRelation($name));

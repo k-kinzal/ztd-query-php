@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An interval boundary retaining a non-scalar distance until its window is reached.
@@ -27,14 +26,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredFrameBound implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameBoundKind $kind PRECEDING or FOLLOWING
      * @param RowOperand|DeferredOperand $offset The complete non-scalar interval operand
      * @param IntervalUnit $unit The written interval unit
      */
-    public function __construct(public readonly FrameBoundKind $kind, public readonly RowOperand|DeferredOperand $offset, public readonly IntervalUnit $unit)
+    public function __construct(public readonly FrameBoundKind $kind, public readonly RowOperand|DeferredOperand $offset, public readonly IntervalUnit $unit, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($kind->offset(), 'A deferred interval boundary is PRECEDING or FOLLOWING.');
     }

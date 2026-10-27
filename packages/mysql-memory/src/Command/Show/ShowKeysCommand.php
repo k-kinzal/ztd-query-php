@@ -16,11 +16,11 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Order;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW INDEX (or KEYS, INDEXES): one row for each column of each key of a table, the keys in the order the server keeps them.
@@ -53,8 +53,8 @@ final class ShowKeysCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowKeys);
         $stored = (new Inspection())->table($statement->table, $statement->database, $session);
         $definition = $stored->definition;

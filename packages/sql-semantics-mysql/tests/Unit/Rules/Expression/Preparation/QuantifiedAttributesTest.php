@@ -23,16 +23,16 @@ final class QuantifiedAttributesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(i INT)');
         $constant = $semantics->analyze('SELECT 7 FROM t', [$table]);
         $column = $semantics->analyze('SELECT i FROM t', [$table]);
-        self::assertInstanceOf(QueryRoot::class, $constant->statement);
-        self::assertInstanceOf(QueryRoot::class, $column->statement);
-        self::assertTrue((new QuantifiedAttributes($constant->facts))->nullable($constant->statement->query));
-        self::assertFalse((new QuantifiedAttributes($column->facts))->nullable($column->statement->query));
+        self::assertInstanceOf(QueryRoot::class, $constant);
+        self::assertInstanceOf(QueryRoot::class, $column);
+        self::assertTrue((new QuantifiedAttributes())->nullable($constant->query));
+        self::assertFalse((new QuantifiedAttributes())->nullable($column->query));
     }
 
     public function testFixedExcludesNestedVariableAndPerReadEffects(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1=1, @v=1, RAND(1)<0');
-        $rules = new QuantifiedAttributes($operation->facts);
+        $rules = new QuantifiedAttributes();
         self::assertNotNull($operation->field(0)->expression);
         self::assertNotNull($operation->field(1)->expression);
         self::assertNotNull($operation->field(2)->expression);

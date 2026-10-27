@@ -17,7 +17,9 @@ use UnitEnum;
  * values and enum cases, and lists of the same length and order, recursively.
  * Source spans are locations rather than operands: formatting changes their byte offsets,
  * and directly constructed values have no original source. Only properties explicitly
- * typed as Span are excluded. Explicit SQL spelling choices remain comparison
+ * typed as Span and the private occurrence bindings are excluded from operand
+ * comparison. Exact comparison includes those bindings and inherited private fields.
+ * Explicit SQL spelling choices remain comparison
  * operands. A generated name whose quote choice is unspecified corresponds to
  * the concrete choice made by its codec; two explicit choices must agree.
  * Exact comparison also preserves object sharing: equal-looking occurrences or
@@ -102,7 +104,18 @@ final class Equivalence
      */
     public function comparedMembers(object $left, object $right, bool $exact): array
     {
-        $members = $exact ? ($this->exactProperties[$left::class] ??= (new ReflectionClass($left))->getProperties()) : $this->members($left);
+        if ($exact && !isset($this->exactProperties[$left::class])) {
+            $members = [];
+            for ($class = new ReflectionClass($left); $class !== false; $class = $class->getParentClass()) {
+                foreach ($class->getProperties() as $property) {
+                    if ($property->getDeclaringClass()->getName() === $class->getName()) {
+                        $members[] = $property;
+                    }
+                }
+            }
+            $this->exactProperties[$left::class] = $members;
+        }
+        $members = $exact ? $this->exactProperties[$left::class] : $this->members($left);
         if (!$exact && $left instanceof \SqlSemantics\Statement\Identifier\Name && $right instanceof \SqlSemantics\Statement\Identifier\Name && ($left->quote === null || $right->quote === null)) {
             return array_values(array_filter($members, static fn (ReflectionProperty $property): bool => $property->getName() !== 'quote'));
         }
@@ -116,7 +129,10 @@ final class Equivalence
      */
     public function members(object $value): array
     {
-        return $this->properties[$value::class] ??= array_values(array_filter((new ReflectionClass($value))->getProperties(), static function (ReflectionProperty $property): bool {
+        return $this->properties[$value::class] ??= array_values(array_filter($this->comparedMembers($value, $value, true), static function (ReflectionProperty $property) use ($value): bool {
+            if ($value instanceof \SqlSemantics\Statement\Node && $property->isPrivate() && in_array($property->getName(), ['valueInformation', 'inputInformation', 'outputInformation', 'requestInformation'], true)) {
+                return false;
+            }
             $type = $property->getType();
             return !$type instanceof ReflectionNamedType || $type->getName() !== Span::class;
         }));

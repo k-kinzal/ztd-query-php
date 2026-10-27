@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ADD [COLUMN] definition [FIRST | AFTER column]`: a request to add one column.
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Adding a column after the first one
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ADD b INT AFTER a');
- *     [$alter->statement->commands[0]->column->name->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t ADD b INT AFTER a']
+ *     [$alter->commands[0]->column->name->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t ADD b INT AFTER a']
  */
 final class AddColumn implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnDefinition $column The new column
      * @param ColumnPosition|null $position Where the column goes, when written
      */
-    public function __construct(public readonly ColumnDefinition $column, public readonly ?ColumnPosition $position = null, public readonly bool $columnWritten = true)
+    public function __construct(public readonly ColumnDefinition $column, public readonly ?ColumnPosition $position = null, public readonly bool $columnWritten = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

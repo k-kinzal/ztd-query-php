@@ -36,8 +36,8 @@ final class ExplainableTest extends TestCase
     public function testQueriesAndDataChangesHaveTheExplainableRole(string $sql): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $statement = $semantics->analyze($sql)->statement;
-        $explained = $semantics->analyze('EXPLAIN ' . $sql)->statement;
+        $statement = $semantics->analyze($sql);
+        $explained = $semantics->analyze('EXPLAIN ' . $sql);
 
         self::assertInstanceOf(Explainable::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $explained);
@@ -46,6 +46,6 @@ final class ExplainableTest extends TestCase
 
     public function testAdministrationDoesNotHaveTheExplainableRole(): void
     {
-        self::assertNotInstanceOf(Explainable::class, (new Semantics(Dialect::MySql))->analyze('SHOW PLUGINS')->statement);
+        self::assertNotInstanceOf(Explainable::class, (new Semantics(Dialect::MySql))->analyze('SHOW PLUGINS'));
     }
 }

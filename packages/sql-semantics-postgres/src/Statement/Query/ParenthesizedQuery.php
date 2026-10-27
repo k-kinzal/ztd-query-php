@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,17 +27,24 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Keeping the grouping of set operations
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 UNION (SELECT 2 UNION SELECT 3)');
- *     [$query->statement->right instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery, $query->toString()] // => [true, 'SELECT 1 UNION (SELECT 2 UNION SELECT 3)']
+ *     [$query->right instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery, $query->toString()] // => [true, 'SELECT 1 UNION (SELECT 2 UNION SELECT 3)']
  */
-final class ParenthesizedQuery implements Statement, Query, OutputNaming
+final class ParenthesizedQuery extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query inside the parentheses
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
     }
 
     /**

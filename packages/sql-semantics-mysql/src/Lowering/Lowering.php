@@ -62,6 +62,11 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 final class Lowering
 {
     /**
+     * @var array<int, non-negative-int> Input parameter positions by token offset
+     */
+    public array $parameterPositions = [];
+
+    /**
      * The table currently declaring column operands; only its typed name can escape.
      */
     public ?\SqlSemantics\Statement\Identifier\QualifiedName $columnTable = null;
@@ -229,6 +234,7 @@ final class Lowering
         $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $this->programName, false, $this->canonicalNames);
         $lowering->hints = $this->hints;
         $lowering->columnTable = $this->columnTable;
+        $lowering->parameterPositions = $this->parameterPositions;
         return $lowering;
     }
 
@@ -243,6 +249,21 @@ final class Lowering
     }
 
     /**
+     * Records parameter slots in lexical order before lowering any subexpression.
+     *
+     * @param list<Token> $tokens The input tokens, including any completed prefix
+     */
+    public function parameters(array $tokens): void
+    {
+        $this->parameterPositions = [];
+        foreach ($tokens as $token) {
+            if ($token->name === 'PARAM_MARKER') {
+                $this->parameterPositions[$token->offset] = count($this->parameterPositions);
+            }
+        }
+    }
+
+    /**
      * Lowers a complete input into the statements it holds: one, or none for an empty input.
      *
      * @return list<Statement>
@@ -251,6 +272,7 @@ final class Lowering
      */
     public function statements(Node $input): array
     {
+        $this->parameters($input->tokens());
         $rejection = (new SyntaxWarnings())->rejected($input, $this->profile);
         if ($rejection !== null) {
             throw $rejection;
@@ -272,7 +294,21 @@ final class Lowering
             Check::invariant($end->signature === 'opt_end_of_input:' || $end->signature === 'opt_end_of_input: END_OF_INPUT', 'A statement ends the input.');
         }
 
-        return [$this->statement($form->node(0))];
+        $statement = $this->statement($form->node(0));
+        $first = null;
+        foreach ($input->tokens() as $token) {
+            if ($token->text !== '(') {
+                $first = $token->offset;
+                break;
+            }
+        }
+        foreach ($this->hints as $offset => $comment) {
+            if ($comment->error !== null) {
+                $problem = $comment->error;
+                $this->origins->noticeAt($statement, new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError($problem->failure, $problem->offset, $problem->closing, $offset === $first), $problem->offset);
+            }
+        }
+        return [$statement];
     }
 
     /**
@@ -351,6 +387,7 @@ final class Lowering
     {
         $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName, canonicalNames: $this->canonicalNames);
         $lowering->hints = $this->hints;
+        $lowering->parameterPositions = $this->parameterPositions;
         return $lowering;
     }
 

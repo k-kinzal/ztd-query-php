@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * PREPARE: names a statement whose text is given as a string or held by a user variable.
@@ -27,18 +26,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a PREPARE
  *     $prepare = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("PREPARE stmt FROM 'SELECT ?'");
- *     [$prepare->statement->name->value, $prepare->statement->source->value, $prepare->toString()] // => ['stmt', 'SELECT ?', "PREPARE stmt FROM 'SELECT ?'"]
+ *     [$prepare->name->value, $prepare->source->value, $prepare->toString()] // => ['stmt', 'SELECT ?', "PREPARE stmt FROM 'SELECT ?'"]
  */
-final class Prepare implements Statement
+final class Prepare extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The name of the prepared statement
      * @param Text|UserVariable $source The statement text, or the user variable that holds it
      */
-    public function __construct(public readonly Name $name, public readonly Text|UserVariable $source)
+    public function __construct(public readonly Name $name, public readonly Text|UserVariable $source, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(!$source instanceof Text || $source->radix === null, 'A PREPARE source is a quoted string or a user variable.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

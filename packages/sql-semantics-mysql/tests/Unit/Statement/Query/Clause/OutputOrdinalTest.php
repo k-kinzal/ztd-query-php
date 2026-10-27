@@ -72,13 +72,13 @@ final class OutputOrdinalTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1, a FROM t GROUP BY 2 ORDER BY 2', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $fact = $operation->facts->scalar($operation->statement->query->orderBy[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $fact = $operation->query->orderBy[0]->expression->scalarInformation();
         self::assertInstanceOf(AliasTarget::class, $fact->resolution);
         self::assertSame($operation->field(1), $fact->resolution->field);
         self::assertSame(Nullability::Nullable, $fact->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarReportsAPositionOutsideTheSelectList(): void
@@ -87,18 +87,18 @@ final class OutputOrdinalTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT * FROM t ORDER BY 3', [$table]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(OrdinalOutOfRange::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(OrdinalOutOfRange::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveScalarDependsOnAnOpenStar(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t ORDER BY 2');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Dependent::class, $operation->query->orderBy[0]->expression->scalarInformation()->type);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheInteger(): void

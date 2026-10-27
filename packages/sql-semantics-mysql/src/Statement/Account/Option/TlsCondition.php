@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `SUBJECT|ISSUER|CIPHER 'value'` condition of a REQUIRE clause.
@@ -20,13 +19,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TlsCondition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TlsAttribute $attribute The property
      * @param Text $value The value the property must have
      */
-    public function __construct(public readonly TlsAttribute $attribute, public readonly Text $value)
+    public function __construct(public readonly TlsAttribute $attribute, public readonly Text $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

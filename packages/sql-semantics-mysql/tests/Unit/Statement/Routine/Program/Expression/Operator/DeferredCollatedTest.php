@@ -22,8 +22,8 @@ final class DeferredCollatedTest extends TestCase
     public function testDeriveScalarPreservesLegacyDefinitionScope(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() SELECT (1, 2) COLLATE missing');
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertSame([], $operation->facts->warnings);
+        self::assertSame([], $operation->diagnostics());
+        self::assertSame([], $operation->warnings());
     }
 
     public function testOperandsRetainsTheCompleteRow(): void

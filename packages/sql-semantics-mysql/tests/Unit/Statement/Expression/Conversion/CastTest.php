@@ -94,11 +94,11 @@ final class CastTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT CAST(1 AS CHAR CHARACTER SET utf8mb3)');
 
-        self::assertSame(["'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame(["'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead"], array_map(static fn ($warning): string => $warning->message(), $operation->warnings()));
     }
 
     public function testDeriveScalarWarnsThatACastToNcharIsUtf8mb3(): void
     {
-        self::assertSame([Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql))->analyze("SELECT CAST('a' AS NCHAR(2))")->facts->warnings));
+        self::assertSame([Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql))->analyze("SELECT CAST('a' AS NCHAR(2))")->warnings()));
     }
 }

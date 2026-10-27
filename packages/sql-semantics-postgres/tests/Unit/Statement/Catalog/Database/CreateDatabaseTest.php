@@ -24,16 +24,16 @@ final class CreateDatabaseTest extends TestCase
 
     public function testDeriveStatementReportsAnUnknownOption(): void
     {
-        self::assertSame('option "foo" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d foo = 1')->facts->diagnostics[0]->message());
+        self::assertSame('option "foo" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d foo = 1')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementAcceptsTheBuiltinLocaleOf17(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->diagnostics());
     }
 
     public function testDeriveStatementRejectsTheBuiltinLocaleOf16(): void
     {
-        self::assertSame('option "builtin_locale" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6'))->analyze('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->facts->diagnostics[0]->message());
+        self::assertSame('option "builtin_locale" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6'))->analyze('CREATE DATABASE d builtin_locale = \'C.UTF-8\'')->diagnostics()[0]->message());
     }
 }

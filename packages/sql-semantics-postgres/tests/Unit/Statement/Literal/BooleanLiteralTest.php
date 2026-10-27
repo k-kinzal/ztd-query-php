@@ -34,8 +34,8 @@ final class BooleanLiteralTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $missing = $semantics->analyze('SELECT bool FROM (SELECT true) s');
         $found = $semantics->analyze('SELECT "?column?" FROM (SELECT true) s');
-        self::assertSame(['Column bool does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $missing->facts->diagnostics));
-        self::assertSame([], $found->facts->diagnostics);
+        self::assertSame(['Column bool does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $missing->diagnostics()));
+        self::assertSame([], $found->diagnostics());
         self::assertEquals(new Known(Builtin::Bool), $found->field(0)->type);
     }
 

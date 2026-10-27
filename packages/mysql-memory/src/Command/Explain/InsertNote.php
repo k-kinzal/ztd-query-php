@@ -13,8 +13,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -29,9 +29,9 @@ final class InsertNote
     /**
      * Returns the resolved write note for an explicit row source.
      */
-    public function rows(Operation $operation, Session $session): ?string
+    public function rows(MySqlStatement $operation, Session $session): ?string
     {
-        $explain = $operation->statement;
+        $explain = $operation;
         $insert = $explain instanceof Explain ? $explain->statement : null;
         if (!$insert instanceof InsertRows && !$insert instanceof InsertSet && !$insert instanceof InsertQuery) {
             return null;
@@ -43,7 +43,7 @@ final class InsertNote
         $database = $explain->database->value ?? $session->variables->database;
         $target = $insert->into->table->name;
         $table = Routine::quoted($target->schema->value ?? $database) . '.' . Routine::quoted($target->name->value);
-        $writer = new ViewText($operation->facts, '', $database);
+        $writer = new ViewText($operation->statementInformation(), '', $database);
         $columns = $insert instanceof InsertSet ? array_column($insert->assignments, 'column') : $insert->into->columns?->columns;
         $names = array_map(static fn ($column): ?string => $column instanceof ColumnUse ? $table . '.' . Routine::quoted($column->name->value) : null, $columns ?? []);
         $rows = array_map(fn (array $row): ?string => $this->row($row, $writer), $values);

@@ -22,7 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ListedColumn::class)]
 #[Medium]
@@ -32,8 +31,8 @@ final class ListedColumnTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('with c(x, "y z" collate nocase desc, w asc) as (select 1, 2, 3) select * from c');
 
-        self::assertInstanceOf(WithQuery::class, $query->statement);
-        $columns = $query->statement->with->tables[0]->columns;
+        self::assertInstanceOf(WithQuery::class, $query);
+        $columns = $query->with->tables[0]->columns;
         self::assertSame('x', $columns[0]->name->value);
         self::assertNull($columns[0]->collation);
         self::assertNull($columns[0]->direction);
@@ -42,17 +41,17 @@ final class ListedColumnTest extends TestCase
         self::assertSame(SortDirection::Descending, $columns[1]->direction);
         self::assertSame(SortDirection::Ascending, $columns[2]->direction);
         self::assertSame('WITH c (x, `y z` COLLATE nocase DESC, w ASC) AS (SELECT 1, 2, 3) SELECT * FROM c', $query->toString());
-        self::assertSame(MisuseRule::DecoratedColumnName->value, $query->facts->diagnostics[0]->message());
+        self::assertSame(MisuseRule::DecoratedColumnName->value, $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesANewlyBuiltName(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = new CommonTable(new Name('c'), new Select([new ResultColumn(new IntegerLiteral('1'))]), [new ListedColumn(new Name('x'))]);
-        $operation = new Operation($semantics->context(), new WithQuery(new WithClause([$table]), new Select([new Star()], new TableInput(new QualifiedName(new Name('c'))))));
+        $operation = Semantics::fromStatement($semantics->context(), new WithQuery(new WithClause([$table]), new Select([new Star()], new TableInput(new QualifiedName(new Name('c'))))));
 
         self::assertSame('WITH c (x) AS (SELECT 1) SELECT * FROM c', $operation->toString());
         self::assertSame('x', $operation->field(0)->name?->value);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

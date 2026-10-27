@@ -161,8 +161,8 @@ final class ExplainCommandTest extends TestCase
         $instance = new Instance();
         $session = $instance->connect();
         $idle = $instance->connect();
-        $own = $session->analyze('EXPLAIN FOR CONNECTION ' . $session->id)->statement;
-        $other = $session->analyze('EXPLAIN FOR CONNECTION ' . $idle->id)->statement;
+        $own = $session->analyze('EXPLAIN FOR CONNECTION ' . $session->id);
+        $other = $session->analyze('EXPLAIN FOR CONNECTION ' . $idle->id);
         $context = new Context(new SqlModes([]), $session->diagnostics, $session->variables, 0.0);
 
         self::assertNotSame($session->id, $idle->id);
@@ -179,7 +179,7 @@ final class ExplainCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
-        $statement = $session->analyze('EXPLAIN SELECT * FROM t AS x, d.u')->statement;
+        $statement = $session->analyze('EXPLAIN SELECT * FROM t AS x, d.u');
 
         self::assertInstanceOf(Explain::class, $statement);
         self::assertSame([['x', 'd', 't'], ['u', 'd', 'u']], (new ExplainCommand())->tables($statement->statement, 'd'));
@@ -189,8 +189,8 @@ final class ExplainCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE e1 (a INT PRIMARY KEY, b INT); INSERT INTO e1 VALUES (1,1),(2,2)');
-        $delete = $session->analyze('EXPLAIN DELETE FROM e1 WHERE b = 1')->statement;
-        $insert = $session->analyze('EXPLAIN INSERT INTO e1 VALUES (3,3)')->statement;
+        $delete = $session->analyze('EXPLAIN DELETE FROM e1 WHERE b = 1');
+        $insert = $session->analyze('EXPLAIN INSERT INTO e1 VALUES (3,3)');
 
         self::assertInstanceOf(Explain::class, $delete);
         self::assertInstanceOf(Explain::class, $insert);
@@ -258,7 +258,7 @@ final class ExplainCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
-        $statement = $session->analyze('EXPLAIN DELETE LOW_PRIORITY IGNORE x FROM t AS x WHERE 0')->statement;
+        $statement = $session->analyze('EXPLAIN DELETE LOW_PRIORITY IGNORE x FROM t AS x WHERE 0');
         self::assertInstanceOf(Explain::class, $statement);
 
         self::assertSame('delete low_priority ignore `d`.`t` from `d`.`t` `x` where false', (new ExplainCommand())->deleted($statement, 'd'));
@@ -268,7 +268,7 @@ final class ExplainCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
-        $explain = $session->analyze('EXPLAIN DELETE t FROM t WHERE a>0')->statement;
+        $explain = $session->analyze('EXPLAIN DELETE t FROM t WHERE a>0');
         self::assertInstanceOf(Explain::class, $explain);
         $command = new ExplainCommand();
 

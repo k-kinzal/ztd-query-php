@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * @visibility public
  * @example Reading the step of a COMMIT PREPARED
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COMMIT PREPARED 'x'");
- *     $operation->statement->action // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\PreparedAction::Commit
+ *     $operation->action // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\PreparedAction::Commit
  */
 enum PreparedAction: string
 {

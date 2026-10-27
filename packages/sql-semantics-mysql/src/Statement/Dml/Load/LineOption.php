@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Load;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of the LINES clause of a text file format: `TERMINATED BY` or `STARTING BY` a string.
@@ -17,17 +16,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the line terminator of INTO OUTFILE
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' LINES TERMINATED BY ';'");
- *     $query->statement->query->into->format->lines[0]->kind // => \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Terminated
+ *     $query->query->into->format->lines[0]->kind // => \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Terminated
  */
 final class LineOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param LineOptionKind $kind What the option sets
      * @param Text $text The string it sets
      */
-    public function __construct(public readonly LineOptionKind $kind, public readonly Text $text)
+    public function __construct(public readonly LineOptionKind $kind, public readonly Text $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

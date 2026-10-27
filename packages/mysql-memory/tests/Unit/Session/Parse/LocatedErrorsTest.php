@@ -21,10 +21,11 @@ final class LocatedErrorsTest extends TestCase
         $session = (new Instance())->connect();
         $sql = 'SELECT ABS((SELECT 1))';
         $operation = $session->semantics()->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $expression = $operation->field(0)->expression;
         self::assertInstanceOf(\SqlSemantics\Statement\Operand::class, $expression);
-        self::assertSame(strpos($sql, '(SELECT'), (new LocatedErrors())->subquery($expression, $operation->sources));
-        self::assertNull((new LocatedErrors())->subquery($expression, new \SqlSemantics\Statement\Source\SourceMap()));
+        self::assertSame(strpos($sql, '(SELECT'), (new LocatedErrors())->subquery($expression, null));
+        self::assertNull((new LocatedErrors())->subquery(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), null));
     }
 
     public function testErrorQuotesTheOriginalSpellingAndLine(): void
@@ -47,7 +48,7 @@ final class LocatedErrorsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT missing');
-        self::assertNull((new LocatedErrors())->error($operation->facts->diagnostics[0], $operation, $session));
+        self::assertNull((new LocatedErrors())->error($operation->statementInformation()->diagnostics[0], $operation, $session));
     }
 
     public function testLocatedUsesTheRefusedDefinitionsOriginalOccurrence(): void

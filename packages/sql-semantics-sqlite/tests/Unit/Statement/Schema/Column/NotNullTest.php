@@ -24,13 +24,13 @@ final class NotNullTest extends TestCase
 
         self::assertSame(Nullability::NotNull, $operation->declarations()[0]->columns[0]->nullability);
         self::assertSame(Nullability::Nullable, $operation->declarations()[0]->columns[1]->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheConflictResolution(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a not null on conflict ignore, b not null)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(NotNull::class, $statement->columns[0]->constraints[0]);

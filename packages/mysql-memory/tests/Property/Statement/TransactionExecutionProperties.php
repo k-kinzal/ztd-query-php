@@ -6,7 +6,6 @@ namespace Tests\Property\Statement;
 
 use Eris\Generators;
 use Eris\TestTrait;
-use LogicException;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -47,7 +46,7 @@ final class TransactionExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesEveryTransactionAlternativeUnwindsItsRuntimeScope(GrammarRelease $release): void
     {
-        $this->forAll(new TransactionStatementGenerator($release))->withMaxSize(10)->then(static function (Transaction\TransactionStatement $statement) use ($release): void {
+        $this->forAll(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new TransactionStatementGenerator($release)))->withMaxSize(10)->then(static function (Transaction\TransactionStatement $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'This is not SQL; execution must use the generated values.';
             $execution = new Execution($session);
@@ -74,12 +73,9 @@ final class TransactionExecutionProperties extends TestCase
     {
         $sequences = Generators::map(static function (array $parts) use ($release): array {
             [$settings, $begin, $savepoint, $commit] = $parts;
-            if (!$settings instanceof SetTransaction || !$begin instanceof Transaction\Begin || !$savepoint instanceof Transaction\Savepoint || !$commit instanceof Transaction\Commit) {
-                throw new LogicException('The sequence generators provide transaction operands.');
-            }
             $profile = new LanguageProfile($release);
-            return [$settings, $begin, $savepoint, new Transaction\RollbackToSavepoint($savepoint->savepoint, profile: $profile), new Transaction\ReleaseSavepoint($savepoint->savepoint, profile: $profile), $commit];
-        }, Generators::tuple(new SetTransactionGenerator($release, Generators::constant(null)), new BeginGenerator($release), new SavepointGenerator($release), new CommitGenerator($release)));
+            return array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Statement $statement): \SqlSemantics\Platform\MySql\Statement\Statement => (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext($profile, [new \SqlSemantics\Statement\Identifier\Name('pbt')]), $statement), [$settings, $begin, $savepoint, new Transaction\RollbackToSavepoint($savepoint->savepoint, profile: $profile), new Transaction\ReleaseSavepoint($savepoint->savepoint, profile: $profile), $commit]);
+        }, \Tests\Generator\Operands::tuple(new SetTransactionGenerator($release, Generators::constant(null)), new BeginGenerator($release), new SavepointGenerator($release), new CommitGenerator($release)));
         $this->forAll($sequences)->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
             [$settings, $begin, $savepoint, $rollback, $releaseSavepoint, $commit] = $sequence;
             self::assertInstanceOf(SetTransaction::class, $settings);
@@ -126,12 +122,9 @@ final class TransactionExecutionProperties extends TestCase
     {
         $sequences = Generators::map(static function (array $parts) use ($release): array {
             [$xid, $commit] = $parts;
-            if (!$xid instanceof Xa\Xid || !is_bool($commit)) {
-                throw new LogicException('The XA sequence requires an identifier and a completion choice.');
-            }
             $profile = new LanguageProfile($release);
-            return [new Xa\XaStart($xid, profile: $profile), new Xa\XaEnd($xid, profile: $profile), new Xa\XaPrepare($xid, profile: $profile), new Xa\XaRecover(profile: $profile), $commit ? new Xa\XaCommit($xid, profile: $profile) : new Xa\XaRollback($xid, profile: $profile)];
-        }, Generators::tuple(new XidGenerator(), Generators::bool()));
+            return array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Statement $statement): \SqlSemantics\Platform\MySql\Statement\Statement => (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext($profile, [new \SqlSemantics\Statement\Identifier\Name('pbt')]), $statement), [new Xa\XaStart($xid, profile: $profile), new Xa\XaEnd($xid, profile: $profile), new Xa\XaPrepare($xid, profile: $profile), new Xa\XaRecover(profile: $profile), $commit ? new Xa\XaCommit($xid, profile: $profile) : new Xa\XaRollback($xid, profile: $profile)]);
+        }, \Tests\Generator\Operands::tuple(new XidGenerator(), Generators::bool()));
         $this->forAll($sequences)->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
             [$start, $end, $prepare, $recover, $finish] = $sequence;
             self::assertInstanceOf(Xa\XaStart::class, $start);
@@ -139,8 +132,8 @@ final class TransactionExecutionProperties extends TestCase
             self::assertInstanceOf(Xa\XaPrepare::class, $prepare);
             self::assertInstanceOf(Xa\XaRecover::class, $recover);
             self::assertTrue($finish instanceof Xa\XaCommit || $finish instanceof Xa\XaRollback);
-            self::assertSame($start->xid, $end->xid);
-            self::assertSame($start->xid, $prepare->xid);
+            self::assertEquals($start->xid, $end->xid);
+            self::assertEquals($start->xid, $prepare->xid);
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'Generated XA sequence without SQL input';
             $execution = new Execution($session);

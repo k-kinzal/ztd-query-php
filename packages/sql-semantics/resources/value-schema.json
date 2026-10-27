@@ -1,4 +1,17 @@
 {
+    "SqlSemantics\\Construction\\Facts": {
+        "declarations": "array",
+        "diagnostics": "array",
+        "notices": "array",
+        "output": "?SqlSemantics\\Statement\\Fact\\QueryFact",
+        "queries": "array",
+        "references": "array",
+        "relations": "array",
+        "scalars": "array",
+        "warningInstructions": "array",
+        "warningSubjects": "array",
+        "warnings": "array"
+    },
     "SqlSemantics\\Contract\\AnalysisContext": {
         "columnNames": "SqlSemantics\\Statement\\Identifier\\Comparison",
         "complete": "bool",
@@ -73,17 +86,12 @@
         "partitions": "?array",
         "profile": "SqlSemantics\\Contract\\LanguageProfile"
     },
-    "SqlSemantics\\Statement\\Fact\\Facts": {
-        "declarations": "array",
-        "diagnostics": "array",
-        "output": "?SqlSemantics\\Statement\\Fact\\QueryFact",
-        "queries": "array",
-        "references": "array",
-        "relations": "array",
-        "scalars": "array",
-        "warningInstructions": "array",
-        "warningSubjects": "array",
-        "warnings": "array"
+    "SqlSemantics\\Statement\\Fact\\Notice": {
+        "fromInput": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "instruction": "?SqlSemantics\\Statement\\Node",
+        "subject": "SqlSemantics\\Statement\\Node|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "warning": "SqlSemantics\\Statement\\Fact\\Warning"
     },
     "SqlSemantics\\Statement\\Fact\\QueryFact": {
         "aggregates": "array",
@@ -116,12 +124,6 @@
         "catalog": "?SqlSemantics\\Statement\\Identifier\\Name",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
-    },
-    "SqlSemantics\\Statement\\Operation": {
-        "context": "SqlSemantics\\Contract\\AnalysisContext",
-        "facts": "SqlSemantics\\Statement\\Fact\\Facts",
-        "sources": "SqlSemantics\\Statement\\Source\\SourceMap",
-        "statement": "SqlSemantics\\Statement\\Statement"
     },
     "SqlSemantics\\Statement\\Reference\\Column\\AliasTarget": {
         "depth": "int",
@@ -178,6 +180,7 @@
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Statement\\Reference\\Table\\DeclaredTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "table": "SqlSemantics\\Statement\\Declaration\\Table"
     },
     "SqlSemantics\\Statement\\Reference\\Table\\MissingTable": {
@@ -187,6 +190,8 @@
         "missing": "SqlSemantics\\Statement\\Reference\\Missing\\UndeclaredRelation"
     },
     "SqlSemantics\\Statement\\Script": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "statements": "array"
     },
     "SqlSemantics\\Statement\\Shape\\AbsentField": {
@@ -257,6 +262,14 @@
     "SqlSemantics\\Statement\\Spelling\\Spelled": {
         "gap": "string",
         "text": "string"
+    },
+    "SqlSemantics\\Statement\\StatementSemantics": {
+        "declarations": "array",
+        "diagnostics": "array",
+        "notices": "array",
+        "output": "?SqlSemantics\\Statement\\Fact\\QueryFact",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "warnings": "array"
     },
     "SqlSemantics\\Statement\\Type\\Choice": {
         "alternatives": "array"

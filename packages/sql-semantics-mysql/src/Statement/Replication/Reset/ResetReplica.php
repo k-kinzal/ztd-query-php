@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET REPLICA [ALL] [FOR CHANNEL 'name']`, written RESET SLAVE in the legacy vocabulary.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading RESET SLAVE as its synonym, in its spelling
  *     $reset = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44'))->analyze('reset slave all');
- *     [$reset->toString(), $reset->statement->targets[0]->terminology, $reset->statement->targets[0]->synonym] // => ['RESET SLAVE ALL', \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, true]
+ *     [$reset->toString(), $reset->targets[0]->terminology, $reset->targets[0]->synonym] // => ['RESET SLAVE ALL', \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, true]
  */
 final class ResetReplica implements ResetTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Terminology $terminology The vocabulary of the release
@@ -40,7 +39,7 @@ final class ResetReplica implements ResetTarget
      * @param Text|null $channel The replication channel, when FOR CHANNEL is written
      * @param bool $synonym Whether the item is written RESET SLAVE where the release reads it as its synonym RESET REPLICA, which MySQL 8.0 to 8.3 warn deprecated
      */
-    public function __construct(public readonly Terminology $terminology, public readonly bool $all = false, public readonly ?Text $channel = null, public readonly bool $synonym = false)
+    public function __construct(public readonly Terminology $terminology, public readonly bool $all = false, public readonly ?Text $channel = null, public readonly bool $synonym = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$synonym || $terminology === Terminology::Current, 'The SLAVE synonym applies to current replication terminology.');
         (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);

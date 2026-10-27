@@ -48,12 +48,12 @@ final class EnginePrefix
         } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
             return [];
         }
-        if (!$operation->statement instanceof CreateTable && !$operation->statement instanceof AlterTable) {
+        if (!$operation instanceof CreateTable && !$operation instanceof AlterTable) {
             return [];
         }
         $errors = [];
-        foreach ((new Walker())->find($operation->statement, EngineOption::class) as $option) {
-            $source = $operation->sources->of($option);
+        foreach ((new Walker())->find($operation, EngineOption::class) as $option) {
+            $source = $option->source();
             if ($source !== null && ServerCatalog::shared()->engine($option->engine->value) === null) {
                 $errors[$source->offset] = SchemaError::UnknownStorageEngine->error($option->engine->value);
             }

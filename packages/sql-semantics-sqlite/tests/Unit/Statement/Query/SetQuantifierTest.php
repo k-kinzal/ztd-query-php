@@ -23,14 +23,14 @@ final class SetQuantifierTest extends TestCase
         $all = $semantics->analyze('select all a from t');
         $plain = $semantics->analyze('select a from t');
 
-        self::assertInstanceOf(Select::class, $distinct->statement);
-        self::assertSame(SetQuantifier::Distinct, $distinct->statement->quantifier);
+        self::assertInstanceOf(Select::class, $distinct);
+        self::assertSame(SetQuantifier::Distinct, $distinct->quantifier);
         self::assertSame('SELECT DISTINCT a FROM t', $distinct->toString());
-        self::assertInstanceOf(Select::class, $all->statement);
-        self::assertSame(SetQuantifier::All, $all->statement->quantifier);
+        self::assertInstanceOf(Select::class, $all);
+        self::assertSame(SetQuantifier::All, $all->quantifier);
         self::assertSame('SELECT ALL a FROM t', $all->toString());
-        self::assertInstanceOf(Select::class, $plain->statement);
-        self::assertNull($plain->statement->quantifier);
+        self::assertInstanceOf(Select::class, $plain);
+        self::assertNull($plain->quantifier);
         self::assertSame(['DISTINCT', 'ALL'], array_map(static fn (SetQuantifier $quantifier): string => $quantifier->value, SetQuantifier::cases()));
     }
 }

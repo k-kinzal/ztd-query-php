@@ -17,7 +17,7 @@ final class SetPasswordTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("SET PASSWORD = 'x'")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("SET PASSWORD = 'x'")->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void

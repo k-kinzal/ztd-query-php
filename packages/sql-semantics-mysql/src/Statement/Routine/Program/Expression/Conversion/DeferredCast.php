@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored cast around an expression whose preparation is deferred until invocation.
@@ -31,14 +30,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredCast implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $operand The retained invocation-time expression
      * @param CastTarget $target The scalar cast target
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CastTarget $target)
+    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CastTarget $target, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
         Check::input((new CastProblems())->size($target) === null, 'A CAST width, precision and scale must fit its target type.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

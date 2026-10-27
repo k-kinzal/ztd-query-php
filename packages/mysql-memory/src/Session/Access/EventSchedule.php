@@ -39,16 +39,17 @@ final class EventSchedule
      */
     public function check(array $operands, Session $session): void
     {
+        $operands = array_map(\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh(...), $operands);
         $derivation = new Derivation($session->semantics()->context([], session: $session->resolution()));
         foreach ($operands as $operand) {
             $derivation->scalar($operand, $derivation->environment());
         }
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->inputs($operands) as $node) {
             if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
                 $variable = new Derivation($derivation->context);
-                $variable->scalar($node, $variable->environment());
-                foreach ($variable->facts()->diagnostics as $problem) {
+                $variable->scalar(\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($node), $variable->environment());
+                foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($variable)->diagnostics as $problem) {
                     if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable || (!$session->settings()->legacy() && $problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse)) {
                         throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
                     }

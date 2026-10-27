@@ -38,12 +38,13 @@ final class Notices
         if ($query === null) {
             return [];
         }
+        $query = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($query);
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = new Derivation($context);
         $query->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $notices = [];
-        foreach ($derivation->facts()->warnings as $warning) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->warnings as $warning) {
             if ($warning instanceof Deprecation && Stages::afterReading($warning)) {
                 $notices[] = [$failure->end, $warning];
             }

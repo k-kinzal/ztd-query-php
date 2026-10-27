@@ -62,7 +62,7 @@ final class PrivilegeRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('GRANT SUPER,SUPER ON d.* TO u');
 
-        self::assertSame(array_fill(0, $count, 'The SUPER privilege identifier is deprecated'), array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame(array_fill(0, $count, 'The SUPER privilege identifier is deprecated'), array_map(static fn (Warning $warning): string => $warning->message(), $operation->warnings()));
     }
 
     /**

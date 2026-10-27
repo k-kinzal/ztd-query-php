@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item;
 
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A role in the list of GRANT or REVOKE (8.0+).
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class GrantedRole implements Grantable
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param AccountName $role The role
      */
-    public function __construct(public readonly AccountName $role)
+    public function __construct(public readonly AccountName $role, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

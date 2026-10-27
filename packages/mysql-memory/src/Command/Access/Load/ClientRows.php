@@ -23,10 +23,10 @@ use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Writes decoded client records using the resolved LOAD target and assignments.
@@ -42,14 +42,14 @@ final class ClientRows
     /**
      * Writes a nonempty DATA or XML client file without creating or parsing SQL.
      */
-    public function execute(Operation $operation, Session $session, Context $context, Connection $connection, string $contents): Completion
+    public function execute(MySqlStatement $operation, Session $session, Context $context, Connection $connection, string $contents): Completion
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof LoadTable);
         $replace = $statement->duplicates === DuplicateHandling::Replace;
         $into = new InsertInto($replace, null, !$replace, $statement->table);
         $table = (new InsertCommand())->table($operation, $into, $session);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $scope = new Scope();
         $scope->place($statement->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
         $targets = $this->targets($statement, $planner, $table);

@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The indirection step `[ index ]`: one element of an array, or of another subscriptable value.
@@ -25,12 +24,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Subscript implements IndirectionStep
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $index The subscript
      */
-    public function __construct(public readonly Scalar $index)
+    public function __construct(public readonly Scalar $index, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

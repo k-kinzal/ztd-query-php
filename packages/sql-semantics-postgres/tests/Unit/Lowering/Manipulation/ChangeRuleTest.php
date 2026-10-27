@@ -16,7 +16,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('WITH w AS (SELECT 1) UPDATE t SET a = 1 FROM u, w WHERE u.c RETURNING *');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\RelationList::class, $statement->from);
     }
@@ -25,14 +25,14 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t USING u WHERE CURRENT OF c RETURNING 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $query->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $query);
     }
 
     public function testUsingIsNullWithoutClause(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
         self::assertNull($statement->using);
     }
@@ -41,7 +41,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('UPDATE ONLY t x SET a = 1');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
         self::assertSame([true, 'x'], [$statement->target->table->only, $statement->target->alias()?->value]);
     }
@@ -50,7 +50,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('UPDATE t SET a = 1, (b, c) = (SELECT 1, 2)');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment::class, $statement->assignments[1]);
     }
@@ -59,7 +59,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('UPDATE t SET (a, b, c) = ROW(1, 2, 3)');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
         $assignment = $statement->assignments[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment::class, $assignment);
@@ -70,7 +70,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('UPDATE t SET a[1] = 1');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
         $assignment = $statement->assignments[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignment::class, $assignment);
@@ -81,7 +81,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('UPDATE t SET a = 1 WHERE CURRENT OF c');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\CurrentOf::class, $statement->where);
     }
@@ -90,7 +90,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t RETURNING a, b AS c');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
         self::assertCount(2, $statement->returning);
     }
@@ -99,7 +99,7 @@ final class ChangeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t WHERE CURRENT OF "C"');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
         $where = $statement->where;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\CurrentOf::class, $where);

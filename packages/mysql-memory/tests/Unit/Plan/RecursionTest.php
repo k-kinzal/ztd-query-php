@@ -29,14 +29,14 @@ final class RecursionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SET SESSION cte_max_recursion_depth = 7');
         $operation = $session->analyze('WITH RECURSIVE r (n) AS (SELECT 1 UNION SELECT n + 1 FROM r WHERE n < 3) SELECT n FROM r');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
         $with = $statement->with;
         self::assertInstanceOf(With::class, $with);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         $plan = (new Recursion($planner))->plan($with->tables[0], null);
 
@@ -54,14 +54,14 @@ final class RecursionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT 2) SELECT n FROM c');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
         $with = $statement->with;
         self::assertInstanceOf(With::class, $with);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
         self::assertNull((new Recursion($planner))->plan($with->tables[0], null));
     }
@@ -80,7 +80,7 @@ final class RecursionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH RECURSIVE r (n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r WHERE n < 3) SELECT n FROM r');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(QueryExpression::class, $statement);
@@ -90,7 +90,7 @@ final class RecursionTest extends TestCase
         self::assertInstanceOf(SetOperation::class, $union);
         self::assertInstanceOf(Query::class, $union->left);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $recursion = new Recursion(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $recursion = new Recursion(new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
 
         self::assertFalse($recursion->refers($union->left, $with->tables[0]));
         self::assertTrue($recursion->refers($union->right, $with->tables[0]));

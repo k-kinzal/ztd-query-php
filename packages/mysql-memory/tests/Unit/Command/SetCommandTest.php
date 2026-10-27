@@ -176,7 +176,8 @@ final class SetCommandTest extends TestCase
         $program = new \MySqlMemory\Program\Activation('TRIGGER', 'd.t', true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'));
         $program->scope[] = new \MySqlMemory\Program\Row(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \MySqlMemory\Program\Variable('a', \MySqlMemory\Typing\Domain::integer())], 'NEW');
         $session->program = $program;
-        $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER x AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1')->statement;
+        $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER x AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $trigger);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger::class, $trigger);
         $statement = $trigger->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $statement);

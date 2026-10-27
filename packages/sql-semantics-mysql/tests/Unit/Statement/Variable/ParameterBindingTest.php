@@ -21,7 +21,7 @@ final class ParameterBindingTest extends TestCase
     public function testPositionFollowsWrittenOrderAcrossNestedScopes(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ? FROM (SELECT ? AS a) t WHERE ?');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -30,9 +30,9 @@ final class ParameterBindingTest extends TestCase
         self::assertInstanceOf(Select::class, $select->from->query);
         self::assertInstanceOf(SelectExpression::class, $select->from->query->items[0]);
         self::assertNotNull($select->where);
-        $projection = $operation->facts->scalar($select->items[0]->expression)->resolution;
-        $source = $operation->facts->scalar($select->from->query->items[0]->expression)->resolution;
-        $condition = $operation->facts->scalar($select->where)->resolution;
+        $projection = $select->items[0]->expression->scalarInformation()->resolution;
+        $source = $select->from->query->items[0]->expression->scalarInformation()->resolution;
+        $condition = $select->where->scalarInformation()->resolution;
         self::assertInstanceOf(ParameterBinding::class, $projection);
         self::assertInstanceOf(ParameterBinding::class, $source);
         self::assertInstanceOf(ParameterBinding::class, $condition);

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored SET list containing at least one deferred assignment operand.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredAssignments implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SetItem|DeferredAssignment> The complete ordered SET list
@@ -35,7 +34,7 @@ final class DeferredAssignments implements ProgramStatement
     /**
      * @param list<SetItem|DeferredAssignment> $items Ordinary and deferred assignments
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $checked = [];
         $deferred = false;

@@ -25,15 +25,15 @@ final class LocationsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $operation = $session->analyze('SELECT nosuch(1), abs(1)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
-        self::assertInstanceOf(FunctionCall::class, $operation->statement->query->items[0]->expression);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[1]);
-        self::assertInstanceOf(FunctionCall::class, $operation->statement->query->items[1]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(FunctionCall::class, $operation->query->items[0]->expression);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[1]);
+        self::assertInstanceOf(FunctionCall::class, $operation->query->items[1]->expression);
 
-        self::assertTrue(Locations::undeclared($operation->statement->query->items[0]->expression, $operation));
-        self::assertFalse(Locations::undeclared($operation->statement->query->items[1]->expression, $operation));
+        self::assertTrue(Locations::undeclared($operation->query->items[0]->expression, $operation));
+        self::assertFalse(Locations::undeclared($operation->query->items[1]->expression, $operation));
     }
 
     public function testProblemAnswersTheProblemOfAnOrdinalAndOfACall(): void
@@ -41,14 +41,14 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->query('CREATE TABLE t(a INT)');
         $operation = $session->analyze('SELECT nosuch(1), t.* FROM t ORDER BY 3');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->query->items[0]);
-        self::assertInstanceOf(FunctionCall::class, $operation->statement->query->items[0]->expression);
-        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(FunctionCall::class, $operation->query->items[0]->expression);
+        self::assertInstanceOf(OutputOrdinal::class, $operation->query->orderBy[0]->expression);
 
-        self::assertSame($operation->statement->query->items[0]->expression, (new Locations())->problem($operation->statement->query->items[0]->expression, $operation));
-        self::assertInstanceOf(OrdinalOutOfRange::class, (new Locations())->problem($operation->statement->query->orderBy[0]->expression, $operation));
+        self::assertSame($operation->query->items[0]->expression, (new Locations())->problem($operation->query->items[0]->expression, $operation));
+        self::assertInstanceOf(OrdinalOutOfRange::class, (new Locations())->problem($operation->query->orderBy[0]->expression, $operation));
     }
 
     public function testNamesKeepsTheFirstLocationOfASharedColumnCondition(): void
@@ -111,7 +111,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT nope, CAST(1 AS SIGNED ARRAY) FROM t');
-        [$located, $matched] = (new Locations())->located($operation, [], $operation->facts->diagnostics, $session);
+        [$located, $matched] = (new Locations())->located($operation, [], $operation->statementInformation()->diagnostics, $session);
 
         self::assertSame([[\SqlSemantics\Statement\Reference\Column\MissingColumn::class, 'field list'], [\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, 'field list']], array_map(static fn (array $entry): array => [$entry[0]::class, $entry[1][0]], array_values($located)));
         self::assertSame([], $matched);
@@ -122,7 +122,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze("SELECT MATCH(nope) AGAINST ('x') FROM t");
-        [$located, $matched] = (new Locations())->names($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), [], $operation->facts->diagnostics);
+        [$located, $matched] = (new Locations())->names($operation, (new \MySqlMemory\Session\Locator())->statement($operation), [], $operation->statementInformation()->diagnostics);
 
         self::assertCount(1, $located);
         self::assertSame(array_keys($located), array_keys($matched));
@@ -133,7 +133,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT nope FROM t');
-        [$located, $matched] = (new Locations())->names($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), [], []);
+        [$located, $matched] = (new Locations())->names($operation, (new \MySqlMemory\Session\Locator())->statement($operation), [], []);
 
         self::assertSame([[], []], [$located, $matched]);
     }
@@ -143,7 +143,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT)');
         $operation = $session->analyze('SELECT DEFAULT(id), DEFAULT(a) FROM t');
-        $located = array_values((new Locations())->defaults($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), $session, []));
+        $located = array_values((new Locations())->defaults($operation, (new \MySqlMemory\Session\Locator())->statement($operation), $session, []));
 
         self::assertCount(1, $located);
         self::assertInstanceOf(SqlError::class, $located[0][0]);
@@ -155,7 +155,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT 1 = ALL (SELECT * FROM t) FROM t');
-        $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
+        $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator())->statement($operation), $operation->statementInformation()->diagnostics, []));
 
         self::assertCount(1, $located);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $located[0][0]);
@@ -177,7 +177,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT zz, q.* FROM t');
-        $located = array_values((new Locations())->wildcards((new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
+        $located = array_values((new Locations())->wildcards((new \MySqlMemory\Session\Locator())->statement($operation), $operation->statementInformation()->diagnostics, []));
 
         self::assertCount(1, $located);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier::class, $located[0][0]);
@@ -192,7 +192,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
         $operation = $session->analyze('SELECT 1 = ALL (SELECT * FROM t) FROM t');
-        $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator(true))->statement($operation->statement), $operation->facts->diagnostics, []));
+        $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator(true))->statement($operation), $operation->statementInformation()->diagnostics, []));
 
         self::assertSame(['field list', [1, 0, 2]], $located[0][1]);
         $wide = $session->run('SELECT zz = ALL (SELECT a, b FROM t) FROM t')[0];
@@ -207,9 +207,9 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $declaration = $session->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER w2, ROW_NUMBER() OVER (w3) FROM t WINDOW w AS (y)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $declaration->statement->body);
-        $operation = new \MySqlMemory\Session\Resolution\QueryPreparation($declaration->statement->body->query, $declaration->facts, $declaration->profile());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $declaration->body);
+        $operation = new \MySqlMemory\Session\Resolution\QueryPreparation($declaration->body->query, $declaration->statementInformation(), $declaration->profile());
         $located = array_values((new Locations())->windows((new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
         $late = $session->run('SELECT zz FROM t WINDOW w AS (y)')[0];
         $early = $session->run('SELECT ROW_NUMBER() OVER w2, zz FROM t')[0];
@@ -224,9 +224,9 @@ final class LocationsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $declaration = $session->analyze('CREATE PROCEDURE p() SELECT nofn() UNION SELECT 1, 2');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $declaration->statement->body);
-        $operation = new \MySqlMemory\Session\Resolution\QueryPreparation($declaration->statement->body->query, $declaration->facts, $declaration->profile());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $declaration->body);
+        $operation = new \MySqlMemory\Session\Resolution\QueryPreparation($declaration->body->query, $declaration->statementInformation(), $declaration->profile());
         $located = array_values((new Locations())->sets($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
         $function = $session->run('SELECT nofn() UNION SELECT 1, 2')[0];
         $count = $session->run('SELECT 1 UNION SELECT 1, 2 UNION SELECT zz')[0];
@@ -280,7 +280,7 @@ final class LocationsTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT nope FROM t USE INDEX (k)');
-        [$located] = (new Locations())->located($operation, [], $operation->facts->diagnostics, $session);
+        [$located] = (new Locations())->located($operation, [], $operation->diagnostics(), $session);
         $first = Locations::first($located);
 
         self::assertNotNull($first);

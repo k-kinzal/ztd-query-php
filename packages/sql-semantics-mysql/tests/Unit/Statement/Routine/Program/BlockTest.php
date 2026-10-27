@@ -28,7 +28,7 @@ final class BlockTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x + 1; SELECT y; END');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveProgramRejectsDuplicateVariablesBeforePublication(): void
@@ -40,7 +40,7 @@ final class BlockTest extends TestCase
     public function testDeriveProgramHidesAParameterWithAVariableOfTheSameName(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x CHAR(1); SELECT x; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -52,10 +52,10 @@ final class BlockTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item);
         $use = $item->expression;
         self::assertInstanceOf(ColumnUse::class, $use);
-        $resolution = $operation->facts->scalar($use)->resolution;
+        $resolution = $use->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -66,7 +66,7 @@ final class BlockTest extends TestCase
     public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -80,7 +80,7 @@ final class BlockTest extends TestCase
     #[DataProvider('providerDeriveProgramAcceptsAWellFormedBlock')]
     public function testDeriveProgramAcceptsAWellFormedBlock(string $sql): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze($sql)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze($sql)->diagnostics());
     }
 
     /**

@@ -18,6 +18,6 @@ final class ViewsTest extends TestCase
         $statement = $semantics->analyze('CREATE UNLOGGED VIEW v AS SELECT 1', []);
         self::assertSame([
           0 => 'views cannot be unlogged because they do not have storage',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

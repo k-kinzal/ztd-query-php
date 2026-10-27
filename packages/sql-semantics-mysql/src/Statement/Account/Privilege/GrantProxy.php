@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `GRANT PROXY ON account TO account, … [WITH GRANT OPTION]`: a request to let accounts act as a proxy for another.
@@ -26,9 +25,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Granting a proxy
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant proxy on 'root' to app with grant option")->toString() // => 'GRANT PROXY ON root TO app WITH GRANT OPTION'
  */
-final class GrantProxy implements Statement, PrivilegeChange
+final class GrantProxy extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Grantee> The proxy accounts
@@ -40,8 +39,11 @@ final class GrantProxy implements Statement, PrivilegeChange
      * @param list<Grantee|UserSpecification> $grantees The proxy accounts; at least one
      * @param bool $withGrantOption Whether WITH GRANT OPTION is written
      */
-    public function __construct(public readonly Account $proxied, array $grantees, public readonly bool $withGrantOption = false)
+    public function __construct(public readonly Account $proxied, array $grantees, public readonly bool $withGrantOption = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, \SqlSemantics\Statement\Node::class, 'GRANT PROXY names at least one account.', 1));
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

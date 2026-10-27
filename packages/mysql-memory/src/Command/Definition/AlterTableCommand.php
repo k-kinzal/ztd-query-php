@@ -35,12 +35,12 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 /**
@@ -76,13 +76,13 @@ final class AlterTableCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation && ($operation->statement instanceof AlterTable || $operation->statement instanceof CreateIndex || $operation->statement instanceof DropIndex));
-        if ($operation->statement instanceof AlterTable && $operation->statement->hasExecutionCondition()) {
-            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation->statement, $session->settings()->release(), $connection->parameters));
-            return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($operation->statement, $session);
+        assert($operation instanceof MySqlStatement && ($operation instanceof AlterTable || $operation instanceof CreateIndex || $operation instanceof DropIndex));
+        if ($operation instanceof AlterTable && $operation->hasExecutionCondition()) {
+            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation, $session->settings()->release(), $connection->parameters));
+            return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($operation, $session);
         }
-        if ($operation->statement instanceof CreateIndex && $operation->statement->hasExecutionCondition()) {
-            (new \MySqlMemory\Program\Definition\IndexUse())->raise($operation->statement, $session);
+        if ($operation instanceof CreateIndex && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Definition\IndexUse())->raise($operation, $session);
         }
         return $this->alter($operation, $session, $context, $connection);
     }
@@ -90,12 +90,12 @@ final class AlterTableCommand implements Command
     /**
      * Applies actions after their invocation conditions have been resolved.
      */
-    public function alter(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function alter(MySqlStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation->statement instanceof AlterTable || $operation->statement instanceof CreateIndex || $operation->statement instanceof DropIndex);
-        $statement = $operation->statement;
+        assert($operation instanceof AlterTable || $operation instanceof CreateIndex || $operation instanceof DropIndex);
+        $statement = $operation;
         [$name, $commands] = $this->request($statement);
-        $this->read($commands, $operation->facts, $session->settings()->legacy());
+        $this->read($commands, $operation->statementInformation(), $session->settings()->legacy());
         $this->validation($commands);
         $database = $session->variables->database;
         $schema = $name->schema->value ?? $database;
@@ -148,7 +148,7 @@ final class AlterTableCommand implements Command
      */
     public function table(Session $session, string $schema, string $name): StoredTable
     {
-        $table = $session->instance->dictionary->table($schema, $name);
+        $table = $session->instance->dictionary->table($schema, $name, $session->temporaries);
         if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name])) {
             throw SchemaError::WrongObject->error($schema, $name, 'BASE TABLE');
         }
@@ -171,29 +171,29 @@ final class AlterTableCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
-    public function resolve(Operation|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session): void
+    public function resolve(MySqlStatement|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session): void
     {
-        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->rows($operation->statement);
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (!(new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->deferred($diagnostic, $operation->statement) && !$diagnostic instanceof MissingTable && !$diagnostic instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+        $statement = $operation instanceof MySqlStatement ? $operation : $operation->statement;
+        $information = $operation instanceof MySqlStatement ? $operation->statementInformation() : $operation->facts;
+        $queries = new \MySqlMemory\Session\Problem\Definition\FunctionalQueries();
+        $queries->rows($statement);
+        foreach (($information)->diagnostics as $diagnostic) {
+            if (!$queries->deferred($diagnostic, $statement) && !$diagnostic instanceof MissingTable && !$diagnostic instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
-        foreach ((new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->ordinaryCalls($operation->statement) as $call) {
+        foreach ($queries->ordinaryCalls($statement) as $call) {
             if (Locations::undeclared($call, $operation)) {
                 throw (new Errors())->routine($call, $session);
             }
         }
-        foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition::class) as $column) {
+        foreach ((new Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition::class) as $column) {
             (new Constraint\SpatialColumns())->check($column, $session->instance->registry->spatialCatalog);
         }
-        $statement = $operation->statement;
-        assert($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex);
+        \SqlSemantics\Diagnostic\Check::invariant($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex, 'An index preparation retains its definition request.');
         [, $commands] = $this->request($statement);
-        (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added($this->indexes($commands), $operation->facts, $session);
-        if (!($operation->statement instanceof AlterTable && $operation->statement->hasExecutionCondition()) || $session->settings()->legacy()) {
-            (new \MySqlMemory\Session\Problem\Definition\IndexNames())->check($operation->facts);
-        }
+        $queries->added($this->indexes($commands), $information, $session);
+        (new \MySqlMemory\Session\Problem\Definition\IndexNames())->preparation($statement, $information, $session->settings()->legacy());
         if ($operation instanceof \MySqlMemory\Session\Resolution\IndexPreparation) {
             (new \MySqlMemory\Session\Problem\Definition\IndexShapes())->request($operation, $session);
         }
@@ -259,7 +259,7 @@ final class AlterTableCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
-    public function read(array $commands, \SqlSemantics\Statement\Fact\Facts $facts, bool $legacy = false): void
+    public function read(array $commands, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, bool $legacy = false): void
     {
         $indexes = $this->indexes($commands);
         foreach ($facts->diagnostics as $diagnostic) {
@@ -359,7 +359,7 @@ final class AlterTableCommand implements Command
      */
     public function others(Session $session, StoredTable $table): array
     {
-        return array_values(array_filter($session->instance->dictionary->declarations(), static fn (Table $declaration): bool => $declaration !== $table->definition->declaration));
+        return array_values(array_filter(\MySqlMemory\Session\Statement\Catalog::declarations($session), static fn (Table $declaration): bool => $declaration !== $table->definition->declaration));
     }
 
     /**
@@ -446,8 +446,8 @@ final class AlterTableCommand implements Command
     public function move(Session $session, StoredTable $table, string $schema, string $name): void
     {
         $dictionary = $session->instance->dictionary;
-        $dictionary->release($table, $schema, $name);
-        $dictionary->store($table);
+        $dictionary->release($table, $schema, $name, $session->temporaries);
+        $dictionary->store($table, $session->temporaries);
         $dictionary->retarget($schema, $name, $table->definition->schema, $table->definition->name);
     }
 }

@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CREATE UNDO TABLESPACE name ADD DATAFILE 'file' [option …]`: a request to create an undo tablespace (MySQL 8.0.14 and later).
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Creating an undo tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create undo tablespace u add datafile 'u.ibu'");
- *     [$statement->toString(), $statement->statement->datafile->value] // => ["CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu'", 'u.ibu']
+ *     [$statement->toString(), $statement->datafile->value] // => ["CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu'", 'u.ibu']
  */
-final class CreateUndoTablespace implements Statement
+final class CreateUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -42,8 +41,11 @@ final class CreateUndoTablespace implements Statement
      * @param Text $datafile The data file
      * @param list<StorageOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, public readonly Text $datafile, array $options = [])
+    public function __construct(public readonly Name $name, public readonly Text $datafile, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input($datafile->radix === null, 'A tablespace file name is a quoted string.');
         $this->options = (new StorageOptions())->checked($options, StorageOptions::UNDO_TABLESPACE);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

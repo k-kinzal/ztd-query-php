@@ -67,7 +67,7 @@ final class ScalarSubqueryTest extends TestCase
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertSame(['VARCHAR', Nullability::NotNull], [$fact->type->descriptor->name(), $fact->nullability]);
         self::assertNotNull($fact->replacement);
-        self::assertTrue($derivation->facts()->covers($fact->replacement));
+        self::assertTrue($fact->replacement->hasBinding());
     }
 
 

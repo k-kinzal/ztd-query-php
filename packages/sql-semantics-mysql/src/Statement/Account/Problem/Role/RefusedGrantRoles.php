@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing a contradictory role grant
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() GRANT '' TO u")->statement;
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() GRANT '' TO u");
  *     $create->body->problem->message() // => 'GRANT cannot use anonymous accounts or grant an explicit account to itself.'
  */
 final class RefusedGrantRoles implements Diagnostic

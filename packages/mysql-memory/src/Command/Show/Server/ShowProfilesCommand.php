@@ -14,11 +14,11 @@ use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ProfileSection;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW PROFILES and SHOW PROFILE: the statements the session profiled, and the stages of one of them.
@@ -56,12 +56,12 @@ final class ShowProfilesCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
         if ($statement instanceof ShowProfile && (!$session->replayed || $session->program !== null) && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $limit = $statement->limit;
-            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary));
+            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session)));
             if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $bounds->bound($limit->count, null) !== 0 || ($limit->offset !== null && $bounds->bound($limit->offset, null) !== 0)) {
                 $context->warning(StatementError::DeprecatedSyntax, 'SHOW PROFILE', 'Performance Schema');
             }

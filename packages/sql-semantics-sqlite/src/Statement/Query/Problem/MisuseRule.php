@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
  * @visibility public
  * @example Reading which rule a statement breaks
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule::StarWithoutTables
+ *     $query->diagnostics()[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule::StarWithoutTables
  */
 enum MisuseRule: string
 {

@@ -87,7 +87,7 @@ final class Relations
      */
     public function table(TableReference $reference, Scope $scope): AccessPath
     {
-        $resolution = $this->planner->compiler->facts->relation($reference)->table;
+        $resolution = $reference->relationInformation()->table;
         if ($resolution instanceof CommonTable) {
             return $this->commonTable($reference, $resolution, $scope);
         }
@@ -96,12 +96,12 @@ final class Relations
         }
         $name = $resolution->table->name;
         $view = $this->planner->dictionary->schema($name->schema->value ?? $this->planner->settings->database)->views[$name->name->value] ?? null;
-        if ($view !== null && $resolution->table === $view->declaration) {
+        if ($view !== null && $resolution->table->kind === \SqlSemantics\Statement\Declaration\RelationKind::View) {
             return (new Views($this->planner))->plan($reference, $view, $scope, $this);
         }
         $system = $this->planner->dictionary->system;
         $read = $system?->table($resolution->table);
-        $stored = $system !== null && $read !== null ? $system->deferred($read, $this->planner->compiler->connection) : $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
+        $stored = $system !== null && $read !== null ? $system->deferred($read, $this->planner->compiler->connection) : $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value, $this->planner->temporaries);
         if ($stored === null) {
             throw QueryError::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         }
@@ -178,7 +178,7 @@ final class Relations
     public function jsonTable(JsonTable $table, Scope $scope): AccessPath
     {
         $document = (new \MySqlMemory\Evaluation\Compile\Preparation\JsonDocument())->compile($table, $this->planner->compiler, $scope);
-        $slots = $this->planner->compiler->facts->relation($table)->shape->slots;
+        $slots = $table->relationInformation()->shape->slots;
         $columns = [];
         foreach ($table->columns as $column) {
             $columns[] = $this->jsonColumn($column, $slots);
@@ -249,7 +249,7 @@ final class Relations
     public function shaped(Relation $relation, array $planned): array
     {
         $domains = [];
-        foreach ($this->planner->compiler->facts->relation($relation)->shape->slots as $position => $slot) {
+        foreach ($relation->relationInformation()->shape->slots as $position => $slot) {
             $type = $slot->type;
             $domains[] = $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull) : $planned[$position] ?? Domain::null();
         }
@@ -270,7 +270,7 @@ final class Relations
      */
     public function mergeable(\SqlSemantics\Statement\Query $query): bool
     {
-        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $this->planner->settings->release(), $this->planner->compiler->facts, $this->planner->settings->resolution()->derivedMerge);
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $this->planner->settings->release(), $this->planner->settings->resolution()->derivedMerge);
     }
 
     /**

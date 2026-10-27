@@ -37,8 +37,8 @@ final class ConflictingUpdateTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $derivation = new \SqlSemantics\Construction\Derivation($semantics->context([], true));
         $input->derive($derivation);
-        self::assertTrue($derivation->facts()->covers($input->tables[0]));
-        self::assertTrue($derivation->facts()->covers($input->tables[1]));
+        self::assertTrue($input->tables[0]->hasBinding());
+        self::assertTrue($input->tables[1]->hasBinding());
         self::assertContains(M\Server\Problem\NonUniqueTable::class, array_map(static fn ($diagnostic): string => $diagnostic::class, $derivation->facts()->diagnostics));
     }
 

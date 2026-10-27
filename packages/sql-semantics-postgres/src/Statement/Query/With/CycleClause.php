@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CYCLE columns SET mark [TO value DEFAULT value] USING path: cycle detection added to a recursive query.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CycleClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The columns compared to detect a cycle
@@ -44,7 +43,7 @@ final class CycleClause implements Node
      * @param Scalar|null $markValue The mark of a row on a cycle, written after TO
      * @param Scalar|null $markDefault The mark of every other row, written after DEFAULT
      */
-    public function __construct(array $columns, public readonly Name $mark, public readonly Name $path, public readonly ?Scalar $markValue = null, public readonly ?Scalar $markDefault = null)
+    public function __construct(array $columns, public readonly Name $mark, public readonly Name $path, public readonly ?Scalar $markValue = null, public readonly ?Scalar $markDefault = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A CYCLE clause names at least one column.', 1);
         Check::input(($markValue === null) === ($markDefault === null), 'A cycle mark value is written with its default.');

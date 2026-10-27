@@ -14,6 +14,15 @@ use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintFailure;
 #[Small]
 final class HintErrorTest extends TestCase
 {
+    public function testCodeReportsTheNativeWarningNumber(): void
+    {
+        self::assertSame(1064, (new HintError(HintFailure::Syntax, 0))->code());
+    }
+
+    public function testMessageWithoutInputRetainsTheSemanticCondition(): void
+    {
+        self::assertSame('Unsupported MAX_EXECUTION_TIME', (new HintError(HintFailure::ExecutionTime, 41))->message());
+    }
     public function testMessageWritesTheStatementFromTheOffsetAndItsLine(): void
     {
         self::assertSame("Unsupported MAX_EXECUTION_TIME near ') */ 1' at line 2", (new HintError(HintFailure::ExecutionTime, 41))->message("SELECT\n/*+ MAX_EXECUTION_TIME(99999999999) */ 1"));

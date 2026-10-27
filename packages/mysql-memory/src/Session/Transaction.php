@@ -167,8 +167,9 @@ final class Transaction
      * @param Variables|null $variables The variables of the session, which hold its isolation level, access mode, autocommit and lock wait timeout
      * @param Transactions $system The transactions of the server
      * @param Diagnostics|null $diagnostics The diagnostics area of the session, where the transaction warns
+     * @param \MySqlMemory\Dictionary\Temporaries $temporaryTables The session namespace for definitions published at commit
      */
-    public function __construct(public readonly Dictionary $dictionary, public readonly int $id = 0, public readonly ?Variables $variables = null, public readonly Transactions $system = new Transactions(), public readonly ?Diagnostics $diagnostics = null)
+    public function __construct(public readonly Dictionary $dictionary, public readonly int $id = 0, public readonly ?Variables $variables = null, public readonly Transactions $system = new Transactions(), public readonly ?Diagnostics $diagnostics = null, public readonly \MySqlMemory\Dictionary\Temporaries $temporaryTables = new \MySqlMemory\Dictionary\Temporaries())
     {
         $this->savepoints = new Savepoints($this);
         $this->creation = new Transaction\Creation($this);

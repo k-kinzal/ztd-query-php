@@ -18,8 +18,8 @@ final class ValidationOptionTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITH VALIDATION, ADD a INT');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $alter);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testRenderWritesWithOrWithout(): void

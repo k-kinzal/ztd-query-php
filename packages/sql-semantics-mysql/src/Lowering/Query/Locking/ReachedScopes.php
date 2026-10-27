@@ -24,11 +24,17 @@ final class ReachedScopes
      */
     public function read(Node $root, Lowering $lowering): array
     {
-        /** @var list<array<string|int, int>> $scopes */
+        /**
+ * @var list<array<string|int, int>> $scopes
+ */
         $scopes = [[]];
-        /** @var list<array{Node, int, bool}> $definitions */
+        /**
+ * @var list<array{Node, int, bool}> $definitions
+ */
         $definitions = [];
-        /** @var list<array{Node, int, bool}> $pending */
+        /**
+ * @var list<array{Node, int, bool}> $pending
+ */
         $pending = [[$root, 0, false]];
         $seen = [];
         $closed = [];

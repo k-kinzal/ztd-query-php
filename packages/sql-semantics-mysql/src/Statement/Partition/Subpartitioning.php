@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SUBPARTITION BY [LINEAR] HASH|KEY … [SUBPARTITIONS n]`: the subpartitioning of each partition.
@@ -29,13 +28,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Subpartitioning implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionMethod $method The HASH or KEY method
      * @param Numeral|null $count The SUBPARTITIONS count, when written
      */
-    public function __construct(public readonly PartitionMethod $method, public readonly ?Numeral $count)
+    public function __construct(public readonly PartitionMethod $method, public readonly ?Numeral $count, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($count === null || (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count), 'A subpartition count is an integer token.');
         Check::input($count === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0'), 'The explicit subpartition count is positive.');

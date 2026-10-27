@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of a built-in function whose name is a keyword and whose arguments are a plain list of expressions.
@@ -43,7 +42,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class KeywordCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in order
@@ -55,8 +55,11 @@ final class KeywordCall implements Scalar
      * @param list<Scalar> $arguments The arguments in order
      * @param OptionalWords $parentheses Whether the empty parentheses of CURRENT_USER are written; the other functions write their parentheses
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Function arguments are expressions.');
         [$minimum, $maximum] = $function->arity();
         Check::input(count($arguments) >= $minimum && ($maximum === -1 || count($arguments) <= $maximum), 'The grammar does not accept this number of arguments for ' . $function->value . '.');

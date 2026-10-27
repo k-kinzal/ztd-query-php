@@ -19,7 +19,7 @@ final class DeallocateTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DEALLOCATE PREPARE s');
 
-        self::assertNull($operation->facts->output);
+        self::assertNull($operation->output());
     }
 
     public function testRenderWritesDeallocate(): void

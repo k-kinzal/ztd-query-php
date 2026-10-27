@@ -8,16 +8,16 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Supplies display text for stored definitions independently of their executable structure.
  *
  * A lowered definition can preserve its input spelling. A directly constructed definition
- * has no input location and renders its typed operands instead, without parsing session text.
+ * renders its typed operands instead, regardless of whether source positions were supplied.
  * The executable routine and trigger bodies remain the supplied semantic nodes in both cases.
  *
  * @visibility MySqlMemory
@@ -34,11 +34,11 @@ final class ProgramText
     }
 
     /**
-     * Uses input spelling only when the operation records the definition's input location.
+     * Uses display strings captured for this exact statement at the input boundary.
      */
-    public static function of(Operation $operation, Session $session): self
+    public static function of(MySqlStatement $operation, Session $session): self
     {
-        return new self($operation->profile(), $operation->sources->of($operation->statement) === null ? null : ProgramSource::of($session), trim($session->following) !== '');
+        return new self($operation->profile(), $session->preparation->programSources[$operation] ?? null, trim($session->following) !== '');
     }
 
     /**
@@ -58,7 +58,7 @@ final class ProgramText
             return $this->render($body);
         }
 
-        $body = $this->source->body($this->source->tree->find('stored_routine_body') === [] ? 'sp_proc_stmt' : 'stored_routine_body');
+        $body = $this->source->body($this->source->body('stored_routine_body') === '' ? 'sp_proc_stmt' : 'stored_routine_body');
 
         return $this->followed ? $body : rtrim(rtrim($body, ';'));
     }

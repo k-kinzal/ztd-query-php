@@ -22,7 +22,7 @@ final class WalkerTest extends TestCase
     public function testFindFindsTheNodesOfAClassInWrittenOrder(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT 1 + (SELECT 2), 3 FROM DUAL WHERE 4 IN (SELECT 5)')->statement;
+        $statement = $session->analyze('SELECT 1 + (SELECT 2), 3 FROM DUAL WHERE 4 IN (SELECT 5)');
 
         self::assertSame(['1', '2', '3', '4', '5'], array_map(static fn (NumberLiteral $literal): string => $literal->text, (new Walker())->find($statement, NumberLiteral::class)));
     }
@@ -30,7 +30,7 @@ final class WalkerTest extends TestCase
     public function testFindDoesNotDescendIntoSubqueriesWhenAsked(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT 1 + (SELECT 2), 3 FROM DUAL WHERE 4 IN (SELECT 5)')->statement;
+        $statement = $session->analyze('SELECT 1 + (SELECT 2), 3 FROM DUAL WHERE 4 IN (SELECT 5)');
 
         self::assertSame(['1', '3', '4'], array_map(static fn (NumberLiteral $literal): string => $literal->text, (new Walker())->find($statement, NumberLiteral::class, false)));
     }
@@ -51,7 +51,7 @@ final class WalkerTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH unused AS (SELECT 99), q AS (SELECT 1), r AS (SELECT * FROM q) SELECT * FROM r');
-        $nodes = (new Walker())->resolved($operation->statement, $operation->facts);
+        $nodes = (new Walker())->resolved($operation, $operation->statementInformation());
 
         self::assertSame(['1'], array_values(array_map(static fn (NumberLiteral $literal): string => $literal->text, array_filter($nodes, static fn ($node): bool => $node instanceof NumberLiteral))));
     }
@@ -61,7 +61,7 @@ final class WalkerTest extends TestCase
         $leaf = new NumberLiteral('1');
         $inner = new Grouped($leaf);
         $outer = new Grouped($inner);
-        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, []);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: []);
         self::assertSame([$leaf, $inner, $outer], (new Walker())->resolved($outer, $facts, true));
         self::assertSame([$outer, $inner, $leaf], (new Walker())->resolved($outer, $facts));
     }
@@ -70,7 +70,7 @@ final class WalkerTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH RECURSIVE q(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM q WHERE n<3) SELECT * FROM q');
-        $nodes = (new Walker())->resolved($operation->statement, $operation->facts);
+        $nodes = (new Walker())->resolved($operation, $operation->statementInformation());
 
         self::assertSame(['1', '1', '3'], array_values(array_map(static fn (NumberLiteral $literal): string => $literal->text, array_filter($nodes, static fn ($node): bool => $node instanceof NumberLiteral))));
     }

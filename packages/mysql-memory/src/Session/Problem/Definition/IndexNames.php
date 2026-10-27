@@ -6,9 +6,9 @@ namespace MySqlMemory\Session\Problem\Definition;
 
 use MySqlMemory\Error\Family\SchemaError;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -26,7 +26,7 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When Semantics diagnosed the selected index name
      */
-    public function check(Facts $facts, ?Name $owner = null): void
+    public function check(StatementSemantics $facts, ?Name $owner = null): void
     {
         foreach ($facts->diagnostics as $problem) {
             if ($problem instanceof InvalidIndexName && ($owner === null || $problem->name === $owner)) {
@@ -40,7 +40,7 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When the declaration's effective name is invalid
      */
-    public function definition(IndexDefinition $index, Facts $facts, bool $legacy = false): void
+    public function definition(IndexDefinition $index, StatementSemantics $facts, bool $legacy = false): void
     {
         if ($legacy) {
             $this->check($facts);
@@ -61,7 +61,7 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When an added index name or key column is invalid
      */
-    public function alter(\MySqlMemory\Command\Definition\TableLayout $layout, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB', string $collation = 'utf8mb4_general_ci'): void
+    public function alter(\MySqlMemory\Command\Definition\TableLayout $layout, StatementSemantics $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB', string $collation = 'utf8mb4_general_ci'): void
     {
         $declared = new \SqlSemantics\Platform\MySql\Rules\Typing\Declared(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known($collation), $release);
         $columns = [];
@@ -82,23 +82,23 @@ final class IndexNames
      *
      * @throws \MySqlMemory\Error\SqlError When a retained name or preceding key column is invalid
      */
-    public function creation(\SqlSemantics\Statement\Operation $prepared, \MySqlMemory\Session\Session $session): void
+    public function creation(\SqlSemantics\Platform\MySql\Statement\Statement $prepared, \MySqlMemory\Session\Session $session): void
     {
-        \SqlSemantics\Diagnostic\Check::invariant($prepared->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable, 'Creation keys belong to the same table request.');
-        if (array_filter($prepared->facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) === []) {
+        \SqlSemantics\Diagnostic\Check::invariant($prepared instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable, 'Creation keys belong to the same table request.');
+        if (array_filter($prepared->statementInformation()->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) === []) {
             return;
         }
         if ($session->settings()->legacy()) {
-            $this->check($prepared->facts);
+            $this->check($prepared->statementInformation());
         }
-        $indexes = array_values(array_filter($prepared->statement->elements, static fn ($element): bool => $element instanceof IndexDefinition));
-        $declared = new \MySqlMemory\Typing\Declared($session->settings()->connectionCollation, $session->settings()->release());
+        $indexes = array_values(array_filter($prepared->elements, static fn ($element): bool => $element instanceof IndexDefinition));
+        $declared = new \MySqlMemory\Typing\Declared($session->settings()->connectionCollation, $session->settings()->release(), $session->resolution()->realAsFloat);
         $columns = [];
         foreach ($prepared->declarations()[0]->columns as $column) {
             $columns[mb_strtolower($column->name->value)] = $column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? \MySqlMemory\Typing\Domain::of($column->type, true) : $declared->domain($column->type);
         }
-        $engine = (new \MySqlMemory\Command\Definition\StorageOptions())->engine($prepared->statement, $session->variables);
-        $this->columns($indexes, $columns, $prepared->facts, $session->settings()->release(), $engine);
+        $engine = (new \MySqlMemory\Command\Definition\StorageOptions())->engine($prepared, $session->variables);
+        $this->columns($indexes, $columns, $prepared->statementInformation(), $session->settings()->release(), $engine);
     }
 
     /**
@@ -108,7 +108,7 @@ final class IndexNames
      * @param array<string, \MySqlMemory\Typing\Domain> $columns Folded names and domains from the complete proposed declaration
      * @throws \MySqlMemory\Error\SqlError When the first name or missing key-column condition is reached
      */
-    public function columns(array $indexes, array $columns, Facts $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB'): void
+    public function columns(array $indexes, array $columns, StatementSemantics $facts, GrammarRelease $release = GrammarRelease::MySql847, string $engine = 'InnoDB'): void
     {
         foreach ($indexes as $index) {
             $this->definition($index, $facts);
@@ -128,4 +128,16 @@ final class IndexNames
             }
         }
     }
+    /**
+     * Checks prepared key names unless a modern retained ALTER condition owns their order.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a prepared index name is invalid
+     */
+    public function preparation(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex|\SqlSemantics\Platform\MySql\Statement\Alter\DropIndex $statement, StatementSemantics $facts, bool $legacy): void
+    {
+        if ($legacy || !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || !$statement->hasExecutionCondition()) {
+            $this->check($facts);
+        }
+    }
+
 }

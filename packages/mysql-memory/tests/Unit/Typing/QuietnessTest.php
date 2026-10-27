@@ -21,7 +21,7 @@ final class QuietnessTest extends TestCase
     public function testLoudTellsTheStringsThatWarnWhenReadAsANumber(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $statement = $session->analyze("SELECT 'a', _latin1 X'41', @@hostname, VERSION(), IF(1, 'a', 'b'), (SELECT 'a'), CASE WHEN 1 THEN 'a' END, USER(), CONCAT('a'), COALESCE('a'), 'a' COLLATE latin1_bin, @v")->statement;
+        $statement = $session->analyze("SELECT 'a', _latin1 X'41', @@hostname, VERSION(), IF(1, 'a', 'b'), (SELECT 'a'), CASE WHEN 1 THEN 'a' END, USER(), CONCAT('a'), COALESCE('a'), 'a' COLLATE latin1_bin, @v");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -32,7 +32,7 @@ final class QuietnessTest extends TestCase
 
     public function testBareAnswersTheExpressionInsideParenthesesAndUnaryPlus(): void
     {
-        $statement = (new Instance('5.7.44'))->connect()->analyze("SELECT (+('a')), -'a'")->statement;
+        $statement = (new Instance('5.7.44'))->connect()->analyze("SELECT (+('a')), -'a'");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);

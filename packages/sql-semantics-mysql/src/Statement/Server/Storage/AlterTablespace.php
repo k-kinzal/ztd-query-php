@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER TABLESPACE name option …`: a request to change the options of a tablespace (MySQL 8.0 and later).
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Encrypting a tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter tablespace ts encryption = 'Y'");
- *     [$statement->toString(), count($statement->statement->options)] // => ["ALTER TABLESPACE ts ENCRYPTION 'Y'", 1]
+ *     [$statement->toString(), count($statement->options)] // => ["ALTER TABLESPACE ts ENCRYPTION 'Y'", 1]
  */
-final class AlterTablespace implements Statement
+final class AlterTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -40,8 +39,11 @@ final class AlterTablespace implements Statement
      * @param Name $name The tablespace name
      * @param list<StorageOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, array $options)
+    public function __construct(public readonly Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::ALTER_TABLESPACE, 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

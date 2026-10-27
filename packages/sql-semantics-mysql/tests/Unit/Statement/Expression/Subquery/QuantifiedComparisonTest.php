@@ -65,7 +65,7 @@ final class QuantifiedComparisonTest extends TestCase
 
     public function testDeriveScalarComparesRowsForEqualAny(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->diagnostics());
     }
 
     public function testEqualAllCannotPublishARowOperand(): void
@@ -85,8 +85,8 @@ final class QuantifiedComparisonTest extends TestCase
     public function testRenderExcludesAnIntoDestinationWithinTheSelect(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'target'");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         $this->expectExceptionMessage('An expression subquery cannot have an INTO destination.');
-        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $operation->statement->query);
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $operation->query);
     }
 }

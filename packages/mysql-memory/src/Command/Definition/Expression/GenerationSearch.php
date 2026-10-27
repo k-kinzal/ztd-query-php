@@ -11,7 +11,7 @@ use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement as M;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -31,7 +31,7 @@ final class GenerationSearch
     /**
      * Answers a search preparation condition, including its following AGAINST error.
      */
-    public function error(Node $expression, Facts $facts, Session $session): ?SqlError
+    public function error(Node $expression, StatementSemantics $facts, Session $session): ?SqlError
     {
         foreach ((new Walker())->find($expression, Node::class) as $node) {
             if (!$node instanceof M\Expression\Access\FullTextSearch && !$node instanceof M\Routine\Program\Expression\Access\DeferredFullTextSearch) {
@@ -39,14 +39,14 @@ final class GenerationSearch
             }
             $against = StatementError::WrongArguments->error('AGAINST');
             foreach ((new Walker())->find($node, Operand::class) as $part) {
-                $fact = $facts->covers($part) ? $facts->scalar($part) : null;
+                $fact = $part->hasBinding() ? $part->scalarInformation() : null;
                 $failure = null;
                 if ($part instanceof M\Name\ColumnUse && !$fact?->resolution instanceof ResolvedColumn) {
                     $failure = QueryError::BadField->error($part->name->value, 'generated column function');
                 } elseif ($part instanceof M\Expression\Operator\Collated || $part instanceof M\Routine\Program\Expression\Operator\DeferredCollated) {
                     $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
-                    $part->deriveScalar($derivation, $derivation->environment());
-                    foreach ($derivation->facts()->diagnostics as $problem) {
+                    \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($part)->deriveScalar($derivation, $derivation->environment());
+                    foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
                         if ($problem instanceof M\Expression\Problem\UnknownCollation) {
                             $failure = (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
                             break;

@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
 
@@ -39,9 +39,9 @@ final class Locks
      *
      * @throws \MySqlMemory\Error\SqlError When a table is not locked, or is written under a READ lock
      */
-    public function check(Operation $operation, Session $session): void
+    public function check(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && !$statement instanceof InsertRows && !$statement instanceof InsertSet && !$statement instanceof InsertQuery
             && !$statement instanceof Update && !$statement instanceof Delete && !$statement instanceof MultipleDelete) {
             return;
@@ -61,16 +61,16 @@ final class Locks
      *
      * @return list<TableReference>
      */
-    public function written(Operation $operation): array
+    public function written(MySqlStatement $operation): array
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         if ($statement instanceof Update) {
             return array_values(array_filter($statement->tables, static fn ($table): bool => $table instanceof TableReference));
         }
         if (!$statement instanceof MultipleDelete) {
             return [];
         }
-        $targets = array_map($operation->facts->referencedRelation(...), $statement->targets);
+        $targets = array_map($statement->input->relation(...), $statement->targets);
 
         return array_values(array_filter($targets, static fn ($reference): bool => $reference instanceof TableReference));
     }
@@ -88,7 +88,7 @@ final class Locks
             return;
         }
         $schema = $name->schema->value ?? $session->variables->database;
-        if ($session->instance->dictionary->table($schema, $name->name->value)?->definition->temporary === true) {
+        if ($session->instance->dictionary->table($schema, $name->name->value, $session->temporaries)?->definition->temporary === true) {
             return;
         }
         foreach ($session->locks as [$lockedSchema, $table, $alias, $exclusive]) {

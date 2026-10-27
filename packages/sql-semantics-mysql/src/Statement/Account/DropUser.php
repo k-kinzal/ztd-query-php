@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP USER [IF EXISTS] account, …`: a request to remove accounts and their privileges.
@@ -22,9 +21,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Dropping accounts
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop user if exists a, 'b'@'h'")->toString() // => 'DROP USER IF EXISTS a, b@h'
  */
-final class DropUser implements Statement
+final class DropUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Account> The accounts in order
@@ -35,8 +34,11 @@ final class DropUser implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<Account> $users The accounts in order; at least one
      */
-    public function __construct(public readonly bool $ifExists, array $users)
+    public function __construct(public readonly bool $ifExists, array $users, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->users = Check::listOf($users, Account::class, 'DROP USER names at least one account.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

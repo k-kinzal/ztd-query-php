@@ -43,7 +43,7 @@ final class OrderingAliasesTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze($sql, [$table]);
 
-        self::assertSame($expected, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($expected, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testNestedLeavesAnIndependentSubqueryInItsOwnScope(): void
@@ -51,30 +51,30 @@ final class OrderingAliasesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, '5.7.44');
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT MIN(a) AS v FROM t ORDER BY (SELECT MIN(a) FROM t)', [$table]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
-        $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
+        $owned = array_fill_keys(array_map(spl_object_id(...), $select->queryInformation()->aggregates), true);
 
-        self::assertNull((new OrderingAliases())->nested($select->orderBy[0]->expression, $operation->facts, $owned));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertNull((new OrderingAliases())->nested($select->orderBy[0]->expression, $owned));
+        self::assertSame([], $operation->diagnostics());
     }
     public function testCorrelatedRejectsAnOuterAggregateAliasInASortingSubquery(): void
     {
         $semantics = new Semantics(Dialect::MySql, '8.4.7');
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT MIN(a) AS v FROM t GROUP BY a ORDER BY (SELECT ABS(v))', [$table]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
-        $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
-        $problem = (new OrderingAliases())->correlated($select->orderBy[0]->expression, $operation->facts, $owned);
+        $owned = array_fill_keys(array_map(spl_object_id(...), $select->queryInformation()->aggregates), true);
+        $problem = (new OrderingAliases())->correlated($select->orderBy[0]->expression, $owned);
 
         self::assertNotNull($problem);
         self::assertSame("Reference 'v' not supported (reference to group function)", $problem->message());
-        self::assertEquals([$problem], $operation->facts->diagnostics);
+        self::assertEquals([$problem], $operation->diagnostics());
     }
 
 }

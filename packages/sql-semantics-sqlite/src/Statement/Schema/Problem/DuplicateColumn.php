@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a repeated column name
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, A)');
- *     $create->facts->diagnostics[0]->message() // => 'Column A is defined more than once.'
+ *     $create->diagnostics()[0]->message() // => 'Column A is defined more than once.'
  */
 final class DuplicateColumn implements Diagnostic
 {

@@ -23,9 +23,9 @@ final class DropTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $drop = $semantics->analyze('DROP TABLE t, u', [$table]);
 
-        self::assertInstanceOf(DropTable::class, $drop->statement);
-        self::assertInstanceOf(DeclaredTable::class, $drop->facts->relation($drop->statement->tables[0])->table);
-        self::assertInstanceOf(MissingTable::class, $drop->facts->relation($drop->statement->tables[1])->table);
+        self::assertInstanceOf(DropTable::class, $drop);
+        self::assertInstanceOf(DeclaredTable::class, $drop->tables[0]->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $drop->tables[1]->relationInformation()->table);
     }
 
     public function testRenderWritesEveryPart(): void
@@ -48,7 +48,7 @@ final class DropTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is a view: DROP TABLE reports it as an unknown table.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE v', [$table, $view])->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE IF EXISTS v', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is a view: DROP TABLE reports it as an unknown table.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE v', [$table, $view])->diagnostics()));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE IF EXISTS v', [$table, $view])->diagnostics()));
     }
 }

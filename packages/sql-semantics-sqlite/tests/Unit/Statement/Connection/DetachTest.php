@@ -19,19 +19,19 @@ final class DetachTest extends TestCase
     public function testDeriveStatementDerivesTheOperand(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('DETACH aux', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Detach::class, $statement);
-        self::assertTrue($operation->facts->covers($statement->schema));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertTrue($statement->schema->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('detach database aux');
 
-        self::assertInstanceOf(Detach::class, $operation->statement);
-        self::assertInstanceOf(NameOperand::class, $operation->statement->schema);
+        self::assertInstanceOf(Detach::class, $operation);
+        self::assertInstanceOf(NameOperand::class, $operation->schema);
         self::assertSame('DETACH aux', $operation->toString());
     }
 }

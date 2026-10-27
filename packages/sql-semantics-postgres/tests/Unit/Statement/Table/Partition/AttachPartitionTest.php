@@ -18,11 +18,11 @@ final class AttachPartitionTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER TABLE p ATTACH PARTITION t DEFAULT', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $n1->commands[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\AttachPartition::class, $n2);
-        $n3 = $statement->facts->relation($n2->partition)->table;
+        $n3 = $n2->partition->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n3);
         self::assertSame(true, $n3->table === $context[0]);
     }

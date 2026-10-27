@@ -19,7 +19,7 @@ final class ForceTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t FORCE', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t FORCE', [$table])->diagnostics());
     }
 
     public function testRenderWritesForce(): void

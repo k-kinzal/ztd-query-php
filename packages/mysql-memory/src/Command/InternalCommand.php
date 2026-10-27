@@ -11,8 +11,8 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -48,14 +48,14 @@ final class InternalCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
+        assert($operation instanceof MySqlStatement);
         throw $this->error($operation);
     }
 
     /**
      * Answers the same rejection before unrelated binding diagnostics can win.
      */
-    public function error(Operation $operation): SqlError
+    public function error(MySqlStatement $operation): SqlError
     {
         $text = $operation->toString();
         $near = mb_strcut(substr($text, 5), 0, 80, 'UTF-8');

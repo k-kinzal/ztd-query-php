@@ -24,7 +24,7 @@ final class ShowRelaylogEventsTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SHOW RELAYLOG EVENTS IN 'r' LIMIT 1");
-        self::assertInstanceOf(ShowRelaylogEvents::class, $show->statement);
+        self::assertInstanceOf(ShowRelaylogEvents::class, $show);
         self::assertSame('Info', $show->field(5)->name?->value);
     }
 

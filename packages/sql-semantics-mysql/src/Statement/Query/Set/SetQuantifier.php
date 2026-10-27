@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
  * @visibility public
  * @example Reading the quantifier of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 UNION ALL SELECT 2');
- *     $query->statement->query->quantifier // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier::All
+ *     $query->query->quantifier // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier::All
  */
 enum SetQuantifier: string
 {

@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A test of whether a string is in a Unicode normal form: `a IS [NOT] [NFC|NFD|NFKC|NFKD] NORMALIZED`.
@@ -35,15 +34,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class NormalizationTest implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested string
      * @param bool $negated Whether NOT is written
      * @param NormalForm|null $form The normal form, or null when none is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly bool $negated, public readonly ?NormalForm $form = null)
+    public function __construct(public readonly Scalar $operand, public readonly bool $negated, public readonly ?NormalForm $form = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->before($operand, Precedence::IS), 'The tested value needs parentheses to keep its place.');
     }
 

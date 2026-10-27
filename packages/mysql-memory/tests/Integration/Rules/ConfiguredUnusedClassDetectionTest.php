@@ -134,6 +134,14 @@ final class ConfiguredUnusedClassDetectionTest extends TestCase
             ['Example\Unused'],
             ['3:Unused class Example\Unused: no reference from outside the configured classes.'],
         ];
+        yield 'trait self references do not make an implementation used' => [
+            <<<'PHP'
+                trait Behavior { public function run(): void { $this->work(); } }
+                final class UnusedGenerator { use Behavior; public function work(): void {} }
+                PHP,
+            ['Example\UnusedGenerator'],
+            ['4:Unused class Example\UnusedGenerator: no reference from outside the configured classes.'],
+        ];
         yield 'import and PHPDoc alone' => [
             <<<'PHP'
                 final class Unused {}

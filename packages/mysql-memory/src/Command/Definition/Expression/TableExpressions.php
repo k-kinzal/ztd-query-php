@@ -181,7 +181,7 @@ final class TableExpressions
         $facts = $this->planner->compiler->facts;
         $positions = [];
         foreach ((new Walker())->find($expression, ColumnUse::class) as $use) {
-            $resolution = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
+            $resolution = $use->hasBinding() ? $use->scalarInformation()->resolution : null;
             $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
             $found = null;
             foreach ($columns as $position => $column) {

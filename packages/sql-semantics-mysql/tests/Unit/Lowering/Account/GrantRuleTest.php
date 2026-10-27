@@ -29,8 +29,8 @@ final class GrantRuleTest extends TestCase
     public function testRequestKeepsTheProgramOnlyInterpretation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON d.t TO u AS CURRENT_USER');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $create = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $create = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs::class, $create->body);
     }

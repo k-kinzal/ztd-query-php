@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A non-scalar or subquery partition method retained by a deferred table instruction.
@@ -40,14 +39,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param \SqlSemantics\Statement\Scalar|RowOperand|DeferredOperand $expression The complete non-scalar or subquery partition operand
      * @param PartitionKind|null $kind RANGE or LIST; null denotes HASH
      * @param bool $linear Whether HASH is LINEAR
      */
-    public function __construct(public readonly \SqlSemantics\Statement\Scalar|RowOperand|DeferredOperand $expression, public readonly ?PartitionKind $kind = null, public readonly bool $linear = false)
+    public function __construct(public readonly \SqlSemantics\Statement\Scalar|RowOperand|DeferredOperand $expression, public readonly ?PartitionKind $kind = null, public readonly bool $linear = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->possible($expression), 'A retained partition method cannot depend on session state or stored functions.');
         Check::input(!$expression instanceof \SqlSemantics\Statement\Scalar || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A scalar retained partition method contains a subquery.');

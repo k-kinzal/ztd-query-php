@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The action DELETE of a MERGE WHEN clause: the target row is deleted.
@@ -17,11 +16,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a delete action
  *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN DELETE');
- *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeDelete // => true
+ *     $merge->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeDelete // => true
  */
 final class MergeDelete implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    /**
+ * Constructs a SQL occurrence with optional publication information.
+ */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+    }
 
     /**
      * Writes DELETE.

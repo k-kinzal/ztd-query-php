@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of SQL_CACHE written twice in 5.7
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE SQL_CACHE 1');
- *     $query->facts->diagnostics[0]->message() // => "Option 'SQL_CACHE' used twice in statement"
+ *     $query->diagnostics()[0]->message() // => "Option 'SQL_CACHE' used twice in statement"
  */
 final class SelectOptionConflict implements Diagnostic
 {

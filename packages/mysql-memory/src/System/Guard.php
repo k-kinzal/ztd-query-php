@@ -47,7 +47,7 @@ final class Guard
      * @throws SqlError When the statement attempts to change INFORMATION_SCHEMA
      * @throws LogicException When system-table mutation semantics are not implemented
      */
-    public function check(Node $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
+    public function check(Node $statement, Session $session, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): void
     {
         $system = $session->instance->dictionary->system;
         if ($system === null) {
@@ -80,7 +80,7 @@ final class Guard
      *
      * @return list<QualifiedName>
      */
-    public function written(Node $statement, \SqlSemantics\Statement\Fact\Facts $facts): array
+    public function written(Node $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): array
     {
         $walker = new Walker();
         $written = [];
@@ -93,15 +93,18 @@ final class Guard
                 $written[] = $inputs[0]->name;
             } else {
                 foreach ($statement->assignments as $assignment) {
-                    $resolution = $facts->scalar($assignment->column)->resolution;
+                    $resolution = $assignment->column->scalarInformation()->resolution;
                     if ($resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && $resolution->relation instanceof TableReference) {
                         $written[] = $resolution->relation->name;
                     }
                 }
             }
         }
-        foreach ($statement instanceof MultipleDelete ? $statement->targets : [] as $target) {
-            $relation = $facts->referencedRelation($target);
+        if (!$statement instanceof MultipleDelete) {
+            return $written;
+        }
+        foreach ($statement->targets as $target) {
+            $relation = $statement->input->relation($target);
             if ($relation instanceof TableReference) {
                 $written[] = $relation->name;
             }

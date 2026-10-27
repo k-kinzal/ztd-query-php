@@ -28,9 +28,10 @@ final class PlatformTest extends TestCase
         $input = $platform->parser($profile)->parse("INSERT t VALUE ('42')");
         $lowered = $platform->lower($input, $profile, new Leaves());
         $statement = $platform->publish($platform->context($profile, null, [], false), $lowered[0], new \SqlSemantics\Statement\Source\SourceMap());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $statement);
         self::assertSame("INSERT t VALUE ('42')", $statement->toString());
-        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $statement->values->rows[0][0]->dataType());
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $statement->rows[0]->values[0]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $statement->rows[0]->values[0]->scalarInformation()->type);
     }
 
     public function testProfileFixesTheDefaultReleaseOfTheDatabase(): void

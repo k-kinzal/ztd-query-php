@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An integer type with its optional display width and its attributes in the order written.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Integral implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<NumericModifier> The attributes in the order written; an attribute may repeat
@@ -37,7 +36,7 @@ final class Integral implements DeclaredName
      * @param string|null $width The display width exactly as written
      * @param list<NumericModifier> $modifiers The attributes in the order written
      */
-    public function __construct(public readonly IntegralKind $kind, public readonly ?string $width = null, array $modifiers = [])
+    public function __construct(public readonly IntegralKind $kind, public readonly ?string $width = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($width === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $width) === 1, 'A display width is an unsigned number.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');

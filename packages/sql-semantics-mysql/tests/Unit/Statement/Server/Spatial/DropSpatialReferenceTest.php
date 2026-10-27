@@ -24,16 +24,16 @@ final class DropSpatialReferenceTest extends TestCase
     public function testDeriveStatementLeavesCatalogConditionsToTheConsumer(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 9');
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testInputPreservesARequestForAnUnmodifiableIdentifier(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 0');
         self::assertSame('DROP SPATIAL REFERENCE SYSTEM 0', $operation->toString());
-        self::assertInstanceOf(DropSpatialReference::class, $operation->statement);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierZero, $operation->statement->problem?->rule);
-        self::assertSame($operation->statement->problem?->message(), $operation->facts->diagnostics[0]->message());
+        self::assertInstanceOf(DropSpatialReference::class, $operation);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierZero, $operation->problem?->rule);
+        self::assertSame($operation->problem->message(), $operation->diagnostics()[0]->message());
     }
     /**
      * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Literal\Numeral}>

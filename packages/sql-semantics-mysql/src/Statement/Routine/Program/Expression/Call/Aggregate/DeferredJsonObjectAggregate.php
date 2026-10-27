@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -30,7 +29,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredJsonObjectAggregate implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $key The complete key expression
@@ -39,8 +39,11 @@ final class DeferredJsonObjectAggregate implements DeferredOperand
      * @param bool $valueAll Whether ALL precedes the value
      * @param Name|WindowSpecification|null $over The optional window
      */
-    public function __construct(public readonly Scalar $key, public readonly Scalar $value, public readonly bool $keyAll = false, public readonly bool $valueAll = false, public readonly Name|WindowSpecification|null $over = null)
+    public function __construct(public readonly Scalar $key, public readonly Scalar $value, public readonly bool $keyAll = false, public readonly bool $valueAll = false, public readonly Name|WindowSpecification|null $over = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new AggregateNesting())->problem([$key, $value], $over !== null) !== null, 'A deferred JSON aggregate retains an intrinsic nesting contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

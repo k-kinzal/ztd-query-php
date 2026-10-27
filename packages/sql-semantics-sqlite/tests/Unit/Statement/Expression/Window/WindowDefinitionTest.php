@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(WindowDefinition::class)]
 #[Medium]
@@ -27,7 +26,7 @@ final class WindowDefinitionTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a), v AS (w PARTITION BY b)', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertCount(2, $statement->windows);
@@ -36,8 +35,8 @@ final class WindowDefinitionTest extends TestCase
         self::assertSame('v', $statement->windows[1]->name->value);
         self::assertSame('w', $statement->windows[1]->window->base?->value);
         self::assertCount(1, $statement->windows[1]->window->partition);
-        self::assertTrue($operation->facts->covers($statement->windows[0]->window->order[0]->expression));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertTrue($statement->windows[0]->window->order[0]->expression->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheNameAndTheParenthesizedSpecification(): void
@@ -51,7 +50,7 @@ final class WindowDefinitionTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $definition = new WindowDefinition(new Name('w'), new WindowSpec(new Name('v'), [new IntegerLiteral('1')]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('rank'), [], false, null, [], null, new Name('w')))], null, null, [], null, [$definition]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('rank'), [], false, null, [], null, new Name('w')))], null, null, [], null, [$definition]));
 
         self::assertSame('SELECT rank() OVER w WINDOW w AS (v PARTITION BY 1)', $operation->toString());
     }

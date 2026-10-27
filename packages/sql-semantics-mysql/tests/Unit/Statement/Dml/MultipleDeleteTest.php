@@ -37,7 +37,7 @@ final class MultipleDeleteTest extends TestCase
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('DELETE FROM x USING t AS x JOIN u ON x.a = u.x', [$t, $u]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesBothSpellings(): void
@@ -69,7 +69,7 @@ final class MultipleDeleteTest extends TestCase
         $delete = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$first, new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([$second, $third])], [new QualifiedName(new Name('a'))]), MultipleDeleteForm::BeforeFrom);
 
         self::assertSame([$first, $second, $third], $delete->tables);
-        self::assertSame('DELETE a FROM a, b, (c, d)', (new \SqlSemantics\Statement\Operation((new Semantics(Dialect::MySql))->context([]), $delete))->toString());
+        self::assertSame('DELETE a FROM a, b, (c, d)', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context([]), $delete, new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
     public function testReadOnlyTargetCannotDescribeAnOrdinaryDeletion(): void
     {

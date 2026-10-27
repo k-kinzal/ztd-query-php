@@ -29,10 +29,10 @@ final class VariableDomain
      *
      * @param Collation $default The collation of the database of the program
      */
-    public static function declared(TypeName $type, ?CollationName $collation, Collation $default): Domain
+    public static function declared(TypeName $type, ?CollationName $collation, Collation $default, bool $realAsFloat = false): Domain
     {
         $named = $collation?->name === null ? null : Collation::named($collation->name->value);
-        $domain = (new Declared($default))->domain($type, $named)->withNullable(true);
+        $domain = (new Declared($default, realAsFloat: $realAsFloat))->domain($type, $named)->withNullable(true);
         if ($domain->kind !== Kind::String) {
             return $domain;
         }

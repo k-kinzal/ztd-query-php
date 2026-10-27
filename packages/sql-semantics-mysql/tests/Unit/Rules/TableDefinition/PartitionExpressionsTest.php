@@ -85,6 +85,7 @@ final class PartitionExpressionsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operand = $semantics->analyze('SELECT ' . $expression)->field(0)->expression;
         self::assertInstanceOf(Scalar::class, $operand);
+        $operand = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($operand);
         $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
         (new PartitionExpressions())->derive($operand, $derivation, $derivation->environment());
         self::assertNotEmpty($derivation->facts()->diagnostics);

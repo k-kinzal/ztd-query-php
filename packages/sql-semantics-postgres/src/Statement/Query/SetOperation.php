@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -31,16 +30,17 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a set operation
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS a UNION ALL SELECT 2');
- *     [$query->statement->operator->value, $query->statement->quantifier->value, $query->field(0)->name->value] // => ['UNION', 'ALL', 'a']
+ *     [$query->operator->value, $query->quantifier->value, $query->field(0)->name->value] // => ['UNION', 'ALL', 'a']
  * @example Refusing a right operand that would re-associate
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])]);
  *     $two = new \SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])]);
  *     $three = new \SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])]);
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation($one, \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperator::Union, new \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation($two, \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperator::Except, $three)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetOperation implements Statement, Query, OutputNaming
+final class SetOperation extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $left The first operand
@@ -48,8 +48,14 @@ final class SetOperation implements Statement, Query, OutputNaming
      * @param Query $right The second operand
      * @param SetQuantifier|null $quantifier The ALL or DISTINCT written after the operator
      */
-    public function __construct(public readonly Query $left, public readonly SetOperator $operator, public readonly Query $right, public readonly ?SetQuantifier $quantifier = null)
+    public function __construct(public readonly Query $left, public readonly SetOperator $operator, public readonly Query $right, public readonly ?SetQuantifier $quantifier = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         foreach ([$left, $right] as $operand) {
             Check::input(
                 $operand instanceof ParenthesizedQuery || $operand instanceof ValuesList || $operand instanceof self

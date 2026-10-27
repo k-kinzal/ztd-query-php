@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ENGINE option: the storage engine of the table.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) ENGINE = InnoDB');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption // => true
  */
 final class EngineOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $engine The storage engine
      */
-    public function __construct(public readonly Name $engine)
+    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

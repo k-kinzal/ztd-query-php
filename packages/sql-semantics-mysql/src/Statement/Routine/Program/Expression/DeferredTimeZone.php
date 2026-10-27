@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredTimeZone implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $operand The expression requiring invocation-time preparation
@@ -42,8 +42,11 @@ final class DeferredTimeZone implements DeferredOperand
      * @param bool $interval Whether INTERVAL precedes the zone
      * @param string|null $precision The fractional seconds precision exactly as written
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$operand instanceof Scalar || (new TimeZoneOperands())->input($operand) === false || !(new TimeZoneOperands())->zone($zone), 'A deferred time-zone conversion retains an incompatible operand or zone.');
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');

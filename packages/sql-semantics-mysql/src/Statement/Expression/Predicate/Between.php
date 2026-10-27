@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A range test: `x [NOT] BETWEEN low AND high` (`Item_func_between`).
@@ -34,11 +33,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the bounds
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a BETWEEN 1 AND 9');
- *     [$query->statement->query->where->low->text, $query->statement->query->where->high->text] // => ['1', '9']
+ *     [$query->query->where->low->text, $query->query->where->high->text] // => ['1', '9']
  */
 final class Between implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested expression
@@ -46,8 +46,11 @@ final class Between implements Scalar
      * @param Scalar $high The upper bound
      * @param bool $negated Whether NOT is written before BETWEEN
      */
-    public function __construct(public readonly Scalar $operand, public readonly Scalar $low, public readonly Scalar $high, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, public readonly Scalar $low, public readonly Scalar $high, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The operand of BETWEEN needs a grouping to keep its place.');
         Check::input($precedence->admits($low, Precedence::BIT_EXPR) && !$precedence->absorbs($low, Precedence::CONJUNCTION, Precedence::CONJUNCTION), 'The lower bound of BETWEEN needs a grouping to keep its place.');

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Grouping around a stored computation, preserving its deferred operand role.
@@ -22,14 +21,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredGrouped implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DeferredOperand $operand The grouped stored computation
      * @param \SqlSemantics\Statement\Identifier\Name|null $escape An ODBC escape kind, or null for ordinary parentheses
      */
-    public function __construct(public readonly DeferredOperand $operand, public readonly ?\SqlSemantics\Statement\Identifier\Name $escape = null)
+    public function __construct(public readonly DeferredOperand $operand, public readonly ?\SqlSemantics\Statement\Identifier\Name $escape = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

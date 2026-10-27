@@ -26,9 +26,9 @@ final class DropElementTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t DROP INDEX i, DROP FOREIGN KEY f', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $alter);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $alter);
 
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testRenderWritesEveryKind(): void

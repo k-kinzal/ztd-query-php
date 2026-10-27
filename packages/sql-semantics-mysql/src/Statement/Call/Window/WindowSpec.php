@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A parenthesized window specification: an optional window it refines, a partitioning, an ordering and a frame.
@@ -41,7 +40,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WindowSpec implements WindowSpecification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OrderItem> The partitioning expressions
@@ -59,7 +58,7 @@ final class WindowSpec implements WindowSpecification
      * @param list<OrderItem> $order The ordering items
      * @param Frame|null $frame The frame
      */
-    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly ?Frame $frame = null)
+    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly ?Frame $frame = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->partition = Check::listOf($partition, OrderItem::class, 'A window partition is a list of ordering items.');
         $this->order = Check::listOf($order, OrderItem::class, 'A window ordering is a list of ordering items.');

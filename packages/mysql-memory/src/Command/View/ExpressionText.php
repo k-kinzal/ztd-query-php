@@ -92,7 +92,7 @@ final class ExpressionText
             return null;
         }
         return match (true) {
-            $scalar instanceof ColumnUse => $this->text->facts->covers($scalar) ? $this->text->column($this->text->facts->scalar($scalar)->resolution) : null,
+            $scalar instanceof ColumnUse => $scalar->hasBinding() ? $this->text->column($scalar->scalarInformation()->resolution) : null,
             $scalar instanceof Grouped => $this->scalar($scalar->operand),
             $scalar instanceof NumberLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral => $this->literal($scalar),
             $scalar instanceof FunctionCall => $this->call(strtolower($scalar->name->value), array_map(static fn ($argument): Scalar => $argument->expression, $scalar->arguments), $scalar->schema === null ? '' : Routine::quoted($scalar->schema->value) . '.'),

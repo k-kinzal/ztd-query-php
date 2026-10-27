@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A WEIGHT_STRING template retaining a non-scalar subject and every typed option.
@@ -22,12 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @example Retaining the non-scalar subject in a skipped instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() DO WEIGHT_STRING(ROW(1, 2), 7, 2, 64)');
- *     $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
+ *     $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
  * @visibility public
  */
 final class DeferredWeightParameters implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $subject The string
@@ -35,8 +35,11 @@ final class DeferredWeightParameters implements DeferredOperand
      * @param Numeral $weights The number of weights
      * @param Numeral $flags The flags
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $subject, public readonly Numeral $length, public readonly Numeral $weights, public readonly Numeral $flags)
+    public function __construct(public readonly RowOperand|DeferredOperand $subject, public readonly Numeral $length, public readonly Numeral $weights, public readonly Numeral $flags, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

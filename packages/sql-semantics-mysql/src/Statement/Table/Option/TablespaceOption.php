@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The TABLESPACE option: the tablespace that stores the table.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) TABLESPACE innodb_system');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption // => true
  */
 final class TablespaceOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $tablespace The tablespace
      */
-    public function __construct(public readonly Name $tablespace)
+    public function __construct(public readonly Name $tablespace, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The role option SYSID of CREATE ROLE, which the server accepts and ignores.
@@ -17,16 +16,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the ignored identifier
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ROLE joe SYSID 100');
- *     [$operation->statement->options[0]->identifier->digits, $operation->statement->options[0]->option()] // => ['100', null]
+ *     [$operation->options[0]->identifier->digits, $operation->options[0]->option()] // => ['100', null]
  */
 final class RoleSystemId implements RoleOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntegerConstant $identifier The identifier as written
      */
-    public function __construct(public readonly IntegerConstant $identifier)
+    public function __construct(public readonly IntegerConstant $identifier, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

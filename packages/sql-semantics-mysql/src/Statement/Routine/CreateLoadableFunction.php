@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CREATE [AGGREGATE] FUNCTION ... SONAME: registers a loadable function of a shared library.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a loadable function
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'");
- *     [$create->statement->aggregate, $create->statement->returns->value, $create->statement->library->value] // => [true, 'REAL', 'udf.so']
+ *     [$create->aggregate, $create->returns->value, $create->library->value] // => [true, 'REAL', 'udf.so']
  */
-final class CreateLoadableFunction implements Statement
+final class CreateLoadableFunction extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The function name
@@ -44,7 +43,12 @@ final class CreateLoadableFunction implements Statement
         public readonly Text $library,
         public readonly bool $aggregate = false,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($library->radix === null, 'A library name is written as a quoted string.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -55,7 +55,7 @@ final class CopiedAssignments
             if ($expression === null || !(new Matching())->unwrap($expression) instanceof VariableAssignment) {
                 continue;
             }
-            if (((new Windowing($this->planner))->reads($expression) && !(new Aggregation())->aggregates([$expression])) || (in_array(SelectOption::Distinct, $select->options, true) && !(new OutputFields())->deferred($select, $expression, $this->planner->compiler->facts))) {
+            if (((new Windowing($this->planner))->reads($expression) && !(new Aggregation())->aggregates([$expression])) || (in_array(SelectOption::Distinct, $select->options, true) && !(new OutputFields())->deferred($select, $expression))) {
                 $positions[$position] = true;
             }
         }

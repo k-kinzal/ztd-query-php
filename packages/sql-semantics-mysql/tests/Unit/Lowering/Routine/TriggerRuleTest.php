@@ -43,8 +43,8 @@ final class TriggerRuleTest extends TestCase
     public function testCreateLowersATriggerOfEveryLayout(string $release, string $sql, TriggerTime $time, TriggerEvent $event, string $expected): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame('tr', $statement->name->name->value);
         self::assertSame('db', $statement->name->schema?->value);
@@ -72,8 +72,8 @@ final class TriggerRuleTest extends TestCase
     public function testCreateReadsIfNotExists(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create trigger if not exists tr after insert on t for each row begin end');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertTrue($statement->ifNotExists);
         self::assertNull($statement->definer);
@@ -84,11 +84,11 @@ final class TriggerRuleTest extends TestCase
     public function testCreateRetainsTheCompleteRequestForDistinctDatabases(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW SET @x=1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        self::assertSame('a', $operation->statement->name->schema?->value);
-        self::assertSame('b', $operation->statement->table->name->schema?->value);
-        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        self::assertSame('a', $operation->name->schema?->value);
+        self::assertSame('b', $operation->table->name->schema?->value);
+        self::assertTrue($operation->hasExecutionCondition());
         self::assertSame('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW SET @x = 1', $operation->toString());
     }
 
@@ -125,8 +125,8 @@ final class TriggerRuleTest extends TestCase
     public function testOrderLowersFollowsAndPrecedes(string $release, string $sql, OrderPlacement $placement, string $expected): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $create);
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame($placement, $statement->order?->placement);
         self::assertSame('other', $statement->order->other->value);

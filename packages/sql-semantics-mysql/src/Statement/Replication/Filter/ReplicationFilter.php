@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `filter = (value, …)` of CHANGE REPLICATION FILTER; an empty list clears the filter.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ReplicationFilter implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name|QualifiedName|Text|DatabaseRewrite> The values in written order
@@ -41,7 +40,7 @@ final class ReplicationFilter implements Node
      * @param FilterKind $kind The filter
      * @param list<Name|QualifiedName|Text|DatabaseRewrite> $values The values in written order, of the class the filter lists
      */
-    public function __construct(public readonly FilterKind $kind, array $values)
+    public function __construct(public readonly FilterKind $kind, array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->values = Check::listOf($values, $kind->member(), 'The values of ' . $kind->value . ' are of the class the filter lists.');
         foreach ($this->values as $value) {

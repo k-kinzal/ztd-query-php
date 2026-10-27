@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One table LOCK TABLES locks: `t [[AS] alias] lock_type`.
@@ -26,9 +25,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $lock = new \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write);
  *     [$lock->table->name->value, $lock->alias?->value, $lock->mode] // => ['t', 'a', \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write]
  */
-final class TableLock implements Node
+final class TableLock implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table name with its optional database
@@ -36,8 +36,11 @@ final class TableLock implements Node
      * @param LockMode $mode The lock
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias, public readonly LockMode $mode, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias, public readonly LockMode $mode, public readonly AliasMark $mark = AliasMark::As, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');

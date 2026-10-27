@@ -22,7 +22,7 @@ final class ConditionalBranchTest extends TestCase
     public function testRenderWritesTheConditionAndTheStatements(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) IF a = 1 THEN SELECT 1; ELSEIF a = 2 THEN SELECT 2; SELECT 3; END IF');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $if = $create->body;
         self::assertInstanceOf(IfStatement::class, $if);

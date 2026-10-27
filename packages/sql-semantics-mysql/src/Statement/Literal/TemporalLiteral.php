@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -52,18 +51,22 @@ use SqlSemantics\Statement\Type\Nullability;
  *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, '2024-02-31'))->text // => '2024-02-31'
  * @example Reading a temporal literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
- *     [$query->statement->query->where->right->form, $query->statement->query->where->right->text, $query->statement->query->where->right->type()->precision] // => [\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02 03:04:05.25', '2']
+ *     [$query->query->where->right->form, $query->query->where->right->text, $query->query->where->right->type()->precision] // => [\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02 03:04:05.25', '2']
  */
 final class TemporalLiteral implements LiteralExpression
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TemporalForm $form The keyword of the literal
      * @param string $text The decoded text
      */
-    public function __construct(public readonly TemporalForm $form, public readonly string $text)
+    public function __construct(public readonly TemporalForm $form, public readonly string $text, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input($form === TemporalForm::Timestamp ? \SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::valid($text) : \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($form->value, $text, 6, false, false, true) !== null, 'A temporal literal requires a bounded representation.');
     }
 

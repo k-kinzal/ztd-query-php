@@ -22,11 +22,11 @@ final class ExpressionFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS x) (SELECT x FROM c) ORDER BY 1 LIMIT 1', []);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->query->orderBy[0]->expression)->resolution);
-        self::assertSame($operation->facts->query($operation->statement->query->body), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(AliasTarget::class, $operation->query->orderBy[0]->expression->scalarInformation()->resolution);
+        self::assertSame($operation->query->body->queryInformation(), $operation->output());
     }
 
     public function testOrderingSeesTheOutputColumnsButNoTableOfTheQuery(): void
@@ -36,9 +36,9 @@ final class ExpressionFactsTest extends TestCase
         $named = $semantics->analyze('SELECT (SELECT a AS x FROM t UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x)', [$table]);
         $qualified = $semantics->analyze('SELECT (SELECT a AS x FROM t UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY t.a)', [$table]);
 
-        self::assertSame([], $named->facts->diagnostics);
-        self::assertCount(1, $qualified->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $qualified->facts->diagnostics[0]);
-        self::assertSame('a', $qualified->facts->diagnostics[0]->name->value);
+        self::assertSame([], $named->diagnostics());
+        self::assertCount(1, $qualified->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $qualified->diagnostics()[0]);
+        self::assertSame('a', $qualified->diagnostics()[0]->name->value);
     }
 }

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored CASE branch with a condition or result requiring deferred preparation.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredCaseBranch implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $condition The WHEN operand
      * @param Scalar|RowOperand|DeferredOperand $result The THEN operand
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $condition, public readonly Scalar|RowOperand|DeferredOperand $result)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $condition, public readonly Scalar|RowOperand|DeferredOperand $result, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$condition instanceof Scalar || !$result instanceof Scalar, 'A deferred CASE branch retains a preparation condition.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

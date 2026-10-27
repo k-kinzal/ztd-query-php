@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The UNION option of a MERGE table: the tables it merges, possibly none.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) UNION = (t1, t2)');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\UnionOption // => true
  */
 final class UnionOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<QualifiedName> The merged tables in order
@@ -34,7 +33,7 @@ final class UnionOption implements TableOption
     /**
      * @param list<QualifiedName> $tables The merged tables in order
      */
-    public function __construct(array $tables)
+    public function __construct(array $tables, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->tables = Check::listOf($tables, QualifiedName::class, 'The merged tables are an ordered list of table names.');
         foreach ($this->tables as $table) {

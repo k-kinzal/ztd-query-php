@@ -12,7 +12,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,9 +32,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Counting the parameters of an empty list
  *     count((new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]))->parameters) // => 0
  */
-final class ParameterList implements Relation
+final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Parameter> The parameters in order
@@ -46,8 +46,11 @@ final class ParameterList implements Relation
      * @param list<Parameter> $parameters The parameters in order
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When two parameters denote the same name
      */
-    public function __construct(array $parameters)
+    public function __construct(array $parameters, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->parameters = Check::listOf($parameters, Parameter::class, 'A parameter list holds parameters.');
         $seen = [];
         foreach ($this->parameters as $parameter) {

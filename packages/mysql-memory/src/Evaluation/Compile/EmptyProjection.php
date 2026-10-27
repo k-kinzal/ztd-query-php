@@ -68,7 +68,7 @@ final class EmptyProjection
         $aggregated = $this->aggregate($plan) !== null;
         $source = $this->source($plan);
         $expressions = [];
-        foreach ($this->compiler->facts->query($query)->projection as $field) {
+        foreach ($query->queryInformation()->projection as $field) {
             if (!$field instanceof Field || $field->expression === null || !$this->readable($field->expression, $aggregated, $source !== null)) {
                 return [];
             }
@@ -88,7 +88,7 @@ final class EmptyProjection
         if (!$this->compiler->settings->legacy()) {
             return $value;
         }
-        while (($replacement = $this->compiler->facts->scalar($node)->replacement) !== null) {
+        while (($replacement = $node->scalarInformation()->replacement) !== null) {
             $node = $replacement;
         }
         $constant = $this->compiler->constancy($node) === Constancy::Resolved;
@@ -99,7 +99,7 @@ final class EmptyProjection
         if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
             return $value;
         }
-        $direct = $this->compiler->facts->scalar($node)->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+        $direct = $node->scalarInformation()->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
         return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $constant || $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable || ($old && !$direct));
     }
@@ -157,7 +157,7 @@ final class EmptyProjection
             return $node->over !== null || $aggregated;
         }
         if ($node instanceof ColumnUse) {
-            $column = $this->compiler->facts->covers($node) ? $this->compiler->facts->scalar($node)->resolution : null;
+            $column = $node->hasBinding() ? $node->scalarInformation()->resolution : null;
             if ($column instanceof \SqlSemantics\Statement\Reference\Column\AliasTarget) {
                 return $column->depth > 0;
             }

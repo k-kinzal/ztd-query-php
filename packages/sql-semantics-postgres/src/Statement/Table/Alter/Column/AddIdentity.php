@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -33,7 +32,7 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class AddIdentity implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SequenceOption> The options of the sequence; none means no parentheses are written
@@ -45,7 +44,7 @@ final class AddIdentity implements AlterCommand
      * @param GeneratedWhen $when When the column takes a generated value
      * @param list<SequenceOption> $options The options of the sequence; none means no parentheses are written
      */
-    public function __construct(public readonly Name $column, public readonly GeneratedWhen $when, array $options = [])
+    public function __construct(public readonly Name $column, public readonly GeneratedWhen $when, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, SequenceOption::class, 'The options of an identity sequence are sequence options.');
     }

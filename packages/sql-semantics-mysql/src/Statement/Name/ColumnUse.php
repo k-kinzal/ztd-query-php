@@ -16,7 +16,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A name used as a value: a request to resolve it as a column at its position.
@@ -38,20 +37,24 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a qualified column use
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT shop.t.a FROM shop.t');
- *     $use = $query->statement->query->items[0]->expression;
+ *     $use = $query->query->items[0]->expression;
  *     [$use->qualifier?->schema?->value, $use->qualifier?->name->value, $use->name->value] // => ['shop', 't', 'a']
  */
 final class ColumnUse implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
      * @param QualifiedName|null $qualifier The table the use is qualified with, and the database of that table when written
      * @param OptionalWords $dot Whether the table qualifier is written after a leading dot, `.t.a` (MySQL 5.6 and 5.7)
      */
-    public function __construct(public readonly Name $name, public readonly ?QualifiedName $qualifier = null, public readonly OptionalWords $dot = OptionalWords::Omitted)
+    public function __construct(public readonly Name $name, public readonly ?QualifiedName $qualifier = null, public readonly OptionalWords $dot = OptionalWords::Omitted, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($qualifier === null || $qualifier->catalog === null, 'A column is qualified by a table and at most a database.');
         Check::input($dot === OptionalWords::Omitted || ($qualifier !== null && $qualifier->schema === null), 'Only a table qualifier without database is written after a leading dot.');
     }

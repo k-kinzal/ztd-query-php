@@ -118,7 +118,7 @@ final class Jsons
                 break;
             }
         }
-        $binding = $this->compiler->facts->scalar($node->document)->resolution;
+        $binding = $node->document->scalarInformation()->resolution;
         if ($problem !== null && ($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding || $binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding)) {
             throw DataError::InvalidJsonType->error(1, 'json_value');
         }

@@ -38,7 +38,7 @@ final class CloneInstanceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CLONE INSTANCE FROM u@h:1 IDENTIFIED BY 'p' DATA DIRECTORY = '/d'");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

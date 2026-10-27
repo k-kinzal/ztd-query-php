@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The REVOKE action of ALTER DEFAULT PRIVILEGES: privileges future objects of a kind no longer receive.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a default revoke
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL ON FUNCTIONS FROM joe RESTRICT');
- *     [$operation->statement->action->grantOptionOnly, $operation->statement->action->behavior?->value] // => [true, 'RESTRICT']
+ *     [$operation->action->grantOptionOnly, $operation->action->behavior?->value] // => [true, 'RESTRICT']
  */
 final class DefaultRevoke implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Privilege> The privileges in the order written; empty for ALL PRIVILEGES
@@ -47,7 +46,7 @@ final class DefaultRevoke implements Node
      * @param bool $grantOptionOnly Whether GRANT OPTION FOR is written
      * @param DropBehavior|null $behavior CASCADE or RESTRICT, when written
      */
-    public function __construct(array $privileges, public readonly DefaultObjectKind $objects, array $grantees, public readonly bool $grantOptionOnly = false, public readonly ?DropBehavior $behavior = null)
+    public function __construct(array $privileges, public readonly DefaultObjectKind $objects, array $grantees, public readonly bool $grantOptionOnly = false, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->privileges = (new PrivilegeLists())->privileges($privileges);
         $this->grantees = Check::listOf($grantees, RoleSpec::class, 'A revoke names at least one role.', 1);

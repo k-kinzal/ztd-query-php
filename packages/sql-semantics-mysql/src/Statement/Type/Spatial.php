@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Type;
 
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A spatial type.
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Spatial implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SpatialKind $kind The spatial type
      */
-    public function __construct(public readonly SpatialKind $kind)
+    public function __construct(public readonly SpatialKind $kind, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

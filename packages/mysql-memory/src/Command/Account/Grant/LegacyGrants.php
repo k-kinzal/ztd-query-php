@@ -11,7 +11,7 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Processes legacy grant recipients in order, retaining partial grants and all conditions.
@@ -30,7 +30,7 @@ final class LegacyGrants
      * @param array{string, string, string} $target The resolved privilege level
      * @throws SqlError When any recipient fails
      */
-    public function execute(GrantPrivileges $statement, Operation $operation, array $identities, array $target, Session $session): void
+    public function execute(GrantPrivileges $statement, MySqlStatement $operation, array $identities, array $target, Session $session): void
     {
         $command = new GrantCommand();
         $first = null;

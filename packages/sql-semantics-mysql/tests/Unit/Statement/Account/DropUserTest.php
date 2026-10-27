@@ -17,7 +17,7 @@ final class DropUserTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP USER u')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP USER u')->diagnostics());
     }
 
     public function testRenderWritesTheAccounts(): void

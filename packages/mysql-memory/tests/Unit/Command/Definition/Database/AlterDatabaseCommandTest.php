@@ -135,7 +135,7 @@ final class AlterDatabaseCommandTest extends TestCase
     public function testCollationAnswersTheDefaultCollationOfACharacterSetAlone(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET latin1')->statement;
+        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET latin1');
         self::assertInstanceOf(AlterDatabase::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
@@ -145,7 +145,7 @@ final class AlterDatabaseCommandTest extends TestCase
     public function testCollationAnswersNullWithoutACharacterSetOrCollation(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER DATABASE d READ ONLY = 0')->statement;
+        $statement = $session->analyze('ALTER DATABASE d READ ONLY = 0');
         self::assertInstanceOf(AlterDatabase::class, $statement);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
@@ -155,7 +155,7 @@ final class AlterDatabaseCommandTest extends TestCase
     public function testCharsetRefusesAnUnknownCharacterSet(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET nope')->statement;
+        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET nope');
         self::assertInstanceOf(AlterDatabase::class, $statement);
         $option = $statement->options[0];
         self::assertInstanceOf(DatabaseCharset::class, $option);
@@ -171,7 +171,7 @@ final class AlterDatabaseCommandTest extends TestCase
     public function testCharsetAnswersTheNamedCharacterSet(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET latin1')->statement;
+        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET latin1');
         self::assertInstanceOf(AlterDatabase::class, $statement);
         $option = $statement->options[0];
         self::assertInstanceOf(DatabaseCharset::class, $option);
@@ -184,7 +184,7 @@ final class AlterDatabaseCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');
-        $statement = $session->analyze('ALTER DATABASE CHARACTER SET latin1')->statement;
+        $statement = $session->analyze('ALTER DATABASE CHARACTER SET latin1');
         self::assertInstanceOf(AlterDatabase::class, $statement);
 
         self::assertSame($session->instance->dictionary->schema('d'), (new AlterDatabaseCommand())->schema($statement, $session));
@@ -193,7 +193,7 @@ final class AlterDatabaseCommandTest extends TestCase
     public function testSchemaRefusesNoCurrentDatabase(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER DATABASE CHARACTER SET latin1')->statement;
+        $statement = $session->analyze('ALTER DATABASE CHARACTER SET latin1');
         self::assertInstanceOf(AlterDatabase::class, $statement);
 
         $this->expectException(SqlError::class);

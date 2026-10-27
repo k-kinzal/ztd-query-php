@@ -46,7 +46,7 @@ final class RoutineDeclarations
     {
         $settings = $session->settings();
         $database = ProgramSource::database($name->schema, $session);
-        $declared = new Declared($settings->resolution()->schema($database), $settings->release());
+        $declared = new Declared($settings->resolution()->schema($database), $settings->release(), $settings->resolution()->realAsFloat);
         foreach ($types as [$type, $collationName]) {
             $collation = $collationName?->name === null ? null : Collation::named($collationName->name->value);
             $domain = $declared->domain($type, $collation);

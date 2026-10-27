@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ADD [COLUMN] (element, …)`: a request to add several columns, and in 8.0 also keys and constraints, at the end of the table.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Adding two columns
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ADD (b INT, c INT)');
- *     [count($alter->statement->commands[0]->elements), $alter->toString()] // => [2, 'ALTER TABLE t ADD (b INT, c INT)']
+ *     [count($alter->commands[0]->elements), $alter->toString()] // => [2, 'ALTER TABLE t ADD (b INT, c INT)']
  */
 final class AddColumns implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TableElement> The elements in order; at least one
@@ -37,7 +36,7 @@ final class AddColumns implements AlterCommand
     /**
      * @param list<TableElement> $elements The elements in order; at least one
      */
-    public function __construct(array $elements, public readonly bool $columnWritten = true)
+    public function __construct(array $elements, public readonly bool $columnWritten = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($elements !== [], 'ADD COLUMN with parentheses adds at least one element.');
         $this->elements = Check::listOf($elements, TableElement::class, 'ADD COLUMN with parentheses holds a list of table elements.');

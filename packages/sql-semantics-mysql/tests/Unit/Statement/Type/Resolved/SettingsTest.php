@@ -116,7 +116,7 @@ final class SettingsTest extends TestCase
     }
     public function testWithParametersPreservesEveryOtherSessionInput(): void
     {
-        $settings = Settings::defaults(GrammarRelease::MySql847);
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), realAsFloat: true);
         $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
         $bound = $settings->withParameters([3 => $domain]);
         self::assertSame([], $settings->parameters);

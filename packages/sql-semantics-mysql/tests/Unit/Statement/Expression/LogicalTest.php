@@ -33,7 +33,7 @@ final class LogicalTest extends TestCase
         $or = new Logical(LogicalOperator::Or, new NumberLiteral('1'), new NullLiteral());
 
         self::assertEquals(new Known(Domain::integer(Field::LongLong, 1)), $derivation->scalar($and, $derivation->environment())->type);
-        self::assertSame(Nullability::NotNull, $derivation->scalar($and, $derivation->environment())->nullability);
+        self::assertSame(Nullability::NotNull, $and->scalarInformation()->nullability);
         self::assertSame(Nullability::Nullable, $derivation->scalar($or, $derivation->environment())->nullability);
     }
 

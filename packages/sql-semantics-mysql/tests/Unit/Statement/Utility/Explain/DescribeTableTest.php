@@ -20,8 +20,8 @@ final class DescribeTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $describe = $semantics->analyze('DESCRIBE t a', [$table]);
-        self::assertInstanceOf(DescribeTable::class, $describe->statement);
-        self::assertSame([], $describe->facts->diagnostics);
+        self::assertInstanceOf(DescribeTable::class, $describe);
+        self::assertSame([], $describe->diagnostics());
         self::assertSame('Field', $describe->field(0)->name?->value);
     }
 

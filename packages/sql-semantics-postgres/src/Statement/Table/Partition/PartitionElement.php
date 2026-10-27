@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One column or expression of a partition key, with its collation and operator class.
@@ -23,18 +22,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a partition key
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text) PARTITION BY LIST (a COLLATE "C" text_ops)');
- *     $create->statement->partitioning->elements[0]->operatorClass->last()->value // => 'text_ops'
+ *     $create->partitioning->elements[0]->operatorClass->last()->value // => 'text_ops'
  */
 final class PartitionElement implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnKey|ExpressionKey $key The column or expression
      * @param DottedName|null $collation The collation
      * @param DottedName|null $operatorClass The operator class
      */
-    public function __construct(public readonly ColumnKey|ExpressionKey $key, public readonly ?DottedName $collation = null, public readonly ?DottedName $operatorClass = null)
+    public function __construct(public readonly ColumnKey|ExpressionKey $key, public readonly ?DottedName $collation = null, public readonly ?DottedName $operatorClass = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

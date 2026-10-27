@@ -27,9 +27,9 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CREATE PROCEDURE, CREATE FUNCTION and ALTER PROCEDURE or FUNCTION.
@@ -69,8 +69,8 @@ final class RoutineCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $session->transaction->commit();
         if ($statement instanceof AlterRoutine) {
             return $this->alter($statement, $session, $context->started);
@@ -148,13 +148,13 @@ final class RoutineCommand implements Command
             $statement->name->name->value,
             ProgramSource::definer($statement->definer, $session),
             $text->parameters($statement->parameters, $function),
-            $statement instanceof CreateFunction ? $this->returns($statement, $schema, $session->settings()->release()) : '',
+            $statement instanceof CreateFunction ? $this->returns($statement, $schema, $session->settings()->release(), $session->modes()->has('REAL_AS_FLOAT')) : '',
             $text->routineBody($statement->body),
             $access,
             $deterministic,
             $security,
             $comment,
-            (string) $session->variables->read('sql_mode'),
+            $session->modes()->toString(),
             $now,
             $now,
             ProgramSource::charsets($session, $schema->name),
@@ -230,11 +230,11 @@ final class RoutineCommand implements Command
     /**
      * Writes the type a function returns as SHOW CREATE writes it: the type of a column, with the character set of a string and a collation that is not its default, as the release names them (verified on live 5.7.44 and 8.4 servers).
      */
-    public function returns(CreateFunction $statement, Schema $schema, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): string
+    public function returns(CreateFunction $statement, Schema $schema, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847, bool $realAsFloat = false): string
     {
         $default = Collation::named($schema->collation) ?? Collation::known('utf8mb4_0900_ai_ci');
         $collation = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ReturnCollation())->resolve($statement->returns, $statement->collation, $default, $release);
-        $domain = (new Declared($default))->domain($statement->returns, $collation);
+        $domain = (new Declared($default, $release, $realAsFloat))->domain($statement->returns, $collation);
         if ($domain->kind === Kind::String && !$domain->collation->bytes()) {
             $domain = $domain->withCollation($collation, $domain->coercibility);
         }

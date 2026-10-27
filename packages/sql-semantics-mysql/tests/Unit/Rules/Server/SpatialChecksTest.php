@@ -47,12 +47,12 @@ final class SpatialChecksTest extends TestCase
     public function testDeclarationRetainsItsFirstIntrinsicProblem(string $sql, string $message): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $statement = $operation;
         self::assertTrue($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference);
         self::assertNotNull($statement->problem);
         self::assertStringContainsString($message, $statement->problem->message());
-        self::assertSame($statement->problem->message(), $operation->facts->diagnostics[0]->message());
+        self::assertSame($statement->problem->message(), $operation->diagnostics()[0]->message());
     }
 
     public function testIdentifierChecksTheModifiableRange(): void

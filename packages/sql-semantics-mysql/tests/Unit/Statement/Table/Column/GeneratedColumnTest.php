@@ -74,7 +74,7 @@ final class GeneratedColumnTest extends TestCase
     public function testDeriveSpecificationResolvesItsLeadingCollation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a INT COLLATE unknown AS (1)');
-        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
+        $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
 
         self::assertCount(1, $problems);
         self::assertSame("Unknown collation: 'unknown'", $problems[0]->message());
@@ -83,7 +83,7 @@ final class GeneratedColumnTest extends TestCase
     public function testDataTypeAnswersTheType(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b BIGINT AS (a) VIRTUAL)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
         self::assertInstanceOf(ColumnDefinition::class, $element1);
@@ -97,7 +97,7 @@ final class GeneratedColumnTest extends TestCase
     public function testColumnAttributesAnswersTheAttributes(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT AS (a) NOT NULL COMMENT \'x\')');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
 
         $element1 = $statement->elements[1];
@@ -109,7 +109,7 @@ final class GeneratedColumnTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT AS (c))', []);
 
-        self::assertSame('Column c does not exist.', $create->facts->diagnostics[0]->message());
+        self::assertSame('Column c does not exist.', $create->diagnostics()[0]->message());
     }
 
     public function testRenderLeavesOutGeneratedAlways(): void

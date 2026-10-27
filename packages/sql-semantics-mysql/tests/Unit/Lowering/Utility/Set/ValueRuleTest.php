@@ -27,9 +27,9 @@ final class ValueRuleTest extends TestCase
     public function testWordLowersABareName(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET @@a = b, @@c = (d)');
-        self::assertInstanceOf(SetVariables::class, $set->statement);
-        self::assertInstanceOf(SystemAssignment::class, $set->statement->items[1]);
-        self::assertNotInstanceOf(BareName::class, $set->statement->items[1]->value);
+        self::assertInstanceOf(SetVariables::class, $set);
+        self::assertInstanceOf(SystemAssignment::class, $set->items[1]);
+        self::assertNotInstanceOf(BareName::class, $set->items[1]->value);
     }
     public function testOperandPreservesAStoredRowValue(): void
     {

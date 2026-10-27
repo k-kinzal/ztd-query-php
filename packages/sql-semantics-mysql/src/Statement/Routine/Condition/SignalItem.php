@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One assignment of the SET clause of SIGNAL or RESIGNAL: a condition information item and its value.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the items of a SIGNAL
  *     $signal = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
- *     $signal->statement->items[1]->name // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno
+ *     $signal->items[1]->name // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno
  */
 final class SignalItem implements \SqlSemantics\Statement\Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ConditionItemName $name The item that is set; not RETURNED_SQLSTATE
      * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable $value The value
      */
-    public function __construct(public readonly ConditionItemName $name, public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $value)
+    public function __construct(public readonly ConditionItemName $name, public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($name !== ConditionItemName::ReturnedSqlstate, 'RETURNED_SQLSTATE is set by the condition value, not by an item.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

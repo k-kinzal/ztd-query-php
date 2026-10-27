@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PURGE BINARY LOGS TO 'file'`: deletes the binary log files listed before the named one.
@@ -24,15 +23,18 @@ use SqlSemantics\Statement\Snapshot;
  * @example Writing MASTER LOGS as its synonym
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze("purge master logs to 'binlog.000010'")->toString() // => "PURGE BINARY LOGS TO 'binlog.000010'"
  */
-final class PurgeLogsTo implements Statement
+final class PurgeLogsTo extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $file The name of the first binary log file kept
      */
-    public function __construct(public readonly Text $file)
+    public function __construct(public readonly Text $file, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input($file->radix === null, 'A binary log file name is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

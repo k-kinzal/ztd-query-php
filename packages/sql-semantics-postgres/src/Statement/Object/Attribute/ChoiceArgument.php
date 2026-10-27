@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An attribute value read as one of a fixed set of words, such as the `parallel` mode of an aggregate.
@@ -27,19 +26,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parallel mode of an aggregate
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, parallel = SAFE)');
- *     $operation->statement->definition[2]->value->choice // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Safe
+ *     $operation->definition[2]->value->choice // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Safe
  * @example Rejecting a member the text does not name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\ChoiceArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('safe'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Unsafe) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ChoiceArgument implements AttributeArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant $written The value as written
      * @param Choice $choice The member the text names
      */
-    public function __construct(public readonly TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant $written, public readonly Choice $choice)
+    public function __construct(public readonly TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant $written, public readonly Choice $choice, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($choice::read((new ArgumentText())->text($written)) === $choice, 'The member of a choice is the one the written text names.');
     }

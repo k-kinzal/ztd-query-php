@@ -22,7 +22,7 @@ final class FetchCursorTest extends TestCase
     public function testDeriveProgramResolvesTheCursorAndTheTargets(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE b INT; DECLARE c CURSOR FOR SELECT 1, 2; FETCH c INTO a, B; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -31,7 +31,7 @@ final class FetchCursorTest extends TestCase
 
         self::assertSame('c', $fetch->cursor->value);
         self::assertSame(['a', 'B'], array_map(static fn (Name $target): string => $target->value, $fetch->targets));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredName')]

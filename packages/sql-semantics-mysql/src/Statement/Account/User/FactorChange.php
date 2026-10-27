@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `user ADD|MODIFY|DROP n FACTOR … [ADD|MODIFY|DROP m FACTOR …]`: an ALTER USER change of authentication factors.
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Dropping the second factor
- *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER USER u DROP 2 FACTOR')->statement->users[0];
+ *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER USER u DROP 2 FACTOR')->users[0];
  *     $change->action // => \SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Drop
  */
 final class FactorChange implements UserAlteration
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<FactorStep> The changed factors in order; one or two
@@ -37,7 +36,7 @@ final class FactorChange implements UserAlteration
      * @param FactorAction $action What is done to each factor
      * @param list<FactorStep> $steps The changed factors in order; one or two
      */
-    public function __construct(public readonly Account $user, public readonly FactorAction $action, array $steps)
+    public function __construct(public readonly Account $user, public readonly FactorAction $action, array $steps, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->steps = Check::listOf($steps, FactorStep::class, 'A factor change names one or two factors.', 1);
         Check::input(count($this->steps) <= 2, 'A factor change names one or two factors.');

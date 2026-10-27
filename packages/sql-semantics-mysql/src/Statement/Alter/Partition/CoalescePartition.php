@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `COALESCE PARTITION [NO_WRITE_TO_BINLOG] n`: a request to merge away n partitions of a HASH or KEY table.
@@ -19,17 +18,17 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Removing two hash partitions
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION 2')->statement->commands[0]->count->text // => '2'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION 2')->commands[0]->count->text // => '2'
  */
 final class CoalescePartition implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $local Whether NO_WRITE_TO_BINLOG or LOCAL is written
      * @param Numeral $count The number of partitions to remove
      */
-    public function __construct(public readonly bool $local, public readonly Numeral $count)
+    public function __construct(public readonly bool $local, public readonly Numeral $count, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

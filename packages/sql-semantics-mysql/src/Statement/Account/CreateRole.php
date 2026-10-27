@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account;
 
+use Override;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -13,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\AnalyzedStatement;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -29,9 +29,9 @@ use SqlSemantics\Statement\Source\Span;
  * @example Creating roles
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create role if not exists reader, 'writer'@'%'")->toString() // => 'CREATE ROLE IF NOT EXISTS reader, writer@`%`'
  */
-final class CreateRole implements Statement, AnalyzedStatement
+final class CreateRole extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AccountName> The roles in order
@@ -50,8 +50,11 @@ final class CreateRole implements Statement, AnalyzedStatement
      * @param Charset|null $client The client encoding used to reconstruct names
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly bool $ifNotExists, array $roles, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(public readonly bool $ifNotExists, array $roles, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A role definition uses a MySQL language profile.');
         $this->roles = Check::listOf($roles, AccountName::class, 'CREATE ROLE names at least one role.', 1);
         $this->problem = (new \SqlSemantics\Platform\MySql\Rules\Account\RoleDefinitions())->problem($this->ifNotExists, $this->roles) === null ? null : new Problem\Role\RefusedCreateRole($this->ifNotExists, $this->roles);
@@ -80,6 +83,7 @@ final class CreateRole implements Statement, AnalyzedStatement
     /**
      * Reconstructs the complete request from its operands and selected language.
      */
+    #[Override]
     public function toString(): string
     {
         $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($this->profile->grammar, $this->profile->lexical, $this->client));
@@ -90,6 +94,7 @@ final class CreateRole implements Statement, AnalyzedStatement
     /**
      * Answers the selected language without retaining the analysis environment.
      */
+    #[Override]
     public function profile(): LanguageProfile
     {
         return $this->profile;
@@ -100,6 +105,7 @@ final class CreateRole implements Statement, AnalyzedStatement
      *
      * @return list<\SqlSemantics\Statement\Declaration\Table>
      */
+    #[Override]
     public function declarations(): array
     {
         return [];

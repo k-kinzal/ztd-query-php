@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrde
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored SELECT retaining items, input, filters, grouping, ordering and limits before invocation.
@@ -38,7 +37,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredSelection implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SelectExpression|DeferredProjection|Star|TableWildcard> The complete projection
@@ -74,7 +73,7 @@ final class DeferredSelection implements ProgramStatement
      * @param Scalar|RowOperand|DeferredOperand|null $qualify The complete QUALIFY predicate
      * @param \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination|null $into The destination written after the projection
      */
-    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null, public readonly Scalar|RowOperand|DeferredOperand|null $qualify = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination $into = null)
+    public function __construct(array $items, public readonly TableSource|Dual|null $from = null, public readonly Scalar|RowOperand|DeferredOperand|null $where = null, array $options = [], public readonly Grouping|DeferredGrouping|null $groupBy = null, public readonly Scalar|RowOperand|DeferredOperand|null $having = null, array $orderBy = [], public readonly ?Limit $limit = null, array $windows = [], public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse $procedure = null, public readonly Scalar|RowOperand|DeferredOperand|null $qualify = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination $into = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->windows = Check::listOf($windows, \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition::class, 'A stored selection retains its named window definitions.');
         $this->options = Check::listOf($options, SelectOption::class, 'A stored selection retains SELECT modifiers.');

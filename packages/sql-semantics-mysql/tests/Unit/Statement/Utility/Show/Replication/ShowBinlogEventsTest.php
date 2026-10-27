@@ -24,7 +24,7 @@ final class ShowBinlogEventsTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW BINLOG EVENTS FROM 4');
-        self::assertInstanceOf(ShowBinlogEvents::class, $show->statement);
+        self::assertInstanceOf(ShowBinlogEvents::class, $show);
         self::assertSame('Pos', $show->field(1)->name?->value);
     }
 

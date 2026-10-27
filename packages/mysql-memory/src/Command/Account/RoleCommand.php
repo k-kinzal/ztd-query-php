@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\SetDefaultRole;
 use SqlSemantics\Platform\MySql\Statement\Account\SetRole;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes SET ROLE, SET DEFAULT ROLE and ALTER USER … DEFAULT ROLE.
@@ -52,8 +52,8 @@ final class RoleCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $names = new Names($session->settings()->release());
         if ($statement instanceof SetRole) {
             $names->check($statement->roles->roles);

@@ -82,7 +82,7 @@ final class TypeLimitsTest extends TestCase
     #[DataProvider('providerLegacyBitDeclarations')]
     public function testCheckKeepsReleaseDependentBoundsInDerivation(string $sql, string $name): void
     {
-        $problem = (new Semantics(Dialect::MySql))->analyze($sql)->facts->diagnostics[0];
+        $problem = (new Semantics(Dialect::MySql))->analyze($sql)->diagnostics()[0];
         self::assertInstanceOf(InvalidTypeSize::class, $problem);
         self::assertSame([TypeLimit::Empty, $name], [$problem->rule, $problem->name]);
     }
@@ -91,9 +91,9 @@ final class TypeLimitsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a BIT(0)) RETURNS INT(11) RETURN 1');
 
-        self::assertInstanceOf(ParseFailure::class, $operation->facts->warnings[0]);
-        self::assertTrue($operation->facts->warnings[0]->aborts);
-        self::assertSame("Invalid size for column ''.", $operation->facts->warnings[0]->message());
+        self::assertInstanceOf(ParseFailure::class, $operation->warnings()[0]);
+        self::assertTrue($operation->warnings()[0]->aborts);
+        self::assertSame("Invalid size for column ''.", $operation->warnings()[0]->message());
     }
 
     public function testSimpleReportsBitOverflowAndAcceptsAnOmittedWidth(): void
@@ -140,13 +140,13 @@ final class TypeLimitsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, '5.6.51'))->analyze('CREATE FUNCTION f() RETURNS BIT(0) RETURN 1');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testCheckAcceptsTheBoundaryWidthsAndFractions(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a BIT(1), b BIT(64), c INT(255), d FLOAT(53), e DOUBLE(255,30), f DECIMAL(65,30), g TIME(6), h BIT, i INT, j FLOAT, k DECIMAL(0,0))');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

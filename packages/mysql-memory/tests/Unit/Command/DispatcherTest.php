@@ -79,8 +79,7 @@ final class DispatcherTest extends TestCase
     public function testCommandChoosesTheCommandOfEachKindOfQueryAndWrite(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();
@@ -111,8 +110,7 @@ final class DispatcherTest extends TestCase
     public function testCommandChoosesTheCommandOfEachKindOfDefinitionAndUtility(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();
@@ -146,8 +144,7 @@ final class DispatcherTest extends TestCase
     public function testCommandChoosesTheCommandOfEachKindOfAccountStatement(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();
@@ -182,8 +179,7 @@ final class DispatcherTest extends TestCase
     public function testCommandChoosesTheCommandOfEachKindOfTableChangeMaintenanceAndAccess(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();
@@ -213,8 +209,7 @@ final class DispatcherTest extends TestCase
     public function testCommandRefusesAStatementNoCommandExecutes(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();
@@ -227,16 +222,15 @@ final class DispatcherTest extends TestCase
         (new Dispatcher())->command($statement);
     }
 
-    public function testCommandCompletesAnEmptySemanticScript(): void
+    public function testCommandCompletesAnEmptyStatement(): void
     {
-        self::assertInstanceOf(EmptyCommand::class, (new Dispatcher())->command(new Script([])));
+        self::assertInstanceOf(EmptyCommand::class, (new Dispatcher())->command(new \SqlSemantics\Platform\MySql\Statement\EmptyStatement()));
     }
 
     public function testCommandChoosesTheCommandsOfServerAdministration(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();
@@ -283,8 +277,7 @@ final class DispatcherTest extends TestCase
     public function testHandlesTellsWhetherAProgramDeclaresAHandler(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $semantics = new Semantics(Dialect::MySql);
@@ -298,8 +291,7 @@ final class DispatcherTest extends TestCase
     public function testProgramTellsWhetherAStatementCreatesAStoredProgram(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $semantics = new Semantics(Dialect::MySql);
@@ -310,8 +302,7 @@ final class DispatcherTest extends TestCase
     public function testHandlesKeepsDiagnosticsForANamedConditionDeclaration(): void
     {
         $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof \SqlSemantics\Statement\Operation ? $analyzed->statement : $analyzed;
-            self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $statement);
+            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
             return $statement;
         };
         $session = (new Instance())->connect();

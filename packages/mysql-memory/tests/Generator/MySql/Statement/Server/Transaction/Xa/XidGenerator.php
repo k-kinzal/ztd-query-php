@@ -9,7 +9,6 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use LogicException;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 
 /**
@@ -27,14 +26,11 @@ final class XidGenerator implements ErisGenerator
      */
     public function __construct()
     {
-        $bytes = Generators::bind(Generators::choose(0, 64), static fn (int $length): ErisGenerator => Generators::map(static fn (array $bytes): string => implode('', $bytes), Generators::vector($length, Generators::map(static fn (int $byte): string => chr($byte), Generators::choose(0, 255)))));
+        $bytes = \Tests\Generator\Operands::bind(Generators::choose(0, 64), static fn (int $length): ErisGenerator => Generators::map(static fn (array $bytes): string => implode('', $bytes), Generators::vector($length, Generators::map(static fn (int $byte): string => chr($byte), Generators::choose(0, 255)))));
         $this->delegate = Generators::map(static function (array $data): Xid {
             [$global, $branch, $format] = $data;
-            if (!is_string($global) || ($branch !== null && !is_string($branch)) || ($format !== null && !is_int($format))) {
-                throw new LogicException('An XID generator supplies byte strings and an integer format.');
-            }
             return new Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($global), $branch === null ? null : new \SqlSemantics\Platform\MySql\Statement\Literal\Text($branch), $branch === null || $format === null ? null : new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral((string) $format));
-        }, Generators::tuple($bytes, Generators::oneOf(Generators::constant(null), $bytes), Generators::oneOf(Generators::constant(null), Generators::nat())));
+        }, \Tests\Generator\Operands::tuple($bytes, Generators::oneOf(Generators::constant(null), $bytes), Generators::oneOf(Generators::constant(null), Generators::nat())));
     }
 
     /**
@@ -54,4 +50,17 @@ final class XidGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $transaction The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null> $branch The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null> $format The generated semantic operand
+     * @return ErisGenerator<Xid>
+     */
+    public static function fromOperands(ErisGenerator $transaction, ErisGenerator $branch, ErisGenerator $format): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): Xid => new Xid(transaction: $parts[0], branch: $parts[1], format: $parts[2]), \Tests\Generator\Operands::tuple($transaction, $branch, $format));
+    }
+
 }

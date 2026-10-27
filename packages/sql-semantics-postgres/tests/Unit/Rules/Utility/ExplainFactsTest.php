@@ -41,7 +41,7 @@ final class ExplainFactsTest extends TestCase
     public function testRowsReportsAnUnknownFormatAndTypesItAsText(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN (FORMAT "JSON") SELECT 1');
-        self::assertSame(['unrecognized value for EXPLAIN option "format": "JSON"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['unrecognized value for EXPLAIN option "format": "JSON"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         self::assertEquals(new Known(Builtin::Text), $operation->field(0)->type);
     }
 
@@ -49,25 +49,25 @@ final class ExplainFactsTest extends TestCase
     {
         self::assertSame(
             ['EXPLAIN option WAL requires ANALYZE', 'EXPLAIN option TIMING requires ANALYZE', 'EXPLAIN option SERIALIZE requires ANALYZE'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze('EXPLAIN (WAL, TIMING, SERIALIZE binary) SELECT 1')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze('EXPLAIN (WAL, TIMING, SERIALIZE binary) SELECT 1')->diagnostics()),
         );
     }
 
     public function testChecksAcceptsTheOptionsWithAnalyze(): void
     {
-        self::assertSame([], (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze('EXPLAIN (ANALYZE on, WAL, TIMING 1, SERIALIZE, MEMORY) SELECT 1')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze('EXPLAIN (ANALYZE on, WAL, TIMING 1, SERIALIZE, MEMORY) SELECT 1')->diagnostics());
     }
 
     public function testChecksAcceptsOptionsThatAreOff(): void
     {
-        self::assertSame([], (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze("EXPLAIN (ANALYZE false, WAL off, TIMING 'false', SERIALIZE none, SERIALIZE off) SELECT 1")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze("EXPLAIN (ANALYZE false, WAL off, TIMING 'false', SERIALIZE none, SERIALIZE off) SELECT 1")->diagnostics());
     }
 
     public function testChecksReportsAnalyzeWithGenericPlan(): void
     {
         self::assertSame(
             ['EXPLAIN options ANALYZE and GENERIC_PLAN cannot be used together'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN (ANALYZE, GENERIC_PLAN) SELECT 1')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN (ANALYZE, GENERIC_PLAN) SELECT 1')->diagnostics()),
         );
     }
 
@@ -75,7 +75,7 @@ final class ExplainFactsTest extends TestCase
     {
         self::assertSame(
             ['unrecognized value for EXPLAIN option "serialize": "json"', 'unrecognized value for EXPLAIN option "serialize": "TEXT"'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze("EXPLAIN (ANALYZE, SERIALIZE json, SERIALIZE 'TEXT') SELECT 1")->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze("EXPLAIN (ANALYZE, SERIALIZE json, SERIALIZE 'TEXT') SELECT 1")->diagnostics()),
         );
     }
 
@@ -83,7 +83,7 @@ final class ExplainFactsTest extends TestCase
     {
         self::assertSame(
             ['unrecognized EXPLAIN option "serialize"'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql, 'pg-16.6'))->analyze('EXPLAIN (SERIALIZE json) SELECT 1')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql, 'pg-16.6'))->analyze('EXPLAIN (SERIALIZE json) SELECT 1')->diagnostics()),
         );
     }
 }

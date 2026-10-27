@@ -69,11 +69,11 @@ final class TableQueriesTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -85,11 +85,11 @@ final class TableQueriesTest extends TestCase
         $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
-            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), $parameters2);
+            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -101,11 +101,11 @@ final class TableQueriesTest extends TestCase
         $parameters3 = array_fill(0, (new Bindings())->count($statement3), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation3 = (new Binding())->operation($session, $statement3, $parameters3, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
-            $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3->statement), $parameters3);
+            $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3), $parameters3);
         } catch (SqlError $executionError) {
             $result3 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -174,7 +174,7 @@ final class TableQueriesTest extends TestCase
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
         $plan = new QueryPlan(new SingleRow(), [new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED)], ['X', 'y', 'wide']);
-        $query = $session->analyze('SELECT 1e2 AS X, 1e2 AS y, ABS(1e2) AS wide')->facts->output;
+        $query = $session->analyze('SELECT 1e2 AS X, 1e2 AS y, ABS(1e2) AS wide')->statementInformation()->output;
         self::assertNotNull($query);
 
         self::assertSame(['x' => 12, 'wide' => 22], $queries->reportedLengths($plan, ['y' => true], $query));

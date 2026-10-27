@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Spelling\Layout;
 
 /**
@@ -32,14 +31,14 @@ use SqlSemantics\Statement\Spelling\Layout;
  * @visibility public
  * @example Reading a projected expression and its alias
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a AS total FROM t');
- *     [$query->statement->query->items[0]->expression->name->value, $query->statement->query->items[0]->alias?->value] // => ['a', 'total']
+ *     [$query->query->items[0]->expression->name->value, $query->query->items[0]->alias?->value] // => ['a', 'total']
  * @example Reading the text an unaliased item is written as
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1+1');
- *     [$query->statement->query->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
+ *     [$query->query->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
  */
 final class SelectExpression implements SelectItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The lexical interpretation of the layout; absent when there is no layout.
@@ -54,7 +53,7 @@ final class SelectExpression implements SelectItem
      * @param LanguageProfile|null $spellingProfile The profile interpreting the layout, defaulting to MySQL 8.4; absent without a layout
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an aliased item is given a layout, or the mark does not fit the alias
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly AliasMark $mark = AliasMark::As, ?LanguageProfile $spellingProfile = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly AliasMark $mark = AliasMark::As, ?LanguageProfile $spellingProfile = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($alias === null || $layout === null, 'An aliased select item is named by its alias and keeps no layout.');
         Check::input($layout === null || $layout->trail === '', 'MySQL names a select item without the trivia after its expression, so its layout has no trailing trivia.');

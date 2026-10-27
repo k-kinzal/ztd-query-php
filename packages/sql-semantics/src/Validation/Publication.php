@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Validation;
 
-use SqlParser\Lexer\SourceException;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Construction\Facts;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvariantViolation;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
@@ -21,40 +18,67 @@ use SqlSemantics\Statement\Script;
 use SqlSemantics\Statement\Statement;
 
 /**
- * Establishes everything an operation publishes: audited structure, complete facts, and corresponding SQL.
+ * Resolves a constructed statement without passing it through the SQL front end.
  *
- * Rule: CORE-PUBLICATION-001. (1) The structure is audited against the closed
- * immutable value domain. (2) The structure renders typed pieces and records
- * parameter occurrences in written order. (3) The statement derives its facts
- * against the context; every scalar, relation and query node must have received
- * a fact. (4) The pieces are joined to text. The
- * text uses the model name representation, independently of client encoding,
- * and is parsed under the same profile and lowered by the same rules.
- * Lowering keeps the selected session settings while decoding these canonical
- * identifier bytes; external client encodability is checked by toString(). The
- * result must correspond operand by operand to the structure. Spelled regions
- * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
- * discards the candidate. Trusted: the parser, the lowering and derivation
- * rules, and these checks. Status: Implemented.
+ * Construction checks the value domain and resolves its operands against the
+ * declarations. SQL reconstruction is a separate consumer, checked by the
+ * round-trip fuzz target. Re-parsing here would make generated-value execution
+ * depend on the parser and lowerer that the property is intended to bypass.
  *
  * @visibility SqlSemantics
  */
 final class Publication
 {
     /**
-     * Derives the facts and the checked SQL of a statement.
+     * Returns the concrete statement with meanings attached to its SQL occurrences.
      *
-     * @return array{Facts, string}
+     */
+    public function publish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): \SqlSemantics\Statement\AnalyzedStatement
+    {
+        if ($statement instanceof \SqlSemantics\Statement\AnalyzedStatement) {
+            $sources = $sources->retainingInputNotices($statement);
+        }
+        $occurrences = new \SqlSemantics\Construction\Occurrences($sources);
+        $result = $occurrences->copy($statement);
+        Check::input($result instanceof \SqlSemantics\Statement\SqlStatement, 'An analyzed statement has a concrete publication implementation.');
+        [$facts, $statements] = $this->derive($context, $result, $occurrences->sources());
+        foreach ($statements as [$node, $environment, $information]) {
+            Check::invariant($node instanceof \SqlSemantics\Statement\SqlStatement, 'Nested SQL statements retain concrete publication implementations.');
+            $information = $node === $result ? $facts : $information;
+            $notices = $information->notices;
+            $node->initializeStatementInformation(new \SqlSemantics\Statement\StatementSemantics($environment->profile, $information->output, $information->declarations, $information->diagnostics, $notices));
+        }
+        return $result;
+    }
+
+    /**
+     * Derives facts from the supplied values and renders their SQL independently.
+     *
+     * @return array{Facts, string, list<array{Statement, AnalysisContext, Facts}>}
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a retained value is outside the closed immutable domain
-     * @throws InvariantViolation When the rendered SQL does not correspond to the structure
      */
     public function establish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): array
     {
         $platform = Platforms::of($context->profile->grammar->database());
+        $output = new Output($platform->codec($context->profile));
+        $statement->render($output);
+        [$facts, $statements] = $this->derive($context, $statement, $sources);
+        $sql = (new Lexical())->join($output->pieces()) . $output->trailing();
+        return [$facts, $sql, $statements];
+    }
+
+    /**
+     * Resolves the supplied semantic values without invoking SQL rendering.
+     *
+     * @return array{Facts, list<array{Statement, AnalysisContext, Facts}>}
+     */
+    public function derive(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): array
+    {
+        $platform = Platforms::of($context->profile->grammar->database());
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $platform->statementNamespace()]);
         $graph->objects($context, true);
-        $objects = $graph->objects($statement);
-        $graph->objects($sources);
+        $objects = $graph->objects($statement, complete: false);
+        $graph->objects($sources, complete: false);
         foreach ($sources->origins as $origin) {
             Check::input(in_array($origin->node, $objects, true), 'A source location belongs to an occurrence of this statement.');
         }
@@ -62,9 +86,7 @@ final class Publication
         foreach ($sources->notices as $notice) {
             Check::input(in_array($notice->subject, $objects, true), 'An input notice belongs to an occurrence of this statement.');
         }
-        $output = new Output($platform->codec($context->profile));
-        $statement->render($output);
-        $derivation = new Derivation($context, $sources, $output->parameters());
+        $derivation = new Derivation($context, $sources);
         $derivation->statement($statement);
         $facts = $derivation->facts();
         foreach ($objects as $object) {
@@ -72,22 +94,11 @@ final class Publication
                 Check::invariant($facts->covers($object), 'Derivation left a ' . $object::class . ' without facts.');
             }
             if ($object instanceof Operand && ($replacement = $facts->scalar($object)->replacement) !== null) {
-                Check::invariant($replacement !== $object && in_array($replacement, $graph->objects($object), true) && $facts->covers($replacement), 'A scalar replacement is a bound strict descendant of its occurrence.');
+                Check::invariant($replacement !== $object && in_array($replacement, $graph->objects($object, complete: false), true) && $facts->covers($replacement), 'A scalar replacement is a bound strict descendant of its occurrence.');
             }
         }
-        $graph->objects($facts);
 
-        $sql = (new Lexical())->join($output->pieces()) . $output->trailing();
-        (new Spellings($platform->parser($context->profile), $platform->productions($context->profile), $platform->leafKeys($context->profile)))->check((new Lexical())->join($output->canonical()), $sql);
-        try {
-            $tree = $platform->parser($context->profile)->parse($sql);
-        } catch (SourceException $error) {
-            throw new InvariantViolation('The rendered SQL is outside the grammar: ' . $error->getMessage() . ' in: ' . $sql, 0, $error);
-        }
-        $difference = (new Equivalence())->difference($statement, $this->root($platform->lower($tree, $context->profile, new Leaves(), session: $context->session, canonicalNames: true)));
-        Check::invariant($difference === null, 'The rendered SQL does not correspond to the statement at ' . $difference . ' in: ' . $sql);
-
-        return [$facts, $sql];
+        return [$facts, $derivation->statements()];
     }
 
     /**

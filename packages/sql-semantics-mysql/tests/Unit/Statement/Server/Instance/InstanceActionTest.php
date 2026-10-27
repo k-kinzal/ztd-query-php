@@ -20,8 +20,8 @@ final class InstanceActionTest extends TestCase
     public function testActionIsTheActionOfAlterInstance(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER INSTANCE RELOAD TLS');
-        self::assertInstanceOf(AlterInstance::class, $alter->statement);
+        self::assertInstanceOf(AlterInstance::class, $alter);
 
-        self::assertInstanceOf(ReloadTls::class, $alter->statement->action);
+        self::assertInstanceOf(ReloadTls::class, $alter->action);
     }
 }

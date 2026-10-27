@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * INHERIT or NO INHERIT: adds or removes a parent table.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing a parent
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t NO INHERIT p');
- *     $statement->statement->commands[0]->remove // => true
+ *     $statement->commands[0]->remove // => true
  */
 final class InheritanceChange implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ParentTable $parent The parent table
      * @param bool $remove Whether the parent is removed (NO INHERIT); added otherwise
      */
-    public function __construct(public readonly ParentTable $parent, public readonly bool $remove = false)
+    public function __construct(public readonly ParentTable $parent, public readonly bool $remove = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

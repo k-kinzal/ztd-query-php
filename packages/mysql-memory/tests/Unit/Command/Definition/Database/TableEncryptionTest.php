@@ -20,7 +20,7 @@ final class TableEncryptionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
-        $create = $session->analyze("CREATE TABLE d.t(a INT) ENCRYPTION='Y' ENCRYPTION='n'")->statement;
+        $create = $session->analyze("CREATE TABLE d.t(a INT) ENCRYPTION='Y' ENCRYPTION='n'");
         self::assertInstanceOf(CreateTable::class, $create);
 
         self::assertSame('n', (new TableEncryption())->operand($create));
@@ -30,8 +30,8 @@ final class TableEncryptionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query("CREATE DATABASE d ENCRYPTION 'Y'; USE d");
-        $persistent = $session->analyze('CREATE TABLE t(a INT)')->statement;
-        $temporary = $session->analyze('CREATE TEMPORARY TABLE t(a INT)')->statement;
+        $persistent = $session->analyze('CREATE TABLE t(a INT)');
+        $temporary = $session->analyze('CREATE TEMPORARY TABLE t(a INT)');
         self::assertInstanceOf(CreateTable::class, $persistent);
         self::assertInstanceOf(CreateTable::class, $temporary);
 
@@ -43,7 +43,7 @@ final class TableEncryptionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query("CREATE DATABASE d ENCRYPTION 'Y'");
-        $create = $session->analyze("CREATE TABLE d.t(a INT) ENCRYPTION=''")->statement;
+        $create = $session->analyze("CREATE TABLE d.t(a INT) ENCRYPTION=''");
         self::assertInstanceOf(CreateTable::class, $create);
 
         self::assertSame('Y', (new TableEncryption())->value($create, $session));

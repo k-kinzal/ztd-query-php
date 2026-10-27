@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
  * @visibility public
  * @example Reading the spelling of a DELETE ... USING
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE FROM t USING t JOIN u ON t.a = u.a');
- *     $delete->statement->form // => \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::Using
+ *     $delete->form // => \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::Using
  */
 enum MultipleDeleteForm
 {

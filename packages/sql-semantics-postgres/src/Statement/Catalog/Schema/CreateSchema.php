@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -39,14 +38,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Creating a schema for a role
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe');
- *     [$operation->statement->name, $operation->statement->authorization?->name?->value] // => [null, 'joe']
+ *     [$operation->name, $operation->authorization?->name?->value] // => [null, 'joe']
  * @example Declaring a table in the new schema
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA AUTHORIZATION joe CREATE TABLE t (a int4)');
  *     $operation->declarations()[0]->name->schema?->value // => 'joe'
  */
-final class CreateSchema implements Statement
+final class CreateSchema extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Statement> The schema elements in the order written
@@ -59,8 +58,11 @@ final class CreateSchema implements Statement
      * @param list<Statement> $elements The schema elements in the order written
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      */
-    public function __construct(public readonly ?Name $name, public readonly ?RoleSpec $authorization = null, array $elements = [], public readonly bool $ifNotExists = false)
+    public function __construct(public readonly ?Name $name, public readonly ?RoleSpec $authorization = null, array $elements = [], public readonly bool $ifNotExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->elements = Check::listOf($elements, Statement::class, 'Schema elements are statements.');
         Check::input($name !== null || $authorization !== null, 'A schema is named or owned.');
     }
@@ -91,7 +93,7 @@ final class CreateSchema implements Statement
         }
         usort($members, static fn (SchemaMember $one, SchemaMember $other): int => $one->step() <=> $other->step());
         foreach ($members as $member) {
-            $derivation->within($member->context($derivation->context, $derivation->facts()->declarations), $member);
+            $derivation->within($member->context($derivation->context, $derivation->facts()->declarations), $member->element, fn () => $member->deriveStatement($derivation));
         }
     }
 

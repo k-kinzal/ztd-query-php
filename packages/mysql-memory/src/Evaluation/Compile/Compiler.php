@@ -77,12 +77,12 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Known;
@@ -151,12 +151,12 @@ final class Compiler
     private ?array $assigned = null;
 
     /**
-     * @param Facts $facts The facts of the bound statement
+     * @param StatementSemantics $facts The facts of the bound statement
      * @param Settings $settings The session settings
      * @param Planner $planner The planner of the statement, for subqueries
      * @param Connection $connection What the expressions read of the connection at compile time
      */
-    public function __construct(public readonly Facts $facts, public readonly Settings $settings, public readonly Planner $planner, public readonly Connection $connection)
+    public function __construct(public readonly StatementSemantics $facts, public readonly Settings $settings, public readonly Planner $planner, public readonly Connection $connection)
     {
         $this->literals = new Literals($this);
         $this->operators = new Operators($this);
@@ -201,7 +201,7 @@ final class Compiler
      */
     public function parameterIndex(Parameter $parameter): int
     {
-        $binding = $this->facts->scalar($parameter)->resolution;
+        $binding = $parameter->scalarInformation()->resolution;
         \SqlSemantics\Diagnostic\Check::invariant($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding, 'A parameter occurrence has a resolved input slot.');
 
         return $binding->position;
@@ -242,7 +242,7 @@ final class Compiler
             throw new LogicException('No value evaluator for ' . $node::class);
         }
 
-        $replacement = $this->facts->covers($node) ? $this->facts->scalar($node)->replacement : null;
+        $replacement = $node->hasBinding() ? $node->scalarInformation()->replacement : null;
 
         return $this->typed($node, $replacement === null ? $this->dispatch($node, $scope) : $this->compile($replacement, $scope));
     }
@@ -252,10 +252,10 @@ final class Compiler
      */
     public function resolved(Operand $node): ?Domain
     {
-        if (!$this->facts->covers($node)) {
+        if (!$node->hasBinding()) {
             return null;
         }
-        $fact = $this->facts->scalar($node);
+        $fact = $node->scalarInformation();
         $type = $fact->type;
         if ($type instanceof NullOnly) {
             return Domain::null();
@@ -282,10 +282,10 @@ final class Compiler
      */
     public function typed(Operand $node, Evaluable $evaluable): Evaluable
     {
-        if (!$this->facts->covers($node)) {
+        if (!$node->hasBinding()) {
             return $evaluable;
         }
-        $fact = $this->facts->scalar($node);
+        $fact = $node->scalarInformation();
         $nullable = match ($fact->nullability) {
             Nullability::NotNull => false,
             Nullability::Nullable => true,
@@ -322,7 +322,7 @@ final class Compiler
             $origin = $origin->evaluable;
         }
         $source = (new Quietness())->bare($node);
-        if ($domain->kind === Kind::String && $this->settings->legacy() && $source instanceof ColumnUse && $this->facts->scalar($source)->resolution instanceof \SqlSemantics\Statement\Reference\Column\AliasTarget) {
+        if ($domain->kind === Kind::String && $this->settings->legacy() && $source instanceof ColumnUse && $source->scalarInformation()->resolution instanceof \SqlSemantics\Statement\Reference\Column\AliasTarget) {
             $domain = $domain->withQuiet($evaluable->domain()->quiet);
         } elseif ($domain->kind === Kind::String && $origin instanceof \MySqlMemory\Evaluation\Subquery\ScalarRead) {
             $domain = $domain->withQuiet();

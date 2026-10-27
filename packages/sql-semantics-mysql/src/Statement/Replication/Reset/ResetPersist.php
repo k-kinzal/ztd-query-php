@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET PERSIST [[IF EXISTS] [component.]variable]`: removes persisted global system variable settings (MySQL 8.0 and later).
@@ -29,17 +28,20 @@ use SqlSemantics\Statement\Snapshot;
  * @example Removing one persisted setting
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('reset persist if exists max_connections')->toString() // => 'RESET PERSIST IF EXISTS max_connections'
  */
-final class ResetPersist implements Statement
+final class ResetPersist extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Name|null $variable The variable whose setting is removed; null for every setting
      * @param Name|null $component The component that defines the variable, when written
      */
-    public function __construct(public readonly bool $ifExists = false, public readonly ?Name $variable = null, public readonly ?Name $component = null)
+    public function __construct(public readonly bool $ifExists = false, public readonly ?Name $variable = null, public readonly ?Name $component = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($variable !== null || (!$ifExists && $component === null), 'IF EXISTS and a component need a variable.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -19,6 +19,6 @@ final class AlterUserMappingTest extends TestCase
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER USER MAPPING FOR CURRENT_ROLE SERVER s OPTIONS (DROP a)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER USER MAPPING FOR CURRENT_ROLE SERVER s OPTIONS (DROP a)')->diagnostics());
     }
 }

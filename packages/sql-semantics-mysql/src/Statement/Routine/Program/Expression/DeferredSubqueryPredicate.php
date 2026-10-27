@@ -19,7 +19,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredSubqueryPredicate implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $operand The compared operand
@@ -43,8 +43,11 @@ final class DeferredSubqueryPredicate implements DeferredOperand
      * @param Quantifier|null $quantifier Null exactly for IN
      * @param bool $negated Whether the IN predicate is negated
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Query $query, public readonly ?ComparisonOperator $operator = null, public readonly ?Quantifier $quantifier = null, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Query $query, public readonly ?ComparisonOperator $operator = null, public readonly ?Quantifier $quantifier = null, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(($operator === null) === ($quantifier === null), 'A quantified predicate has both an operator and a quantifier.');
         Check::input($operator !== ComparisonOperator::NullSafeEqual, 'Null-safe equality cannot be quantified.');
         Check::input(!$negated || $operator === null, 'Only IN carries a separate negation.');

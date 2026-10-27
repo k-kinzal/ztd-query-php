@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Statement\Operation;
 
 #[CoversNothing]
 #[Medium]
@@ -30,10 +29,8 @@ final class TableDefinitionAnalysisBoundaryTest extends TestCase
         $rows = [$session->variables->rowCount, $session->variables->foundRows];
 
         $operation = $session->analyze('CREATE TABLE IF NOT EXISTS t ENGINE=InnoDB');
-
-        self::assertInstanceOf(Operation::class, $operation);
-        self::assertInstanceOf(CreateTable::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertInstanceOf(CreateTable::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
         self::assertSame($table, $session->instance->dictionary->table('d', 't'));
         self::assertTrue($session->transaction->open);
         self::assertEquals($status, $session->instance->registry->status);
@@ -68,9 +65,8 @@ final class TableDefinitionAnalysisBoundaryTest extends TestCase
         $operation = $session->analyze('ALTER TABLE t WITH VALIDATION, FORCE');
         self::assertTrue($session->transaction->open);
         self::assertEquals($status, $session->instance->registry->status);
-        self::assertInstanceOf(Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
         $session->text = 'opaque alteration label';
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of ALTER and WITH VALIDATION');

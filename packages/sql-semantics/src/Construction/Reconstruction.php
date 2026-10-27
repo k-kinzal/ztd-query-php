@@ -51,6 +51,10 @@ final class Reconstruction
         $values = get_object_vars($node);
         foreach ($parameters as $parameter) {
             $name = $parameter->getName();
+            if (in_array($name, ['scalarInformation', 'relationInformation', 'queryInformation', 'statementInformation'], true)) {
+                $arguments[] = null;
+                continue;
+            }
             Check::invariant(array_key_exists($name, $values), 'A structural rewrite needs the constructor operand ' . $class->getName() . '::$' . $name . '.');
             $arguments[] = $this->value(array_key_exists($name, $changes) ? $changes[$name] : $values[$name]);
         }

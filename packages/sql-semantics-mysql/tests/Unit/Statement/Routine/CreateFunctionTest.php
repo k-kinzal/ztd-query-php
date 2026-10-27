@@ -28,9 +28,9 @@ final class CreateFunctionTest extends TestCase
     public function testNameCollisionIncludesKeywordsAndNativeFunctions(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $keyword = $semantics->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1')->statement;
-        $native = $semantics->analyze('CREATE FUNCTION d.ABS() RETURNS INT RETURN 1')->statement;
-        $plain = $semantics->analyze('CREATE FUNCTION d.f() RETURNS INT RETURN 1')->statement;
+        $keyword = $semantics->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1');
+        $native = $semantics->analyze('CREATE FUNCTION d.ABS() RETURNS INT RETURN 1');
+        $plain = $semantics->analyze('CREATE FUNCTION d.f() RETURNS INT RETURN 1');
 
         self::assertInstanceOf(CreateFunction::class, $keyword);
         self::assertInstanceOf(CreateFunction::class, $native);
@@ -48,7 +48,7 @@ final class CreateFunctionTest extends TestCase
             . 'SELECT a INTO y FROM t WHERE a = x LIMIT 1; UPDATE t SET b = x WHERE a = y; INSERT INTO t (a) VALUES (x); '
             . 'DELETE FROM t WHERE b = y; SET @v = x + y; RETURN x + y; END', [$table]);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementReportsAnUnknownNameInACompleteContext(): void
@@ -57,7 +57,7 @@ final class CreateFunctionTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE FUNCTION f(x INT) RETURNS INT BEGIN UPDATE t SET b = x WHERE a = zz; RETURN x; END', [$table]);
 
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
@@ -89,17 +89,17 @@ final class CreateFunctionTest extends TestCase
     #[DataProvider('providerDeriveStatementFindsAReturnAnywhereInTheBody')]
     public function testDeriveStatementFindsAReturnAnywhereInTheBody(string $body): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT) RETURNS INT ' . $body)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT) RETURNS INT ' . $body)->diagnostics());
     }
 
     public function testDeriveStatementLeavesAnExternalBodyOpaque(): void
     {
         $create = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('CREATE FUNCTION f(x INT) RETURNS INT LANGUAGE JAVASCRIPT AS $$ return zz $$');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
         self::assertInstanceOf(ExternalBody::class, $statement->body);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**
@@ -135,7 +135,7 @@ final class CreateFunctionTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 INTO @a; (SELECT 2 INTO @b); RETURN @a; END');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementRefusesAResultSetBeforeAMissingReturn(): void

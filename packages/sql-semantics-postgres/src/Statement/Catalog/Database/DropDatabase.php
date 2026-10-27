@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Dropping a database while it is in use
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP DATABASE IF EXISTS d (FORCE)');
- *     [$operation->statement->ifExists, $operation->toString()] // => [true, 'DROP DATABASE IF EXISTS d WITH (FORCE)']
+ *     [$operation->ifExists, $operation->toString()] // => [true, 'DROP DATABASE IF EXISTS d WITH (FORCE)']
  */
-final class DropDatabase implements Statement
+final class DropDatabase extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<DropDatabaseOption> The options in the order written
@@ -38,8 +37,11 @@ final class DropDatabase implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<DropDatabaseOption> $options The options in the order written
      */
-    public function __construct(public readonly Name $name, public readonly bool $ifExists = false, array $options = [])
+    public function __construct(public readonly Name $name, public readonly bool $ifExists = false, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, DropDatabaseOption::class, 'Drop options are a list of options.');
     }
 

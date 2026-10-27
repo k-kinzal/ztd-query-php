@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the code of an anonymous block
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DO $$BEGIN NULL; END$$ LANGUAGE plpgsql');
- *     [$operation->statement->code()?->value, $operation->statement->language()?->name()] // => ['BEGIN NULL; END', 'plpgsql']
+ *     [$operation->code()?->value, $operation->language()?->name()] // => ['BEGIN NULL; END', 'plpgsql']
  * @example Refusing a block without items
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\DoBlock([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class DoBlock implements Statement
+final class DoBlock extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<StringConstant|DoLanguage> The code strings and language clauses in the order written
@@ -45,8 +44,11 @@ final class DoBlock implements Statement
      *
      * @throws InvalidConstruction When an item is neither a string nor a language clause, or there is none
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $list = [];
         foreach ($items as $item) {
             if (!$item instanceof StringConstant && !$item instanceof DoLanguage) {

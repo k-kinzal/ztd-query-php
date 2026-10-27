@@ -21,14 +21,13 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use Tests\Generator\MySql\Statement\Call\Temporal\DateArithmeticGenerator;
-use Tests\Generator\Semantics\Statement\OperationGenerator;
+use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;
 
 /**
  * Executes generated interval arithmetic through the current query execution boundary.
- * Query publication still uses Operation until the concrete SELECT migration.
  */
 #[CoversNothing]
 #[Large]
@@ -54,7 +53,7 @@ final class IntervalExecutionProperties extends TestCase
                 new SelectExpression(new DateArithmetic($expression->subtract, $date, $quantity, $expression->unit->canonical()), new Name('canonical')),
             ]));
         }, new DateArithmeticGenerator());
-        $this->forAll(new OperationGenerator($release, $queries))->withMaxSize(10)->then(static function (Operation $statement) use ($release): void {
+        $this->forAll(new AnalyzedStatementGenerator($release, $queries))->withMaxSize(10)->then(static function (MySqlStatement $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6), ['character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'collation_connection' => 'utf8mb4_unicode_ci'], ['pbt']))->connect(database: 'pbt');
             $session->text = 'not SQL: generated interval execution';
             $reply = (new Execution($session))->statement($statement);
@@ -63,7 +62,7 @@ final class IntervalExecutionProperties extends TestCase
             self::assertCount(2, $reply->rows[0]);
             self::assertNotNull($reply->rows[0][0]);
             self::assertSame($reply->rows[0][0], $reply->rows[0][1]);
-            self::assertEquals($statement->field(0)->type, $statement->field(1)->type);
+            self::assertEquals($statement->statementInformation()->field(0)->type, $statement->statementInformation()->field(1)->type);
             self::assertCount(2, $reply->columns);
             [$written, $canonical] = $reply->columns;
             self::assertSame([$written->type, $written->length, $written->decimals, $written->flags, $written->charset], [$canonical->type, $canonical->length, $canonical->decimals, $canonical->flags, $canonical->charset]);

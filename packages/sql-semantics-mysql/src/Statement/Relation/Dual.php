@@ -9,7 +9,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FROM DUAL`: the dummy table of one row and no columns.
@@ -22,11 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a selection from DUAL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM DUAL');
- *     $query->statement->query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
+ *     $query->query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
  */
-final class Dual implements \SqlSemantics\Statement\Relation
+final class Dual implements \SqlSemantics\Statement\Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Answers the empty row.
@@ -42,5 +42,14 @@ final class Dual implements \SqlSemantics\Statement\Relation
     public function render(Output $out): void
     {
         $out->keyword('DUAL');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 }

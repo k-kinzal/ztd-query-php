@@ -22,7 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -60,7 +59,7 @@ final class PatternMatchTest extends TestCase
         self::assertSame(Nullability::Dependent, $query->field(0)->nullability);
         self::assertInstanceOf(Dependent::class, $query->field(1)->type);
         self::assertSame('the signature of routine match', $query->field(1)->type->missing[0]->describe());
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarRecordsTheFactsOfEveryOperand(): void
@@ -71,18 +70,18 @@ final class PatternMatchTest extends TestCase
 
         self::assertInstanceOf(PatternMatch::class, $match);
         self::assertNotNull($match->escape);
-        self::assertSame(Nullability::Nullable, $query->facts->scalar($match->left)->nullability);
-        self::assertSame(Nullability::NotNull, $query->facts->scalar($match->right)->nullability);
-        self::assertSame(Nullability::NotNull, $query->facts->scalar($match->escape)->nullability);
+        self::assertSame(Nullability::Nullable, $match->left->scalarInformation()->nullability);
+        self::assertSame(Nullability::NotNull, $match->right->scalarInformation()->nullability);
+        self::assertSame(Nullability::NotNull, $match->escape->scalarInformation()->nullability);
     }
 
     public function testDeriveScalarReportsARowValueOperand(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) LIKE 1', []);
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::TooManyValueColumns, $query->facts->diagnostics[0]->rule);
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::TooManyValueColumns, $query->diagnostics()[0]->rule);
     }
 
     public function testRenderWritesTheNegationAndTheEscape(): void
@@ -112,7 +111,7 @@ final class PatternMatchTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $match = new PatternMatch(PatternOperator::Glob, new TextLiteral('abc'), new TextLiteral('a*'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($match)]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn($match)]));
 
         self::assertSame("SELECT 'abc' GLOB 'a*'", $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

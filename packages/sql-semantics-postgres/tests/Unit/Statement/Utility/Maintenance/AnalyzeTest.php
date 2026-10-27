@@ -20,18 +20,18 @@ final class AnalyzeTest extends TestCase
     public function testDeriveStatementResolvesEachTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE t, s.u');
-        self::assertInstanceOf(Analyze::class, $operation->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement->targets[1])->table);
+        self::assertInstanceOf(Analyze::class, $operation);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->targets[1]->relationInformation()->table);
     }
 
     public function testDeriveStatementReportsAnOptionOfVacuum(): void
     {
-        self::assertSame(['unrecognized ANALYZE option "freeze"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE (FREEZE) t')->facts->diagnostics));
+        self::assertSame(['unrecognized ANALYZE option "freeze"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE (FREEZE) t')->diagnostics()));
     }
 
     public function testDeriveStatementAcceptsItsOwnOptions(): void
     {
-        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("ANALYSE (VERBOSE, SKIP_LOCKED off, BUFFER_USAGE_LIMIT '256kB') t (a)")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("ANALYSE (VERBOSE, SKIP_LOCKED off, BUFFER_USAGE_LIMIT '256kB') t (a)")->diagnostics());
     }
 
     public function testRenderKeepsTheSpellingAndTheSyntax(): void

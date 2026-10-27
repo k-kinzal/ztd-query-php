@@ -252,7 +252,7 @@ final class OperatorsTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT ((1 IS NULL)), ISNULL(2), 3 IS NOT UNKNOWN, 4 IS TRUE');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $isNull = $operation->field(0)->expression;
         $function = $operation->field(1)->expression;
         $isNotUnknown = $operation->field(2)->expression;

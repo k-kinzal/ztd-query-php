@@ -33,7 +33,7 @@ final class RenameUserGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $profile = new LanguageProfile($release);
-        $requests = Generators::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), Generators::seq(new UserRenamingGenerator())));
+        $requests = \Tests\Generator\Operands::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), Generators::seq(new UserRenamingGenerator())));
         $this->delegate = Generators::oneOf(
             $requests,
             Generators::map(static fn (RefusedRenameUser $condition): RenameUser => new RenameUser($condition->renamings, $profile), new RefusedRenameUserGenerator()),
@@ -57,4 +57,46 @@ final class RenameUserGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<list<UserRenaming>> $renamings The generated semantic operand
+     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
+     * @return ErisGenerator<RenameUser>
+     */
+    public static function fromOperands(ErisGenerator $renamings, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): RenameUser => new RenameUser(renamings: $parts[0], profile: $parts[1], client: $parts[2]), \Tests\Generator\Operands::tuple($renamings, $profile, $client));
+    }
+
+    /**
+     * Composes the statement's SQL forms from typed operand generators.
+     *
+     * @return iterable<string, ErisGenerator<RenameUser>>
+     */
+    public static function forms(): iterable
+    {
+        yield 'RenameUser/63' => RenameUserGenerator::fromOperands(
+            renamings: \Tests\Generator\Operands::tuple(
+                UserRenamingGenerator::fromOperands(
+                    from: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
+                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
+                    )]),
+                    to: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
+                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
+                    )])
+                )
+            ),
+            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
+                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
+                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
+                    settings: Generators::constant('')
+                ),
+                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
+            ),
+            client: Generators::constant(null)
+        );
+    }
+
 }

@@ -19,7 +19,7 @@ final class GrantRequestTest extends TestCase
 {
     public function testScopeProblemRetainsTheContradictoryTarget(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON PROCEDURE d.p TO u')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON PROCEDURE d.p TO u');
         self::assertInstanceOf(CreateProcedure::class, $create);
         self::assertInstanceOf(DeferredGrantLevel::class, $create->body);
         self::assertSame('SELECT cannot be granted at object d.p (ER_ILLEGAL_GRANT_FOR_TABLE).', $create->body->request->scopeProblem()?->message());
@@ -27,7 +27,7 @@ final class GrantRequestTest extends TestCase
 
     public function testColumnLevelDistinguishesNonObjectTargets(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT(a) ON d.* TO u')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT(a) ON d.* TO u');
         self::assertInstanceOf(CreateProcedure::class, $create);
         self::assertInstanceOf(DeferredGrantLevel::class, $create->body);
         self::assertTrue($create->body->request->columnLevel());

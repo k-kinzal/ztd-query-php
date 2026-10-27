@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored single-table DELETE retaining an intrinsic target, sampling or ordering condition.
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining a common-table deletion in a stored program
  *     $definition = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1) DELETE FROM c');
- *     $definition->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete // => true
+ *     $definition->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete // => true
  */
 final class DeferredDelete implements \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
@@ -65,6 +64,7 @@ final class DeferredDelete implements \SqlSemantics\Platform\MySql\Statement\Rou
         array $orderBy = [],
         public readonly ?Limit $limit = null,
         array $hints = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');

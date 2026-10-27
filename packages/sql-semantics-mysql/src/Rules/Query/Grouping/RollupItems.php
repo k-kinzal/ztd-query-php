@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as FieldType;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
@@ -77,8 +76,7 @@ final class RollupItems
         if (!$this->rolls($select)) {
             return $items;
         }
-        $facts = $derivation->facts();
-        $groups = $this->groups($select, $facts);
+        $groups = $this->groups($select);
         $materialized = $select->orderBy !== [] || ($select->late !== null && $select->late->orderBy !== []) || in_array(SelectOption::Distinct, $select->options, true) || $this->windowed($select);
         $connection = Settings::of($derivation->context)->connection;
         $fields = [];
@@ -88,13 +86,13 @@ final class RollupItems
                 continue;
             }
             $slot = $field->slot;
-            if ($this->rolled($field, $groups, $facts)) {
+            if ($this->rolled($field, $groups)) {
                 $domain = $slot->type instanceof Known && $slot->type->descriptor instanceof Domain ? $slot->type->descriptor : null;
                 $type = $domain === null ? $slot->type : new Known($materialized ? $this->materialized($this->item($domain, $connection)) : $this->item($domain, $connection));
                 $fields[] = new Field($field->position, new OutputSlot($slot->name, $type, Nullability::Nullable, $slot->column, $slot->origin, $slot->unnamed), $field->expression, $field->resolution);
                 continue;
             }
-            $nullability = $field->expression !== null && $this->reads($field->expression, $groups, $facts) ? Nullability::Nullable : $this->before($field, $visible, $output, $facts);
+            $nullability = $field->expression !== null && $this->reads($field->expression, $groups) ? Nullability::Nullable : $this->before($field, $visible, $output);
             $fields[] = new Field($field->position, new OutputSlot($slot->name, $slot->type, $nullability, $slot->column, $slot->origin, $slot->unnamed), $field->expression, $field->resolution);
         }
 
@@ -147,12 +145,12 @@ final class RollupItems
      *
      * @return list<Operand>
      */
-    public function groups(Select $select, Facts $facts): array
+    public function groups(Select $select): array
     {
         $matching = new Matching();
         $groups = [];
         foreach ($select->groupBy->items ?? [] as $item) {
-            $groups[] = $matching->unwrap($matching->target($item->expression, $facts));
+            $groups[] = $matching->unwrap($matching->target($item->expression));
         }
 
         return $groups;
@@ -163,19 +161,19 @@ final class RollupItems
      *
      * @param list<Operand> $groups
      */
-    public function rolled(Field $field, array $groups, Facts $facts): bool
+    public function rolled(Field $field, array $groups): bool
     {
         $reads = new ColumnReads();
         if ($field->expression !== null) {
-            return (new Matching())->listed($field->expression, $groups, $facts);
+            return (new Matching())->listed($field->expression, $groups);
         }
         if (!$field->resolution instanceof ResolvedColumn) {
             return false;
         }
         $key = $reads->key($field->resolution);
         foreach ($groups as $group) {
-            if ($group instanceof ColumnUse && $facts->covers($group)) {
-                $resolution = $facts->scalar($group)->resolution;
+            if ($group instanceof ColumnUse && $group->hasBinding()) {
+                $resolution = $group->scalarInformation()->resolution;
                 if ($resolution instanceof ResolvedColumn && $reads->key($resolution) === $key) {
                     return true;
                 }
@@ -190,12 +188,12 @@ final class RollupItems
      *
      * @param list<Operand> $groups
      */
-    public function reads(Node $node, array $groups, Facts $facts): bool
+    public function reads(Node $node, array $groups): bool
     {
         if ($node instanceof Query || $node instanceof WindowFunction || $node instanceof Aggregate && $node->over === null || $node instanceof GroupConcat && $node->over === null || $node instanceof JsonObjectAggregate || $node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
             return false;
         }
-        if ($node instanceof Operand && (new Matching())->listed($node, $groups, $facts)) {
+        if ($node instanceof Operand && (new Matching())->listed($node, $groups)) {
             return true;
         }
         $properties = get_object_vars($node);
@@ -206,7 +204,7 @@ final class RollupItems
             }
         });
         foreach ($children as $child) {
-            if ($this->reads($child, $groups, $facts)) {
+            if ($this->reads($child, $groups)) {
                 return true;
             }
         }
@@ -220,12 +218,12 @@ final class RollupItems
      * @param list<VisibleRelation> $visible
      * @param list<VisibleRelation> $output
      */
-    public function before(Field $field, array $visible, array $output, Facts $facts): Nullability
+    public function before(Field $field, array $visible, array $output): Nullability
     {
         $resolution = $field->resolution;
         $expression = $field->expression === null ? null : (new Matching())->unwrap($field->expression);
-        if ($expression instanceof ColumnUse && $facts->covers($expression)) {
-            $resolution = $facts->scalar($expression)->resolution;
+        if ($expression instanceof ColumnUse && $expression->hasBinding()) {
+            $resolution = $expression->scalarInformation()->resolution;
         }
         if (!$resolution instanceof ResolvedColumn) {
             return $field->nullability;
@@ -298,12 +296,11 @@ final class RollupItems
         if (!$query instanceof Select || !$this->rolls($query)) {
             return false;
         }
-        $facts = $derivation->facts();
-        if (!$facts->covers($query)) {
+        if (!$query->hasBinding()) {
             return false;
         }
-        $field = $facts->query($query)->projection[$position] ?? null;
+        $field = $query->queryInformation()->projection[$position] ?? null;
 
-        return $field instanceof Field && $this->rolled($field, $this->groups($query, $facts), $facts);
+        return $field instanceof Field && $this->rolled($field, $this->groups($query));
     }
 }

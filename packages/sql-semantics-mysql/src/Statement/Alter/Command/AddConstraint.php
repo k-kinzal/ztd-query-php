@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ADD key or constraint`: a request to add an index, a key, a foreign key or a check constraint.
@@ -29,12 +28,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AddConstraint implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IndexDefinition|ForeignKey|CheckConstraint $element The key or constraint
      */
-    public function __construct(public readonly IndexDefinition|ForeignKey|CheckConstraint $element)
+    public function __construct(public readonly IndexDefinition|ForeignKey|CheckConstraint $element, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

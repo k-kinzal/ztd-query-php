@@ -18,19 +18,19 @@ final class ShowKeysTest extends TestCase
     public function testDeriveStatementResolvesTheTableInTheWrittenDatabase(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED INDEX FROM t FROM db');
-        self::assertInstanceOf(ShowKeys::class, $show->statement);
+        self::assertInstanceOf(ShowKeys::class, $show);
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE db.t (a INT)');
         $keys = $semantics->analyze('SHOW INDEX FROM other.t IN db', [$table]);
-        self::assertInstanceOf(ShowKeys::class, $keys->statement);
-        self::assertSame([], $keys->facts->diagnostics);
+        self::assertInstanceOf(ShowKeys::class, $keys);
+        self::assertSame([], $keys->diagnostics());
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED INDEX FROM t FROM db');
-        self::assertInstanceOf(ShowKeys::class, $show->statement);
-        self::assertSame('Visible', $show->facts->relation($show->statement)->shape->slots[13]->name?->value);
+        self::assertInstanceOf(ShowKeys::class, $show);
+        self::assertSame('Visible', $show->relationInformation()->shape->slots[13]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

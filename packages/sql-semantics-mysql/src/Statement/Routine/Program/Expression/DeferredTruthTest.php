@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -24,19 +23,23 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Keeping the truth test around a deferred stored computation
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() KILL (1 LIKE ROW(1,2)) IS TRUE');
- *     $operation->statement->body->process instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest // => true
+ *     $operation->body->process instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest // => true
  */
 final class DeferredTruthTest implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $operand The complete non-scalar computation
      * @param Truth $truth The truth value tested
      * @param bool $negated Whether NOT follows IS
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly Truth $truth, public readonly bool $negated = false)
+    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly Truth $truth, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->fits($operand, Precedence::TRUTH, Precedence::BOOL_PRI), 'The truth-test operand requires grouping.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

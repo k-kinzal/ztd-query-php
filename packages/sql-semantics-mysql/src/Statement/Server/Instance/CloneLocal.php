@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `CLONE LOCAL DATA DIRECTORY [=] 'directory'`: a request to clone the local server's data into a directory (MySQL 8.0.17 and later).
@@ -22,17 +21,20 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Cloning into a directory
  *     $clone = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("clone local data directory = '/srv/copy'");
- *     [$clone->toString(), $clone->statement->directory->value] // => ["CLONE LOCAL DATA DIRECTORY '/srv/copy'", '/srv/copy']
+ *     [$clone->toString(), $clone->directory->value] // => ["CLONE LOCAL DATA DIRECTORY '/srv/copy'", '/srv/copy']
  */
-final class CloneLocal implements Statement
+final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $directory The directory the data is cloned into
      */
-    public function __construct(public readonly Text $directory)
+    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input($directory->radix === null, 'A clone directory is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

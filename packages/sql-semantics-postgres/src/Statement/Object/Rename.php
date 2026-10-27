@@ -18,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\RelationTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,11 +33,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a column rename
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t RENAME COLUMN a TO b');
- *     [$operation->statement->member?->name->value, $operation->statement->newName->value] // => ['a', 'b']
+ *     [$operation->member?->name->value, $operation->newName->value] // => ['a', 'b']
  */
-final class Rename implements Statement
+final class Rename extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ObjectKind $kind The kind of the object
@@ -57,7 +56,12 @@ final class Rename implements Statement
         public readonly bool $ifExists = false,
         public readonly ?DropBehavior $behavior = null,
         public readonly ?RoleWord $roleWord = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $forms = new ObjectForms();
         Check::input(in_array($forms->form($object), $forms->altered($kind, 'rename'), true), 'ALTER ... RENAME names the object as the grammar names objects of its kind.');
         Check::input(($kind === ObjectKind::Role) === ($roleWord !== null), 'A role is renamed with ROLE, USER or GROUP; nothing else is.');

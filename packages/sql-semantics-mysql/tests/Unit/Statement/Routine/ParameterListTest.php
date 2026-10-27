@@ -54,25 +54,22 @@ final class ParameterListTest extends TestCase
     public function testDeriveRelationAnswersTheRowOfAnAnalyzedRoutine(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(INOUT x INT, y BIGINT) SELECT x');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
-        self::assertEquals(new RowShape([
-            new OutputSlot(new Name('x'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable),
-            new OutputSlot(new Name('y'), new Known(new Integral(IntegralKind::BigInt)), Nullability::Nullable),
-        ]), $create->facts->relation($statement->parameters)->shape);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new RowShape([new OutputSlot(new Name('x'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable), new OutputSlot(new Name('y'), new Known(new Integral(IntegralKind::BigInt)), Nullability::Nullable)]), $statement->parameters->relationInformation()->shape));
     }
 
     public function testDeriveRelationResolvesEveryDirectionInTheBody(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(IN a INT, OUT b INT, INOUT c INT, d INT) SELECT a, b, c, d, z', []);
 
-        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveRelationLetsALocalVariableHideAParameter(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->diagnostics());
     }
 
     /**

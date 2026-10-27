@@ -26,7 +26,7 @@ final class ForeignKeyRuleTest extends TestCase
 {
     public function testClauseLowersTheParentAndItsOptionalColumns(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p, b REFERENCES q (x, y))')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p, b REFERENCES q (x, y))');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $first = $statement->columns[0]->constraints[0];
@@ -40,7 +40,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testArgumentsKeepTheirWrittenOrder(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p ON DELETE CASCADE MATCH full ON UPDATE NO ACTION ON INSERT RESTRICT)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p ON DELETE CASCADE MATCH full ON UPDATE NO ACTION ON INSERT RESTRICT)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];
@@ -53,7 +53,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testArgumentLowersEveryEventAndReaction(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p ON DELETE SET NULL ON UPDATE SET DEFAULT ON INSERT CASCADE ON DELETE RESTRICT ON UPDATE NO ACTION)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p ON DELETE SET NULL ON UPDATE SET DEFAULT ON INSERT CASCADE ON DELETE RESTRICT ON UPDATE NO ACTION)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];
@@ -70,7 +70,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testDeferrabilityLowersBothForms(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p NOT DEFERRABLE)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p NOT DEFERRABLE)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $plain = $statement->columns[0]->constraints[1];
@@ -83,7 +83,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testOptionalDeferrabilityIsNullWhenNoClauseIsWritten(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a, FOREIGN KEY (a) REFERENCES p, FOREIGN KEY (a) REFERENCES p DEFERRABLE)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a, FOREIGN KEY (a) REFERENCES p, FOREIGN KEY (a) REFERENCES p DEFERRABLE)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $without = $statement->constraints[0]->items[0];
@@ -96,7 +96,7 @@ final class ForeignKeyRuleTest extends TestCase
 
     public function testInitiallyLowersTheOptionalMode(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p DEFERRABLE INITIALLY DEFERRED, d REFERENCES p DEFERRABLE INITIALLY IMMEDIATE)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a REFERENCES p DEFERRABLE, b REFERENCES p DEFERRABLE INITIALLY DEFERRED, d REFERENCES p DEFERRABLE INITIALLY IMMEDIATE)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $modes = array_map(static fn (object $column): ?InitialMode => $column->constraints[1] instanceof Deferrability ? $column->constraints[1]->initially : null, $statement->columns);

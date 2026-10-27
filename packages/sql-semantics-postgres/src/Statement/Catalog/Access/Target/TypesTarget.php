@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Types or domains named as the objects of a GRANT or REVOKE.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the domain of a grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT USAGE ON DOMAIN app.email TO joe');
- *     $operation->statement->target->names[0]->last()->value // => 'email'
+ *     $operation->target->names[0]->last()->value // => 'email'
  */
 final class TypesTarget implements PrivilegeTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<DottedName> The names in the order written
@@ -36,7 +35,7 @@ final class TypesTarget implements PrivilegeTarget
      * @param PrivilegeObjectKind $object The kind: types or domains
      * @param list<DottedName> $names The names in the order written, at least one
      */
-    public function __construct(public readonly PrivilegeObjectKind $object, array $names)
+    public function __construct(public readonly PrivilegeObjectKind $object, array $names, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($object === PrivilegeObjectKind::Type || $object === PrivilegeObjectKind::Domain, 'Dotted names are types or domains.');
         $this->names = Check::listOf($names, DottedName::class, 'A grant names at least one type.', 1);

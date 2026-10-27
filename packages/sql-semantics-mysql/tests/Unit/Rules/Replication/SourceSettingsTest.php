@@ -19,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(SourceSettings::class)]
@@ -42,28 +41,25 @@ final class SourceSettingsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=0');
 
-        self::assertCount(2, $operation->facts->warnings);
-        self::assertEquals($operation->facts->warnings[0], $operation->facts->warnings[1]);
-        self::assertNotSame($operation->facts->warnings[0], $operation->facts->warnings[1]);
+        self::assertCount(2, $operation->warnings());
+        self::assertEquals($operation->warnings()[0], $operation->warnings()[1]);
+        self::assertNotSame($operation->warnings()[0], $operation->warnings()[1]);
     }
 
     public function testOptionsDerivesTheHeartbeatPeriod(): void
     {
         $change = (new Semantics(Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');
 
-        self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
-        self::assertInstanceOf(NumberLiteral::class, $change->statement->options[0]->value);
-        self::assertInstanceOf(Known::class, $change->facts->scalar($change->statement->options[0]->value)->type);
+        self::assertInstanceOf(ChangeReplicationSource::class, $change);
+        self::assertInstanceOf(NumberLiteral::class, $change->options[0]->value);
+        self::assertInstanceOf(Known::class, $change->options[0]->value->scalarInformation()->type);
     }
 
     public function testOptionRejectsAnOptionOfALaterRelease(): void
     {
         $this->expectExceptionMessage('SOURCE_TLS_VERSION is not an option of this release.');
 
-        new Operation(
-            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]),
-            new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::TlsVersion, new Text('TLSv1.2'))]),
-        );
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::TlsVersion, new Text('TLSv1.2'))]), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testErrorAnswersTheCheckOfEachValueKind(): void

@@ -20,7 +20,7 @@ final class KindProblemTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('DROP TABLE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')]);
-        $problem = $statement->facts->diagnostics[0];
+        $problem = $statement->diagnostics()[0];
         self::assertInstanceOf(KindProblem::class, $problem);
         self::assertSame('"v" is not a table', $problem->message());
     }

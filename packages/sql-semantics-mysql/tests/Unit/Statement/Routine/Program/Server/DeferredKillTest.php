@@ -18,11 +18,11 @@ final class DeferredKillTest extends TestCase
     public function testDeriveProgramRetainsDefinitionTimeVariableProblems(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() KILL QUERY ROW(@@missing,2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredKill::class, $operation->statement->body);
-        self::assertNotEmpty(array_filter($operation->facts->diagnostics, static fn ($problem) => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredKill::class, $operation->body);
+        self::assertNotEmpty(array_filter($operation->diagnostics(), static fn ($problem) => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable));
         self::assertSame('CREATE PROCEDURE p() KILL QUERY ROW(@@missing, 2)', $operation->toString());
-        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->statement->body);
+        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->body);
     }
     public function testRenderKeepsTheProcessScopeAndOperand(): void
     {

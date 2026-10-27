@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -39,16 +38,16 @@ final class ColumnReads
      * @param array<int, VisibleRelation> $relations
      * @return list<array{string, ResolvedColumn}>
      */
-    public function columns(Node $value, array $relations, Facts $facts, bool $aggregated): array
+    public function columns(Node $value, array $relations, bool $aggregated): array
     {
         if (!$aggregated && ($this->aggregate($value) || $this->anyValue($value))) {
             return [];
         }
-        if (($value instanceof ColumnUse || $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) && $facts->covers($value)) {
-            $resolution = $facts->scalar($value)->resolution;
+        if (($value instanceof ColumnUse || $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal) && $value->hasBinding()) {
+            $resolution = $value->scalarInformation()->resolution;
             if ($resolution instanceof AliasTarget) {
                 if ($resolution->field->expression !== null) {
-                    return $this->columns($resolution->field->expression, $relations, $facts, $aggregated);
+                    return $this->columns($resolution->field->expression, $relations, $aggregated);
                 }
                 $resolution = $resolution->field->resolution;
             }
@@ -64,7 +63,7 @@ final class ColumnReads
         });
         $found = [];
         foreach ($children as $child) {
-            array_push($found, ...$this->columns($child, $relations, $facts, $aggregated));
+            array_push($found, ...$this->columns($child, $relations, $aggregated));
         }
 
         return $found;

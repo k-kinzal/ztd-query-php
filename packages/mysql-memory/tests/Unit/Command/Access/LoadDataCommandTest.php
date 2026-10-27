@@ -21,8 +21,8 @@ final class LoadDataCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("LOAD XML INFILE 'x' INTO TABLE d.t ROWS IDENTIFIED BY '<猫>'");
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
-        self::assertSame(['xml:ROW' => '<猫>'], (new LoadDataCommand())->separatorBytes($operation->statement));
+        self::assertInstanceOf(LoadTable::class, $operation);
+        self::assertSame(['xml:ROW' => '<猫>'], (new LoadDataCommand())->separatorBytes($operation));
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1049);
         try {
@@ -58,20 +58,20 @@ final class LoadDataCommandTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze("LOAD DATA LOCAL INFILE 'f' INTO TABLE absent");
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertInstanceOf(LoadTable::class, $operation);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3948);
-        (new LoadDataCommand())->entry($operation->statement, $operation->facts, $session);
+        (new LoadDataCommand())->entry($operation, $operation->statementInformation(), $session);
     }
 
     public function testOptionsRetainsTheReleaseSpecificBulkConditions(): void
     {
         $session = (new Instance('8.2.0', [], ['d']))->connect(database: 'd');
         $operation = $session->analyze("LOAD DATA INFILE 'f' INTO TABLE absent ALGORITHM=BULK");
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertInstanceOf(LoadTable::class, $operation);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
-        (new LoadDataCommand())->options($operation->statement, $operation->facts, $session);
+        (new LoadDataCommand())->options($operation, $operation->statementInformation(), $session);
     }
 
     public function testBulkConditionsFollowTargetAndPrimaryKeyChanges(): void
@@ -79,15 +79,15 @@ final class LoadDataCommandTest extends TestCase
         $session = (new Instance('8.2.0'))->connect();
         $session->query('CREATE DATABASE d; USE d');
         $operation = $session->analyze("LOAD DATA INFILE 'text' INTO TABLE t ALGORITHM=BULK");
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertInstanceOf(LoadTable::class, $operation);
         $command = new LoadDataCommand();
 
-        self::assertSame([[1146, "Table 'd.t' doesn't exist"]], $command->bulkConditions($operation->statement, $session));
+        self::assertSame([[1146, "Table 'd.t' doesn't exist"]], $command->bulkConditions($operation, $session));
         $session->query('CREATE TABLE t(a INT)');
-        self::assertSame([[4130, "Table 'd/t' has no primary key."]], $command->bulkConditions($operation->statement, $session));
+        self::assertSame([[4130, "Table 'd/t' has no primary key."]], $command->bulkConditions($operation, $session));
         $session->query('ALTER TABLE t ADD PRIMARY KEY(a)');
-        self::assertSame([[1290, 'The MySQL server is running with the --secure-file-priv option so it cannot execute this statement']], $command->bulkConditions($operation->statement, $session));
-        self::assertSame([], $command->bulkConditions($operation->statement, (new Instance())->connect()));
+        self::assertSame([[1290, 'The MySQL server is running with the --secure-file-priv option so it cannot execute this statement']], $command->bulkConditions($operation, $session));
+        self::assertSame([], $command->bulkConditions($operation, (new Instance())->connect()));
     }
 
     public function testClearsDiagnosticsAnswersTrue(): void
@@ -200,7 +200,7 @@ final class LoadDataCommandTest extends TestCase
     public function testSeparatorsTakesATerminatorOfSeveralBytes(): void
     {
         $session = (new Instance('9.1.0'))->connect();
-        $statement = $session->analyze("LOAD DATA INFILE '/tmp/x' INTO TABLE t FIELDS TERMINATED BY 'abc' ESCAPED BY X'5C'")->statement;
+        $statement = $session->analyze("LOAD DATA INFILE '/tmp/x' INTO TABLE t FIELDS TERMINATED BY 'abc' ESCAPED BY X'5C'");
         self::assertInstanceOf(LoadTable::class, $statement);
 
         (new LoadDataCommand())->separators($statement);
@@ -211,9 +211,9 @@ final class LoadDataCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("LOAD DATA INFILE 'x' INTO TABLE d.t FIELDS TERMINATED BY X'80' TERMINATED BY 'a' ENCLOSED BY 'x' OPTIONALLY ENCLOSED BY 'y' LINES STARTING BY B'10000000'");
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertInstanceOf(LoadTable::class, $operation);
 
-        self::assertSame(['field:TERMINATED' => 'a', 'field:ENCLOSED' => 'y', 'line:STARTING' => "\x80"], (new LoadDataCommand())->separatorBytes($operation->statement));
+        self::assertSame(['field:TERMINATED' => 'a', 'field:ENCLOSED' => 'y', 'line:STARTING' => "\x80"], (new LoadDataCommand())->separatorBytes($operation));
     }
 
 }

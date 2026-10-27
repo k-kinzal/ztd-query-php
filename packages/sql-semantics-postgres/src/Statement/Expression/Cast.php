@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -43,15 +42,19 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class Cast implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The converted value
      * @param TypeName $type The target type
      * @param CastSpelling $spelling How the cast is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly TypeName $type, public readonly CastSpelling $spelling)
+    public function __construct(public readonly Scalar $operand, public readonly TypeName $type, public readonly CastSpelling $spelling, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($spelling === CastSpelling::Function || (new Precedence())->before($operand, Precedence::TYPECAST), 'The operand of :: needs parentheses to keep its place.');
     }
 

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A CHECK column constraint.
@@ -26,17 +25,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Resolving a column inside a CHECK constraint to the column being defined
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a INT CHECK (a > 0))');
- *     $check = $create->statement->columns[0]->constraints[0];
- *     $create->facts->scalar($check->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ *     $check = $create->columns[0]->constraints[0];
+ *     $check->expression->left->scalarInformation()->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
  */
 final class ColumnCheck implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The condition every row must not fail
      */
-    public function __construct(public readonly Scalar $expression)
+    public function __construct(public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

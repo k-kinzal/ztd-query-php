@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored query write retaining its destination and a deferred read source.
@@ -32,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredInsertQuery implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Assignment> The duplicate-key assignments in written order
@@ -44,7 +43,7 @@ final class DeferredInsertQuery implements ProgramStatement
      * @param Query $source The complete retained read, including unused definitions
      * @param list<Assignment> $onDuplicate The duplicate-key assignments
      */
-    public function __construct(public readonly InsertInto $into, public readonly Query $source, array $onDuplicate = [])
+    public function __construct(public readonly InsertInto $into, public readonly Query $source, array $onDuplicate = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');

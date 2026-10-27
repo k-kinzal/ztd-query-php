@@ -48,7 +48,7 @@ final class ControlResults
         while ($node instanceof Grouped) {
             $node = $node->operand;
         }
-        $column = $node !== null && $call->derivation->facts()->scalar($node)->resolution instanceof ResolvedColumn;
+        $column = $node !== null && $node->scalarInformation()->resolution instanceof ResolvedColumn;
         $legacy = (new FormatResults())->legacy($call);
         $domain = $call->domain(0);
         if ($legacy && $domain->kind === Kind::Null) {

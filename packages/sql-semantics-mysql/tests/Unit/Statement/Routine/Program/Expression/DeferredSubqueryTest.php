@@ -26,12 +26,12 @@ final class DeferredSubqueryTest extends TestCase
     public function testDeriveScalarRetainsTheStoredQueryDependency(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT (VALUES ROW())');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(M\Routine\Program\DeferredSelection::class, $operation->statement->body);
-        $projection = $operation->statement->body->items[0];
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(M\Routine\Program\DeferredSelection::class, $operation->body);
+        $projection = $operation->body->items[0];
         self::assertInstanceOf(M\Routine\Program\DeferredProjection::class, $projection);
         self::assertInstanceOf(M\Routine\Program\Expression\DeferredSubquery::class, $projection->expression);
-        self::assertNotEmpty($operation->facts->diagnostics);
+        self::assertNotEmpty($operation->diagnostics());
     }
 
     public function testProblemIdentifiesTheMissingReadColumns(): void

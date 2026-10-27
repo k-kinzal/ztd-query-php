@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `START REPLICA [threads] [UNTIL …] [USER = …] [PASSWORD = …] [DEFAULT_AUTH = …] [PLUGIN_DIR = …] [FOR CHANNEL …]`, or START SLAVE.
@@ -38,9 +37,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Starting the receiver thread with credentials
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
  */
-final class StartReplica implements Statement
+final class StartReplica extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ReplicaThread> The threads in written order; empty for both
@@ -66,7 +65,12 @@ final class StartReplica implements Statement
         public readonly ?Text $defaultAuth = null,
         public readonly ?Text $pluginDir = null,
         public readonly ?Text $channel = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         foreach ([$user, $password, $defaultAuth, $pluginDir, $channel] as $text) {
             Check::input($text === null || $text->radix === null, 'Replication credentials and channel names are quoted text.');
         }

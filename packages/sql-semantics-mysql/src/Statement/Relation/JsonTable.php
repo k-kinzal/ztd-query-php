@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The table function `JSON_TABLE(document, path COLUMNS (...)) [AS] alias`.
@@ -36,11 +35,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the alias of a JSON table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$')) AS j");
- *     $query->statement->query->from->alias->value // => 'j'
+ *     $query->query->from->alias->value // => 'j'
  */
-final class JsonTable implements Relation
+final class JsonTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<JsonTableColumn> The column definitions in written order
@@ -54,8 +54,11 @@ final class JsonTable implements Relation
      * @param Name $alias The nonempty correlation name
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $document, public readonly StringLiteral $path, array $columns, public readonly Name $alias, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $document, public readonly StringLiteral $path, array $columns, public readonly Name $alias, public readonly AliasMark $mark = AliasMark::As, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($mark !== AliasMark::Equals, 'A JSON table alias is written with or without AS.');
         Check::input($alias->value !== '', 'A JSON table requires a nonempty alias.');
         $this->columns = Check::listOf($columns, JsonTableColumn::class, 'JSON_TABLE defines at least one column.', 1);

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading a function's instruction body
- *     $function = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT RETURN 1')->statement;
+ *     $function = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT RETURN 1');
  *     $function->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody // => true
  */
 interface FunctionBody extends ProgramStatement

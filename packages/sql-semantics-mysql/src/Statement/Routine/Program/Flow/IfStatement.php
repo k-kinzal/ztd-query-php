@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * IF ... THEN ... ELSEIF ... ELSE ... END IF.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an IF with ELSE
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) IF a THEN SELECT 1; ELSE SELECT 2; END IF');
- *     [count($create->statement->body->branches), count($create->statement->body->otherwise)] // => [1, 1]
+ *     [count($create->body->branches), count($create->body->otherwise)] // => [1, 1]
  */
 final class IfStatement implements FunctionBody
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ConditionalBranch> The IF branch and the ELSEIF branches in written order
@@ -46,7 +45,7 @@ final class IfStatement implements FunctionBody
      * @param list<ProgramStatement|Statement> $otherwise The statements of ELSE; empty without ELSE
      * @throws InvalidConstruction When there is no branch or a member is of another class
      */
-    public function __construct(array $branches, array $otherwise = [])
+    public function __construct(array $branches, array $otherwise = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->branches = Check::listOf($branches, ConditionalBranch::class, 'IF holds at least one branch.', 1);
         $this->otherwise = (new StatementSequence())->members($otherwise);

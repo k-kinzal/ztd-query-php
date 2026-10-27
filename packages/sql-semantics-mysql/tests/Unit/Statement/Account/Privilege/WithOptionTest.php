@@ -22,9 +22,9 @@ final class WithOptionTest extends TestCase
     {
         $grant = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('GRANT SELECT ON *.* TO u WITH GRANT OPTION MAX_QUERIES_PER_HOUR 1');
 
-        self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
-        self::assertContainsOnlyInstancesOf(WithOption::class, $grant->statement->options);
-        self::assertInstanceOf(GrantOptionRight::class, $grant->statement->options[0]);
-        self::assertInstanceOf(ResourceLimit::class, $grant->statement->options[1]);
+        self::assertInstanceOf(GrantPrivileges::class, $grant);
+        self::assertContainsOnlyInstancesOf(WithOption::class, $grant->options);
+        self::assertInstanceOf(GrantOptionRight::class, $grant->options[0]);
+        self::assertInstanceOf(ResourceLimit::class, $grant->options[1]);
     }
 }

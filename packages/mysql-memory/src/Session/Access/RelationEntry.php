@@ -8,7 +8,7 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement as M;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -29,7 +29,7 @@ final class RelationEntry
      *
      * @throws \MySqlMemory\Error\SqlError When a reached count or preceding dependency cannot bind
      */
-    public function counts(Node $statement, Facts $facts, Session $session): void
+    public function counts(Node $statement, StatementSemantics $facts, Session $session): void
     {
         foreach ($this->nodes($statement, $facts) as $node) {
             if ($node instanceof M\Call\Window\RoutineVariable || ($node instanceof M\Query\Clause\RowLimit && ($node->count instanceof M\Query\Clause\ProgramVariable || $node->offset instanceof M\Query\Clause\ProgramVariable))) {
@@ -44,7 +44,7 @@ final class RelationEntry
      *
      * @throws \MySqlMemory\Error\SqlError When the first reached name cannot bind
      */
-    public function check(Node $statement, Facts $facts, Session $session, bool $counts = false): void
+    public function check(Node $statement, StatementSemantics $facts, Session $session, bool $counts = false): void
     {
         $database = $statement instanceof M\Utility\Explain\Explain ? $statement->database->value ?? $session->variables->database : $session->variables->database;
         if ($session->settings()->legacy() || ($statement instanceof \SqlSemantics\Statement\Statement && \MySqlMemory\Command\Dispatcher::program($statement))) {
@@ -74,7 +74,7 @@ final class RelationEntry
     /**
      * @return array<string, M\Variable\Problem\UnknownSystemVariable> Unresolved unqualified system-variable reads
      */
-    public function variables(Facts $facts): array
+    public function variables(StatementSemantics $facts): array
     {
         $variables = [];
         foreach ($facts->diagnostics as $problem) {
@@ -88,7 +88,7 @@ final class RelationEntry
     /**
      * @return array<int, M\Server\Problem\NonUniqueTable> Duplicate names indexed by their later relation occurrence
      */
-    public function aliases(Facts $facts): array
+    public function aliases(StatementSemantics $facts): array
     {
         $aliases = [];
         foreach ($facts->diagnostics as $problem) {
@@ -102,12 +102,12 @@ final class RelationEntry
     /**
      * Answers whether this reached base relation needs the current database.
      */
-    public function implicit(Node $node, Facts $facts): bool
+    public function implicit(Node $node, StatementSemantics $facts): bool
     {
-        if (!in_array($node::class, [M\Relation\TableReference::class, M\Query\ExplicitTable::class, M\Dml\WriteTarget::class], true) || !$facts->covers($node)) {
+        if (!in_array($node::class, [M\Relation\TableReference::class, M\Query\ExplicitTable::class, M\Dml\WriteTarget::class], true) || !$node->hasBinding()) {
             return false;
         }
-        $table = $facts->relation($node)->table;
+        $table = $node->relationInformation()->table;
         return $table instanceof MissingTable && $table->name->schema === null;
     }
 
@@ -126,7 +126,7 @@ final class RelationEntry
     /**
      * @return list<Node> Active occurrences, with projections before input relations
      */
-    public function nodes(Node $root, Facts $facts): array
+    public function nodes(Node $root, StatementSemantics $facts): array
     {
         /** @var list<array{Node, bool}> $pending */
         $pending = [[$root, false]];
@@ -152,8 +152,8 @@ final class RelationEntry
                 $ordered = array_values(array_filter([...$node->items, ...(($node instanceof M\Routine\Program\DeferredSelection || $node->intoPosition === M\Query\Into\IntoPosition::AfterItems) ? [$node->into] : []), $node->from, $node->where, $node->groupBy, $node->having, ...$node->windows, $node->qualify, ...$node->orderBy, $node->limit], static fn ($child): bool => $child instanceof Node));
                 $children = [...$ordered, ...array_filter($children, static fn (Node $child): bool => !in_array($child, $ordered, true))];
             }
-            if (($node instanceof M\Relation\TableReference || $node instanceof M\Query\ExplicitTable) && $facts->covers($node)) {
-                $table = $facts->relation($node)->table;
+            if (($node instanceof M\Relation\TableReference || $node instanceof M\Query\ExplicitTable) && $node->hasBinding()) {
+                $table = $node->relationInformation()->table;
                 if ($table instanceof CommonTable) {
                     $children[] = $table->definition;
                 }

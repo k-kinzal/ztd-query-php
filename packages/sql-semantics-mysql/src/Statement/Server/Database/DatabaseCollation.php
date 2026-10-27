@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[DEFAULT] COLLATE [=] collation`: the default collation of the database's tables.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the collation
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
- *     $alter->statement->options[0]->collation->name?->value // => 'utf8mb4_bin'
+ *     $alter->options[0]->collation->name?->value // => 'utf8mb4_bin'
  */
 final class DatabaseCollation implements DatabaseOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CollationName $collation The collation
      */
-    public function __construct(public readonly CollationName $collation)
+    public function __construct(public readonly CollationName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

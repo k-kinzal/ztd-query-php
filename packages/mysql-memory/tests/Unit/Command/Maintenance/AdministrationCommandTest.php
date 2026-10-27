@@ -210,7 +210,7 @@ final class AdministrationCommandTest extends TestCase
     public function testNamesAnswersTheTablesAndWhetherTheySelectPartitions(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('LOAD INDEX INTO CACHE t PARTITION (ALL)')->statement;
+        $statement = $session->analyze('LOAD INDEX INTO CACHE t PARTITION (ALL)');
         self::assertInstanceOf(LoadIndex::class, $statement);
 
         self::assertSame([['t', true]], array_map(static fn (array $name): array => [$name[0]->name->value, $name[1]], (new AdministrationCommand())->names($statement)));
@@ -219,7 +219,7 @@ final class AdministrationCommandTest extends TestCase
     public function testOperationAnswersTheOpColumn(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CACHE INDEX t IN DEFAULT')->statement;
+        $statement = $session->analyze('CACHE INDEX t IN DEFAULT');
         self::assertInstanceOf(CacheIndex::class, $statement);
 
         self::assertSame('assign_to_keycache', (new AdministrationCommand())->operation($statement));
@@ -229,7 +229,7 @@ final class AdministrationCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $statement = $session->analyze('CHECK TABLE t')->statement;
+        $statement = $session->analyze('CHECK TABLE t');
         self::assertInstanceOf(CheckTable::class, $statement);
 
         self::assertNull((new AdministrationCommand())->failure($session, 'd', $statement->tables[0]->name, $session->instance->dictionary->table('d', 't')));
@@ -263,7 +263,7 @@ final class AdministrationCommandTest extends TestCase
     public function testValidateRequiresADatabaseBeforeLookingUpTheKeyCache(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CACHE INDEX t IN other')->statement;
+        $statement = $session->analyze('CACHE INDEX t IN other');
         self::assertInstanceOf(CacheIndex::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -276,7 +276,7 @@ final class AdministrationCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');
-        $statement = $session->analyze('REPAIR TABLE nope, x.nope')->statement;
+        $statement = $session->analyze('REPAIR TABLE nope, x.nope');
         self::assertInstanceOf(RepairTable::class, $statement);
 
         self::assertSame(

@@ -19,12 +19,12 @@ final class AlterRoleTest extends TestCase
 
     public function testDeriveStatementReportsPublicAndAReservedName(): void
     {
-        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE public LOGIN; ')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE public LOGIN; ')->diagnostics()));
     }
 
     public function testDeriveStatementReportsAReservedName(): void
     {
-        self::assertSame(['role name "pg_monitor" is reserved', 'conflicting or redundant options'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE pg_monitor LOGIN LOGIN')->facts->diagnostics));
+        self::assertSame(['role name "pg_monitor" is reserved', 'conflicting or redundant options'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE pg_monitor LOGIN LOGIN')->diagnostics()));
     }
 
     public function testRejectsTheGroupWord(): void

@@ -25,8 +25,8 @@ final class OnWordTest extends TestCase
     public function testDeriveScalarIsAString(): void
     {
         $install = (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'c' SET c.v = ON");
-        self::assertInstanceOf(InstallComponent::class, $install->statement);
+        self::assertInstanceOf(InstallComponent::class, $install);
 
-        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), $install->facts->scalar($install->statement->settings[0]->value)->type);
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), $install->settings[0]->value->scalarInformation()->type);
     }
 }

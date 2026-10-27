@@ -217,3 +217,54 @@ choice into a fixed acceptance condition.
 | S2 | `2026/10/25/rollout-2026-10-25T14-01-21-01a16607-9bd0-7c90-ab6a-9a87fe2cf1ee_01a1716f-495c-7b63-9eb5-ae02044ff1f7.jsonl` |
 | S3 | `2026/10/25/rollout-2026-10-25T14-33-23-01a1718c-9e88-7f02-bf62-4c795489b38d.jsonl` |
 | S4 | `2026/10/27/rollout-2026-10-27T21-36-11-01a17d5c-6b98-7ce3-a9b0-82afef1490ad.jsonl` |
+
+## Existing uncommitted implementation note
+
+The following pre-existing local note is retained verbatim as historical work
+context. Its goals, proposed solutions and acceptance statements are not additional
+requirements; the audited requirements above govern this memo.
+
+<details>
+<summary>Historical local note</summary>
+
+```text
+Fixed duplicate UPDATE aliases and incomplete-input routes remain separate.
+At that checkpoint, analysis still mutated shared temporary-table selection and
+view caches. The catalog snapshot migration below removes those mutations;
+complete read-only analysis is not established. Operation/Facts, runtime derivation and
+rendered marker discovery also remain in the migrated families. Complete local
+meaning, generators, native catalog providers and state observation, full corpus
+replay and the separate 900-second matrix are still required. Goals B-D remain
+open, and PR #665 remains a draft.
+
+### Catalog snapshots and explicit session namespaces (2026-10-26)
+
+The shared dictionary now owns persistent objects only. Session table lookup,
+installation, removal, planning, hints and transaction publication receive the
+owning temporary namespace explicitly. Analysis, rebinding and lifecycle cleanup
+no longer swap a dictionary-wide session pointer; lock-wait resumption no longer
+needs a callback to restore that pointer.
+
+Stored views retain immutable definitions, creation declarations and dependencies.
+A separate dependency traversal computes view bindings before publishing a
+declaration snapshot. It resolves persistent dependencies first, propagates invalid
+dependencies, and overlays session temporary tables only for the calling scope.
+Planning, writable-view column mapping and metadata readers consume these bindings
+without installing them in the dictionary. Preparation invalidation records stored
+view identities and transitive persistent table identities, not the ephemeral
+declarations produced by rebinding. Dependency names remain typed identifiers
+instead of being recovered from concatenated strings.
+
+This closes the ambient temporary namespace and mutable view-cache defects, not
+goal C. The snapshots still bind through Operation/Facts. Read-time diagnostics,
+other retained parser state and incomplete-input paths still need migration.
+View write rewriting still uses a flat declaration context: a rewritten persistent
+base target and caller subqueries can require distinct bindings for the same
+spelling. That remaining boundary must use occurrence-specific semantic references;
+removing temporary tables from the whole rewritten statement would be incorrect.
+The full generator, corpus and 900-second acceptance requirements remain open.
+
+Verification for this migration is recorded below after the ordinary checks.
+```
+
+</details>

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored PURGE BINARY LOGS BEFORE whose log cutoff operand requires invocation-time scalar preparation.
@@ -21,16 +20,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining the log cutoff operand in a stored instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() PURGE BINARY LOGS BEFORE ROW(1,2)');
- *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge // => true
+ *     $operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge // => true
  */
 final class DeferredPurge implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $moment The complete non-scalar log cutoff operand
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $moment)
+    public function __construct(public readonly RowOperand|DeferredOperand $moment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Replication\LogMoment())->check($moment);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

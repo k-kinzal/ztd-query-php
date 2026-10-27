@@ -19,14 +19,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use Tests\Generator\MySql\Statement\Account\Privilege\RevokePrivilegesGenerator;
 use Tests\Generator\MySql\Statement\Dml\UpdateGenerator;
 use Tests\Generator\MySql\Statement\Routine\CreateTriggerGenerator;
 use Tests\Generator\MySql\Statement\Table\CreateIndexGenerator;
-use Tests\Generator\Semantics\Statement\OperationGenerator;
+use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;
 
 /**
  * Executes generated complete requests before and after their related table definitions.
@@ -52,7 +52,7 @@ final class ConditionalRequestExecutionProperties extends TestCase
             'trigger' => new CreateTriggerGenerator(),
             'revoke' => new RevokePrivilegesGenerator(),
         };
-        $this->forAll(new OperationGenerator($release, $requests))->then(static function (Operation $operation) use ($release, $family): void {
+        $this->forAll(new AnalyzedStatementGenerator($release, $requests))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $operation) use ($release, $family): void {
             $session = (new Instance(substr($release->value, 6), [], ['pbt', 'other']))->connect(database: 'pbt');
             $session->text = 'generated request without SQL';
             try {
@@ -83,8 +83,8 @@ final class ConditionalRequestExecutionProperties extends TestCase
             'update' => new UpdateGenerator($release),
             'trigger' => new CreateTriggerGenerator(),
         };
-        $sequences = Generators::map(static function (Operation $operation): array {
-            $request = $operation->statement;
+        $sequences = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $operation): array {
+            $request = $operation;
             if (!$request instanceof M\Table\CreateIndex && !$request instanceof M\Dml\Update && !$request instanceof M\Routine\CreateTrigger) {
                 throw new LogicException('The generator supplies an index, update or trigger request.');
             }
@@ -97,14 +97,14 @@ final class ConditionalRequestExecutionProperties extends TestCase
                 default => new Name('a'),
             };
             $table = new M\Table\CreateTable(new QualifiedName(new Name('target')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName($column), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)))]);
-            return [new Operation($operation->context, $table), $operation];
-        }, new OperationGenerator($release, $requests));
+            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext($operation->profile(), [new Name('pbt')], session: M\Type\Resolved\Settings::defaults($operation->profile()->grammar)), $table, new \SqlSemantics\Statement\Source\SourceMap()), $operation];
+        }, new AnalyzedStatementGenerator($release, $requests));
         $this->forAll($sequences)->then(static function (array $sequence) use ($release): void {
             [$definition, $operation] = $sequence;
-            self::assertInstanceOf(Operation::class, $definition);
-            self::assertInstanceOf(Operation::class, $operation);
+            self::assertInstanceOf(MySqlStatement::class, $definition);
+            self::assertInstanceOf(MySqlStatement::class, $operation);
             $session = (new Instance(substr($release->value, 6), [], ['pbt', 'other']))->connect(database: 'pbt');
-            $request = $operation->statement;
+            $request = $operation;
             self::assertTrue($request instanceof M\Table\CreateIndex || $request instanceof M\Dml\Update || $request instanceof M\Routine\CreateTrigger);
             if ($request instanceof M\Table\CreateIndex && $request->hasExecutionCondition()) {
                 (new \MySqlMemory\Session\Access\Preparation())->check($operation, $session);

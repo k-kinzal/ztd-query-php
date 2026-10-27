@@ -35,10 +35,10 @@ final class CreateRoleGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $profile = new LanguageProfile($release);
-        $requests = Generators::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => Generators::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), Generators::seq(new AccountNameGenerator()))));
+        $requests = \Tests\Generator\Operands::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => \Tests\Generator\Operands::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), Generators::seq(new AccountNameGenerator()))));
         $this->delegate = Generators::oneOf(
             $requests,
-            Generators::bind(new RefusedCreateRoleGenerator(), static fn (RefusedCreateRole $condition): ErisGenerator => Generators::map(static fn (bool $conditional): CreateRole => new CreateRole($conditional, $condition->roles, $profile), Generators::bool())),
+            \Tests\Generator\Operands::bind(new RefusedCreateRoleGenerator(), static fn (RefusedCreateRole $condition): ErisGenerator => Generators::map(static fn (bool $conditional): CreateRole => new CreateRole($conditional, $condition->roles, $profile), Generators::bool())),
         );
     }
 
@@ -59,4 +59,47 @@ final class CreateRoleGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Composes all semantic operands, including spellings outside the convenience defaults.
+     *
+     * @param ErisGenerator<bool> $ifNotExists The generated semantic operand
+     * @param ErisGenerator<list<AccountName>> $roles The generated semantic operand
+     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
+     * @return ErisGenerator<CreateRole>
+     */
+    public static function fromOperands(ErisGenerator $ifNotExists, ErisGenerator $roles, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
+    {
+        return Generators::map(static fn (array $parts): CreateRole => new CreateRole(ifNotExists: $parts[0], roles: $parts[1], profile: $parts[2], client: $parts[3]), \Tests\Generator\Operands::tuple($ifNotExists, $roles, $profile, $client));
+    }
+
+    /**
+     * Composes the statement's SQL forms from typed operand generators.
+     *
+     * @return iterable<string, ErisGenerator<CreateRole>>
+     */
+    public static function forms(): iterable
+    {
+        yield 'CreateRole/25' => CreateRoleGenerator::fromOperands(
+            ifNotExists: Generators::constant(false),
+            roles: \Tests\Generator\Operands::tuple(
+                AccountNameGenerator::fromOperands(
+                    user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
+                        quote: Generators::constant(null)
+                    ),
+                    host: Generators::constant(null)
+                )
+            ),
+            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
+                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
+                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
+                    settings: Generators::constant('')
+                ),
+                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
+            ),
+            client: Generators::constant(null)
+        );
+    }
+
 }

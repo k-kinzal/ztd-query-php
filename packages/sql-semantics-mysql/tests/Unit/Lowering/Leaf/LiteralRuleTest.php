@@ -57,18 +57,18 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $item0 = $operation->statement->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(NumberLiteral::class, $item0->expression);
-        $item3 = $operation->statement->query->items[3];
+        $item3 = $operation->query->items[3];
         self::assertInstanceOf(SelectExpression::class, $item3);
         self::assertInstanceOf(StringLiteral::class, $item3->expression);
-        $item7 = $operation->statement->query->items[7];
+        $item7 = $operation->query->items[7];
         self::assertInstanceOf(SelectExpression::class, $item7);
         self::assertInstanceOf(RadixLiteral::class, $item7->expression);
-        $item10 = $operation->statement->query->items[10];
+        $item10 = $operation->query->items[10];
         self::assertInstanceOf(SelectExpression::class, $item10);
         self::assertInstanceOf(TemporalLiteral::class, $item10->expression);
         self::assertSame(TemporalForm::Time, $item10->expression->form);
@@ -77,7 +77,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testConstantLowersIntroducedRadixLiterals(): void
     {
-        $introduced = (new Semantics(Dialect::MySql))->analyze("SELECT _latin1 X'4142', _utf8mb4 0b1")->statement;
+        $introduced = (new Semantics(Dialect::MySql))->analyze("SELECT _latin1 X'4142', _utf8mb4 0b1");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $introduced);
         $introduced = $introduced->query;
 
@@ -120,17 +120,17 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'");
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $item0 = $operation->statement->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(StringLiteral::class, $item0->expression);
         self::assertSame(['a', 'b', 'c'], $item0->expression->segments);
-        $item1 = $operation->statement->query->items[1];
+        $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(StringLiteral::class, $item1->expression);
         self::assertSame('utf8mb4', $item1->expression->introducer?->value);
-        $item2 = $operation->statement->query->items[2];
+        $item2 = $operation->query->items[2];
         self::assertInstanceOf(SelectExpression::class, $item2);
         self::assertInstanceOf(StringLiteral::class, $item2->expression);
         self::assertTrue($item2->expression->national);
@@ -213,8 +213,8 @@ final class LiteralRuleTest extends TestCase
     public function testTextKeepsBytesAfterNulInRestrictedOperands(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'a\\0b\nc'");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Text::class, $operation->statement->options[0]->value);
-        self::assertSame("a\0b\nc", $operation->statement->options[0]->value->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Text::class, $operation->options[0]->value);
+        self::assertSame("a\0b\nc", $operation->options[0]->value->value);
     }
 }

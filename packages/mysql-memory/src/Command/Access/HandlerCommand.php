@@ -38,10 +38,10 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -76,8 +76,8 @@ final class HandlerCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if ($statement instanceof HandlerOpen) {
             return $this->open($statement, $session);
         }
@@ -107,22 +107,25 @@ final class HandlerCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the handler is not open, the index does not exist, a seek has more values than the index has parts, or the condition or LIMIT fails
      */
-    public function read(HandlerScan|HandlerIndexRead|HandlerIndexSeek $statement, Operation $operation, Session $session, Context $context, Connection $connection): ResultSet
+    public function read(HandlerScan|HandlerIndexRead|HandlerIndexSeek $statement, MySqlStatement $operation, Session $session, Context $context, Connection $connection): ResultSet
     {
         (new HandlerPreparation())->check($operation, $session);
         $handler = $this->handler($session, $statement->handler->name->value);
-        $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        $table = $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries);
         (new \MySqlMemory\Session\Access\OpenedTables())->open($handler->schema, $handler->table, $session);
         assert($table !== null);
         $query = $this->select($handler, null);
-        $select = new Operation($operation->context, new QueryRoot($query));
-        foreach ($select->facts->diagnostics as $diagnostic) {
+        $select = (new \MySqlMemory\Session\Statement\Binding())->operation($session, new QueryRoot($query));
+        assert($select instanceof QueryRoot);
+        $query = $select->query;
+        assert($query instanceof Select);
+        foreach ($select->statementInformation()->diagnostics as $diagnostic) {
             throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
         }
         assert($query->from !== null);
-        $planner = new Planner($query, $select->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($query, $select->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $plan = $planner->query($query, null);
-        $reading = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $reading = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $condition = $this->filter($reading, $statement, $table);
         $key = $statement instanceof HandlerScan ? null : $this->key($table, $statement->index->value, $handler);
         if ($statement instanceof HandlerIndexSeek && $key !== null && count($statement->values) > count($key->columns)) {
@@ -173,11 +176,11 @@ final class HandlerCommand implements Command
      *
      * @return list<int|float|string|null>
      */
-    public function values(HandlerIndexSeek $statement, Operation $operation, Session $session, Context $context, Connection $connection): array
+    public function values(HandlerIndexSeek $statement, MySqlStatement $operation, Session $session, Context $context, Connection $connection): array
     {
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $handler = $this->handler($session, $statement->handler->name->value);
-        $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        $table = $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries);
         assert($table !== null);
         $keys = new HandlerKeys();
         $scope = $keys->scope($statement->handler, $table);
@@ -203,7 +206,7 @@ final class HandlerCommand implements Command
     public function default(HandlerIndexSeek $statement, int $position, Session $session, Context $context): int|float|string|null
     {
         $handler = $this->handler($session, $statement->handler->name->value);
-        $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        $table = $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries);
         assert($table !== null);
         $key = $this->key($table, $statement->index->value, $handler);
         $column = $table->definition->columns[$key->columns[$position]];
@@ -250,7 +253,7 @@ final class HandlerCommand implements Command
         if (isset($session->instance->dictionary->schema($schema)?->views[$statement->table->name->value])) {
             throw SchemaError::WrongObject->error($schema, $statement->table->name->value, 'BASE TABLE');
         }
-        if ($session->instance->dictionary->table($schema, $statement->table->name->value) === null) {
+        if ($session->instance->dictionary->table($schema, $statement->table->name->value, $session->temporaries) === null) {
             throw QueryError::NoSuchTable->error($schema, $statement->table->name->value);
         }
         $name = $statement->alias->value ?? $statement->table->name->value;
@@ -271,7 +274,7 @@ final class HandlerCommand implements Command
     public function handler(Session $session, string $name): Handler
     {
         $handler = $session->handlers[mb_strtolower($name)] ?? null;
-        if ($handler !== null && $session->instance->dictionary->table($handler->schema, $handler->table) === null) {
+        if ($handler !== null && $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries) === null) {
             unset($session->handlers[mb_strtolower($name)]);
             $handler = null;
         }

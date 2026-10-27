@@ -66,8 +66,8 @@ final class DeprecationTest extends TestCase
         self::assertSame(1287, $derivation->facts()->warnings[0]->code());
         self::assertSame("'SRID' is deprecated and will be removed in a future release. Please use ST_SRID instead", $derivation->facts()->warnings[0]->message());
         $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT SRID(NULL)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $query);
-        self::assertSame([], $query->facts->warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $query);
+        self::assertSame([], $query->warnings());
     }
 
     public function testSpatialWarningUsesTheReleaseAndNormalizesTheName(): void
@@ -86,8 +86,8 @@ final class DeprecationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $statement = $semantics->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statement);
-        $warnings = $statement->facts->warnings;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $warnings = $statement->warnings();
         self::assertCount(1, $warnings);
         self::assertSame("'CONTAINS' is deprecated and will be removed in a future release. Please use MBRCONTAINS instead", $warnings[0]->message());
     }
@@ -110,8 +110,8 @@ final class DeprecationTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT, c INT)');
         $codes = static function (string $sql) use ($semantics, $table): array {
             $statement = $semantics->analyze($sql, [$table]);
-            self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statement);
-            return array_map(static fn ($warning): string => $warning->message(), $statement->facts->warnings);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+            return array_map(static fn ($warning): string => $warning->message(), $statement->warnings());
         };
 
         self::assertSame([Deprecated::BangNot->value, Deprecated::BinaryOperator->value, Deprecated::PipesOr->value], $codes('SELECT !a, BINARY b || c FROM t'));
@@ -138,15 +138,15 @@ final class DeprecationTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
 
         $statement = $semantics->analyze("SELECT _ucs2'a'", []);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statement);
-        self::assertSame([Deprecated::Ucs2->value], array_map(static fn ($warning): string => $warning->message(), $statement->facts->warnings));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        self::assertSame([Deprecated::Ucs2->value], array_map(static fn ($warning): string => $warning->message(), $statement->warnings()));
     }
 
     public function testVariableWarnsOfEachReadOfADeprecatedVariableIn57(): void
     {
         $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@tx_isolation, @@GLOBAL.tx_isolation, @@transaction_isolation');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $statement);
-        $warnings = $statement->facts->warnings;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $warnings = $statement->warnings();
 
         self::assertSame(["'@@tx_isolation' is deprecated and will be removed in a future release. Please use '@@transaction_isolation' instead", "'@@tx_isolation' is deprecated and will be removed in a future release. Please use '@@transaction_isolation' instead"], array_map(static fn ($warning): string => $warning->message(), $warnings));
         self::assertInstanceOf(Deprecation::class, $warnings[0]);

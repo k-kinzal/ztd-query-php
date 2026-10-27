@@ -22,24 +22,24 @@ final class DatabaseOptionsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE DATABASE d COLLATE 'bad_collation' CHARACTER SET bad_charset");
 
-        self::assertEquals([new UnknownCollation('bad_collation'), new UnknownCharset('bad_charset')], $operation->facts->diagnostics);
-        self::assertEquals([new ParseFailure(new UnknownCollation('bad_collation'), true), new ParseFailure(new UnknownCharset('bad_charset'), true)], $operation->facts->warnings);
+        self::assertEquals([new UnknownCollation('bad_collation'), new UnknownCharset('bad_charset')], $operation->diagnostics());
+        self::assertEquals([new ParseFailure(new UnknownCollation('bad_collation'), true), new ParseFailure(new UnknownCharset('bad_charset'), true)], $operation->warnings());
     }
 
     public function testDeriveChecksAvailabilityUnderTheSelectedRelease(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE d COLLATE utf8mb4_0900_ai_ci');
 
-        self::assertEquals([new UnknownCollation('utf8mb4_0900_ai_ci')], $operation->facts->diagnostics);
+        self::assertEquals([new UnknownCollation('utf8mb4_0900_ai_ci')], $operation->diagnostics());
     }
     public function testProblemsRetainsConflictsAtTheirOptionOccurrence(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER DATABASE d READ ONLY DEFAULT READ ONLY 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $operation->statement);
-        $problems = (new DatabaseOptions())->problems($operation->statement->options, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $operation);
+        $problems = (new DatabaseOptions())->problems($operation->options, \SqlSemantics\Contract\GrammarRelease::MySql847);
 
         self::assertEquals([1 => new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\ReadOnlyConflict()], $problems);
-        self::assertEquals([new ParseFailure($problems[1], true)], $operation->facts->warnings);
+        self::assertEquals([new ParseFailure($problems[1], true)], $operation->warnings());
     }
 
     public function testInvalidAcceptsConvertedEncryptionAndReadOnlyOptions(): void

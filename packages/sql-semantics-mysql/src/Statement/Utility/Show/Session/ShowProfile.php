@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW PROFILE: the stages of one profiled statement of the session and their resource use.
@@ -33,9 +32,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PROFILE SWAPS, CPU FOR QUERY 2');
  *     [array_map(static fn (\SqlSemantics\Statement\Shape\Field $field): ?string => $field->name?->value, iterator_to_array($show->fields())), $show->toString()] // => [['Status', 'Duration', 'CPU_user', 'CPU_system', 'Swaps'], 'SHOW PROFILE SWAPS, CPU FOR QUERY 2']
  */
-final class ShowProfile implements Statement
+final class ShowProfile extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ProfileSection> The sections in the order written
@@ -47,8 +46,11 @@ final class ShowProfile implements Statement
      * @param Numeral|null $query The number of the statement after FOR QUERY
      * @param Limit|null $limit The LIMIT clause
      */
-    public function __construct(array $sections = [], public readonly ?Numeral $query = null, public readonly ?Limit $limit = null)
+    public function __construct(array $sections = [], public readonly ?Numeral $query = null, public readonly ?Limit $limit = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->sections = Check::listOf($sections, ProfileSection::class, 'The sections of SHOW PROFILE are a list.');
         Check::input($query === null || $query->isIntegerToken(), 'A SHOW PROFILE query number is a decimal integer token no greater than 2147483647.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

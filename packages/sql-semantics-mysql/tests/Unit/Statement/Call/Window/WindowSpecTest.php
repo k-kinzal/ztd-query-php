@@ -39,7 +39,7 @@ final class WindowSpecTest extends TestCase
         $window = new WindowSpec(null, [], [], new Frame(FrameUnit::Groups, new FrameBound(FrameBoundKind::Preceding, $offset), null, FrameExclusion::Ties));
         $window->deriveWindow($derivation, $derivation->environment());
 
-        self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($offset)->nullability);
+        self::assertSame(Nullability::NotNull, $offset->scalarInformation()->nullability);
         self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupsUnit, $window), new UnsupportedWindowing(WindowingLimit::Exclusion, $window)], $derivation->facts()->diagnostics);
     }
 

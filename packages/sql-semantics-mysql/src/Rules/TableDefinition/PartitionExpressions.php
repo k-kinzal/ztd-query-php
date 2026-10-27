@@ -107,7 +107,7 @@ final class PartitionExpressions
     public function forbidden(\SqlSemantics\Statement\Operand $expression, GrammarRelease $release): bool
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
-        foreach ($graph->objects($expression) as $part) {
+        foreach ($graph->objects($expression, bindings: false) as $part) {
             if ($part instanceof ClockCall || $part instanceof UserVariable || $part instanceof SystemVariable || $part instanceof VariableAssignment) {
                 return true;
             }
@@ -129,7 +129,7 @@ final class PartitionExpressions
     public function condition(\SqlSemantics\Statement\Operand $expression, GrammarRelease $release): \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
-        foreach ($graph->objects($expression) as $part) {
+        foreach ($graph->objects($expression, bindings: false) as $part) {
             if ($part instanceof \SqlSemantics\Statement\Query) {
                 return \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery;
             }

@@ -47,7 +47,7 @@ final class OrdinaryColumnTest extends TestCase
     public function testDataTypeAnswersTheType(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT UNSIGNED)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element0 = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $element0);
@@ -60,7 +60,7 @@ final class OrdinaryColumnTest extends TestCase
     public function testColumnAttributesAnswersTheAttributesInOrder(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL NULL)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element0 = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $element0);
@@ -74,7 +74,7 @@ final class OrdinaryColumnTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT CHECK (a > 0))');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheTypeTheAttributesAndTheReference(): void

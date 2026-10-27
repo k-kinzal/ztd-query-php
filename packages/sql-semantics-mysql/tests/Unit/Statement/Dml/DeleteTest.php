@@ -24,7 +24,7 @@ final class DeleteTest extends TestCase
 {
     public function testValueRejectsAnOffsetInTheRowLimit(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE FROM t')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE FROM t');
         self::assertInstanceOf(Delete::class, $statement);
         $limit = new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma);
         $this->expectExceptionMessage('DELETE limits rows without an offset.');
@@ -43,10 +43,10 @@ final class DeleteTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('DELETE FROM t AS x WHERE x.a = 1 ORDER BY b LIMIT 1', [$t]);
-        self::assertInstanceOf(Delete::class, $operation->statement);
+        self::assertInstanceOf(Delete::class, $operation);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 
     public function testRenderWritesEveryClause(): void

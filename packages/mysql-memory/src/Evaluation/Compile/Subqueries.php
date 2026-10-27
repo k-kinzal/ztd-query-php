@@ -209,7 +209,7 @@ final class Subqueries
         if (!$this->compiler->settings->legacy() || !$this->compiler->constancy($operand)->constant() || !$query instanceof Select) {
             return false;
         }
-        foreach ($this->compiler->facts->query($query)->projection as $field) {
+        foreach ($query->queryInformation()->projection as $field) {
             if ($field instanceof \SqlSemantics\Statement\Shape\Field && $field->slot->type instanceof \SqlSemantics\Statement\Type\NullOnly) {
                 return $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || !$this->compiler->planner->blocks->empty($query, $scope);
             }
@@ -245,7 +245,7 @@ final class Subqueries
         if (!$query instanceof Select || !$query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $query->groupBy?->modifier !== null || $query->having !== null || $query->windows !== [] || $query->from->indexHints !== [] || $this->aggregated($query)) {
             return [];
         }
-        $table = $this->compiler->facts->relation($query->from)->table;
+        $table = $query->from->relationInformation()->table;
         if (!$table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {
             return [];
         }
@@ -269,7 +269,7 @@ final class Subqueries
     public function membershipColumns(Select $query, array $comparators): array
     {
         $columns = [];
-        foreach ($this->compiler->facts->query($query)->projection as $field) {
+        foreach ($query->queryInformation()->projection as $field) {
             if (!$field instanceof \SqlSemantics\Statement\Shape\Field || $field->expression === null || $comparators[$field->position]->mode !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {
                 continue;
             }

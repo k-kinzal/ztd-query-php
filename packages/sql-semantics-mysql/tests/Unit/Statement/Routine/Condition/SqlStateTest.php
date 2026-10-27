@@ -89,7 +89,7 @@ final class SqlStateTest extends TestCase
     public function testRenderDropsTheWordValue(string $release): void
     {
         $signal = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate value '42S02'");
-        $statement = $signal->statement;
+        $statement = $signal;
         self::assertInstanceOf(Signal::class, $statement);
         self::assertInstanceOf(SqlState::class, $statement->condition);
 

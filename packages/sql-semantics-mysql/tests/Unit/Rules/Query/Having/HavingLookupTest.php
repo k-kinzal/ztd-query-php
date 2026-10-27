@@ -32,16 +32,16 @@ final class HavingLookupTest extends TestCase
         $operation = $semantics->analyze('SELECT a AS x FROM d.t', [$table]);
         $relation = $operation->inputRelation();
         self::assertNotNull($relation);
-        $visible = new VisibleRelation($relation, $operation->facts->relation($relation)->shape, name: new QualifiedName(new Name('t'), new Name('d')));
+        $visible = new VisibleRelation($relation, $relation->relationInformation()->shape, name: new QualifiedName(new Name('t'), new Name('d')));
         $row = new GroupedRow([$operation->field(0)], [], true);
-        $environment = (new HavingScope())->enter(new Environment($operation->context, relations: [$visible]), $row);
+        $environment = (new HavingScope())->enter(new Environment($semantics->context([$table]), relations: [$visible]), $row);
         $lookup = new HavingLookup();
 
         self::assertNull($lookup->row($environment, new Name('a'), null, 1, true));
         self::assertSame($row, $lookup->row($environment, new Name('x'), null, 1, true));
         self::assertSame($row, $lookup->row($environment, new Name('a'), null, 1, false));
         self::assertSame($row, $lookup->row($environment, new Name('a'), null, 0, true));
-        self::assertNull($lookup->row(new Environment($operation->context), new Name('a'), null, 1, true));
+        self::assertNull($lookup->row(new Environment($semantics->context([$table])), new Name('a'), null, 1, true));
     }
 
     public function testMergedExposesOnlyEligibleDerivedInputs(): void
@@ -54,7 +54,7 @@ final class HavingLookupTest extends TestCase
         $materialized = $limited->field(0)->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $column);
         self::assertInstanceOf(ResolvedColumn::class, $materialized);
-        $environment = new Environment($merged->context);
+        $environment = new Environment($semantics->context([$table]));
         $lookup = new HavingLookup();
 
         self::assertTrue($lookup->merged($environment, [$column]));
@@ -70,8 +70,8 @@ final class HavingLookupTest extends TestCase
         $operation = $semantics->analyze('SELECT a FROM d.t', [$table]);
         $relation = $operation->inputRelation();
         self::assertNotNull($relation);
-        $visible = new VisibleRelation($relation, $operation->facts->relation($relation)->shape, name: new QualifiedName(new Name('t'), new Name('d')));
-        $environment = new Environment($operation->context, relations: [$visible]);
+        $visible = new VisibleRelation($relation, $relation->relationInformation()->shape, name: new QualifiedName(new Name('t'), new Name('d')));
+        $environment = new Environment($semantics->context([$table]), relations: [$visible]);
         $lookup = new HavingLookup();
 
         self::assertCount(1, $lookup->input($environment, new Name('a'), new QualifiedName(new Name('t'), new Name('d')), 1)->found());
@@ -109,9 +109,9 @@ final class HavingLookupTest extends TestCase
         $operation = $semantics->analyze('SELECT a FROM d.t', [$table]);
         $relation = $operation->inputRelation();
         self::assertNotNull($relation);
-        $visible = new VisibleRelation($relation, $operation->facts->relation($relation)->shape, name: new QualifiedName(new Name('t'), new Name('d')));
-        $outer = (new HavingScope())->enter(new Environment($operation->context, relations: [$visible]), new GroupedRow([], [], true));
-        $inner = new Environment($operation->context, $outer);
+        $visible = new VisibleRelation($relation, $relation->relationInformation()->shape, name: new QualifiedName(new Name('t'), new Name('d')));
+        $outer = (new HavingScope())->enter(new Environment($semantics->context([$table]), relations: [$visible]), new GroupedRow([], [], true));
+        $inner = new Environment($semantics->context([$table]), $outer);
         $lookup = new HavingLookup();
         $missing = $lookup->missing($inner, new Name('a'), null);
 
@@ -119,6 +119,6 @@ final class HavingLookupTest extends TestCase
         self::assertSame('d', $missing->qualifier?->schema?->value);
         self::assertSame('t', $missing->qualifier->name->value);
         self::assertNull($lookup->missing($inner, new Name('absent'), null)->qualifier);
-        self::assertNull($lookup->missing(new Environment($operation->context), new Name('a'), null)->qualifier);
+        self::assertNull($lookup->missing(new Environment($semantics->context([$table])), new Name('a'), null)->qualifier);
     }
 }

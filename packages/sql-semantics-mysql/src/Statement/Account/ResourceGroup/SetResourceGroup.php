@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SET RESOURCE GROUP name [FOR thread_id, …]` (8.0+): a request to assign threads, or the session's thread, to a resource group.
@@ -24,9 +23,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Assigning two threads
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('set resource group batch for 14 15')->toString() // => 'SET RESOURCE GROUP batch FOR 14, 15'
  */
-final class SetResourceGroup implements Statement
+final class SetResourceGroup extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Numeral> The thread ids of FOR; none for the session's thread
@@ -37,8 +36,11 @@ final class SetResourceGroup implements Statement
      * @param ResourceGroupName $name The group name
      * @param list<Numeral> $threads The thread ids of FOR; none for the session's thread
      */
-    public function __construct(public readonly ResourceGroupName $name, array $threads = [])
+    public function __construct(public readonly ResourceGroupName $name, array $threads = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->threads = Check::listOf($threads, Numeral::class, 'FOR lists thread ids.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

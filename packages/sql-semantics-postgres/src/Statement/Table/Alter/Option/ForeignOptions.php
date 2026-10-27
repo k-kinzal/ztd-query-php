@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * OPTIONS ( ... ): changes the options of a foreign table.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ForeignOptions implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AlteredOption> The changes
@@ -35,7 +34,7 @@ final class ForeignOptions implements AlterCommand
     /**
      * @param list<AlteredOption> $options The changes
      */
-    public function __construct(array $options)
+    public function __construct(array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, AlteredOption::class, 'Option changes are altered options.', 1);
     }

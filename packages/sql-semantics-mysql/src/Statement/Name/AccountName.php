@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Name;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A user or role account name: the user part and the optional host part.
@@ -35,13 +34,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AccountName implements Account
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $user The user part
      * @param Name|null $host The host part, when written
      */
-    public function __construct(public readonly Name $user, public readonly ?Name $host = null)
+    public function __construct(public readonly Name $user, public readonly ?Name $host = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($user, $host) === null, 'An account name satisfies the supported user and host domains.');
     }

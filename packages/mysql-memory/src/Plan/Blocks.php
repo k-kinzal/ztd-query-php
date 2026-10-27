@@ -31,14 +31,12 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit as LimitClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 
@@ -164,7 +162,7 @@ final class Blocks
     public function fields(Select $select): array
     {
         $fields = [];
-        foreach ($this->planner->compiler->facts->query($select)->projection as $field) {
+        foreach ($select->queryInformation()->projection as $field) {
             if (!$field instanceof Field) {
                 throw StatementError::NotSupportedYet->error('a star over an open relation');
             }
@@ -327,17 +325,17 @@ final class Blocks
      */
     public function table(ExplicitTable $table, ?Scope $outer): QueryPlan
     {
-        $resolution = $this->planner->compiler->facts->relation($table)->table;
+        $resolution = $table->relationInformation()->table;
         if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable) {
             $scope = new Scope($outer);
             $path = $this->planner->relations->commonTable($table, $resolution, $scope);
-            $fields = $this->planner->compiler->facts->query($table)->fields();
+            $fields = $table->queryInformation()->fields();
             \SqlSemantics\Diagnostic\Check::invariant($fields !== null, 'A prepared CTE exposes every output column.');
             $origins = array_map(fn (Field $field): ?ColumnOrigin => (new Origins($this->planner))->origin($field, $scope), $fields->items);
             return new QueryPlan($path, $scope->columns[spl_object_id($table)], $scope->names[spl_object_id($table)], $origins);
         }
         $schema = $table->table->schema->value ?? $this->planner->settings->database;
-        $stored = $this->planner->dictionary->table($schema, $table->table->name->value);
+        $stored = $this->planner->dictionary->table($schema, $table->table->name->value, $this->planner->temporaries);
         $view = $this->planner->dictionary->schema($schema)->views[$table->table->name->value] ?? null;
         if ($stored === null && $view !== null) {
             return (new Views($this->planner))->table($view);
@@ -403,50 +401,10 @@ final class Blocks
     }
 
     /**
-     * Answers the name of an output column.
-     *
-     * An item without alias that names a column of a view is named as the view names the column,
-     * in any case the statement writes it; so is a column of a view of INFORMATION_SCHEMA of MySQL
-     * 8.0 and later (verified on live 5.7.44, 8.0.44 and 8.4.7 servers).
-     *
-     * @param Select|null $select The block of the select list, which tells whether the item has an alias
+     * Resolves the output label from its field and optional view binding.
      */
     public function name(Field $field, ?Select $select = null): string
     {
-        if ($field->name !== null) {
-            return ($select === null ? null : $this->viewed($field, $select)) ?? $field->name->value;
-        }
-
-        return $field->expression === null ? '' : (new \MySqlMemory\Evaluation\Compile\Printer())->expression($field->expression);
-    }
-
-    /**
-     * Answers the name a view gives the column an item without alias names, or null for another item.
-     */
-    public function viewed(Field $field, Select $select): ?string
-    {
-        $expression = $field->expression;
-        if (!$expression instanceof ColumnUse) {
-            return null;
-        }
-        foreach ($select->items as $item) {
-            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression && $item->expression === $expression && $item->alias !== null) {
-                return null;
-            }
-        }
-        $resolution = $this->planner->compiler->facts->scalar($expression)->resolution;
-        if (!$resolution instanceof ResolvedColumn || $resolution->slot->name === null) {
-            return null;
-        }
-        $table = $this->planner->compiler->facts->covers($resolution->relation) ? $this->planner->compiler->facts->relation($resolution->relation)->table : null;
-        if (!$table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable || $table->table->kind !== \SqlSemantics\Statement\Declaration\RelationKind::View) {
-            return null;
-        }
-        $system = $this->planner->dictionary->system;
-        if ($system !== null && $system->table($table->table) !== null && !$system->named($table->table)) {
-            return null;
-        }
-
-        return $resolution->slot->name->value;
+        return (new Projection\OutputNames($this->planner))->name($field, $select);
     }
 }

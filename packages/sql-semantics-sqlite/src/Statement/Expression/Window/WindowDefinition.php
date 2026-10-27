@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A named window of the WINDOW clause of a selection.
@@ -18,17 +17,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a named window
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a)');
- *     [$query->statement->windows[0]->name->value, count($query->statement->windows[0]->window->order)] // => ['w', 1]
+ *     [$query->windows[0]->name->value, count($query->windows[0]->window->order)] // => ['w', 1]
  */
 final class WindowDefinition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The window name
      * @param WindowSpec $window The specification
      */
-    public function __construct(public readonly Name $name, public readonly WindowSpec $window)
+    public function __construct(public readonly Name $name, public readonly WindowSpec $window, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

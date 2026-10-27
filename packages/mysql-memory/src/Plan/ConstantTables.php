@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -50,9 +50,9 @@ use SqlSemantics\Statement\Relation;
 final class ConstantTables
 {
     /**
-     * @param Facts $facts The facts of the statement
+     * @param StatementSemantics $facts The facts of the statement
      */
-    public function __construct(public readonly Facts $facts)
+    public function __construct(public readonly StatementSemantics $facts)
     {
     }
 
@@ -164,7 +164,7 @@ final class ConstantTables
      */
     public function keyed(TableReference $table, array $bound): bool
     {
-        $resolution = $this->facts->covers($table) ? $this->facts->relation($table)->table : null;
+        $resolution = $table->hasBinding() ? $table->relationInformation()->table : null;
         if (!$resolution instanceof DeclaredTable) {
             return false;
         }
@@ -187,10 +187,10 @@ final class ConstantTables
     public function column(Operand $expression): ?ResolvedColumn
     {
         $expression = $this->unwrap($expression);
-        if (!$expression instanceof ColumnUse || !$this->facts->covers($expression)) {
+        if (!$expression instanceof ColumnUse || !$expression->hasBinding()) {
             return null;
         }
-        $resolution = $this->facts->scalar($expression)->resolution;
+        $resolution = $expression->scalarInformation()->resolution;
 
         return $resolution instanceof ResolvedColumn ? $resolution : null;
     }
@@ -204,7 +204,7 @@ final class ConstantTables
     public function fixed(Operand $value, array $members, array $constant): bool
     {
         foreach ((new Walker())->find($value, ColumnUse::class) as $use) {
-            $resolution = $this->facts->covers($use) ? $this->facts->scalar($use)->resolution : null;
+            $resolution = $use->hasBinding() ? $use->scalarInformation()->resolution : null;
             if (!$resolution instanceof ResolvedColumn) {
                 return false;
             }

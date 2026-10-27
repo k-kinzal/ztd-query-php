@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Weight;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A range of collation levels `from - to` in the LEVEL clause of WEIGHT_STRING in MySQL 5.6 and 5.7.
@@ -21,13 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WeightLevelRange implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral $from The first level
      * @param Numeral $to The last level
      */
-    public function __construct(public readonly Numeral $from, public readonly Numeral $to)
+    public function __construct(public readonly Numeral $from, public readonly Numeral $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

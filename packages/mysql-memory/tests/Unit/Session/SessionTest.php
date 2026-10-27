@@ -216,9 +216,9 @@ final class SessionTest extends TestCase
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a FROM t');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame([], $operation->statementInformation()->diagnostics);
     }
 
     public function testAnalyzeRefusesAParameterMarkerOutsideAPreparedStatement(): void
@@ -237,8 +237,8 @@ final class SessionTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT ?', true);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
     }
 
     public function testAnalyzeRefusesAStatementThatDoesNotParse(): void

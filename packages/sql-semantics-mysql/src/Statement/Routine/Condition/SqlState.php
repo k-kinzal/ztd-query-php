@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An SQLSTATE value: `SQLSTATE [VALUE] 'xxxxx'`.
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SqlState implements Condition
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $state The five characters of the value, written as a quoted string
      */
-    public function __construct(public readonly Text $state)
+    public function __construct(public readonly Text $state, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($state->radix === null, 'An SQLSTATE value is written as a quoted string.');
         Check::input(self::accepts($state->value), 'An SQLSTATE value has five uppercase letters or digits and excludes class 00.');

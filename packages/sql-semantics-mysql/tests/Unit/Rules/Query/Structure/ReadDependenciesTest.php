@@ -38,7 +38,7 @@ final class ReadDependenciesTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerScopes')]
     public function testNodesFollowLexicalAndTransitiveDefinitions(string $sql, array $variables): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
         $nodes = (new ReadDependencies())->nodes($statement);
         $inputs = array_values(array_filter($nodes, static fn ($node): bool => $node instanceof UserVariable));
 
@@ -46,7 +46,7 @@ final class ReadDependenciesTest extends TestCase
     }
     public function testNodesCanVisitCompletedOperandsBeforeOwnersWithoutReversingSiblings(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT outer_call(first_call(), second_call())')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT outer_call(first_call(), second_call())');
         $nodes = (new ReadDependencies())->nodes($statement, childrenFirst: true);
         $calls = array_values(array_filter($nodes, static fn ($node): bool => $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall));
         self::assertSame(['first_call', 'second_call', 'outer_call'], array_map(static fn ($call): string => $call->name->value, $calls));
@@ -54,14 +54,14 @@ final class ReadDependenciesTest extends TestCase
 
     public function testChildrenKeepsWrittenRowsButExcludesInactiveWriteClauses(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES ROW(@written) ORDER BY @ignored')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES ROW(@written) ORDER BY @ignored');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $statement);
         self::assertSame([$statement->into, $statement->values()], (new ReadDependencies())->children($statement));
     }
 
     public function testWithRecognizesAnUpdateScopeWithoutOpeningItsDefinitions(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT @unused) UPDATE t SET a=1')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT @unused) UPDATE t SET a=1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $statement);
         self::assertSame($statement->with, (new ReadDependencies())->with($statement));
         self::assertSame([], array_values(array_filter((new ReadDependencies())->nodes($statement), static fn ($node): bool => $node instanceof UserVariable)));
@@ -69,7 +69,7 @@ final class ReadDependenciesTest extends TestCase
 
     public function testInputsFollowAnEnclosingCommonTableInAWrite(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT @read AS a) UPDATE t,c SET t.a=c.a')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT @read AS a) UPDATE t,c SET t.a=c.a');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $statement->with);
         $nodes = (new ReadDependencies())->inputs($statement->tables, $statement->with);
@@ -79,7 +79,7 @@ final class ReadDependenciesTest extends TestCase
 
     public function testDefineKeepsEarlierBindingsOutsideANonrecursiveDefinition(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), b AS (TABLE a) SELECT 1')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), b AS (TABLE a) SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\QueryExpression::class, $statement->query);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $statement->query->with);

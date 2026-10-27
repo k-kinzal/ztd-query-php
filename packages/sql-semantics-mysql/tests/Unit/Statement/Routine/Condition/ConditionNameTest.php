@@ -42,7 +42,7 @@ final class ConditionNameTest extends TestCase
     public function testRenderWritesTheNameASignalRaises(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN DECLARE `select` CONDITION FOR SQLSTATE '45000'; SIGNAL `select`; END");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);
@@ -51,7 +51,7 @@ final class ConditionNameTest extends TestCase
         self::assertInstanceOf(ConditionName::class, $signal->condition);
 
         self::assertSame('select', $signal->condition->name->value);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE `select` CONDITION FOR SQLSTATE '45000'; SIGNAL `select`; END", $create->toString());
     }
 }

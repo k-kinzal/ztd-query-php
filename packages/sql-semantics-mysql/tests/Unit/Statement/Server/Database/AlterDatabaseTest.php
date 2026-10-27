@@ -24,7 +24,7 @@ final class AlterDatabaseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

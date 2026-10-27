@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One key of an index, an exclusion constraint or an ON CONFLICT target: a column or expression with its collation, operator class and ordering.
@@ -27,12 +26,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the options of an index key
  *     $index = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE INDEX ON t (a COLLATE "C" text_pattern_ops DESC NULLS LAST)');
- *     $key = $index->statement->elements[0];
+ *     $key = $index->elements[0];
  *     [$key->collation->last()->value, $key->operatorClass->last()->value, $key->direction, $key->nulls] // => ['C', 'text_pattern_ops', \SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection::Descending, \SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder::Last]
  */
 final class IndexElement implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Definition> The parameters of the operator class
@@ -54,6 +53,7 @@ final class IndexElement implements Clause
         array $classOptions = [],
         public readonly ?SortDirection $direction = null,
         public readonly ?NullsOrder $nulls = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         $this->classOptions = Check::listOf($classOptions, Definition::class, 'Operator class parameters are definitions.');
         Check::input($this->classOptions === [] || $operatorClass !== null, 'Operator class parameters follow an operator class.');

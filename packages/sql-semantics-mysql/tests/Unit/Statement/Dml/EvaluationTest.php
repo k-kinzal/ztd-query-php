@@ -18,10 +18,10 @@ final class EvaluationTest extends TestCase
     public function testDeriveStatementDerivesTheItemsWithoutOutput(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DO 1 + 1, @a := 2');
-        self::assertInstanceOf(Evaluation::class, $operation->statement);
+        self::assertInstanceOf(Evaluation::class, $operation);
 
-        self::assertCount(2, $operation->statement->items);
-        self::assertNull($operation->facts->output);
+        self::assertCount(2, $operation->items);
+        self::assertNull($operation->output());
     }
 
     public function testRenderWritesTheItems(): void

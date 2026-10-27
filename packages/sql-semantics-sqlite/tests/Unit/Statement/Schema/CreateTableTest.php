@@ -21,7 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Type\Nullability;
@@ -43,7 +42,7 @@ final class CreateTableTest extends TestCase
 
     public function testStrictIgnoresAnOptionSqliteRejects(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a) "strict"')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a) "strict"');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertFalse($statement->strict());
@@ -63,17 +62,17 @@ final class CreateTableTest extends TestCase
         $create = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)');
         $table = $create->declarations()[0];
         $query = $semantics->analyze('SELECT name, rowid FROM t WHERE t.id > 1', [$create]);
-        $input = $query->facts->relation($query->singleNamedInput())->table;
+        $input = $query->singleNamedInput()->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $input);
         self::assertSame($table, $input->table);
         self::assertSame($table->columns[1], $query->field('name')->column());
         self::assertSame($table->columns[0], $query->field(1)->column());
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(Select::class, $select);
         $where = $select->where;
         self::assertInstanceOf(Binary::class, $where);
-        $resolution = $query->facts->scalar($where->left)->resolution;
+        $resolution = $where->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->columns[0], $resolution->slot->column);
     }
@@ -90,7 +89,7 @@ final class CreateTableTest extends TestCase
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
         self::assertSame(Nullability::Nullable, $table->columns[1]->nullability);
         self::assertNull($operation->shape());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementDeclaresATemporaryTableInTheTempSchema(): void
@@ -131,7 +130,8 @@ final class CreateTableTest extends TestCase
     public function testDeriveStatementRecordsTheShapeOfTheNewTableForTheStatementNode(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b)');
-        $fact = $operation->facts->relation($operation->statement);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        $fact = $operation->relationInformation();
 
         self::assertCount(2, $fact->shape->slots);
         self::assertSame($operation->declarations()[0]->columns[1], $fact->shape->slots[1]->column);
@@ -142,7 +142,7 @@ final class CreateTableTest extends TestCase
     public function testDeriveRelationDeclaresTheTableAndAnswersItsShape(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('CREATE TABLE t (a, b PRIMARY KEY, c PRIMARY KEY)')->statement;
+        $statement = $semantics->analyze('CREATE TABLE t (a, b PRIMARY KEY, c PRIMARY KEY)');
         $derivation = new Derivation($semantics->context());
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -159,8 +159,8 @@ final class CreateTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY) , WITHOUT ROWID , WITHOUT ROWID');
 
-        self::assertInstanceOf(CreateTable::class, $operation->statement);
-        self::assertTrue($operation->statement->optionsComma);
+        self::assertInstanceOf(CreateTable::class, $operation);
+        self::assertTrue($operation->optionsComma);
         self::assertSame('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID, WITHOUT ROWID', $operation->toString());
     }
 
@@ -181,7 +181,7 @@ final class CreateTableTest extends TestCase
     public function testRenderWritesANewlyBuiltDefinition(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new CreateTable(new QualifiedName(new Name('t'), new Name('main')), [new ColumnDefinition(new Name('a')), new ColumnDefinition(new Name('b'))]));
+        $operation = Semantics::fromStatement($semantics->context(), new CreateTable(new QualifiedName(new Name('t'), new Name('main')), [new ColumnDefinition(new Name('a')), new ColumnDefinition(new Name('b'))]));
 
         self::assertSame('CREATE TABLE main.t (a, b)', $operation->toString());
         self::assertCount(2, $operation->declarations()[0]->columns);

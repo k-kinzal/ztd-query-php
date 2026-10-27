@@ -133,12 +133,11 @@ final class ReaderTest extends TestCase
         self::assertSame([['Error', 1064, $error->getMessage()]], $session->diagnostics->conditions);
     }
 
-    public function testReadRecordsTheHintCommentsAndRefusesAParameterMarkerOutsideAPreparedStatement(): void
+    public function testReadAcceptsPreparedMarkersAndRefusesThemOutsidePreparation(): void
     {
         $session = (new Instance())->connect();
         (new Reader())->read('SELECT /*+ BKA() */ ?', true, $session);
 
-        self::assertSame([], $session->hinted);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1064);
 

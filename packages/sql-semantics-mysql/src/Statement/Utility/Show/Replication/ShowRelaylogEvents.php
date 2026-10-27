@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW RELAYLOG EVENTS: the events of a relay log file of a replica.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'");
- *     [$show->statement->channel?->value, $show->toString()] // => ['c', "SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'"]
+ *     [$show->channel?->value, $show->toString()] // => ['c', "SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'"]
  */
-final class ShowRelaylogEvents implements Statement
+final class ShowRelaylogEvents extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ?Text $file The log file after IN; null for the first one
@@ -40,8 +39,11 @@ final class ShowRelaylogEvents implements Statement
      * @param ?Limit $limit The LIMIT clause
      * @param ?Text $channel The channel after FOR CHANNEL
      */
-    public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null, public readonly ?Text $channel = null)
+    public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null, public readonly ?Text $channel = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input($file === null || $file->radix === null, 'A relay log file name is quoted text.');
         (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         \SqlSemantics\Diagnostic\Check::input($position === null || !$position->hexadecimal, 'A log event position uses decimal number syntax.');

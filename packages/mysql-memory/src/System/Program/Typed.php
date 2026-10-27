@@ -39,7 +39,7 @@ final class Typed
     public static function columns(Routine $routine, TypeName $type, ?string $collation, Reading $reading): array
     {
         $written = $collation === null ? null : Collation::named($collation);
-        $domain = (new Declared(Collation::named($routine->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'), $reading->release))->domain($type, $written);
+        $domain = (new Declared(Collation::named($routine->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'), $reading->release, \MySqlMemory\Session\SqlModes::parse($routine->mode, $routine->release)?->has('REAL_AS_FLOAT') ?? false))->domain($type, $written);
         if ($written !== null && $domain->kind === Kind::String && !$domain->collation->bytes()) {
             $domain = $domain->withCollation($written, $domain->coercibility);
         }

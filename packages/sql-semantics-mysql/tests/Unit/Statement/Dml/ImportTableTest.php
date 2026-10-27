@@ -26,7 +26,7 @@ final class ImportTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("IMPORT TABLE FROM 'a.sdi'");
 
-        self::assertNull($operation->facts->output);
+        self::assertNull($operation->output());
         self::assertSame([], $operation->declarations());
     }
 

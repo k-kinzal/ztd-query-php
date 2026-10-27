@@ -46,7 +46,8 @@ final class AttributeInputTest extends TestCase
     public function testValidAttributesDoNotRequireConsumerReinterpretation(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->semantics()->analyze("CREATE TABLE t(a INT SECONDARY_ENGINE_ATTRIBUTE '', b INT SECONDARY_ENGINE_ATTRIBUTE 'null', KEY(a) SECONDARY_ENGINE_ATTRIBUTE '[]') SECONDARY_ENGINE_ATTRIBUTE '1'")->statement;
+        $statement = $session->semantics()->analyze("CREATE TABLE t(a INT SECONDARY_ENGINE_ATTRIBUTE '', b INT SECONDARY_ENGINE_ATTRIBUTE 'null', KEY(a) SECONDARY_ENGINE_ATTRIBUTE '[]') SECONDARY_ENGINE_ATTRIBUTE '1'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
         self::assertInstanceOf(CreateTable::class, $statement);
         $session->query('CREATE DATABASE placement');
         $session->query('USE placement');
@@ -55,11 +56,11 @@ final class AttributeInputTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);

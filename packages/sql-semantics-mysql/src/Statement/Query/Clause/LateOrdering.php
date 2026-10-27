@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An ORDER BY or LIMIT that a 5.6 subquery writes after the locking clauses of its query block, or a LIMIT it writes after the block's own LIMIT.
@@ -29,13 +28,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an ORDER BY written after FOR UPDATE in a 5.6 subquery
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT a FROM t FOR UPDATE ORDER BY a)');
- *     count($query->statement->query->items[0]->expression->query->late->orderBy) // => 1
+ *     count($query->query->items[0]->expression->query->late->orderBy) // => 1
  * @example Refusing a late ordering without clauses
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class LateOrdering implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> The ORDER BY items in written order
@@ -46,7 +45,7 @@ final class LateOrdering implements Node
      * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items
      * @param Limit|null $limit The LIMIT clause
      */
-    public function __construct(array $orderBy, public readonly ?Limit $limit = null)
+    public function __construct(array $orderBy, public readonly ?Limit $limit = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->orderBy = (new SortScopes())->items($orderBy);
         (new SortScopes())->check($this->orderBy);

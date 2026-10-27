@@ -29,13 +29,10 @@ final class ParameterTest extends TestCase
 {
     public function testRenderKeepsTheDirectionTheNameTheTypeAndTheCollation(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin) SELECT 1')->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin) SELECT 1');
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
-        self::assertEquals([
-            new Parameter(new Name('a'), new Integral(IntegralKind::Int)),
-            new Parameter(new Name('b'), new Character(CharacterKind::VarChar, '3', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), ParameterMode::Out),
-        ], $statement->parameters->parameters);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new Parameter(new Name('a'), new Integral(IntegralKind::Int)), new Parameter(new Name('b'), new Character(CharacterKind::VarChar, '3', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), ParameterMode::Out)], $statement->parameters->parameters));
     }
 
     /**

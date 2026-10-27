@@ -56,8 +56,8 @@ final class LoadFactsTest extends TestCase
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), userVariables: $variables);
         $table = $semantics->analyze('CREATE TABLE t(a VARCHAR(30))')->declarations();
         $operation = $semantics->analyze("LOAD DATA LOCAL INFILE 'file' INTO TABLE t CHARACTER SET utf8mb4 (@v) SET a=@v", $semantics->context($table, session: $settings));
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
-        $fact = $operation->facts->scalar($operation->statement->assignments[0]->value);
+        self::assertInstanceOf(LoadTable::class, $operation);
+        $fact = $operation->assignments[0]->value->scalarInformation();
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding::class, $fact->resolution);
         self::assertTrue($fact->resolution->exists);
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $fact->type);
@@ -96,15 +96,15 @@ final class LoadFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK");
 
-        self::assertInstanceOf(LoadConflict::class, $operation->facts->diagnostics[0]);
-        self::assertSame(LoadRule::XmlBulk, $operation->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(LoadConflict::class, $operation->diagnostics()[0]);
+        self::assertSame(LoadRule::XmlBulk, $operation->diagnostics()[0]->rule);
     }
 
     public function testDeriveKeepsBulkAnnotationsInTheEarlierLanguageWithoutAConflict(): void
     {
-        $facts = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK")->facts;
+        $facts = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK");
 
-        self::assertSame([], array_values(array_filter($facts->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof LoadConflict)));
+        self::assertSame([], array_values(array_filter($facts->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof LoadConflict)));
     }
 
     public function testDeriveReportsAnUnknownColumn(): void
@@ -113,7 +113,7 @@ final class LoadFactsTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t (a, z)", [$t]);
 
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveFindsTheInvisibleColumnsOfTheTable(): void
@@ -121,21 +121,21 @@ final class LoadFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations();
 
-        self::assertSame([], $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE v (a, e)", $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE v (a, e)", $tables)->diagnostics());
     }
 
     public function testDeriveWarnsOfTheCharacterSetTheStatementNames(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = $semantics->analyze('CREATE TABLE t (a INT)');
-        $facts = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET utf8", [$t])->facts;
+        $facts = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET utf8", [$t]);
 
-        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
     }
     public function testDeriveRecordsTheCharsetFailureBeforeAssignmentNotices(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=(@v:=1)");
-        $warning = $operation->facts->warnings[0];
+        $warning = $operation->warnings()[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
         self::assertTrue($warning->aborts);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warning->problem);

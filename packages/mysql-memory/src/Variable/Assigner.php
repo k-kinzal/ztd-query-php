@@ -128,7 +128,7 @@ final class Assigner
     {
         (new EncodingSettings($this->context))->notices($name, $value, $domain);
         $definition = $this->variables->catalog->find($name);
-        $deprecated = $definition === null ? null : (new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\DeprecatedVariables())->warning($definition->name, $this->context->modes->release);
+        $deprecated = $definition === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Utility\DeprecatedVariables())->warning($definition->name, $this->context->modes->release);
         if ($deprecated !== null) {
             $this->context->diagnostics->warning(1287, $deprecated);
         }

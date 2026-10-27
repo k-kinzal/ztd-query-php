@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored KILL whose process operand requires invocation-time scalar preparation.
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Retaining the process operand in a stored instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() KILL ROW(1,2)');
- *     $operation->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill // => true
+ *     $operation->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill // => true
  */
 final class DeferredKill implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param KillScope|null $scope The optional connection or query modifier
      * @param RowOperand|DeferredOperand $process The complete non-scalar process operand
      */
-    public function __construct(public readonly ?KillScope $scope, public readonly RowOperand|DeferredOperand $process)
+    public function __construct(public readonly ?KillScope $scope, public readonly RowOperand|DeferredOperand $process, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A derived table: `[LATERAL] (query) [AS] alias [(columns)]`.
@@ -34,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a derived table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT x FROM (SELECT 1) AS d (x)');
- *     [$query->statement->query->from->alias->value, $query->statement->query->from->columns[0]->value] // => ['d', 'x']
+ *     [$query->query->from->alias->value, $query->query->from->columns[0]->value] // => ['d', 'x']
  * @example Refusing an option that no derived table accepts
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -42,9 +41,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class DerivedTable implements Relation
+final class DerivedTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names in written order; empty when the query names the columns
@@ -58,8 +58,11 @@ final class DerivedTable implements Relation
      * @param bool $lateral Whether LATERAL is written
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly Query $query, public readonly Name $alias, array $columns = [], public readonly bool $lateral = false, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly Query $query, public readonly Name $alias, array $columns = [], public readonly bool $lateral = false, public readonly AliasMark $mark = AliasMark::As, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a derived table holds names.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query) === null, 'A derived query cannot carry statement-level SELECT modifiers.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -72,7 +75,7 @@ final class DerivedTable implements Relation
     {
         $query = $derivation->query($this->query, $environment);
 
-        return new RelationFact((new DerivedShapes())->shape($query, $this->columns, $derivation, (new Materialization())->mergeable($this->query, $derivation->context->profile->grammar, $derivation->facts(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge) ? null : $this->query));
+        return new RelationFact((new DerivedShapes())->shape($query, $this->columns, $derivation, (new Materialization())->mergeable($this->query, $derivation->context->profile->grammar, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge) ? null : $this->query));
     }
 
     /**

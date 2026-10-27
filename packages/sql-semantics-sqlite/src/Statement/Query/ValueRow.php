@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One row of a VALUES clause.
@@ -16,11 +15,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a row of values
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VALUES (1, 'a')");
- *     $query->statement->rows[0]->values[1]->value // => 'a'
+ *     $query->rows[0]->values[1]->value // => 'a'
  */
 final class ValueRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The values in order
@@ -30,7 +29,7 @@ final class ValueRow implements Node
     /**
      * @param list<Scalar> $values The values in order; at least one
      */
-    public function __construct(array $values)
+    public function __construct(array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->values = Check::listOf($values, Scalar::class, 'A row of values has at least one expression.', 1);
     }

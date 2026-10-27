@@ -31,11 +31,11 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Publishes the existing representation until this dialect's statements are migrated.
+     * Publishes the concrete statement with meaning owned by its SQL occurrences.
      */
     public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
     {
-        return new \SqlSemantics\Statement\Operation($context, $statement, $sources);
+        return (new \SqlSemantics\Validation\Publication())->publish($context, $statement, $sources);
     }
 
     /**

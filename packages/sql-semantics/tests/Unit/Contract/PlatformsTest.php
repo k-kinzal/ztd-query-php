@@ -39,7 +39,7 @@ final class PlatformsTest extends TestCase
 
     public function testValueDirectoryFindsTheCoreAndDialectPackages(): void
     {
-        self::assertFileExists(Platforms::valueDirectory(\SqlSemantics\Statement\Operation::class) . '/resources/value-schema.json');
+        self::assertFileExists(Platforms::valueDirectory(\SqlSemantics\Statement\AnalyzedStatement::class) . '/resources/value-schema.json');
         self::assertFileExists(Platforms::valueDirectory(\SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral::class) . '/resources/value-schema.json');
     }
 }

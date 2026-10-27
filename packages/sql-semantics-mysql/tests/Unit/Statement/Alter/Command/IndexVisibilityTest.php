@@ -19,7 +19,7 @@ final class IndexVisibilityTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ALTER INDEX i VISIBLE', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t ALTER INDEX i VISIBLE', [$table])->diagnostics());
     }
 
     public function testRenderWritesTheVisibility(): void

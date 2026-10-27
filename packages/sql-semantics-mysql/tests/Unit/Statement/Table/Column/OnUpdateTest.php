@@ -20,9 +20,9 @@ final class OnUpdateTest extends TestCase
     public function testDeriveAttributeRetainsADeclarationOperandWithoutAScalarFact(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
@@ -30,7 +30,7 @@ final class OnUpdateTest extends TestCase
 
         self::assertInstanceOf(OnUpdate::class, $attribute);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp::class, $attribute->value);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheAttribute(): void

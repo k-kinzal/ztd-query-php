@@ -14,7 +14,20 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ViewsTest extends TestCase
 {
-    public function testRefreshRebindsTheRetainedStructure(): void
+    public function testCapturePublishesValuesWithoutRetainingTheTraversal(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE VIEW v AS SELECT 1 AS a');
+        $view = $session->instance->dictionary->schema('d')?->views['v'];
+        self::assertNotNull($view);
+
+        $snapshot = Views::capture($session->instance->dictionary, $session->settings());
+
+        self::assertTrue($snapshot->view($view)->valid);
+        self::assertContains($view->declaration, $snapshot->tables());
+    }
+
+    public function testBindRebindsTheRetainedStructure(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE VIEW v AS SELECT a FROM t');
@@ -26,14 +39,15 @@ final class ViewsTest extends TestCase
         $session->query('DROP TABLE t; CREATE TABLE t (a VARCHAR(12))');
         $session->text = 'This is not SQL';
 
-        Views::refresh($view, $session->instance->dictionary, $session->settings());
+        $binding = Views::bind($view, $session->instance->dictionary->declarations(), $session->settings());
 
         self::assertSame($definition, $view->query);
-        self::assertNotSame($before, $view->operation);
-        self::assertSame([], $view->operation->facts->diagnostics);
+        self::assertSame($before, $view->operation);
+        self::assertNotSame($before, $binding->operation);
+        self::assertSame([], $binding->operation->statementInformation()->diagnostics);
     }
 
-    public function testRefreshRetainsMaterializedColumnTypes(): void
+    public function testBindRetainsMaterializedColumnTypes(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE VIEW v AS SELECT 1 n, a FROM t LIMIT 1');
@@ -43,13 +57,13 @@ final class ViewsTest extends TestCase
         $session->query('DROP TABLE t; CREATE TABLE t (a VARCHAR(12))');
         $session->text = 'This is not SQL';
 
-        Views::refresh($view, $session->instance->dictionary, $session->settings());
+        $binding = Views::bind($view, $session->instance->dictionary->declarations(), $session->settings());
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $view->declaration->columns[0]->type);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, $view->declaration->columns[0]->type->field);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $binding->declaration->columns[0]->type);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, $binding->declaration->columns[0]->type->field);
     }
 
-    public function testRefreshAllRecordsInvalidViewsWithoutPlanningThem(): void
+    public function testBindRecordsInvalidViewsWithoutPlanningThem(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE VIEW v AS SELECT a FROM t; DROP TABLE t');
@@ -57,8 +71,8 @@ final class ViewsTest extends TestCase
         self::assertNotNull($schema);
         $view = $schema->views['v'];
 
-        Views::refreshAll($session->instance->dictionary, $session->settings());
+        $binding = Views::bind($view, $session->instance->dictionary->declarations(), $session->settings());
 
-        self::assertFalse($view->valid);
+        self::assertFalse($binding->valid);
     }
 }

@@ -69,9 +69,9 @@ final class ExplainFactsTest extends TestCase
     public function testDeriveRetainsTheModifierNoticeBeforeItsExplainedOperand(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN EXTENDED SELECT missing');
-        self::assertCount(1, $operation->facts->warnings);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->facts->warnings[0]);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainExtended, $operation->facts->warnings[0]->construct);
+        self::assertCount(1, $operation->warnings());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->warnings()[0]);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainExtended, $operation->warnings()[0]->construct);
     }
 
 

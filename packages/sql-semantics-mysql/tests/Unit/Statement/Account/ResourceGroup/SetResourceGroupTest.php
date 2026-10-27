@@ -18,7 +18,7 @@ final class SetResourceGroupTest extends TestCase
 {
     public function testDeriveStatementReportsANonIntegerThread(): void
     {
-        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics(Dialect::MySql))->analyze('SET RESOURCE GROUP g FOR 1.5')->facts->diagnostics[0]);
+        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics(Dialect::MySql))->analyze('SET RESOURCE GROUP g FOR 1.5')->diagnostics()[0]);
     }
 
     public function testRenderWritesTheThreads(): void

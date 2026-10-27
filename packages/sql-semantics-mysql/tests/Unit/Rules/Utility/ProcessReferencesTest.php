@@ -36,7 +36,7 @@ final class ProcessReferencesTest extends TestCase
     public function testCheckDistinguishesConstantSubqueriesFromExternalDependencies(string $sql, bool $forbidden): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-        $dependencies = array_filter($operation->facts->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof NotSupportedYet && $diagnostic->feature === Kill::DEPENDENCIES);
+        $dependencies = array_filter($operation->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof NotSupportedYet && $diagnostic->feature === Kill::DEPENDENCIES);
 
         self::assertCount($forbidden ? 1 : 0, $dependencies);
     }

@@ -10,9 +10,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -28,7 +28,7 @@ final class FixedColumns
      *
      * @return array<string, true>
      */
-    public static function of(ShowLike|ShowWhere|null $filter, Facts $facts): array
+    public static function of(ShowLike|ShowWhere|null $filter, StatementSemantics $facts): array
     {
         if (!$filter instanceof ShowWhere) {
             return [];
@@ -52,7 +52,7 @@ final class FixedColumns
     /**
      * Answers the unqualified column fixed to a statement constant, or an empty name.
      */
-    public static function column(\SqlSemantics\Statement\Operand $column, \SqlSemantics\Statement\Operand $value, Facts $facts): string
+    public static function column(\SqlSemantics\Statement\Operand $column, \SqlSemantics\Statement\Operand $value, StatementSemantics $facts): string
     {
         return $column instanceof ColumnUse && $value instanceof Scalar && $column->qualifier === null && Constancy::of($value, $facts) !== Constancy::Row ? strtolower($column->name->value) : '';
     }

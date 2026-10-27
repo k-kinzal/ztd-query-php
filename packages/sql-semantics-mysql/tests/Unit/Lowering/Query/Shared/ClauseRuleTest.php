@@ -45,10 +45,10 @@ final class ClauseRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY 1, a + 1');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[0]->expression);
-        self::assertNotInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[1]->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(OutputOrdinal::class, $operation->query->orderBy[0]->expression);
+        self::assertNotInstanceOf(OutputOrdinal::class, $operation->query->orderBy[1]->expression);
     }
 
     public function testOrderingAndGroupingKeepWrappedIntegersPositional(): void
@@ -61,10 +61,10 @@ final class ClauseRuleTest extends TestCase
     public function testOrderingGivesLegacyBooleansTheirPositionalRole(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t ORDER BY (TRUE)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->query->orderBy[0]->expression);
-        self::assertSame(1, $operation->statement->query->orderBy[0]->expression->position());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(OutputOrdinal::class, $operation->query->orderBy[0]->expression);
+        self::assertSame(1, $operation->query->orderBy[0]->expression->position());
     }
 
     public function testOrderItemsKeepsIntegersAsWritten(): void
@@ -89,9 +89,9 @@ final class ClauseRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY a ASC, b DESC, c');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame([Direction::Ascending, Direction::Descending, null], array_map(static fn (OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item): ?Direction => $item->direction, $operation->statement->query->orderBy));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame([Direction::Ascending, Direction::Descending, null], array_map(static fn (OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item): ?Direction => $item->direction, $operation->query->orderBy));
     }
 
     public function testPositionsWrapsUnsignedIntegers(): void

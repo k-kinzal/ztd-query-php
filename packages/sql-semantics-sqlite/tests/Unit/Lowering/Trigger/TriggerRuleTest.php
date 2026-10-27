@@ -33,18 +33,18 @@ final class TriggerRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER IF NOT EXISTS main.tr BEFORE UPDATE OF a, b ON u FOR EACH ROW WHEN new.a > 1 BEGIN SELECT 1; SELECT 2; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        self::assertSame('main', $operation->statement->name->schema?->value);
-        self::assertSame('tr', $operation->statement->name->name->value);
-        self::assertFalse($operation->statement->temporary);
-        self::assertTrue($operation->statement->ifNotExists);
-        self::assertSame(TriggerTiming::Before, $operation->statement->timing);
-        self::assertSame(TriggerEvent::Update, $operation->statement->event);
-        self::assertSame(['a', 'b'], array_map(static fn (Name $column): string => $column->value, $operation->statement->columns));
-        self::assertSame('u', $operation->statement->table->name->name->value);
-        self::assertTrue($operation->statement->forEachRow);
-        self::assertInstanceOf(Binary::class, $operation->statement->when);
-        self::assertCount(2, $operation->statement->steps);
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        self::assertSame('main', $operation->name->schema?->value);
+        self::assertSame('tr', $operation->name->name->value);
+        self::assertFalse($operation->temporary);
+        self::assertTrue($operation->ifNotExists);
+        self::assertSame(TriggerTiming::Before, $operation->timing);
+        self::assertSame(TriggerEvent::Update, $operation->event);
+        self::assertSame(['a', 'b'], array_map(static fn (Name $column): string => $column->value, $operation->columns));
+        self::assertSame('u', $operation->table->name->name->value);
+        self::assertTrue($operation->forEachRow);
+        self::assertInstanceOf(Binary::class, $operation->when);
+        self::assertCount(2, $operation->steps);
         self::assertSame('CREATE TRIGGER IF NOT EXISTS main.tr BEFORE UPDATE OF a, b ON u FOR EACH ROW WHEN new.a > 1 BEGIN SELECT 1; SELECT 2; END', $operation->toString());
     }
 
@@ -52,24 +52,24 @@ final class TriggerRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TEMP TRIGGER tr DELETE ON t BEGIN SELECT 1; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        self::assertTrue($operation->statement->temporary);
-        self::assertFalse($operation->statement->ifNotExists);
-        self::assertNull($operation->statement->name->schema);
-        self::assertNull($operation->statement->timing);
-        self::assertSame([], $operation->statement->columns);
-        self::assertFalse($operation->statement->forEachRow);
-        self::assertNull($operation->statement->when);
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        self::assertTrue($operation->temporary);
+        self::assertFalse($operation->ifNotExists);
+        self::assertNull($operation->name->schema);
+        self::assertNull($operation->timing);
+        self::assertSame([], $operation->columns);
+        self::assertFalse($operation->forEachRow);
+        self::assertNull($operation->when);
         self::assertSame('CREATE TEMP TRIGGER tr DELETE ON t BEGIN SELECT 1; END', $operation->toString());
     }
 
     public function testTimingLowersBeforeAfterInsteadOfAndNone(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $before = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t BEGIN SELECT 1; END')->statement;
-        $after = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END')->statement;
-        $instead = $semantics->analyze('CREATE TRIGGER tr INSTEAD OF INSERT ON v BEGIN SELECT 1; END')->statement;
-        $none = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $before = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t BEGIN SELECT 1; END');
+        $after = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END');
+        $instead = $semantics->analyze('CREATE TRIGGER tr INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
+        $none = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $before);
         self::assertInstanceOf(CreateTrigger::class, $after);
@@ -85,10 +85,10 @@ final class TriggerRuleTest extends TestCase
     public function testEventLowersDeleteInsertUpdateAndUpdateOf(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $delete = $semantics->analyze('CREATE TRIGGER tr DELETE ON t BEGIN SELECT 1; END')->statement;
-        $insert = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $update = $semantics->analyze('CREATE TRIGGER tr UPDATE ON t BEGIN SELECT 1; END')->statement;
-        $columns = $semantics->analyze('CREATE TRIGGER tr UPDATE OF a, "b c" ON t BEGIN SELECT 1; END')->statement;
+        $delete = $semantics->analyze('CREATE TRIGGER tr DELETE ON t BEGIN SELECT 1; END');
+        $insert = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
+        $update = $semantics->analyze('CREATE TRIGGER tr UPDATE ON t BEGIN SELECT 1; END');
+        $columns = $semantics->analyze('CREATE TRIGGER tr UPDATE OF a, "b c" ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $delete);
         self::assertInstanceOf(CreateTrigger::class, $insert);
@@ -105,8 +105,8 @@ final class TriggerRuleTest extends TestCase
     public function testWhenIsNullWithoutTheClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $guarded = $semantics->analyze('CREATE TRIGGER tr INSERT ON t WHEN new.a > 1 BEGIN SELECT 1; END')->statement;
+        $bare = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
+        $guarded = $semantics->analyze('CREATE TRIGGER tr INSERT ON t WHEN new.a > 1 BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $bare);
         self::assertInstanceOf(CreateTrigger::class, $guarded);
@@ -118,8 +118,8 @@ final class TriggerRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO u VALUES (1); UPDATE u SET a = 1; DELETE FROM u; SELECT 1; INSERT INTO u SELECT 1; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        self::assertSame([InsertRows::class, Update::class, Delete::class, Select::class, InsertSelect::class], array_map(static fn (object $step): string => $step::class, $operation->statement->steps));
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        self::assertSame([InsertRows::class, Update::class, Delete::class, Select::class, InsertSelect::class], array_map(static fn (object $step): string => $step::class, $operation->steps));
         self::assertSame('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO u VALUES (1); UPDATE u SET a = 1; DELETE FROM u; SELECT 1; INSERT INTO u SELECT 1; END', $operation->toString());
     }
 
@@ -127,8 +127,8 @@ final class TriggerRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE OR IGNORE u SET a = 1, b = 2 FROM w WHERE u.b = w.b; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        $update = $operation->statement->steps[0];
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        $update = $operation->steps[0];
         self::assertInstanceOf(Update::class, $update);
         self::assertSame(ConflictResolution::Ignore, $update->resolution);
         self::assertSame('u', $update->target->name->name->value);
@@ -144,9 +144,9 @@ final class TriggerRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON t BEGIN INSERT OR REPLACE INTO u (a) VALUES (1) ON CONFLICT DO NOTHING; DELETE FROM u WHERE a = 1; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        $insert = $operation->statement->steps[0];
-        $delete = $operation->statement->steps[1];
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        $insert = $operation->steps[0];
+        $delete = $operation->steps[1];
         self::assertInstanceOf(InsertRows::class, $insert);
         self::assertSame(ConflictResolution::Replace, $insert->into->resolution);
         self::assertFalse($insert->into->replace);
@@ -161,10 +161,10 @@ final class TriggerRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE u INDEXED BY i SET a = 1; DELETE FROM u NOT INDEXED; DELETE FROM main.u; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        $indexed = $operation->statement->steps[0];
-        $refused = $operation->statement->steps[1];
-        $qualified = $operation->statement->steps[2];
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        $indexed = $operation->steps[0];
+        $refused = $operation->steps[1];
+        $qualified = $operation->steps[2];
         self::assertInstanceOf(Update::class, $indexed);
         self::assertInstanceOf(Delete::class, $refused);
         self::assertInstanceOf(Delete::class, $qualified);
@@ -177,7 +177,7 @@ final class TriggerRuleTest extends TestCase
             self::assertInstanceOf(Misuse::class, $diagnostic);
 
             return $diagnostic->rule;
-        }, $operation->facts->diagnostics));
+        }, $operation->diagnostics()));
         self::assertSame('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE u INDEXED BY i SET a = 1; DELETE FROM u NOT INDEXED; DELETE FROM main.u; END', $operation->toString());
     }
 }

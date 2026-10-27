@@ -29,27 +29,32 @@ final class OpenHandlerTest extends TestCase
         $column = new ColumnUse(new Name('hidden'));
         $handler = new OpenHandler(new Name('h'));
         $node = new HandlerScan($handler, \SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::First, $column);
-        $before = new \SqlSemantics\Statement\Operation($semantics->context([$table]), $node);
+        $before = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$table]), $node, new \SqlSemantics\Statement\Source\SourceMap());
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), handlers: ['h' => $table->name]);
-        $after = new \SqlSemantics\Statement\Operation($semantics->context([$table], session: $settings), $node);
-        $resolution = $after->facts->scalar($column)->resolution;
+        $after = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$table], session: $settings), $node, new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertInstanceOf(HandlerScan::class, $before);
+        self::assertInstanceOf(HandlerScan::class, $after);
+        self::assertNotNull($before->where);
+        self::assertNotNull($after->where);
+        $resolution = $after->where->scalarInformation()->resolution;
 
-        self::assertInstanceOf(ConditionalColumn::class, $before->facts->scalar($column)->resolution);
+        self::assertInstanceOf(ConditionalColumn::class, $before->where->scalarInformation()->resolution);
+        self::assertFalse($column->hasBinding());
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $resolution);
-        self::assertSame($handler, $resolution->relation);
+        self::assertSame($after->handler, $resolution->relation);
         self::assertSame($table->implicit[0]->column, $resolution->slot->declaration());
         self::assertSame('a', $after->field(0)->name?->value);
-        self::assertTrue($after->facts->relation($handler)->shape->complete());
-        self::assertFalse($before->facts->relation($handler)->shape->complete());
+        self::assertTrue($after->handler->relationInformation()->shape->complete());
+        self::assertFalse($before->handler->relationInformation()->shape->complete());
     }
 
     public function testDeriveRelationIsOpen(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ FIRST WHERE a');
-        self::assertInstanceOf(HandlerScan::class, $operation->statement);
+        self::assertInstanceOf(HandlerScan::class, $operation);
 
-        self::assertFalse($operation->facts->relation($operation->statement->handler)->shape->complete());
-        self::assertInstanceOf(ConditionalColumn::class, $operation->facts->scalar($operation->statement->where ?? new ColumnUse(new Name('a')))->resolution);
+        self::assertFalse($operation->handler->relationInformation()->shape->complete());
+        self::assertInstanceOf(ConditionalColumn::class, ($operation->where ?? new ColumnUse(new Name('a')))->scalarInformation()->resolution);
     }
 
     public function testRenderWritesTheName(): void

@@ -19,11 +19,11 @@ final class DeferredMultipleDeleteTest extends TestCase
     public function testDeriveProgramRetainsDependenciesAndDiagnosticOwnership(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DELETE q FROM (SELECT * FROM source) q');
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $delete = $operation->statement->body;
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $delete = $operation->body;
         self::assertInstanceOf(DeferredMultipleDelete::class, $delete);
-        self::assertTrue($operation->facts->covers($delete->tables[0]));
-        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof M\Dml\Problem\WriteMisuse));
+        self::assertTrue($delete->tables[0]->hasBinding());
+        $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof M\Dml\Problem\WriteMisuse));
         self::assertCount(1, $problems);
         self::assertSame($delete, $problems[0]->statement);
     }

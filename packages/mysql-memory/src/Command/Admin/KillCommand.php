@@ -21,9 +21,9 @@ use Override;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Evaluates KILL's process identifier and ends the named connection or its active statement.
@@ -51,10 +51,10 @@ final class KillCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof Kill);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         try {
             $operand = $planner->compiler->compile($statement->process, new Scope());
         } catch (SqlError $error) {

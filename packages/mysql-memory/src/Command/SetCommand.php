@@ -19,6 +19,7 @@ use MySqlMemory\Variable\Assigner;
 use MySqlMemory\Variable\Scope as VariableScope;
 use Override;
 use ReflectionClass;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
@@ -29,7 +30,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope as Written;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -60,10 +60,10 @@ final class SetCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof SetVariables);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $frame = new Frame($context);
         $assigner = new Assigner($session->variables, $context);
         $actions = [];

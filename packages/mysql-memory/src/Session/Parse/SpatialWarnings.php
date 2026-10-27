@@ -64,9 +64,9 @@ final class SpatialWarnings
      * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings
      * @return array<int, \SqlSemantics\Statement\Fact\Warning>
      */
-    public function accepted(\SqlSemantics\Statement\Operation $operation, array $warnings): array
+    public function accepted(\SqlSemantics\Platform\MySql\Statement\Statement $operation, array $warnings): array
     {
-        if (array_filter($operation->facts->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount) === []) {
+        if (array_filter($operation->statementInformation()->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount) === []) {
             return $warnings;
         }
 
@@ -86,7 +86,7 @@ final class SpatialWarnings
         } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
             return false;
         }
-        $root = $operation->statement;
+        $root = $operation;
         $query = $root instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot ? $root->query : null;
         $item = $query instanceof Select ? ($query->items[0] ?? null) : null;
         $call = $item instanceof SelectExpression ? $item->expression : null;

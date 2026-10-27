@@ -28,14 +28,14 @@ final class BooleanLiteralTest extends TestCase
     public function testDeriveScalarAnswersBigIntThatIsNeverNull(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = TRUE');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
         self::assertInstanceOf(BooleanLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertTrue($literal->value);
         self::assertInstanceOf(Known::class, $fact->type);
@@ -47,7 +47,7 @@ final class BooleanLiteralTest extends TestCase
     public function testDeriveScalarTypesFalseLikeTrue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT FALSE');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -55,7 +55,7 @@ final class BooleanLiteralTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(BooleanLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertFalse($literal->value);
         self::assertInstanceOf(Known::class, $fact->type);

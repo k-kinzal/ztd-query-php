@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\PublicationList;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Removing a table with a row filter
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p DROP TABLE t WHERE (true)');
- *     $operation->facts->diagnostics[0]->message() // => 'cannot use a WHERE clause when removing a table from a publication'
+ *     $operation->diagnostics()[0]->message() // => 'cannot use a WHERE clause when removing a table from a publication'
  */
-final class AlterPublicationMembers implements Statement
+final class AlterPublicationMembers extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<PublicationMember> The tables and schemas in the order written
@@ -40,8 +39,11 @@ final class AlterPublicationMembers implements Statement
      * @param PublicationAction $action Whether the objects are added, replace the list, or are removed
      * @param list<PublicationMember> $objects The tables and schemas in the order written; at least one
      */
-    public function __construct(public readonly Name $name, public readonly PublicationAction $action, array $objects)
+    public function __construct(public readonly Name $name, public readonly PublicationAction $action, array $objects, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->objects = Check::listOf($objects, PublicationMember::class, 'ALTER PUBLICATION names at least one object.', 1);
         (new PublicationList())->check($this->objects);
     }

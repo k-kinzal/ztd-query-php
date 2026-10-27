@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to add an index to an existing table: CREATE [UNIQUE | FULLTEXT | SPATIAL] INDEX.
@@ -39,11 +38,12 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
  *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC, (a + b))', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->diagnostics] // => [true, []]
+ *     [$index->relationInformation()->table->table === $table->declarations()[0], $index->diagnostics()] // => [true, []]
  */
-final class CreateIndex implements Statement, Relation
+final class CreateIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<KeyPart> The key parts in order
@@ -77,7 +77,16 @@ final class CreateIndex implements Statement, Relation
         public readonly ?IndexAlgorithm $algorithm = null,
         array $options = [],
         array $alterOptions = [],
+        ?RelationFact $relationInformation = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($kind !== IndexKind::Primary, 'CREATE INDEX does not create a primary key.');

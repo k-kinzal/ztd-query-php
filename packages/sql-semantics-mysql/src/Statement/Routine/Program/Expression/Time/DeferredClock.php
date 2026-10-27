@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -31,14 +30,18 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredClock implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Clock $clock The time function
      * @param Numeral $precision The complete decimal NUM operand
      */
-    public function __construct(public readonly Clock $clock, public readonly Numeral $precision)
+    public function __construct(public readonly Clock $clock, public readonly Numeral $precision, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($clock->precise() && $precision->isIntegerToken() && (int) $precision->text % 256 > 6, 'A deferred clock retains a NUM precision whose effective value exceeds six.');
     }
 

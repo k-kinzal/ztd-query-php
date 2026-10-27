@@ -29,8 +29,8 @@ final class WrongArgumentCountTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT abs(1, 2)');
 
-        self::assertInstanceOf(WrongArgumentCount::class, $query->facts->diagnostics[0]);
-        self::assertSame(2, $query->facts->diagnostics[0]->arguments);
-        self::assertSame('wrong number of arguments to function abs()', $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(WrongArgumentCount::class, $query->diagnostics()[0]);
+        self::assertSame(2, $query->diagnostics()[0]->arguments);
+        self::assertSame('wrong number of arguments to function abs()', $query->diagnostics()[0]->message());
     }
 }

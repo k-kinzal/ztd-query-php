@@ -18,12 +18,12 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateTable;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW CREATE TABLE: the statement that creates a table as it is now.
@@ -64,12 +64,12 @@ final class ShowCreateTableCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowCreateTable);
         $stored = (new Inspection())->table($statement->table, null, $session);
         $view = $session->instance->dictionary->schema($stored->definition->schema)->views[$stored->definition->name] ?? null;
-        if ($view !== null && $view->declaration === $stored->definition->declaration) {
+        if ($view !== null && $stored->definition->declaration->kind === \SqlSemantics\Statement\Declaration\RelationKind::View) {
             return (new \MySqlMemory\Command\View\ShowCreateViewCommand())->write($view, $session, $context);
         }
         (new \MySqlMemory\Session\Access\OpenedTables())->open($stored->definition->schema, $stored->definition->name, $session);

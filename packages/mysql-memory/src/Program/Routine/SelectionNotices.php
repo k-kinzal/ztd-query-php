@@ -9,7 +9,7 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use WeakMap;
@@ -29,12 +29,12 @@ final class SelectionNotices
     /**
      * Captures relation identities and emits notices only for another preparation.
      */
-    public function start(DeferredSelection $selection, Facts $facts, Session $session): void
+    public function start(DeferredSelection $selection, StatementSemantics $facts, Session $session): void
     {
         $cache = $session->preparation->selections ??= new WeakMap();
         $tables = [];
         foreach ((new Walker())->find($selection, NamedRelation::class) as $relation) {
-            $resolved = $facts->covers($relation) ? $facts->relation($relation)->table : null;
+            $resolved = $relation->hasBinding() ? $relation->relationInformation()->table : null;
             $tables[] = $resolved instanceof DeclaredTable ? $resolved->table : null;
         }
         $previous = $cache[$selection] ?? null;

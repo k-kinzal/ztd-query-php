@@ -18,7 +18,7 @@ final class UseDatabaseTest extends TestCase
     public function testDeriveStatementReturnsNoRows(): void
     {
         $use = (new Semantics(Dialect::MySql))->analyze('USE db');
-        self::assertInstanceOf(UseDatabase::class, $use->statement);
+        self::assertInstanceOf(UseDatabase::class, $use);
         self::assertNull($use->shape());
     }
 

@@ -25,12 +25,12 @@ final class ConditionalTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE main.t (a INTEGER)');
         $query = $semantics->analyze('SELECT a FROM t', $semantics->context([$table], false));
 
-        $resolution = $query->facts->relation($query->singleNamedInput())->table;
+        $resolution = $query->singleNamedInput()->relationInformation()->table;
 
         self::assertInstanceOf(ConditionalTable::class, $resolution);
         self::assertSame([$table->declarations()[0]], $resolution->candidates);
         self::assertSame('the declaration of relation t', $resolution->missing->describe());
-        self::assertFalse($query->facts->relation($query->singleNamedInput())->shape->complete());
+        self::assertFalse($query->singleNamedInput()->relationInformation()->shape->complete());
     }
 
     public function testCandidatesAreNotNeededWhenTheContextIsComplete(): void
@@ -39,7 +39,7 @@ final class ConditionalTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE main.t (a INTEGER)');
         $query = $semantics->analyze('SELECT a FROM t', [$table]);
 
-        self::assertInstanceOf(DeclaredTable::class, $query->facts->relation($query->singleNamedInput())->table);
+        self::assertInstanceOf(DeclaredTable::class, $query->singleNamedInput()->relationInformation()->table);
     }
 
     public function testCandidatesAreAtLeastOne(): void

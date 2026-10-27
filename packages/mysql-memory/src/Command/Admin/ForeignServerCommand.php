@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\AlterServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\DropServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes CREATE SERVER, ALTER SERVER and DROP SERVER.
@@ -55,8 +55,8 @@ final class ForeignServerCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $registry = $session->instance->registry;
         $affected = 1;
         $session->transaction->commit();

@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ENGINE_ATTRIBUTE [=] 'json'`: attributes for a secondary engine (MySQL 8.0.21 and later).
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class EngineAttributeOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $attribute The JSON text
      */
-    public function __construct(public readonly Text $attribute)
+    public function __construct(public readonly Text $attribute, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }

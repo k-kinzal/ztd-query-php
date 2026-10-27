@@ -16,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * INSERT or REPLACE of the rows of a query (SELECT, TABLE, VALUES or a set operation), with the optional ON DUPLICATE KEY UPDATE.
@@ -36,11 +35,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the source of an INSERT ... SELECT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) SELECT b FROM u');
- *     [$insert->statement->source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT b FROM u']
+ *     [$insert->source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT b FROM u']
  */
-final class InsertQuery implements Explainable
+final class InsertQuery extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Assignment> The assignments of ON DUPLICATE KEY UPDATE in written order
@@ -53,8 +52,11 @@ final class InsertQuery implements Explainable
      * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When REPLACE has ON DUPLICATE KEY UPDATE
      */
-    public function __construct(public readonly InsertInto $into, public readonly Query $source, array $onDuplicate = [])
+    public function __construct(public readonly InsertInto $into, public readonly Query $source, array $onDuplicate = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->hasDestination($source), 'An INSERT source supplies rows without an INTO result destination.');

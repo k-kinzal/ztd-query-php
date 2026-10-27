@@ -18,10 +18,10 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Raises the problems the server finds while it parses SIGNAL and RESIGNAL, in the order they are written.
@@ -53,13 +53,13 @@ final class SignalProblems
      *
      * @throws SqlError When the statement has such a problem
      */
-    public function check(Operation $operation, Session $session): void
+    public function check(MySqlStatement $operation, Session $session): void
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         if (!$statement instanceof Signal && !$statement instanceof Resignal) {
             return;
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof ProgramProblem && in_array($diagnostic->rule, [ProgramRule::UndefinedCondition, ProgramRule::BadSqlState, ProgramRule::SignalConditionKind], true)) {
                 throw (new ProgramErrors())->error($diagnostic);
             }
@@ -83,10 +83,10 @@ final class SignalProblems
      */
     public function refused(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems $refusal, Session $session): SqlError
     {
-        $operation = new Operation($session->semantics()->context(session: $session->resolution()), $refusal->prefix);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(session: $session->resolution()), $refusal->prefix, new \SqlSemantics\Statement\Source\SourceMap());
         $this->check($operation, $session);
         if ($refusal->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem) {
-            $pending = new Operation($session->semantics()->context(session: $session->resolution()), new Resignal(null, [$refusal->problem]));
+            $pending = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(session: $session->resolution()), new Resignal(null, [$refusal->problem]), new \SqlSemantics\Statement\Source\SourceMap());
             $this->check($pending, $session);
         }
 
@@ -98,7 +98,7 @@ final class SignalProblems
      *
      * @throws SqlError When the node has such a problem
      */
-    public function value(Node $node, Operation $operation, Session $session): void
+    public function value(Node $node, MySqlStatement $operation, Session $session): void
     {
         if ($node instanceof TemporalLiteral) {
             $form = $node->form === TemporalForm::Timestamp ? 'DATETIME' : $node->form->value;
@@ -112,9 +112,9 @@ final class SignalProblems
             return;
         }
         $name = strtolower(($node->instance === null ? '' : $node->instance->value . '.') . $node->name->value);
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownSystemVariable && strtolower($diagnostic->name) === $name) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $operation);
             }
         }
     }

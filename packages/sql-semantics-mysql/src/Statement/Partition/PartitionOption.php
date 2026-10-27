@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of a partition or subpartition definition, such as `ENGINE = InnoDB` or `COMMENT = 'text'`.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionOptionKind $kind The option
@@ -41,6 +40,7 @@ final class PartitionOption implements Node
         public readonly ?Name $name = null,
         public readonly ?Numeral $number = null,
         public readonly ?Text $text = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input(
             ($name !== null) === $kind->named() && ($number !== null) === $kind->numbered() && ($text !== null) === (!$kind->named() && !$kind->numbered()),

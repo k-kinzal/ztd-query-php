@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Comparing two explicit collations
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 'a' COLLATE utf8mb4_bin = 'b' COLLATE utf8mb4_general_ci");
- *     $query->facts->diagnostics[0]->message() // => "Illegal mix of collations (utf8mb4_bin,EXPLICIT) and (utf8mb4_general_ci,EXPLICIT) for operation '='"
+ *     $query->diagnostics()[0]->message() // => "Illegal mix of collations (utf8mb4_bin,EXPLICIT) and (utf8mb4_general_ci,EXPLICIT) for operation '='"
  */
 final class IllegalCollationMix implements Diagnostic
 {

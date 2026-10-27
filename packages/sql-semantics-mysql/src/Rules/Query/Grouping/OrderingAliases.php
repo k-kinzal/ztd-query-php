@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
@@ -33,14 +32,14 @@ final class OrderingAliases
      *
      * @param list<Operand> $aggregates The resolved aggregate occurrences of the block
      */
-    public function check(Select $select, Facts $facts, array $aggregates, GrammarRelease $release): ?InvalidProjectionAlias
+    public function check(Select $select, array $aggregates, GrammarRelease $release): ?InvalidProjectionAlias
     {
         if ($aggregates === []) {
             return null;
         }
         $owned = array_fill_keys(array_map(spl_object_id(...), $aggregates), true);
         foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $item) {
-            $correlated = $this->correlated($item->expression, $facts, $owned);
+            $correlated = $this->correlated($item->expression, $owned);
             if ($correlated !== null) {
                 return $correlated;
             }
@@ -50,7 +49,7 @@ final class OrderingAliases
             if ($item->expression instanceof OutputOrdinal || (new SortScopes())->word($item->expression) !== null) {
                 continue;
             }
-            $problem = $this->nested($item->expression, $facts, $owned);
+            $problem = $this->nested($item->expression, $owned);
             if ($problem !== null) {
                 return $problem;
             }
@@ -64,7 +63,7 @@ final class OrderingAliases
      *
      * @param array<int, true> $owned The aggregate occurrence identities
      */
-    public function correlated(Operand $expression, Facts $facts, array $owned): ?InvalidProjectionAlias
+    public function correlated(Operand $expression, array $owned): ?InvalidProjectionAlias
     {
         $pending = [$expression];
         while ($pending !== []) {
@@ -76,8 +75,8 @@ final class OrderingAliases
             if (!is_object($node)) {
                 continue;
             }
-            if ($node instanceof ColumnUse && $facts->covers($node)) {
-                $resolution = $facts->scalar($node)->resolution;
+            if ($node instanceof ColumnUse && $node->hasBinding()) {
+                $resolution = $node->scalarInformation()->resolution;
                 $source = $resolution instanceof AliasTarget && $resolution->depth > 0 ? $resolution->field->expression : null;
                 if ($source !== null && (new OrderingAggregates())->occurrences($source, $owned) !== []) {
                     return new InvalidProjectionAlias($node->name, AliasRule::Aggregate, [$source]);
@@ -93,7 +92,7 @@ final class OrderingAliases
      *
      * @param array<int, true> $owned The aggregate occurrence identities
      */
-    public function nested(Operand $expression, Facts $facts, array $owned): ?InvalidProjectionAlias
+    public function nested(Operand $expression, array $owned): ?InvalidProjectionAlias
     {
         $pending = [$expression];
         while ($pending !== []) {
@@ -105,8 +104,8 @@ final class OrderingAliases
             if (!is_object($node) || $node instanceof Query) {
                 continue;
             }
-            if ($node instanceof ColumnUse && $facts->covers($node)) {
-                $resolution = $facts->scalar($node)->resolution;
+            if ($node instanceof ColumnUse && $node->hasBinding()) {
+                $resolution = $node->scalarInformation()->resolution;
                 $source = $resolution instanceof AliasTarget && $resolution->depth === 0 ? $resolution->field->expression : null;
                 if ($source !== null && (new OrderingAggregates())->occurrences($source, $owned) !== []) {
                     return new InvalidProjectionAlias($node->name, AliasRule::Aggregate, [$source]);

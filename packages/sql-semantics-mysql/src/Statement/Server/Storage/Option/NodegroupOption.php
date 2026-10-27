@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `NODEGROUP [=] id`: the NDB node group of a tablespace or log file group.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class NodegroupOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral $group The node group identifier
      */
-    public function __construct(public readonly Numeral $group)
+    public function __construct(public readonly Numeral $group, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($group), 'A node-group number is an integer token.');
     }

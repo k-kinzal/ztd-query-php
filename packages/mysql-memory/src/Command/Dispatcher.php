@@ -35,6 +35,7 @@ final class Dispatcher
      * @var array<class-string<Statement>, class-string<Command>>
      */
     public const COMMANDS = [
+        MySql\EmptyStatement::class => EmptyCommand::class,
         MySql\QueryRoot::class => QueryCommand::class,
         MySql\Utility\Show\ShowParseTree::class => InternalCommand::class,
         MySql\Server\Instance\Kill::class => Admin\KillCommand::class,
@@ -225,14 +226,11 @@ final class Dispatcher
      */
     public function command(\SqlSemantics\Statement\Node $statement): Command
     {
-        if ($statement instanceof MySql\Dml\Insert\InsertStatement) {
-            return new Write\InsertValuesCommand();
-        }
+
         assert($statement instanceof Statement);
         $command = self::COMMANDS[$statement::class] ?? null;
 
         return match (true) {
-            $statement instanceof \SqlSemantics\Statement\Script && $statement->statements === [] => new EmptyCommand(),
             $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => new View\ViewWriteCommand(new InsertCommand()),
             $statement instanceof Update && $statement->hasExecutionCondition() => new ChangeCommand(),
             $statement instanceof Update && MultipleChangeCommand::joined($statement) => new MultipleChangeCommand(),

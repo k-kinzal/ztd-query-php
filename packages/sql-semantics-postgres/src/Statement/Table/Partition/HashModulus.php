@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One item of a hash partition bound: MODULUS or REMAINDER and its number.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a hash bound item
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)');
- *     [$create->statement->definition->bound->items[1]->name->value, $create->statement->definition->bound->items[1]->value->digits] // => ['remainder', '1']
+ *     [$create->definition->bound->items[1]->name->value, $create->definition->bound->items[1]->value->digits] // => ['remainder', '1']
  */
 final class HashModulus implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The word: modulus or remainder
      * @param IntegerConstant $value The number
      */
-    public function __construct(public readonly Name $name, public readonly IntegerConstant $value)
+    public function __construct(public readonly Name $name, public readonly IntegerConstant $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

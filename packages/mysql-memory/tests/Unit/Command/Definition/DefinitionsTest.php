@@ -77,7 +77,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT) ENGINE=MyISAM CHARSET=latin1');
-        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        $definition = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition;
 
         self::assertNotNull($definition);
         self::assertSame(['d', 't', 'MyISAM', 'latin1_swedish_ci', false], [$definition->schema, $definition->name, $definition->engine, $definition->collation, $definition->temporary]);
@@ -87,7 +87,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE t (a INT)');
-        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        $definition = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition;
 
         self::assertNotNull($definition);
         self::assertSame(['InnoDB', true], [$definition->engine, $definition->temporary]);
@@ -97,7 +97,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d COLLATE latin1_bin; USE d; CREATE TABLE t (a VARCHAR(4))');
-        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        $definition = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition;
 
         self::assertNotNull($definition);
         self::assertSame(['latin1_bin', 'latin1_bin'], [$definition->collation, $definition->columns[0]->domain->collation->name]);
@@ -107,7 +107,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a VARCHAR(4)) CHARSET=utf8mb4 COLLATE=utf8mb4_bin');
-        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        $definition = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition;
 
         self::assertNotNull($definition);
         self::assertSame(['utf8mb4_bin', 'utf8mb4_bin'], [$definition->collation, $definition->columns[0]->domain->collation->name]);
@@ -117,7 +117,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (a INT NOT NULL COMMENT 'hi', b VARCHAR(4) COLLATE utf8mb4_bin)");
-        $columns = $session->instance->dictionary->table('d', 't')?->definition->columns ?? [];
+        $columns = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->columns ?? [];
 
         self::assertSame(
             [['a', Field::Long, 11, false, 'hi'], ['b', Field::VarString, 4, true, '']],
@@ -130,7 +130,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a SERIAL)');
-        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        $definition = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition;
 
         self::assertNotNull($definition);
         self::assertSame([Field::LongLong, true, false, true], [$definition->columns[0]->domain->field, $definition->columns[0]->domain->unsigned, $definition->columns[0]->nullable(), $definition->columns[0]->autoIncrement]);
@@ -153,7 +153,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT DEFAULT 5, b INT, c INT NOT NULL)');
-        $columns = $session->instance->dictionary->table('d', 't')?->definition->columns ?? [];
+        $columns = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->columns ?? [];
 
         self::assertSame(
             [[true, 5, '5'], [true, null, null], [false, null, null]],
@@ -225,7 +225,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP, b TIMESTAMP NULL)');
-        $columns = $session->instance->dictionary->table('d', 't')?->definition->columns ?? [];
+        $columns = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->columns ?? [];
 
         self::assertSame([true, false], [$columns[0]->onUpdateNow, $columns[1]->onUpdateNow]);
     }
@@ -234,7 +234,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT UNIQUE, b INT PRIMARY KEY)');
-        $keys = $session->instance->dictionary->table('d', 't')?->definition->keys ?? [];
+        $keys = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->keys ?? [];
 
         self::assertSame(
             [['PRIMARY', KeyKind::Primary, [1]], ['a', KeyKind::Unique, [0]]],
@@ -246,7 +246,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b VARCHAR(10), c VARCHAR(10), INDEX idx (a, b(3)), CONSTRAINT u1 UNIQUE (c), FULLTEXT KEY f (b))');
-        $keys = $session->instance->dictionary->table('d', 't')?->definition->keys ?? [];
+        $keys = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->keys ?? [];
 
         self::assertSame(
             [['idx', KeyKind::Index, [0, 1], [null, 3]], ['u1', KeyKind::Unique, [2], [null]], ['f', KeyKind::FullText, [1], [null]]],
@@ -258,7 +258,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, KEY (a) VISIBLE INVISIBLE, KEY b (a) INVISIBLE VISIBLE)');
-        $keys = $session->instance->dictionary->table('d', 't')?->definition->keys ?? [];
+        $keys = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->keys ?? [];
 
         self::assertSame([['a', false], ['b', true]], array_map(static fn ($key): array => [$key->name, $key->visible], $keys));
     }
@@ -276,7 +276,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT, UNIQUE (a), KEY (a, b), KEY (b))');
-        $keys = $session->instance->dictionary->table('d', 't')?->definition->keys ?? [];
+        $keys = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->keys ?? [];
 
         self::assertSame(['a', 'a_2', 'b'], [$keys[0]->name, $keys[1]->name, $keys[2]->name]);
     }
@@ -298,7 +298,7 @@ final class DefinitionsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT AUTO_INCREMENT, b INT, KEY (a, b))');
 
-        self::assertSame(0, $session->instance->dictionary->table('d', 't')?->definition->autoIncrementColumn());
+        self::assertSame(0, $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->autoIncrementColumn());
     }
 
     public function testCheckRefusesAnAutoIncrementColumnOutsideAnyKey(): void
@@ -352,7 +352,7 @@ final class DefinitionsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (c TIMESTAMP DEFAULT CURRENT_TIMESTAMP, d DATETIME(3) DEFAULT NOW(3), e DATETIME DEFAULT LOCALTIMESTAMP)');
-        $columns = $session->instance->dictionary->table('d', 't')?->definition->columns ?? [];
+        $columns = $session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->columns ?? [];
 
         self::assertSame([[true, null, 'CURRENT_TIMESTAMP'], [true, null, 'CURRENT_TIMESTAMP(3)'], [true, null, 'CURRENT_TIMESTAMP']], array_map(static fn ($column): array => [$column->default->now, $column->default->value, $column->default->text], $columns));
         self::assertNotNull($columns[1]->default->expression);
@@ -375,7 +375,7 @@ final class DefinitionsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (e ENUM('é','b') CHARACTER SET latin1, s SET('é','x') CHARACTER SET latin1)");
         $session->query("INSERT INTO t VALUES ('é', 'é,x')");
-        $table = $session->instance->dictionary->table('d', 't');
+        $table = $session->instance->dictionary->table('d', 't', $session->temporaries);
         $result = $session->query("SELECT e, s, HEX(e), HEX(s), e = 'é' FROM t")[0];
 
         self::assertNotNull($table);
@@ -389,6 +389,6 @@ final class DefinitionsTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT) ENGINE=InnoDB ENGINE=MyISAM; CREATE TABLE u (a INT)');
 
-        self::assertSame(['MyISAM', 'InnoDB'], [$session->instance->dictionary->table('d', 't')?->definition->engine, $session->instance->dictionary->table('d', 'u')?->definition->engine]);
+        self::assertSame(['MyISAM', 'InnoDB'], [$session->instance->dictionary->table('d', 't', $session->temporaries)?->definition->engine, $session->instance->dictionary->table('d', 'u')?->definition->engine]);
     }
 }

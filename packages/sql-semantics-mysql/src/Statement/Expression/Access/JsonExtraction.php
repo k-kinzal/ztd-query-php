@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,19 +32,23 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the path of an unquoting extraction
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a->>'$.b' = 'x'");
- *     [$query->statement->query->where->left->path->value, $query->statement->query->where->left->unquote] // => ['$.b', true]
+ *     [$query->query->where->left->path->value, $query->query->where->left->unquote] // => ['$.b', true]
  */
 final class JsonExtraction implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnUse $column The JSON column
      * @param Text $path The JSON path
      * @param bool $unquote Whether the result is unquoted (`->>`)
      */
-    public function __construct(public readonly ColumnUse $column, public readonly Text $path, public readonly bool $unquote = false)
+    public function __construct(public readonly ColumnUse $column, public readonly Text $path, public readonly bool $unquote = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($path->radix === null, 'A JSON path is a quoted string.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

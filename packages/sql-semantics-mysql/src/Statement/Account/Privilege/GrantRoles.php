@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
+use Override;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -14,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\AnalyzedStatement;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -30,9 +30,9 @@ use SqlSemantics\Statement\Source\Span;
  * @example Granting roles with the admin option
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, r2@`%` TO u WITH ADMIN OPTION'
  */
-final class GrantRoles implements Statement, PrivilegeChange, AnalyzedStatement
+final class GrantRoles extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<GrantedRole> The granted roles in order
@@ -57,8 +57,11 @@ final class GrantRoles implements Statement, PrivilegeChange, AnalyzedStatement
      * @param Charset|null $client The client encoding used to reconstruct names
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(array $roles, array $users, public readonly bool $withAdminOption = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(array $roles, array $users, public readonly bool $withAdminOption = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A role grant uses a MySQL language profile.');
         $this->roles = Check::listOf($roles, GrantedRole::class, 'GRANT names at least one role.', 1);
         $this->users = Check::listOf($users, Account::class, 'GRANT names at least one account.', 1);
@@ -87,6 +90,7 @@ final class GrantRoles implements Statement, PrivilegeChange, AnalyzedStatement
     /**
      * Reconstructs the complete request from its operands and selected language.
      */
+    #[Override]
     public function toString(): string
     {
         $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($this->profile->grammar, $this->profile->lexical, $this->client));
@@ -97,6 +101,7 @@ final class GrantRoles implements Statement, PrivilegeChange, AnalyzedStatement
     /**
      * Answers the selected language without retaining the analysis environment.
      */
+    #[Override]
     public function profile(): LanguageProfile
     {
         return $this->profile;
@@ -107,6 +112,7 @@ final class GrantRoles implements Statement, PrivilegeChange, AnalyzedStatement
      *
      * @return list<\SqlSemantics\Statement\Declaration\Table>
      */
+    #[Override]
     public function declarations(): array
     {
         return [];

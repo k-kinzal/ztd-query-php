@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(StartReplica::class)]
 #[Medium]
@@ -23,14 +22,14 @@ final class StartReplicaTest extends TestCase
     {
         $start = (new Semantics(Dialect::MySql))->analyze("START REPLICA SQL_THREAD UNTIL SOURCE_LOG_FILE = 'f', SOURCE_LOG_POS = 4 USER = 'u'");
 
-        self::assertEquals([new RefusedSetting(ReplicationError::ApplierWithCredentials)], $start->facts->diagnostics);
+        self::assertEquals([new RefusedSetting(ReplicationError::ApplierWithCredentials)], $start->diagnostics());
     }
 
     public function testDeriveStatementRejectsSlaveAfterItsRemoval(): void
     {
         $this->expectExceptionMessage('START SLAVE is not a statement of this release.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-9.1.0'))->context([]), new StartReplica(Terminology::Legacy));
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-9.1.0'))->context([]), new StartReplica(Terminology::Legacy), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderKeepsTheSpellingAndWritesEveryOption(): void

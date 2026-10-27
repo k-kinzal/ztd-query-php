@@ -22,12 +22,12 @@ final class CastTextTest extends TestCase
     public function testWriteRetainsTheResolvedCharacterSetAndLength(): void
     {
         $operation = (new Instance())->connect()->analyze('SELECT CAST(7 AS CHAR(5) CHARACTER SET ascii)');
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $item = $operation->statement->query->items[0];
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         self::assertInstanceOf(Cast::class, $item->expression);
-        $writer = new ViewText($operation->facts, '', '');
+        $writer = new ViewText($operation->statementInformation(), '', '');
         self::assertSame('cast(7 as char(5) charset ascii)', (new CastText($writer->expressions))->write($item->expression));
     }
 }

@@ -20,7 +20,7 @@ final class IndexElementTest extends TestCase
         $statement = $semantics->analyze('CREATE INDEX ON t (zz text_pattern_ops (x = 1))', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

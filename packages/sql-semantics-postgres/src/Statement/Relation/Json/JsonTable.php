@@ -16,7 +16,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * JSON_TABLE as a FROM item: rows and columns read from a JSON value (PostgreSQL 17).
@@ -29,11 +28,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the columns of JSON_TABLE
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' AS p COLUMNS (n FOR ORDINALITY, e boolean EXISTS)) AS j");
- *     [$query->statement->from->pathName->value, $query->field(0)->type->descriptor->name(), $query->field(1)->name->value] // => ['p', 'integer', 'e']
+ *     [$query->from->pathName->value, $query->field(0)->type->descriptor->name(), $query->field(1)->name->value] // => ['p', 'integer', 'e']
  */
-final class JsonTable implements Relation
+final class JsonTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Clause> The PASSING arguments
@@ -71,7 +71,12 @@ final class JsonTable implements Relation
         public readonly ?Name $alias = null,
         array $aliases = [],
         public readonly bool $lateral = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, JsonTableColumn::class, 'JSON_TABLE has at least one column.', 1);
         $this->passing = Check::listOf($passing, Clause::class, 'PASSING holds arguments.');
         $this->aliases = Check::listOf($aliases, Name::class, 'Column aliases are names.');

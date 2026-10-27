@@ -33,13 +33,13 @@ final class DerivedShapesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $derivation = new Derivation($semantics->context());
-        $fact = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull)), new Field(1, new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2')]))], $semantics->context()->columnNames);
+        $fact = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull)), new Field(1, new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2', 'é')]))], $semantics->context()->columnNames);
         $plain = (new DerivedShapes())->shape($fact, [], $derivation);
         $listed = (new DerivedShapes())->shape($fact, [new Name('x'), new Name('y')], $derivation);
 
         self::assertCount(2, $plain->slots);
         self::assertTrue($plain->complete());
-        self::assertEquals([new NameConversion('latin2')], $plain->slots[1]->unnamed);
+        self::assertEquals([new NameConversion('latin2', 'é')], $plain->slots[1]->unnamed);
         self::assertSame(['x', 'y'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $listed->slots));
         self::assertTrue($listed->complete());
         self::assertSame([], $derivation->facts()->diagnostics);
@@ -69,16 +69,16 @@ final class DerivedShapesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('a'))], $semantics->analyze('SELECT * FROM (SELECT 1 A, 2 a) d')->facts->diagnostics);
-        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('x'))], $semantics->analyze('SELECT * FROM (SELECT 1, 2) d (x, x)')->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('a'))], $semantics->analyze('SELECT * FROM (SELECT 1 A, 2 a) d')->diagnostics());
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('x'))], $semantics->analyze('SELECT * FROM (SELECT 1, 2) d (x, x)')->diagnostics());
     }
 
     public function testMergedSendsATemporalValueInTheConnectionCollation(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = $semantics->analyze('CREATE TABLE t (e DATE, n INT)');
-        $merged = $semantics->analyze('SELECT e, n FROM (SELECT e, n FROM t) AS d', [$t])->facts->output?->fields();
-        $limited = $semantics->analyze('SELECT e FROM (SELECT e FROM t LIMIT 1) AS d', [$t])->facts->output?->fields()?->at(0)->type;
+        $merged = $semantics->analyze('SELECT e, n FROM (SELECT e, n FROM t) AS d', [$t])->output()?->fields();
+        $limited = $semantics->analyze('SELECT e FROM (SELECT e FROM t LIMIT 1) AS d', [$t])->output()?->fields()?->at(0)->type;
 
         self::assertInstanceOf(Known::class, $merged?->at(0)->type);
         self::assertInstanceOf(Domain::class, $merged->at(0)->type->descriptor);

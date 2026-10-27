@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Source\SourceMap;
 
 /**
@@ -81,12 +81,12 @@ final class Operand
     /**
      * Modern partition subqueries are refused before interpreting their contents.
      */
-    public function facts(InvalidPartitionExpression $problem, Session $session): Facts
+    public function facts(InvalidPartitionExpression $problem, Session $session): StatementSemantics
     {
         $derivation = new Derivation($session->semantics()->context([], session: $session->resolution()));
         if ($session->settings()->legacy() || (new PartitionExpressions())->condition($problem->expression, $session->settings()->release()) !== OperandCondition::Subquery) {
-            $derivation->scalar($problem->expression, $derivation->environment());
+            $derivation->scalar(\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($problem->expression), $derivation->environment());
         }
-        return $derivation->facts();
+        return (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
     }
 }

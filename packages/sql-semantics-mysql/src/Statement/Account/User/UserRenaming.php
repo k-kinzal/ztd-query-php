@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `old_user TO new_user` pair of RENAME USER.
@@ -21,13 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class UserRenaming implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Account $from The account renamed
      * @param Account $to Its new name
      */
-    public function __construct(public readonly Account $from, public readonly Account $to)
+    public function __construct(public readonly Account $from, public readonly Account $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

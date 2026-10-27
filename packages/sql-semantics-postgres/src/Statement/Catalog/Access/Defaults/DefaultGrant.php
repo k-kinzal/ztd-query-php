@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privileg
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The GRANT action of ALTER DEFAULT PRIVILEGES: privileges future objects of a kind receive.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a default grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe WITH GRANT OPTION');
- *     [$operation->statement->action->objects->value, $operation->statement->action->grantOption] // => ['TABLES', true]
+ *     [$operation->action->objects->value, $operation->action->grantOption] // => ['TABLES', true]
  */
 final class DefaultGrant implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Privilege> The privileges in the order written; empty for ALL PRIVILEGES
@@ -45,7 +44,7 @@ final class DefaultGrant implements Node
      * @param list<RoleSpec> $grantees The grantees in the order written, at least one
      * @param bool $grantOption Whether WITH GRANT OPTION is written
      */
-    public function __construct(array $privileges, public readonly DefaultObjectKind $objects, array $grantees, public readonly bool $grantOption = false)
+    public function __construct(array $privileges, public readonly DefaultObjectKind $objects, array $grantees, public readonly bool $grantOption = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->privileges = (new PrivilegeLists())->privileges($privileges);
         $this->grantees = Check::listOf($grantees, RoleSpec::class, 'A grant names at least one grantee.', 1);

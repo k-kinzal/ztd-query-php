@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the modes of a BEGIN
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('BEGIN WORK ISOLATION LEVEL SERIALIZABLE, READ ONLY');
- *     [count($operation->statement->modes), $operation->toString()] // => [2, 'BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY']
+ *     [count($operation->modes), $operation->toString()] // => [2, 'BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY']
  */
-final class Begin implements Statement
+final class Begin extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TransactionMode> The characteristics in the order written
@@ -38,8 +37,11 @@ final class Begin implements Statement
      * @param BeginSpelling $spelling The spelling of the command
      * @param list<TransactionMode> $modes The characteristics in the order written
      */
-    public function __construct(public readonly BeginSpelling $spelling = BeginSpelling::Begin, array $modes = [])
+    public function __construct(public readonly BeginSpelling $spelling = BeginSpelling::Begin, array $modes = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->modes = Check::listOf($modes, TransactionMode::class, 'The modes of a transaction are transaction modes.');
     }
 

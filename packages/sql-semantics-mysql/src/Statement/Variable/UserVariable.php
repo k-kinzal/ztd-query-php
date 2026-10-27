@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -33,17 +32,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Naming the session state a variable depends on
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @total');
- *     [$query->statement->query->where->right->name->value, $query->facts->scalar($query->statement->query->where->right)->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
+ *     [$query->query->where->right->name->value, $query->query->where->right->scalarInformation()->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
  */
 final class UserVariable implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The variable name without the at sign
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

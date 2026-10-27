@@ -26,11 +26,11 @@ final class ExternalBodyTest extends TestCase
     public function testRenderKeepsAQuotedCode(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
         self::assertEquals(new ExternalBody(new Text('return zz')), $statement->body);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**

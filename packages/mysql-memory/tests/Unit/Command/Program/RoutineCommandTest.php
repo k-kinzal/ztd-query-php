@@ -227,7 +227,7 @@ final class RoutineCommandTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $session->text = "CREATE FUNCTION f(a INT) RETURNS CHAR(2) NO SQL RETURN 'x'";
-        $statement = $session->analyze($session->text)->statement;
+        $statement = $session->analyze($session->text);
         self::assertInstanceOf(CreateFunction::class, $statement);
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);

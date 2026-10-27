@@ -36,7 +36,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 /**
@@ -67,8 +67,8 @@ final class ChangeCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof Update || $statement instanceof Delete);
         if ($statement instanceof Update && $statement->hasExecutionCondition()) {
             (new \MySqlMemory\Program\Write\UpdateUse())->raise($statement, $session, $connection->parameters);
@@ -79,7 +79,7 @@ final class ChangeCommand implements Command
         }
         assert($relation instanceof TableReference || $relation instanceof WriteTarget);
         $table = $this->table($operation, $relation, $session);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $context->strict = $context->modes->strict() && !($statement instanceof Update ? $statement->ignore : in_array(DeleteOption::Ignore, $statement->options, true));
         $scope = new Scope();
         $definition = $table->definition;
@@ -101,14 +101,14 @@ final class ChangeCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the table does not exist
      */
-    public function table(Operation $operation, TableReference|WriteTarget $relation, Session $session): StoredTable
+    public function table(MySqlStatement $operation, TableReference|WriteTarget $relation, Session $session): StoredTable
     {
-        $resolution = $operation->facts->relation($relation)->table;
+        $resolution = $relation->relationInformation()->table;
         $schema = $relation->name->schema->value ?? $session->variables->database;
         if ($resolution instanceof DeclaredTable) {
             $schema = $resolution->table->name->schema->value ?? $schema;
         }
-        $table = $session->instance->dictionary->table($schema, $relation->name->name->value);
+        $table = $session->instance->dictionary->table($schema, $relation->name->name->value, $session->temporaries);
         if ($table === null) {
             throw QueryError::NoSuchTable->error($schema, $relation->name->name->value);
         }

@@ -52,7 +52,7 @@ final class ResourceGroupCommandTest extends TestCase
     public function testCreateChecksTheCpusBeforeTheName(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE RESOURCE GROUP USR_default TYPE SYSTEM VCPU = 9')->statement;
+        $statement = $session->analyze('CREATE RESOURCE GROUP USR_default TYPE SYSTEM VCPU = 9');
         self::assertInstanceOf(CreateResourceGroup::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -87,7 +87,7 @@ final class ResourceGroupCommandTest extends TestCase
     public function testAlterChecksTheCpusBeforeTheGroup(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER RESOURCE GROUP missing VCPU := 000007208, 1 - 0 FORCE')->statement;
+        $statement = $session->analyze('ALTER RESOURCE GROUP missing VCPU := 000007208, 1 - 0 FORCE');
         self::assertInstanceOf(AlterResourceGroup::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -165,7 +165,7 @@ final class ResourceGroupCommandTest extends TestCase
     public function testDropRefusesAMissingGroup(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('DROP RESOURCE GROUP RESTART FORCE')->statement;
+        $statement = $session->analyze('DROP RESOURCE GROUP RESTART FORCE');
         self::assertInstanceOf(DropResourceGroup::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -201,7 +201,7 @@ final class ResourceGroupCommandTest extends TestCase
     public function testAssignRefusesASystemGroupForTheSession(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SET RESOURCE GROUP SYS_default')->statement;
+        $statement = $session->analyze('SET RESOURCE GROUP SYS_default');
         self::assertInstanceOf(SetResourceGroup::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -224,7 +224,7 @@ final class ResourceGroupCommandTest extends TestCase
 
     public function testCpusChecksEveryIdBeforeTheRanges(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP g TYPE USER VCPU = 3-1, 99')->statement;
+        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP g TYPE USER VCPU = 3-1, 99');
         self::assertInstanceOf(CreateResourceGroup::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -235,7 +235,7 @@ final class ResourceGroupCommandTest extends TestCase
 
     public function testCpusRefusesAReversedRange(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP g TYPE USER VCPU = 7-0')->statement;
+        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP g TYPE USER VCPU = 7-0');
         self::assertInstanceOf(CreateResourceGroup::class, $statement);
 
         $this->expectException(SqlError::class);
@@ -252,7 +252,7 @@ final class ResourceGroupCommandTest extends TestCase
 
     public function testPriorityReadsTheSignAndTheDigits(): void
     {
-        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP g TYPE SYSTEM THREAD_PRIORITY = - 0005')->statement;
+        $statement = (new Instance())->connect()->analyze('CREATE RESOURCE GROUP g TYPE SYSTEM THREAD_PRIORITY = - 0005');
         self::assertInstanceOf(CreateResourceGroup::class, $statement);
 
         self::assertSame([-5, 0], [(new ResourceGroupCommand())->priority($statement->priority), (new ResourceGroupCommand())->priority(null)]);

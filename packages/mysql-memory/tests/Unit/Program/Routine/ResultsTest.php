@@ -36,7 +36,8 @@ final class ResultsTest extends TestCase
     #[DataProvider('providerBodies')]
     public function testAnnouncedReadsDeclaredInstructionsInsteadOfTheirReachability(string $body, bool $expected): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body)->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
         self::assertSame($expected, (new Results())->announced($statement->body));

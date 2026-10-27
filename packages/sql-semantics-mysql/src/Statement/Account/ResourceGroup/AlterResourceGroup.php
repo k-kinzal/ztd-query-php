@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER RESOURCE GROUP name [VCPU = …] [THREAD_PRIORITY = n] [ENABLE|DISABLE] [FORCE]` (8.0+).
@@ -22,9 +21,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Disabling a group by force
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter resource group batch disable force')->toString() // => 'ALTER RESOURCE GROUP batch DISABLE FORCE'
  */
-final class AlterResourceGroup implements Statement
+final class AlterResourceGroup extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CpuRange> The CPUs of VCPU; none when the option is absent
@@ -38,8 +37,11 @@ final class AlterResourceGroup implements Statement
      * @param bool|null $enabled ENABLE (true) or DISABLE (false), when written
      * @param bool $force Whether FORCE is written
      */
-    public function __construct(public readonly ResourceGroupName $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false)
+    public function __construct(public readonly ResourceGroupName $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->cpus = Check::listOf($cpus, CpuRange::class, 'VCPU lists CPU numbers and ranges.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

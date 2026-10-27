@@ -51,7 +51,7 @@ final class ViewTextTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
 
-        self::assertSame('', (new ViewText($operation->facts, '', ''))->tail([], null));
+        self::assertSame('', (new ViewText($operation->statementInformation(), '', ''))->tail([], null));
     }
 
     public function testRelationWritesADerivedTable(): void
@@ -71,7 +71,7 @@ final class ViewTextTest extends TestCase
     public function testTableQualifiesAnotherDatabase(): void
     {
         $session = (new Instance())->connect();
-        $text = new ViewText($session->analyze('SELECT 1')->facts, 'd', 'd');
+        $text = new ViewText($session->analyze('SELECT 1')->statementInformation(), 'd', 'd');
 
         self::assertSame(['`t`', '`e`.`t`'], [$text->table(null, 't'), $text->table('e', 't')]);
     }
@@ -80,7 +80,7 @@ final class ViewTextTest extends TestCase
     {
         $session = (new Instance())->connect();
 
-        self::assertNull((new ViewText($session->analyze('SELECT 1')->facts, '', ''))->column(null));
+        self::assertNull((new ViewText($session->analyze('SELECT 1')->statementInformation(), '', ''))->column(null));
     }
 
     public function testMembersWritesATableListAsJoins(): void
@@ -128,7 +128,7 @@ final class ViewTextTest extends TestCase
     public function testQueryWritesItsExpressionsThroughAWriterOfItsOwn(): void
     {
         $session = (new Instance())->connect();
-        $text = new ViewText($session->analyze('SELECT 1')->facts, '', '');
+        $text = new ViewText($session->analyze('SELECT 1')->statementInformation(), '', '');
 
         self::assertSame($text, $text->expressions->text);
     }

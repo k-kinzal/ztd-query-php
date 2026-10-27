@@ -18,9 +18,9 @@ final class ShowParseTreeTest extends TestCase
     public function testDeriveStatementInspectsTheStatement(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW PARSE_TREE SELECT a FROM t');
-        self::assertInstanceOf(ShowParseTree::class, $show->statement);
+        self::assertInstanceOf(ShowParseTree::class, $show);
         self::assertNull($show->shape());
-        self::assertCount(1, $show->facts->diagnostics);
+        self::assertCount(1, $show->diagnostics());
     }
 
     public function testRenderWritesTheStatement(): void

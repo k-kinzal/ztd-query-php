@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The value of a string constant, whichever way it was quoted.
@@ -23,18 +22,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the value of an escape string
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT E'a\\tb'");
- *     $query->statement->targets[0]->expression->value->value // => "a\tb"
+ *     $query->targets[0]->expression->value->value // => "a\tb"
  * @example Rejecting a value the server cannot hold
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant("a\0b") // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class StringConstant implements OptionArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $value The decoded text
      */
-    public function __construct(public readonly string $value)
+    public function __construct(public readonly string $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!str_contains($value, "\0"), 'A PostgreSQL string constant holds no zero byte.');
     }

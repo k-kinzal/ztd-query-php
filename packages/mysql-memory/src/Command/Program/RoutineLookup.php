@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Show\FixedColumns;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -23,7 +23,7 @@ final class RoutineLookup
     /**
      * Answers whether the filter fixes a database and routine name.
      */
-    public static function single(ShowLike|ShowWhere|null $filter, Facts $facts): bool
+    public static function single(ShowLike|ShowWhere|null $filter, StatementSemantics $facts): bool
     {
         $fixed = FixedColumns::of($filter, $facts);
 
@@ -33,7 +33,7 @@ final class RoutineLookup
     /**
      * Answers the unqualified column fixed to a statement constant, or an empty name.
      */
-    public static function column(Scalar $column, Scalar $value, Facts $facts): string
+    public static function column(Scalar $column, Scalar $value, StatementSemantics $facts): string
     {
         return FixedColumns::column($column, $value, $facts);
     }

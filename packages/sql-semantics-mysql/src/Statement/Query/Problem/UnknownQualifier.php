@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the qualifier a query does not read
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT q.* FROM t', []);
- *     $query->facts->diagnostics[1]->message() // => "Unknown table 'q'"
+ *     $query->diagnostics()[1]->message() // => "Unknown table 'q'"
  */
 final class UnknownQualifier implements Diagnostic
 {

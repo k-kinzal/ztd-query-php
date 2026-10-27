@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `USER()` at the account position of ALTER USER: the account of the session.
@@ -24,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SessionUser implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes `USER()`.
@@ -32,5 +31,11 @@ final class SessionUser implements Node
     public function render(Output $out): void
     {
         $out->keyword('USER')->glue()->symbol('(')->glue()->symbol(')');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

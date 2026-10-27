@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -29,15 +28,19 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredTrim implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $subject The complete string operand
      * @param TrimSide|null $side The explicitly selected side
      * @param Scalar|RowOperand|DeferredOperand|null $removed The optional removed string
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $subject, public readonly ?TrimSide $side = null, public readonly Scalar|RowOperand|DeferredOperand|null $removed = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $subject, public readonly ?TrimSide $side = null, public readonly Scalar|RowOperand|DeferredOperand|null $removed = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$subject instanceof Scalar || ($removed !== null && !$removed instanceof Scalar), 'A deferred TRIM call retains a non-scalar operand.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

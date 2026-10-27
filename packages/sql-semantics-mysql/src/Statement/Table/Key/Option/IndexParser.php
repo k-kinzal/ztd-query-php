@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The WITH PARSER option of a full-text index: the full-text parser plugin.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, FULLTEXT (a) WITH PARSER ngram)');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser // => true
+ *     $create->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser // => true
  */
 final class IndexParser implements IndexOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $parser The parser plugin
      */
-    public function __construct(public readonly Name $parser)
+    public function __construct(public readonly Name $parser, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

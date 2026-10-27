@@ -175,7 +175,7 @@ final class ReplicaCommandTest extends TestCase
     public function testResetStartsTheBinaryLogAgain(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('RESET BINARY LOGS AND GTIDS TO 06344632')->statement;
+        $statement = $session->analyze('RESET BINARY LOGS AND GTIDS TO 06344632');
         self::assertInstanceOf(Reset::class, $statement);
         $registry = new Registry();
         (new ReplicaCommand())->reset($statement->targets[0], $registry);

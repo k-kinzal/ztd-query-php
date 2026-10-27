@@ -7,7 +7,6 @@ namespace MySqlMemory\Program\Expression;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problems;
-use MySqlMemory\Session\Resolution\Views;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\State\StatementCounters;
 use SqlSemantics\Contract\SearchPath;
@@ -16,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuer
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write as W;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Prepares a retained explanation before checking its invocation-time target.
@@ -31,6 +29,8 @@ final class ExplainUse
 {
     /**
      * Returns the first dependency or output-target error without running the explained statement.
+     *
+     * @throws SqlError When the requested analysis report is unavailable
      */
     public function error(DeferredExplain $explanation, Session $session): SqlError
     {
@@ -40,7 +40,6 @@ final class ExplainUse
             return $error;
         }
         $database = $explanation->database->value ?? $session->variables->database;
-        Views::refreshAll($session->instance->dictionary, $session->settings());
         $previous = $session->variables->database;
         $session->variables->database = $database;
         try {
@@ -59,9 +58,9 @@ final class ExplainUse
             if ($explanation->statement instanceof DeferredSelection) {
                 (new SelectionUse())->raise($explanation->statement, $session, false);
             }
-            $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+            $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
             $inspection = new Explain($explanation->statement, $explanation->format, database: $explanation->database);
-            (new Problems())->raise(new Operation($context, $inspection), $session);
+            (new Problems())->raise((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $inspection, new \SqlSemantics\Statement\Source\SourceMap()), $session);
         } catch (SqlError $error) {
             return $error;
         } finally {

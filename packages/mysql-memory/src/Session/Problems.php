@@ -26,9 +26,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 /**
@@ -60,7 +60,7 @@ final class Problems
      *
      * @throws SqlError When the operation has a problem
      */
-    public function raise(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
+    public function raise(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
         (new \MySqlMemory\Hint\TriggerNotices())->during(fn () => $this->check($operation, $session, $prepared), $session);
     }
@@ -70,24 +70,26 @@ final class Problems
      *
      * @throws SqlError When the operation has a problem
      */
-    public function check(Operation|QueryPreparation $operation, Session $session, bool $prepared = false): void
+    public function check(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
-        if ($operation instanceof Operation) {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        if ($operation instanceof MySqlStatement) {
             $this->signals($operation, $session);
         }
-        if ($operation instanceof Operation && $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
-            (new Problem\Reading())->into($operation->statement, $session);
+        if ($operation instanceof MySqlStatement && ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+            (new Problem\Reading())->into($statement, $session);
 
             return;
         }
-        if ($operation instanceof Operation && (Stages::selfChecked($operation->statement) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this, $prepared) || Stages::opensTableFirst($operation->statement))) {
+        if ($operation instanceof MySqlStatement && (Stages::selfChecked($operation) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this, $prepared) || Stages::opensTableFirst($statement))) {
             return;
         }
         $calls = $this->calls($operation);
         $diagnostics = $this->pending($operation, $session);
         $reading = new Problem\Reading();
         $reading->read($operation, $session, $prepared);
-        $reading->into($operation->statement, $session);
+        $reading->into($statement, $session);
         $this->prepared($operation, $session);
         foreach ($calls as $call) {
             if ($call->named()) {
@@ -96,14 +98,14 @@ final class Problems
         }
         $this->paths($operation, $session, $diagnostics);
         $this->opened($operation, $session, $diagnostics);
-        (new Problem\Sampling())->opened($operation->statement, $operation->facts, $session->settings(), $session->instance->dictionary);
-        (new \MySqlMemory\Hint\Hints())->resolve($operation->statement, $session);
-        (new Problem\IndexHints())->check($operation->statement, $this->reached($operation->statement), $session);
-        (new Problem\Delayed())->check($operation->statement, $session);
+        (new Problem\Sampling())->opened($statement, $information, $session->settings(), $session->instance->dictionary);
+        (new \MySqlMemory\Hint\Hints())->resolve($statement, $session);
+        (new Problem\IndexHints())->check($statement, $this->reached($statement), $session);
+        (new Problem\Delayed())->check($statement, $session);
         $this->resolution($operation, $session, $diagnostics);
         (new Problem\Location\Conditions())->check($operation, $session, $calls, $diagnostics, $prepared);
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : $operation->statement);
+            $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : ($statement));
         }
     }
 
@@ -113,11 +115,12 @@ final class Problems
      * @param list<Diagnostic> $diagnostics The pending semantic conditions
      * @throws SqlError When an analysis clause or reached template is refused
      */
-    public function resolution(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
+    public function resolution(MySqlStatement|QueryPreparation $operation, Session $session, array $diagnostics): void
     {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $starred = array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables) !== [];
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$starred)) {
-            $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : $operation->statement);
+            $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : ($statement));
         }
         if ($operation instanceof QueryPreparation) {
             (new \MySqlMemory\Program\Expression\QueryUse())->templates($operation, $session);
@@ -149,12 +152,13 @@ final class Problems
      *
      * @return list<FunctionCall>
      */
-    public function calls(Operation|QueryPreparation $operation): array
+    public function calls(MySqlStatement|QueryPreparation $operation): array
     {
-        $offsets = (new Problem\Location\FrameOffsets())->nodes($operation->statement);
-        $calls = array_values(array_filter((new Walker())->find($operation->statement, FunctionCall::class), static fn (FunctionCall $call): bool => !isset($offsets[spl_object_id($call)]) && Locations::undeclared($call, $operation)));
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $offsets = (new Problem\Location\FrameOffsets())->nodes($statement);
+        $calls = array_values(array_filter((new Walker())->find($statement, FunctionCall::class), static fn (FunctionCall $call): bool => !isset($offsets[spl_object_id($call)]) && Locations::undeclared($call, $operation)));
         if ($calls !== []) {
-            $reached = array_fill_keys(array_map(spl_object_id(...), $this->reached($operation->statement)), true);
+            $reached = array_fill_keys(array_map(spl_object_id(...), $this->reached($statement)), true);
             $calls = array_values(array_filter($calls, static fn (FunctionCall $call): bool => isset($reached[spl_object_id($call)])));
         }
 
@@ -168,32 +172,35 @@ final class Problems
      *
      * @return list<Diagnostic>
      */
-    public function pending(Operation|QueryPreparation $operation, Session $session): array
+    public function pending(MySqlStatement|QueryPreparation $operation, Session $session): array
     {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
         $grouping = $session->modes()->has('ONLY_FULL_GROUP_BY');
         $database = $session->variables->database;
         $tested = $this->tested($operation);
-        $offsets = (new Problem\Location\FrameOffsets())->conditions($operation->statement, $operation->facts);
+        $offsets = (new Problem\Location\FrameOffsets())->conditions($statement, $information);
 
-        return array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || (!$diagnostic instanceof NonGroupedColumn && !($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering && $diagnostic->distinct)))
+        return array_values(array_filter(($information)->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || (!$diagnostic instanceof NonGroupedColumn && !($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering && $diagnostic->distinct)))
             && !($tested && $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables)
             && !($operation instanceof QueryPreparation && $operation->deferSetWidth && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch && $diagnostic->list === \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList::SetOperands)
-            && !Stages::answered($operation->statement, $diagnostic)
+            && !Stages::answered($statement, $diagnostic)
             && !Stages::planned($diagnostic)
             && !isset($offsets[spl_object_id($diagnostic)])
-            && !($operation->statement instanceof DropTable && $diagnostic instanceof MissingTable && ($diagnostic->name->schema !== null || $database !== ''))));
+            && !($operation instanceof DropTable && $diagnostic instanceof MissingTable && ($diagnostic->name->schema !== null || $database !== ''))));
     }
 
     /**
      * Tells whether every block that writes `*` without tables is a query EXISTS tests, which takes it (verified on live 5.6.51 and 8.4.7 servers).
      */
-    public function tested(Operation|QueryPreparation $operation): bool
+    public function tested(MySqlStatement|QueryPreparation $operation): bool
     {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $existing = Locations::existing($operation);
         if ($existing === []) {
             return false;
         }
-        foreach ((new Walker())->find($operation->statement, Select::class) as $select) {
+        foreach ((new Walker())->find($statement, Select::class) as $select) {
             $starred = array_filter($select->items, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star) !== [];
             $empty = array_filter($select->items, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard && $item->table->name->value === '') !== [];
             if (($empty || ($starred && ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual))) && !in_array($select, $existing, true)) {
@@ -214,15 +221,17 @@ final class Problems
      *
      * @throws SqlError When a path of a JSON_TABLE is invalid
      */
-    public function paths(Operation|QueryPreparation $operation, Session $session, array $diagnostics): void
+    public function paths(MySqlStatement|QueryPreparation $operation, Session $session, array $diagnostics): void
     {
-        $path = (new JsonTables())->first($operation->statement, $operation->facts);
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        $path = (new JsonTables())->first($statement, $information);
         if ($path === null) {
             return;
         }
         foreach ($diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable || $diagnostic instanceof UnpartitionedTable || $diagnostic instanceof UnknownPartition) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
 
@@ -240,24 +249,26 @@ final class Problems
      *
      * @throws SqlError When a table the statement reads does not exist
      */
-    public function opened(Operation|QueryPreparation|Resolution\IndexPreparation $operation, Session $session, array $diagnostics): void
+    public function opened(MySqlStatement|QueryPreparation|Resolution\IndexPreparation $operation, Session $session, array $diagnostics): void
     {
-        (new OpenedTables())->prepare($this->reached($operation->statement), $operation->facts, $session);
+        $statement = $operation instanceof QueryPreparation || $operation instanceof Resolution\IndexPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation || $operation instanceof Resolution\IndexPreparation ? $operation->facts : $operation->statementInformation();
+        (new OpenedTables())->prepare($this->reached($statement), $information, $session);
         $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));
         $read = [];
-        foreach ($this->reached($operation->statement) as $node) {
+        foreach ($this->reached($statement) as $node) {
             if ($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) {
                 $read[spl_object_id($node->name())] = true;
             }
         }
         foreach ($missing as $diagnostic) {
             if (isset($read[spl_object_id($diagnostic->name)])) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
         foreach ($diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnpartitionedTable || $diagnostic instanceof UnknownPartition) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
     }
@@ -300,33 +311,35 @@ final class Problems
      *
      * @throws SqlError When the statement has such a clause
      */
-    public function prepared(Operation|QueryPreparation $operation, Session $session): void
+    public function prepared(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
-        if ($operation instanceof Operation) {
-            if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
+        $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
+        $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
+        if ($operation instanceof MySqlStatement) {
+            if (($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
                 (new \MySqlMemory\Command\Access\LoadDataCommand())->prepare($operation, $session);
             }
             (new Problem\Definition\CheckQueries())->prepare($operation, $session, $this);
             (new Problem\Definition\FunctionalQueries())->prepare($operation, $session, $this);
         }
-        (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
+        (new Problem\Reopened())->check($statement, $session, $information);
         $special = static fn (Node $node): bool => $node instanceof Select && ($node->groupBy?->modifier === GroupingModifier::Cube || $node->qualify !== null);
-        if (array_filter((new Walker())->find($operation->statement, Select::class), $special) === []) {
+        if (array_filter((new Walker())->find($statement, Select::class), $special) === []) {
             return;
         }
-        $reached = $this->reached($operation->statement);
+        $reached = $this->reached($statement);
         $blocks = array_values(array_filter($reached, $special));
         $cube = array_filter($blocks, static fn (Node $block): bool => $block instanceof Select && $block->groupBy?->modifier === GroupingModifier::Cube) !== [];
         $qualify = array_filter($blocks, static fn (Node $block): bool => $block instanceof Select && $block->qualify !== null) !== [];
         if (!$cube && !$qualify) {
             return;
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($information)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable) {
                 throw (new Errors())->error($diagnostic, $session);
             }
         }
-        $names = array_map(static fn (CommonTableExpression $table): string => $table->name->value, (new Walker())->find($operation->statement, CommonTableExpression::class));
+        $names = array_map(static fn (CommonTableExpression $table): string => $table->name->value, (new Walker())->find($statement, CommonTableExpression::class));
         $tables = array_filter($reached, static fn (Node $node): bool => ($node instanceof TableReference || $node instanceof ExplicitTable)
             && ($node->name()->schema !== null || !in_array($node->name()->name->value, $names, true)));
         if ($cube && $tables === []) {
@@ -373,10 +386,10 @@ final class Problems
      *
      * @throws SqlError When a condition is invalid or RESIGNAL has no active handler
      */
-    public function signals(Operation $operation, Session $session): void
+    public function signals(MySqlStatement $operation, Session $session): void
     {
         (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $session);
-        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal && ($session->program === null || $session->program->stacked === [])) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal && ($session->program === null || $session->program->stacked === [])) {
             throw ProgramError::ResignalWithoutHandler->error();
         }
     }

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment to a system variable named with `@@`: `SET @@GLOBAL.x = v`, `SET @@x = DEFAULT`.
@@ -31,17 +30,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a persisted assignment
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET @@PERSIST.max_connections = 10');
- *     [$set->statement->items[0]->variable->scope, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'SET @@PERSIST.max_connections = 10']
+ *     [$set->items[0]->variable->scope, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'SET @@PERSIST.max_connections = 10']
  */
 final class SystemAssignment implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SystemTarget $variable The assigned variable with the scope written inside `@@`
      * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      */
-    public function __construct(public readonly SystemTarget $variable, public readonly Scalar|BareName|SetWord $value)
+    public function __construct(public readonly SystemTarget $variable, public readonly Scalar|BareName|SetWord $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$value instanceof BareName || $value->system, 'A bare name assigned to a system variable is its text.');
     }

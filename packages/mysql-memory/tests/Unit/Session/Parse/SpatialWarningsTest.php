@@ -18,7 +18,8 @@ final class SpatialWarningsTest extends TestCase
     {
         $semantics = (new Instance(version: '5.7.44'))->connect()->semantics();
         $valid = $semantics->analyze('SELECT DIMENSION(SRID(NULL))');
-        self::assertCount(2, (new SpatialWarnings())->accepted($valid, $valid->facts->warnings));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $valid);
+        self::assertCount(2, (new SpatialWarnings())->accepted($valid, $valid->statementInformation()->warnings));
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
         $this->expectExceptionMessage("Incorrect parameter count in the call to native function 'SRID'");
 

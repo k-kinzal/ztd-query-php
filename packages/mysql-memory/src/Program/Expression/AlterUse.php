@@ -39,7 +39,8 @@ final class AlterUse
             throw QueryError::NoDatabase->error();
         }
         (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
-        $facts = (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database);
+        $definition = (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->bound($definition, $session, $database);
+        $facts = $definition->statementInformation();
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || \MySqlMemory\Session\Problem\Stages::characters($problem, $session->settings()->legacy())) {
                 throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
@@ -74,10 +75,12 @@ final class AlterUse
             throw \MySqlMemory\Error\Family\TransactionError::CreateTransactionInvalid->error('with ALTER TABLE command.');
         }
         (new AlterTableCommand())->validation($definition->commands);
+        $definition = (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->bound($definition, $session, $database);
+        $facts = $definition->statementInformation();
         $name = $definition->table->name->value;
         $table = (new AlterTableCommand())->table($session, $database, $name);
         if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->commands($definition->commands)) {
-            foreach ((new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database)->diagnostics as $problem) {
+            foreach ($facts->diagnostics as $problem) {
                 if ($problem instanceof \SqlSemantics\Statement\Reference\Table\MissingTable) {
                     throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
                 }
@@ -85,7 +88,7 @@ final class AlterUse
             throw \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error();
         }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($definition->commands)) {
-            $prepared = new \MySqlMemory\Session\Resolution\IndexPreparation($definition, (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database));
+            $prepared = new \MySqlMemory\Session\Resolution\IndexPreparation($definition, $facts);
             (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($prepared, $session, new \MySqlMemory\Session\Problems());
             (new AlterTableCommand())->resolve($prepared, $session);
         }
@@ -99,7 +102,7 @@ final class AlterUse
         $rewrite = $this->rewrite;
         $columns = array_map($rewrite->column(...), array_column($layout->columns, 0));
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($columns)) {
-            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, true, (new \MySqlMemory\Command\Definition\Expression\AlterDefaults())->facts($definition, $session, $database), $session);
+            throw (new \MySqlMemory\Command\Definition\Expression\GenerationCondition())->columns($columns, $database, $name, true, $facts, $session);
         }
         $statement = new AlterTable($definition->table, $rewrite->commands($definition), $definition->ignore);
         $execution = new \MySqlMemory\Command\Definition\Expression\GenerationExecution();

@@ -18,8 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
 use WeakReference;
 
@@ -42,7 +42,7 @@ final class UpdateOperands
      * @return bool Whether MySQL 5.6 preparation defers the assignment values
      * @throws SqlError When a reached clause, destination or value cannot prepare
      */
-    public function prepare(Update $write, Facts $facts, Session $session, bool $prepared = false, array $parameters = []): bool
+    public function prepare(Update $write, StatementSemantics $facts, Session $session, bool $prepared = false, array $parameters = []): bool
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure();
         if ($rules->target($write->tables, $write->assignments, $write->with) !== null) {
@@ -52,7 +52,7 @@ final class UpdateOperands
         $legacy = $session->settings()->legacy();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new Connection($session->variables, $context, $session->user, $session->host, $session->id, $parameters, program: $session->program, session: WeakReference::create($session));
-        $planner = new Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $inputs = new UpdateInputs();
         $scope = $inputs->scope($write->tables, $planner);
         if ($legacy && $multiple) {
@@ -116,10 +116,10 @@ final class UpdateOperands
      *
      * @throws SqlError When a destination does not resolve
      */
-    public function destinations(Update $write, Facts $facts, Session $session): void
+    public function destinations(Update $write, StatementSemantics $facts, Session $session): void
     {
         foreach ($write->assignments as $assignment) {
-            $resolution = $facts->scalar($assignment->column)->resolution;
+            $resolution = $assignment->column->scalarInformation()->resolution;
             if ($resolution instanceof Diagnostic) {
                 throw (new Errors())->error($resolution, $session);
             }

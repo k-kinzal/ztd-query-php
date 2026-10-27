@@ -30,10 +30,11 @@ final class PurgeUse
     public function error(RowOperand|DeferredOperand $moment, Session $session): SqlError
     {
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $moment = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($moment);
         $derivation = new Derivation($context);
         $derivation->scalar($moment, $derivation->environment());
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
             if (Stages::parsed($problem)) {
                 return (new Errors())->error($problem, $session);
             }

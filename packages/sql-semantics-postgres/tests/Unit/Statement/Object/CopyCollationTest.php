@@ -18,7 +18,7 @@ final class CopyCollationTest extends TestCase
     public function testDeriveStatementRecordsNothing(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE COLLATION c FROM d', []);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesIfNotExists(): void

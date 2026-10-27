@@ -36,7 +36,7 @@ final class OdbcJoinTest extends TestCase
         $operation = $semantics->analyze('SELECT c FROM { OJ t LEFT JOIN u ON t.a = u.a }', [$t, $u]);
 
         self::assertSame(Nullability::Nullable, $operation->field('c')->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheEscape(): void

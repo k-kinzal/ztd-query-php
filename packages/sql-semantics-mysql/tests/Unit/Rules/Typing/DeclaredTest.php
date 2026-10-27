@@ -62,8 +62,8 @@ final class DeclaredTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([], true, null, new Settings(Collation::known('utf8mb4_0900_ai_ci'), 4, null, ['shop' => Collation::known('latin1_bin')]));
-        $plain = $semantics->analyze('CREATE TABLE shop.t (a INT)')->statement;
-        $optioned = $semantics->analyze('CREATE TABLE shop.t (a INT) CHARACTER SET ascii')->statement;
+        $plain = $semantics->analyze('CREATE TABLE shop.t (a INT)');
+        $optioned = $semantics->analyze('CREATE TABLE shop.t (a INT) CHARACTER SET ascii');
         self::assertInstanceOf(CreateTable::class, $plain);
         self::assertInstanceOf(CreateTable::class, $optioned);
 
@@ -73,7 +73,7 @@ final class DeclaredTest extends TestCase
 
     public function testColumnUsesItsCollateClauseAndHasNoDecimalsForAString(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a VARCHAR(5) CHARACTER SET latin1 COLLATE latin1_bin, b CHAR(2))')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a VARCHAR(5) CHARACTER SET latin1 COLLATE latin1_bin, b CHAR(2))');
         self::assertInstanceOf(CreateTable::class, $create);
         $columns = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnDefinition));
         $declared = new Declared(Collation::known('utf8mb4_0900_ai_ci'));
@@ -102,6 +102,15 @@ final class DeclaredTest extends TestCase
     {
         self::assertEquals(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 5), (new Declared(Collation::binary()))->integral(new Integral(IntegralKind::Int, '5')));
         self::assertEquals(Domain::integer(Field::Long, 11), (new Declared(Collation::binary()))->integral(new Integral(IntegralKind::Int)));
+    }
+
+    public function testRealDeclarationFollowsTheSessionMode(): void
+    {
+        $real = new Floating(FloatingKind::Real);
+        $default = (new Declared(Collation::binary()))->floating($real);
+        $single = (new Declared(Collation::binary(), realAsFloat: true))->floating($real);
+        self::assertSame([Field::Double, 22], [$default->field, $default->length]);
+        self::assertSame([Field::Float, 12], [$single->field, $single->length]);
     }
 
     public function testFloatingIsSingleUpToTwentyFourDigits(): void

@@ -21,6 +21,7 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
 use SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm;
@@ -29,7 +30,6 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
@@ -63,8 +63,8 @@ final class ViewCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof CreateView || $statement instanceof AlterView);
         $session->transaction->commit();
         $definition = $statement->definition;
@@ -83,30 +83,29 @@ final class ViewCommand implements Command
         self::checkName($statement, $schema, $database, $name);
         self::refuseTemporaryTables($operation, $definition->query, $session);
         $resolved = $statement instanceof CreateView ? $operation : self::reanalyze($session, $database, $name, $definition->columns, $definition->query);
-        $resolvedStatement = $resolved->statement;
+        $resolvedStatement = $resolved;
         assert($resolvedStatement instanceof CreateView);
         $declared = $resolved->declarations()[0];
         $declaration = new Table(new QualifiedName(new Name($name), new Name($database)), $declared->profile, $declared->columns, $declared->implicit, $declared->complete, RelationKind::View, $declared->keys, $declared->partitions);
         $query = $resolvedStatement->definition->query;
         $algorithm = self::algorithm($definition->algorithm, $query, $context);
         $check = self::checkOption($definition->check);
-        $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $statement instanceof AlterView ? $context : null), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
-        $view->hints = (new \MySqlMemory\Hint\Hints())->view($query, $session);
+        $schema->views[$name] = new View($database, $name, ProgramSource::definer($definition->definer, $session, $statement instanceof AlterView ? $context : null), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')], (new \MySqlMemory\Hint\Hints())->view($query, $session));
 
         return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**
-     * Brings the views the query reads up to date with the tables they read, so that the new view
-     * resolves against their current columns.
+     * Checks that the query reads valid views without modifying their stored definitions.
      */
-    public static function refreshReadViews(Operation $operation, Query $query, Session $session): void
+    public static function refreshReadViews(MySqlStatement $operation, Query $query, Session $session): void
     {
-        foreach (array_keys(Views::tables($operation, $query, $session->variables->database)) as $key) {
-            [$holder, $read] = explode('.', $key, 2);
+        foreach (Views::tables($operation, $query) as $table) {
+            $holder = $table->name->schema->value ?? $session->variables->database;
+            $read = $table->name->name->value;
             $inner = $session->instance->dictionary->schema($holder)->views[$read] ?? null;
             if ($inner !== null) {
-                \MySqlMemory\Session\Resolution\Views::refresh($inner, $session->instance->dictionary, $session->settings());
+                \MySqlMemory\Session\Statement\Catalog::view($inner, $session);
             }
         }
     }
@@ -138,11 +137,11 @@ final class ViewCommand implements Command
      *
      * @throws SqlError When a table the query reads is temporary
      */
-    public static function refuseTemporaryTables(Operation $operation, Query $query, Session $session): void
+    public static function refuseTemporaryTables(MySqlStatement $operation, Query $query, Session $session): void
     {
         foreach ((new Walker())->find($query, TableReference::class) as $reference) {
-            $resolution = $operation->facts->covers($reference) ? $operation->facts->relation($reference)->table : null;
-            $stored = $resolution instanceof DeclaredTable ? $session->instance->dictionary->table($resolution->table->name->schema->value ?? $session->variables->database, $resolution->table->name->name->value) : null;
+            $resolution = $reference->hasBinding() ? $reference->relationInformation()->table : null;
+            $stored = $resolution instanceof DeclaredTable ? $session->instance->dictionary->table($resolution->table->name->schema->value ?? $session->variables->database, $resolution->table->name->name->value, $session->temporaries) : null;
             if ($stored !== null && $stored->definition->temporary) {
                 throw SchemaError::ViewSelectTemporary->error($reference->alias->value ?? $reference->name->name->value);
             }
@@ -155,13 +154,13 @@ final class ViewCommand implements Command
      *
      * @param list<Name>|null $columns The column list of the view, or null when none is written
      */
-    public static function reanalyze(Session $session, string $database, string $name, ?array $columns, Query $query): Operation
+    public static function reanalyze(Session $session, string $database, string $name, ?array $columns, Query $query): MySqlStatement
     {
         $semantics = $session->semantics();
-        $context = $semantics->context($session->instance->dictionary->declarations(), true, new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
+        $context = $semantics->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, new \SqlSemantics\Contract\SearchPath($session->variables->database), $session->resolution());
         $definition = new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new QualifiedName(new Name($name), new Name($database)), $query, $columns);
 
-        return new Operation($context, new CreateView($definition, true));
+        return (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new CreateView($definition, true), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     /**

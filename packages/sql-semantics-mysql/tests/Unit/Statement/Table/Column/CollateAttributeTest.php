@@ -20,9 +20,9 @@ final class CollateAttributeTest extends TestCase
     public function testDeriveAttributeRetainsAKnownCollation(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
@@ -35,7 +35,7 @@ final class CollateAttributeTest extends TestCase
     public function testDeriveAttributeReportsAnUnknownCollationBeforeTableResolution(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIT NULL COLLATE unknown');
-        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
+        $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
 
         self::assertCount(1, $problems);
         self::assertSame("Unknown collation: 'unknown'", $problems[0]->message());

@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The name of a column at a position that defines or alters it, with the table qualifier MySQL 5.x allows there.
@@ -28,14 +27,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column name
      * @param QualifiedName|null $table The table qualifier, and its database when written
      * @param OptionalWords $dot Whether the unqualified name has the legacy dot prefix
      */
-    public function __construct(public readonly Name $column, public readonly ?QualifiedName $table = null, public readonly OptionalWords $dot = OptionalWords::Omitted)
+    public function __construct(public readonly Name $column, public readonly ?QualifiedName $table = null, public readonly OptionalWords $dot = OptionalWords::Omitted, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($table === null || $table->catalog === null, 'A column name is qualified by a table and at most a database.');
         Check::input($dot === OptionalWords::Omitted || $table === null, 'A definition name with a dot prefix has no table qualifier.');

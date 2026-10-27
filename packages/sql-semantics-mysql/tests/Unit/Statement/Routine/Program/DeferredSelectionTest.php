@@ -20,17 +20,17 @@ final class DeferredSelectionTest extends TestCase
     public function testDeriveProgramRetainsOperandFactsInTheProgramScope(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SELECT (x,2)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredSelection::class, $operation->statement->body);
-        $item = $operation->statement->body->items[0];
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredSelection::class, $operation->body);
+        $item = $operation->body->items[0];
         self::assertInstanceOf(DeferredProjection::class, $item);
-        self::assertTrue($operation->facts->covers($item->expression));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertTrue($item->expression->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderUsesSelectForAnOrderingOnlyTemplate(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 ORDER BY ROW(2,3)')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 ORDER BY ROW(2,3)');
         self::assertInstanceOf(CreateProcedure::class, $create);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $create->body);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $create->body->query);
@@ -41,7 +41,7 @@ final class DeferredSelectionTest extends TestCase
 
     public function testDeferredKeepsPreparationOrderAcrossTheClauses(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WHERE (1,2) GROUP BY (3,4) HAVING (5,6) ORDER BY (7,8)')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WHERE (1,2) GROUP BY (3,4) HAVING (5,6) ORDER BY (7,8)');
         self::assertInstanceOf(CreateProcedure::class, $create);
         self::assertInstanceOf(DeferredSelection::class, $create->body);
         self::assertCount(4, $create->body->deferred());
@@ -52,10 +52,10 @@ final class DeferredSelectionTest extends TestCase
     public function testRenderRetainsLegacyAnalysisWithTheDeferredWriteSource(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1,2) PROCEDURE ANALYSE(3)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->body->source);
-        self::assertNotNull($operation->statement->body->source->selection->procedure);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->body->source);
+        self::assertNotNull($operation->body->source->selection->procedure);
         self::assertSame('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1, 2) PROCEDURE ANALYSE(3)', $operation->toString());
     }
 
@@ -67,23 +67,23 @@ final class DeferredSelectionTest extends TestCase
     public function testDeferredRetainsQualifyDependenciesWithoutPreparingAnUnusedCommonTable(): void
     {
         $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze('CREATE PROCEDURE p() SELECT 1 FROM t QUALIFY ROW(a,2)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredSelection::class, $operation->statement->body);
-        $selection = $operation->statement->body;
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredSelection::class, $operation->body);
+        $selection = $operation->body;
         self::assertSame([$selection->qualify], $selection->deferred());
         self::assertNotNull($selection->qualify);
-        self::assertTrue($operation->facts->covers($selection->qualify));
+        self::assertTrue($selection->qualify->hasBinding());
         self::assertSame('CREATE PROCEDURE p() SELECT 1 FROM t QUALIFY ROW(a, 2)', $operation->toString());
     }
 
     public function testRenderRetainsNamedWindowsWithDeferredProjectionOperands(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT FIRST_VALUE(ROW(1,2)) OVER w WINDOW w AS (ORDER BY 1.5)');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredSelection::class, $operation->statement->body);
-        self::assertCount(1, $operation->statement->body->windows);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec::class, $operation->statement->body->windows[0]->specification);
-        self::assertTrue($operation->facts->covers($operation->statement->body->windows[0]->specification->order[0]->expression));
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredSelection::class, $operation->body);
+        self::assertCount(1, $operation->body->windows);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec::class, $operation->body->windows[0]->specification);
+        self::assertTrue($operation->body->windows[0]->specification->order[0]->expression->hasBinding());
         self::assertSame('CREATE PROCEDURE p() SELECT FIRST_VALUE(ROW(1, 2)) OVER w WINDOW w AS (ORDER BY 1.5)', $operation->toString());
     }
 }

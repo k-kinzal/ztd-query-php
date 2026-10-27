@@ -20,18 +20,18 @@ final class VacuumTest extends TestCase
     public function testDeriveStatementResolvesEachTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('VACUUM a, s.b');
-        self::assertInstanceOf(Vacuum::class, $operation->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement->targets[0])->table);
+        self::assertInstanceOf(Vacuum::class, $operation);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->targets[0]->relationInformation()->table);
     }
 
     public function testDeriveStatementReportsColumnsWithoutAnalyze(): void
     {
-        self::assertSame(['ANALYZE option must be specified when a column list is provided'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('VACUUM FULL t (a)')->facts->diagnostics));
+        self::assertSame(['ANALYZE option must be specified when a column list is provided'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('VACUUM FULL t (a)')->diagnostics()));
     }
 
     public function testDeriveStatementReportsAnUnknownOption(): void
     {
-        self::assertSame(['unrecognized VACUUM option "fast"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('VACUUM (fast) t')->facts->diagnostics));
+        self::assertSame(['unrecognized VACUUM option "fast"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('VACUUM (fast) t')->diagnostics()));
     }
 
     public function testRenderWritesEachSyntax(): void

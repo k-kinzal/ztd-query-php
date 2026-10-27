@@ -68,6 +68,7 @@ final class PrimaryRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $rule = new PrimaryRule($lowering);
         $tree = $platform->parser($profile)->parse('SELECT a = ?');
+        $lowering->parameters($tree->tokens());
 
         self::assertInstanceOf(ColumnUse::class, $rule->leaf('column', $tree->find('simple_ident')[0]));
         self::assertInstanceOf(Parameter::class, $rule->leaf('parameter', $tree->find('param_marker')[0]));

@@ -18,7 +18,7 @@ final class ShowCreateEventTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE EVENT db.x');
-        self::assertInstanceOf(ShowCreateEvent::class, $show->statement);
+        self::assertInstanceOf(ShowCreateEvent::class, $show);
         self::assertSame('Event', $show->field(0)->name?->value);
     }
 

@@ -18,7 +18,7 @@ final class InvalidJsonPathTest extends TestCase
     public function testMessageDescribesTheDecodedPathPosition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT JSON_VALUE(NULL, 'bad')");
-        $problem = $operation->facts->diagnostics[0];
+        $problem = $operation->diagnostics()[0];
         self::assertInstanceOf(InvalidJsonPath::class, $problem);
         self::assertSame('Invalid JSON path expression. The error is around character position 1.', $problem->message());
     }

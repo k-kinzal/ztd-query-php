@@ -50,9 +50,9 @@ final class ArityMismatchTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1, 2 UNION SELECT 3');
 
-        self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
-        self::assertSame(2, $query->facts->diagnostics[0]->expected);
-        self::assertSame(1, $query->facts->diagnostics[0]->actual);
-        self::assertSame('SELECTs to the left and right of a compound operator do not have the same number of result columns: 2 and 1.', $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(ArityMismatch::class, $query->diagnostics()[0]);
+        self::assertSame(2, $query->diagnostics()[0]->expected);
+        self::assertSame(1, $query->diagnostics()[0]->actual);
+        self::assertSame('SELECTs to the left and right of a compound operator do not have the same number of result columns: 2 and 1.', $query->diagnostics()[0]->message());
     }
 }

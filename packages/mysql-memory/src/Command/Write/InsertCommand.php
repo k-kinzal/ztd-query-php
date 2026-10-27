@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
@@ -61,12 +61,12 @@ final class InsertCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof InsertRows || $statement instanceof InsertSet || $statement instanceof InsertQuery);
         $into = $statement->into;
         $table = $this->table($operation, $into, $session);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $context->strict = $context->modes->strict() && !$into->ignore;
         $session->transaction->touch($table);
         [$positions, $sources] = $this->sources($statement, $planner, $table, $context);
@@ -91,14 +91,12 @@ final class InsertCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the table does not exist
      */
-    public function table(Operation $operation, InsertInto $into, Session $session): StoredTable
+    public function table(MySqlStatement $operation, InsertInto $into, Session $session): StoredTable
     {
-        $resolution = $operation->facts->relation($into->table)->table;
-        $schema = $into->table->name->schema->value ?? $session->variables->database;
-        if ($resolution instanceof DeclaredTable) {
-            $schema = $resolution->table->name->schema->value ?? $schema;
-        }
-        $table = $session->instance->dictionary->table($schema, $into->table->name->name->value);
+        $resolution = $into->table->relationInformation()->table;
+        $name = $resolution instanceof DeclaredTable ? $resolution->name : $into->table->name;
+        $schema = $name->schema->value ?? $session->variables->database;
+        $table = $session->instance->dictionary->table($schema, $name->name->value, $session->temporaries);
         if ($table === null) {
             throw QueryError::NoSuchTable->error($schema, $into->table->name->name->value);
         }
@@ -123,11 +121,11 @@ final class InsertCommand implements Command
     {
         $definition = $table->definition;
         $facts = $planner->compiler->facts;
-        $position = static function (ColumnUse|TableWildcard $use) use ($facts, $definition): int {
+        $position = static function (ColumnUse|TableWildcard $use) use ($definition): int {
             if ($use instanceof TableWildcard) {
                 throw StatementError::NotSupportedYet->error('a table wildcard in the column list of INSERT');
             }
-            $resolution = $facts->scalar($use)->resolution;
+            $resolution = $use->scalarInformation()->resolution;
             $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
             foreach ($definition->columns as $index => $column) {
                 if ($column->declaration === $declaration || ($declaration === null && strcasecmp($column->name, $use->name->value) === 0)) {

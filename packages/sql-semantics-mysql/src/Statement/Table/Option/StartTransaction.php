@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * START TRANSACTION, the table option of CREATE TABLE ... SELECT that makes the statement atomic under row-based replication (MySQL 8.0.21 and later).
@@ -17,11 +16,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) START TRANSACTION');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction // => true
  */
 final class StartTransaction implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes the option.
@@ -29,5 +28,11 @@ final class StartTransaction implements TableOption
     public function render(Output $out): void
     {
         $out->keyword('START', 'TRANSACTION');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

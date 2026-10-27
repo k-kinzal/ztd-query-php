@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One account of CREATE USER, ALTER USER or a MySQL 5.x GRANT, with what the statement sets for its authentication.
@@ -26,12 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the password of an account
- *     $user = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER app IDENTIFIED BY 'secret'")->statement->users[0];
+ *     $user = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER app IDENTIFIED BY 'secret'")->users[0];
  *     $user->identification?->secret?->value // => 'secret'
  */
 final class UserSpecification implements UserAlteration
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Identification> The second and third authentication factors, in order
@@ -55,6 +54,7 @@ final class UserSpecification implements UserAlteration
         public readonly ?Text $replace = null,
         public readonly bool $retainCurrent = false,
         public readonly bool $discardOld = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->factors = Check::listOf($factors, Identification::class, 'The further factors are authentication methods.');
         Check::input(count($this->factors) <= 2, 'An account has at most three authentication factors.');

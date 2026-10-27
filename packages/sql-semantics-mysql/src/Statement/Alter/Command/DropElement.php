@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP [COLUMN] c [RESTRICT | CASCADE]`, `DROP PRIMARY KEY`, `DROP FOREIGN KEY`, `DROP INDEX`, `DROP CHECK` or `DROP CONSTRAINT`.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Dropping a foreign key
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t DROP FOREIGN KEY fk');
- *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::ForeignKey, 'ALTER TABLE t DROP FOREIGN KEY fk']
+ *     [$alter->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::ForeignKey, 'ALTER TABLE t DROP FOREIGN KEY fk']
  */
 final class DropElement implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Whether COLUMN was written; absent for other dropped elements.
@@ -44,7 +43,7 @@ final class DropElement implements AlterCommand
      * @param ColumnName|null $name The element name; null only for the primary key
      * @param DropBehavior|null $behavior RESTRICT or CASCADE after a column, when written
      */
-    public function __construct(public readonly ElementKind $kind, public readonly ?ColumnName $name = null, public readonly ?DropBehavior $behavior = null, ?bool $columnWritten = null)
+    public function __construct(public readonly ElementKind $kind, public readonly ?ColumnName $name = null, public readonly ?DropBehavior $behavior = null, ?bool $columnWritten = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($name === null) === ($kind === ElementKind::PrimaryKey), 'Every dropped element but the primary key is named.');
         Check::input($behavior === null || $kind === ElementKind::Column, 'Only a dropped column takes RESTRICT or CASCADE.');

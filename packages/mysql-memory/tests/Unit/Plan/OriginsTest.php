@@ -286,13 +286,13 @@ final class OriginsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (id INT)');
         $operation = $session->analyze('SELECT * FROM t AS x LEFT JOIN t AS y ON 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        $statement = $operation->statement->query;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $statement = $operation->query;
         $select = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement ? $statement->query : $statement;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable::class, $select->from);
-        self::assertSame([spl_object_id($select->from->right)], (new Origins((new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))))->supplied($select->from));
+        self::assertSame([spl_object_id($select->from->right)], (new Origins((new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))))->supplied($select->from));
     }
     public function testStoredAssignmentNamesTheCopiedAggregateFieldOnMySql80(): void
     {

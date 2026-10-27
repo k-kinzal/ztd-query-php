@@ -48,4 +48,15 @@ final class IntervalUnitGenerator implements ErisGenerator
     {
         return $this->delegate->shrink($element);
     }
+    /**
+     * Selects the alternatives valid in a particular SQL role.
+     *
+     * @param non-empty-list<IntervalUnit> $cases The alternatives allowed by the parent structure
+     * @return ErisGenerator<IntervalUnit>
+     */
+    public static function selecting(array $cases): ErisGenerator
+    {
+        return Generators::elements($cases);
+    }
+
 }

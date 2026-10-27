@@ -39,10 +39,10 @@ final class TableListTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT * FROM t, u', [$t, $u]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableList::class, $operation->statement->query->from);
-        self::assertCount(4, $operation->facts->relation($operation->statement->query->from)->shape->slots);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableList::class, $operation->query->from);
+        self::assertCount(4, $operation->query->from->relationInformation()->shape->slots);
         self::assertSame(['a', 'b', 'a', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
     }
 
@@ -59,8 +59,8 @@ final class TableListTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1 FROM t, u JOIN u AS v ON t.a = v.a', [$t, $u]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testRenderWritesTheMembers(): void

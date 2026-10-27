@@ -21,8 +21,8 @@ final class ForeignStringsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE SERVER s FOREIGN DATA WRAPPER '😀' OPTIONS(HOST '😀', HOST 'localhost', DATABASE '猫😀')");
 
-        self::assertCount(3, $operation->facts->warnings);
-        self::assertSame(['😀', '😀', '猫😀'], array_map(static fn (\SqlSemantics\Statement\Fact\Warning $warning): string => $warning instanceof NameConversion ? $warning->name->value : '', $operation->facts->warnings));
+        self::assertCount(3, $operation->warnings());
+        self::assertSame(['😀', '😀', '猫😀'], array_map(static fn (\SqlSemantics\Statement\Fact\Warning $warning): string => $warning instanceof NameConversion ? $warning->name->value : '', $operation->warnings()));
     }
 
     public function testConversionKeepsTheFullValueAndSelectsTheReleaseDiagnostic(): void

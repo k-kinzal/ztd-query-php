@@ -25,7 +25,7 @@ final class LiteralDefaultsTest extends TestCase
 {
     public function testDefaultsAnswersTheDefaultClausesInWrittenOrder(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a NOT NULL DEFAULT 1 UNIQUE DEFAULT (2) DEFAULT word)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a NOT NULL DEFAULT 1 UNIQUE DEFAULT (2) DEFAULT word)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $defaults = (new LiteralDefaults())->defaults($statement->columns[0]->constraints);
@@ -37,7 +37,7 @@ final class LiteralDefaultsTest extends TestCase
 
     public function testNullIsTheLiteralNullWithOrWithoutParentheses(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT NULL DEFAULT (NULL) DEFAULT ((NULL)) DEFAULT -NULL DEFAULT (+NULL) DEFAULT 0 DEFAULT null)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT NULL DEFAULT (NULL) DEFAULT ((NULL)) DEFAULT -NULL DEFAULT (+NULL) DEFAULT 0 DEFAULT null)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $rule = new LiteralDefaults();
@@ -46,7 +46,7 @@ final class LiteralDefaultsTest extends TestCase
 
     public function testLiteralTellsTheDefaultsSqliteComputesWhenAColumnIsAdded(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a DEFAULT 1 DEFAULT -1.5 DEFAULT 'x' DEFAULT x'00' DEFAULT CURRENT_TIME DEFAULT word DEFAULT TRUE DEFAULT (1) DEFAULT (-(-5)) DEFAULT (+'x') DEFAULT (CAST(1 AS TEXT)) DEFAULT (true) DEFAULT (1 + 1) DEFAULT (abs(1)) DEFAULT (CURRENT_DATE) DEFAULT (CAST(abs(1) AS TEXT)) DEFAULT (~1))")->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a DEFAULT 1 DEFAULT -1.5 DEFAULT 'x' DEFAULT x'00' DEFAULT CURRENT_TIME DEFAULT word DEFAULT TRUE DEFAULT (1) DEFAULT (-(-5)) DEFAULT (+'x') DEFAULT (CAST(1 AS TEXT)) DEFAULT (true) DEFAULT (1 + 1) DEFAULT (abs(1)) DEFAULT (CURRENT_DATE) DEFAULT (CAST(abs(1) AS TEXT)) DEFAULT (~1))");
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $rule = new LiteralDefaults();

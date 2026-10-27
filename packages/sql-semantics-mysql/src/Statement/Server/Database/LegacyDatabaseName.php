@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A legacy database directory identity, before MySQL's filename encoding.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class LegacyDatabaseName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The directory component after conversion to the system character set.
@@ -38,7 +37,7 @@ final class LegacyDatabaseName implements Node
      * @param Name $suffix The decoded component without the marker, before character conversion
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the converted component violates the directory name domain
      */
-    public function __construct(public readonly Name $suffix)
+    public function __construct(public readonly Name $suffix, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(self::valid($suffix->value), 'A legacy database name requires a valid directory component of at most 64 characters.');
         $this->value = self::converted($suffix->value);

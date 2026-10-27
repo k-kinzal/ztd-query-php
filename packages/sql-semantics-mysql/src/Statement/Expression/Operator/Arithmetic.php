@@ -20,7 +20,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -46,19 +45,23 @@ use SqlSemantics\Statement\Type\Nullability;
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a % 2 = 1'
  * @example Typing a division of integers as DECIMAL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE 1 / 2');
- *     $query->facts->scalar($query->statement->query->where)->type->descriptor->name() // => 'DECIMAL'
+ *     $query->query->where->scalarInformation()->type->descriptor->name() // => 'DECIMAL'
  */
 final class Arithmetic implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ArithmeticOperator $operator The operator
      * @param Scalar $left The left operand
      * @param Scalar $right The right operand
      */
-    public function __construct(public readonly ArithmeticOperator $operator, public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly ArithmeticOperator $operator, public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left operand of ' . $operator->value . ' needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > $operator->level(), 'The right operand of ' . $operator->value . ' needs a grouping to keep its place.');
@@ -87,7 +90,7 @@ final class Arithmetic implements Scalar
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
             if (in_array($this->operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply], true) && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
                 $facts = $derivation->facts();
-                $domains = [$numbers->signed($this->left, $domains[0], $facts), $numbers->signed($this->right, $domains[1], $facts)];
+                $domains = [$numbers->signed($this->left, $domains[0]), $numbers->signed($this->right, $domains[1])];
             }
             $type = new Known($this->operator->bitwise() && $type instanceof Known ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $bytes[0], $bytes[1])) : $numbers->binary($this->operator, $domains[0], $domains[1]));
         }

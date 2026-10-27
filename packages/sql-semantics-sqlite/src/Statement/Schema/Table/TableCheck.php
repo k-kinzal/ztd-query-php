@@ -11,7 +11,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A CHECK table constraint.
@@ -29,17 +28,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table check
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, CHECK (a < b))');
- *     $create->facts->scalar($create->statement->constraints[0]->items[0]->expression->right)->resolution->slot->name->value // => 'b'
+ *     $create->constraints[0]->items[0]->expression->right->scalarInformation()->resolution->slot->name->value // => 'b'
  */
 final class TableCheck implements TableConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The condition every row must not fail
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution, which SQLite ignores
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?ConflictResolution $conflict = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?ConflictResolution $conflict = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

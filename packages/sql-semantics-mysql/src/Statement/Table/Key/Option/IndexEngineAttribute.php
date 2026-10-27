@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ENGINE_ATTRIBUTE or SECONDARY_ENGINE_ATTRIBUTE of an index (MySQL 8.0.21 and later).
@@ -16,17 +15,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE \'{}\')');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute // => true
+ *     $create->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute // => true
  */
 final class IndexEngineAttribute implements IndexOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $attribute The attribute document
      * @param bool $secondary Whether it is the SECONDARY_ENGINE_ATTRIBUTE
      */
-    public function __construct(public readonly Text $attribute, public readonly bool $secondary = false)
+    public function __construct(public readonly Text $attribute, public readonly bool $secondary = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }

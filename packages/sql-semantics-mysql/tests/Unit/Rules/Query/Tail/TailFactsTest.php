@@ -29,127 +29,127 @@ final class TailFactsTest extends TestCase
     public function testDestinationReportsAnUnboundProgramVariable(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        self::assertEquals([new UndeclaredVariable(new Name('x'))], $semantics->analyze('SELECT 1 INTO x')->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('SELECT 1 INTO @x')->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT 1 INTO x; END')->facts->diagnostics);
+        self::assertEquals([new UndeclaredVariable(new Name('x'))], $semantics->analyze('SELECT 1 INTO x')->diagnostics());
+        self::assertSame([], $semantics->analyze('SELECT 1 INTO @x')->diagnostics());
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT 1 INTO x; END')->diagnostics());
     }
 
     public function testDeriveReportsAnUnknownLockedTable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t AS u FOR UPDATE OF d.t');
 
-        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t'), new Name('d')))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t'), new Name('d')))], $operation->diagnostics());
     }
 
     public function testDeriveChecksTheLockingClausesOfAQueryStatement(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT a FROM t LOCK IN SHARE MODE) FOR UPDATE');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t'))], $operation->diagnostics());
     }
 
     public function testDeriveWarnsAboutIntoBeforeTheLockingClauses(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT 1 INTO @x FOR SHARE');
 
-        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->facts->warnings);
+        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->warnings());
     }
 
     public function testDeriveWarnsAboutIntoAtTheEndOfASetOperationBeforeTheLockingClauses(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 INTO @x FOR SHARE');
 
-        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->facts->warnings);
+        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->warnings());
     }
 
     public function testDeriveLeavesIntoAfterTheSelectListOfABlockAlone(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 INTO @x FOR SHARE');
 
-        self::assertSame([], $operation->facts->warnings);
+        self::assertSame([], $operation->warnings());
     }
 
     public function testOperandWarnsAboutIntoInsideTheLastOperandOfASetOperation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT 2 INTO @x)');
 
-        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->facts->warnings);
+        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->warnings());
     }
 
     public function testOperandWarnsAboutIntoBeforeTheFromClauseOfTheLastOperand(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT a INTO @x FROM t');
 
-        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->facts->warnings);
+        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->warnings());
     }
 
     public function testOperandLeavesIntoAtTheEndOfASetOperationAlone(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 INTO @x');
 
-        self::assertSame([], $operation->facts->warnings);
+        self::assertSame([], $operation->warnings());
     }
 
     public function testTrailingAnswersTheLastBlockOfASetOperation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 UNION SELECT 2) FOR SHARE');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryStatement::class, $operation->statement->query);
-        self::assertInstanceOf(Select::class, (new TailFacts())->trailing($operation->statement->query->query));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryStatement::class, $operation->query);
+        self::assertInstanceOf(Select::class, (new TailFacts())->trailing($operation->query->query));
     }
 
     public function testLimitReportsAnUndeclaredVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT n');
 
-        self::assertEquals([new UndeclaredVariable(new Name('n'))], $operation->facts->diagnostics);
+        self::assertEquals([new UndeclaredVariable(new Name('n'))], $operation->diagnostics());
     }
 
     public function testLimitDerivesTheOperands(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT ?, ?');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->query->limit);
-        self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->query->limit->count)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(RowLimit::class, $operation->query->limit);
+        self::assertInstanceOf(Dependent::class, $operation->query->limit->count->scalarInformation()->type);
     }
 
     public function testDeriveWarnsOfTheCharacterSetIntoOutfileNames(): void
     {
-        $facts = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' CHARACTER SET utf8mb3")->facts;
+        $facts = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' CHARACTER SET utf8mb3");
 
-        self::assertSame([Deprecated::Utf8mb3->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+        self::assertSame([Deprecated::Utf8mb3->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
     }
 
     public function testLimitReportsTheOffsetWrittenBeforeACommaFirstInMySql57(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 LIMIT a, b');
 
-        self::assertEquals(new UndeclaredVariable(new Name('a')), $operation->facts->diagnostics[0]);
+        self::assertEquals(new UndeclaredVariable(new Name('a')), $operation->diagnostics()[0]);
     }
 
     public function testLimitReportsTheOffsetWrittenBeforeACommaFirstInMySql84(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT 1 LIMIT a, b');
 
-        self::assertEquals([new UndeclaredVariable(new Name('a')), new UndeclaredVariable(new Name('b'))], $operation->facts->diagnostics);
+        self::assertEquals([new UndeclaredVariable(new Name('a')), new UndeclaredVariable(new Name('b'))], $operation->diagnostics());
     }
 
     public function testLimitReportsTheCountFirstWhenTheOffsetIsWrittenAfterIt(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT 1 LIMIT b OFFSET a');
 
-        self::assertEquals([new UndeclaredVariable(new Name('b')), new UndeclaredVariable(new Name('a'))], $operation->facts->diagnostics);
+        self::assertEquals([new UndeclaredVariable(new Name('b')), new UndeclaredVariable(new Name('a'))], $operation->diagnostics());
     }
     public function testDestinationDerivesTheTargetsOfADeferredSelection(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW(1,2) INTO @x FROM DUAL');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables::class, $operation->statement->body->into);
-        self::assertTrue($operation->facts->covers($operation->statement->body->into->targets[0]));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables::class, $operation->body->into);
+        self::assertTrue($operation->body->into->targets[0]->hasBinding());
     }
 
 }

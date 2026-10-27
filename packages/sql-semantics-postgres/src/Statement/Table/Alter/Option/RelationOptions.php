@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET ( ... ) or RESET ( ... ): the storage parameters of the relation.
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RelationOptions implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Definition> The parameters
@@ -37,7 +36,7 @@ final class RelationOptions implements AlterCommand
      * @param bool $reset Whether the parameters are reset; set otherwise
      * @param list<Definition> $options The parameters
      */
-    public function __construct(public readonly bool $reset, array $options)
+    public function __construct(public readonly bool $reset, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, Definition::class, 'Storage parameters are definitions.', 1);
     }

@@ -59,7 +59,7 @@ final class ProgramOnly
      */
     public function holds(Node $node, string $class): bool
     {
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($node) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($node, bindings: false) as $object) {
             if ($object instanceof $class) {
                 return true;
             }

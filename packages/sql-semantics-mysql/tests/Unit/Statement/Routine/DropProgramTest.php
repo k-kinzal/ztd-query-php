@@ -26,7 +26,7 @@ final class DropProgramTest extends TestCase
     {
         $legacy = new DropProgram(ProgramKind::Function, new QualifiedName(new Name('')));
         $ordinary = new DropProgram(ProgramKind::Function, new QualifiedName(new Name('f')));
-        $parsed = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('DROP FUNCTION ``')->statement;
+        $parsed = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('DROP FUNCTION ``');
 
         self::assertTrue($legacy->legacyName());
         self::assertFalse($ordinary->legacyName());
@@ -40,9 +40,9 @@ final class DropProgramTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $drop = $semantics->analyze('DROP TRIGGER IF EXISTS shop.tr', [$table]);
 
-        self::assertSame([], $drop->facts->diagnostics);
-        self::assertSame([], $drop->facts->declarations);
-        self::assertNull($drop->facts->output);
+        self::assertSame([], $drop->diagnostics());
+        self::assertSame([], $drop->declarations());
+        self::assertNull($drop->output());
     }
 
     /**
@@ -59,7 +59,7 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerDeriveStatementReadsTheDroppedProgram')]
     public function testDeriveStatementReadsTheDroppedProgram(string $sql, ProgramKind $kind, bool $ifExists, ?string $schema, string $name): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
         self::assertInstanceOf(DropProgram::class, $statement);
 
         self::assertSame($kind, $statement->kind);

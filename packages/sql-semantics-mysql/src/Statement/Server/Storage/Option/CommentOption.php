@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `COMMENT [=] 'text'`: a comment on a tablespace or log file group.
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CommentOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $comment The comment
      */
-    public function __construct(public readonly Text $comment)
+    public function __construct(public readonly Text $comment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

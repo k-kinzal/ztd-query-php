@@ -19,7 +19,7 @@ final class AlterUserTest extends TestCase
     {
         $hash = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED WITH mysql_native_password AS '*0123456789012345678901234567890123456789'");
 
-        self::assertSame([], $hash->facts->diagnostics);
+        self::assertSame([], $hash->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void

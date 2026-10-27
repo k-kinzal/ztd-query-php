@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A string at a position that is not an expression: a comment, a file name, a password, a separator, a member of an ENUM.
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Text implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $value The decoded bytes of a quoted string, or the digits of a hexadecimal or bit literal
      * @param Radix|null $radix The digit system when the text is written as a hexadecimal or bit literal
      */
-    public function __construct(public readonly string $value, public readonly ?Radix $radix = null)
+    public function __construct(public readonly string $value, public readonly ?Radix $radix = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($radix !== Radix::Hexadecimal || preg_match('/\A[0-9A-Fa-f]*\z/', $value) === 1, 'A hexadecimal text holds hexadecimal digits.');
         Check::input($radix !== Radix::Bit || preg_match('/\A[01]*\z/', $value) === 1, 'A bit text holds binary digits.');

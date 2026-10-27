@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -30,7 +29,8 @@ use SqlSemantics\Statement\Type\Invalid;
  */
 final class DeferredMembership implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RowOperand|DeferredOperand> The compared members in written order
@@ -42,8 +42,11 @@ final class DeferredMembership implements DeferredOperand
      * @param list<Scalar|RowOperand|DeferredOperand> $elements Members including a fixed shape mismatch
      * @param bool $negated Whether NOT precedes IN
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, array $elements, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, array $elements, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The membership operand needs grouping.');
         $checked = Check::listOf($elements, \SqlSemantics\Statement\Operand::class, 'Stored membership has at least one member.', 1);
         $accepted = [];

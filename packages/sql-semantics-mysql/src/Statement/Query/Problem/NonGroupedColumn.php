@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading the column a grouped query does not determine
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
- *     $semantics->analyze('SELECT b FROM t GROUP BY a', [$table])->facts->diagnostics[0]->message() // => "Expression #1 of SELECT list is not in GROUP BY clause and contains nonaggregated column '(current).t.b' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by"
+ *     $semantics->analyze('SELECT b FROM t GROUP BY a', [$table])->diagnostics()[0]->message() // => "Expression #1 of SELECT list is not in GROUP BY clause and contains nonaggregated column '(current).t.b' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by"
  */
 final class NonGroupedColumn implements Diagnostic
 {

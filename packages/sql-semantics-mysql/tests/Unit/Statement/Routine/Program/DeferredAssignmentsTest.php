@@ -21,6 +21,6 @@ final class DeferredAssignmentsTest extends TestCase
     public function testDeriveProgramKeepsTheAssignmentDependencies(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SET @a=x,@b=(x,2)');
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

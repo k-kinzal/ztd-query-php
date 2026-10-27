@@ -114,7 +114,7 @@ final class Variables
     {
         $domain = (new Precision())->domain($type);
         if ($domain === null && $type instanceof \SqlSemantics\Statement\Type\Known) {
-            $domain = (new Declared($this->settings->connection, $this->release))->domain($type->descriptor);
+            $domain = (new Declared($this->settings->connection, $this->release, $this->settings->realAsFloat))->domain($type->descriptor);
         }
 
         return $domain === null ? $type : new \SqlSemantics\Statement\Type\Known($this->assignment($domain));

@@ -38,15 +38,15 @@ final class StoredSelectionsTest extends TestCase
     public function testBodyRetainsTheCompleteCteDefinitionInItsTemplateRole(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT ROW(1,2) LIKE 1) SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\QueryExpression::class, $operation->statement->query);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $operation->statement->query->with);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->query->with->tables[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\QueryExpression::class, $operation->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $operation->query->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->query->with->tables[0]->query);
     }
 
     public function testDeferredKeepsAGroupPredicateOutsideTheScalarQueryDomain(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t HAVING (a,2)')->statement;
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t HAVING (a,2)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $create->body);
     }

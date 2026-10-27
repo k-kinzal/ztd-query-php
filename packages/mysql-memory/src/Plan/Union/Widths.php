@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Union;
 
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
-use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Query;
 
 /**
@@ -19,13 +19,13 @@ final class Widths
     /**
      * Reports a resolved mismatch without expanding stars or binding names again.
      */
-    public function differ(Query|LeadingUnion $left, Query $right, Facts $facts): bool
+    public function differ(Query|LeadingUnion $left, Query $right, StatementSemantics $facts): bool
     {
         if ($left instanceof LeadingUnion) {
             return $this->differ($left->left, $right, $facts);
         }
-        $one = $facts->query($left)->shape;
-        $two = $facts->query($right)->shape;
+        $one = $left->queryInformation()->shape;
+        $two = $right->queryInformation()->shape;
         return $one->complete() && $two->complete() && count($one->slots) !== count($two->slots);
     }
 }

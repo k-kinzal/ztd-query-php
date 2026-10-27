@@ -30,7 +30,6 @@ use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Builds the definition a table layout declares, and the rows of a table under it.
@@ -80,8 +79,10 @@ final class TableRebuild
             throw QueryError::BadDatabase->error($schemaName);
         }
         $database = $this->session->variables->database;
-        $operation = new Operation($this->session->semantics()->context($declarations, true, $database === '' ? null : new SearchPath($database), $this->session->resolution()), $create);
-        $planner = new Planner($create, $operation->facts, $this->session->settings(), $this->connection, $this->session->instance->dictionary);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($this->session->semantics()->context($declarations, true, $database === '' ? null : new SearchPath($database), $this->session->resolution()), $create, new \SqlSemantics\Statement\Source\SourceMap());
+        \SqlSemantics\Diagnostic\Check::invariant($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable, 'A table rebuild binds the replacement table definition.');
+        $create = $operation;
+        $planner = new Planner($create, $operation->statementInformation(), $this->session->settings(), $this->connection, $this->session->instance->dictionary, $this->session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($this->session));
         $command = new CreateTableCommand();
         $definitions = new Definitions($planner, $schema->collation);
         $definitions->inferredDefaults = $layout->inferredDefaults;

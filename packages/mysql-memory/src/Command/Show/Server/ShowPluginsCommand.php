@@ -13,9 +13,9 @@ use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW PLUGINS: the plugins of the server, with their status, type, library and license.
@@ -42,8 +42,8 @@ final class ShowPluginsCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        assert($operation->statement instanceof ShowPlugins);
+        assert($operation instanceof MySqlStatement);
+        assert($operation instanceof ShowPlugins);
         $table = 'PLUGINS';
         $schema = 'information_schema';
         $headings = [

@@ -23,14 +23,14 @@ final class ReturnStatementTest extends TestCase
     public function testDeriveProgramResolvesTheParameter(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateFunction::class, $create);
         $return = $create->body;
         self::assertInstanceOf(ReturnStatement::class, $return);
         self::assertInstanceOf(ColumnUse::class, $return->value);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($return->value)->resolution);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(ResolvedColumn::class, $return->value->scalarInformation()->resolution);
     }
 
     /**
@@ -41,7 +41,7 @@ final class ReturnStatementTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**

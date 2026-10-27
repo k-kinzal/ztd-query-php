@@ -63,7 +63,7 @@ final class Stages
      * @param array<int, Warning> $warnings The semantic notices in written order
      * @return array<int, Warning> The conditions from stages that the input reaches
      */
-    public static function grammar(array $warnings, bool $legacy, ?\SqlSemantics\Statement\Fact\Facts $facts = null): array
+    public static function grammar(array $warnings, bool $legacy, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts = null): array
     {
         $warnings = array_filter($warnings, static fn (Warning $warning): bool => !$warning instanceof Deprecation || $warning->phase() !== \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Resolution);
         if ($legacy) {
@@ -271,6 +271,27 @@ final class Stages
         return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString
             || ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation && $diagnostic->name !== '' && !$legacy);
+    }
+
+    /**
+     * Identifies locking-table conditions that first require a default database.
+     */
+    public static function locked(Diagnostic $diagnostic): bool
+    {
+        return $diagnostic instanceof Misuse
+            && in_array($diagnostic->rule, [MisuseRule::UnknownLockedTable, MisuseRule::RepeatedLockedTable], true);
+    }
+
+    /**
+     * Identifies relation alias conflicts that precede end-of-clause conditions.
+     */
+    public static function duplicateAlias(Diagnostic $diagnostic, Node $statement): bool
+    {
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
+            return true;
+        }
+        $insert = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
+        return $insert && $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::DuplicateAlias;
     }
 
 }

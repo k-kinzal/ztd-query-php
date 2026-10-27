@@ -31,21 +31,21 @@ final class WindowReferencesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER w, SUM(1) OVER (v ORDER BY 1.5) FROM DUAL WINDOW v AS (u)', []);
 
-        self::assertCount(2, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::UnknownWindow, $operation->facts->diagnostics[0]->rule);
+        self::assertCount(2, $operation->diagnostics());
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
+        self::assertSame(MisuseRule::UnknownWindow, $operation->diagnostics()[0]->rule);
     }
 
     public function testCheckAcceptsANameWithoutRegardToLetterCaseAndLeavesSubqueriesAlone(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER W, (SELECT RANK() OVER w FROM DUAL WINDOW w AS ()) FROM DUAL WINDOW w AS ()', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testNamesAnswersTheWindowNamesInWrittenOrder(): void
     {
-        $declaration = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER a, LAG(1) OVER (b), (SELECT RANK() OVER c WINDOW c AS ()) FROM DUAL WINDOW d AS (e)')->statement;
+        $declaration = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT ROW_NUMBER() OVER a, LAG(1) OVER (b), (SELECT RANK() OVER c WINDOW c AS ()) FROM DUAL WINDOW d AS (e)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $declaration);
         $select = $declaration->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery::class, $select);
@@ -59,13 +59,13 @@ final class WindowReferencesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 WINDOW x AS (zz)');
 
-        self::assertEquals([new Misuse(MisuseRule::UnknownWindow, new Name('zz'))], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::UnknownWindow, new Name('zz'))], $operation->diagnostics());
     }
 
     public function testCheckReportsAWindowNameInWhereAndGroupBy(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertCount(2, $semantics->analyze('CREATE PROCEDURE p() SELECT 1 FROM (SELECT 1 a) t WHERE RANK() OVER w > 0 GROUP BY RANK() OVER v')->facts->diagnostics);
+        self::assertCount(2, $semantics->analyze('CREATE PROCEDURE p() SELECT 1 FROM (SELECT 1 a) t WHERE RANK() OVER w > 0 GROUP BY RANK() OVER v')->diagnostics());
     }
 }

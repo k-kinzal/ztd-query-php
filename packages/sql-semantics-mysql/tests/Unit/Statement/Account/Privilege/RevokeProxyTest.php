@@ -18,7 +18,7 @@ final class RevokeProxyTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE PROXY ON a FROM b')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE PROXY ON a FROM b')->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void

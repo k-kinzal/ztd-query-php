@@ -387,7 +387,7 @@ final class Texts
      */
     public function weight(WeightString|\SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters $node, Scope $scope): Evaluable
     {
-        $stored = (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->stored($this->compiler->facts->scalar($node->subject), $this->compiler->facts, $this->compiler->settings->release(), $this->compiler->settings->resolution()->derivedMerge);
+        $stored = (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->stored($node->subject->scalarInformation(), $this->compiler->settings->release(), $this->compiler->settings->resolution()->derivedMerge);
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters) {
             return new Weight($this->compiler->compile($node->subject, $scope), null, null, $this->compiler->domain($node), $node->weightCount(), $node->resultLength(), $node->formatFlags(), stored: $stored);
         }
@@ -423,7 +423,7 @@ final class Texts
         $stored = null;
         $positions = [];
         foreach ($node->columns as $column) {
-            $resolution = $this->compiler->facts->scalar($column)->resolution;
+            $resolution = $column->scalarInformation()->resolution;
             if (!$resolution instanceof ResolvedColumn) {
                 throw StatementError::WrongArguments->error('MATCH');
             }

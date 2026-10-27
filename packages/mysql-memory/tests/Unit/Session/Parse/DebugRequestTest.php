@@ -44,7 +44,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Scalar;
 use Tests\Generator\Bindings;
 use Tests\Generator\Embedding;
@@ -63,11 +62,11 @@ final class DebugRequestTest extends TestCase
         $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1);
+            $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -83,18 +82,18 @@ final class DebugRequestTest extends TestCase
         $session = (new Instance())->connect();
         $session->text = 'unrelated input';
         $statement = new ShowParseTree(new D\GetDiagnostics(new D\StatementDiagnostics([new D\InformationItem(new Name('x'), D\StatementItemName::Number)])));
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
         $problem = (new DebugRequest())->operand($operation);
         self::assertSame('Undeclared variable: x', $problem?->message());
         $statement2 = (new Embedding())->statement($statement);
         $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
         $session->activity->begin();
         StatementCounters::received($session);
-        $session->hinted = [];
+
         $session->dots = [];
         try {
             $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
-            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2->statement), $parameters2);
+            $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;
             (new Execution($session))->failed($executionError);
@@ -109,7 +108,7 @@ final class DebugRequestTest extends TestCase
         $session = (new Instance())->connect();
         $session->diagnostics->error(1327, 'Undeclared variable: previous');
         $statement = new ShowParseTree(new D\GetDiagnostics(new D\StatementDiagnostics([new D\InformationItem(new UserVariable(new Name('x')), D\StatementItemName::Number)])));
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
         self::assertTrue((new DebugRequest())->preserves($operation));
         $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
         self::assertSame(1064, $error->getCode());
@@ -135,8 +134,8 @@ final class DebugRequestTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), new ShowParseTree(new QueryRoot(new Select([], [new SelectExpression($operand)]))));
-        $error = (new DebugRequest())->notices($operation->facts->warnings, (new InternalCommand())->error($operation), $session);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), new ShowParseTree(new QueryRoot(new Select([], [new SelectExpression($operand)]))), new \SqlSemantics\Statement\Source\SourceMap());
+        $error = (new DebugRequest())->notices($operation->statementInformation()->warnings, (new InternalCommand())->error($operation), $session);
 
         self::assertSame($codes[0], $error->getCode());
         self::assertTrue($error->recorded);
@@ -149,7 +148,7 @@ final class DebugRequestTest extends TestCase
         $session->text = 'unrelated invalid input';
         $partitioning = new PartitionClause(new HashMethod(false, new Collated(new FunctionCall(new Name('ABS'), [new CallArgument(new NumberLiteral('1'))]), new Name('missing'))), null, null, []);
         $statement = new ShowParseTree(new CreateTable(new QualifiedName(new Name('t')), [new ColumnDefinition(new ColumnName(new Name('a')), new OrdinaryColumn(new Integral(IntegralKind::Int)))], partitioning: $partitioning));
-        $operation = new Operation($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
 
         $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
 

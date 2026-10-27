@@ -20,8 +20,8 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Storage\Heap;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes CREATE TABLE: declares the table in its database, with no rows, or with the rows of its query (TableQueries).
@@ -49,10 +49,10 @@ final class CreateTableCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        if ($operation->statement instanceof CreateTable && $operation->statement->hasExecutionCondition()) {
-            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation->statement, $session->settings()->release(), $connection->parameters));
-            return (new \MySqlMemory\Program\Expression\TableUse($rewrite))->raise($operation->statement, $session);
+        assert($operation instanceof MySqlStatement);
+        if ($operation instanceof CreateTable && $operation->hasExecutionCondition()) {
+            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation, $session->settings()->release(), $connection->parameters));
+            return (new \MySqlMemory\Program\Expression\TableUse($rewrite))->raise($operation, $session);
         }
         return $this->create($operation, $session, $context, $connection);
     }
@@ -60,9 +60,9 @@ final class CreateTableCommand implements Command
     /**
      * Installs a complete request after its invocation conditions have been resolved.
      */
-    public function create(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    public function create(MySqlStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        $create = $operation->statement;
+        $create = $operation;
         assert($create instanceof CreateTable);
         $started = (new \MySqlMemory\Session\Access\TableCreation())->requested($create);
         if ($create->temporaryWords === 0) {
@@ -71,7 +71,7 @@ final class CreateTableCommand implements Command
         $schema = $this->schema($create, $operation, $session, $connection);
         $schemaName = $schema->name;
         $name = $create->name->name->value;
-        $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new Planner($create, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $definitions = new Definitions($planner, $schema->collation);
         $definition = $session->settings()->legacy() && $create->query === null ? $definitions->shape($create, $operation->declarations()[0], $schemaName) : null;
         if ($create->temporaryWords > 0 ? $session->temporaries->table($schemaName, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name])) {
@@ -109,7 +109,7 @@ final class CreateTableCommand implements Command
      * Legacy empty definitions fail before schema lookup. Modern tablespace lookup
      * precedes the existing-table shortcut, including IF NOT EXISTS.
      */
-    public function schema(CreateTable $create, Operation $operation, Session $session, Connection $connection): \MySqlMemory\Dictionary\Schema
+    public function schema(CreateTable $create, MySqlStatement $operation, Session $session, Connection $connection): \MySqlMemory\Dictionary\Schema
     {
         $schemaName = $create->name->schema->value ?? $session->variables->database;
         if ($schemaName === '') {
@@ -140,18 +140,18 @@ final class CreateTableCommand implements Command
     /**
      * Raises the semantic empty-definition condition at the release's preparation phase.
      */
-    public function columns(Operation $operation, Session $session, Connection $connection): void
+    public function columns(MySqlStatement $operation, Session $session, Connection $connection): void
     {
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns) {
                 if ($session->settings()->legacy()) {
                     throw SchemaError::TableMustHaveColumns->error();
                 }
-                $create = $operation->statement;
+                $create = $operation;
                 assert($create instanceof CreateTable);
                 $schema = $session->instance->dictionary->schema($create->name->schema->value ?? $session->variables->database);
                 \SqlSemantics\Diagnostic\Check::invariant($schema !== null, 'The destination schema precedes modern column validation.');
-                $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+                $planner = new Planner($create, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
                 (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schema->name);
             }
         }
@@ -169,7 +169,7 @@ final class CreateTableCommand implements Command
         if ($started) {
             $session->transaction->creation->begin($table);
         } else {
-            $session->instance->dictionary->store($table);
+            $session->instance->dictionary->store($table, $session->temporaries);
         }
     }
 

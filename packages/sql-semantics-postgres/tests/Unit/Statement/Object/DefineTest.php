@@ -36,8 +36,8 @@ final class DefineTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $aggregate = $semantics->analyze('CREATE AGGREGATE a(int4) (initcond = 0)');
         $operator = $semantics->analyze('CREATE OPERATOR === (leftarg = int4)');
-        self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['stype']), new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['sfunc'])], $aggregate->facts->diagnostics);
-        self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingOperatorFunction), new AttributeProblem(AttributeProblemKind::MissingRightArgument)], $operator->facts->diagnostics);
+        self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['stype']), new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['sfunc'])], $aggregate->diagnostics());
+        self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingOperatorFunction), new AttributeProblem(AttributeProblemKind::MissingRightArgument)], $operator->diagnostics());
     }
 
     public function testRenderWritesEachForm(): void
@@ -105,7 +105,7 @@ final class DefineTest extends TestCase
 
     public function testDeriveStatementReadsTheFunctionOfAnOperatorAsARoutine(): void
     {
-        $define = (new Semantics(Dialect::PostgreSql))->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)')->statement;
+        $define = (new Semantics(Dialect::PostgreSql))->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
         self::assertInstanceOf(Define::class, $define);
         $definition = $define->definition ?? [];
         self::assertSame([OperatorAttribute::Leftarg, OperatorAttribute::Rightarg, OperatorAttribute::Function], array_map(static fn (Attribute $attribute): ?KnownAttribute => $attribute->known, $definition));

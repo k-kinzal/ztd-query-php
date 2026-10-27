@@ -26,10 +26,10 @@ final class CommandTest extends TestCase
         self::assertSame(
             [true, true, false, false],
             [
-                $dispatcher->command($session->analyze('SELECT 1')->statement)->clearsDiagnostics(),
-                $dispatcher->command($session->analyze('SET @a = 1')->statement)->clearsDiagnostics(),
-                $dispatcher->command($session->analyze('SHOW WARNINGS')->statement)->clearsDiagnostics(),
-                $dispatcher->command($session->analyze('SHOW ERRORS')->statement)->clearsDiagnostics(),
+                $dispatcher->command($session->analyze('SELECT 1'))->clearsDiagnostics(),
+                $dispatcher->command($session->analyze('SET @a = 1'))->clearsDiagnostics(),
+                $dispatcher->command($session->analyze('SHOW WARNINGS'))->clearsDiagnostics(),
+                $dispatcher->command($session->analyze('SHOW ERRORS'))->clearsDiagnostics(),
             ],
         );
     }
@@ -39,7 +39,7 @@ final class CommandTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 + 1');
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $command = (new Dispatcher())->command($operation->statement);
+        $command = (new Dispatcher())->command($operation);
 
         $reply = $command->execute($operation, $session, $context, new Connection($session->variables, $context));
 

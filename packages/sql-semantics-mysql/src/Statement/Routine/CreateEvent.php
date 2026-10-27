@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CREATE EVENT: a statement the event scheduler runs once or repeatedly.
@@ -39,11 +38,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an event definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO DELETE FROM log");
- *     [$create->statement->completion, $create->statement->status, $create->statement->comment->value] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion::Preserve, \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Disable, 'nightly']
+ *     [$create->completion, $create->status, $create->comment->value] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion::Preserve, \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Disable, 'nightly']
  */
-final class CreateEvent implements Statement
+final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var ProgramStatement|Statement The statement the event runs
@@ -70,7 +69,12 @@ final class CreateEvent implements Statement
         public readonly ?Text $comment = null,
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');

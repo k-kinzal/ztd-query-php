@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One common table expression: a named query, optionally with column names and a materialization hint.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a common table expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('WITH c(x) AS (SELECT 1) SELECT x FROM c');
- *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->name->value] // => ['c', 'x']
+ *     [$query->with->tables[0]->name->value, $query->with->tables[0]->columns[0]->name->value] // => ['c', 'x']
  */
 final class CommonTable implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ListedColumn> The column names in written order
@@ -38,7 +37,7 @@ final class CommonTable implements Node
      * @param list<ListedColumn> $columns The column names; none when the list is absent
      * @param Materialization|null $materialization The written hint
      */
-    public function __construct(public readonly Name $name, public readonly Query $query, array $columns = [], public readonly ?Materialization $materialization = null)
+    public function __construct(public readonly Name $name, public readonly Query $query, array $columns = [], public readonly ?Materialization $materialization = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, ListedColumn::class, 'The column list of a common table holds column names.');
     }

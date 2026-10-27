@@ -39,7 +39,7 @@ final class NestedRelationTest extends TestCase
 
         self::assertSame($t->columns[0], $operation->field(0)->column());
         self::assertSame($u->columns[1], $operation->field(1)->column());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheParentheses(): void

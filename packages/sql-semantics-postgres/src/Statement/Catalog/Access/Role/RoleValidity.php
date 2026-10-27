@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The role option VALID UNTIL: the time after which the password of the role is no longer valid.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the time
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE ROLE joe VALID UNTIL 'infinity'");
- *     $operation->statement->options[0]->until->value // => 'infinity'
+ *     $operation->options[0]->until->value // => 'infinity'
  */
 final class RoleValidity implements RoleOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param StringConstant $until The time as written
      */
-    public function __construct(public readonly StringConstant $until)
+    public function __construct(public readonly StringConstant $until, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

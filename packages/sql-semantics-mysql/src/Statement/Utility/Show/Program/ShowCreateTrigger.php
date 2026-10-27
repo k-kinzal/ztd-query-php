@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW CREATE TRIGGER: the statement that creates a trigger.
@@ -25,17 +24,20 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE TRIGGER shop.p');
- *     [$show->statement->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE TRIGGER shop.p']
+ *     [$show->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE TRIGGER shop.p']
  */
-final class ShowCreateTrigger implements Statement
+final class ShowCreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The name with its optional database
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($name);
         \SqlSemantics\Diagnostic\Check::input($name->catalog === null, 'A stored-program name has at most a database qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

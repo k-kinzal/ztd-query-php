@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The role option CONNECTION LIMIT: how many concurrent connections the role can make.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the limit
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ROLE joe CONNECTION LIMIT 5');
- *     $operation->statement->options[0]->magnitude->digits // => '5'
+ *     $operation->options[0]->magnitude->digits // => '5'
  */
 final class RoleConnectionLimit implements RoleOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The magnitude of the limit.
@@ -34,7 +33,7 @@ final class RoleConnectionLimit implements RoleOption
     /**
      * @param SignedNumber $limit The limit, a signed integer
      */
-    public function __construct(public readonly SignedNumber $limit)
+    public function __construct(public readonly SignedNumber $limit, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $magnitude = $limit->magnitude;
         Check::input($magnitude instanceof IntegerConstant, 'A connection limit is an integer.');

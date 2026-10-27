@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * GET DIAGNOSTICS: copies statement or condition information of a diagnostics area into variables.
@@ -22,18 +21,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the area and the kind of information
  *     $get = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT');
- *     [$get->statement->area->value, $get->toString()] // => ['STACKED', 'GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT']
+ *     [$get->area->value, $get->toString()] // => ['STACKED', 'GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT']
  */
-final class GetDiagnostics implements Statement, ProgramStatement
+final class GetDiagnostics extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, ProgramStatement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ConditionDiagnostics|StatementDiagnostics $information The information read
      * @param DiagnosticsArea|null $area The area keyword, when written
      */
-    public function __construct(public readonly ConditionDiagnostics|StatementDiagnostics $information, public readonly ?DiagnosticsArea $area = null)
+    public function __construct(public readonly ConditionDiagnostics|StatementDiagnostics $information, public readonly ?DiagnosticsArea $area = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

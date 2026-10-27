@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatemen
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 
 /**
@@ -36,9 +35,9 @@ use SqlSemantics\Statement\Source\Span;
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE');
  *     [$set->scope, $set->characteristics, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode::ReadOnly, \SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel::Serializable], 'SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE']
  */
-final class SetTransaction implements TransactionStatement
+final class SetTransaction extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
     use TransactionSql;
 
     /**
@@ -55,8 +54,11 @@ final class SetTransaction implements TransactionStatement
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
      */
-    public function __construct(array $characteristics, public readonly ?VariableScope $scope = null, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null)
+    public function __construct(array $characteristics, public readonly ?VariableScope $scope = null, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         Check::input(array_is_list($characteristics) && $characteristics !== [] && count($characteristics) <= 2, 'SET TRANSACTION writes one or two characteristics.');
         $kinds = [];

@@ -35,7 +35,7 @@ final class SelectionUseTest extends TestCase
 
     public function testDiagnosedReportsGrammarConditionsBeforeQueryPreparation(): void
     {
-        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow), new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('nosuch')]);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::EmptyValuesRow), new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('nosuch')]);
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
         $this->expectException(\MySqlMemory\Error\SqlError::class);
@@ -59,7 +59,7 @@ final class SelectionUseTest extends TestCase
     {
         $session = (new Instance())->connect();
         $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AssignmentInExpression);
-        $facts = new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [], [$notice]);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [], warnings: [$notice]);
         (new SelectionUse())->diagnosed($facts, $session);
         self::assertSame([['Warning', 1287, $notice->message()]], $session->diagnostics->conditions);
     }

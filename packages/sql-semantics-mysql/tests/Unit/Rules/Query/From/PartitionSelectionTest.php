@@ -22,8 +22,8 @@ final class PartitionSelectionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
 
-        self::assertEquals([new UnpartitionedTable()], $semantics->analyze('SELECT a FROM t PARTITION (p0)', [$table])->facts->diagnostics);
-        self::assertEquals([new UnpartitionedTable()], $semantics->analyze('INSERT INTO t PARTITION (p0) VALUES (1)', [$table])->facts->diagnostics);
+        self::assertEquals([new UnpartitionedTable()], $semantics->analyze('SELECT a FROM t PARTITION (p0)', [$table])->diagnostics());
+        self::assertEquals([new UnpartitionedTable()], $semantics->analyze('INSERT INTO t PARTITION (p0) VALUES (1)', [$table])->diagnostics());
     }
 
     public function testCheckAcceptsDeclaredPartitionsAndSubpartitionsInAnyCase(): void
@@ -31,12 +31,12 @@ final class PartitionSelectionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT) PARTITION BY RANGE (a) SUBPARTITION BY HASH (a) SUBPARTITIONS 2 (PARTITION r0 VALUES LESS THAN (10), PARTITION r1 VALUES LESS THAN MAXVALUE)');
 
-        self::assertSame([], $semantics->analyze('SELECT a FROM t PARTITION (R0, r1sp1)', [$table])->facts->diagnostics);
-        self::assertEquals([new UnknownPartition('p0sp0', 't')], $semantics->analyze('SELECT a FROM t PARTITION (r0, p0sp0)', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SELECT a FROM t PARTITION (R0, r1sp1)', [$table])->diagnostics());
+        self::assertEquals([new UnknownPartition('p0sp0', 't')], $semantics->analyze('SELECT a FROM t PARTITION (r0, p0sp0)', [$table])->diagnostics());
     }
 
     public function testCheckLeavesATableOfUnknownPartitionsAlone(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0)')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0)')->diagnostics());
     }
 }

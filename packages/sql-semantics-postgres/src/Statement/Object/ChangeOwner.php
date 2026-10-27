@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,19 +24,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the new owner
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SCHEMA app OWNER TO CURRENT_USER');
- *     $operation->statement->owner->kind->name // => 'CurrentUser'
+ *     $operation->owner->kind->name // => 'CurrentUser'
  */
-final class ChangeOwner implements Statement
+final class ChangeOwner extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ObjectKind $kind The kind of the object
      * @param ObjectReference $object The object, named as OWNER TO names objects of the kind
      * @param RoleSpec $owner The new owner
      */
-    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly RoleSpec $owner)
+    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly RoleSpec $owner, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $forms = new ObjectForms();
         Check::input(in_array($forms->form($object), $forms->altered($kind, 'owner'), true), 'OWNER TO names the object as the grammar names objects of its kind.');
     }

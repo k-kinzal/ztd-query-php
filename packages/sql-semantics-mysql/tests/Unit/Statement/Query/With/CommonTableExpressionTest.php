@@ -30,8 +30,8 @@ final class CommonTableExpressionTest extends TestCase
         $context = $semantics->context([$semantics->analyze('CREATE TABLE d.t(a INT)')]);
         $operation = $semantics->analyze('WITH c (x, y) AS (SELECT * FROM d.t) SELECT x FROM c', $context);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(CountMismatch::class, $operation->diagnostics()[0]);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
         self::assertInstanceOf(Invalid::class, $semantics->analyze('WITH c (x, y) AS (SELECT * FROM d.t) SELECT y FROM c', $context)->field('y')->type);
     }

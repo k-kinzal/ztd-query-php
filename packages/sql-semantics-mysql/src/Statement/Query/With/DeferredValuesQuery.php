@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A VALUES query template with a retained operand preparation condition.
@@ -33,7 +32,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredValuesQuery implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ValueRow|DeferredValueRow> The complete ordered rows
@@ -43,8 +43,11 @@ final class DeferredValuesQuery implements Query
     /**
      * @param list<ValueRow|DeferredValueRow> $rows At least one deferred row
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $items = [];
         $deferred = false;
         foreach (Check::listOf($rows, Node::class, 'VALUES retains at least one row.', 1) as $row) {

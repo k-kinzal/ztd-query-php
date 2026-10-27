@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition\Constraint;
 
 use MySqlMemory\Error\Family\SchemaError;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
-use SqlSemantics\Statement\Fact\Facts;
 
 /**
  * Reports fixed semantic conditions when the column declaration is prepared.
@@ -23,7 +23,7 @@ final class DeclarationErrors
      *
      * @throws \MySqlMemory\Error\SqlError When declared columns or keys contradict one another
      */
-    public function check(Facts $facts): void
+    public function check(StatementSemantics $facts): void
     {
         $indexConditions = array_filter($facts->diagnostics, static fn (\SqlSemantics\Statement\Fact\Diagnostic $problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\InvalidIndexName || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind) !== [];
         foreach ($facts->diagnostics as $problem) {

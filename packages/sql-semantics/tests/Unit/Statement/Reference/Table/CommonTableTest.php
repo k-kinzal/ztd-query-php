@@ -21,13 +21,13 @@ final class CommonTableTest extends TestCase
     public function testDefinitionIsTheCommonTableNodeOfTheStatement(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
-        $statement = $query->statement;
+        $statement = $query;
 
         self::assertInstanceOf(WithQuery::class, $statement);
         self::assertInstanceOf(Select::class, $statement->body);
         $input = $statement->body->input();
         self::assertNotNull($input);
-        $resolution = $query->facts->relation($input)->table;
+        $resolution = $input->relationInformation()->table;
         self::assertInstanceOf(CommonTable::class, $resolution);
         self::assertSame($statement->with->tables[0], $resolution->definition);
         self::assertSame('a', $query->field('a')->name?->value);
@@ -38,13 +38,13 @@ final class CommonTableTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE c (b INTEGER)');
         $query = $semantics->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c', [$table]);
-        $statement = $query->statement;
+        $statement = $query;
 
         self::assertInstanceOf(WithQuery::class, $statement);
         self::assertInstanceOf(Select::class, $statement->body);
         $input = $statement->body->input();
         self::assertNotNull($input);
-        self::assertInstanceOf(CommonTable::class, $query->facts->relation($input)->table);
-        self::assertNotInstanceOf(DeclaredTable::class, $query->facts->relation($input)->table);
+        self::assertInstanceOf(CommonTable::class, $input->relationInformation()->table);
+        self::assertNotInstanceOf(DeclaredTable::class, $input->relationInformation()->table);
     }
 }

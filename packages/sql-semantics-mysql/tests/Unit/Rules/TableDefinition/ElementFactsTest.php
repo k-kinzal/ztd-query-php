@@ -26,7 +26,7 @@ final class ElementFactsTest extends TestCase
     public function testElementResolvesTheReferences(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES p (x))');
-        $statement = $create->statement;
+        $statement = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($create);
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
@@ -34,13 +34,13 @@ final class ElementFactsTest extends TestCase
         self::assertInstanceOf(ForeignKey::class, $element1);
         (new ElementFacts())->element($statement->elements[1], $derivation, $derivation->environment());
 
-        self::assertInstanceOf(MissingTable::class, $derivation->facts()->relation($element1->references)->table);
+        self::assertInstanceOf(MissingTable::class, $element1->references->relationInformation()->table);
     }
 
     public function testSpecificationDerivesTheExpressions(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT DEFAULT (1 + 2))');
-        $statement = $create->statement;
+        $statement = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($create);
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
@@ -55,7 +55,7 @@ final class ElementFactsTest extends TestCase
     public function testOptionsAcceptsTableOptions(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) ENGINE x');
-        $statement = $create->statement;
+        $statement = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($create);
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
@@ -67,7 +67,7 @@ final class ElementFactsTest extends TestCase
     public function testDeclarationAnswersTheColumnDeclaration(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT AUTO_INCREMENT)');
-        $statement = $create->statement;
+        $statement = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($create);
         self::assertInstanceOf(CreateTable::class, $statement);
 
         $column = $statement->elements[0];
@@ -79,7 +79,7 @@ final class ElementFactsTest extends TestCase
     public function testOptionsPreservesTheOrderOfAbortingNameFailures(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) CHARACTER SET missing COLLATE other AS SELECT BINARY 1');
-        $warnings = $create->facts->warnings;
+        $warnings = $create->warnings();
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warnings[0]->problem);
@@ -117,7 +117,7 @@ final class ElementFactsTest extends TestCase
     public function testReferencesAnswersTheInlineReference(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT REFERENCES p (x))');
-        $statement = $create->statement;
+        $statement = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($create);
         self::assertInstanceOf(CreateTable::class, $statement);
 
         $element0 = $statement->elements[0];

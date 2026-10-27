@@ -21,7 +21,7 @@ final class IndexDefinitionTest extends TestCase
     public function testDeriveElementDerivesTheKeyParts(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, UNIQUE KEY u USING HASH ((a * 2)) COMMENT \'x\')');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $index = $statement->elements[1];
 
@@ -29,7 +29,7 @@ final class IndexDefinitionTest extends TestCase
         self::assertSame(IndexKind::Unique, $index->kind);
         self::assertTrue($index->keyword);
         self::assertSame(IndexAlgorithm::Hash, $index->algorithm);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesKindNameAlgorithmPartsAndOptions(): void

@@ -28,10 +28,10 @@ final class UnionRuleTest extends TestCase
     public function testRetainedKeepsTheCompleteWriteAroundADeferredUnionOperand(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze('CREATE PROCEDURE p() INSERT INTO target SELECT 1 UNION SELECT ROW(a, 2) FROM source');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->statement->body);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->body->source);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->statement->body->source->right);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->body);
+        self::assertInstanceOf(SetOperation::class, $operation->body->source);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->body->source->right);
         self::assertSame('CREATE PROCEDURE p() INSERT INTO target SELECT 1 UNION SELECT ROW(a, 2) FROM source', $operation->toString());
     }
 
@@ -39,9 +39,9 @@ final class UnionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->query->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        self::assertInstanceOf(SetOperation::class, $operation->query->body);
         self::assertSame('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2', $operation->toString());
     }
 

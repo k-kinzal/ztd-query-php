@@ -19,7 +19,7 @@ final class AliasRuleTest extends TestCase
     public function testValueDistinguishesAnAggregateReferenceFromAForwardReference(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT SUM(1) AS x, (SELECT x)');
-        $problem = $operation->facts->diagnostics[0];
+        $problem = $operation->diagnostics()[0];
 
         self::assertInstanceOf(InvalidProjectionAlias::class, $problem);
         self::assertSame(AliasRule::Aggregate, $problem->rule);

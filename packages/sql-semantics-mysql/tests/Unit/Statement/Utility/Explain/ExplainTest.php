@@ -21,8 +21,8 @@ final class ExplainTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $explain = $semantics->analyze('EXPLAIN FORMAT = JSON SELECT a FROM t', [$table]);
-        self::assertInstanceOf(Explain::class, $explain->statement);
-        self::assertSame([], $explain->facts->diagnostics);
+        self::assertInstanceOf(Explain::class, $explain);
+        self::assertSame([], $explain->diagnostics());
         self::assertSame('EXPLAIN', $explain->field(0)->name?->value);
         self::assertSame([], $explain->declarations());
     }
@@ -32,9 +32,9 @@ final class ExplainTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE shop.t (a INT)');
         $explain = $semantics->analyze('EXPLAIN FORMAT = TREE FOR DATABASE shop SELECT a FROM t', [$table]);
-        self::assertInstanceOf(Explain::class, $explain->statement);
-        self::assertSame([], $explain->facts->diagnostics);
-        self::assertSame('shop', $explain->statement->database?->value);
+        self::assertInstanceOf(Explain::class, $explain);
+        self::assertSame([], $explain->diagnostics());
+        self::assertSame('shop', $explain->database?->value);
     }
 
     public function testDeriveStatementReportsARefusedFormat(): void
@@ -48,7 +48,7 @@ final class ExplainTest extends TestCase
     {
         $explain = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT = JSON INTO @plan SELECT 1');
         self::assertNull($explain->shape());
-        self::assertSame([], $explain->facts->diagnostics);
+        self::assertSame([], $explain->diagnostics());
     }
 
     public function testRenderWritesTheOptions(): void
@@ -59,14 +59,14 @@ final class ExplainTest extends TestCase
 
     public function testRefusesAModifierWithOptions(): void
     {
-        $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Explainable::class, $select);
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');
         new Explain($select, null, true, ExplainModifier::Extended);
     }
     public function testRefusesAnIntoWithoutExplicitJsonFormat(): void
     {
-        $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Explainable::class, $query);
         $this->expectExceptionMessage('EXPLAIN INTO has an explicit JSON format.');
         new Explain($query, into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('p')));
@@ -99,7 +99,7 @@ final class ExplainTest extends TestCase
 
     public function testRefusesAnIgnoredDestinationAroundALaterTableSamplingClause(): void
     {
-        $query = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT id FROM t TABLESAMPLE SYSTEM(50)')->statement;
+        $query = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT id FROM t TABLESAMPLE SYSTEM(50)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Explainable::class, $query);
         $this->expectExceptionMessage('The retained operands must share a supported MySQL release.');
         new Explain($query, emptyInto: true);
@@ -124,7 +124,7 @@ final class ExplainTest extends TestCase
     public function testDeriveStatementKeepsAFullMultibyteDatabaseAtTheCharacterLimit(): void
     {
         $database = str_repeat('猫', 64);
-        $explain = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR SCHEMA `' . $database . '` SELECT 1')->statement;
+        $explain = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR SCHEMA `' . $database . '` SELECT 1');
         self::assertInstanceOf(Explain::class, $explain);
         self::assertSame($database, $explain->database?->value);
     }

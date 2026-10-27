@@ -42,7 +42,7 @@ final class Walker
      * @param bool $childrenFirst Whether an occurrence follows its completed operands
      * @return list<Node>
      */
-    public function resolved(Node $root, \SqlSemantics\Statement\Fact\Facts $facts, bool $childrenFirst = false): array
+    public function resolved(Node $root, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, bool $childrenFirst = false): array
     {
         /** @var list<array{Node, bool}> $pending */
         $pending = [[$root, false]];
@@ -72,8 +72,8 @@ final class Walker
                     $children[] = $value;
                 }
             });
-            if ($node instanceof \SqlSemantics\Statement\NamedRelation && $facts->covers($node)) {
-                $resolution = $facts->relation($node)->table;
+            if ($node instanceof \SqlSemantics\Statement\NamedRelation && $node->hasBinding()) {
+                $resolution = $node->relationInformation()->table;
                 if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable) {
                     $children[] = $resolution->definition;
                 }

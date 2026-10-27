@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Establishing that a table does not exist
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t', []);
- *     $query->facts->relation($query->inputRelation())->table->message() // => 'Relation t does not exist.'
+ *     $query->inputRelation()->relationInformation()->table->message() // => 'Relation t does not exist.'
  */
 final class MissingTable implements TableResolution, Diagnostic
 {

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\RenameUser;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 #[CoversClass(RenameUser::class)]
 #[Medium]
@@ -57,10 +57,10 @@ final class RenameUserTest extends TestCase
     public function testDeriveProgramKeepsAnUnreachedRename(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() RENAME USER r TO r');
-        self::assertInstanceOf(Operation::class, $operation);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(RenameUser::class, $operation->statement->body);
+        self::assertInstanceOf(MySqlStatement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(RenameUser::class, $operation->body);
     }
 
     public function testRenderPreservesTheCompleteRename(): void
@@ -78,12 +78,12 @@ final class RenameUserTest extends TestCase
     public function testRenderRetainsDuplicateAccountsInAStoredRename(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() RENAME USER r TO r, a TO b');
-        self::assertInstanceOf(Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(RenameUser::class, $operation->statement->body);
-        self::assertCount(2, $operation->statement->body->renamings);
-        self::assertNotNull($operation->statement->body->problem);
-        self::assertSame('RENAME USER requires consistent source and destination identities throughout its ordered pairs.', $operation->statement->body->problem->message());
+        self::assertInstanceOf(MySqlStatement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(RenameUser::class, $operation->body);
+        self::assertCount(2, $operation->body->renamings);
+        self::assertNotNull($operation->body->problem);
+        self::assertSame('RENAME USER requires consistent source and destination identities throughout its ordered pairs.', $operation->body->problem->message());
         self::assertSame('CREATE PROCEDURE p() RENAME USER r TO r, a TO b', $operation->toString());
     }
 

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SET DEFAULT ROLE {NONE | ALL | role, …} TO account, …` (8.0+): a request to set the default roles of accounts.
@@ -25,9 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Clearing the default roles of two accounts
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('set default role none to a, b')->toString() // => 'SET DEFAULT ROLE NONE TO a, b'
  */
-final class SetDefaultRole implements Statement
+final class SetDefaultRole extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AccountName> The accounts in order
@@ -38,8 +37,11 @@ final class SetDefaultRole implements Statement
      * @param RoleSelection $roles The default roles: named roles, ALL or NONE
      * @param list<AccountName> $users The accounts in order; at least one
      */
-    public function __construct(public readonly RoleSelection $roles, array $users)
+    public function __construct(public readonly RoleSelection $roles, array $users, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($roles->set !== RoleSet::Default && ($roles->set !== RoleSet::All || $roles->roles === []), 'SET DEFAULT ROLE names roles, ALL or NONE.');
         $this->users = Check::listOf($users, AccountName::class, 'SET DEFAULT ROLE names at least one account.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

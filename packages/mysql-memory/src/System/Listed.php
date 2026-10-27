@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\System;
 
+use LogicException;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\View;
@@ -80,9 +81,16 @@ final class Listed
 
     /**
      * Answers a table of no rows with the columns of a view, as INFORMATION_SCHEMA describes them.
+     *
+     * @throws LogicException When view metadata has no active reading session
      */
     public static function stored(View $view, Reading $reading): StoredTable
     {
-        return Views::stored($view, $reading->instance->dictionary);
+        $session = $reading->session();
+        if ($session === null) {
+            throw new LogicException('View metadata requires an active reading session.');
+        }
+        $binding = \MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($view);
+        return Views::stored($binding, $reading->instance->dictionary);
     }
 }

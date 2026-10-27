@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The identifier of an XA transaction: `gtrid [, bqual [, formatID]]`.
@@ -32,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Xid implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $transaction The global transaction identifier
@@ -40,7 +39,7 @@ final class Xid implements Node
      * @param Numeral|null $format The format identifier, when written; it needs a branch qualifier
      * @throws InvalidConstruction When a part is too long or the format is written without a branch qualifier
      */
-    public function __construct(public readonly Text $transaction, public readonly ?Text $branch = null, public readonly ?Numeral $format = null)
+    public function __construct(public readonly Text $transaction, public readonly ?Text $branch = null, public readonly ?Numeral $format = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $magnitudes = new Magnitudes();
         Check::input($magnitudes->bytes($transaction) <= 64, 'A global transaction identifier holds at most 64 bytes.');

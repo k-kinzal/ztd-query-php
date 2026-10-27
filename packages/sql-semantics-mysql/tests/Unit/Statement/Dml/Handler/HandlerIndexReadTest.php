@@ -19,7 +19,7 @@ final class HandlerIndexReadTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i LAST');
 
-        self::assertNotNull($operation->facts->output);
+        self::assertNotNull($operation->output());
     }
 
     public function testRenderWritesTheRead(): void

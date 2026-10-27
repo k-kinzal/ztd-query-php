@@ -17,7 +17,7 @@ use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterRegistration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RegistrationStep;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes the registration forms of ALTER USER: INITIATE REGISTRATION, FINISH REGISTRATION and UNREGISTER of a multifactor authentication factor.
@@ -48,8 +48,8 @@ final class RegistrationCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if (!$statement instanceof AlterRegistration) {
             throw StatementError::NotSupportedYet->error('this registration statement');
         }

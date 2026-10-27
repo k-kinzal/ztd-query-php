@@ -18,10 +18,10 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Upgrades a legacy database name by removing its #mysql50# prefix.
@@ -51,8 +51,8 @@ final class UpgradeDatabaseCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof UpgradeDatabaseName);
         $source = $this->source($statement->name->identifier()->value, $session);
         $session->transaction->commit();
@@ -139,10 +139,6 @@ final class UpgradeDatabaseCommand implements Command
     {
         $original = $view->declaration;
         $declaration = new Table(new QualifiedName(new Name($view->name), new Name($schema)), $original->profile, $original->columns, $original->implicit, $original->complete, $original->kind, $original->keys, $original->partitions);
-        $renamed = new View($schema, $view->name, $view->definer, $view->algorithm, $view->security, $view->check, $view->database, $view->created, $view->definition, $declaration, $view->tables, $view->charsets);
-        $renamed->positions = $view->positions;
-        $renamed->hints = $view->hints;
-
-        return $renamed;
+        return new View($schema, $view->name, $view->definer, $view->algorithm, $view->security, $view->check, $view->database, $view->created, $view->definition, $declaration, $view->tables, $view->charsets, $view->hints);
     }
 }

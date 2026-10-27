@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW GRANTS: the GRANT statements that reproduce the privileges of an account or role.
@@ -32,9 +31,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW GRANTS FOR 'u'@'localhost' USING r");
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR u@localhost USING r']
  */
-final class ShowGrants implements Statement
+final class ShowGrants extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Account> The roles of USING in order
@@ -45,8 +44,11 @@ final class ShowGrants implements Statement
      * @param Account|null $user The account or role after FOR; null when FOR is not written
      * @param list<Account> $using The roles of USING in order; only with an account
      */
-    public function __construct(public readonly ?Account $user = null, array $using = [])
+    public function __construct(public readonly ?Account $user = null, array $using = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->using = Check::listOf($using, Account::class, 'USING names a list of roles.');
         Check::input($user !== null || $this->using === [], 'USING requires FOR.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

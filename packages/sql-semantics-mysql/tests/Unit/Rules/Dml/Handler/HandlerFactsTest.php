@@ -18,9 +18,9 @@ final class HandlerFactsTest extends TestCase
     public function testFunctionsReportsNestedStoredCallsBeforeRelationResolution(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ABS(d.f())');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        $derivation = new \SqlSemantics\Construction\Derivation($operation->context);
-        (new HandlerFacts())->functions([$operation->statement->query], $derivation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context([]));
+        (new HandlerFacts())->functions([$operation->query], $derivation);
         $problems = array_values(array_filter($derivation->facts()->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet));
 
         self::assertCount(1, $problems);
@@ -31,16 +31,16 @@ final class HandlerFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (ABS(1)) WHERE ABS(2)');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testReadResolvesDefaultAgainstTheOpenHandlerState(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (DEFAULT)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek::class, $operation->statement);
-        $fact = $operation->facts->scalar($operation->statement->values[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek::class, $operation);
+        $fact = $operation->values[0]->scalarInformation();
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertInstanceOf(\SqlSemantics\Statement\Type\Dependent::class, $fact->type);
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Missing\SessionState::class, $fact->type->missing[0]);
     }
@@ -51,23 +51,23 @@ final class HandlerFactsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE d.t(a INT)')->declarations()[0];
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), handlers: ['h' => $table->name]);
         $operation = $semantics->analyze('HANDLER h READ k = (a) WHERE a', $semantics->context([$table], session: $settings));
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek::class, $statement);
-        $key = $operation->facts->scalar($statement->values[0])->resolution;
+        $key = $statement->values[0]->scalarInformation()->resolution;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $key);
         self::assertSame($statement->handler, $key->relation);
         self::assertNotNull($statement->where);
-        $predicate = $operation->facts->scalar($statement->where)->resolution;
+        $predicate = $statement->where->scalarInformation()->resolution;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $predicate);
         self::assertSame($key->relation, $predicate->relation);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testReadRecordsTheRowsOfTheHandler(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (1) WHERE h.a = 2 LIMIT 1');
 
-        self::assertNotNull($operation->facts->output);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertNotNull($operation->output());
+        self::assertSame([], $operation->diagnostics());
     }
 }

@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(IndexChoice::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class IndexChoiceTest extends TestCase
     public function testRenderWritesIndexedByWithTheIndexName(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $built = new Operation($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t')), null, new IndexChoice(new Name('i')))));
+        $built = Semantics::fromStatement($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t')), null, new IndexChoice(new Name('i')))));
         $query = $semantics->analyze('select * from t indexed by i');
 
         self::assertSame('SELECT * FROM t INDEXED BY i', $built->toString());
@@ -38,7 +37,7 @@ final class IndexChoiceTest extends TestCase
     public function testRenderWritesNotIndexedWhenNoIndexIsNamed(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $built = new Operation($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t')), null, new IndexChoice())));
+        $built = Semantics::fromStatement($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t')), null, new IndexChoice())));
         $query = $semantics->analyze('SELECT * FROM t NOT INDEXED');
 
         self::assertSame('DELETE FROM t NOT INDEXED', $built->toString());

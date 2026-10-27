@@ -120,7 +120,7 @@ final class InterpreterTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE v INT; SET v = 1; SET v = 1, @u = 2; END');
         $activation = new Activation('PROCEDURE', 'd.p', false, Collation::known('utf8mb4_0900_ai_ci'));
         $interpreter = new Interpreter($session, $activation);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
         $block = $statement->body;
         self::assertInstanceOf(Block::class, $block);

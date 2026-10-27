@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Option;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ROW_FORMAT option.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) ROW_FORMAT = DYNAMIC');
- *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption // => true
+ *     $create->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption // => true
  */
 final class RowFormatOption implements TableOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowFormat $format The row format
      */
-    public function __construct(public readonly RowFormat $format)
+    public function __construct(public readonly RowFormat $format, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

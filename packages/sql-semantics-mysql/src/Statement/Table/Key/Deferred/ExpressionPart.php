@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An index definition retaining an operand that cannot be an ordinary functional key.
@@ -31,13 +30,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ExpressionPart implements KeyPart
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $expression The complete operand awaiting index preparation
      * @param Direction|null $direction The written index order
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         \SqlSemantics\Diagnostic\Check::input(!$expression instanceof Scalar || !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\Operands())->ordinary($expression), 'A deferred scalar key part retains an operand outside the ordinary index-expression role.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

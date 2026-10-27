@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REVOKE [IF EXISTS] role, … FROM account, … [IGNORE UNKNOWN USER]` (8.0+): a request to revoke roles.
@@ -23,9 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Revoking a role
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
  */
-final class RevokeRoles implements Statement, PrivilegeChange
+final class RevokeRoles extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<GrantedRole> The revoked roles in order
@@ -43,8 +42,11 @@ final class RevokeRoles implements Statement, PrivilegeChange
      * @param list<Account> $users The accounts the roles are revoked from; at least one
      * @param bool $ignoreUnknownUser Whether IGNORE UNKNOWN USER is written
      */
-    public function __construct(public readonly bool $ifExists, array $roles, array $users, public readonly bool $ignoreUnknownUser = false)
+    public function __construct(public readonly bool $ifExists, array $roles, array $users, public readonly bool $ignoreUnknownUser = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = Check::listOf($roles, GrantedRole::class, 'REVOKE names at least one role.', 1);
         $this->users = Check::listOf($users, Account::class, 'REVOKE names at least one account.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

@@ -80,10 +80,10 @@ final class GenerationExecution
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
         foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($definition, $derivation->context->relationNames) as $variable) {
             if ($variable instanceof M\Variable\SystemVariable) {
-                $variable->deriveScalar($derivation, $derivation->environment());
+                \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($variable)->deriveScalar($derivation, $derivation->environment());
             }
         }
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->diagnostics as $problem) {
             throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
         }
     }

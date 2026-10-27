@@ -106,6 +106,16 @@ final class CastsTest extends TestCase
         self::assertEquals([Domain::decimal(10, 0), Domain::decimal(7, 0), Domain::decimal(7, 3)], [$casts->decimal(new CastTarget(CastKind::Decimal)), $casts->decimal(new CastTarget(CastKind::Decimal, '7')), $casts->decimal(new CastTarget(CastKind::Decimal, '7', '3'))]);
     }
 
+    public function testRealCastFollowsTheSessionMode(): void
+    {
+        $target = new CastTarget(CastKind::Real);
+        $default = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql847);
+        $single = new Casts(new Settings(Collation::binary(), realAsFloat: true), GrammarRelease::MySql847);
+        self::assertSame(Field::Double, $default->cast(Domain::integer(), $target)->field);
+        self::assertSame(Field::Float, $single->cast(Domain::integer(), $target)->field);
+        self::assertSame(23, $single->cast(Domain::integer(), $target)->length);
+    }
+
     public function testFloatIsADoubleAboveTwentyFourDigits(): void
     {
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);

@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,7 +32,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredBetween implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $operand The matched expression
@@ -41,8 +41,11 @@ final class DeferredBetween implements DeferredOperand
      * @param Scalar|RowOperand|DeferredOperand $upper The upper bound
      * @param bool $negated Whether NOT precedes BETWEEN
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $lower, public readonly Scalar|RowOperand|DeferredOperand $upper, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Scalar|RowOperand|DeferredOperand $lower, public readonly Scalar|RowOperand|DeferredOperand $upper, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input(!$operand instanceof Scalar || !$lower instanceof Scalar || !$upper instanceof Scalar, 'A deferred BETWEEN contains a non-scalar operand.');
         Check::input($precedence->fits($operand, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The BETWEEN operand requires grouping.');

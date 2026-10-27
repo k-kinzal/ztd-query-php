@@ -29,8 +29,8 @@ final class ConstancyTest extends TestCase
         $operation = $session->analyze('SELECT DEFAULT(a), (SELECT DEFAULT(b)) FROM t');
         self::assertNotNull($operation->field(0)->expression);
         self::assertNotNull($operation->field(1)->expression);
-        self::assertSame(Constancy::Resolved, Constancy::of($operation->field(0)->expression, $operation->facts));
-        self::assertSame(Constancy::Resolved, Constancy::of($operation->field(1)->expression, $operation->facts));
+        self::assertSame(Constancy::Resolved, Constancy::of($operation->field(0)->expression, $operation->statementInformation()));
+        self::assertSame(Constancy::Resolved, Constancy::of($operation->field(1)->expression, $operation->statementInformation()));
         $result = $session->query('SELECT NULL LIKE "a" ESCAPE DEFAULT(a), "a" LIKE "a" ESCAPE DEFAULT(b) FROM t')[0];
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[null, '1']], $result->rows);
@@ -43,18 +43,19 @@ final class ConstancyTest extends TestCase
         $operation = $session->analyze('SELECT VALUES(a) FROM t');
         $expression = $operation->field(0)->expression;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn::class, $expression);
-        self::assertSame(Constancy::Resolved, Constancy::inserted($expression, $operation->facts));
-        self::assertSame(Constancy::Resolved, Constancy::of($expression, $operation->facts));
-        self::assertSame(Constancy::Row, Constancy::inserted($expression, new \SqlSemantics\Statement\Fact\Facts([], [], [], [], null, [])));
+        self::assertSame(Constancy::Resolved, Constancy::inserted($expression, $operation->statementInformation()));
+        self::assertSame(Constancy::Resolved, Constancy::of($expression, $operation->statementInformation()));
+        self::assertSame(Constancy::Row, Constancy::inserted(\SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($expression), new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [])));
     }
 
     public function testOfUsesSemanticNativeClassificationForKeywordNamedStoredFunctions(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT `COLLATION`(3), ABS(3), d.ABS(3)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $lifetimes = array_map(static function ($field) use ($operation): Constancy {
             self::assertNotNull($field->expression);
 
-            return Constancy::of($field->expression, $operation->facts);
+            return Constancy::of($field->expression, $operation->statementInformation());
         }, [$operation->field(0), $operation->field(1), $operation->field(2)]);
 
         self::assertSame([Constancy::Row, Constancy::Resolved, Constancy::Row], $lifetimes);
@@ -73,6 +74,7 @@ final class ConstancyTest extends TestCase
     public function testOfTellsHowLongEachKindOfExpressionStaysTheSame(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT CONCAT('a', DATABASE(), ROW_COUNT(), (SELECT 'a')), CONCAT(USER(), NOW(), @v, (SELECT USER())), CONCAT(SYSDATE()), (@v := 1)");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $resolved = $operation->field(0)->expression;
         $statement = $operation->field(1)->expression;
         $clock = $operation->field(2)->expression;
@@ -82,30 +84,33 @@ final class ConstancyTest extends TestCase
         self::assertNotNull($clock);
         self::assertNotNull($assignment);
 
-        self::assertSame([Constancy::Resolved, Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::of($resolved, $operation->facts), Constancy::of($statement, $operation->facts), Constancy::of($clock, $operation->facts), Constancy::of($assignment, $operation->facts)]);
+        self::assertSame([Constancy::Resolved, Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::of($resolved, $operation->statementInformation()), Constancy::of($statement, $operation->statementInformation()), Constancy::of($clock, $operation->statementInformation()), Constancy::of($assignment, $operation->statementInformation())]);
     }
 
     public function testOfMakesAnAssignedUserVariableVary(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @V');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $variable = $operation->field(0)->expression;
         self::assertNotNull($variable);
 
-        self::assertSame([Constancy::Row, Constancy::Statement], [Constancy::of($variable, $operation->facts, true, ['v']), Constancy::of($variable, $operation->facts, true, ['w'])]);
+        self::assertSame([Constancy::Row, Constancy::Statement], [Constancy::of($variable, $operation->statementInformation(), true, ['v']), Constancy::of($variable, $operation->statementInformation(), true, ['w'])]);
     }
 
     public function testWithinKeepsRandomCallsVaryingInsideASubquery(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT RAND()');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $call = $operation->field(0)->expression;
         self::assertNotNull($call);
 
-        self::assertSame([Constancy::Row, Constancy::Row], [Constancy::within($call, $operation->facts, 1, true, []), Constancy::within($call, $operation->facts, 0, true, [])]);
+        self::assertSame([Constancy::Row, Constancy::Row], [Constancy::within($call, $operation->statementInformation(), 1, true, []), Constancy::within($call, $operation->statementInformation(), 0, true, [])]);
     }
 
     public function testUncacheableDistinguishesStatementValuesFromVariableReadsAndEffects(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT RAND(17), @v, @v:=1, SYSDATE(), NOW(), LAST_INSERT_ID(1), LAST_INSERT_ID(), ABS(1)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $uncacheable = array_map(static function (int $index) use ($operation): bool {
             $expression = $operation->field($index)->expression;
             self::assertNotNull($expression);
@@ -119,13 +124,14 @@ final class ConstancyTest extends TestCase
     public function testOfCanRetainLegacyRowVariableReadsWithoutCachingOtherEffects(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (1,2)=(SELECT @v,1), (1,2)=(SELECT RAND(1),1), (1,2)=(SELECT @v:=1,1)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $lifetimes = array_map(static function (int $index) use ($operation): Constancy {
             $comparison = $operation->field($index)->expression;
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Comparison::class, $comparison);
             $subquery = $comparison->right;
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery::class, $subquery);
 
-            return Constancy::of($subquery->query, $operation->facts, variableReadsVary: false);
+            return Constancy::of($subquery->query, $operation->statementInformation(), variableReadsVary: false);
         }, range(0, 2));
 
         self::assertSame([Constancy::Statement, Constancy::Row, Constancy::Row], $lifetimes);
@@ -134,6 +140,7 @@ final class ConstancyTest extends TestCase
     public function testFormTellsHowLongANodeStaysTheSameByItsForm(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @v, @@sql_mode, CURRENT_USER, RAND(), (@v := 1)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $variable = $operation->field(0)->expression;
         $system = $operation->field(1)->expression;
         $keyword = $operation->field(2)->expression;
@@ -145,16 +152,17 @@ final class ConstancyTest extends TestCase
         self::assertNotNull($call);
         self::assertNotNull($assignment);
 
-        self::assertSame([Constancy::Row, Constancy::Statement, Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::form($variable, $operation->facts, true, ['v'], true), Constancy::form($system, $operation->facts, true, [], true), Constancy::form($keyword, $operation->facts, true, [], true), Constancy::form($call, $operation->facts, true, [], true), Constancy::form($assignment, $operation->facts, true, [], true)]);
+        self::assertSame([Constancy::Row, Constancy::Statement, Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::form($variable, $operation->statementInformation(), true, ['v'], true), Constancy::form($system, $operation->statementInformation(), true, [], true), Constancy::form($keyword, $operation->statementInformation(), true, [], true), Constancy::form($call, $operation->statementInformation(), true, [], true), Constancy::form($assignment, $operation->statementInformation(), true, [], true)]);
     }
 
     public function testColumnMakesAColumnOfTheBlockVary(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $use = $operation->field(0)->expression;
 
         self::assertInstanceOf(ColumnUse::class, $use);
-        self::assertSame([Constancy::Row, Constancy::Resolved], [Constancy::column($use, $operation->facts, 0), Constancy::column($use, $operation->facts, 1)]);
+        self::assertSame([Constancy::Row, Constancy::Resolved], [Constancy::column($use, $operation->statementInformation(), 0), Constancy::column($use, $operation->statementInformation(), 1)]);
     }
 
     public function testFunctionTellsTheFunctionsOfTheStatementAndOfEachCall(): void
@@ -165,20 +173,22 @@ final class ConstancyTest extends TestCase
     public function testChildrenJoinsTheChildrenOfANode(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT CONCAT(USER(), RAND())');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $call = $operation->field(0)->expression;
         self::assertNotNull($call);
 
-        self::assertSame(Constancy::Row, Constancy::children($call, $operation->facts, 0, true, []));
+        self::assertSame(Constancy::Row, Constancy::children($call, $operation->statementInformation(), 0, true, []));
     }
 
     public function testWithinUsesTheReplacementResolvedBySemantics(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT (SELECT 'a' LIMIT 0), (SELECT 'a' FROM DUAL WHERE 1), (SELECT 'a' UNION SELECT 'b')");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $lifetimes = array_map(static function (int $index) use ($operation): Constancy {
             $subquery = $operation->field($index)->expression;
             self::assertInstanceOf(ScalarSubquery::class, $subquery);
 
-            return Constancy::within($subquery, $operation->facts, 0, true, []);
+            return Constancy::within($subquery, $operation->statementInformation(), 0, true, []);
         }, range(0, 2));
 
         self::assertSame([Constancy::Resolved, Constancy::Resolved, Constancy::Statement], $lifetimes);
@@ -220,26 +230,28 @@ final class ConstancyTest extends TestCase
     public function testOfSeparatesColumnCorrelationFromUncacheableCalls(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT RAND(17)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
 
-        self::assertSame(Constancy::Row, Constancy::of($operation->statement, $operation->facts));
-        self::assertSame(Constancy::Statement, Constancy::of($operation->statement, $operation->facts, effects: false));
+        self::assertSame(Constancy::Row, Constancy::of($operation, $operation->statementInformation()));
+        self::assertSame(Constancy::Statement, Constancy::of($operation, $operation->statementInformation(), effects: false));
     }
 
     public function testOfTakesAnAssignmentAsItsValueWhenAssignmentsDoNotVary(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (@v := 1), (@w := @w + 1)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $constant = $operation->field(0)->expression;
         $varying = $operation->field(1)->expression;
         self::assertNotNull($constant);
         self::assertNotNull($varying);
 
-        self::assertSame([Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::of($constant, $operation->facts, true, ['v', 'w'], false), Constancy::of($varying, $operation->facts, true, ['v', 'w'], false), Constancy::of($constant, $operation->facts, true, ['v', 'w'])]);
+        self::assertSame([Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::of($constant, $operation->statementInformation(), true, ['v', 'w'], false), Constancy::of($varying, $operation->statementInformation(), true, ['v', 'w'], false), Constancy::of($constant, $operation->statementInformation(), true, ['v', 'w'])]);
     }
 
     public function testOfKnowsTheAccountFunctionsWhenItResolvesA57Statement(): void
     {
         $operation = (new Instance())->connect()->analyze('SELECT USER(), SESSION_USER()');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -248,15 +260,16 @@ final class ConstancyTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $user);
         self::assertInstanceOf(SelectExpression::class, $session);
 
-        self::assertSame([Constancy::Statement, Constancy::Resolved, Constancy::Statement, Constancy::Resolved], [Constancy::of($user->expression, $operation->facts), Constancy::of($user->expression, $operation->facts, true, [], true, true), Constancy::of($session->expression, $operation->facts), Constancy::of($session->expression, $operation->facts, true, [], true, true)]);
+        self::assertSame([Constancy::Statement, Constancy::Resolved, Constancy::Statement, Constancy::Resolved], [Constancy::of($user->expression, $operation->statementInformation()), Constancy::of($user->expression, $operation->statementInformation(), true, [], true, true), Constancy::of($session->expression, $operation->statementInformation()), Constancy::of($session->expression, $operation->statementInformation(), true, [], true, true)]);
     }
 
     public function testFormMakesAWindowFunctionVaryByRow(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER ()');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $call = $operation->field(0)->expression;
         self::assertNotNull($call);
 
-        self::assertSame(Constancy::Row, Constancy::of($call, $operation->facts));
+        self::assertSame(Constancy::Row, Constancy::of($call, $operation->statementInformation()));
     }
 }

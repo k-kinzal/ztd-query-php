@@ -23,22 +23,22 @@ final class JoinTextTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t(x INT); CREATE TABLE u(x INT)');
         $operation = $session->analyze('SELECT * FROM t NATURAL JOIN u');
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $join = $operation->statement->query->from;
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $join = $operation->query->from;
         self::assertInstanceOf(JoinedTable::class, $join);
-        $writer = new JoinText(new ViewText($operation->facts, '', 'd'));
+        $writer = new JoinText(new ViewText($operation->statementInformation(), '', 'd'));
         self::assertSame('(`d`.`t`.`x` = `d`.`u`.`x`)', $writer->condition($join));
         self::assertSame(['x' => '`d`.`t`.`x`'], $writer->columns($join->left));
     }
     public function testColumnsUsesDerivedOutputNames(): void
     {
         $operation = (new Instance())->connect()->analyze('SELECT * FROM (SELECT 1 AS x) q');
-        self::assertInstanceOf(QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $from = $operation->statement->query->from;
+        self::assertInstanceOf(QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $from = $operation->query->from;
         self::assertNotNull($from);
-        $writer = new JoinText(new ViewText($operation->facts, '', ''));
+        $writer = new JoinText(new ViewText($operation->statementInformation(), '', ''));
         self::assertSame(['x' => '`q`.`x`'], $writer->columns($from));
     }
 

@@ -174,7 +174,7 @@ final class Grouping
             while ($expression instanceof Grouped) {
                 $expression = $expression->operand;
             }
-            $resolution = $expression instanceof ColumnUse && $this->planner->compiler->facts->covers($expression) ? $this->planner->compiler->facts->scalar($expression)->resolution : null;
+            $resolution = $expression instanceof ColumnUse && $expression->hasBinding() ? $expression->scalarInformation()->resolution : null;
             if (!$resolution instanceof ResolvedColumn) {
                 return null;
             }
@@ -232,7 +232,7 @@ final class Grouping
             $direct = $direct->operand;
         }
         foreach ($walker->find($expression, Operand::class, false) as $node) {
-            $resolution = ($node instanceof ColumnUse || $node instanceof OutputOrdinal) && $facts->covers($node) ? $facts->scalar($node)->resolution : null;
+            $resolution = ($node instanceof ColumnUse || $node instanceof OutputOrdinal) && $node->hasBinding() ? $node->scalarInformation()->resolution : null;
             if (!$resolution instanceof AliasTarget || $resolution->field->expression === null) {
                 continue;
             }
@@ -372,8 +372,8 @@ final class Grouping
             $expression = $expression->operand;
         }
         $facts = $this->planner->compiler->facts;
-        if (($expression instanceof ColumnUse || $expression instanceof OutputOrdinal) && $facts->covers($expression)) {
-            $resolution = $facts->scalar($expression)->resolution;
+        if (($expression instanceof ColumnUse || $expression instanceof OutputOrdinal) && $expression->hasBinding()) {
+            $resolution = $expression->scalarInformation()->resolution;
             if ($resolution instanceof AliasTarget && $resolution->field->expression !== null) {
                 return $this->target($resolution->field->expression);
             }
@@ -389,7 +389,7 @@ final class Grouping
      */
     public function collect(Select $select): array
     {
-        return array_values(array_filter($this->planner->compiler->facts->query($select)->aggregates, static fn (Operand $call): bool => $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate));
+        return array_values(array_filter($select->queryInformation()->aggregates, static fn (Operand $call): bool => $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate));
     }
 
     /**

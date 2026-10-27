@@ -11,7 +11,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column written by name as the key of an index, a partition key or extended statistics.
@@ -26,17 +25,21 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
  *     $table = $semantics->analyze('CREATE TABLE t (a int, b text)');
  *     $index = $semantics->analyze('CREATE INDEX i ON t (b)', $table->declarations());
- *     $index->facts->scalar($index->statement->elements[0]->key)->resolution->slot->column === $table->declarations()[0]->columns[1] // => true
+ *     $index->elements[0]->key->scalarInformation()->resolution->slot->column === $table->declarations()[0]->columns[1] // => true
  */
 final class ColumnKey implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column name
      */
-    public function __construct(public readonly Name $column)
+    public function __construct(public readonly Name $column, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

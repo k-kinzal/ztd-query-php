@@ -41,6 +41,7 @@ final class ContextualReading
     public function read(Node $tree, LanguageProfile $profile, ?Charset $client = null): array
     {
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 3) . '/resources/productions/' . $profile->grammar->value . '.php'), new Leaves(), $profile, client: $client);
+        $lowering->parameters($tree->tokens());
         $pending = [new ReadingVisit($tree)];
         $values = [];
         while ($pending !== []) {

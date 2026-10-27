@@ -19,12 +19,26 @@ use SqlSemantics\Statement\Fact\ScalarFact;
  * @visibility public
  * @example Reading the fact of an expression operand
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1');
- *     $operation->facts->scalar($operation->field(0)->expression)->nullability // => \SqlSemantics\Statement\Type\Nullability::NotNull
+ *     $operation->field(0)->expression->scalarInformation()->nullability // => \SqlSemantics\Statement\Type\Nullability::NotNull
  */
-interface Operand extends Node
+interface Operand extends Expression
 {
+    /**
+     * Returns the type, nullability and reference owned by this value occurrence.
+     */
+    public function scalarInformation(): ScalarFact;
+
+    /**
+     * Completes this occurrence during semantic construction.
+     */
+    public function initializeScalarInformation(ScalarFact $information): void;
+
     /**
      * Derives the facts of this value at its use position.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact;
+    /**
+     * Reports whether construction supplied this occurrence's information.
+     */
+    public function hasScalarInformation(): bool;
 }

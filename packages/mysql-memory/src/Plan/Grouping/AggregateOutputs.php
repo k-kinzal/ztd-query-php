@@ -50,7 +50,7 @@ final class AggregateOutputs
         if (!$call instanceof Aggregate || $call->over !== null || $select->groupBy === null || (new RollupItems())->windowed($select)) {
             return null;
         }
-        $varying = (new GroupKeys())->varying($select, $this->planner->compiler->facts);
+        $varying = (new GroupKeys())->varying($select);
         $streaming = !$varying || $this->streaming($select, $scope);
         $copied = $this->copied($select);
         if (!$copied && $streaming) {
@@ -83,7 +83,7 @@ final class AggregateOutputs
             return $reported;
         }
 
-        return !(new GroupKeys())->varying($select, $this->planner->compiler->facts) || $this->streaming($select, $scope) ? $logical : $reported;
+        return !(new GroupKeys())->varying($select) || $this->streaming($select, $scope) ? $logical : $reported;
     }
 
     /**
@@ -91,7 +91,7 @@ final class AggregateOutputs
      */
     public function copied(Select $select): bool
     {
-        return (new GroupKeys())->varying($select, $this->planner->compiler->facts) && ((new Origins($this->planner))->aggregateOrder($select) || in_array(SelectOption::Distinct, $select->options, true));
+        return (new GroupKeys())->varying($select) && ((new Origins($this->planner))->aggregateOrder($select) || in_array(SelectOption::Distinct, $select->options, true));
     }
 
     /**

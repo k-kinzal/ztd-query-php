@@ -4,76 +4,114 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Connection\\Attach": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "file": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "key": "?SqlSemantics\\Statement\\Scalar",
         "schema": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Connection\\Detach": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "schema": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Connection\\NameOperand": {
-        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\BindParameter": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "label": "string",
-        "prefix": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\ParameterPrefix"
+        "prefix": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\ParameterPrefix",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\CaseBranch": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "then": "SqlSemantics\\Statement\\Scalar",
         "when": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\CaseExpression": {
         "base": "?SqlSemantics\\Statement\\Scalar",
         "branches": "array",
-        "otherwise": "?SqlSemantics\\Statement\\Scalar"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "otherwise": "?SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Cast": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "operand": "SqlSemantics\\Statement\\Scalar",
-        "target": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName"
+        "target": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Collate": {
         "collation": "SqlSemantics\\Statement\\Identifier\\Name",
-        "operand": "SqlSemantics\\Statement\\Scalar"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\ColumnUse": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\DoubleQuotedWord": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact",
         "word": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\FunctionCall": {
         "arguments": "array",
         "filter": "?SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "order": "array",
         "over": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowSpec|SqlSemantics\\Statement\\Identifier\\Name|null",
         "quantifier": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\SetQuantifier",
-        "star": "bool"
+        "star": "bool",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Grouped": {
-        "operand": "SqlSemantics\\Statement\\Scalar"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\BlobLiteral": {
-        "hex": "string"
+        "hex": "string",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\CurrentTime": {
-        "keyword": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TimeKeyword"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyword": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TimeKeyword",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\HexLiteral": {
-        "digits": "string"
+        "digits": "string",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\IntegerLiteral": {
-        "digits": "string"
+        "digits": "string",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
-    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\NullLiteral": [],
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\NullLiteral": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
+    },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral": {
         "exponent": "?string",
         "fraction": "?string",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact",
         "whole": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TextLiteral": {
-        "value": "string"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "value": "string",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TimeKeyword": {
         "name": "string",
@@ -81,14 +119,18 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\Between": {
         "high": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "low": "SqlSemantics\\Statement\\Scalar",
         "negated": "bool",
-        "operand": "SqlSemantics\\Statement\\Scalar"
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\Binary": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "left": "SqlSemantics\\Statement\\Scalar",
         "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\BinaryOperator",
-        "right": "SqlSemantics\\Statement\\Scalar"
+        "right": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\BinaryOperator": {
         "name": "string",
@@ -96,25 +138,31 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\NullTest": {
         "form": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\NullTestForm",
-        "operand": "SqlSemantics\\Statement\\Scalar"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\NullTestForm": {
         "name": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\PatternMatch": {
         "escape": "?SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "left": "SqlSemantics\\Statement\\Scalar",
         "negated": "bool",
         "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\PatternOperator",
-        "right": "SqlSemantics\\Statement\\Scalar"
+        "right": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\PatternOperator": {
         "name": "string",
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\Unary": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "operand": "SqlSemantics\\Statement\\Scalar",
-        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\UnaryOperator"
+        "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\UnaryOperator",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Operator\\UnaryOperator": {
         "name": "string",
@@ -126,47 +174,66 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Raise": {
         "action": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\RaiseAction",
-        "message": "?SqlSemantics\\Statement\\Scalar"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "message": "?SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\RaiseAction": {
         "name": "string",
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\RowExpression": {
-        "items": "array"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "items": "array",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\Exists": {
-        "query": "SqlSemantics\\Statement\\Query"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "query": "SqlSemantics\\Statement\\Query",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\InList": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "items": "array",
         "negated": "bool",
-        "operand": "SqlSemantics\\Statement\\Scalar"
+        "operand": "SqlSemantics\\Statement\\Scalar",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\InQuery": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "negated": "bool",
         "operand": "SqlSemantics\\Statement\\Scalar",
-        "query": "SqlSemantics\\Statement\\Query"
+        "query": "SqlSemantics\\Statement\\Query",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\InTable": {
         "arguments": "?array",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "negated": "bool",
         "operand": "SqlSemantics\\Statement\\Scalar",
-        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Subquery\\ScalarSubquery": {
-        "query": "SqlSemantics\\Statement\\Query"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "query": "SqlSemantics\\Statement\\Query",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\TruthWord": {
-        "value": "bool"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "value": "bool",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\Frame": {
         "end": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBound",
         "exclusion": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameExclusion",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "start": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBound",
         "unit": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameUnit"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBound": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\FrameBoundKind",
         "offset": "?SqlSemantics\\Statement\\Scalar"
     },
@@ -182,16 +249,20 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowDefinition": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "window": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowSpec"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\WindowSpec": {
         "base": "?SqlSemantics\\Statement\\Identifier\\Name",
         "frame": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Window\\Frame",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "order": "array",
         "partition": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Inspection\\Explain": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "mode": "SqlSemantics\\Platform\\Sqlite\\Statement\\Inspection\\ExplainMode",
         "statement": "SqlSemantics\\Statement\\Statement"
     },
@@ -199,6 +270,7 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "quote": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\WordQuote"
     },
@@ -206,9 +278,13 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Analyze": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "target": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Pragma": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "value": "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\SignedNumber|SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\PragmaKeyword|null"
     },
@@ -217,14 +293,19 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Reindex": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "target": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Maintenance\\Vacuum": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "?SqlSemantics\\Statement\\Scalar",
         "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Assignment": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "value": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution": {
@@ -232,33 +313,43 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictTarget": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "terms": "array",
         "where": "?SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Delete": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "returning": "array",
         "target": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertDefaults": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto",
         "returning": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto": {
         "columns": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "replace": "bool",
         "resolution": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
         "target": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget",
         "with": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertRows": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto",
         "returning": "array",
         "rows": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause",
         "upserts": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertSelect": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\InsertInto",
         "query": "SqlSemantics\\Statement\\Query",
         "returning": "array",
@@ -267,6 +358,8 @@
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "index": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\IndexChoice",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Problem\\GeneratedColumnWrite": {
@@ -279,11 +372,14 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\RowAssignment": {
         "columns": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "value": "SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Update": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "assignments": "array",
         "from": "?SqlSemantics\\Statement\\Relation",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "resolution": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
         "returning": "array",
         "target": "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\MutationTarget",
@@ -292,13 +388,17 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\Upsert": {
         "assignments": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "target": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictTarget",
         "where": "?SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Compound": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "first": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "limit": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Limit",
         "orderBy": "array",
+        "outputInformation": "?SqlSemantics\\Statement\\Fact\\QueryFact",
         "steps": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\CompoundOperator": {
@@ -306,17 +406,20 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\CompoundStep": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\CompoundOperator",
         "query": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Limit": {
         "comma": "bool",
         "count": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "offset": "?SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\ListedColumn": {
         "collation": "?SqlSemantics\\Statement\\Identifier\\Name",
         "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\NullsOrder": {
@@ -324,7 +427,9 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\OutputOrdinal": {
-        "constant": "SqlSemantics\\Statement\\Scalar"
+        "constant": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection": {
         "name": "string",
@@ -333,6 +438,7 @@
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortTerm": {
         "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection",
         "expression": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "nulls": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\NullsOrder"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Problem\\ArityMismatch": {
@@ -370,15 +476,19 @@
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "as": "bool",
         "expression": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "layout": "?SqlSemantics\\Statement\\Spelling\\Layout"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "columns": "array",
         "from": "?SqlSemantics\\Statement\\Relation",
         "groupBy": "array",
         "having": "?SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "limit": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Limit",
         "orderBy": "array",
+        "outputInformation": "?SqlSemantics\\Statement\\Fact\\QueryFact",
         "quantifier": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\SetQuantifier",
         "where": "?SqlSemantics\\Statement\\Scalar",
         "windows": "array"
@@ -387,18 +497,26 @@
         "name": "string",
         "value": "string"
     },
-    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Star": [],
+    "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Star": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+    },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\TableStar": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "table": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValueRow": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "values": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "outputInformation": "?SqlSemantics\\Statement\\Fact\\QueryFact",
         "rows": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\CommonTable": {
         "columns": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "materialization": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\Materialization",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "query": "SqlSemantics\\Statement\\Query"
@@ -408,24 +526,33 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "recursive": "bool",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithQuery": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "body": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Select|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\ValuesClause|SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Compound",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "outputInformation": "?SqlSemantics\\Statement\\Fact\\QueryFact",
         "with": "SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\With\\WithClause"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\DerivedQuery": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "as": "bool",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "query": "SqlSemantics\\Statement\\Query"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\IndexChoice": {
-        "index": "?SqlSemantics\\Statement\\Identifier\\Name"
+        "index": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinChain": {
         "constraint": "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOn|SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinUsing|null",
         "first": "SqlSemantics\\Statement\\Relation",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "steps": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinKeyword": {
@@ -433,104 +560,141 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOn": {
-        "condition": "SqlSemantics\\Statement\\Scalar"
+        "condition": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOperator": {
         "comma": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "words": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinStep": {
         "constraint": "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOn|SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinUsing|null",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "operator": "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinOperator",
         "relation": "SqlSemantics\\Statement\\Relation"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\JoinUsing": {
-        "columns": "array"
+        "columns": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\NestedInput": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "as": "bool",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "relation": "SqlSemantics\\Statement\\Relation"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\TableCall": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "arguments": "array",
         "as": "bool",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\TableInput": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
         "as": "bool",
         "index": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Relation\\IndexChoice",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AbsentRelation": {
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterAddColumn": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "column": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnDefinition",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterDropColumn": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterRenameColumn": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "column": "SqlSemantics\\Statement\\Identifier\\Name",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "newName": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\AlterRenameTable": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "newName": "SqlSemantics\\Statement\\Identifier\\Name",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\Collation": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnCheck": {
-        "expression": "SqlSemantics\\Statement\\Scalar"
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnDefinition": {
         "constraints": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "type": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnPrimaryKey": {
         "autoincrement": "bool",
         "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
-        "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection"
+        "direction": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\Ordering\\SortDirection",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ColumnUnique": {
-        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution"
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\ConstraintName": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\DefaultExpression": {
-        "expression": "SqlSemantics\\Statement\\Scalar"
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\DefaultLiteral": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "literal": "SqlSemantics\\Statement\\Scalar",
         "sign": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\NumberSign"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\DefaultWord": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "word": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\Generated": {
         "expression": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "word": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\GeneratedStorage": {
         "name": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\NotNull": {
-        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution"
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Column\\NullAllowed": {
-        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution"
+        "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateIndex": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "ifNotExists": "bool",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "table": "SqlSemantics\\Statement\\Identifier\\Name",
         "terms": "array",
@@ -538,35 +702,47 @@
         "where": "?SqlSemantics\\Statement\\Scalar"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateTable": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "columns": "array",
         "constraints": "array",
         "ifNotExists": "bool",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "options": "array",
         "optionsComma": "bool",
         "temporary": "bool"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateTableAs": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "ifNotExists": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "query": "SqlSemantics\\Statement\\Query",
         "temporary": "bool"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateView": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "columns": "?array",
         "ifNotExists": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "query": "SqlSemantics\\Statement\\Query",
         "temporary": "bool"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\CreateVirtualTable": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "arguments": "?array",
         "ifNotExists": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "module": "SqlSemantics\\Statement\\Identifier\\Name",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Drop": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "ifExists": "bool",
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "object": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\SchemaObjectKind"
     },
@@ -586,9 +762,12 @@
         "position": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Limit\\DefinitionPosition"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\LiteralColumn": {
-        "literal": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TextLiteral"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "literal": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\TextLiteral",
+        "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\ModuleArgument": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "text": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Problem\\AlterationObstacle": {
@@ -641,11 +820,13 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\Deferrability": {
         "deferrable": "bool",
-        "initially": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\InitialMode"
+        "initially": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\InitialMode",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ForeignKeyClause": {
         "arguments": "array",
         "columns": "?array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "table": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\InitialMode": {
@@ -653,10 +834,12 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\MatchName": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceAction": {
         "event": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceEvent",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "reaction": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceReaction"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ReferenceEvent": {
@@ -680,18 +863,22 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\ConstraintRun": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "items": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\ForeignKey": {
         "clause": "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\ForeignKeyClause",
         "columns": "array",
-        "deferrability": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\Deferrability"
+        "deferrability": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Reference\\Deferrability",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableCheck": {
         "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
-        "expression": "SqlSemantics\\Statement\\Scalar"
+        "expression": "SqlSemantics\\Statement\\Scalar",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableOption": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "without": "bool",
         "word": "SqlSemantics\\Platform\\Sqlite\\Statement\\Lexical\\Word"
     },
@@ -701,30 +888,44 @@
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TablePrimaryKey": {
         "autoincrement": "bool",
         "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "terms": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Schema\\Table\\TableUnique": {
         "conflict": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Mutation\\ConflictResolution",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "terms": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Begin": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "behavior": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\TransactionBehavior",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Commit": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Release": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Rollback": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\RollbackTo": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name",
         "savepoint": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\Savepoint": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Transaction\\TransactionBehavior": {
@@ -732,10 +933,12 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\CreateTrigger": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
         "columns": "array",
         "event": "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerEvent",
         "forEachRow": "bool",
         "ifNotExists": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "steps": "array",
         "table": "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTable",
@@ -748,6 +951,8 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTable": {
+        "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Trigger\\TriggerTiming": {
@@ -769,6 +974,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\SignedNumber": {
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "number": "SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\IntegerLiteral|SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\HexLiteral|SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral",
         "sign": "?SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\NumberSign"
     },
@@ -778,6 +984,7 @@
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\TypeName": {
         "arguments": "array",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "words": "array"
     },
     "SqlSemantics\\Platform\\Sqlite\\Statement\\Type\\Vector": {

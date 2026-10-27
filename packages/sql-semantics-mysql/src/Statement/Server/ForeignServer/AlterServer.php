@@ -11,7 +11,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER SERVER name OPTIONS (option, …)`: a request to change the options of a FEDERATED server.
@@ -25,9 +24,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Changing the user of a server
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter server s options (user 'u')")->toString() // => "ALTER SERVER s OPTIONS (USER 'u')"
  */
-final class AlterServer implements Statement
+final class AlterServer extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ServerOption> The options in written order; at least one
@@ -39,8 +38,11 @@ final class AlterServer implements Statement
      * @param list<ServerOption> $options The options in written order; at least one
      * @throws InvalidConstruction When there is no option
      */
-    public function __construct(public readonly Name $name, array $options)
+    public function __construct(public readonly Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, ServerOption::class, 'ALTER SERVER takes at least one option.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

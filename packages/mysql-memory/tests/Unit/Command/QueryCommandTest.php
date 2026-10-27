@@ -55,7 +55,7 @@ final class QueryCommandTest extends TestCase
     public function testDestinationFindsTheIntoOfAParenthesizedQuery(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('(SELECT 3) INTO @z')->statement;
+        $statement = $session->analyze('(SELECT 3) INTO @z');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
 
@@ -65,7 +65,7 @@ final class QueryCommandTest extends TestCase
     public function testDestinationAnswersNullForAQueryWithoutInto(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT 1 UNION SELECT 2')->statement;
+        $statement = $session->analyze('SELECT 1 UNION SELECT 2');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
 
@@ -137,7 +137,7 @@ final class QueryCommandTest extends TestCase
     public function testDestinationFindsTheIntoOfTheLastOperandOfASetOperation(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('SELECT 1 UNION (SELECT 2 INTO @z)')->statement;
+        $statement = $session->analyze('SELECT 1 UNION (SELECT 2 INTO @z)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
 
@@ -202,10 +202,10 @@ final class QueryCommandTest extends TestCase
     public function testCalculatesReadsTheOptionOfTheFirstSelect(): void
     {
         $session = (new Instance())->connect();
-        $first = $session->analyze('SELECT SQL_CALC_FOUND_ROWS 1 UNION SELECT 2')->statement;
+        $first = $session->analyze('SELECT SQL_CALC_FOUND_ROWS 1 UNION SELECT 2');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $first);
         $first = $first->query;
-        $plain = $session->analyze('(SELECT 1 LIMIT 1)')->statement;
+        $plain = $session->analyze('(SELECT 1 LIMIT 1)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plain);
         $plain = $plain->query;
 
@@ -235,16 +235,16 @@ final class QueryCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $command = new QueryCommand();
-        $ordered = $session->analyze('(SELECT 1 UNION SELECT 2) ORDER BY 1')->statement;
+        $ordered = $session->analyze('(SELECT 1 UNION SELECT 2) ORDER BY 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $ordered);
         $ordered = $ordered->query;
-        $nested = $session->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 2')->statement;
+        $nested = $session->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 2');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $nested);
         $nested = $nested->query;
-        $intersected = $session->analyze('(SELECT 1 UNION SELECT 2) INTERSECT SELECT 2')->statement;
+        $intersected = $session->analyze('(SELECT 1 UNION SELECT 2) INTERSECT SELECT 2');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $intersected);
         $intersected = $intersected->query;
-        $single = $session->analyze('SELECT 1')->statement;
+        $single = $session->analyze('SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $single);
         $single = $single->query;
 
@@ -282,9 +282,9 @@ final class QueryCommandTest extends TestCase
         $except = $session->analyze('SELECT x FROM a UNION SELECT x FROM a EXCEPT SELECT x FROM b');
         $union = $session->analyze('SELECT x FROM a EXCEPT SELECT x FROM b UNION SELECT x FROM a');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $except->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $union->statement);
-        self::assertSame([[true], null], [(new QueryCommand())->restricted($except->statement->query, $except->facts), (new QueryCommand())->restricted($union->statement->query, $union->facts)]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $except);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $union);
+        self::assertSame([[true], null], [(new QueryCommand())->restricted($except->query, $except->statementInformation()), (new QueryCommand())->restricted($union->query, $union->statementInformation())]);
     }
 
     public function testNullablesAnswersEachColumnOfASingleQuery(): void
@@ -292,14 +292,14 @@ final class QueryCommandTest extends TestCase
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1, NULL');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertSame([false, true], (new QueryCommand())->nullables($operation->statement->query, $operation->facts));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertSame([false, true], (new QueryCommand())->nullables($operation->query, $operation->statementInformation()));
     }
 
     public function testOutermostUnwrapsParenthesesAndOrdering(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('((SELECT 1) EXCEPT (SELECT 2)) ORDER BY 1')->statement;
+        $statement = $session->analyze('((SELECT 1) EXCEPT (SELECT 2)) ORDER BY 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
 

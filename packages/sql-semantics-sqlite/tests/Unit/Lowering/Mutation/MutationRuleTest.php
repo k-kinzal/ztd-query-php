@@ -37,24 +37,24 @@ final class MutationRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertInstanceOf(Delete::class, $semantics->analyze('DELETE FROM t')->statement);
-        self::assertInstanceOf(Update::class, $semantics->analyze('UPDATE t SET a = 1')->statement);
-        self::assertInstanceOf(InsertRows::class, $semantics->analyze('INSERT INTO t VALUES (1)')->statement);
-        self::assertInstanceOf(InsertSelect::class, $semantics->analyze('INSERT INTO t SELECT 1')->statement);
-        self::assertInstanceOf(InsertDefaults::class, $semantics->analyze('INSERT INTO t DEFAULT VALUES')->statement);
+        self::assertInstanceOf(Delete::class, $semantics->analyze('DELETE FROM t'));
+        self::assertInstanceOf(Update::class, $semantics->analyze('UPDATE t SET a = 1'));
+        self::assertInstanceOf(InsertRows::class, $semantics->analyze('INSERT INTO t VALUES (1)'));
+        self::assertInstanceOf(InsertSelect::class, $semantics->analyze('INSERT INTO t SELECT 1'));
+        self::assertInstanceOf(InsertDefaults::class, $semantics->analyze('INSERT INTO t DEFAULT VALUES'));
     }
 
     public function testDeleteLowersTheTargetThePredicateTheReturningAndTheWithClause(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1) DELETE FROM t INDEXED BY i WHERE a IN c RETURNING *');
 
-        self::assertInstanceOf(Delete::class, $operation->statement);
-        self::assertNotNull($operation->statement->with);
-        self::assertSame('t', $operation->statement->target->name->name->value);
-        self::assertSame('i', $operation->statement->target->index?->index?->value);
-        self::assertNotNull($operation->statement->where);
-        self::assertCount(1, $operation->statement->returning);
-        self::assertInstanceOf(Star::class, $operation->statement->returning[0]);
+        self::assertInstanceOf(Delete::class, $operation);
+        self::assertNotNull($operation->with);
+        self::assertSame('t', $operation->target->name->name->value);
+        self::assertSame('i', $operation->target->index?->index?->value);
+        self::assertNotNull($operation->where);
+        self::assertCount(1, $operation->returning);
+        self::assertInstanceOf(Star::class, $operation->returning[0]);
         self::assertSame('WITH c AS (SELECT 1) DELETE FROM t INDEXED BY i WHERE a IN c RETURNING *', $operation->toString());
     }
 
@@ -62,24 +62,24 @@ final class MutationRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1) UPDATE OR REPLACE main.t AS x INDEXED BY i SET a = 1 FROM u WHERE x.id = u.id RETURNING x.*');
 
-        self::assertInstanceOf(Update::class, $operation->statement);
-        self::assertNotNull($operation->statement->with);
-        self::assertSame(ConflictResolution::Replace, $operation->statement->resolution);
-        self::assertSame('main', $operation->statement->target->name->schema?->value);
-        self::assertSame('t', $operation->statement->target->name->name->value);
-        self::assertSame('x', $operation->statement->target->alias?->value);
-        self::assertSame('i', $operation->statement->target->index?->index?->value);
-        self::assertCount(1, $operation->statement->assignments);
-        self::assertInstanceOf(TableInput::class, $operation->statement->from);
-        self::assertInstanceOf(Binary::class, $operation->statement->where);
-        self::assertCount(1, $operation->statement->returning);
-        self::assertInstanceOf(TableStar::class, $operation->statement->returning[0]);
+        self::assertInstanceOf(Update::class, $operation);
+        self::assertNotNull($operation->with);
+        self::assertSame(ConflictResolution::Replace, $operation->resolution);
+        self::assertSame('main', $operation->target->name->schema?->value);
+        self::assertSame('t', $operation->target->name->name->value);
+        self::assertSame('x', $operation->target->alias?->value);
+        self::assertSame('i', $operation->target->index?->index?->value);
+        self::assertCount(1, $operation->assignments);
+        self::assertInstanceOf(TableInput::class, $operation->from);
+        self::assertInstanceOf(Binary::class, $operation->where);
+        self::assertCount(1, $operation->returning);
+        self::assertInstanceOf(TableStar::class, $operation->returning[0]);
         self::assertSame('WITH c AS (SELECT 1) UPDATE OR REPLACE main.t AS x INDEXED BY i SET a = 1 FROM u WHERE x.id = u.id RETURNING x.*', $operation->toString());
     }
 
     public function testUpdateLeavesEveryOptionalClauseEmptyWhenNotWritten(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET a = 1')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET a = 1');
 
         self::assertInstanceOf(Update::class, $statement);
         self::assertNull($statement->with);
@@ -97,15 +97,15 @@ final class MutationRuleTest extends TestCase
         $insert = $semantics->analyze('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)');
         $replace = $semantics->analyze('REPLACE INTO t VALUES (1)');
 
-        self::assertInstanceOf(InsertRows::class, $insert->statement);
-        self::assertInstanceOf(InsertRows::class, $replace->statement);
-        self::assertFalse($insert->statement->into->replace);
-        self::assertSame(ConflictResolution::Ignore, $insert->statement->into->resolution);
-        self::assertSame(['a', 'b'], array_map(static fn (Name $column): string => $column->value, $insert->statement->into->columns));
-        self::assertNull($insert->statement->into->with);
-        self::assertTrue($replace->statement->into->replace);
-        self::assertNull($replace->statement->into->resolution);
-        self::assertSame([], $replace->statement->into->columns);
+        self::assertInstanceOf(InsertRows::class, $insert);
+        self::assertInstanceOf(InsertRows::class, $replace);
+        self::assertFalse($insert->into->replace);
+        self::assertSame(ConflictResolution::Ignore, $insert->into->resolution);
+        self::assertSame(['a', 'b'], array_map(static fn (Name $column): string => $column->value, $insert->into->columns));
+        self::assertNull($insert->into->with);
+        self::assertTrue($replace->into->replace);
+        self::assertNull($replace->into->resolution);
+        self::assertSame([], $replace->into->columns);
         self::assertSame('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)', $insert->toString());
         self::assertSame('REPLACE INTO t VALUES (1)', $replace->toString());
     }
@@ -113,10 +113,10 @@ final class MutationRuleTest extends TestCase
     public function testInsertLowersWrittenRowsAndEveryOtherSourceAsAQuery(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $rows = $semantics->analyze('INSERT INTO t VALUES (1), (2)')->statement;
-        $select = $semantics->analyze('INSERT INTO t SELECT * FROM u')->statement;
-        $compound = $semantics->analyze('INSERT INTO t VALUES (1) UNION SELECT 2')->statement;
-        $with = $semantics->analyze('INSERT INTO t WITH c AS (SELECT 1) SELECT * FROM c')->statement;
+        $rows = $semantics->analyze('INSERT INTO t VALUES (1), (2)');
+        $select = $semantics->analyze('INSERT INTO t SELECT * FROM u');
+        $compound = $semantics->analyze('INSERT INTO t VALUES (1) UNION SELECT 2');
+        $with = $semantics->analyze('INSERT INTO t WITH c AS (SELECT 1) SELECT * FROM c');
 
         self::assertInstanceOf(InsertRows::class, $rows);
         self::assertCount(2, $rows->rows->rows);
@@ -134,13 +134,13 @@ final class MutationRuleTest extends TestCase
         $returning = $semantics->analyze('INSERT INTO main.t AS x DEFAULT VALUES RETURNING *');
         $bare = $semantics->analyze('INSERT OR FAIL INTO t DEFAULT VALUES');
 
-        self::assertInstanceOf(InsertDefaults::class, $returning->statement);
-        self::assertInstanceOf(InsertDefaults::class, $bare->statement);
-        self::assertSame('main', $returning->statement->into->target->name->schema?->value);
-        self::assertSame('x', $returning->statement->into->target->alias?->value);
-        self::assertCount(1, $returning->statement->returning);
-        self::assertSame([], $bare->statement->returning);
-        self::assertSame(ConflictResolution::Fail, $bare->statement->into->resolution);
+        self::assertInstanceOf(InsertDefaults::class, $returning);
+        self::assertInstanceOf(InsertDefaults::class, $bare);
+        self::assertSame('main', $returning->into->target->name->schema?->value);
+        self::assertSame('x', $returning->into->target->alias?->value);
+        self::assertCount(1, $returning->returning);
+        self::assertSame([], $bare->returning);
+        self::assertSame(ConflictResolution::Fail, $bare->into->resolution);
         self::assertSame('INSERT INTO main.t AS x DEFAULT VALUES RETURNING *', $returning->toString());
         self::assertSame('INSERT OR FAIL INTO t DEFAULT VALUES', $bare->toString());
     }
@@ -148,10 +148,10 @@ final class MutationRuleTest extends TestCase
     public function testTargetLowersEveryFormOfTheWrittenTable(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('DELETE FROM t')->statement;
-        $qualified = $semantics->analyze('DELETE FROM main.t')->statement;
-        $aliased = $semantics->analyze('DELETE FROM t AS x')->statement;
-        $both = $semantics->analyze('DELETE FROM main.t AS x')->statement;
+        $plain = $semantics->analyze('DELETE FROM t');
+        $qualified = $semantics->analyze('DELETE FROM main.t');
+        $aliased = $semantics->analyze('DELETE FROM t AS x');
+        $both = $semantics->analyze('DELETE FROM main.t AS x');
 
         self::assertInstanceOf(Delete::class, $plain);
         self::assertInstanceOf(Delete::class, $qualified);
@@ -172,8 +172,8 @@ final class MutationRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET a = 1, (b, c) = (2, 3), d = 4');
 
-        self::assertInstanceOf(Update::class, $operation->statement);
-        $assignments = $operation->statement->assignments;
+        self::assertInstanceOf(Update::class, $operation);
+        $assignments = $operation->assignments;
         self::assertCount(3, $assignments);
         self::assertInstanceOf(Assignment::class, $assignments[0]);
         self::assertSame('a', $assignments[0]->column->value);
@@ -189,19 +189,19 @@ final class MutationRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET (a, b) = (SELECT 1, 2), c = 3');
 
-        self::assertInstanceOf(Update::class, $operation->statement);
-        self::assertInstanceOf(RowAssignment::class, $operation->statement->assignments[0]);
-        self::assertInstanceOf(Assignment::class, $operation->statement->assignments[1]);
+        self::assertInstanceOf(Update::class, $operation);
+        self::assertInstanceOf(RowAssignment::class, $operation->assignments[0]);
+        self::assertInstanceOf(Assignment::class, $operation->assignments[1]);
         self::assertSame('UPDATE t SET (a, b) = (SELECT 1, 2), c = 3', $operation->toString());
     }
 
     public function testWhereReturningLowersEachOfTheFourTails(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $none = $semantics->analyze('DELETE FROM t')->statement;
-        $where = $semantics->analyze('DELETE FROM t WHERE a')->statement;
-        $returning = $semantics->analyze('DELETE FROM t RETURNING a')->statement;
-        $both = $semantics->analyze('DELETE FROM t WHERE a RETURNING a, b')->statement;
+        $none = $semantics->analyze('DELETE FROM t');
+        $where = $semantics->analyze('DELETE FROM t WHERE a');
+        $returning = $semantics->analyze('DELETE FROM t RETURNING a');
+        $both = $semantics->analyze('DELETE FROM t WHERE a RETURNING a, b');
 
         self::assertInstanceOf(Delete::class, $none);
         self::assertInstanceOf(Delete::class, $where);
@@ -221,8 +221,8 @@ final class MutationRuleTest extends TestCase
     public function testReturningIsEmptyWithoutTheClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('INSERT INTO t DEFAULT VALUES')->statement;
-        $listed = $semantics->analyze('INSERT INTO t DEFAULT VALUES RETURNING a, b AS c')->statement;
+        $bare = $semantics->analyze('INSERT INTO t DEFAULT VALUES');
+        $listed = $semantics->analyze('INSERT INTO t DEFAULT VALUES RETURNING a, b AS c');
 
         self::assertInstanceOf(InsertDefaults::class, $bare);
         self::assertInstanceOf(InsertDefaults::class, $listed);

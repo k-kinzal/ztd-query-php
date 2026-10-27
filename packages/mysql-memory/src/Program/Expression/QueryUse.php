@@ -7,7 +7,6 @@ namespace MySqlMemory\Program\Expression;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Resolution\QueryPreparation;
-use MySqlMemory\Session\Resolution\Views;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\State\StatementCounters;
 use SqlSemantics\Contract\SearchPath;
@@ -39,17 +38,17 @@ final class QueryUse
      */
     public function raise(DeferredQuery $query, Session $session, bool $invocation = true): never
     {
+        $query = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($query);
         if ($invocation) {
             StatementCounters::query($session);
             StatementCounters::command($session, 'Com_select');
             $session->diagnostics->clear();
         }
-        Views::refreshAll($session->instance->dictionary, $session->settings());
         $database = $session->variables->database;
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
         $derivation = (new \MySqlMemory\Session\Resolution\Parameters())->derivation($query, $context, ($session->preparation->resolution->parameters ?? []) + array_map(static fn (\MySqlMemory\Typing\Domain $domain): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $domain->resolved(), $session->preparation->domains));
         $query->deriveProgram($derivation, new ProgramScope($derivation->environment()));
-        $preparation = new QueryPreparation($query->query, $derivation->facts(), $context->profile);
+        $preparation = new QueryPreparation($query->query, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $context->profile);
         (new Problems())->raise($preparation, $session);
         if ($query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || $query->problem() instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint) {
             $this->plan($preparation, $session);
@@ -87,7 +86,7 @@ final class QueryUse
     {
         $evaluation = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $evaluation, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($query->statement, $query->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($query->statement, $query->facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $planner->query($query->statement, null);
     }
 

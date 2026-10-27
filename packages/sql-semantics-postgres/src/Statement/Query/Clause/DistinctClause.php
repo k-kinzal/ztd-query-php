@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DISTINCT or DISTINCT ON: which rows of a selection are kept when they repeat.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a DISTINCT ON clause
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT DISTINCT ON (1) 1, 2');
- *     count($query->statement->distinct->on) // => 1
+ *     count($query->distinct->on) // => 1
  */
 final class DistinctClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The DISTINCT ON expressions; empty for plain DISTINCT
@@ -36,7 +35,7 @@ final class DistinctClause implements Node
     /**
      * @param list<Scalar> $on The DISTINCT ON expressions; empty for plain DISTINCT
      */
-    public function __construct(array $on = [])
+    public function __construct(array $on = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->on = Check::listOf($on, Scalar::class, 'DISTINCT ON expressions are expressions.');
     }

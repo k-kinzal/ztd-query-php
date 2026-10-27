@@ -22,7 +22,6 @@ use SqlSemantics\Statement\Expression;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Source\Span;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -51,11 +50,12 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the value of adjacent strings
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a = 'x' \"y\"");
- *     [$query->statement->query->where->right->segments, $query->statement->query->where->right->value()] // => [['x', 'y'], 'xy']
+ *     [$query->query->where->right->segments, $query->query->where->right->value()] // => [['x', 'y'], 'xy']
  */
 final class StringLiteral implements LiteralExpression, Expression
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<string> The decoded bytes of each adjacent quoted string, in order
@@ -67,8 +67,11 @@ final class StringLiteral implements LiteralExpression, Expression
      * @param Name|null $introducer The introduced character set, in lower case
      * @param bool $national Whether the literal is written `N'...'`; excludes an introducer
      */
-    public function __construct(array $segments, public readonly ?Name $introducer = null, public readonly bool $national = false, public readonly ?Collation $collation = null, private readonly ?Span $location = null)
+    public function __construct(array $segments, public readonly ?Name $introducer = null, public readonly bool $national = false, public readonly ?Collation $collation = null, private readonly ?Span $location = null, ?ScalarFact $scalarInformation = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $list = [];
         foreach ($segments as $segment) {
             Check::input(is_string($segment), 'A string literal holds decoded strings.');
@@ -87,6 +90,9 @@ final class StringLiteral implements LiteralExpression, Expression
      */
     public function dataType(): TypeFact
     {
+        if ($this->hasScalarInformation()) {
+            return $this->scalarInformation()->type;
+        }
         if ($this->collation === null) {
             return new Dependent([new SessionState('the character set and collation of the string literal')]);
         }

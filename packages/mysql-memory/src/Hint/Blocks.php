@@ -96,7 +96,7 @@ final class Blocks
      * @param Dictionary $dictionary The tables of the server
      * @param string $database The current database, or the empty string
      */
-    public function __construct(public readonly Dictionary $dictionary, public readonly string $database)
+    public function __construct(public readonly Dictionary $dictionary, public readonly string $database, public readonly ?\MySqlMemory\Dictionary\Temporaries $temporaries = null)
     {
     }
 
@@ -362,7 +362,7 @@ final class Blocks
      */
     public function named(QualifiedName $name, ?string $alias): array
     {
-        $stored = $this->dictionary->table($name->schema->value ?? $this->database, $name->name->value);
+        $stored = $this->dictionary->table($name->schema->value ?? $this->database, $name->name->value, $this->temporaries);
         $indexes = $stored === null ? [] : array_map(static fn (\MySqlMemory\Dictionary\Key $key): string => $key->name, $stored->definition->keys);
 
         return [$alias ?? $name->name->value, $indexes];

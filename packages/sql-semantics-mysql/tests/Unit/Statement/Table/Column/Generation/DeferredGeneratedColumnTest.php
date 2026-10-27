@@ -54,9 +54,9 @@ final class DeferredGeneratedColumnTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '5.7.44');
         $operation = $semantics->analyze("CREATE PROCEDURE p() CREATE TABLE t (g INT AS (1+(SELECT * FROM source)) STORED NOT NULL COMMENT 'note')");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation->statement);
-        $body = $operation->statement->body;
+        self::assertInstanceOf(M\Statement::class, $operation);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        $body = $operation->body;
         self::assertInstanceOf(M\Table\CreateTable::class, $body);
         self::assertInstanceOf(M\Table\Column\ColumnDefinition::class, $body->elements[0]);
         $column = $body->elements[0]->specification;

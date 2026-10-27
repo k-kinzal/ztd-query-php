@@ -65,7 +65,7 @@ final class ItemNamingTest extends TestCase
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
 
         self::assertEquals(new SessionState('character_set_client'), $naming->name(new SelectExpression(new StringLiteral(['é']))));
-        self::assertEquals(new NameConversion('latin2'), $naming->name(new SelectExpression(new StringLiteral(['é'], introducer: new Name('latin2')))));
+        self::assertEquals(new NameConversion('latin2', 'é'), $naming->name(new SelectExpression(new StringLiteral(['é'], introducer: new Name('latin2')))));
     }
 
     public function testNameRefusesALayoutOfAnItemThatNamesItself(): void
@@ -201,7 +201,7 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name('aé'), $naming->stored('aé', 'binary'));
         self::assertEquals(new Name('慢'), $naming->stored('ab', 'utf16'));
         self::assertEquals(new Name('Ã©'), $naming->stored('é', 'latin1'));
-        self::assertEquals(new NameConversion('cp1251'), $naming->stored('é', 'cp1251'));
+        self::assertEquals(new NameConversion('cp1251', 'é'), $naming->stored('é', 'cp1251'));
         self::assertEquals(new Name('é?'), $naming->stored('é😀', 'utf8mb4'));
     }
 
@@ -226,7 +226,7 @@ final class ItemNamingTest extends TestCase
 
         self::assertEquals(new Name(str_repeat('é', 127)), $naming->narrowed(str_repeat('é', 140)));
         self::assertEquals(new Name('a?'), $naming->narrowed('a😀'));
-        self::assertEquals(new NameConversion('utf8mb4'), $naming->narrowed("\xC3"));
+        self::assertEquals(new NameConversion('utf8mb4', "\xC3"), $naming->narrowed("\xC3"));
     }
 
     public function testLegacyTellsTheReleasesThatNameBooleansInUpperCase(): void

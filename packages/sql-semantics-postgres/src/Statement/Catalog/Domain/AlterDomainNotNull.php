@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -19,18 +18,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Forbidding NULL values
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d SET NOT NULL');
- *     $operation->statement->notNull // => true
+ *     $operation->notNull // => true
  */
-final class AlterDomainNotNull implements Statement
+final class AlterDomainNotNull extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The domain name
      * @param bool $notNull Whether NULL is forbidden (SET) instead of allowed (DROP)
      */
-    public function __construct(public readonly DottedName $name, public readonly bool $notNull)
+    public function __construct(public readonly DottedName $name, public readonly bool $notNull, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

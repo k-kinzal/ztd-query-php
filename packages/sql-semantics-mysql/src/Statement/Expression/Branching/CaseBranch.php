@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Branching;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `WHEN condition THEN result` branch of a CASE expression.
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a branch
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE CASE WHEN a THEN 1 END');
- *     $query->statement->query->where->branches[0]->result->text // => '1'
+ *     $query->query->where->branches[0]->result->text // => '1'
  */
 final class CaseBranch implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $condition The value or condition after WHEN
      * @param Scalar $result The result after THEN
      */
-    public function __construct(public readonly Scalar $condition, public readonly Scalar $result)
+    public function __construct(public readonly Scalar $condition, public readonly Scalar $result, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

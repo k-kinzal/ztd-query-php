@@ -20,6 +20,16 @@ use WeakMap;
 final class Preparation
 {
     /**
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Statement, \MySqlMemory\Command\Program\ProgramSource>|null Display strings captured from actual input, owned by the corresponding statement
+     */
+    public ?WeakMap $programSources = null;
+
+    /**
+     * @var WeakMap<\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError, string>|null Input-only display messages; execution decisions use the semantic warning
+     */
+    public ?WeakMap $hintMessages = null;
+
+    /**
      * Whether the input currently being interpreted belongs to prepared execution.
      * Scoped by Session::analyze and restored on both success and failure.
      */

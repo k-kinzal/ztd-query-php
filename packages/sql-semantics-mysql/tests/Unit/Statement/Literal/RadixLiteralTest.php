@@ -31,14 +31,14 @@ final class RadixLiteralTest extends TestCase
     public function testDeriveScalarAnswersVarBinaryWithoutAnIntroducer(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = X'1F'");
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
         self::assertInstanceOf(RadixLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame(Radix::Hexadecimal, $literal->radix);
         self::assertSame('1F', $literal->digits);
@@ -52,7 +52,7 @@ final class RadixLiteralTest extends TestCase
     public function testDeriveScalarAnswersVarCharOfTheIntroducedCharacterSet(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _LATIN1 b'1'");
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -60,7 +60,7 @@ final class RadixLiteralTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(RadixLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame(Radix::Bit, $literal->radix);
         self::assertSame('1', $literal->digits);
@@ -84,7 +84,7 @@ final class RadixLiteralTest extends TestCase
     public function testRenderPrefixesAnOddCountOfHexadecimalDigits(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0x1');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -100,7 +100,7 @@ final class RadixLiteralTest extends TestCase
     public function testRenderQuotesBitDigitsOfEitherSpelling(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0b01 AS v');
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
@@ -151,7 +151,7 @@ final class RadixLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 X'41', _utf8mb3 b'1'");
 
-        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->facts->warnings);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->warnings());
     }
 
 }

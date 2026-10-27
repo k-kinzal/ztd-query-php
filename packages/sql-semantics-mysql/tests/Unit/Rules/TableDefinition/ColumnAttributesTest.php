@@ -81,7 +81,7 @@ final class ColumnAttributesTest extends TestCase
             self::assertSame($expected, [$failure->problem->attribute]);
             return;
         }
-        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof InvalidColumnAttribute));
+        $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof InvalidColumnAttribute));
 
         self::assertSame($expected, array_map(static fn ($problem): string => $problem->attribute, $problems));
     }

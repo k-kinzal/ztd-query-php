@@ -41,15 +41,15 @@ final class CreateLoadableFunctionTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $create = $semantics->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'", [$table]);
 
-        self::assertSame([], $create->facts->diagnostics);
-        self::assertSame([], $create->facts->declarations);
-        self::assertNull($create->facts->output);
+        self::assertSame([], $create->diagnostics());
+        self::assertSame([], $create->declarations());
+        self::assertNull($create->output());
     }
 
     public function testDeriveStatementReadsTheRegistration(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION IF NOT EXISTS f RETURNS INT SONAME 'u.so'");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
 
         self::assertSame('f', $statement->name->value);

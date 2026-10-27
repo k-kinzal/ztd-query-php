@@ -31,7 +31,7 @@ final class EvaluationItemsTest extends TestCase
 
     public function testProgramRetainsWildcardsOnlyInAStoredInstruction(): void
     {
-        $body = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DO *')->statement;
+        $body = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DO *');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $body);
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation::class, $body->body);
@@ -50,9 +50,9 @@ final class EvaluationItemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         $operation = $semantics->analyze('CREATE PROCEDURE p() DO (1, 2) COLLATE missing');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation::class, $operation->statement->body);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation::class, $operation->body);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame('CREATE PROCEDURE p() DO (1, 2) COLLATE missing', $operation->toString());
     }
 

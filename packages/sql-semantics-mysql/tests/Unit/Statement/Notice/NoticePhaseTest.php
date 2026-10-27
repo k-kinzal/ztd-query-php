@@ -21,6 +21,7 @@ final class NoticePhaseTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $expression = $semantics->analyze('SELECT @v COLLATE missing')->field(0)->expression;
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $expression);
+        $expression = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($expression);
         $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->derive($expression, $derivation, $derivation->environment());
 

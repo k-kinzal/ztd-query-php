@@ -55,11 +55,19 @@ final class ValueSchema
     public function fields(string $class): array
     {
         $reflection = new ReflectionClass($class);
-        Check::input($reflection->getParentClass() === false, 'Semantic value classes do not inherit hidden state.');
         $fields = [];
-        foreach ($reflection->getProperties() as $property) {
-            $fields[$property->getName()] = (string) $property->getType();
-        }
+        do {
+            foreach ($reflection->getProperties() as $property) {
+                if ($property->getDeclaringClass()->getName() !== $reflection->getName()) {
+                    continue;
+                }
+                $name = $reflection->getName() !== $class && $property->isPrivate()
+                    ? $reflection->getName() . '::$' . $property->getName()
+                    : $property->getName();
+                $fields[$name] = (string) $property->getType();
+            }
+            $reflection = $reflection->getParentClass();
+        } while ($reflection !== false);
         ksort($fields);
 
         return $fields;
@@ -88,7 +96,9 @@ final class ValueSchema
             $text = file_get_contents($directory . '/resources/value-schema.json');
             Check::input($text !== false, 'The semantic value schema must be installed.');
             try {
-                /** @var array<string, array<string, string>> $schema */
+                /**
+ * @var array<string, array<string, string>> $schema
+ */
                 $schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
             } catch (JsonException $failure) {
                 throw new \SqlSemantics\Diagnostic\InvariantViolation('The semantic value schema is malformed.', 0, $failure);

@@ -34,7 +34,7 @@ final class FlowFactsTest extends TestCase
         $actual = (static function () use ($release, $sql): array {
             try {
                 $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
                 return [$failure->problem->message()];
@@ -57,7 +57,7 @@ final class FlowFactsTest extends TestCase
     public function testBranchesResolvesAVariableInTheCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; IF x > 0 THEN SELECT 1; END IF; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -65,10 +65,10 @@ final class FlowFactsTest extends TestCase
         self::assertInstanceOf(IfStatement::class, $if);
         $condition = $if->branches[0]->condition;
         self::assertInstanceOf(Comparison::class, $condition);
-        $resolution = $operation->facts->scalar($condition->left)->resolution;
+        $resolution = $condition->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -81,7 +81,7 @@ final class FlowFactsTest extends TestCase
         $actual = (static function () use ($release, $sql): array {
             try {
                 $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
                 return [$failure->problem->message()];
@@ -106,7 +106,7 @@ final class FlowFactsTest extends TestCase
     public function testLoopResolvesAVariableInTheCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 3; WHILE x > 0 DO SET x = x - 1; END WHILE; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -114,10 +114,10 @@ final class FlowFactsTest extends TestCase
         self::assertInstanceOf(WhileLoop::class, $loop);
         $condition = $loop->condition;
         self::assertInstanceOf(Comparison::class, $condition);
-        $resolution = $operation->facts->scalar($condition->left)->resolution;
+        $resolution = $condition->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -130,7 +130,7 @@ final class FlowFactsTest extends TestCase
         $actual = (static function () use ($sql): array {
             try {
                 $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
                 return [$failure->problem->message()];
@@ -162,7 +162,7 @@ final class FlowFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -177,16 +177,16 @@ final class FlowFactsTest extends TestCase
     public function testReturnedResolvesTheValueToALocalVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN DECLARE x INT DEFAULT 2; RETURN x; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateFunction::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $return = $block->statements[0];
         self::assertInstanceOf(ReturnStatement::class, $return);
-        $resolution = $operation->facts->scalar($return->value)->resolution;
+        $resolution = $return->value->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 

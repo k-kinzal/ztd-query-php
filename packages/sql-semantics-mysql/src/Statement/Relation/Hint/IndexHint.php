@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One index hint of a table reference: `USE|FORCE|IGNORE INDEX [FOR scope] (indexes)`.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index hint
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t IGNORE KEY FOR GROUP BY (i, j)');
- *     [$query->statement->query->from->indexHints[0]->action, count($query->statement->query->from->indexHints[0]->indexes)] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Ignore, 2]
+ *     [$query->query->from->indexHints[0]->action, count($query->query->from->indexHints[0]->indexes)] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Ignore, 2]
  * @example Refusing FORCE INDEX without an index
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force, null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class IndexHint implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name|PrimaryIndex> The indexes in written order
@@ -40,7 +39,7 @@ final class IndexHint implements Node
      * @param IndexHintScope|null $scope The part of processing it applies to
      * @param list<Name|Node> $indexes The indexes in written order, each a name or the primary key
      */
-    public function __construct(public readonly IndexHintAction $action, public readonly ?IndexHintScope $scope, array $indexes)
+    public function __construct(public readonly IndexHintAction $action, public readonly ?IndexHintScope $scope, array $indexes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $list = [];
         foreach ($indexes as $index) {

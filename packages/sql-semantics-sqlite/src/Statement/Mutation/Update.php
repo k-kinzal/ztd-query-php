@@ -21,7 +21,6 @@ use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -36,13 +35,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of an UPDATE
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('UPDATE OR FAIL t SET a = u.b FROM u WHERE t.id = u.id');
- *     [$update->statement->resolution, count($update->statement->assignments), $update->statement->from->name->name->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Fail, 1, 'u']
+ *     [$update->resolution, count($update->assignments), $update->from->name->name->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Fail, 1, 'u']
  * @example Refusing an UPDATE that assigns nothing
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\Update(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Update implements Statement, Selection
+final class Update extends \SqlSemantics\Statement\SqlStatement implements Statement, Selection
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Assignment|RowAssignment> The assignments in written order
@@ -72,7 +71,12 @@ final class Update implements Statement, Selection
         array $returning = [],
         public readonly ?ConflictResolution $resolution = null,
         public readonly ?WithClause $with = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->assignments = (new ClosedList())->of($assignments, [Assignment::class, RowAssignment::class], 'An UPDATE has at least one assignment of a column or of a column row.', 1);
         $this->returning = (new ClosedList())->of($returning, [ResultColumn::class, Star::class, TableStar::class], 'A RETURNING column is an expression, a star or a qualified star.');
     }

@@ -17,12 +17,12 @@ use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
-use WeakReference;
+use WeakMap;
 
 /**
  * A client session of the server: its current database, variables, diagnostics area and transaction.
@@ -53,11 +53,6 @@ final class Session
      * @var array<int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated> The deprecations MySQL 5.7 raises for the leading dots of the statement last parsed, by the offset of the dot
      */
     public array $dots = [];
-
-    /**
-     * @var list<array{string, bool}> The warnings about the problems of the hint comments of the statement last parsed, in written order, each with whether its comment follows the first keyword of the statement
-     */
-    public array $hinted = [];
 
     /**
      * Whether the statement runs a prepared statement, whose hints warned when it was prepared.
@@ -163,15 +158,8 @@ final class Session
         $this->variables->roles = array_values($instance->accounts->defaults[(new \MySqlMemory\Account\Identity($user, '%'))->key()] ?? []);
         $this->diagnostics = new Diagnostics();
         $this->temporaries = new \MySqlMemory\Dictionary\Temporaries();
-        $this->transaction = new Transaction($instance->dictionary, $id, $this->variables, $instance->transactions, $this->diagnostics);
+        $this->transaction = new Transaction($instance->dictionary, $id, $this->variables, $instance->transactions, $this->diagnostics, $this->temporaries);
         $instance->transactions->sessions[$id] = $this->transaction;
-        $session = WeakReference::create($this);
-        $this->transaction->access->resumed = static function () use ($session): void {
-            $resumed = $session->get();
-            if ($resumed !== null) {
-                $resumed->instance->dictionary->temporaries = $resumed->temporaries;
-            }
-        };
         $this->running = new \MySqlMemory\Program\Running();
         if ($database !== null) {
             $this->use($database);
@@ -296,7 +284,6 @@ final class Session
         $this->replayed = $prepared;
         try {
             $operation = $this->analyze($statement, $prepared, $parameters);
-            $this->hinted = $prepared ? [] : $this->hinted;
         } catch (SqlError $error) {
             if (!$error->recorded) {
                 $this->diagnostics->clear();
@@ -316,7 +303,7 @@ final class Session
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
-    public function analyze(string $statement, bool $prepared = false, array $parameters = []): \SqlSemantics\Statement\AnalyzedStatement
+    public function analyze(string $statement, bool $prepared = false, array $parameters = []): MySqlStatement
     {
         if ($prepared || $this->following === '') {
             $statement = (new Script\Trailing())->input($statement);
@@ -327,16 +314,15 @@ final class Session
         $this->text = $statement;
         try {
             $semantics = $this->semantics();
-            $this->instance->dictionary->temporaries = $this->temporaries;
             $this->dots = [];
             $reader = new Parse\Reader();
             $tree = $reader->read($statement, $prepared, $this);
             $database = $this->variables->database;
-            \MySqlMemory\Session\Resolution\Views::refreshAll($this->instance->dictionary, $this->settings());
             $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
             try {
                 $bindings = $reader->bound($tree, $parameters, $prepared, $this);
-                $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($bindings, unboundParameters: $prepared && $parameters === [] ? array_keys($bindings) : [])));
+                $operation = $semantics->analyze($tree, $semantics->context(Statement\Catalog::declarations($this), true, $database === '' ? null : new SearchPath($database), $this->resolution($bindings, unboundParameters: $prepared && $parameters === [] ? array_keys($bindings) : [])));
+                \SqlSemantics\Diagnostic\Check::invariant($operation instanceof MySqlStatement, 'A MySQL session analyzes concrete MySQL statements.');
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 throw $reader->operand($failure, $tree, $statement, $this);
             } catch (AnalysisException $error) {
@@ -347,10 +333,17 @@ final class Session
             try {
                 (new Syntax(Charset::named((string) $this->variables->read('character_set_client'))))->debugOnly($tree, $statement);
             } catch (SqlError $error) {
-                throw $operation instanceof Operation ? (new Parse\DebugRequest())->refusal($operation, $error, $this) : $error;
+                throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
             }
-            if ($operation instanceof Operation && (new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
+            if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
                 (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
+            }
+
+            (new \MySqlMemory\Hint\Hints())->messages($operation, $statement, $this);
+
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent) {
+                $this->preparation->programSources ??= new WeakMap();
+                $this->preparation->programSources[$operation] = new \MySqlMemory\Command\Program\ProgramSource($statement, $tree);
             }
 
             return $operation;
@@ -381,7 +374,7 @@ final class Session
         $client = $this->variables->read('character_set_client');
         $timestamps = $this->variables->read('explicit_defaults_for_timestamp');
 
-        return new Resolution($literals->connection ?? $connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), $literals->client ?? (is_string($client) ? Charset::named($client) : null), program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: version_compare($this->instance->version, '8.0.0', '<') ? $this->modes()->strict() : ($literals->strict ?? $this->modes()->strict()), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true), noZeroDate: $this->modes()->has('NO_ZERO_DATE'), noZeroInDate: $this->modes()->has('NO_ZERO_IN_DATE'), allowInvalidDates: $this->modes()->has('ALLOW_INVALID_DATES'), handlers: array_map(static fn (\MySqlMemory\Command\Access\Handler $handler): \SqlSemantics\Statement\Identifier\QualifiedName => new \SqlSemantics\Statement\Identifier\QualifiedName(new Name($handler->table), new Name($handler->schema)), $this->handlers), databaseCollation: Collation::named((string) $this->variables->read('collation_database')), replicaNetTimeout: (int) $this->variables->read(version_compare($this->instance->version, '8.0.0', '<') ? 'slave_net_timeout' : 'replica_net_timeout'), fullTextParsers: (new \MySqlMemory\System\Server\Plugins())->fullTextParsers(\SqlSemantics\Contract\GrammarRelease::tryFrom('mysql-' . $this->instance->version) ?? \SqlSemantics\Contract\GrammarRelease::MySql847), unboundParameters: $unboundParameters);
+        return new Resolution($literals->connection ?? $connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), $literals->client ?? (is_string($client) ? Charset::named($client) : null), program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: version_compare($this->instance->version, '8.0.0', '<') ? $this->modes()->strict() : ($literals->strict ?? $this->modes()->strict()), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true), noZeroDate: $this->modes()->has('NO_ZERO_DATE'), noZeroInDate: $this->modes()->has('NO_ZERO_IN_DATE'), allowInvalidDates: $this->modes()->has('ALLOW_INVALID_DATES'), handlers: array_map(static fn (\MySqlMemory\Command\Access\Handler $handler): \SqlSemantics\Statement\Identifier\QualifiedName => new \SqlSemantics\Statement\Identifier\QualifiedName(new Name($handler->table), new Name($handler->schema)), $this->handlers), databaseCollation: Collation::named((string) $this->variables->read('collation_database')), replicaNetTimeout: (int) $this->variables->read(version_compare($this->instance->version, '8.0.0', '<') ? 'slave_net_timeout' : 'replica_net_timeout'), fullTextParsers: (new \MySqlMemory\System\Server\Plugins())->fullTextParsers(\SqlSemantics\Contract\GrammarRelease::tryFrom('mysql-' . $this->instance->version) ?? \SqlSemantics\Contract\GrammarRelease::MySql847), unboundParameters: $unboundParameters, realAsFloat: $this->modes()->has('REAL_AS_FLOAT'));
     }
 
     /**

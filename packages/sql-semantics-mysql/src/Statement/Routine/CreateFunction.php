@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CREATE FUNCTION of a stored function: its parameters, return type, characteristics and body.
@@ -46,11 +45,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a function definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION twice(a INT) RETURNS BIGINT DETERMINISTIC RETURN a * 2');
- *     [$create->statement->returns->name(), $create->facts->diagnostics] // => ['BIGINT', []]
+ *     [$create->returns->name(), $create->diagnostics()] // => ['BIGINT', []]
  */
-final class CreateFunction implements Statement
+final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Characteristic> The characteristics in written order
@@ -80,7 +79,12 @@ final class CreateFunction implements Statement
         public readonly ?CollationName $collation = null,
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($returns, $collation);

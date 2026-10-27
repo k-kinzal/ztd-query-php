@@ -20,7 +20,7 @@ use Override;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
 use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes SET PASSWORD.
@@ -108,8 +108,8 @@ final class SetPasswordCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof SetPassword);
         if ($statement->password?->function === PasswordFunction::Password && $session->settings()->release() === GrammarRelease::MySql5744) {
             $for = $statement->user === null ? '' : ' FOR <user>';

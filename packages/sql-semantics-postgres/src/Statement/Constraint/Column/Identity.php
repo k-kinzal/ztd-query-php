@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A GENERATED ... AS IDENTITY column constraint: the column takes its values from an implicit sequence.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example An identity column is never NULL
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a bigint GENERATED ALWAYS AS IDENTITY (START WITH 10))');
- *     [$create->declarations()[0]->columns[0]->nullability, count($create->statement->definition->elements[0]->qualifiers[0]->options)] // => [\SqlSemantics\Statement\Type\Nullability::NotNull, 1]
+ *     [$create->declarations()[0]->columns[0]->nullability, count($create->definition->elements[0]->qualifiers[0]->options)] // => [\SqlSemantics\Statement\Type\Nullability::NotNull, 1]
  */
 final class Identity implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SequenceOption> The options of the sequence; none means no parentheses are written
@@ -42,7 +41,7 @@ final class Identity implements Constraint
      * @param list<SequenceOption> $options The options of the sequence
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly GeneratedWhen $when, array $options = [], public readonly ?Name $name = null)
+    public function __construct(public readonly GeneratedWhen $when, array $options = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, SequenceOption::class, 'The options of an identity sequence are sequence options.');
     }

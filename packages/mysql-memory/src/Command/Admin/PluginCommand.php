@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes INSTALL PLUGIN, UNINSTALL PLUGIN, INSTALL COMPONENT and UNINSTALL COMPONENT.
@@ -58,8 +58,8 @@ final class PluginCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         $session->transaction->commit();
         $directory = (string) $session->variables->read('plugin_dir');
         if ($statement instanceof CreateLoadableFunction) {

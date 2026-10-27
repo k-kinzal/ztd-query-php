@@ -36,7 +36,7 @@ final class Defaults
      */
     public function column(DefaultOfColumn $node, Scope $scope): ColumnDefinition
     {
-        $resolution = $this->compiler->facts->scalar($node->column)->resolution;
+        $resolution = $node->column->scalarInformation()->resolution;
         if (!$resolution instanceof ResolvedColumn) {
             throw QueryError::BadField->error($node->column->name->value, 'field list');
         }
@@ -55,13 +55,10 @@ final class Defaults
                     }
                 }
             }
-            foreach ($schema->views as $view) {
-                foreach ($view->declaration->columns as $position => $column) {
-                    if ($column === $declaration) {
-                        return \MySqlMemory\Plan\Views::stored($view, $this->compiler->planner->dictionary)->definition->columns[$position];
-                    }
-                }
-            }
+        }
+        $view = (new Defaults\ViewColumn($this->compiler))->column($resolution);
+        if ($view !== null) {
+            return $view;
         }
         $position = $this->compiler->names->position($holder, $resolution);
         if (($holder->merged[$id][$position] ?? null) === null) {
@@ -76,7 +73,7 @@ final class Defaults
      */
     public function name(DefaultOfColumn $node, ColumnDefinition $column): string
     {
-        $resolution = $this->compiler->facts->scalar($node->column)->resolution;
+        $resolution = $node->column->scalarInformation()->resolution;
         return $this->compiler->settings->release() === GrammarRelease::MySql5651 && $resolution instanceof ResolvedColumn && $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable ? $node->column->name->value : $column->name;
     }
 }

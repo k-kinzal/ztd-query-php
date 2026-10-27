@@ -10,9 +10,9 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
-use SqlSemantics\Statement\Operation;
 
 /**
  * Executes SHOW TABLES: the tables and views of a database, in name order, optionally filtered by LIKE or WHERE.
@@ -42,8 +42,8 @@ final class ShowTablesCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         assert($statement instanceof ShowTables);
         $name = $statement->database->value ?? $session->variables->database;
         if ($name === '') {
@@ -80,12 +80,12 @@ final class ShowTablesCommand implements Command
      *
      * @return non-empty-list<Show\Heading>
      */
-    public function headings(Operation $operation, Session $session): array
+    public function headings(MySqlStatement $operation, Session $session): array
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof ShowTables);
         $full = $statement->listing?->full() ?? false;
-        $heading = $operation->field(0)->name;
+        $heading = $operation->statementInformation()->field(0)->name;
         \SqlSemantics\Diagnostic\Check::invariant($heading !== null, 'A table inspection has a resolved column name.');
         $heading = $heading->value;
         $legacy = $session->settings()->legacy();
@@ -104,13 +104,13 @@ final class ShowTablesCommand implements Command
      * @param list<Show\Heading> $headings
      * @param list<list<string>> $rows
      */
-    public function result(array $headings, array $rows, Operation $operation, Session $session, Context $context, Connection $connection, bool $legacy, string $name): Reply
+    public function result(array $headings, array $rows, MySqlStatement $operation, Session $session, Context $context, Connection $connection, bool $legacy, string $name): Reply
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof ShowTables);
         $listing = new Show\Listing($headings);
         $result = $listing->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
-        $fixed = Show\FixedColumns::of($statement->filter, $operation->facts);
+        $fixed = Show\FixedColumns::of($statement->filter, $operation->statementInformation());
         if ($legacy || count($headings) !== 2 || (!$listing->constantEmpty && !isset($fixed[strtolower($name)]))) {
             return $result;
         }

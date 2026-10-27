@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Identifying the instruction's declaration constraint
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT ALL ON *.* TO u')->statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange // => true
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT ALL ON *.* TO u') instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\PrivilegeChange // => true
  */
 interface PrivilegeChange extends Node
 {

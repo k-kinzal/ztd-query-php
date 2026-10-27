@@ -49,7 +49,9 @@ final class SystemVariables
         if (!isset(self::$releases[$release->value])) {
             $directory = dirname(__DIR__, 4) . '/resources/variables/';
             $file = is_file($directory . $release->value . '.php') ? $directory . $release->value . '.php' : $directory . GrammarRelease::MySql847->value . '.php';
-            /** @var list<array{string, string, string, string|int|null, string, int|null, int|string|null, int, int, int, bool, string}> $entries */
+            /**
+ * @var list<array{string, string, string, string|int|null, string, int|null, int|string|null, int, int, int, bool, string}> $entries
+ */
             $entries = require $file;
             $definitions = [];
             foreach ($entries as [$name, $reach, $shape, $default, $writability, $minimum, $maximum, $field, $length, $decimals, $unsigned, $collation]) {

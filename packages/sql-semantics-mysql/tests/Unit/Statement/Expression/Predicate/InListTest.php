@@ -67,7 +67,7 @@ final class InListTest extends TestCase
         $notIn = $semantics->analyze("SELECT _latin1'a' COLLATE latin1_bin NOT IN (_latin1'a' COLLATE latin1_general_ci)");
         $list = $semantics->analyze("SELECT _latin1'a' COLLATE latin1_bin IN (_latin1'a' COLLATE latin1_general_ci, 'b')");
 
-        $diagnostics = [$in->facts->diagnostics[0], $notIn->facts->diagnostics[0], $list->facts->diagnostics[0]];
+        $diagnostics = [$in->diagnostics()[0], $notIn->diagnostics()[0], $list->diagnostics()[0]];
 
         self::assertContainsOnlyInstancesOf(IllegalCollationMix::class, $diagnostics);
         self::assertSame(['=', '<>', ' IN '], array_column($diagnostics, 'operation'));

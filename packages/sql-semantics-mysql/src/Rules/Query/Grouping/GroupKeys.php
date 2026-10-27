@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Query;
@@ -34,24 +33,24 @@ final class GroupKeys
     /**
      * Tells whether grouping emits a single direct aggregate result without ROLLUP.
      */
-    public function direct(Select $select, ?Facts $facts = null): bool
+    public function direct(Select $select): bool
     {
         if ($select->groupBy === null) {
             return (new Aggregation())->aggregates([...$select->items, ...$select->orderBy, ...($select->late->orderBy ?? []), ...array_filter([$select->having])]);
         }
 
-        return $select->groupBy->modifier === null && !$this->varying($select, $facts);
+        return $select->groupBy->modifier === null && !$this->varying($select);
     }
 
     /**
      * Tells whether any grouping key can vary with input rows.
      */
-    public function varying(Select $select, ?Facts $facts = null): bool
+    public function varying(Select $select): bool
     {
         $assigned = $this->assigned($select);
         foreach ($select->groupBy->items ?? [] as $item) {
-            $key = $facts === null ? $item->expression : (new Matching())->target($item->expression, $facts);
-            if (!$this->constant($key, $facts, $assigned)) {
+            $key = (new Matching())->target($item->expression);
+            if (!$this->constant($key, $assigned)) {
                 return true;
             }
         }
@@ -64,11 +63,11 @@ final class GroupKeys
      *
      * @param list<string> $assigned Lower-case variable names assigned by the statement
      */
-    public function constant(Node $node, ?Facts $facts = null, array $assigned = []): bool
+    public function constant(Node $node, array $assigned = []): bool
     {
-        $replacement = $node instanceof Operand && $facts !== null && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
+        $replacement = $node instanceof Operand && $node->hasBinding() ? $node->scalarInformation()->replacement : null;
         if ($replacement !== null) {
-            return $this->constant($replacement, $facts, $assigned);
+            return $this->constant($replacement, $assigned);
         }
         if ($node instanceof UserVariable) {
             return !in_array(strtolower($node->name->value), $assigned, true);
@@ -77,7 +76,7 @@ final class GroupKeys
             return false;
         }
         foreach ($this->children($node) as $child) {
-            if (!$this->constant($child, $facts, $assigned)) {
+            if (!$this->constant($child, $assigned)) {
                 return false;
             }
         }

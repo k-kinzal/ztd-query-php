@@ -50,7 +50,7 @@ final class ConditionRuleTest extends TestCase
     public function testValueLowersAnErrorCodeAndAnSqlstate(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare c condition for 1051; declare d condition for sqlstate '42S02'; declare e condition for sqlstate value '42S01'; end");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         self::assertEquals([
@@ -65,7 +65,7 @@ final class ConditionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("resignal sqlstate value '45000'");
 
-        self::assertEquals(new Resignal(new SqlState(new Text('45000'))), $operation->statement);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Resignal(new SqlState(new Text('45000'))), $operation));
         self::assertSame("RESIGNAL SQLSTATE '45000'", $operation->toString());
     }
 
@@ -95,7 +95,7 @@ final class ConditionRuleTest extends TestCase
     public function testHandledLowersEveryKindOfCondition(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare c condition for 1051; declare continue handler for c, 1052, sqlstate value '42000', sqlwarning, not found, sqlexception set @x = 1; end");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         $handler = $statement->body->declarations[1];
@@ -110,17 +110,17 @@ final class ConditionRuleTest extends TestCase
             new GeneralCondition(ConditionClass::SqlException),
         ], $handler->conditions);
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052, SQLSTATE '42000', SQLWARNING, NOT FOUND, SQLEXCEPTION SET @x = 1; END", $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testHandledLowersASingleCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('create procedure p() begin declare exit handler for sqlexception begin end; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([new HandlerDeclaration(HandlerAction::Exit, [new GeneralCondition(ConditionClass::SqlException)], new Block())], $statement->body->declarations);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new HandlerDeclaration(HandlerAction::Exit, [new GeneralCondition(ConditionClass::SqlException)], new Block())], $statement->body->declarations));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END', $operation->toString());
     }
 

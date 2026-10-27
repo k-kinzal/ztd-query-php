@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of GET_FORMAT(kind, standard): a format string for DATE_FORMAT and STR_TO_DATE.
@@ -30,14 +29,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class GetFormat implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TemporalFormat $format The kind of value
      * @param Scalar $standard The name of the standard
      */
-    public function __construct(public readonly TemporalFormat $format, public readonly Scalar $standard)
+    public function __construct(public readonly TemporalFormat $format, public readonly Scalar $standard, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

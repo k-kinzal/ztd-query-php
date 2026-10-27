@@ -43,14 +43,14 @@ final class OrderingAggregatesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(id INT PRIMARY KEY, a INT)');
 
-        self::assertEquals($expected, $semantics->analyze($sql, [$table])->facts->diagnostics);
+        self::assertEquals($expected, $semantics->analyze($sql, [$table])->diagnostics());
     }
 
     public function testCheckKeepsTheLegacyGroupingDiagnostic(): void
     {
         $semantics = new Semantics(Dialect::MySql, '5.6.51');
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
-        $diagnostics = $semantics->analyze('SELECT a FROM t ORDER BY SUM(a)', [$table])->facts->diagnostics;
+        $diagnostics = $semantics->analyze('SELECT a FROM t ORDER BY SUM(a)', [$table])->diagnostics();
 
         self::assertCount(1, $diagnostics);
         self::assertInstanceOf(NonGroupedColumn::class, $diagnostics[0]);
@@ -61,11 +61,11 @@ final class OrderingAggregatesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(a INT)');
         $operation = $semantics->analyze('SELECT 1 FROM t ORDER BY (SELECT SUM(t.a)), (SELECT SUM(1))', [$table]);
-        $select = $operation->statement;
+        $select = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
         $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
-        $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
+        $owned = array_fill_keys(array_map(spl_object_id(...), $select->queryInformation()->aggregates), true);
         $rule = new OrderingAggregates();
 
         self::assertCount(1, $owned);

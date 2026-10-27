@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\RangeDatums;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A range partition bound: FOR VALUES FROM (lower) TO (upper).
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RangeBound implements PartitionBound
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|RangeLimit> The lower datums
@@ -41,7 +40,7 @@ final class RangeBound implements PartitionBound
      * @param list<Scalar|RangeLimit> $from The lower datums; at least one
      * @param list<Scalar|RangeLimit> $to The upper datums; at least one
      */
-    public function __construct(array $from, array $to)
+    public function __construct(array $from, array $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->from = (new RangeDatums())->checked($from);
         $this->to = (new RangeDatums())->checked($to);

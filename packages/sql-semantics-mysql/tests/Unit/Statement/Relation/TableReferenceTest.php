@@ -67,10 +67,10 @@ final class TableReferenceTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
-        $fact = $operation->facts->relation($operation->statement->query->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        $fact = $operation->query->from->relationInformation();
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertSame($table, $fact->table->table);
         self::assertTrue($fact->shape->complete());
@@ -81,38 +81,38 @@ final class TableReferenceTest extends TestCase
         self::assertInstanceOf(Known::class, $fact->shape->slots[1]->type);
         self::assertSame($table->columns[1]->type, $fact->shape->slots[1]->type->descriptor);
         self::assertSame(Nullability::Nullable, $fact->shape->slots[1]->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationLeavesTheShapeOpenForAnUndeclaredTable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM shop.t AS x');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
-        $fact = $operation->facts->relation($operation->statement->query->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        $fact = $operation->query->from->relationInformation();
         self::assertInstanceOf(UndeclaredTable::class, $fact->table);
         self::assertFalse($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
         self::assertSame('the declaration of relation shop.t', $fact->shape->missing[0]->describe());
         self::assertSame($fact->table->missing, $fact->shape->missing[0]);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationReportsAMissingTableWithAnEmptyCompleteShape(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t', []);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
-        $fact = $operation->facts->relation($operation->statement->query->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        $fact = $operation->query->from->relationInformation();
         self::assertInstanceOf(MissingTable::class, $fact->table);
         self::assertTrue($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertSame('Relation t does not exist.', $operation->facts->diagnostics[0]->message());
+        self::assertCount(1, $operation->diagnostics());
+        self::assertSame('Relation t does not exist.', $operation->diagnostics()[0]->message());
     }
 
     public function testDeriveRelationResolvesAnUnqualifiedNameInTheCurrentDatabase(): void
@@ -137,10 +137,10 @@ final class TableReferenceTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM shop.t', [$table]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
-        self::assertInstanceOf(MissingTable::class, $operation->facts->relation($operation->statement->query->from)->table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        self::assertInstanceOf(MissingTable::class, $operation->query->from->relationInformation()->table);
         self::assertSame('(current)', $semantics->context()->searchPath[0]->value);
     }
 
@@ -153,15 +153,15 @@ final class TableReferenceTest extends TestCase
         $second = new Table(new QualifiedName(new Name('t')), $semantics->profile(), []);
         $operation = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(TableReference::class, $operation->statement->query->from);
-        $fact = $operation->facts->relation($operation->statement->query->from);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        $fact = $operation->query->from->relationInformation();
         self::assertInstanceOf(ConflictingTables::class, $fact->table);
         self::assertSame([$first, $second], $fact->table->candidates);
         self::assertTrue($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
-        self::assertSame('Relation t has conflicting declarations.', $operation->facts->diagnostics[0]->message());
+        self::assertSame('Relation t has conflicting declarations.', $operation->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheDatabaseTheNameAndTheCorrelationName(): void

@@ -10,7 +10,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Completes a comment-only query, whose semantic script has no statements.
@@ -38,7 +38,7 @@ final class EmptyCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
+        assert($operation instanceof MySqlStatement);
         return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

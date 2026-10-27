@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operand;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A complete frame containing a non-scalar interval boundary.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredFrame implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameUnit $unit The unit
@@ -35,7 +34,7 @@ final class DeferredFrame implements Node
      * @param FrameBound|DeferredFrameBound|null $end The end boundary of the BETWEEN form
      * @param FrameExclusion|null $exclusion The written exclusion
      */
-    public function __construct(public readonly FrameUnit $unit, public readonly FrameBound|DeferredFrameBound $start, public readonly FrameBound|DeferredFrameBound|null $end = null, public readonly ?FrameExclusion $exclusion = null)
+    public function __construct(public readonly FrameUnit $unit, public readonly FrameBound|DeferredFrameBound $start, public readonly FrameBound|DeferredFrameBound|null $end = null, public readonly ?FrameExclusion $exclusion = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($start instanceof DeferredFrameBound || $end instanceof DeferredFrameBound, 'A deferred frame retains at least one non-scalar boundary.');
         Check::input($start->kind !== FrameBoundKind::UnboundedFollowing, 'A frame cannot start at UNBOUNDED FOLLOWING.');

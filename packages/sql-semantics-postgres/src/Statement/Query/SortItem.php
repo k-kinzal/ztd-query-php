@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One sort key of an ORDER BY list: an expression, a direction or ordering operator, and the place of NULLs.
@@ -37,7 +36,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SortItem implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The sort key
@@ -50,6 +49,7 @@ final class SortItem implements Clause
         public readonly ?SortDirection $direction = null,
         public readonly ?OperatorName $using = null,
         public readonly ?NullsOrder $nulls = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         Check::input($direction === null || $using === null, 'A sort key has a direction or an ordering operator, not both.');
     }

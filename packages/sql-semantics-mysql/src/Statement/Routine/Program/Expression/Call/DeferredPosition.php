@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,14 +32,18 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DeferredPosition implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|RowOperand|DeferredOperand $substring The substring to find
      * @param Scalar|RowOperand|DeferredOperand $string The string to search
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $substring, public readonly Scalar|RowOperand|DeferredOperand $string)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $substring, public readonly Scalar|RowOperand|DeferredOperand $string, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input(!$substring instanceof Scalar || !$string instanceof Scalar, 'A deferred POSITION contains a non-scalar operand.');
         Check::input($precedence->admits($substring, Precedence::BIT_EXPR) && !$precedence->absorbs($substring, Precedence::PREDICATE, Precedence::BIT_EXPR), 'The substring of POSITION requires grouping.');

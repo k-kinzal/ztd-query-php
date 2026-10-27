@@ -11,10 +11,10 @@ use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 
 /**
@@ -56,9 +56,9 @@ final class FunctionalQueries
      *
      * @throws \MySqlMemory\Error\SqlError When an explicit width or a referenced table is invalid
      */
-    public function prepare(Operation|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session, Problems $problems): void
+    public function prepare(MySqlStatement|\MySqlMemory\Session\Resolution\IndexPreparation $operation, Session $session, Problems $problems): void
     {
-        $create = $operation->statement;
+        $create = $operation instanceof MySqlStatement ? $operation : $operation->statement;
         $index = $create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
         $alter = $create instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
         if ((!$create instanceof CreateTable && !$alter && !$index) || $session->settings()->legacy()) {
@@ -69,17 +69,17 @@ final class FunctionalQueries
         if (array_filter($indexes, static fn (\SqlSemantics\Statement\Node $index): bool => (new Walker())->find($index, Query::class) !== []) === []) {
             return;
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($operation instanceof MySqlStatement ? $operation->statementInformation() : $operation->facts)->diagnostics as $diagnostic) {
             if ($diagnostic instanceof OperandColumns && $diagnostic->expression !== null && $walker->find($diagnostic->expression, Query::class) === []) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $create);
             }
         }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
+        foreach (($operation instanceof MySqlStatement ? $operation->statementInformation() : $operation->facts)->diagnostics as $diagnostic) {
             if (($alter || $index) && $diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name === $create->table) {
                 throw (new Errors())->error($diagnostic, $session);
             }
         }
-        $problems->opened($operation, $session, $operation->facts->diagnostics);
+        $problems->opened($operation, $session, ($operation instanceof MySqlStatement ? $operation->statementInformation() : $operation->facts)->diagnostics);
     }
 
     /**
@@ -88,7 +88,7 @@ final class FunctionalQueries
      * @param list<IndexDefinition> $indexes The requested indexes in action order
      * @throws \MySqlMemory\Error\SqlError When an indexed operand cannot be prepared
      */
-    public function added(array $indexes, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function added(array $indexes, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         foreach ($indexes as $index) {
             foreach ($index->parts as $part) {
@@ -102,7 +102,7 @@ final class FunctionalQueries
                 $nodes = (new Walker())->find($part->expression, \SqlSemantics\Statement\Node::class);
                 foreach ($nodes as $node) {
                     if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
-                        $resolution = $facts->scalar($node)->resolution;
+                        $resolution = $node->scalarInformation()->resolution;
                         if ($resolution instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn) {
                             throw (new Errors())->error($resolution, $session, 'functional index');
                         }

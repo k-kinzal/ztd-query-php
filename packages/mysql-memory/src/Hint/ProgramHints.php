@@ -64,7 +64,7 @@ final class ProgramHints
             if (is_array($value)) {
                 array_push($pending, ...array_reverse($value));
             } elseif ($value instanceof Node) {
-                $blocks = (new Blocks($session->instance->dictionary, $session->variables->database))->read($value);
+                $blocks = (new Blocks($session->instance->dictionary, $session->variables->database, $session->temporaries))->read($value);
                 if ($value instanceof Scalar) {
                     $blocks->open(false);
                     $blocks->resolved = [1, ...$blocks->subqueries($value)];

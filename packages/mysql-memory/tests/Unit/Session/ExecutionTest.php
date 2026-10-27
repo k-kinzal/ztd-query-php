@@ -46,7 +46,7 @@ final class ExecutionTest extends TestCase
         $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
         $session->query("SET sql_mode='STRICT_ALL_TABLES'; CREATE TABLE target (amount INT)");
         $insert = $session->analyze("INSERT target VALUES ('42'), ('invalid')");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement::class, $insert);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $insert);
         $session->text = 'an execution label, not SQL';
 
         try {
@@ -83,7 +83,6 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('CREATE TABLE t(a INT) CHARACTER SET missing');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1046);
@@ -111,9 +110,8 @@ final class ExecutionTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('INSERT INTO t VALUES (1), (2)');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
-        (new Execution($session))->perform($operation, (new Dispatcher())->command($operation->statement));
+        (new Execution($session))->perform($operation, (new Dispatcher())->command($operation));
 
         self::assertSame(2, $session->variables->rowCount);
     }
@@ -136,10 +134,9 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SELECT /*+ FOO */ SQL_NO_CACHE 1');
         $operation = $session->analyze('SELECT /*+ MAX_EXECUTION_TIME(1) MAX_EXECUTION_TIME(2) */ 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $hints = (new Hints())->apply($operation->statement, $session);
+        $hints = (new Hints())->apply($operation, $session);
 
-        (new Execution($session))->run($operation, (new Dispatcher())->command($operation->statement), $hints);
+        (new Execution($session))->run($operation, (new Dispatcher())->command($operation), $hints);
 
         self::assertSame([['Warning', 3126, 'Hint MAX_EXECUTION_TIME(2) is ignored as conflicting/duplicated']], $session->diagnostics->conditions);
     }
@@ -148,9 +145,8 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT /*+ SET_VAR(unique_checks = OFF) */ @@unique_checks');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
-        $reply = (new Execution($session))->perform($operation, (new Dispatcher())->command($operation->statement));
+        $reply = (new Execution($session))->perform($operation, (new Dispatcher())->command($operation));
 
         self::assertInstanceOf(ResultSet::class, $reply);
         self::assertSame([[['0']], 'ON'], [$reply->rows, $session->variables->read('unique_checks')]);
@@ -192,9 +188,8 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT BINARY 'a'");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
-        (new Execution($session))->parsing($operation, $operation->facts->warnings);
+        (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);
 
         self::assertSame([['Warning', 1287, "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"]], $session->diagnostics->conditions);
     }
@@ -203,13 +198,12 @@ final class ExecutionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze("SELECT ('a' COLLATE nope) COLLATE nope2");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1273);
         $this->expectExceptionMessage("Unknown collation: 'nope'");
 
-        (new Execution($session))->parsing($operation, $operation->facts->warnings);
+        (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);
     }
 
     public function testRetainsKeepsTheDiagnosticsOfAStatementWithoutTablesIn56(): void
@@ -222,10 +216,8 @@ final class ExecutionTest extends TestCase
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'abc'"]], $legacy->diagnostics->conditions);
         $legacyQuery = $legacy->analyze('SELECT 1');
         $modernQuery = $modern->analyze('SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $legacyQuery);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $modernQuery);
-        self::assertTrue((new Execution($legacy))->retains($legacyQuery->statement, new QueryCommand()));
-        self::assertFalse((new Execution($modern))->retains($modernQuery->statement, new QueryCommand()));
+        self::assertTrue((new Execution($legacy))->retains($legacyQuery, new QueryCommand()));
+        self::assertFalse((new Execution($modern))->retains($modernQuery, new QueryCommand()));
     }
 
     public function testRetainsKeepsTheDiagnosticsAcrossTheTransactionStatementsOf56(): void
@@ -277,8 +269,6 @@ final class ExecutionTest extends TestCase
 
         $missing = $session->analyze('SELECT a FROM t INTO nosuch FOR UPDATE');
         $present = $session->analyze('SELECT a FROM t INTO @a FOR UPDATE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $missing);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $present);
         self::assertTrue((new Execution($session))->undeclared($missing));
         self::assertFalse((new Execution($session))->undeclared($present));
     }
@@ -297,9 +287,8 @@ final class ExecutionTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('SELECT 1 / 0');
         $operation = $session->analyze('SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
 
-        (new Execution($session))->area($operation, (new Dispatcher())->command($operation->statement));
+        (new Execution($session))->area($operation, (new Dispatcher())->command($operation));
 
         self::assertSame([[], [1, 0]], [$session->diagnostics->conditions, $session->diagnostics->previous]);
     }
@@ -353,10 +342,10 @@ final class ExecutionTest extends TestCase
         $parameters1 = $parameters;
         $session1->activity->begin();
         StatementCounters::received($session1);
-        $session1->hinted = [];
+
         $session1->dots = [];
         $operation1 = (new Binding())->operation($session1, $statement1, $parameters1, new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1->statement), $parameters1));
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1));
     }
 
     public function testPerformBindsNullParametersInsideTypedParentExpressions(): void
@@ -369,10 +358,10 @@ final class ExecutionTest extends TestCase
         $parameters3 = $bindings;
         $session3->activity->begin();
         StatementCounters::received($session3);
-        $session3->hinted = [];
+
         $session3->dots = [];
         $operation3 = (new Binding())->operation($session3, $statement3, $parameters3, new LanguageProfile($session3->semantics()->profile()->grammar, $session3->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
-        $reply = (new Execution($session3))->perform($operation3, (new Dispatcher())->command($operation3->statement), $parameters3);
+        $reply = (new Execution($session3))->perform($operation3, (new Dispatcher())->command($operation3), $parameters3);
         self::assertCount(4, $bindings);
         self::assertInstanceOf(ResultSet::class, $reply);
         self::assertSame([[null, null, null]], $reply->rows);

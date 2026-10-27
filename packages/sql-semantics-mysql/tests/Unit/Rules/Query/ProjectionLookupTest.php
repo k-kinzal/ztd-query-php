@@ -53,7 +53,7 @@ final class ProjectionLookupTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t(a INT,b INT)');
         $operation = $semantics->analyze($sql, [$table]);
 
-        self::assertSame($expected, array_map(static fn (Diagnostic $problem): ?AliasRule => $problem instanceof InvalidProjectionAlias ? $problem->rule : null, $operation->facts->diagnostics));
+        self::assertSame($expected, array_map(static fn (Diagnostic $problem): ?AliasRule => $problem instanceof InvalidProjectionAlias ? $problem->rule : null, $operation->diagnostics()));
     }
 
     public function testChosenRetainsTheFieldAndEnclosingDepth(): void
@@ -64,7 +64,7 @@ final class ProjectionLookupTest extends TestCase
         self::assertNotNull($field->expression);
         $projection = new ProjectionScope([0 => [$field->name, $field->expression]]);
         $projection->bind(0, $field);
-        $scope = new Environment($operation->context, projection: $projection);
+        $scope = new Environment((new Semantics(Dialect::MySql))->context([]), projection: $projection);
         $reference = (new ProjectionLookup())->chosen($scope, new Name('x'), [0], 2);
 
         self::assertInstanceOf(AliasTarget::class, $reference);
@@ -79,7 +79,7 @@ final class ProjectionLookupTest extends TestCase
         $expression = $operation->field(0)->expression;
         self::assertNotNull($expression);
         $missing = new SessionState('character_set_client');
-        $scope = new Environment($operation->context, projection: new ProjectionScope([[$missing, $expression]]));
+        $scope = new Environment((new Semantics(Dialect::MySql))->context([]), projection: new ProjectionScope([[$missing, $expression]]));
         $reference = (new ProjectionLookup())->find($scope, new Name('x'), 1);
 
         self::assertInstanceOf(ConditionalColumn::class, $reference);

@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the items of a SET statement
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET @a = 1, NAMES utf8mb4');
- *     array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem $item): string => $item::class, $set->statement->items) // => [\SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment::class, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames::class]
+ *     array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem $item): string => $item::class, $set->items) // => [\SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment::class, \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames::class]
  */
 interface SetItem extends Node
 {

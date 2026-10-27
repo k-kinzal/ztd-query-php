@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ADD [ COLUMN ]: adds a column to the relation.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an added column
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ADD COLUMN IF NOT EXISTS c int NOT NULL');
- *     [$statement->statement->commands[0]->column->name->value, $statement->toString()] // => ['c', 'ALTER TABLE t ADD IF NOT EXISTS c INT NOT NULL']
+ *     [$statement->commands[0]->column->name->value, $statement->toString()] // => ['c', 'ALTER TABLE t ADD IF NOT EXISTS c INT NOT NULL']
  */
 final class AddColumn implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnDefinition $column The new column
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      */
-    public function __construct(public readonly ColumnDefinition $column, public readonly bool $ifNotExists = false)
+    public function __construct(public readonly ColumnDefinition $column, public readonly bool $ifNotExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

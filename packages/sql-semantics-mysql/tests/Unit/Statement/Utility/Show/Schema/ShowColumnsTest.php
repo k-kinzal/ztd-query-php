@@ -18,16 +18,16 @@ final class ShowColumnsTest extends TestCase
     public function testDeriveStatementResolvesTheTable(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW COLUMNS FROM t');
-        self::assertInstanceOf(ShowColumns::class, $show->statement);
+        self::assertInstanceOf(ShowColumns::class, $show);
         self::assertSame(6, count($show->fields() ?? []));
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $show->facts->relation($show->statement->table)->table);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $show->table->relationInformation()->table);
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW COLUMNS FROM t');
-        self::assertInstanceOf(ShowColumns::class, $show->statement);
-        self::assertSame('Field', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
+        self::assertInstanceOf(ShowColumns::class, $show);
+        self::assertSame('Field', $show->relationInformation()->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

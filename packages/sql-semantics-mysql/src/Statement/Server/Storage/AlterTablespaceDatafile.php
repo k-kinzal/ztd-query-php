@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER TABLESPACE name {ADD | DROP | CHANGE} DATAFILE 'file' [option …]`: a request to add, remove or resize a data file of a tablespace.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Adding a data file
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter tablespace ts add datafile 'b.dat' initial_size = 16M");
- *     [$statement->toString(), $statement->statement->action] // => ["ALTER TABLESPACE ts ADD DATAFILE 'b.dat' INITIAL_SIZE 16M", \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction::Add]
+ *     [$statement->toString(), $statement->action] // => ["ALTER TABLESPACE ts ADD DATAFILE 'b.dat' INITIAL_SIZE 16M", \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction::Add]
  */
-final class AlterTablespaceDatafile implements Statement
+final class AlterTablespaceDatafile extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -45,8 +44,11 @@ final class AlterTablespaceDatafile implements Statement
      * @param Text $datafile The data file
      * @param list<StorageOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, public readonly DatafileAction $action, public readonly Text $datafile, array $options = [])
+    public function __construct(public readonly Name $name, public readonly DatafileAction $action, public readonly Text $datafile, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($datafile->radix === null, 'A tablespace file name is a quoted string.');
         $this->options = (new StorageOptions())->checked($options, $action === DatafileAction::Change ? StorageOptions::CHANGE_DATAFILE : StorageOptions::ALTER_TABLESPACE, $action === DatafileAction::Change ? 1 : 0);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

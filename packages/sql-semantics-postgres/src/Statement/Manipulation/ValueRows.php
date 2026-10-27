@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The VALUES rows of an INSERT: rows whose values are assigned to the target columns one by one.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the rows of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t VALUES (1), (DEFAULT)');
- *     count($insert->statement->rows->rows()) // => 2
+ *     count($insert->rows->rows()) // => 2
  * @example Refusing VALUES without a row
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\ValueRows([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ValueRows implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ValuesRow> The rows in written order
@@ -40,7 +39,7 @@ final class ValueRows implements Node
      *
      * @throws InvalidConstruction When there is no row
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->rows = Check::listOf($rows, ValuesRow::class, 'VALUES holds at least one row.', 1);
     }

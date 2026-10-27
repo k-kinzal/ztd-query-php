@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create an empty table with the definition of another table: CREATE TABLE ... LIKE.
@@ -36,9 +35,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $copy = $semantics->analyze('CREATE TABLE c LIKE s', [$source])->declarations()[0];
  *     [$copy->name->name->value, $copy->columns[0]->name->value, $copy->columns[0] === $source->declarations()[0]->columns[0]] // => ['c', 'a', false]
  */
-final class CreateTableLike implements Statement
+final class CreateTableLike extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The table name
@@ -51,7 +51,16 @@ final class CreateTableLike implements Statement
         public readonly QualifiedName $source,
         public readonly int $temporaryWords = 0,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null,
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($source);
         Check::input($name->catalog === null && $source->catalog === null, 'A table name has at most a database qualifier.');

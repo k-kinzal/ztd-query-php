@@ -84,7 +84,7 @@ final class ProgramNamesTest extends TestCase
 
     public function testTypeWritesTheCollateClauseWhenPresent(): void
     {
-        $function = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin RETURN 1')->statement;
+        $function = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin RETURN 1');
         self::assertInstanceOf(CreateFunction::class, $function);
         $out = new Output(new Codec(GrammarRelease::MySql910));
         (new ProgramNames())->type($out, $function->returns, $function->collation);

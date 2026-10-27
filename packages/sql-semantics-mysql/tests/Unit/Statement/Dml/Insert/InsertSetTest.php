@@ -35,8 +35,8 @@ final class InsertSetTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('INSERT INTO t SET a = 1, b = a, a = 2', [$t]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(DuplicateColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(DuplicateColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testRenderWritesTheAssignments(): void

@@ -24,13 +24,13 @@ final class ScalarTest extends TestCase
         $expression = $operation->field(0)->expression;
 
         self::assertInstanceOf(Binary::class, $expression);
-        self::assertTrue($operation->facts->covers($expression));
-        $left = $operation->facts->scalar($expression->left)->type;
-        $right = $operation->facts->scalar($expression->right)->type;
+        self::assertTrue($expression->hasBinding());
+        $left = $expression->left->scalarInformation()->type;
+        $right = $expression->right->scalarInformation()->type;
         self::assertInstanceOf(Known::class, $left);
         self::assertInstanceOf(Known::class, $right);
         self::assertSame('INTEGER', $left->descriptor->name());
         self::assertSame('TEXT', $right->descriptor->name());
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($expression)->nullability);
+        self::assertSame(Nullability::NotNull, $expression->scalarInformation()->nullability);
     }
 }

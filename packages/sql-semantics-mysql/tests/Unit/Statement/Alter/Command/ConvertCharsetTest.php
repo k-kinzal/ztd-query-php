@@ -21,20 +21,20 @@ final class ConvertCharsetTest extends TestCase
         $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin'), databaseCollation: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_bin'));
         $operation = $semantics->analyze('ALTER TABLE other.t CONVERT TO CHARSET DEFAULT COLLATE utf8mb4_bin', $semantics->context([], true, null, $settings));
 
-        self::assertSame("COLLATION 'utf8mb4_bin' is not valid for CHARACTER SET 'latin1'", $operation->facts->warnings[0]->message());
+        self::assertSame("COLLATION 'utf8mb4_bin' is not valid for CHARACTER SET 'latin1'", $operation->warnings()[0]->message());
     }
 
     public function testDeriveCommandAcceptsKnownCharacterSets(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4', [$table])->diagnostics());
     }
 
     public function testDeriveCommandReportsUnknownNamesInOrderBeforeTableBinding(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET absent COLLATE missing');
-        $warnings = $alter->facts->warnings;
+        $warnings = $alter->warnings();
 
         self::assertCount(2, $warnings);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
@@ -48,7 +48,7 @@ final class ConvertCharsetTest extends TestCase
     public function testDeriveCollationRetainsIncompatibleEncodingMeaning(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin');
-        $warnings = $alter->facts->warnings;
+        $warnings = $alter->warnings();
 
         self::assertCount(1, $warnings);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);

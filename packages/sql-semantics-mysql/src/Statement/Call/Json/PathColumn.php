@@ -18,7 +18,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -42,7 +41,7 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class PathColumn implements JsonTableColumn
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
@@ -63,6 +62,7 @@ final class PathColumn implements JsonTableColumn
         public readonly ?JsonResponse $onEmpty = null,
         public readonly ?JsonResponse $onError = null,
         public readonly bool $errorFirst = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input($collation === null || $collation->name !== null, 'A JSON_TABLE column collation names a collation.');
         Check::input(!$errorFirst || ($onEmpty !== null && $onError !== null), 'ON ERROR is written first only when both responses are.');
@@ -85,7 +85,7 @@ final class PathColumn implements JsonTableColumn
             }
         }
 
-        $domain = (new Declared(Settings::of($derivation->context)->connection, $derivation->context->profile->grammar))->tableFunction($this->type);
+        $domain = (new Declared(Settings::of($derivation->context)->connection, $derivation->context->profile->grammar, Settings::of($derivation->context)->realAsFloat))->tableFunction($this->type);
 
         return [new OutputSlot($this->name, new Known($domain), Nullability::Nullable)];
     }

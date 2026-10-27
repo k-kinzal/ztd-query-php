@@ -12,7 +12,6 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Begin::class)]
 #[Medium]
@@ -34,7 +33,7 @@ final class BeginTest extends TestCase
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->declarations());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheBehaviorWordAndTheIgnoredName(): void
@@ -48,7 +47,7 @@ final class BeginTest extends TestCase
 
     public function testRenderWritesANewlyBuiltStart(): void
     {
-        $operation = new Operation((new Semantics(Dialect::Sqlite))->context(), new Begin(TransactionBehavior::Exclusive, new Name('t1')));
+        $operation = Semantics::fromStatement((new Semantics(Dialect::Sqlite))->context(), new Begin(TransactionBehavior::Exclusive, new Name('t1')));
 
         self::assertSame('BEGIN EXCLUSIVE TRANSACTION t1', $operation->toString());
     }

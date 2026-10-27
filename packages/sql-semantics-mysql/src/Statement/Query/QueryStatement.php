@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * INTO and locking clauses written after a set operation, a parenthesized query or another query that is not a single query block.
@@ -32,14 +31,15 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the INTO destination of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u INTO @x');
- *     $query->statement->query->into->targets[0]->name->value // => 'x'
+ *     $query->query->into->targets[0]->name->value // => 'x'
  * @example Refusing a query statement without clauses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class QueryStatement implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<LockingClause> The locking clauses in written order
@@ -52,8 +52,11 @@ final class QueryStatement implements Query
      * @param IntoDestination|null $into The INTO destination
      * @param IntoPosition|null $intoPosition Where INTO is written: after the query or after the locking clauses; given exactly when there is a destination
      */
-    public function __construct(public readonly Query $query, array $locking = [], public readonly ?IntoDestination $into = null, public readonly ?IntoPosition $intoPosition = null)
+    public function __construct(public readonly Query $query, array $locking = [], public readonly ?IntoDestination $into = null, public readonly ?IntoPosition $intoPosition = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a query are locking clauses.');
         Check::input($locking !== [] || $into !== null, 'A query statement holds an INTO or a locking clause.');
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');

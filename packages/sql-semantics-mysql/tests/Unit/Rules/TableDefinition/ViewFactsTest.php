@@ -21,8 +21,8 @@ final class ViewFactsTest extends TestCase
 {
     public function testDeriveAnswersTheDeclarationOfTheView(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a');
-        $statement = $create->statement;
+        $create = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy((new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a'));
+        $statement = $create;
         self::assertInstanceOf(CreateView::class, $statement);
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
@@ -72,8 +72,8 @@ final class ViewFactsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerViewDomains')]
     public function testMaterializedKeepsTheExposedColumnDomain(string $release, string $query, int $field): void
     {
-        $create = (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze('CREATE VIEW v AS ' . $query);
-        $statement = $create->statement;
+        $create = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy((new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze('CREATE VIEW v AS ' . $query));
+        $statement = $create;
         self::assertInstanceOf(CreateView::class, $statement);
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-' . $release, null, ParameterStyle::Native), null, [], true));

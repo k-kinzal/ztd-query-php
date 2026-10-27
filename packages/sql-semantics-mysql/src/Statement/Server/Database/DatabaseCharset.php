@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[DEFAULT] CHARACTER SET [=] charset`: the default character set of the database's tables.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the character set
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE DATABASE d DEFAULT CHARACTER SET = latin1');
- *     [$create->toString(), $create->statement->options[0]->charset->name?->value] // => ['CREATE DATABASE d CHARACTER SET latin1', 'latin1']
+ *     [$create->toString(), $create->options[0]->charset->name?->value] // => ['CREATE DATABASE d CHARACTER SET latin1', 'latin1']
  */
 final class DatabaseCharset implements DatabaseOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharsetName $charset The character set
      */
-    public function __construct(public readonly CharsetName $charset)
+    public function __construct(public readonly CharsetName $charset, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

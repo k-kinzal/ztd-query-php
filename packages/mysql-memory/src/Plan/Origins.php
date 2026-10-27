@@ -84,7 +84,7 @@ final class Origins
         if ($origin === null || ($select->groupBy === null && !in_array(SelectOption::Distinct, $select->options, true))) {
             return $origin;
         }
-        $resolution = $field->expression instanceof ColumnUse ? $this->planner->compiler->facts->scalar($field->expression)->resolution : $field->resolution;
+        $resolution = $field->expression instanceof ColumnUse ? $field->expression->scalarInformation()->resolution : $field->resolution;
         if (!$resolution instanceof ResolvedColumn || !isset($scope->derived[spl_object_id($resolution->relation)])) {
             return $origin;
         }
@@ -130,7 +130,7 @@ final class Origins
         $distinct = in_array(SelectOption::Distinct, $select->options, true);
         $named = (new Windowing($this->planner))->reads($expression) || ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql8044 && ($select->groupBy?->modifier === null || $distinct));
 
-        return $named && (!(new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$expression]) || ($distinct && !(new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->deferred($select, $expression, $this->planner->compiler->facts)));
+        return $named && (!(new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$expression]) || ($distinct && !(new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->deferred($select, $expression)));
     }
 
     /**
@@ -139,7 +139,7 @@ final class Origins
      */
     public function storedAggregate(Select $select, Field $field, Domain $domain): bool
     {
-        return $domain->field->blob() && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && ($select->groupBy !== null || in_array(SelectOption::Distinct, $select->options, true)) && (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->stored($select, $field->expression, $this->planner->compiler->facts, $this->planner->settings->release());
+        return $domain->field->blob() && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && ($select->groupBy !== null || in_array(SelectOption::Distinct, $select->options, true)) && (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->stored($select, $field->expression, $this->planner->settings->release());
     }
 
     /**
@@ -185,7 +185,7 @@ final class Origins
         $grouping = new Grouping($this->planner);
         foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $item) {
             foreach ((new Walker())->find($grouping->target($item->expression), ColumnUse::class) as $use) {
-                $resolution = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
+                $resolution = $use->hasBinding() ? $use->scalarInformation()->resolution : null;
                 if ($resolution instanceof ResolvedColumn && !isset($constant[spl_object_id($resolution->relation)])) {
                     $ordered[spl_object_id($resolution->relation)] = true;
                 }
@@ -208,7 +208,7 @@ final class Origins
     public function kept(Field $field, Scope $scope, ?ColumnOrigin $origin, array $supplied = []): ?ColumnOrigin
     {
         $resolution = match (true) {
-            $field->expression instanceof ColumnUse => $this->planner->compiler->facts->scalar($field->expression)->resolution,
+            $field->expression instanceof ColumnUse => $field->expression->scalarInformation()->resolution,
             $field->expression === null => $field->resolution,
             default => null,
         };
@@ -245,18 +245,18 @@ final class Origins
      */
     public function origin(Field $field, Scope $scope): ?ColumnOrigin
     {
-        $replacement = $field->expression === null ? null : $this->planner->compiler->facts->scalar($field->expression)->replacement;
+        $replacement = $field->expression === null ? null : $field->expression->scalarInformation()->replacement;
         if ($replacement !== null) {
-            $inner = $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery ? ($this->planner->compiler->facts->query($field->expression->query)->projection[0] ?? null) : null;
+            $inner = $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery ? ($field->expression->query->queryInformation()->projection[0] ?? null) : null;
 
             return $this->origin($inner instanceof Field ? $inner : new Field($field->position, $field->slot, $replacement), $scope);
         }
         $resolution = $field->resolution;
         if ($field->expression instanceof ColumnUse) {
-            $resolution = $this->planner->compiler->facts->scalar($field->expression)->resolution;
+            $resolution = $field->expression->scalarInformation()->resolution;
         }
         if ($field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn) {
-            $resolution = $this->planner->compiler->facts->scalar($field->expression->column)->resolution;
+            $resolution = $field->expression->column->scalarInformation()->resolution;
             if ($resolution instanceof ResolvedColumn) {
                 return $this->default($resolution, $field, $scope);
             }

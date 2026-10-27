@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOpe
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A WEIGHT_STRING template retaining a non-scalar subject and every typed option.
@@ -26,12 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @example Retaining the non-scalar subject in a skipped instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() DO WEIGHT_STRING(ROW(1, 2))');
- *     $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
+ *     $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
  * @visibility public
  */
 final class DeferredWeightString implements DeferredOperand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<WeightLevel> The levels of the LEVEL clause
@@ -51,7 +51,12 @@ final class DeferredWeightString implements DeferredOperand
         public readonly ?Numeral $length = null,
         array $levels = [],
         public readonly ?WeightLevelRange $range = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->levels = Check::listOf($levels, WeightLevel::class, 'A LEVEL clause is a list of levels.');
         Check::input(($cast === null) === ($length === null), 'A cast of WEIGHT_STRING has a length, and only a cast has one.');
         $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();

@@ -55,11 +55,11 @@ final class DeleteUse
         if ($write instanceof DeferredMultipleDelete && $database === '' && array_filter($targets, static fn ($target): bool => $target->schema === null) !== []) {
             throw QueryError::NoDatabase->error();
         }
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-        $context = $session->semantics()->context($session->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
+        $write = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($write);
         $derivation = new Derivation($context);
         $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
-        $facts = $derivation->facts();
+        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
                 throw (new Errors())->error($problem, $session);
@@ -86,17 +86,17 @@ final class DeleteUse
      *
      * @throws SqlError When a reached JSON document or join cannot bind
      */
-    public function inputs(DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Statement\Fact\Facts $facts, Session $session): void
+    public function inputs(DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         if ($write instanceof DeferredDelete && (((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($write->orderBy) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($write) === null) || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($write->with, $write->table->name))) {
             return;
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
-        $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $scope = new \MySqlMemory\Evaluation\Scope();
         if ($write instanceof DeferredDelete) {
-            $slots = $facts->relation($write->table)->shape->slots;
+            $slots = $write->table->relationInformation()->shape->slots;
             $scope->place($write->table, $planner->relations->shaped($write->table, []), array_map(static fn ($slot): string => $slot->name->value ?? '', $slots));
             $operands = new \MySqlMemory\Program\Write\UpdateOperands();
             $operands->operand($write->where, $planner, $scope, 'where clause');

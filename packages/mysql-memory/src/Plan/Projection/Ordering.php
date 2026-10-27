@@ -58,7 +58,7 @@ final class Ordering
             while ($target instanceof Grouped) {
                 $target = $target->operand;
             }
-            $resolution = ($target instanceof ColumnUse || $target instanceof OutputOrdinal) && $compiler->facts->covers($target) ? $compiler->facts->scalar($target)->resolution : null;
+            $resolution = ($target instanceof ColumnUse || $target instanceof OutputOrdinal) && $target->hasBinding() ? $target->scalarInformation()->resolution : null;
             $position = $resolution instanceof AliasTarget && $resolution->depth === 0 ? $resolution->field->position : false;
             if ($position === false && $target instanceof ColumnUse) {
                 foreach ($fields as $selected => $field) {

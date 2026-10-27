@@ -76,9 +76,9 @@ final class WeightStringTest extends TestCase
         self::assertNotNull($double);
         self::assertNotNull($binary);
 
-        self::assertEquals(new Known(Domain::string(8, Collation::binary())), $operation->facts->scalar($integer)->type);
-        self::assertEquals(new Known(Domain::string(22, Collation::binary())), $operation->facts->scalar($double)->type);
-        self::assertEquals(new Known(Domain::string(12, Collation::binary())), $operation->facts->scalar($binary)->type);
+        self::assertEquals(new Known(Domain::string(8, Collation::binary())), $integer->scalarInformation()->type);
+        self::assertEquals(new Known(Domain::string(22, Collation::binary())), $double->scalarInformation()->type);
+        self::assertEquals(new Known(Domain::string(12, Collation::binary())), $binary->scalarInformation()->type);
     }
 
 

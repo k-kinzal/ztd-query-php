@@ -63,8 +63,7 @@ final class CommandPrefix
             } catch (AnalysisException $failure) {
                 return (new Syntax())->error($failure, $statement, $session->settings()->release(), $session->following);
             }
-            $model = $operation instanceof \SqlSemantics\Statement\Operation ? $operation->statement : $operation;
-            $earlier = $model instanceof \SqlSemantics\Statement\Statement ? $this->completed($model, $tokens[$index + 1] ?? null, $statement, $session) : null;
+            $earlier = $this->completed($operation, $tokens[$index + 1] ?? null, $statement, $session);
             if ($earlier !== null) {
                 return $earlier;
             }
@@ -90,7 +89,7 @@ final class CommandPrefix
         } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
             return null;
         }
-        foreach ($operation instanceof \SqlSemantics\Statement\Operation ? $operation->facts->diagnostics : [] as $problem) {
+        foreach ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation->statementInformation()->diagnostics : [] as $problem) {
             if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable) {
                 return (new RoutinePrefix())->database($statement, $end, $session)
                     ?? (new \MySqlMemory\Session\CacheOptions())->undeclared((new \MySqlMemory\Session\Problem\Errors())->error($problem, $session), $statement, $session);

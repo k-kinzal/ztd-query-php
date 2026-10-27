@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,7 +38,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DateArithmetic implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $subtract Whether the interval is subtracted (DATE_SUB)
@@ -47,8 +47,11 @@ final class DateArithmetic implements Scalar
      * @param Scalar $quantity The number of units
      * @param IntervalUnit $unit The unit
      */
-    public function __construct(public readonly bool $subtract, public readonly Scalar $date, public readonly Scalar $quantity, public readonly IntervalUnit $unit)
+    public function __construct(public readonly bool $subtract, public readonly Scalar $date, public readonly Scalar $quantity, public readonly IntervalUnit $unit, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

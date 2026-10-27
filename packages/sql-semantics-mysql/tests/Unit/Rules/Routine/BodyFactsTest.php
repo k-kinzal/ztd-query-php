@@ -28,7 +28,7 @@ final class BodyFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN SELECT y; SELECT 1; SELECT z; END');
 
-        self::assertSame(['Column y does not exist.', 'Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column y does not exist.', 'Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testStatementResolvesAVariableInANestedQuery(): void
@@ -36,7 +36,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = x; END', [$table]);
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -46,12 +46,12 @@ final class BodyFactsTest extends TestCase
         self::assertInstanceOf(Select::class, $select);
         $where = $select->where;
         self::assertInstanceOf(Comparison::class, $where);
-        $resolution = $operation->facts->scalar($where->right)->resolution;
+        $resolution = $where->right->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->facts->diagnostics));
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->diagnostics()));
     }
 
     public function testStatementResolvesAVariableInAnInspectedStatement(): void
@@ -59,16 +59,16 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN DECLARE x INT; UPDATE t SET a = x; END', [$table]);
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateEvent::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $update = $block->statements[0];
         self::assertInstanceOf(Update::class, $update);
-        $resolution = $operation->facts->scalar($update->assignments[0]->value)->resolution;
+        $resolution = $update->assignments[0]->value->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -81,7 +81,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -105,7 +105,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -125,7 +125,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**

@@ -158,7 +158,7 @@ final class Windowing
         if ($expression instanceof OutputRead) {
             return $domain;
         }
-        $stored = (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->plainStored($select, $field->expression, $domain->resolved(), $this->planner->settings->release(), $this->planner->compiler->facts);
+        $stored = (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->plainStored($select, $field->expression, $domain->resolved(), $this->planner->settings->release());
         if (($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || $domain->kind->temporal()) && $field->expression !== null && ($stored || (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression])) && $field->type instanceof \SqlSemantics\Statement\Type\Known && $field->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
             return \MySqlMemory\Typing\Domain::of($field->type->descriptor, $domain->nullable);
         }
@@ -302,7 +302,7 @@ final class Windowing
             if (self::windowed($node)) {
                 return true;
             }
-            $resolution = ($node instanceof ColumnUse || $node instanceof OutputOrdinal) && $facts->covers($node) ? $facts->scalar($node)->resolution : null;
+            $resolution = ($node instanceof ColumnUse || $node instanceof OutputOrdinal) && $node->hasBinding() ? $node->scalarInformation()->resolution : null;
             if ($resolution instanceof AliasTarget && $resolution->field->expression !== null && $this->reads($resolution->field->expression)) {
                 return true;
             }

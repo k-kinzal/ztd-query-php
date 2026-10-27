@@ -33,7 +33,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a FROM t WHERE b = 1 ORDER BY c')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a FROM t WHERE b = 1 ORDER BY c'));
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
         self::assertSame([['field list', [1, 0]], ['where clause', [2, 1]], ['order clause', [6, 0, 0]]], array_values($locator->places));
@@ -43,7 +43,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $locator = (new Locator())->statement($session->analyze('TABLE t ORDER BY x')->statement);
+        $locator = (new Locator())->statement($session->analyze('TABLE t ORDER BY x'));
 
         self::assertSame(['order clause'], array_column(array_values($locator->places), 0));
     }
@@ -52,7 +52,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a FROM (SELECT b FROM t) AS s JOIN t AS u ON u.c = 1 WHERE a = 2 GROUP BY a HAVING a > 0')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a FROM (SELECT b FROM t) AS s JOIN t AS u ON u.c = 1 WHERE a = 2 GROUP BY a HAVING a > 0'));
 
         self::assertSame(['b', 'a', 'a', 'c', 'a', 'a'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
         self::assertSame(['field list', 'field list', 'where clause', 'on clause', 'group statement', 'having clause'], array_column(array_values($locator->places), 0));
@@ -62,7 +62,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('UPDATE t SET a = b WHERE c = 1 ORDER BY a')->statement);
+        $locator = (new Locator())->statement($session->analyze('UPDATE t SET a = b WHERE c = 1 ORDER BY a'));
 
         self::assertSame(['c', 'a', 'b', 'a'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
         self::assertSame([['where clause', [3, 1]], ['field list', [5, 0]], ['field list', [6, 0]], ['order clause', [7, 0, 0]]], array_values($locator->places));
@@ -72,8 +72,8 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $rows = (new Locator())->statement($session->analyze('INSERT INTO t (a) VALUES (b) ON DUPLICATE KEY UPDATE c = a')->statement);
-        $query = (new Locator())->statement($session->analyze('INSERT INTO t (a) SELECT b FROM t ON DUPLICATE KEY UPDATE c = 1')->statement);
+        $rows = (new Locator())->statement($session->analyze('INSERT INTO t (a) VALUES (b) ON DUPLICATE KEY UPDATE c = a'));
+        $query = (new Locator())->statement($session->analyze('INSERT INTO t (a) SELECT b FROM t ON DUPLICATE KEY UPDATE c = 1'));
 
         self::assertSame(['a', 'b', 'c', 'a'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $rows->nodes()));
         self::assertSame(['a', 'c', 'b'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $query->nodes()));
@@ -83,10 +83,15 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $update = $session->analyze('UPDATE t SET a = b, c = 1')->statement;
+        $update = $session->analyze('UPDATE t SET a = b, c = 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $update);
         $locator = new Locator();
-        $locator->assignments($update->assignments, [4]);
+        self::assertCount(2, $update->assignments);
+        $first = $update->assignments[0];
+        $second = $update->assignments[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Assignment::class, $first);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Assignment::class, $second);
+        $locator->assignments([$first, $second], [4]);
 
         self::assertSame([['field list', [4, 0, 0]], ['field list', [4, 0, 1]], ['field list', [4, 1, 0]]], array_values($locator->places));
     }
@@ -95,7 +100,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('DELETE FROM t WHERE c = 1 ORDER BY a')->statement);
+        $locator = (new Locator())->statement($session->analyze('DELETE FROM t WHERE c = 1 ORDER BY a'));
 
         self::assertSame(['c', 'a'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
         self::assertSame([['where clause', [2, 1]], ['order clause', [6, 0, 0]]], array_values($locator->places));
@@ -105,7 +110,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a, (SELECT b FROM t AS x) FROM t')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a, (SELECT b FROM t AS x) FROM t'));
 
         self::assertSame([['field list', [1, 0]], ['field list', [1, 1, 0, 1, 0]]], array_values($locator->places));
     }
@@ -135,7 +140,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('INSERT INTO t VALUES (1, 2, 3)')->statement);
+        $locator = (new Locator())->statement($session->analyze('INSERT INTO t VALUES (1, 2, 3)'));
 
         self::assertSame([], $locator->nodes());
     }
@@ -144,7 +149,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a FROM t HAVING b > 0')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a FROM t HAVING b > 0'));
 
         self::assertSame(['having clause', [5, 1]], $locator->place($locator->nodes()[1]));
     }
@@ -153,7 +158,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM t WHERE b = 1')->statement;
+        $statement = $session->analyze('SELECT a FROM t WHERE b = 1');
         $located = (new Locator())->statement($statement);
 
         self::assertNull((new Locator())->place($located->nodes()[0]));
@@ -163,7 +168,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM t WHERE b = c')->statement;
+        $statement = $session->analyze('SELECT a FROM t WHERE b = c');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -177,7 +182,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM t ORDER BY b, c')->statement;
+        $statement = $session->analyze('SELECT a FROM t ORDER BY b, c');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -192,7 +197,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
-        $statement = $session->analyze('SELECT a FROM t WHERE b')->statement;
+        $statement = $session->analyze('SELECT a FROM t WHERE b');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -208,7 +213,7 @@ final class LocatorTest extends TestCase
     public function testRecordKeepsACastToAnArray(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $statement = $session->analyze('SELECT 1 FROM DUAL WHERE CAST(1 AS SIGNED ARRAY)')->statement;
+        $statement = $session->analyze('SELECT 1 FROM DUAL WHERE CAST(1 AS SIGNED ARRAY)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -224,7 +229,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM t WHERE b = 1 LIMIT 1')->statement;
+        $statement = $session->analyze('SELECT a FROM t WHERE b = 1 LIMIT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -238,7 +243,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT f(a) FROM t GROUP BY 1')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT f(a) FROM t GROUP BY 1'));
 
         self::assertSame([FunctionCall::class, ColumnUse::class, OutputOrdinal::class], array_map(static fn (object $node): string => $node::class, $locator->nodes()));
         self::assertSame(['field list', 'field list', 'group statement'], array_map(static fn (array $place): string => $place[0], array_values($locator->places)));
@@ -248,7 +253,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a FROM t WHERE NOW(3)')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a FROM t WHERE NOW(3)'));
 
         self::assertSame([[ColumnUse::class], [ClockCall::class]], [array_map(static fn (object $node): string => $node::class, $locator->nodes()), array_map(static fn (object $node): string => $node::class, $locator->clocks())]);
         self::assertSame(['field list', 'where clause'], array_map(static fn (array $place): string => $place[0], array_values($locator->places)));
@@ -258,7 +263,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a IN (SELECT b FROM t), a = ALL (SELECT b FROM t) FROM t')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a IN (SELECT b FROM t), a = ALL (SELECT b FROM t) FROM t'));
 
         self::assertSame([['IN/ALL/ANY subquery', [1, 0, 1]], ['field list', [1, 0, 0, 1, 0]], ['IN/ALL/ANY subquery', [1, 1, 2]], ['field list', [1, 1, 0, 1, 0]]], array_values($locator->places));
         self::assertCount(2, $locator->predicates);
@@ -268,7 +273,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT 1 IN (TABLE t), 1 = ANY (TABLE t), 1 <> ALL (TABLE t), 1 = ALL (TABLE t), 1 > ANY (TABLE t)')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT 1 IN (TABLE t), 1 = ANY (TABLE t), 1 <> ALL (TABLE t), 1 = ALL (TABLE t), 1 > ANY (TABLE t)'));
 
         self::assertSame([false, false, false, true, true], array_map(static fn (array $predicate): bool => Locator::early($predicate[0]), $locator->predicates));
     }
@@ -276,7 +281,7 @@ final class LocatorTest extends TestCase
     public function testStatementLocatesACastToAnArrayOutsideAFunctionalIndex(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $locator = (new Locator())->statement($session->analyze('SELECT CAST(1 AS SIGNED ARRAY), CAST(2 AS UNSIGNED)')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT CAST(1 AS SIGNED ARRAY), CAST(2 AS UNSIGNED)'));
 
         self::assertCount(1, $locator->arrays);
         self::assertSame('field list', $locator->arrays[0][1]);
@@ -286,7 +291,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT a, t.* FROM t')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT a, t.* FROM t'));
 
         self::assertSame([[1, -1]], array_column($locator->wildcards, 1));
     }
@@ -295,7 +300,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT)');
-        $statement = $session->analyze('SELECT a IN (SELECT b FROM t) FROM t')->statement;
+        $statement = $session->analyze('SELECT a IN (SELECT b FROM t) FROM t');
 
         self::assertSame([['IN/ALL/ANY subquery', [1, 0, 0]], ['field list', [1, 0, 1, 1, 0]]], array_values((new Locator(true))->statement($statement)->places));
         self::assertSame([['IN/ALL/ANY subquery', [1, 0, 1]], ['field list', [1, 0, 0, 1, 0]]], array_values((new Locator())->statement($statement)->places));
@@ -305,7 +310,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS (v), v AS ()')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS (v), v AS ()'));
 
         self::assertSame([['w', [1, 0]], ['v', [6, PHP_INT_MAX, PHP_INT_MAX]]], array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows));
     }
@@ -313,7 +318,7 @@ final class LocatorTest extends TestCase
     public function testRecordLocatesASetOperationAfterItsRightOperand(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $locator = (new Locator())->statement($session->analyze('SELECT 1 UNION SELECT 2')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT 1 UNION SELECT 2'));
 
         self::assertCount(1, $locator->sets);
         self::assertSame(PHP_INT_MAX, $locator->sets[0][1][count($locator->sets[0][1]) - 1]);
@@ -322,7 +327,7 @@ final class LocatorTest extends TestCase
     public function testSelectLocatesAStarWithoutTablesBeforeTheItems(): void
     {
         $session = (new Instance())->connect();
-        $locator = (new Locator())->statement($session->analyze('SELECT EXISTS (SELECT *)')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT EXISTS (SELECT *)'));
 
         self::assertCount(1, $locator->stars);
     }
@@ -331,7 +336,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $locator = (new Locator())->statement($session->analyze('SELECT RANK() OVER (ORDER BY a) FROM t WINDOW w AS (PARTITION BY c) ORDER BY b')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT RANK() OVER (ORDER BY a) FROM t WINDOW w AS (PARTITION BY c) ORDER BY b'));
 
         self::assertSame([['order clause', [6, 0, 0]], ['window partition by', [6, PHP_INT_MAX, 0, 0, 0, 0]], ['window order by', [6, PHP_INT_MAX, 1, 1, 0, 0]]], array_values($locator->places));
     }
@@ -340,7 +345,7 @@ final class LocatorTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $statement = $session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS ()')->statement;
+        $statement = $session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS ()');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
         $statement = $statement->query;
         self::assertInstanceOf(Select::class, $statement);
@@ -377,8 +382,8 @@ final class LocatorTest extends TestCase
     public function testSelectChecksTheIndexHintsOfABlockBeforeItsDerivedTables(): void
     {
         $session = (new Instance())->connect();
-        $locator = (new Locator())->statement($session->analyze('SELECT * FROM t JOIN (SELECT 1 FROM u) AS x')->statement);
-        $legacy = (new Locator(false, \SqlSemantics\Contract\GrammarRelease::MySql5651))->statement($session->analyze('SELECT * FROM t')->statement);
+        $locator = (new Locator())->statement($session->analyze('SELECT * FROM t JOIN (SELECT 1 FROM u) AS x'));
+        $legacy = (new Locator(false, \SqlSemantics\Contract\GrammarRelease::MySql5651))->statement($session->analyze('SELECT * FROM t'));
 
         self::assertSame([['t', [-1]], ['u', [0, 0, -1]]], array_map(static fn (array $entry): array => [$entry[0]->name->name->value, $entry[1]], $locator->hinted));
         self::assertSame([0, PHP_INT_MAX], $legacy->hinted[0][1]);

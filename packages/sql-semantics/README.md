@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-sql--semantics-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics analyzes SQL of one database release into an immutable, typed semantic model implementing `AnalyzedStatement`. MySQL transaction control and its migrated INSERT form return concrete statement values; the other families currently return `Operation`, which combines the statement structure with facts derived against an explicit declaration context. Each result reconstructs SQL from semantic values. Before publication, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input. See each dialect package for its concrete return types.
+SQL Semantics analyzes SQL of one database release into concrete statement values implementing `AnalyzedStatement`. The statement and its nested SQL occurrences own their resolved types, names, row shapes, conditions and optional source ranges. Each result reconstructs SQL from those semantic values. Construction checks the value graph and resolves its operands without rendering or parsing SQL; independent reconstruction and execution properties check the resulting model. See each dialect package for its concrete return types.
 
 The model is read-only. There is no API that edits an operation; another statement is analyzed from new SQL or built from explicit inputs, and it stands on its own. Analysis reads the grammar of the selected release and needs no database connection; it does not execute or simulate statements.
 
@@ -77,7 +77,7 @@ Each package provides its dialect: `SqlSemantics\Platform\MySql\Dialect::MySql`,
 
 ### Analyzing a statement
 
-`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into an `AnalyzedStatement`. The query examples below use the `Operation` API; transaction control and migrated MySQL INSERT values expose their operands directly.
+`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into an `AnalyzedStatement`. Every result exposes the operands of its concrete SQL statement type directly.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -87,12 +87,12 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 $semantics = new Semantics(Dialect::Sqlite);
 $query = $semantics->analyze('select   id, name  from users -- active users');
 
-$query->statement instanceof Select; // => true
+$query instanceof Select; // => true
 $query->toString(); // => 'SELECT id, name FROM users'
 $semantics->profile()->grammar->value; // => 'sqlite-3.47.2'
 ```
 
-`$query->statement` is the concrete statement structure of the database package; `toString()` is SQL rendered from that structure, never the analyzed text. See [Rendering](docs/rendering.md).
+`$query` is the concrete statement of the database package; `toString()` is SQL rendered from that structure, never the analyzed text. See [Rendering](docs/rendering.md).
 
 ### Reading fields, types and resolutions
 
@@ -149,7 +149,7 @@ $semantics = new Semantics(Dialect::Sqlite);
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $query = $semantics->analyze('SELECT nickname FROM users', [$users]);
 
-$query->facts->diagnostics[0]->message(); // => 'Column nickname does not exist.'
+$query->diagnostics()[0]->message(); // => 'Column nickname does not exist.'
 $query->field('nickname')->resolution instanceof MissingColumn; // => true
 $query->field('nickname')->type instanceof Invalid; // => true
 $query->toString(); // => 'SELECT nickname FROM users'
@@ -171,7 +171,7 @@ $table = $users->declarations()[0];
 $query = $semantics->analyze('SELECT name FROM users', [$users]);
 
 $query->field('name')->column() === $table->columns[1]; // => true
-$query->facts->relation($query->inputRelation())->table->table === $table; // => true
+$query->inputRelation()->relationInformation()->table->table === $table; // => true
 ```
 
 Declarations can also be constructed from your own catalog information; see [Contexts](docs/contexts.md#declarations).
@@ -200,14 +200,14 @@ $open->field('name')->type->missing[0]->describe(); // => 'the declaration of re
 $open->field('name')->resolution instanceof ConditionalColumn; // => true
 
 $complete = $semantics->analyze('SELECT name FROM users', []);
-$complete->facts->diagnostics[0]->message(); // => 'Relation users does not exist.'
+$complete->diagnostics()[0]->message(); // => 'Relation users does not exist.'
 ```
 
 A fact that depends on missing information carries the missing input; it is never used for a rule that is not implemented. See [Contexts](docs/contexts.md) for search paths, name comparison, conflicts and completeness.
 
 ### Scripts
 
-An input with several statements is one operation whose statement is a `Script`. `analyzeAll()` analyzes each statement into its own operation, and `split()` finds the statement boundaries as the database does. Every statement sees the same explicit context: a CREATE earlier in a script declares nothing for the statements after it.
+For a dialect accepting several statements in one input, that result is a concrete `Script`. `analyzeAll()` analyzes each statement into its own operation, and `split()` finds the statement boundaries as the database does. Every statement sees the same explicit context: a CREATE earlier in a script declares nothing for the statements after it.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -217,9 +217,9 @@ use SqlSemantics\Statement\Script;
 $semantics = new Semantics(Dialect::Sqlite);
 $sql = 'CREATE TABLE t (a INTEGER); SELECT a FROM t';
 
-$semantics->analyze($sql, [])->statement instanceof Script; // => true
+$semantics->analyze($sql, []) instanceof Script; // => true
 count($semantics->analyzeAll($sql, [])); // => 2
-$semantics->analyzeAll($sql, [])[1]->facts->diagnostics[0]->message(); // => 'Relation t does not exist.'
+$semantics->analyzeAll($sql, [])[1]->diagnostics()[0]->message(); // => 'Relation t does not exist.'
 $semantics->split("SELECT 1; SELECT ';'"); // => ['SELECT 1;', " SELECT ';'"]
 ```
 
@@ -227,7 +227,7 @@ To analyze a statement against the table a script creates, analyze the CREATE fi
 
 ### Building a new root
 
-`new Operation($context, $statement)` derives, renders and checks a new root from a context and an explicit statement structure. Structure values hold decoded names and exact literals and no bindings, so they are the inputs of a construction; the database package documents the constructor of each class.
+`Semantics::fromStatement($context, $statement)` resolves a new concrete statement from explicit operands and declarations. It neither renders nor parses SQL. The returned occurrences own their bindings; the input remains available for another construction. The database package documents the constructor of each class.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -240,13 +240,12 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 $semantics = new Semantics(Dialect::Sqlite);
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $query = $semantics->analyze('SELECT id FROM users', [$users]);
 
-$other = new Operation($query->context, new Select(
+$other = Semantics::fromStatement($semantics->context([$users]), new Select(
     [new ResultColumn(new ColumnUse(new Name('name')), new Name('label'))],
     new TableInput($query->singleNamedInput()->name()),
     new Binary(BinaryOperator::Greater, new ColumnUse(new Name('id')), new IntegerLiteral('10')),
@@ -284,7 +283,7 @@ $semantics->analyze("SELECT count(*) FROM {$table}")->singleNamedInput()->name()
 The model has no editing API. Nothing adds or removes a field, replaces a WHERE clause, renames an alias, rewrites with a visitor, moves a bound part of one operation into another, or re-resolves an existing operation against a different context, not even through methods that return a new value. To obtain a different statement:
 
 - analyze new SQL text, using names read from the model and `SqlNames` where needed, or
-- build a new root with `new Operation(...)` from explicit structure values.
+- build a new statement with `Semantics::fromStatement(...)` from explicit operands.
 
 Both paths check the new root on its own. Neither establishes how the new statement relates to an earlier one; that comparison is yours to make. To analyze the same SQL against other declarations, analyze it again with the other context.
 
@@ -307,7 +306,7 @@ Except for `SqlSemantics\Construction\RejectedInput`, these exceptions are in `S
 
 ## Documentation
 
-- [Model](docs/model.md) - Operations, statement structure and facts, fields and lookups, shapes and open stars, resolutions, types and nullability, diagnostics, and missing inputs
+- [Model](docs/model.md) - Concrete statements, local semantic information, fields and lookups, shapes and open stars, resolutions, types and nullability, diagnostics, and missing inputs
 - [Contexts](docs/contexts.md) - Analysis contexts: declarations, relation kinds and generated columns, identity and conflicts, completeness, search paths, and name comparison
 - [Rendering](docs/rendering.md) - How SQL is rendered from the model, the checks before publication, what the rendered SQL does not preserve, and the spelling layouts of result columns
 - [Guarantees](docs/guarantees.md) - What the package guarantees, the trust boundary, rule records, what tests and fuzzing establish, and known limitations

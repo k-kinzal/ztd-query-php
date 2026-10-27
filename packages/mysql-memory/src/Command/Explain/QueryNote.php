@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
@@ -33,20 +33,20 @@ final class QueryNote
     /**
      * Returns the resolved projection note when no filter, grouping or ordering rewrite is required.
      */
-    public function projection(Operation $operation, Session $session, Connection $connection, bool $impossible): ?string
+    public function projection(MySqlStatement $operation, Session $session, Connection $connection, bool $impossible): ?string
     {
-        $explain = $operation->statement;
+        $explain = $operation;
         $query = $explain instanceof Explain && $explain->statement instanceof QueryRoot ? $explain->statement->query : null;
         if (!$query instanceof Select || !$this->simple($query, true)) {
             return null;
         }
-        $writer = new ViewText($operation->facts, '', $explain->database->value ?? $session->variables->database);
-        $compiler = (new Planner($query, $operation->facts, $session->settings(), $connection, $session->instance->dictionary))->compiler;
+        $writer = new ViewText($operation->statementInformation(), '', $explain->database->value ?? $session->variables->database);
+        $compiler = (new Planner($query, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session)))->compiler;
         if ($query->where !== null && $compiler->constancy($query->where) !== \MySqlMemory\Evaluation\Compile\Constancy::Resolved) {
             return null;
         }
         $items = [];
-        foreach ($operation->facts->query($query)->projection as $field) {
+        foreach ($query->queryInformation()->projection as $field) {
             if (!$field instanceof Field) {
                 return null;
             }

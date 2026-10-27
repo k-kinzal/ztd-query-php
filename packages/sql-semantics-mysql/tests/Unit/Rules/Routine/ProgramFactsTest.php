@@ -31,13 +31,13 @@ final class ProgramFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE d.p() DELETE t FROM d.t');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        $delete = $operation->statement->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        $delete = $operation->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $delete);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertSame($delete->tables[0], $operation->facts->referencedRelation($delete->targets[0]));
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable::class, $semantics->analyze('CREATE PROCEDURE d.p() DELETE t FROM e.t')->facts->diagnostics[0]);
+        self::assertSame([], $operation->diagnostics());
+        self::assertSame($delete->tables[0], $delete->input->relation($delete->targets[0]));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable::class, $semantics->analyze('CREATE PROCEDURE d.p() DELETE t FROM e.t')->diagnostics()[0]);
     }
 
     public function testRoutineRejectsAnImplicitBinaryReturnCollation(): void
@@ -47,16 +47,16 @@ final class ProgramFactsTest extends TestCase
         $problem = (new ProgramFacts())->returnCollation($type, \SqlSemantics\Contract\GrammarRelease::MySql847);
         self::assertNotNull($problem);
         self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", $problem->message());
-        self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS NCHAR(2) BINARY RETURN 1')->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS CHAR(2) ASCII BINARY RETURN 1')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS NCHAR(2) BINARY RETURN 1')->diagnostics());
+        self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS CHAR(2) ASCII BINARY RETURN 1')->diagnostics());
     }
 
     public function testRoutineRejectsNationalBinaryReturnsOnLegacyReleases(): void
     {
         $sql = 'CREATE FUNCTION f() RETURNS NCHAR(2) BINARY RETURN 1';
 
-        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.6.51'))->analyze($sql)->facts->diagnostics[0]->message());
-        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.7.44'))->analyze($sql)->facts->diagnostics[0]->message());
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.6.51'))->analyze($sql)->diagnostics()[0]->message());
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.7.44'))->analyze($sql)->diagnostics()[0]->message());
     }
 
     public function testReturnCollationDistinguishesNationalAndNamedAttributes(): void
@@ -96,7 +96,7 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerRoutineResolvesTheParametersInTheBody')]
     public function testRoutineResolvesTheParametersInTheBody(string $release, string $sql): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql, $release))->analyze($sql)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql, $release))->analyze($sql)->diagnostics());
     }
 
     /**
@@ -119,7 +119,7 @@ final class ProgramFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -133,7 +133,7 @@ final class ProgramFactsTest extends TestCase
     #[DataProvider('providerRoutineAcceptsAFunctionWithAReturnAnywhere')]
     public function testRoutineAcceptsAFunctionWithAReturnAnywhere(string $sql): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze($sql)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze($sql)->diagnostics());
     }
 
     /**
@@ -156,10 +156,10 @@ final class ProgramFactsTest extends TestCase
     public function testRoutineDerivesNothingFromExternalCode(string $sql, array $messages): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
-        self::assertInstanceOf(CreateFunction::class, $operation->statement);
-        self::assertInstanceOf(ExternalBody::class, $operation->statement->body);
+        self::assertInstanceOf(CreateFunction::class, $operation);
+        self::assertInstanceOf(ExternalBody::class, $operation->body);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -186,7 +186,7 @@ final class ProgramFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -207,7 +207,7 @@ final class ProgramFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON u FOR EACH ROW SET @x = 1', [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame(['Relation u does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Relation u does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -219,7 +219,7 @@ final class ProgramFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -244,7 +244,7 @@ final class ProgramFactsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', [$table, $view])->diagnostics()));
     }
 
     /**

@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the hints of a query block
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT /*+ BKA(t) MAX_EXECUTION_TIME(5) *' . '/ 1');
- *     array_map(static fn ($hint) => $hint->text(), $query->statement->query->hints) // => ['BKA(`t`)', 'MAX_EXECUTION_TIME(5)']
+ *     array_map(static fn ($hint) => $hint->text(), $query->query->hints) // => ['BKA(`t`)', 'MAX_EXECUTION_TIME(5)']
  */
 final class HintComment
 {

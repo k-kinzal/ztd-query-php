@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A logical AND, OR or XOR of two operands, in the order written (`Item_cond_and`, `Item_cond_or`, `Item_func_xor`).
@@ -34,14 +33,15 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading both operands of a conjunction
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a && b');
- *     [$query->statement->query->where->operator->value, $query->statement->query->where->symbolic, $query->toString()] // => ['AND', true, 'SELECT a FROM t WHERE a && b']
+ *     [$query->query->where->operator->value, $query->query->where->symbolic, $query->toString()] // => ['AND', true, 'SELECT a FROM t WHERE a && b']
  * @example Refusing an operand that would associate differently
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a OR b')->statement->query->where;
+ *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a OR b')->query->where;
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('c'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Logical implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param LogicalOperator $operator The operator
@@ -49,8 +49,11 @@ final class Logical implements Scalar
      * @param Scalar $right The right operand
      * @param bool $symbolic Whether OR is written `||` or AND `&&`
      */
-    public function __construct(public readonly LogicalOperator $operator, public readonly Scalar $left, public readonly Scalar $right, public readonly bool $symbolic = false)
+    public function __construct(public readonly LogicalOperator $operator, public readonly Scalar $left, public readonly Scalar $right, public readonly bool $symbolic = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$symbolic || $operator !== LogicalOperator::Xor, 'XOR has no symbolic spelling.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left operand of ' . $operator->value . ' needs a grouping to keep its place.');

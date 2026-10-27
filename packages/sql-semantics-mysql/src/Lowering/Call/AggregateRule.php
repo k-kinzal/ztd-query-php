@@ -137,7 +137,9 @@ final class AggregateRule
             \SqlSemantics\Diagnostic\Check::invariant($arguments !== [], 'A retained aggregate has arguments.');
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate($function, $arguments, $distinct, $all, $over);
         }
-        /** @var list<Scalar> $arguments */
+        /**
+ * @var list<Scalar> $arguments
+ */
         return $this->windowed(new Aggregate($function, $arguments, $distinct, $all), $over);
     }
 

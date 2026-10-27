@@ -22,7 +22,9 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
  */
 final class VariablePrefix
 {
-    /** @var list<array<string, array<string, true>>> Names in each open lexical block */
+    /**
+ * @var list<array<string, array<string, true>>> Names in each open lexical block
+ */
     private array $frames = [];
 
     /**

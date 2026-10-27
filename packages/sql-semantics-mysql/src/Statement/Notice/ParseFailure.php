@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the place of an unknown collation
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT BINARY ('a' COLLATE nope)");
- *     [$query->facts->warnings[0]->message(), $query->facts->warnings[1]->message()] // => ["Unknown collation: 'nope'", "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"]
+ *     [$query->warnings()[0]->message(), $query->warnings()[1]->message()] // => ["Unknown collation: 'nope'", "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"]
  */
 final class ParseFailure implements Warning
 {

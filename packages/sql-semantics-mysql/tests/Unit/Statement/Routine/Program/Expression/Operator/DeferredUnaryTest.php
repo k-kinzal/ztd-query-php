@@ -55,11 +55,11 @@ final class DeferredUnaryTest extends TestCase
         $sql = '-' . $cast;
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE p() SELECT ' . $sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->statement->body);
-        $item = $operation->statement->body->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->body);
+        $item = $operation->body->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $item);
-        self::assertEquals($value, $item->expression);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($value, $item->expression));
         self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
     }
     public function testGroupingCannotHideConflictingNegationModes(): void

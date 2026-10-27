@@ -69,9 +69,9 @@ final class ModifierRuleTest extends TestCase
     public function testModifierRetainsTheStandaloneValidationCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t WITHOUT VALIDATION');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation->statement);
-        self::assertTrue($operation->statement->hasExecutionCondition());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
     }
 
     public function testValidationLowersTheOptionOfExchange(): void

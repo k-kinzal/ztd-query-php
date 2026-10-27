@@ -20,7 +20,7 @@ final class GenerationCondition
     /**
      * Produces the retained condition after destination and column checks.
      */
-    public function error(ColumnDefinition $column, string $database, string $table, bool $temporaryFile = false, ?\SqlSemantics\Statement\Fact\Facts $facts = null, ?\MySqlMemory\Session\Session $session = null): SqlError
+    public function error(ColumnDefinition $column, string $database, string $table, bool $temporaryFile = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts = null, ?\MySqlMemory\Session\Session $session = null): SqlError
     {
         $specification = $column->specification;
         \SqlSemantics\Diagnostic\Check::invariant($specification instanceof DeferredGeneratedColumn, 'An invoked generation condition has a deferred declaration.');
@@ -59,7 +59,7 @@ final class GenerationCondition
      *
      * @param list<ColumnDefinition> $columns Complete declarations in written order
      */
-    public function columns(array $columns, string $database, string $table, bool $temporaryFile = false, ?\SqlSemantics\Statement\Fact\Facts $facts = null, ?\MySqlMemory\Session\Session $session = null): SqlError
+    public function columns(array $columns, string $database, string $table, bool $temporaryFile = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts = null, ?\MySqlMemory\Session\Session $session = null): SqlError
     {
         $first = null;
         foreach ($columns as $column) {

@@ -176,7 +176,7 @@ final class ErrorsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $session->query('CREATE TABLE t (a INT)');
-        $diagnostic = $session->analyze('SELECT x FROM t')->facts->diagnostics[0];
+        $diagnostic = $session->analyze('SELECT x FROM t')->statementInformation()->diagnostics[0];
         $error = (new Errors())->error($diagnostic, $session, 'having clause');
 
         self::assertSame(1054, $error->getCode());
@@ -637,7 +637,7 @@ final class ErrorsTest extends TestCase
     public function testWriteNamesTheStatementOfATargetThatIsNotUpdatable(): void
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
-        $update = $session->analyze('UPDATE t SET a = 1')->statement;
+        $update = $session->analyze('UPDATE t SET a = 1');
         self::assertInstanceOf(Update::class, $update);
 
         self::assertSame('The target table d of the UPDATE is not updatable', (new Errors())->write(new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('d')), $update)->getMessage());
@@ -690,7 +690,7 @@ final class ErrorsTest extends TestCase
     public function testLocatedFollowsTheErrorOfAColumnOfMatchWithTheErrorOfAgainst(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $statement = $session->analyze('SELECT 1')->statement;
+        $statement = $session->analyze('SELECT 1');
         $refusal = \MySqlMemory\Error\Family\DataError::NoDefaultForField->error('a');
 
         $matched = (new Errors())->located(new \SqlSemantics\Statement\Reference\Column\MissingColumn(new Name('x')), 'where clause', true, $session, $statement);

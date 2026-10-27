@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * name type [FORMAT JSON] [PATH path] [wrapper] [quotes] [behavior]: a JSON_TABLE column read from the row.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a value column
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (a integer PATH '$.a'))");
- *     [$query->statement->from->columns[0]->path->value, $query->field(0)->type->descriptor->name()] // => ['$.a', 'integer']
+ *     [$query->from->columns[0]->path->value, $query->field(0)->type->descriptor->name()] // => ['$.a', 'integer']
  */
 final class JsonValueColumn implements JsonTableColumn
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
@@ -47,6 +46,7 @@ final class JsonValueColumn implements JsonTableColumn
         public readonly ?Clause $wrapper = null,
         public readonly ?Clause $quotes = null,
         public readonly ?Clause $behavior = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
     }
 

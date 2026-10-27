@@ -89,10 +89,6 @@ final class AccessTest extends TestCase
         $delete = $session->analyze('DELETE FROM d.t');
         $update = $session->analyze('UPDATE t JOIN u ON t.a = u.a SET t.a = 1');
         $select = $session->analyze('SELECT 1');
-
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $delete);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $update);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $select);
         self::assertSame([['t'], [null], []], [array_map(static fn ($name): ?string => $name?->name->value, $access->written($delete)), $access->written($update), $access->written($select)]);
     }
 }

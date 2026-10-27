@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A role named directly, or designated as PUBLIC, CURRENT_ROLE, CURRENT_USER or SESSION_USER.
@@ -28,13 +27,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RoleSpec implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RoleSpecKind $kind How the role is designated
      * @param Name|null $name The role name; given exactly when the role is named
      */
-    public function __construct(public readonly RoleSpecKind $kind, public readonly ?Name $name = null)
+    public function __construct(public readonly RoleSpecKind $kind, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($kind === RoleSpecKind::Named) === ($name !== null), 'A role specification has a name exactly when it names a role.');
         Check::input($name === null || ($name->value !== 'public' && $name->value !== 'none'), 'The words public and none cannot name a role.');

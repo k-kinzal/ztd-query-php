@@ -18,7 +18,7 @@ final class ShowCreateFunctionTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE FUNCTION db.x');
-        self::assertInstanceOf(ShowCreateFunction::class, $show->statement);
+        self::assertInstanceOf(ShowCreateFunction::class, $show);
         self::assertSame('Function', $show->field(0)->name?->value);
     }
 

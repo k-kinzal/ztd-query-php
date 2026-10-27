@@ -19,18 +19,18 @@ final class RefusedInsertQueryTest extends TestCase
     public function testProblemRetainsTheValueConstraintInItsWriteEnvelope(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO d.t SELECT ROW(1, 2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertQuery::class, $operation->statement->body);
-        $problem = new RefusedInsertQuery($operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertQuery::class, $operation->body);
+        $problem = new RefusedInsertQuery($operation->body);
         self::assertSame('Operand should contain 1 column(s), not 2.', $problem->problem()->message());
-        self::assertSame($operation->statement->body, $problem->write);
+        self::assertSame($operation->body, $problem->write);
     }    public function testMessageDescribesTheRetainedWriteConstraint(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO d.t SELECT ROW(1, 2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(DeferredInsertQuery::class, $operation->statement->body);
-        $problem = new RefusedInsertQuery($operation->statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertQuery::class, $operation->body);
+        $problem = new RefusedInsertQuery($operation->body);
         self::assertSame('Operand should contain 1 column(s), not 2.', $problem->message());
-        self::assertSame($operation->statement->body, $problem->write);
+        self::assertSame($operation->body, $problem->write);
     }
 }

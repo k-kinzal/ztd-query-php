@@ -61,7 +61,7 @@ final class ViewsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result2);
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);
-        self::assertSame([[1, 0], [['6', '5']]], [\MySqlMemory\Session\Resolution\Views::refresh($schema->views['v'], $session->instance->dictionary, $session->settings()), $result2->rows]);
+        self::assertSame([[1, 0], [['6', '5']]], [\MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($schema->views['v'])->positions, $result2->rows]);
     }
 
     public function testRefreshAllLeavesAnInvalidViewAsItIs(): void
@@ -76,7 +76,7 @@ final class ViewsTest extends TestCase
         $declaration = $schema->views['v']->declaration;
         $session->query('DROP TABLE t');
 
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
+        \MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($schema->views['v']);
 
         self::assertSame($declaration, $schema->views['v']->declaration);
     }
@@ -94,7 +94,7 @@ final class ViewsTest extends TestCase
         self::assertNotNull($view);
         $operation = $session->analyze('SELECT 1');
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
 
         self::assertSame(['a', 'b'], (new Views($planner))->query($view)->names);
     }
@@ -110,7 +110,7 @@ final class ViewsTest extends TestCase
         self::assertNotNull($view);
         $operation = $session->analyze('SELECT 1');
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
 
         self::assertSame(['x'], (new Views($planner))->table($view)->names);
     }
@@ -125,7 +125,7 @@ final class ViewsTest extends TestCase
         $view = $session->instance->dictionary->schema('d')?->views['v'];
         self::assertNotNull($view);
 
-        $columns = Views::stored($view, $session->instance->dictionary)->definition->columns;
+        $columns = Views::stored(\MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($view), $session->instance->dictionary)->definition->columns;
 
         self::assertSame([5, 'q', '0.0', null], [$columns[0]->default->value, $columns[1]->default->value, $columns[2]->default->value, $columns[3]->default->value]);
     }
@@ -134,7 +134,7 @@ final class ViewsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 AS A, 2 AS b');
-        $query = $operation->statement;
+        $query = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
 
@@ -148,11 +148,11 @@ final class ViewsTest extends TestCase
         $session->query('USE d');
         $session->query('CREATE TABLE t (a INT)');
         $operation = $session->analyze('SELECT a FROM t');
-        $query = $operation->statement;
+        $query = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
 
-        self::assertSame(['d.t'], array_keys(Views::tables($operation, $query, 'd')));
+        self::assertSame([$session->instance->dictionary->table('d', 't')?->definition->declaration], Views::tables($operation, $query));
     }
 
     public function testDeclarationAnswersTheDeclarationOfATableOrAView(): void
@@ -177,7 +177,7 @@ final class ViewsTest extends TestCase
         $view = $session->instance->dictionary->schema('d')?->views['v'];
         self::assertNotNull($view);
 
-        self::assertSame([5, null], [Views::baseDefault($view, $session->instance->dictionary, 0)?->value, Views::baseDefault($view, $session->instance->dictionary, 1)]);
+        self::assertSame([5, null], [Views::baseDefault(\MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($view), $session->instance->dictionary, 0)?->value, Views::baseDefault(\MySqlMemory\Session\Statement\Catalog::snapshot($session)->view($view), $session->instance->dictionary, 1)]);
     }
 
     public function testZeroAnswersTheZeroValueOfEachType(): void
@@ -205,7 +205,7 @@ final class ViewsTest extends TestCase
         $view = $s->instance->dictionary->schema('d')->views['v'] ?? null;
         self::assertNotNull($view);
 
-        self::assertSame(['a', 'b', null], [Views::base($view, $s->instance->dictionary, 0)?->name, Views::base($view, $s->instance->dictionary, 1)?->name, Views::base($view, $s->instance->dictionary, 2)?->name]);
+        self::assertSame(['a', 'b', null], [Views::base(\MySqlMemory\Session\Statement\Catalog::snapshot($s)->view($view), $s->instance->dictionary, 0)?->name, Views::base(\MySqlMemory\Session\Statement\Catalog::snapshot($s)->view($view), $s->instance->dictionary, 1)?->name, Views::base(\MySqlMemory\Session\Statement\Catalog::snapshot($s)->view($view), $s->instance->dictionary, 2)?->name]);
         $read1 = $s->query('SHOW COLUMNS FROM v')[0];
         self::assertInstanceOf(ResultSet::class, $read1);
         self::assertSame([['a', 'int', 'NO', '', '0', ''], ['b', 'int', 'YES', '', null, '']], array_slice($read1->rows, 0, 2));

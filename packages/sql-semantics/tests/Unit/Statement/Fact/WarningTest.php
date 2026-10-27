@@ -19,14 +19,14 @@ final class WarningTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT !a, BINARY b FROM t');
 
-        self::assertSame(["'!' is deprecated and will be removed in a future release. Please use NOT instead", "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"], array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame(["'!' is deprecated and will be removed in a future release. Please use NOT instead", "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"], array_map(static fn (Warning $warning): string => $warning->message(), $operation->warnings()));
     }
 
     public function testWarningsAreKeptApartFromProblems(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT !a FROM t', []);
 
-        self::assertCount(1, $operation->facts->warnings);
-        self::assertCount(2, $operation->facts->diagnostics);
+        self::assertCount(1, $operation->warnings());
+        self::assertCount(2, $operation->diagnostics());
     }
 }

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A stored ordering or grouping item whose operand needs invocation-time preparation.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DeferredOrderItem implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowOperand|DeferredOperand $expression The ordering expression
      * @param Direction|null $direction The direction, when written
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null)
+    public function __construct(public readonly RowOperand|DeferredOperand $expression, public readonly ?Direction $direction = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

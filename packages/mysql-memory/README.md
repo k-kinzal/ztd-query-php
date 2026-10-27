@@ -90,238 +90,71 @@ Conversion rules still come from PHP's time-zone database.
 
 ## Verification
 
-MySQL Memory uses the repository's ordinary unit tests and static checks.
-Its semantic validation has three parts:
-
-1. Reconstruct SQL Faker input from semantic values and require exact Compact SQL equality.
-2. Compose semantic values with Eris, execute them directly in MemoryDB, and shrink failures.
-3. Compare SQL Faker statements on MemoryDB and Testcontainers MySQL with PHP-Fuzzer.
-
-PBT classes live under `tests/Property`, use `*Properties` names, and expose
-`satisfies*` test methods. Their grouping follows the properties being checked;
-there is no required property class or `MODEL` constant for each semantic type.
-`tests/Generator` supplies semantic values independently of `fuzz`.
-
-The PHPStan rules in `rules` require a corresponding, instantiable `Eris\Generator<T>`
-for every public semantic value type discovered in SQL Semantics and its MySQL
-package, including model interfaces, ordinary public model records and enums. The check does not depend on a runtime entry class or on a model using the Snapshot trait. Generator names mirror their semantic type:
-`SqlSemantics\Platform\MySql\Statement\Account\AlterUser` requires
-`Tests\Generator\MySql\Statement\Account\AlterUserGenerator` generating `AlterUser`.
-Core types use the `Tests\Generator\Semantics` prefix. Generic constructor sampling
-does not satisfy this requirement.
-
-The unused-class rule selects classes through `parameters.unusedClasses` in
-`phpstan.neon`, using fully qualified names or `*` patterns. The package checks
-`Tests\Generator\*Generator`. A selected class must be referenced from outside
-the selection, directly or through other selected classes. Self references and
-disconnected cycles do not count. References include construction, member access,
-class-name constants, native type declarations, inheritance, traits and attributes.
-Imports, PHPDoc-only names and unresolved dynamic names do not count.
-Run PHPStan over all relevant directories; isolated file analysis skips the check.
-This checks class usage, independently of constructor declarations and Eris; it
-does not establish execution in a property or runtime coverage. Tests of MemoryDB
-classes live under `tests/Unit`; generators do not create mysql-memory implementation
-types.
-
-`CreateTableExecutionProperties` composes `OperationGenerator`,
-`CreateTableGenerator` and `ColumnNameGenerator` through Eris. It checks stored
-column names and duplicate-column refusals, then generates a related pair of
-creation requests. The dependent request is prepared before the first request
-installs its destination; execution checks the release-specific conditional
-outcome and preserves the installed table. Eris shrinks both requests together
-before the callback, which executes semantic values without rendering or analysis.
-Each release gets 100 trials per property by default; `ERIS_SEED` reproduces them.
-Table definitions still use the transitional `Operation` boundary and derive
-facts from an analysis context. These properties do not establish the required
-concrete-statement and local-meaning model for table definitions.
-
-Representable CREATE TABLE and ALTER TABLE requests share their statement types
-and command lifecycle with ordinary definitions, including retained intrinsic
-conditions. Analysis retains those requests; preparation and execution determine
-their outcome. Prepared definitions retain their original database and observe
-the catalog at execution. Some column-attribute combinations, unknown index
-algorithms and invalid JSON index attributes are still rejected during lowering
-instead of being retained. Representable CREATE INDEX, REVOKE, UPDATE and trigger
-requests also enter the common execution boundary. Conditional
-index, revocation and update preparation retains the ordinary PreparedStatement.
-Incomplete input, fixed duplicate UPDATE aliases and shared dictionary/view
-caches still have separate behavior, so this does not establish read-only
-analysis for all SQL.
-
-`InsertExecutionProperties` exercises character-literal VALUES directly as concrete
-`InsertStatement` values. It distinguishes an absent-table SQL error from an
-implementation failure, then composes a generated CREATE TABLE and dependent
-INSERT before the assertion callback. The latter checks conversion, affected rows,
-and stored data. A shrinking regression verifies that the declaration and write
-remain related as Eris reduces a counterexample. These properties currently cover
-small statement forms; most statement families still use the legacy operation API.
-
-`TransactionExecutionProperties` generates all fourteen concrete transaction
-command alternatives. It also composes dependent savepoint and XA sequences before
-execution: each sequence shares its generated name or XID through shrinking.
-These properties check transaction state, access mode, isolation, prepared XA
-branches and balanced statement journals without parsing or rendering
-inside the assertion callback. Direct execution, SQL preparation, binary
-preparation and stored programs use the same command lifecycle as concrete INSERT
-and legacy operations. Syntax notices occur during reading/preparation, not again
-when a prepared value is executed. Existing families still using `Operation`
-remain explicit at their command boundaries.
-
-Transaction control has no schema dependencies or parameter markers. Preparation
-retains the same concrete value and does not build alternative interpretations
-for metadata invalidation. Changing table definitions therefore cannot rebind a
-prepared savepoint name or transaction characteristic.
-
-`AccountRenameExecutionProperties` and `RoleExecutionProperties` execute concrete
-account requests without source SQL. They check ordinary SQL refusals when
-prerequisite accounts are absent, then generate related statements together:
-dependent renames, and role definitions followed by prepared grants. The role
-sequence checks retained admin options, cyclic-grant refusal and atomic state
-restoration. Generation and shrinking construct the statements before execution;
-the assertion callbacks do not render or analyze them. Account analysis retains
-the request without changing accounts, role edges or transaction state. These
-checks do not yet establish read-only analysis for every statement family.
-
-`ConditionalRequestExecutionProperties` generates CREATE INDEX, UPDATE, REVOKE
-and CREATE TRIGGER values without source SQL. It checks their absent-state SQL
-errors, then composes table definitions with dependent indexes, updates and
-triggers before the assertion callback. Generation and shrinking preserve the
-referenced column. Both accepted and conditional requests use the same execution
-lifecycle. The generated forms are deliberately bounded; they do not establish
-complete operand or statement coverage.
-
-The property suite currently exercises the stated CREATE TABLE, INSERT, transaction,
-account, index, update, trigger and interval behaviors. It does not cover every statement family. The old constructor sampler
-and its instance-only properties have been removed. Missing generators remain
-errors in the complete PHPStan check; deleting those properties does not satisfy
-model coverage. Interface generators must compose their concrete alternatives,
-so the incomplete statement/expression interface aliases have also been removed.
-
-The generator-coverage integration tests run PHPStan without a MemoryDB Instance
-class and with no generators at all. They check missing record/interface/enum
-generators, wrong Eris result types, abstract generators and unmatched generator
-names. The separate usage tests check configured roots and disconnected cycles.
-These validate the static rules, not SQL execution coverage.
+The package uses the repository's ordinary unit, integration and property tests
+and static checks. Run them from this directory:
 
 ```sh
 composer lint
 composer test
-ERIS_SEED=20261025 vendor/bin/phpunit --testsuite property --filter CreateTableExecutionProperties
-MYSQL_VERSION=8.4.7 composer fuzz:mysql
+ERIS_SEED=20261025 vendor/bin/phpunit --testsuite property
 ```
 
-`fuzz/fuzz_mysql_execution.php` is the single SQL execution target. It accepts SQL
-Faker's supplied grammar seeds, including SQL-mode and diagnostic profiles.
-`MYSQL_MEMORY_FUZZ_SECONDS=900` bounds a search from an empty corpus after startup.
-The MySQL semantic verification workflow runs reconstruction and execution over
-all nine releases, plus the supplied 8.4.7 mode and diagnostic supplements. Text
-and native prepared execution use separate jobs. Each job replays its supplied
-profile and then runs the fifteen-minute search from a different empty directory.
-Differences, crashes, timeouts, and unstable reference observations fail the check.
-The selected seeds and duration establish only the cases explored by that run.
+The property suite composes semantic statements with Eris and executes them
+directly. Dependent requests, such as a table definition and an INSERT using its
+columns, are generated together before execution. Shrinking retains their
+relationships. These checks do not render or reparse generated values.
 
-To reproduce one default-profile replay with the ordinary tools:
+Every public core and MySQL semantic type has a corresponding generator under
+`tests/Generator`. PHPStan checks this mapping and whether the generators are
+used. The configurable unused-class rule accepts fully qualified names or `*`
+patterns through `parameters.unusedClasses` in `phpstan.neon`. References must be
+reachable from outside the selected classes; disconnected cycles do not count.
+Run PHPStan over the complete configured paths. Generator mapping and usage are
+static checks; they do not establish complete SQL behavior coverage.
+
+### Compare SQL execution
+
+Docker and `mysqli` are required. The fuzz target starts one Testcontainers MySQL
+and one MemoryDB for the selected release. It executes each SQL Faker statement
+once on each connection and compares the actual replies, including rows, column
+metadata, affected rows, insert IDs, warning counts, completion information and
+SQL errors. Both connections retain the same statement history. A failure reports
+that history and the input bytes, so state-dependent differences can be reproduced.
 
 ```sh
-# Run SQL Faker's existing coverage check from its package first.
+MYSQL_VERSION=8.4.7 composer fuzz:smoke
+```
+
+To replay SQL Faker's default grammar corpus, first verify its coverage and copy
+its input files into a separate directory:
+
+```sh
 cd ../sql-faker
 php bin/seeds.php check --tag mysql-8.4.7
 cd ../mysql-memory
-corpus=$(mktemp -d)
-cp ../sql-faker/seeds/mysql/mysql-8.4.7/*.txt "$corpus/"
-MYSQL_VERSION=8.4.7 MYSQL_MEMORY_EMULATE=0 php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_execution.php "$corpus/" --max-runs=0 --timeout=60
+mkdir -p build/fuzz/replay
+cp ../sql-faker/seeds/mysql/mysql-8.4.7/*.txt build/fuzz/replay/
+MYSQL_VERSION=8.4.7 php -d memory_limit=1G vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_execution.php build/fuzz/replay/ --max-runs=0 --timeout=60
 ```
 
-Use a fresh replay directory and copy only the selected profile's `.txt` files.
-Mode supplements require their matching `SQLFAKER_SQL_MODE`; diagnostic seeds
-require `SQLFAKER_DIAGNOSTICS=1`. `MYSQL_MEMORY_EMULATE=0` selects native prepared
-execution, and `1` selects text execution. Profile setup is not concatenated to
-the statement under test. Common fixture SQL uses the text protocol on both
-servers; the selected input protocol is restored even when setup fails. Each
-native connection's advertised MySQL release must match the grammar before
-fixture cleanup or configuration import begins. A successful replay prints `Verified N inputs.`;
-require `N` to equal the number of copied files. Missing or empty corpora cannot
-establish a passing replay.
+Use a fresh directory for each profile. Mode supplements require the matching
+`SQLFAKER_SQL_MODE` (`HIGH_NOT_PRECEDENCE` or `PIPES_AS_CONCAT`); diagnostic seeds
+require `SQLFAKER_DIAGNOSTICS=1`. A successful replay prints `Verified N inputs.`;
+compare that count with the copied files. An empty corpus is not a seed replay.
 
-The observer retains raw protocol results and compares deterministic metadata,
-rows, completion information, errors, warnings, table contents and definitions.
-SELECT rows retain order when the outer query has an ordering clause; otherwise
-they are compared as multisets, preserving duplicates and value types.
-Other result-producing commands retain order. Raw observations in counterexample
-reports are base64-encoded PHP serialization, preserving binary values as well
-as types. The target records transaction status, selected database, session
-variables and global settings before restoration. State-read failures are failures
-of the check, even if both engines refuse the same probe. Fixed state probes use
-the text protocol and restore the generated input's selected protocol afterwards.
-Only the initial database inventory can establish that a database is absent;
-failed later reads cannot become an empty snapshot.
-Account/privilege catalogs, stored-program definitions, replication
-configuration, server catalog state and committed rows in other application
-databases are observed independently through the administrator connection.
-Views contribute definitions without evaluating their bodies during observation.
-On MySQL 5.7 and later, an independent administrator discovers the tested session's
-user variables through Performance Schema. The observation retains their stored
-bytes and reads their result metadata, character sets, collations and coercibility
-on the owning connection. An unavailable owner or inventory fails the check;
-it cannot become an empty variable snapshot. Metadata locks are read through the
-administrator immediately after primary results and conditions, before further
-owner queries can change them. Their object names, modes, durations and statuses
-are compared with duplicates preserved. Instrumentation is enabled before the
-input, and missing owners, disabled instrumentation or lost records fail the
-check. The native observation mechanism tests require Docker and start the
-pinned Testcontainers releases.
-Each campaign owns a fresh reference container, and a failed reset cannot pass
-or contaminate a later campaign. An incomplete restoration makes its target
-unusable: subsequent verification, comparison and execution calls refuse further
-input. Setup runs inside the same connection lifetime as observation, so a failed
-setup also releases its connection. The administrator terminates that captured
-connection and confirms its disappearance before restoring catalog objects.
-Failure reports retain completed result sets and state observations, including
-binary values, together with separate observation and cleanup phases. A cleanup
-failure cannot turn an earlier observation failure into a successful comparison.
-Post-input catalog, schema and session probes are attached to that input's record
-before they run. A failed composite snapshot retains earlier catalog reads, definitions,
-rows and conditions, together with the failing probe's SQL and phase. Probe
-evidence stays separate from the primary outcome and the comparison copy.
-Process, status, random-password and table-clock comparison contracts also require
-successful independent samples. Missing samples fail observation; an empty password
-is retained as an account state. Status traffic is measured around execution,
-after native preparation and before cursor cleanup or condition reads. Raw mysqlnd
-counters are retained separately, including the command counts needed to correct
-its accounting according to the driver implementation. Running this fuzz target
-requires `mysqli` with mysqlnd statistics enabled, as well as `pdo_mysql` and Docker.
-The independent process failure channel is checked even when initial restoration
-fails before an input connection exists, and after restoration itself. An internal
-failure invalidates any earlier restoration success and prevents fixture reuse.
+For a fifteen-minute search without supplied seeds:
 
-Top-level SHUTDOWN and RESTART use disposable servers, selected through the
-official grammar rather than text matching. Two independently initialized native
-servers must agree before MemoryDB is compared. Both native initializations keep
-the ordinary SQL readiness check. A command must terminate its original connection
-within ten seconds; RESTART must then become SQL-ready within thirty seconds.
-Exceeding either deadline fails observation, even if both implementations time out.
-A shutdown-in-progress response is distinct from completed disconnection. Other
-SQL refusals remain failures of readiness, not evidence that a server stopped.
-The observer retains primary results or full SQL errors and conditions for refused
-commands. Table rows, definitions and status are captured both after restart and
-after a refused command, before cleanup. Partial lifecycle
-observations use the same failure reports as ordinary statements. Startup, probes
-and disposal remain inside the existing sixty-second input limit. The pinned
-images include AMD64-only releases, which require CPU emulation on an ARM Docker
-host. A matching Docker host can be selected through the standard `DOCKER_HOST`
-setting. Record the host architecture and image identity with execution evidence;
-changing hosts does not establish additional SQL or profile coverage.
-Networks with restricted published ports can set
-`MYSQL_MEMORY_LIFECYCLE_NATIVE_PORT` and `MYSQL_MEMORY_LIFECYCLE_REPEATED_PORT`
-to two distinct available ports on that Docker host. They must also differ from
-the ordinary campaign's optional `MYSQL_MEMORY_CONTAINER_PORT`.
+```sh
+mkdir -p build/fuzz/search
+MYSQL_VERSION=8.4.7 MYSQL_MEMORY_FUZZ_SECONDS=900 php -d memory_limit=1G vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_execution.php build/fuzz/search/ --timeout=60
+```
 
-Temporary objects, MySQL 5.6 session inventories,
-row locks, advisory-lock recursion, contention and environment-specific catalog
-fields still need complete contracts; these runs do not yet establish equivalence
-for every state change.
-
-Each target records its release, lexical profile and mutation seed. Set
-`PHP_FUZZER_SEED` to reproduce PHP-Fuzzer's random sequence on the same revision
-and corpus. The retained input bytes are the direct way to replay a finding with
+The search directory must initially be empty. The target prints its release,
+lexical profile and mutation seed; `PHP_FUZZER_SEED` reproduces that random sequence
+on the same revision and corpus. Retained input bytes can also be passed to
 `vendor/bin/php-fuzzer run-single`.
+
+SQL reconstruction is checked separately in `sql-semantics-mysql`: SQL Faker
+input is analyzed into semantic values, rendered, and compared using exact
+`sql-formatter` Compact equality. Both fuzz paths search for counterexamples;
+passing a run establishes only its explored scope, not complete MySQL equivalence.

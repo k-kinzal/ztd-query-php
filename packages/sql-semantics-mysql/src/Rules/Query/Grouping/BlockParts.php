@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Relation;
@@ -131,12 +130,12 @@ final class BlockParts
      *
      * @return array<int, VisibleRelation>
      */
-    public function occurrences(Select $select, Facts $facts): array
+    public function occurrences(Select $select): array
     {
         $occurrences = [];
         foreach ($this->leaves($select->from) as $leaf) {
-            if ($facts->covers($leaf)) {
-                $occurrences[spl_object_id($leaf)] = new VisibleRelation($leaf, $facts->relation($leaf)->shape);
+            if ($leaf->hasBinding()) {
+                $occurrences[spl_object_id($leaf)] = new VisibleRelation($leaf, $leaf->relationInformation()->shape);
             }
         }
 
@@ -146,13 +145,13 @@ final class BlockParts
     /**
      * Answers the query block a derived table or a common table reads its rows from, when it is a single block.
      */
-    public function block(Relation $relation, Facts $facts): ?Select
+    public function block(Relation $relation): ?Select
     {
         $query = null;
         if ($relation instanceof DerivedTable) {
             $query = $relation->query;
-        } elseif ($relation instanceof TableReference && $facts->covers($relation)) {
-            $table = $facts->relation($relation)->table;
+        } elseif ($relation instanceof TableReference && $relation->hasBinding()) {
+            $table = $relation->relationInformation()->table;
             $query = $table instanceof CommonTable && $table->definition instanceof CommonTableExpression ? $table->definition->query : null;
         }
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {

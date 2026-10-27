@@ -37,49 +37,49 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY a LIMIT 1 FOR UPDATE');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertCount(1, $operation->statement->query->locking);
-        self::assertNotNull($operation->statement->query->limit);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertCount(1, $operation->query->locking);
+        self::assertNotNull($operation->query->limit);
     }
 
     public function testIntoLowersTheIntoAfterTheQuery(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT a FROM t FOR UPDATE INTO @x)');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->query);
-        self::assertInstanceOf(Select::class, $operation->statement->query->query);
-        self::assertSame(IntoPosition::AfterLocking, $operation->statement->query->query->intoPosition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->query);
+        self::assertInstanceOf(Select::class, $operation->query->query);
+        self::assertSame(IntoPosition::AfterLocking, $operation->query->query->intoPosition);
     }
 
     public function testExpressionWrapsANonBlockBody(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) SELECT 1 UNION SELECT 2 ORDER BY 1 FOR UPDATE');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(QueryStatement::class, $operation->statement->query);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query->query);
-        self::assertNotNull($operation->statement->query->query->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryStatement::class, $operation->query);
+        self::assertInstanceOf(QueryExpression::class, $operation->query->query);
+        self::assertNotNull($operation->query->query->with);
     }
 
     public function testBodyBuildsALeftDeepChain(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 EXCEPT SELECT 3');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->query);
-        self::assertSame(SetOperator::Except, $operation->statement->query->operator);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->query->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(SetOperation::class, $operation->query);
+        self::assertSame(SetOperator::Except, $operation->query->operator);
+        self::assertInstanceOf(SetOperation::class, $operation->query->left);
     }
 
     public function testQuantifierLowersDistinctAndAll(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION DISTINCT SELECT 2');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->query);
-        self::assertSame(SetQuantifier::Distinct, $operation->statement->query->quantifier);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(SetOperation::class, $operation->query);
+        self::assertSame(SetQuantifier::Distinct, $operation->query->quantifier);
     }
 
     public function testParenthesizedKeepsEveryPair(): void
@@ -101,9 +101,9 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM (SELECT 1) AS d');
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertInstanceOf(DerivedTable::class, $operation->statement->query->from);
-        self::assertInstanceOf(Select::class, $operation->statement->query->from->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(DerivedTable::class, $operation->query->from);
+        self::assertInstanceOf(Select::class, $operation->query->from->query);
     }
 }

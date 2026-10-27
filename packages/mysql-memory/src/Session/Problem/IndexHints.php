@@ -97,7 +97,7 @@ final class IndexHints
         if ($schema === null) {
             return null;
         }
-        $table = $session->instance->dictionary->table($database, $reference->name->name->value);
+        $table = $session->instance->dictionary->table($database, $reference->name->name->value, $session->temporaries);
         if ($table !== null) {
             $invisible = str_contains((string) $session->variables->read('optimizer_switch'), 'use_invisible_indexes=on');
 

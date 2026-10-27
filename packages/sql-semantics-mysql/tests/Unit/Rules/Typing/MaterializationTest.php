@@ -156,7 +156,7 @@ final class MaterializationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $derived = static function (string $sql) use ($semantics): DerivedTable {
-            $select = $semantics->analyze($sql)->statement;
+            $select = $semantics->analyze($sql);
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
             $select = $select->query;
             self::assertInstanceOf(Select::class, $select);
@@ -175,9 +175,9 @@ final class MaterializationTest extends TestCase
     public function testMergeableRespectsTheReleaseAndSessionSetting(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        $query = $operation->statement->query;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $query = $operation->query;
         $rules = new Materialization();
 
         self::assertFalse($rules->mergeable($query, GrammarRelease::MySql5651));
@@ -189,7 +189,7 @@ final class MaterializationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $query = static function (string $sql) use ($semantics): \SqlSemantics\Statement\Query {
-            $select = $semantics->analyze($sql)->statement;
+            $select = $semantics->analyze($sql);
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
             $select = $select->query;
             self::assertInstanceOf(Select::class, $select);
@@ -241,7 +241,7 @@ final class MaterializationTest extends TestCase
 
     public function testColumnLetsAnExpressionSeeTheWholeTypeOfADerivedColumn(): void
     {
-        $output = (new Semantics(Dialect::MySql))->analyze('SELECT a, -a, a + 0 FROM (SELECT 3 AS a) d')->facts->output;
+        $output = (new Semantics(Dialect::MySql))->analyze('SELECT a, -a, a + 0 FROM (SELECT 3 AS a) d')->output();
 
         self::assertNotNull($output);
         self::assertEquals([new Known(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 2)), new Known(Domain::integer(Field::LongLong, 11)), new Known(Domain::integer(Field::LongLong, 12))], array_map(static fn (OutputSlot $slot): TypeFact => $slot->type, $output->shape->slots));
@@ -378,8 +378,8 @@ final class MaterializationTest extends TestCase
     public function testViewKeepsAnUnusedCommonTableExpressionSeparateFromItsBody(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH unused AS (SELECT @x) SELECT a FROM t');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation->statement);
-        self::assertTrue((new Materialization())->view($operation->statement->query));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertTrue((new Materialization())->view($operation->query));
     }
 
 }

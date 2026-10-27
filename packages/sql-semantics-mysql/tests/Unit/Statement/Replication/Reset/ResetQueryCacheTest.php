@@ -11,7 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ResetQueryCache::class)]
 #[Medium]
@@ -21,7 +20,7 @@ final class ResetQueryCacheTest extends TestCase
     {
         $this->expectExceptionMessage('RESET QUERY CACHE needs MySQL 5.6 or 5.7.');
 
-        new Operation((new Semantics(Dialect::MySql))->context([]), new Reset([new ResetQueryCache()]));
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context([]), new Reset([new ResetQueryCache()]), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheItem(): void

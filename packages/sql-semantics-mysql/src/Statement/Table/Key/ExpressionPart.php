@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A functional key part: an expression in parentheses that the index stores (MySQL 8.0.13 and later).
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a functional key part
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY ((a + 1)))');
- *     $create->statement->elements[1]->parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart // => true
+ *     $create->elements[1]->parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart // => true
  */
 final class ExpressionPart implements KeyPart
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The indexed expression
      * @param Direction|null $direction The sort direction, when written
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?Direction $direction = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $ungrouped = $expression;
         while ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {

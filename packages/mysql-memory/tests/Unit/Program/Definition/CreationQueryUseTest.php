@@ -33,13 +33,17 @@ final class CreationQueryUseTest extends TestCase
         $use->execute($definition, $session);
     }
 
-    public function testBoundKeepsTheOriginalQueryWithoutConstructingAReadStatement(): void
+    public function testBoundResolvesFreshOccurrencesWithoutChangingTheOriginalQuery(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();
         $query = new M\Query\Select([], [new M\Query\Star()]);
         $definition = new M\Table\CreateTable(new QualifiedName(new Name('t')), query: new M\Table\TableQuery($query));
         $bound = (new CreationQueryUse())->bound($definition, $session);
-        self::assertSame($query, $bound->statement);
+        self::assertInstanceOf(M\Query\Select::class, $bound->statement);
+        self::assertNotSame($query, $bound->statement);
+        self::assertFalse($query->hasBinding());
+        self::assertTrue($bound->statement->hasBinding());
+        self::assertInstanceOf(M\Query\Star::class, $bound->statement->items[0]);
         self::assertNotEmpty($bound->facts->diagnostics);
     }
 }

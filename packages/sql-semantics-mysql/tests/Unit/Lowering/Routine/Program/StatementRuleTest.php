@@ -44,8 +44,8 @@ final class StatementRuleTest extends TestCase
     public function testAdministrativeRefusalKeepsCredentialsUntilInvocation(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() START GROUP_REPLICATION PASSWORD = 'p'");
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart::class, $operation->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart::class, $operation->body);
     }
 
     public function testRejectedKeepsLoadOutsideTheStoredInstructionDomain(): void
@@ -79,15 +79,15 @@ final class StatementRuleTest extends TestCase
     public function testRejectedRetainsDeferredWriteOperandsAsProgramMembers(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t VALUES(ROW(1, 2))');
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows::class, $operation->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows::class, $operation->body);
     }
 
     #[DataProvider('providerStatementRoutesEveryKindOfProgramStatement')]
     public function testStatementRoutesEveryKindOfProgramStatement(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create function f(x int) returns int begin declare a int; declare k cursor for select 1; set a = 1; if x then set a = 1; end if; case x when 1 then set a = 2; end case; b: begin leave b; end b; begin end; l: loop iterate l; end loop; while 0 do set a = 0; end while; open k; fetch k into a; close k; return a; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
@@ -96,7 +96,7 @@ final class StatementRuleTest extends TestCase
             OpenCursor::class, FetchCursor::class, CloseCursor::class, ReturnStatement::class,
         ], array_map(static fn (StatementNode $node): string => $node::class, $statement->body->statements));
         self::assertSame('CREATE FUNCTION f(x INT) RETURNS INT BEGIN DECLARE a INT; DECLARE k CURSOR FOR SELECT 1; SET a = 1; IF x THEN SET a = 1; END IF; CASE x WHEN 1 THEN SET a = 2; END CASE; b: BEGIN LEAVE b; END b; BEGIN END; l: LOOP ITERATE l; END LOOP; WHILE 0 DO SET a = 0; END WHILE; OPEN k; FETCH k INTO a; CLOSE k; RETURN a; END', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testStatementRefusesANodeOfNoProduction(): void
@@ -127,13 +127,13 @@ final class StatementRuleTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, $release);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('create trigger tr before insert on t for each row begin set @a = 1; select 2 into @b; set new.a = 3; end', [$table]);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
         self::assertSame([SetVariables::class, \SqlSemantics\Platform\MySql\Statement\QueryRoot::class, SetVariables::class], array_map(static fn (StatementNode $node): string => $node::class, $statement->body->statements));
         self::assertSame('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN SET @a = 1; SELECT 2 INTO @b; SET new.a = 3; END', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -157,13 +157,13 @@ final class StatementRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $release);
         $create = $semantics->analyze('create event e on schedule every 1 day do ' . $sql);
-        self::assertInstanceOf(CreateEvent::class, $create->statement);
-        self::assertInstanceOf($class, $create->statement->body);
+        self::assertInstanceOf(CreateEvent::class, $create);
+        self::assertInstanceOf($class, $create->body);
         self::assertSame('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO ' . $rendering, $create->toString());
 
         $alter = $semantics->analyze('alter event e do ' . $sql);
-        self::assertInstanceOf(AlterEvent::class, $alter->statement);
-        self::assertInstanceOf($class, $alter->statement->body);
+        self::assertInstanceOf(AlterEvent::class, $alter);
+        self::assertInstanceOf($class, $alter->body);
         self::assertSame('ALTER EVENT e DO ' . $rendering, $alter->toString());
     }
 
@@ -183,13 +183,13 @@ final class StatementRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $release);
         $procedure = $semantics->analyze('create procedure p() begin end');
-        self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
-        self::assertEquals(new Block(), $procedure->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Block(), $procedure->body));
         self::assertSame('CREATE PROCEDURE p() BEGIN END', $procedure->toString());
 
         $function = $semantics->analyze('create function f() returns int return 1');
-        self::assertInstanceOf(CreateFunction::class, $function->statement);
-        self::assertInstanceOf(ReturnStatement::class, $function->statement->body);
+        self::assertInstanceOf(CreateFunction::class, $function);
+        self::assertInstanceOf(ReturnStatement::class, $function->body);
         self::assertSame('CREATE FUNCTION f() RETURNS INT RETURN 1', $function->toString());
     }
 
@@ -208,13 +208,13 @@ final class StatementRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $release);
         $function = $semantics->analyze("create function f() returns int language javascript as 'return 1'");
-        self::assertInstanceOf(CreateFunction::class, $function->statement);
-        self::assertEquals(new ExternalBody(new Text('return 1')), $function->statement->body);
+        self::assertInstanceOf(CreateFunction::class, $function);
+        self::assertEquals(new ExternalBody(new Text('return 1')), $function->body);
         self::assertSame("CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'", $function->toString());
 
         $procedure = $semantics->analyze('create procedure p() language javascript as $$ return 1 $$');
-        self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
-        self::assertEquals(new ExternalBody(new DollarQuotedText(' return 1 ')), $procedure->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertEquals(new ExternalBody(new DollarQuotedText(' return 1 ')), $procedure->body);
         self::assertSame('CREATE PROCEDURE p() LANGUAGE javascript AS $$ return 1 $$', $procedure->toString());
     }
 
@@ -232,9 +232,9 @@ final class StatementRuleTest extends TestCase
     public function testDollarQuotedSplitsTheTagAndTheText(string $string, DollarQuotedText $expected, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('create procedure p() language javascript as ' . $string);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
 
-        self::assertEquals(new ExternalBody($expected), $operation->statement->body);
+        self::assertEquals(new ExternalBody($expected), $operation->body);
         self::assertSame('CREATE PROCEDURE p() LANGUAGE javascript AS ' . $rendering, $operation->toString());
     }
 }

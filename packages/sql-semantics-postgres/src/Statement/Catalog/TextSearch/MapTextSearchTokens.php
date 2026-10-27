@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Adding a mapping
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple');
- *     [count($operation->statement->tokens), $operation->toString()] // => [2, 'ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple']
+ *     [count($operation->tokens), $operation->toString()] // => [2, 'ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple']
  */
-final class MapTextSearchTokens implements Statement
+final class MapTextSearchTokens extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The token types
@@ -45,8 +44,11 @@ final class MapTextSearchTokens implements Statement
      * @param list<Name> $tokens The token types; at least one
      * @param list<DottedName> $dictionaries The dictionaries; at least one
      */
-    public function __construct(public readonly DottedName $configuration, public readonly MappingChange $change, array $tokens, array $dictionaries)
+    public function __construct(public readonly DottedName $configuration, public readonly MappingChange $change, array $tokens, array $dictionaries, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tokens = Check::listOf($tokens, Name::class, 'A mapping names at least one token type.', 1);
         $this->dictionaries = Check::listOf($dictionaries, DottedName::class, 'A mapping names at least one dictionary.', 1);
     }

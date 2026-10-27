@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a notification with a payload
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("NOTIFY jobs, 'ready'");
- *     [$operation->statement->channel->value, $operation->statement->payload->value] // => ['jobs', 'ready']
+ *     [$operation->channel->value, $operation->payload->value] // => ['jobs', 'ready']
  */
-final class Notify implements Statement
+final class Notify extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The number of bytes a payload must stay below.
@@ -42,8 +41,11 @@ final class Notify implements Statement
      * @param Name $channel The channel name
      * @param StringConstant|null $payload The payload string, when written
      */
-    public function __construct(public readonly Name $channel, public readonly ?StringConstant $payload = null)
+    public function __construct(public readonly Name $channel, public readonly ?StringConstant $payload = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

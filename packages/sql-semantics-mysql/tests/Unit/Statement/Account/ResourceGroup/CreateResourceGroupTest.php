@@ -44,7 +44,7 @@ final class CreateResourceGroupTest extends TestCase
 
     public function testDeriveStatementAcceptsTheBoundaryOfTheSystemRange(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE RESOURCE GROUP g TYPE = SYSTEM THREAD_PRIORITY -20')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE RESOURCE GROUP g TYPE = SYSTEM THREAD_PRIORITY -20')->diagnostics());
     }
 
     public function testRenderWritesEveryOption(): void
@@ -53,7 +53,7 @@ final class CreateResourceGroupTest extends TestCase
     }
     public function testDeriveStatementDoesNotDecidePlatformPrioritySupport(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE RESOURCE GROUP g TYPE USER THREAD_PRIORITY 20')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE RESOURCE GROUP g TYPE USER THREAD_PRIORITY 20')->diagnostics());
     }
 
 }

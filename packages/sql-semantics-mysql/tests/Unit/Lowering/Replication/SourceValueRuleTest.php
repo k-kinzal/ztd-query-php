@@ -41,7 +41,7 @@ final class SourceValueRuleTest extends TestCase
         $change = (new Semantics(Dialect::MySql))->analyze("change replication source to assign_gtids_to_anonymous_transactions = '3E11FA47-71CA-11E1-9E33-C80AA9429562'");
 
         self::assertSame("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = '3E11FA47-71CA-11E1-9E33-C80AA9429562'", $change->toString());
-        self::assertSame([], $change->facts->diagnostics);
+        self::assertSame([], $change->diagnostics());
     }
 
     public function testAnonymousGtidsRejectsInvalidTextBeforePublishingAnOption(): void

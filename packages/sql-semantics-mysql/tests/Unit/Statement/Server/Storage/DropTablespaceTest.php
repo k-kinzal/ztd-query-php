@@ -24,6 +24,6 @@ final class DropTablespaceTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP TABLESPACE ts ENGINE a');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

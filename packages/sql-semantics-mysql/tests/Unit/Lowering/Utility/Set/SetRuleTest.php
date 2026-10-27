@@ -25,7 +25,7 @@ final class SetRuleTest extends TestCase
 
     public function testUnscopedRoutesALonePasswordToTheAccountFamily(): void
     {
-        self::assertNotInstanceOf(SetVariables::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SET PASSWORD = 'x'")->statement);
+        self::assertNotInstanceOf(SetVariables::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SET PASSWORD = 'x'"));
     }
 
     public function testScopedLowersTheScopedTransaction(): void

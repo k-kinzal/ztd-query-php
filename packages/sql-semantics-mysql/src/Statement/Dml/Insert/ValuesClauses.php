@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An unused VALUES-write ordering that cannot be an ordinary scalar ordering.
@@ -32,7 +31,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ValuesClauses implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<OrderItem|DeferredOrderItem> Written ordering items
@@ -45,8 +45,11 @@ final class ValuesClauses implements Query
      * @param non-empty-list<OrderItem|DeferredOrderItem> $orderBy The unused ordering
      * @param Limit|null $limit The unused row limit
      */
-    public function __construct(public readonly ?WithClause $with, public readonly Query $body, array $orderBy, public readonly ?Limit $limit = null)
+    public function __construct(public readonly ?WithClause $with, public readonly Query $body, array $orderBy, public readonly ?Limit $limit = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $items = [];
         foreach (Check::listOf($orderBy, Node::class, 'A retained ordering has items.', 1) as $item) {
             Check::input($item instanceof OrderItem || $item instanceof DeferredOrderItem, 'An ordering retains scalar or deferred item roles.');

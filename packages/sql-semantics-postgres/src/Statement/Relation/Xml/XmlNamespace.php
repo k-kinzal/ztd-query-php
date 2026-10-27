@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One namespace of XMLNAMESPACES: a URI with its prefix, or the DEFAULT namespace.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class XmlNamespace implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $uri The namespace URI, an expression of the restricted form `b_expr`
      * @param Name|null $prefix The prefix; null for the DEFAULT namespace
      */
-    public function __construct(public readonly Scalar $uri, public readonly ?Name $prefix = null)
+    public function __construct(public readonly Scalar $uri, public readonly ?Name $prefix = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new Precedence())->restricted($uri), 'A namespace URI is an expression without boolean, IS or pattern operators.');
     }

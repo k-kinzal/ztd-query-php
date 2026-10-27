@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,13 +29,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a FETCH
  *     $fetch = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('FETCH ABSOLUTE 3 IN c');
- *     [$fetch->statement->count->magnitude->digits, $fetch->shape()->complete(), $fetch->toString()] // => ['3', false, 'FETCH ABSOLUTE 3 c']
+ *     [$fetch->count->magnitude->digits, $fetch->shape()->complete(), $fetch->toString()] // => ['3', false, 'FETCH ABSOLUTE 3 c']
  * @example Refusing a count where the movement takes none
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch(false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::Next, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Statement\Identifier\Name('c')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Fetch implements Statement
+final class Fetch extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $move Whether the statement is MOVE, which returns no rows
@@ -46,8 +45,11 @@ final class Fetch implements Statement
      *
      * @throws InvalidConstruction When the count does not fit the movement, or is not an integer
      */
-    public function __construct(public readonly bool $move, public readonly FetchMovement $movement, public readonly ?SignedNumber $count, public readonly Name $cursor)
+    public function __construct(public readonly bool $move, public readonly FetchMovement $movement, public readonly ?SignedNumber $count, public readonly Name $cursor, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($movement->counted() === ($count !== null), 'A counted movement takes a count, any other none.');
         Check::input($count === null || $count->magnitude instanceof IntegerConstant, 'The count of FETCH is an integer.');
     }

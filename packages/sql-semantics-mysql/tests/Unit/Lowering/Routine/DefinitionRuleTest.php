@@ -49,7 +49,7 @@ final class DefinitionRuleTest extends TestCase
     public function testRoutineLowersAProcedure(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze("create definer = 'root'@'%' procedure db.p(in a int, out b int, inout c int) comment 'x' select a");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame('p', $statement->name->name->value);
         self::assertSame('db', $statement->name->schema?->value);
@@ -78,7 +78,7 @@ final class DefinitionRuleTest extends TestCase
     public function testRoutineLowersAFunctionWithItsReturnCollation(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int) returns varchar(5) character set utf8mb4 collate utf8mb4_bin deterministic return a');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame('f', $statement->name->name->value);
         self::assertCount(1, $statement->parameters->parameters);
@@ -104,14 +104,14 @@ final class DefinitionRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, $release);
         $procedure = $semantics->analyze('create procedure if not exists p() select 1');
-        self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
-        self::assertTrue($procedure->statement->ifNotExists);
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertTrue($procedure->ifNotExists);
         self::assertSame('CREATE PROCEDURE IF NOT EXISTS p() SELECT 1', $procedure->toString());
 
         $function = $semantics->analyze('create function if not exists db.f() returns int return 1');
-        self::assertInstanceOf(CreateFunction::class, $function->statement);
-        self::assertTrue($function->statement->ifNotExists);
-        self::assertNull($function->statement->collation);
+        self::assertInstanceOf(CreateFunction::class, $function);
+        self::assertTrue($function->ifNotExists);
+        self::assertNull($function->collation);
         self::assertSame('CREATE FUNCTION IF NOT EXISTS db.f() RETURNS INT RETURN 1', $function->toString());
     }
 
@@ -119,13 +119,13 @@ final class DefinitionRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-8.1.0');
         $function = $semantics->analyze("create function f() returns int language javascript as 'return 1'");
-        self::assertInstanceOf(CreateFunction::class, $function->statement);
-        self::assertInstanceOf(ExternalBody::class, $function->statement->body);
+        self::assertInstanceOf(CreateFunction::class, $function);
+        self::assertInstanceOf(ExternalBody::class, $function->body);
         self::assertSame("CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'", $function->toString());
 
         $procedure = $semantics->analyze('create procedure p() language javascript as $$ return 1 $$');
-        self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
-        self::assertInstanceOf(ExternalBody::class, $procedure->statement->body);
+        self::assertInstanceOf(CreateProcedure::class, $procedure);
+        self::assertInstanceOf(ExternalBody::class, $procedure->body);
         self::assertSame('CREATE PROCEDURE p() LANGUAGE javascript AS $$ return 1 $$', $procedure->toString());
     }
 
@@ -158,7 +158,7 @@ final class DefinitionRuleTest extends TestCase
     public function testLoadableLowersEveryLayoutAndResult(string $release, string $sql, LoadableResult $result, bool $aggregate, bool $ifNotExists, string $expected): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
         self::assertSame('u', $statement->name->value);
         self::assertSame($result, $statement->returns);
@@ -194,7 +194,7 @@ final class DefinitionRuleTest extends TestCase
     public function testAlterLowersProceduresAndFunctions(string $release, string $sql, ProgramKind $kind, string $expected): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         self::assertSame($kind, $statement->kind);
         self::assertSame('p', $statement->name->name->value);
@@ -235,7 +235,7 @@ final class DefinitionRuleTest extends TestCase
     public function testDropLowersEveryKindOfProgram(string $release, string $sql, ProgramKind $kind, ?string $schema, bool $ifExists, string $expected): void
     {
         $drop = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $drop->statement;
+        $statement = $drop;
         self::assertInstanceOf(DropProgram::class, $statement);
         self::assertSame($kind, $statement->kind);
         self::assertSame('x', $statement->name->name->value);

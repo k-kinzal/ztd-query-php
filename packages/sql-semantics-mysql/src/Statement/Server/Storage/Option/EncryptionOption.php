@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ENCRYPTION [=] {'Y' | 'N'}`: whether an InnoDB tablespace is encrypted (MySQL 8.0 and later).
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class EncryptionOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $encryption The value, 'Y' or 'N' for the server
      */
-    public function __construct(public readonly Text $encryption)
+    public function __construct(public readonly Text $encryption, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($encryption->radix === null, 'A tablespace encryption value is quoted text.');
     }

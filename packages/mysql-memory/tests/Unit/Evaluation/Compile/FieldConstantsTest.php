@@ -35,7 +35,7 @@ final class FieldConstantsTest extends TestCase
     public function testColumnAnswersTheNameOfAColumnOnly(): void
     {
         $session = (new Instance())->connect();
-        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
 
         self::assertSame(['f', null], [$constants->column(new ColumnUse(new Name('f'))), $constants->column(new NumberLiteral('1'))]);
     }
@@ -43,7 +43,7 @@ final class FieldConstantsTest extends TestCase
     public function testNumberAnswersTheTextOfAnIntegerOrDecimalLiteral(): void
     {
         $session = (new Instance())->connect();
-        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
 
         self::assertSame(['20240131', '1.5', null, null], [$constants->number(new NumberLiteral('20240131')), $constants->number(new NumberLiteral('1.5')), $constants->number(new NumberLiteral('1e5')), $constants->number(new StringLiteral(['1']))]);
     }
@@ -51,7 +51,7 @@ final class FieldConstantsTest extends TestCase
     public function testMomentReadsTheDigitsOfADateOrDatetime(): void
     {
         $session = (new Instance())->connect();
-        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
 
         self::assertSame([['2024-01-31 00:00:00', false], ['2024-02-31 00:00:00', false], ['1999-12-31 23:59:59', false], [null, false], [null, false], ['2024-01-31 00:00:00', true]], [$constants->moment('240131'), $constants->moment('20240231'), $constants->moment('19991231235959'), $constants->moment('5'), $constants->moment('2030'), $constants->moment('20240131.5')]);
     }
@@ -59,7 +59,7 @@ final class FieldConstantsTest extends TestCase
     public function testDigitsWidensATwoDigitYear(): void
     {
         $session = (new Instance())->connect();
-        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
 
         self::assertSame([0, 20240131, 19991231, null, 20240131102030, null], [$constants->digits(0), $constants->digits(240131), $constants->digits(991231), $constants->digits(695000), $constants->digits(240131102030), $constants->digits(100)]);
     }
@@ -67,7 +67,7 @@ final class FieldConstantsTest extends TestCase
     public function testSpelledChecksTheRangeOfEachPart(): void
     {
         $session = (new Instance())->connect();
-        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1')->statement, $session->analyze('SELECT 1')->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
+        $constants = new FieldConstants((new \MySqlMemory\Plan\Planner($session->analyze('SELECT 1'), $session->analyze('SELECT 1')->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))->compiler);
 
         self::assertSame(['2024-02-31 00:00:00', '1999-12-31 23:59:59', null, null], [$constants->spelled(20240231), $constants->spelled(19991231235959), $constants->spelled(20241301), $constants->spelled(20240131246000)]);
     }

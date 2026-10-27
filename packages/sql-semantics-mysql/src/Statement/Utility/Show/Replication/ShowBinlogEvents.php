@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SHOW BINLOG EVENTS: the events of a binary log file.
@@ -27,19 +26,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2");
- *     [$show->statement->file?->value, $show->toString()] // => ['binlog.000001', "SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2"]
+ *     [$show->file?->value, $show->toString()] // => ['binlog.000001', "SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2"]
  */
-final class ShowBinlogEvents implements Statement
+final class ShowBinlogEvents extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ?Text $file The log file after IN; null for the first one
      * @param ?Numeral $position The position after FROM; null for the start of the file
      * @param ?Limit $limit The LIMIT clause
      */
-    public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null)
+    public function __construct(public readonly ?Text $file = null, public readonly ?Numeral $position = null, public readonly ?Limit $limit = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         \SqlSemantics\Diagnostic\Check::input($file === null || $file->radix === null, 'A binary log file name is quoted text.');
         \SqlSemantics\Diagnostic\Check::input($position === null || !$position->hexadecimal, 'A log event position uses decimal number syntax.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

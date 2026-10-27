@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALL [PRIVILEGES]`: every privilege of the level the grant names, except GRANT OPTION and, globally, PROXY.
@@ -19,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AllPrivileges implements Privilege
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes ALL.
@@ -27,5 +26,11 @@ final class AllPrivileges implements Privilege
     public function render(Output $out): void
     {
         $out->keyword('ALL');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

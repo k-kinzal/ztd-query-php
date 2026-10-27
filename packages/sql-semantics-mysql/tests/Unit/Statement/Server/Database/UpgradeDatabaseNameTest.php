@@ -27,8 +27,8 @@ final class UpgradeDatabaseNameTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE `#mysql50#d` UPGRADE DATA DIRECTORY NAME');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 
     /**
@@ -48,6 +48,6 @@ final class UpgradeDatabaseNameTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('ALTER DATABASE `#mysql50#d` UPGRADE DATA DIRECTORY NAME');
 
-        self::assertEquals($warnings, $operation->facts->warnings);
+        self::assertEquals($warnings, $operation->warnings());
     }
 }

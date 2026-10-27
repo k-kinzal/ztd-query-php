@@ -48,7 +48,7 @@ final class QueryWidthTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerQueries')]
     public function testOfDistinguishesFixedOutputFromCatalogDependentOutput(string $sql, ?int $width): void
     {
-        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql)->statement;
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         self::assertSame($width, (new QueryWidth())->of($query->query));
     }

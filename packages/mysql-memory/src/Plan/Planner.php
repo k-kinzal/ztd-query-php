@@ -37,9 +37,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
@@ -96,12 +96,14 @@ final class Planner
 
     /**
      * @param Statement|Query|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $statement The bound statement, query or stored expression being prepared
-     * @param Facts $facts The facts of the statement
+     * @param StatementSemantics $facts The facts of the statement
      * @param Settings $settings The session settings
      * @param Connection $connection What the statement reads of its connection
      * @param Dictionary $dictionary The databases of the server
+     * @param \MySqlMemory\Dictionary\Temporaries|null $temporaries The visible session tables; null inside a stored view
+     * @param \MySqlMemory\Dictionary\Binding\Declarations $declarations Bound catalog inputs supplied before planning; required for stored view reads
      */
-    public function __construct(public readonly Statement|Query|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $statement, Facts $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary)
+    public function __construct(public readonly Statement|Query|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $statement, StatementSemantics $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary, public readonly ?\MySqlMemory\Dictionary\Temporaries $temporaries = null, public readonly \MySqlMemory\Dictionary\Binding\Declarations $declarations = new \MySqlMemory\Dictionary\Binding\Declarations())
     {
         $this->compiler = new Compiler($facts, $settings, $this, $connection);
         $this->blocks = new Blocks($this);
@@ -341,7 +343,7 @@ final class Planner
     public function outputs(Query $query, ?\SqlSemantics\Statement\Fact\QueryFact $fact = null): array
     {
         $domains = [];
-        foreach (($fact ?? $this->compiler->facts->query($query))->shape->slots as $slot) {
+        foreach (($fact ?? $query->queryInformation())->shape->slots as $slot) {
             $type = $slot->type;
             if (!$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
                 throw StatementError::NotSupportedYet->error('the type of a set operation column');
@@ -359,7 +361,7 @@ final class Planner
     public function result(QueryPlan $plan): QueryPlan
     {
         $output = $this->compiler->facts->output;
-        if (!$this->statement instanceof Query || $output === null || $output === $this->compiler->facts->query($this->statement)) {
+        if (!$this->statement instanceof Query || $output === null || $output === $this->statement->queryInformation()) {
             return $plan;
         }
 

@@ -141,12 +141,12 @@ final class StorageOptions
      *
      * @throws SqlError When an earlier engine name is unavailable
      */
-    public function beforePartition(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $notice, \SqlSemantics\Statement\Operation $operation, Session $session): void
+    public function beforePartition(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $notice, \SqlSemantics\Platform\MySql\Statement\Statement $operation, Session $session): void
     {
         if (!$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
             return;
         }
-        $statement = $operation->facts->warningInstruction($notice) ?? $operation->statement;
+        $statement = $operation->statementInformation()->warningInstruction($notice) ?? $operation;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         if ($statement instanceof CreateTable) {
             $this->header($statement, $session, $context);

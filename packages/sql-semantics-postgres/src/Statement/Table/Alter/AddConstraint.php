@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\TableConstraints;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ADD table_constraint: adds a constraint.
@@ -25,12 +24,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AddConstraint implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Constraint $constraint The constraint
      */
-    public function __construct(public readonly Constraint $constraint)
+    public function __construct(public readonly Constraint $constraint, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new TableConstraints())->admits($constraint), 'ADD takes a table constraint.');
     }

@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment to a user-defined variable inside an expression: `@name := value`.
@@ -30,18 +29,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an assignment
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @n := 5');
- *     [$query->statement->query->where->right->target->name->value, $query->statement->query->where->right->value->text] // => ['n', '5']
+ *     [$query->query->where->right->target->name->value, $query->query->where->right->value->text] // => ['n', '5']
  */
 final class VariableAssignment implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param UserVariable $target The variable assigned to
      * @param Scalar $value The assigned expression
      */
-    public function __construct(public readonly UserVariable $target, public readonly Scalar $value)
+    public function __construct(public readonly UserVariable $target, public readonly Scalar $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

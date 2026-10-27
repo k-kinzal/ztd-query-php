@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[DEFAULT] ENCRYPTION [=] {'Y' | 'N'}`: the default encryption of the database's tables (MySQL 8.0.16 and later).
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the encryption
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE DATABASE d ENCRYPTION 'Y'");
- *     $create->statement->options[0]->encryption->value // => 'Y'
+ *     $create->options[0]->encryption->value // => 'Y'
  */
 final class DatabaseEncryption implements DatabaseOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * A noncanonical decoded operand, or null for the canonical Y/N value.
@@ -38,7 +37,7 @@ final class DatabaseEncryption implements DatabaseOption
      * @param Encryption $encryption Whether new tables use encryption by default
      * @param Text|null $spelling A quoted operand denoting the same setting
      */
-    public function __construct(public readonly Encryption $encryption, ?Text $spelling = null)
+    public function __construct(public readonly Encryption $encryption, ?Text $spelling = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($spelling === null || ($spelling->radix === null && Encryption::fromOperand($spelling->value) === $encryption), 'An encryption spelling denotes the same Y/N setting.');
         $this->spelling = $spelling?->value === $encryption->value ? null : $spelling;

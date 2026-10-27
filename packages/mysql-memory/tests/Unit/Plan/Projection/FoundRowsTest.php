@@ -26,7 +26,7 @@ final class FoundRowsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerQueries')]
     public function testRequestedReadsTheFirstSelectAcrossSetAndLimitWrappers(string $sql, bool $expected): void
     {
-        $query = (new \MySqlMemory\Instance())->connect()->analyze($sql)->statement;
+        $query = (new \MySqlMemory\Instance())->connect()->analyze($sql);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
         $query = $query->query;
 

@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -36,7 +35,7 @@ final class InListTest extends TestCase
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
         self::assertSame(Nullability::NotNull, $query->field(1)->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarCanBeNullWhenTheOperandOrAValueCan(): void
@@ -64,14 +63,14 @@ final class InListTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT c IN (1) FROM x');
 
         self::assertSame(Nullability::Dependent, $query->field(0)->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarAdmitsRowsOfTheWidthOfTheOperand(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) IN ((1, 2), (3, 4))', []);
 
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
     }
 
@@ -81,13 +80,13 @@ final class InListTest extends TestCase
         $single = $semantics->analyze('SELECT (1, 2) IN (1)', []);
         $several = $semantics->analyze('SELECT (1, 2) IN ((1, 2), 3, 4)', []);
 
-        self::assertCount(1, $single->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $single->facts->diagnostics[0]);
-        self::assertSame(ArityRule::InListElement, $single->facts->diagnostics[0]->rule);
-        self::assertSame(2, $single->facts->diagnostics[0]->expected);
-        self::assertSame(1, $single->facts->diagnostics[0]->actual);
-        self::assertSame('IN(...) element has 1 term - expected 2.', $single->facts->diagnostics[0]->message());
-        self::assertCount(1, $several->facts->diagnostics);
+        self::assertCount(1, $single->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $single->diagnostics()[0]);
+        self::assertSame(ArityRule::InListElement, $single->diagnostics()[0]->rule);
+        self::assertSame(2, $single->diagnostics()[0]->expected);
+        self::assertSame(1, $single->diagnostics()[0]->actual);
+        self::assertSame('IN(...) element has 1 term - expected 2.', $single->diagnostics()[0]->message());
+        self::assertCount(1, $several->diagnostics());
     }
 
     public function testRenderWritesTheNegationAndTheValues(): void
@@ -115,7 +114,7 @@ final class InListTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $test = new InList(new IntegerLiteral('1'), [new IntegerLiteral('1'), new IntegerLiteral('2')]);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 1 IN (1, 2)', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

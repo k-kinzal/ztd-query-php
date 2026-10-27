@@ -44,7 +44,7 @@ final class PlacementTest extends TestCase
         $this->expectExceptionCode($code);
         $this->expectExceptionMessage($message);
 
-        (new Placement())->check($session->analyze($sql)->statement);
+        (new Placement())->check($session->analyze($sql));
     }
 
     public function testCheckAcceptsTheOptionsOfTheFirstQueryBlock(): void
@@ -52,8 +52,8 @@ final class PlacementTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
 
-        (new Placement())->check($session->analyze('(SELECT SQL_BUFFER_RESULT SQL_CALC_FOUND_ROWS HIGH_PRIORITY 1) UNION (SELECT 2)')->statement);
-        (new Placement())->check($session->analyze('INSERT INTO t SELECT SQL_BUFFER_RESULT 1')->statement);
+        (new Placement())->check($session->analyze('(SELECT SQL_BUFFER_RESULT SQL_CALC_FOUND_ROWS HIGH_PRIORITY 1) UNION (SELECT 2)'));
+        (new Placement())->check($session->analyze('INSERT INTO t SELECT SQL_BUFFER_RESULT 1'));
 
         self::assertCount(1, $session->query('SELECT SQL_BUFFER_RESULT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1'));
     }
@@ -80,12 +80,12 @@ final class PlacementTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $query = $session->analyze('WITH x AS (SELECT 1) (SELECT 2 UNION SELECT 3) ORDER BY 1')->statement;
-        $insert = $session->analyze('INSERT INTO t (SELECT 4 UNION SELECT 5)')->statement;
+        $query = $session->analyze('WITH x AS (SELECT 1) (SELECT 2 UNION SELECT 3) ORDER BY 1');
+        $insert = $session->analyze('INSERT INTO t (SELECT 4 UNION SELECT 5)');
 
         self::assertSame((new Walker())->find($query, Select::class)[1], (new Placement())->first($query));
         self::assertSame((new Walker())->find($insert, Select::class)[0], (new Placement())->first($insert));
-        self::assertNull((new Placement())->first($session->analyze('UPDATE t SET a = (SELECT 1)')->statement));
+        self::assertNull((new Placement())->first($session->analyze('UPDATE t SET a = (SELECT 1)')));
     }
 
     public function testCachedRefusesAQueryCacheModifierOutsideTheFirstBlockIn57(): void
@@ -96,13 +96,13 @@ final class PlacementTest extends TestCase
         $this->expectExceptionCode(1234);
         $this->expectExceptionMessage("Incorrect usage/placement of 'SQL_NO_CACHE'");
 
-        (new Placement())->cached($session->analyze('SELECT 1 UNION SELECT SQL_NO_CACHE 1')->statement, GrammarRelease::MySql5744);
+        (new Placement())->cached($session->analyze('SELECT 1 UNION SELECT SQL_NO_CACHE 1'), GrammarRelease::MySql5744);
     }
 
     public function testCachedTakesTheModifiersOfTheFirstBlock(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        (new Placement())->cached($session->analyze('SELECT SQL_CACHE 1 UNION SELECT 2')->statement, GrammarRelease::MySql5744);
+        (new Placement())->cached($session->analyze('SELECT SQL_CACHE 1 UNION SELECT 2'), GrammarRelease::MySql5744);
         $result = $session->query('SELECT SQL_CACHE 1 UNION SELECT 2')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
@@ -116,20 +116,20 @@ final class PlacementTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of UNION and INTO');
 
-        (new Placement())->united($session->analyze('(SELECT 1 INTO @a) UNION SELECT 2')->statement, GrammarRelease::MySql5744);
+        (new Placement())->united($session->analyze('(SELECT 1 INTO @a) UNION SELECT 2'), GrammarRelease::MySql5744);
     }
 
     public function testBlocksAnswersTheBlocksOfAQueryThroughParenthesesAndUnions(): void
     {
         $session = (new Instance())->connect();
 
-        self::assertCount(3, (new Placement())->blocks($session->analyze('(SELECT 1) UNION (SELECT 2 UNION SELECT 3)')->statement));
+        self::assertCount(3, (new Placement())->blocks($session->analyze('(SELECT 1) UNION (SELECT 2 UNION SELECT 3)')));
     }
 
     public function testMisplacedRefusesAQueryCacheModifierOfABlockButTheFirstIn56(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $statement = $session->analyze('SELECT 1 UNION SELECT SQL_CACHE 2')->statement;
+        $statement = $session->analyze('SELECT 1 UNION SELECT SQL_CACHE 2');
         $selects = (new Walker())->find($statement, Select::class);
 
         $this->expectException(SqlError::class);
@@ -141,7 +141,7 @@ final class PlacementTest extends TestCase
     public function testBoundariesAnswerTheBlockAfterAUnionOperandWithInto(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $statement = $session->analyze('(SELECT 1 INTO @a) UNION SELECT 2')->statement;
+        $statement = $session->analyze('(SELECT 1 INTO @a) UNION SELECT 2');
         $selects = (new Walker())->find($statement, Select::class);
 
         self::assertSame([spl_object_id($selects[1])], (new Placement())->boundaries($statement, GrammarRelease::MySql5744));
@@ -154,13 +154,13 @@ final class PlacementTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of ALL and DISTINCT');
 
-        (new Placement())->check($session->analyze('SELECT 1 UNION SELECT SQL_CACHE ALL DISTINCT 2')->statement, GrammarRelease::MySql5744);
+        (new Placement())->check($session->analyze('SELECT 1 UNION SELECT SQL_CACHE ALL DISTINCT 2'), GrammarRelease::MySql5744);
     }
 
     public function testCarrierAnswersTheStatementExplainExplainsInMySql56(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $statement = $session->analyze('EXPLAIN SELECT SQL_CACHE 1')->statement;
+        $statement = $session->analyze('EXPLAIN SELECT SQL_CACHE 1');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $statement);
         self::assertSame($statement->statement, (new Placement())->carrier($statement, GrammarRelease::MySql5651));
@@ -170,7 +170,7 @@ final class PlacementTest extends TestCase
     {
         $session = (new Instance())->connect();
         $events = new ArrayObject();
-        $statement = $session->analyze('SELECT (SELECT 1) FROM (SELECT 2) AS x UNION SELECT 3')->statement;
+        $statement = $session->analyze('SELECT (SELECT 1) FROM (SELECT 2) AS x UNION SELECT 3');
         $selects = (new Walker())->find($statement, Select::class);
 
         (new Placement())->check($statement, GrammarRelease::MySql847, static function (Select $select, bool $ended) use ($events): void {
@@ -183,7 +183,7 @@ final class PlacementTest extends TestCase
     public function testExpressionBlocksPreservesTheDerivedTableBoundaryWithinAnExpression(): void
     {
         $session = (new Instance('5.6.51'))->connect();
-        $statement = $session->analyze('SELECT (SELECT v FROM (SELECT 1 AS v) d UNION SELECT 2)')->statement;
+        $statement = $session->analyze('SELECT (SELECT v FROM (SELECT 1 AS v) d UNION SELECT 2)');
         $blocks = (new Walker())->find($statement, Select::class);
 
         self::assertSame([spl_object_id($blocks[1]) => true, spl_object_id($blocks[3]) => true], (new Placement())->expressionBlocks($statement));
@@ -201,7 +201,7 @@ final class PlacementTest extends TestCase
     public function testClosedEndsTheOpenBlocksThatDoNotHoldTheNextOne(): void
     {
         $session = (new Instance())->connect();
-        $selects = (new Walker())->find($session->analyze('SELECT (SELECT 1) UNION SELECT 2')->statement, Select::class);
+        $selects = (new Walker())->find($session->analyze('SELECT (SELECT 1) UNION SELECT 2'), Select::class);
         $ended = new ArrayObject();
 
         $open = (new Placement())->closed([$selects[0], $selects[1]], $selects[2], static function (Select $select) use ($ended): void {

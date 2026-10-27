@@ -58,7 +58,7 @@ final class TransactionPreparedExecutionTest extends TestCase
         self::assertNull($session->preparation->named['tx'][3]->input);
         self::assertInstanceOf(\MySqlMemory\Command\Prepared\PreparedStatement::class, $prepared);
         self::assertInstanceOf(Begin::class, $prepared->statement);
-        self::assertNull($prepared->literals);
+        self::assertSame($session->resolution()->connection, $prepared->literals->connection);
         $session->execute('EXECUTE tx');
         self::assertTrue($session->transaction->active());
         $session->execute('ROLLBACK');

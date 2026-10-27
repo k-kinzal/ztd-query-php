@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 
@@ -41,14 +40,14 @@ final class TemporalFields
      * field again. Direct column arguments keep their declared field throughout.
      * Verified through PDO on MySQL 5.6.51 and 5.7.44.
      */
-    public function reported(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?Facts $facts = null): Domain
+    public function reported(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release): Domain
     {
         $expression = $expression === null ? null : (new Matching())->unwrap($expression);
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $distinct = in_array(SelectOption::Distinct, $select->options, true);
         $direct = $select->groupBy === null || ((new RollupItems())->rolls($select) && $select->orderBy === []);
         $argument = $expression instanceof Aggregate ? ($expression->arguments[0] ?? null) : null;
-        if (!$legacy || $distinct || !$direct || !$domain->kind->temporal() || $argument === null || $facts === null || !$facts->covers($argument) || $facts->scalar($argument)->resolution instanceof ResolvedColumn) {
+        if (!$legacy || $distinct || !$direct || !$domain->kind->temporal() || $argument === null || !$argument->hasBinding() || $argument->scalarInformation()->resolution instanceof ResolvedColumn) {
             return $domain;
         }
 

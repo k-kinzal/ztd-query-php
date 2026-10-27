@@ -59,20 +59,20 @@ final class FlowRuleTest extends TestCase
     public function testConditionalLowersTheBranchesAndTheElse(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(x int) if x = 1 then set @a = 1; set @a = 2; elseif x = 2 then set @a = 3; elseif x = 3 then set @a = 4; else set @a = 5; end if');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $conditional = $statement->body;
         self::assertInstanceOf(IfStatement::class, $conditional);
 
         self::assertCount(3, $conditional->branches);
-        self::assertEquals(new Comparison(ComparisonOperator::Equal, new ColumnUse(new Name('x')), new NumberLiteral('1')), $conditional->branches[0]->condition);
-        self::assertEquals(new Comparison(ComparisonOperator::Equal, new ColumnUse(new Name('x')), new NumberLiteral('3')), $conditional->branches[2]->condition);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Comparison(ComparisonOperator::Equal, new ColumnUse(new Name('x')), new NumberLiteral('1')), $conditional->branches[0]->condition));
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Comparison(ComparisonOperator::Equal, new ColumnUse(new Name('x')), new NumberLiteral('3')), $conditional->branches[2]->condition));
         self::assertCount(2, $conditional->branches[0]->statements);
         self::assertCount(1, $conditional->branches[1]->statements);
         self::assertCount(1, $conditional->otherwise);
         self::assertContainsOnlyInstancesOf(SetVariables::class, $conditional->otherwise);
         self::assertSame('CREATE PROCEDURE p(x INT) IF x = 1 THEN SET @a = 1; SET @a = 2; ELSEIF x = 2 THEN SET @a = 3; ELSEIF x = 3 THEN SET @a = 4; ELSE SET @a = 5; END IF', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -89,14 +89,14 @@ final class FlowRuleTest extends TestCase
     public function testConditionalLowersAnIfWithoutElse(string $release, string $sql, int $branches, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(x int) b: begin ' . $sql . '; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         $conditional = $statement->body->statements[0];
         self::assertInstanceOf(IfStatement::class, $conditional);
 
         self::assertCount($branches, $conditional->branches);
-        self::assertEquals(new ConditionalBranch(new ColumnUse(new Name('x')), [new Leave(new Name('b'))]), $conditional->branches[0]);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new ConditionalBranch(new ColumnUse(new Name('x')), [new Leave(new Name('b'))]), $conditional->branches[0]));
         self::assertSame([], $conditional->otherwise);
         self::assertSame('CREATE PROCEDURE p(x INT) b: BEGIN ' . $rendering . '; END', $operation->toString());
     }
@@ -127,15 +127,15 @@ final class FlowRuleTest extends TestCase
     public function testChoiceLowersASimpleCase(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(x int) case x when 1 then set x = 2; when 2 then set x = 3; set x = 4; else set x = 5; end case');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
-        self::assertEquals(new SimpleCase(new ColumnUse(new Name('x')), [
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new SimpleCase(new ColumnUse(new Name('x')), [
             new ConditionalBranch(new NumberLiteral('1'), [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('2'))])]),
             new ConditionalBranch(new NumberLiteral('2'), [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('3'))]), new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('4'))])]),
-        ], [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('5'))])]), $statement->body);
+        ], [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('5'))])]), $statement->body));
         self::assertSame('CREATE PROCEDURE p(x INT) CASE x WHEN 1 THEN SET x = 2; WHEN 2 THEN SET x = 3; SET x = 4; ELSE SET x = 5; END CASE', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -153,12 +153,12 @@ final class FlowRuleTest extends TestCase
     public function testChoiceLowersASearchedCase(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(x int) case when x > 1 then set x = 0; end case');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
-        self::assertEquals(new SearchedCase([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new SearchedCase([
             new ConditionalBranch(new Comparison(ComparisonOperator::Greater, new ColumnUse(new Name('x')), new NumberLiteral('1')), [new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('0'))])]),
-        ]), $statement->body);
+        ]), $statement->body));
         self::assertSame('CREATE PROCEDURE p(x INT) CASE WHEN x > 1 THEN SET x = 0; END CASE', $operation->toString());
     }
 
@@ -177,11 +177,11 @@ final class FlowRuleTest extends TestCase
     public function testLabeledLowersALabeledLoop(string $release, string $sql, Loop|WhileLoop|RepeatLoop $expected, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() ' . $sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
+        self::assertInstanceOf(CreateProcedure::class, $operation);
 
-        self::assertEquals($expected, $operation->statement->body);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($expected, $operation->body));
         self::assertSame('CREATE PROCEDURE p() ' . $rendering, $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -198,8 +198,8 @@ final class FlowRuleTest extends TestCase
     public function testEndLabelLowersTheLabelAfterEnd(string $release, string $sql, ?Name $endLabel, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() ' . $sql);
-        self::assertInstanceOf(CreateProcedure::class, $operation->statement);
-        $loop = $operation->statement->body;
+        self::assertInstanceOf(CreateProcedure::class, $operation);
+        $loop = $operation->body;
         self::assertInstanceOf(RepeatLoop::class, $loop);
 
         self::assertEquals($endLabel, $loop->endLabel);
@@ -221,18 +221,18 @@ final class FlowRuleTest extends TestCase
     public function testLoopLowersLoopWhileAndRepeat(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(x int) begin while x > 0 do set x = x - 1; end while; repeat set x = x + 1; until x > 9 end repeat; loop set x = 0; end loop; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         $x = new ColumnUse(new Name('x'));
 
-        self::assertEquals([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new WhileLoop(new Comparison(ComparisonOperator::Greater, $x, new NumberLiteral('0')), [new SetVariables([new NameAssignment(new Name('x'), new Arithmetic(ArithmeticOperator::Minus, $x, new NumberLiteral('1')))])]),
             new RepeatLoop(new Comparison(ComparisonOperator::Greater, $x, new NumberLiteral('9')), [new SetVariables([new NameAssignment(new Name('x'), new Arithmetic(ArithmeticOperator::Plus, $x, new NumberLiteral('1')))])]),
             new Loop([new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('0'))])]),
-        ], $statement->body->statements);
+        ], $statement->body->statements));
         self::assertSame('CREATE PROCEDURE p(x INT) BEGIN WHILE x > 0 DO SET x = x - 1; END WHILE; REPEAT SET x = x + 1; UNTIL x > 9 END REPEAT; LOOP SET x = 0; END LOOP; END', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -250,16 +250,16 @@ final class FlowRuleTest extends TestCase
     public function testJumpLowersReturnLeaveAndIterate(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create function f(x int) returns int begin l: loop if x > 0 then leave l; end if; iterate l; end loop; return x + 1; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         $x = new ColumnUse(new Name('x'));
 
-        self::assertEquals([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new Loop([new IfStatement([new ConditionalBranch(new Comparison(ComparisonOperator::Greater, $x, new NumberLiteral('0')), [new Leave(new Name('l'))])]), new Iterate(new Name('l'))], new Name('l')),
             new ReturnStatement(new Arithmetic(ArithmeticOperator::Plus, $x, new NumberLiteral('1'))),
-        ], $statement->body->statements);
+        ], $statement->body->statements));
         self::assertSame('CREATE FUNCTION f(x INT) RETURNS INT BEGIN l: LOOP IF x > 0 THEN LEAVE l; END IF; ITERATE l; END LOOP; RETURN x + 1; END', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

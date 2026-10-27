@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The frame of a window: its unit, its boundaries and its exclusion.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Frame implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameUnit $unit The unit
@@ -35,7 +34,7 @@ final class Frame implements Node
      * @param FrameBound|null $end The end boundary of the BETWEEN form
      * @param FrameExclusion|null $exclusion The written exclusion
      */
-    public function __construct(public readonly FrameUnit $unit, public readonly FrameBound $start, public readonly ?FrameBound $end = null, public readonly ?FrameExclusion $exclusion = null)
+    public function __construct(public readonly FrameUnit $unit, public readonly FrameBound $start, public readonly ?FrameBound $end = null, public readonly ?FrameExclusion $exclusion = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($start->kind !== FrameBoundKind::UnboundedFollowing, 'A frame cannot start at UNBOUNDED FOLLOWING.');
         Check::input($end !== null || $start->kind !== FrameBoundKind::Following, 'A frame without BETWEEN cannot start FOLLOWING.');

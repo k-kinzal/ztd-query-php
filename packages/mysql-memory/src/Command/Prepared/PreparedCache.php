@@ -11,10 +11,10 @@ use MySqlMemory\Session\Statement\Binding;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Interpretation;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\SyntaxRefusal;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 /**
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 final class PreparedCache
 {
     /**
-     * @param list<array{string, string, Table}> $tables Resolved schema, name and declaration identities
+     * @param list<array{string, string, Table|\MySqlMemory\Dictionary\View|null, bool}> $tables Schema, name, stored identity and permanent-only lookup
      */
     public function __construct(public PreparedStatement|PendingTable $definition, public array $tables, public readonly ?Definition $input = null)
     {
@@ -46,36 +46,24 @@ final class PreparedCache
         if ($operation instanceof PendingTable) {
             return new self($operation, [], $input);
         }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertStatement) {
-            $resolution = $operation->target->resolution;
-            $tables = [];
-            if ($resolution instanceof DeclaredTable) {
-                $name = $operation->target->resolvedName;
-                if ($name === null || $name->schema === null) {
-                    throw new LogicException('A resolved insertion target identifies its declaration schema.');
-                }
-                $tables = [[$name->schema->value, $name->name->value, $resolution->table]];
-            }
-            return new self(PreparedStatement::capture($operation, $session), $tables, $input);
-        }
+
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
             return new self(PreparedStatement::capture($operation, $session), [], $input);
         }
-        if (!$operation instanceof Operation) {
+        if (!$operation instanceof MySqlStatement) {
             throw new LogicException('No prepared cache capture for ' . $operation::class);
         }
         $tables = [];
-        foreach ((new Walker())->find($operation->statement, NamedRelation::class) as $relation) {
-            if (!$operation->facts->covers($relation)) {
+        foreach ((new Walker())->find($operation, NamedRelation::class) as $relation) {
+            if (!$relation->hasBinding()) {
                 continue;
             }
-            $resolution = $operation->facts->relation($relation)->table;
+            $resolution = $relation->relationInformation()->table;
             if ($resolution instanceof DeclaredTable) {
-                $table = $resolution->table;
-                $tables[] = [$table->name->schema->value ?? $session->variables->database, $table->name->name->value, $table];
+                $tables[] = $resolution;
             }
         }
-        return new self(PreparedStatement::capture($operation, $session), $tables, $input);
+        return new self(PreparedStatement::capture($operation, $session), Dependencies::capture($tables, $session), $input);
     }
 
     /**
@@ -83,11 +71,18 @@ final class PreparedCache
      */
     public function changed(Session $session): bool
     {
-        $session->instance->dictionary->temporaries = $session->temporaries;
-        \MySqlMemory\Session\Resolution\Views::refreshAll($session->instance->dictionary, $session->settings());
-        $current = $session->instance->dictionary->declarations();
-        foreach ($this->tables as [, , $table]) {
-            if (!in_array($table, $current, true)) {
+        $dictionary = $session->instance->dictionary;
+        foreach ($this->tables as [$schema, $name, $table, $permanent]) {
+            $namespace = $permanent ? null : $session->temporaries;
+            if ($table instanceof Table) {
+                if (!in_array($table, $dictionary->declarations($namespace), true)) {
+                    return true;
+                }
+                continue;
+            }
+            $stored = $dictionary->table($schema, $name, $namespace);
+            $current = $stored?->definition->declaration ?? ($dictionary->schema($schema)->views[$name] ?? null);
+            if ($current !== $table) {
                 return true;
             }
         }

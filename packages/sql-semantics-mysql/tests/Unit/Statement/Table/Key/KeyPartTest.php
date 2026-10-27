@@ -32,6 +32,6 @@ final class KeyPartTest extends TestCase
         $part = new ExpressionPart($literal);
         $part->deriveKeyPart($derivation, $derivation->environment());
 
-        self::assertTrue($derivation->facts()->covers($literal));
+        self::assertTrue($literal->hasBinding());
     }
 }

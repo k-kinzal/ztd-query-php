@@ -37,7 +37,7 @@ final class RoutineLanguageTest extends TestCase
     public function testRenderWritesTheKeywordSql(string $release): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze('alter procedure p language sql');
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineLanguage::class, $characteristic);
@@ -59,7 +59,7 @@ final class RoutineLanguageTest extends TestCase
     public function testRenderWritesTheNameOfAnExternalLanguage(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f() returns int language javascript as $$ return 1 $$');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineLanguage::class, $characteristic);
@@ -71,7 +71,7 @@ final class RoutineLanguageTest extends TestCase
     public function testRenderQuotesALanguageNameThatNeedsQuoting(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("create procedure p() language `java script` as 'x'");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineLanguage::class, $characteristic);

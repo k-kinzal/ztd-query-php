@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A character string type with its optional length, national marker and character set attribute.
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Character implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharacterKind $kind The character type
@@ -39,6 +38,7 @@ final class Character implements DeclaredName
         public readonly ?string $length = null,
         public readonly bool $national = false,
         public readonly ?CharsetAttribute $charset = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         Check::input(!in_array($kind, [CharacterKind::VarChar, CharacterKind::CharVarying], true) || $length !== null, 'A VARCHAR declaration requires a length.');
         Check::input($length === null || in_array($kind, [CharacterKind::Char, CharacterKind::VarChar, CharacterKind::CharVarying, CharacterKind::Text], true), 'Only CHAR, VARCHAR and TEXT take a length.');

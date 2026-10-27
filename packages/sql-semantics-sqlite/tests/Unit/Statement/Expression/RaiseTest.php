@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -30,7 +29,7 @@ final class RaiseTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END", [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Select::class, $statement->steps[0]);
@@ -40,18 +39,18 @@ final class RaiseTest extends TestCase
         self::assertSame(RaiseAction::Fail, $raise->action);
         self::assertInstanceOf(TextLiteral::class, $raise->message);
         self::assertSame('no', $raise->message->value);
-        $fact = $operation->facts->scalar($raise);
+        $fact = $raise->scalarInformation();
         self::assertInstanceOf(NullOnly::class, $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
-        self::assertTrue($operation->facts->covers($raise->message));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertTrue($raise->message->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarOutsideATriggerIsReportedByTheStatement(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT RAISE(IGNORE)', []);
 
-        self::assertEquals([new Misuse(MisuseRule::RaiseOutsideTrigger)], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::RaiseOutsideTrigger)], $operation->diagnostics());
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
     }
 
@@ -65,7 +64,7 @@ final class RaiseTest extends TestCase
     public function testRenderWritesANewlyBuiltRaise(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Raise(RaiseAction::Ignore)), new ResultColumn(new Raise(RaiseAction::Abort, new TextLiteral('stop')))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new Raise(RaiseAction::Ignore)), new ResultColumn(new Raise(RaiseAction::Abort, new TextLiteral('stop')))]));
 
         self::assertSame("SELECT RAISE(IGNORE), RAISE(ABORT, 'stop')", $operation->toString());
     }

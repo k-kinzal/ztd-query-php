@@ -121,8 +121,7 @@ final class ReadingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH c AS (TABLE absent.t LIMIT x) SELECT * FROM c LIMIT y');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, Select::class)[0];
+        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation, Select::class)[0];
         $session->text = 'unrelated invalid request';
         $this->expectExceptionMessage('Undeclared variable: x');
         (new Reading())->declared($select, true, $session, $operation);
@@ -162,16 +161,14 @@ final class ReadingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 INTO @x');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        (new Reading())->into($operation->statement);
+        (new Reading())->into($operation);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1327);
         $this->expectExceptionMessage('Undeclared variable: x');
 
         $operation = $session->analyze('SELECT 1 INTO x');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        (new Reading())->into($operation->statement);
+        (new Reading())->into($operation);
     }
 
     public function testReadRaisesAnUnknownSystemVariableBeforeOpeningTablesAndAVariableOfAViewBeforeIt(): void
@@ -206,16 +203,16 @@ final class ReadingTest extends TestCase
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
         $operation = $session->analyze('CREATE PROCEDURE p() UPDATE (SELECT *) AS x SET a = 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $routine = $operation->statement;
+        $routine = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $routine->body);
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context(session: $session->resolution()));
-        $routine->body->deriveStatement($derivation);
+        $body = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($routine->body);
+        $body->deriveStatement($derivation);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1288);
 
-        (new Reading())->legacyWrites($routine->body, $derivation->facts(), $session);
+        (new Reading())->legacyWrites($body, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
     }
 
     public function testLegacyWritesDefersAnUpdateClauseUntilItsStoredBranchIsReached(): void
@@ -312,7 +309,6 @@ final class ReadingTest extends TestCase
         $this->expectExceptionMessage("Unknown collation: 'zz'");
 
         $operation = $session->analyze("SELECT nosuch FROM nosuch WHERE 'a' COLLATE zz");
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         (new Reading())->parsed($operation, $session);
     }
 
@@ -320,14 +316,12 @@ final class ReadingTest extends TestCase
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('SELECT 1 FROM DUAL GROUP BY 1 WITH ROLLUP');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         (new Reading())->grouping($operation, $session);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
 
         $operation = $session->analyze('SELECT 1 FROM DUAL GROUP BY 1 WITH CUBE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         (new Reading())->grouping($operation, $session);
     }
 
@@ -335,7 +329,6 @@ final class ReadingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 INTO @v');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         (new Reading())->variables($operation, $session);
 
         $this->expectException(SqlError::class);
@@ -343,7 +336,6 @@ final class ReadingTest extends TestCase
         $this->expectExceptionMessage('Undeclared variable: v');
 
         $operation = $session->analyze('SELECT 1 INTO v');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         (new Reading())->variables($operation, $session);
     }
 
@@ -366,7 +358,6 @@ final class ReadingTest extends TestCase
         $this->expectExceptionMessage("Unknown table 'x' in MULTI DELETE");
 
         $operation = $session->analyze('DELETE x.* FROM w');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
         (new Reading())->diagnosed($operation, $session);
     }
 
@@ -374,8 +365,7 @@ final class ReadingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 LIMIT v');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, Select::class)[0];
+        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation, Select::class)[0];
         (new Reading())->declared($select, false, $session, $operation);
 
         $this->expectException(SqlError::class);
@@ -389,8 +379,7 @@ final class ReadingTest extends TestCase
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1 INTO v FROM DUAL LIMIT 1');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
-        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation->statement, Select::class)[0];
+        $select = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation, Select::class)[0];
         (new Reading())->declared($select, true, $session, $operation);
 
         $this->expectExceptionMessage('Undeclared variable: v');

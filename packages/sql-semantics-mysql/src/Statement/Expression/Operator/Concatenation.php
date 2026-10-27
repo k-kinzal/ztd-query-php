@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The string concatenation `a || b` of the PIPES_AS_CONCAT mode (`Item_func_concat`).
@@ -33,18 +32,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Concatenating under PIPES_AS_CONCAT
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'));
- *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->statement->query->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
+ *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->query->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
  */
 final class Concatenation implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $left The left operand
      * @param Scalar $right The right operand
      */
-    public function __construct(public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->fits($left, Precedence::SIMPLE_EXPR, Precedence::SIMPLE_EXPR), 'The left operand of || needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > Precedence::SIMPLE_EXPR, 'The right operand of || needs a grouping to keep its place.');

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Type;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A type written as one keyword: BOOL, SERIAL, JSON, and BIT or VECTOR with an optional length.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Elementary implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ElementaryKind $kind The type
      * @param string|null $length The length exactly as written; only BIT and VECTOR take one
      */
-    public function __construct(public readonly ElementaryKind $kind, public readonly ?string $length = null)
+    public function __construct(public readonly ElementaryKind $kind, public readonly ?string $length = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($length === null || $kind === ElementaryKind::Bit || $kind === ElementaryKind::Vector, 'Only BIT and VECTOR take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');

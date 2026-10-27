@@ -23,6 +23,18 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 #[Medium]
 final class LoweringTest extends TestCase
 {
+    public function testParametersRetainInputOrderWhenSubexpressionsAreLoweredInReverse(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $tree = $platform->parser($profile)->parse('SELECT ?, COALESCE(?, ?)');
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $lowering->parameters($tree->tokens());
+        $markers = array_reverse($tree->find('param_marker'));
+        self::assertSame([2, 1, 0], array_map(static fn (\SqlParser\Parser\Node $marker): int => $lowering->literals->parameter($marker)->position, $markers));
+        self::assertSame($lowering->parameterPositions, $lowering->unprepared()->parameterPositions);
+    }
+
     public function testStatementsKeepParameterOccurrencesDistinct(): void
     {
         $platform = new Platform();
@@ -81,9 +93,9 @@ final class LoweringTest extends TestCase
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SET ROLE NONE');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
 
-        self::assertInstanceOf(SetRole::class, $operation->statement);
+        self::assertInstanceOf(SetRole::class, $operation);
         self::assertSame('SET ROLE NONE', $operation->toString());
     }
 
@@ -98,18 +110,18 @@ final class LoweringTest extends TestCase
     public function testDefinitionRoutesCreateAlterAndDrop(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP TABLE t');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
 
-        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
+        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation::class);
         self::assertSame('DROP TABLE t', $operation->toString());
     }
 
     public function testRoutedHandsAModernStatementToItsFamily(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DROP TABLE t');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
 
-        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
+        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation::class);
         self::assertSame('DROP TABLE t', $operation->toString());
     }
 
@@ -120,12 +132,12 @@ final class LoweringTest extends TestCase
         $tablespace = $semantics->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'");
         $database = $semantics->analyze('CREATE DATABASE d');
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE DATABASE d');
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $tablespace);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $database);
-        self::assertInstanceOf(\SqlSemantics\Statement\Operation::class, $legacy);
-        self::assertInstanceOf(CreateTablespace::class, $tablespace->statement);
-        self::assertInstanceOf(CreateDatabase::class, $database->statement);
-        self::assertInstanceOf(CreateDatabase::class, $legacy->statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $tablespace);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $database);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $legacy);
+        self::assertInstanceOf(CreateTablespace::class, $tablespace);
+        self::assertInstanceOf(CreateDatabase::class, $database);
+        self::assertInstanceOf(CreateDatabase::class, $legacy);
     }
 
     public function testFormAnswersTheProductionOfANode(): void

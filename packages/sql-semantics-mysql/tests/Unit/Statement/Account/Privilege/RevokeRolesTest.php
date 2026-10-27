@@ -17,7 +17,7 @@ final class RevokeRolesTest extends TestCase
 {
     public function testDeriveStatementNeedsNoExpressionBindings(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE r FROM u')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('REVOKE r FROM u')->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void

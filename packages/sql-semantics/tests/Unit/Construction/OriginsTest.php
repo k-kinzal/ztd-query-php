@@ -17,6 +17,16 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 #[Small]
 final class OriginsTest extends TestCase
 {
+    public function testNoticeAtRetainsACommentBoundaryWithoutAParserNode(): void
+    {
+        $origins = new Origins();
+        $subject = new IntegerLiteral('1');
+        $warning = new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError(\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintFailure::Syntax, 7);
+        $origins->noticeAt($subject, $warning, 7);
+
+        $notice = $origins->publish()->notices[0];
+        self::assertSame([$subject, $warning, 7], [$notice->subject, $notice->warning, $notice->offset]);
+    }
     public function testRecordCountsBytesFromTheFirstThroughTheLastToken(): void
     {
         $origins = new Origins();

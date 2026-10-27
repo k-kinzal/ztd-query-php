@@ -15,7 +15,7 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes LOCK TABLES and UNLOCK TABLES: the tables a session may use until it unlocks them.
@@ -46,8 +46,8 @@ final class LockTablesCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof Operation);
-        $statement = $operation->statement;
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
         if ($statement instanceof UnlockTables) {
             if ($session->locks !== []) {
                 $session->transaction->commit();
@@ -67,7 +67,7 @@ final class LockTablesCommand implements Command
             if ($session->instance->dictionary->schema($schema) === null) {
                 throw \MySqlMemory\Session\Problem\Errors::unknown($schema, $lock->table->name->value, $session->settings()->release());
             }
-            if ($session->instance->dictionary->table($schema, $lock->table->name->value) === null && !isset($session->instance->dictionary->schema($schema)?->views[$lock->table->name->value])) {
+            if ($session->instance->dictionary->table($schema, $lock->table->name->value, $session->temporaries) === null && !isset($session->instance->dictionary->schema($schema)?->views[$lock->table->name->value])) {
                 throw QueryError::NoSuchTable->error($schema, $lock->table->name->value);
             }
             $locks[] = [$schema, $lock->table->name->value, $lock->alias->value ?? $lock->table->name->value, $lock->mode === LockMode::Write || $lock->mode === LockMode::LowPriorityWrite];

@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the name of a LIMIT operand no program declares
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 LIMIT n');
- *     $query->facts->diagnostics[0]->name->value // => 'n'
+ *     $query->diagnostics()[0]->name->value // => 'n'
  */
 final class UndeclaredVariable implements Diagnostic
 {

@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Resolves lock names in their retained order before reading later lock specifications.
@@ -30,9 +30,9 @@ final class LockNames
      *
      * @throws SqlError When a lock name fails before later lock specifications
      */
-    public function check(Operation $operation, Session $session, bool $read): void
+    public function check(MySqlStatement $operation, Session $session, bool $read): void
     {
-        if (!$operation->statement instanceof LockTables) {
+        if (!$operation instanceof LockTables) {
             return;
         }
         $failure = $this->failure($operation, $session);
@@ -40,7 +40,7 @@ final class LockNames
             return;
         }
         [$count, $error] = $failure;
-        foreach ($read && !$session->replayed ? $operation->facts->warnings : [] as $warning) {
+        foreach ($read && !$session->replayed ? $operation->statementInformation()->warnings : [] as $warning) {
             if ($warning instanceof Deprecation && $warning->construct === Deprecated::LowPriorityWrite && $count-- > 0) {
                 $session->diagnostics->warning($warning->code(), $warning->message());
             }
@@ -53,9 +53,9 @@ final class LockNames
      *
      * @return array{int, SqlError}|null The notice prefix and its terminal name error
      */
-    public function failure(Operation $operation, Session $session): ?array
+    public function failure(MySqlStatement $operation, Session $session): ?array
     {
-        $statement = $operation->statement;
+        $statement = $operation;
         assert($statement instanceof LockTables);
         $count = 0;
         foreach ($statement->locks as $lock) {
@@ -68,7 +68,7 @@ final class LockNames
             if ($lock->table->schema === null && $session->variables->database === '') {
                 return [$count, QueryError::NoDatabase->error()];
             }
-            foreach ($operation->facts->diagnostics as $problem) {
+            foreach ($operation->statementInformation()->diagnostics as $problem) {
                 if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable && $problem->alias === ($lock->alias ?? $lock->table->name)) {
                     return [$count, QueryError::NonUniqueTable->error($problem->alias->value)];
                 }

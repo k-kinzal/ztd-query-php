@@ -32,7 +32,7 @@ final class Assignments
      */
     public function position(ColumnUse $use): int
     {
-        $resolution = $this->planner->compiler->facts->scalar($use)->resolution;
+        $resolution = $use->scalarInformation()->resolution;
         if ($resolution instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn) {
             $name = ($use->qualifier?->schema === null ? '' : $use->qualifier->schema->value . '.') . ($use->qualifier === null ? '' : $use->qualifier->name->value . '.') . $use->name->value;
             throw QueryError::BadField->error((new \MySqlMemory\Error\DiagnosticText())->bytes($name, 192), 'field list');

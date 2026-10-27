@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ForeignOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Importing a remote schema
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('IMPORT FOREIGN SCHEMA remote LIMIT TO (a, b) FROM SERVER s INTO local');
- *     [$operation->statement->localSchema->value, count($operation->statement->restriction?->tables ?? []), $operation->declarations()] // => ['local', 2, []]
+ *     [$operation->localSchema->value, count($operation->restriction?->tables ?? []), $operation->declarations()] // => ['local', 2, []]
  */
-final class ImportForeignSchema implements Statement
+final class ImportForeignSchema extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<GenericOption> The options
@@ -50,7 +49,12 @@ final class ImportForeignSchema implements Statement
         public readonly Name $server,
         public readonly Name $localSchema,
         array $options = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, GenericOption::class, 'Import options are a list of options.');
     }
 
