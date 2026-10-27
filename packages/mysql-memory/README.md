@@ -90,6 +90,13 @@ is independent of the MySQL version. The `timeZones` argument accepts rows of
 `[name, identifier, usesLeapSeconds]`; pass `[]` for empty time-zone tables.
 Conversion rules still come from PHP's time-zone database.
 
+`ALTER TABLE` reports the rows copied by the selected engine and algorithm.
+Changing MyISAM or MEMORY index storage copies rows; renaming an index or
+replacing it with an identical definition does not. Index changes on a temporary
+table use COPY even for an identical replacement, and reject INPLACE or INSTANT.
+MySQL 5.6 and 5.7 ignore index direction; newer releases reject descending
+indexes on MyISAM and MEMORY.
+
 ## Verification
 
 The package uses the repository's ordinary unit, integration and property tests

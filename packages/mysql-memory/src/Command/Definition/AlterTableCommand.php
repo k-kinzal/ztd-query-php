@@ -6,9 +6,7 @@ namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Definition\Constraint\Constraints;
-use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
@@ -221,7 +219,7 @@ final class AlterTableCommand implements Command
         $needs->dropped($table, $definition, $change->dropped);
         $needs->followed($table, $layout);
         $origins = array_map(static fn (array $column): ?int => $column[1], $layout->columns);
-        $copies = $this->copies($table->definition, $definition, $origins, $change, $context);
+        $copies = (new AlterAlgorithm())->copies($table->definition, $definition, $origins, $change, $context);
         if ((new InnoDbOptions())->retained($table->definition, $definition, $origins, $change, $context->modes->release)) {
             $definition = $definition->withRowFormat($table->definition->rowFormat);
         }
@@ -360,59 +358,6 @@ final class AlterTableCommand implements Command
     public function others(Session $session, StoredTable $table): array
     {
         return array_values(array_filter(\MySqlMemory\Session\Statement\Catalog::declarations($session), static fn (Table $declaration): bool => $declaration !== $table->definition->declaration));
-    }
-
-    /**
-     * Determines whether the change copies rows and checks its ALGORITHM and LOCK restrictions.
-     * Column type or charset changes, ORDER BY, ALGORITHM=COPY, primary-key removal,
-     * AUTO_INCREMENT addition and non-strict NOT NULL conversion can require copying.
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
-     *
-     * @param list<int|null> $origins
-     *
-     * @throws \MySqlMemory\Error\SqlError When the algorithm or lock cannot be used
-     */
-    public function copies(TableDefinition $old, TableDefinition $new, array $origins, TableChange $change, Context $context): bool
-    {
-        $retyped = false;
-        $copies = $change->copies || $change->algorithm === 'copy' || TableRebuild::copiesDefinition($old, $new, $change->layout);
-        foreach (array_filter($new->columns, static fn (ColumnDefinition $column): bool => $column->functional === null) as $position => $column) {
-            $origin = $origins[$position] ?? null;
-            if ($origin === null) {
-                $copies = $copies || TableRebuild::copiesAdded($column);
-                continue;
-            }
-            $before = $old->columns[$origin];
-            $retyped = $retyped || !TableRebuild::columnInPlace($before, $column, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
-            $copies = $copies || TableRebuild::copiesColumn($before, $column, $context);
-        }
-        if ($retyped) {
-            $this->typeAlgorithm($change);
-        } else {
-            (new Constraint\SpatialColumns())->alter($old, $new, $origins, $change->algorithm, $change->lock);
-        }
-        $rekeyed = array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $old->keys) !== array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $new->keys);
-        $copies = $copies || ($old->temporary && ($rekeyed || in_array(null, $origins, true)));
-        if ($change->algorithm === 'instant' && ($retyped || $copies || $rekeyed)) {
-            throw SchemaError::AlterOperationNotSupported->error('ALGORITHM=INSTANT', 'ALGORITHM=COPY/INPLACE');
-        }
-
-        return $copies || $retyped;
-    }
-
-    /**
-     * Refuses algorithms and locks that cannot rebuild changed column types.
-     *
-     * @throws \MySqlMemory\Error\SqlError When the selected algorithm or lock requires an in-place type change
-     */
-    public function typeAlgorithm(TableChange $change): void
-    {
-        if ($change->algorithm === 'inplace') {
-            throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=INPLACE', 'Cannot change column type INPLACE', 'ALGORITHM=COPY');
-        }
-        if ($change->lock === 'none') {
-            throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
-        }
     }
 
     /**

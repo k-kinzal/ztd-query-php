@@ -57,7 +57,7 @@ final class Keys
             }
             $positions[] = $position;
             $prefixes[] = $part instanceof ColumnPart ? (new \MySqlMemory\Command\Definition\Constraint\ColumnPrefixes())->length($part, $columns[$position]->domain, $index->kind) : null;
-            $descending[] = $part->direction === Direction::Descending;
+            $descending[] = $this->descending($part->direction, $engine);
         }
         $kind = match ($index->kind) {
             IndexKind::Primary => KeyKind::Primary,
@@ -70,6 +70,22 @@ final class Keys
         $key = new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->visible($index), algorithm: (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->algorithm($index, $engine, $this->planner->settings->legacy()));
 
         return (new \MySqlMemory\Command\Definition\Constraint\SpatialKeys($this->planner))->resolve($index, $key, $columns, $engine);
+    }
+
+    /**
+     * MySQL 5.6 and 5.7 discard index ordering; later releases require engine support.
+     * Source: MySQL 8.4.7 sql/sql_table.cc count_keys().
+     *
+     * @throws \MySqlMemory\Error\SqlError When an engine cannot store a descending index
+     */
+    public function descending(?Direction $direction, string $engine): bool
+    {
+        $descending = !$this->planner->settings->legacy() && $direction === Direction::Descending;
+        if ($descending && strcasecmp($engine, 'InnoDB') !== 0) {
+            throw SchemaError::EngineUnsupportedOperation->error('descending indexes');
+        }
+
+        return $descending;
     }
 
 }

@@ -236,7 +236,7 @@ final class AlterTableCommandTest extends TestCase
         $change = new TableChange(TableLayout::of($old->definition), 't', 'd', GrammarRelease::MySql847);
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
-        self::assertFalse((new AlterTableCommand())->copies($old->definition, $new->definition, [0], $change, $context));
+        self::assertFalse((new \MySqlMemory\Command\Definition\AlterAlgorithm())->copies($old->definition, $new->definition, [0], $change, $context));
     }
 
     public function testMoveMovesTheTableToTheNameOfItsDefinition(): void
