@@ -27,7 +27,7 @@
         "nikic/php-fuzzer": "^0.0.11",
         "opis/json-schema": "^2.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-        "phpmyadmin/sql-parser": "^5.11",
+        "phpmyadmin/sql-parser": "^6.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5",
