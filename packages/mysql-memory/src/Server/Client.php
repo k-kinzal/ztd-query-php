@@ -152,7 +152,7 @@ final class Client
                 0x04 => $this->send($this->messages->eof(0, $this->status())),
                 0x07 => (new Refresh($this))->answer($reader),
                 0x0E, 0x1F => $this->ping($command === 0x1F),
-                0x1B => $this->send($this->messages->eof(0, $this->status())),
+                0x1B => $this->setOption($reader),
                 0x09 => (new Statistics($this))->answer(),
                 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1C => $this->statements->handle($command, $reader),
                 default => $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message())),
@@ -258,6 +258,25 @@ final class Client
         }
 
         return $this->send($this->messages->ok(0, 0, $this->status(), 0));
+    }
+
+    /**
+     * Counts COM_SET_OPTION and updates the multi-statement capability.
+     * Unknown options report ER_UNKNOWN_COM_ERROR after counting the command.
+     * Source: MySQL 8.4.7 sql/sql_parse.cc, dispatch_command(COM_SET_OPTION).
+     *
+     * @throws MalformedPacket When the two-byte option is missing
+     */
+    public function setOption(PayloadReader $reader): bool
+    {
+        $option = $reader->integer(2);
+        \MySqlMemory\Session\State\StatementCounters::received($this->session());
+        \MySqlMemory\Session\State\StatementCounters::command($this->session(), 'Com_set_option');
+        if ($option > 1) {
+            return $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message()));
+        }
+        $this->capabilities = $option === 0 ? $this->capabilities | Capability::MULTI_STATEMENTS : $this->capabilities & ~Capability::MULTI_STATEMENTS;
+        return $this->send($this->messages->eof(0, $this->status()));
     }
 
     /**

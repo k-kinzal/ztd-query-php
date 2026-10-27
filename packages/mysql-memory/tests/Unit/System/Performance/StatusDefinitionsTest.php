@@ -20,6 +20,8 @@ final class StatusDefinitionsTest extends TestCase
         $current = array_column(StatusDefinitions::of(GrammarRelease::MySql847), null, 0);
         self::assertSame(['Aborted_clients', 'Global', '0', true], $current['Aborted_clients']);
         self::assertSame('OFF', $current['Compression'][2]);
+        self::assertSame('0.000000', $legacy['Last_query_cost'][2]);
+        self::assertSame('0.000000', $current['Last_query_cost'][2]);
         self::assertSame('ON', $current['Innodb_redo_log_enabled'][2]);
         self::assertArrayNotHasKey('Innodb_redo_log_enabled', $legacy);
     }

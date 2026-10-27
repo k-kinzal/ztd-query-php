@@ -22,6 +22,24 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ClientTest extends TestCase
 {
+    public function testSetOptionCountsBothCapabilityChangesAndUnknownOptions(): void
+    {
+        $sent = new ArrayObject();
+        $instance = new Instance();
+        $client = new Client($instance, 7, static function (string $bytes) use ($sent): void {
+            $sent->append(substr($bytes, 4));
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $sent->exchangeArray([]);
+        self::assertTrue($client->handle("\x1B\x00\x00"));
+        self::assertTrue($client->handle("\x1B\x01\x00"));
+        self::assertTrue($client->handle("\x1B\x02\x00"));
+        self::assertSame(3, $instance->registry->status->read('Com_set_option', $client->session()->id));
+        self::assertSame(3, $instance->registry->status->read('Questions', $client->session()->id));
+        self::assertSame(3, $instance->registry->status->read('Queries'));
+        self::assertSame(["\xFE\x00\x00\x02\x00", "\xFE\x00\x00\x02\x00", "\xFF\x17\x04#08S01Unknown command"], $sent->getArrayCopy());
+    }
+
     public function testReceivePropagatesAnImplementationFailureInsteadOfSendingAnSqlError(): void
     {
         $failure = new RuntimeException('Intentional transport failure');

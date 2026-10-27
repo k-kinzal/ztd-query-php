@@ -295,7 +295,7 @@ final class StatusDefinitions
         foreach (self::GROUPS as [$scope, $value, $listed, $releases, $names]) {
             if (in_array($release->value, $releases, true)) {
                 foreach (explode(' ', $names) as $name) {
-                    $entries[] = [$name, $scope, $value, $listed];
+                    $entries[] = [$name, $scope, $name === 'Last_query_cost' ? '0.000000' : $value, $listed];
                 }
             }
         }
