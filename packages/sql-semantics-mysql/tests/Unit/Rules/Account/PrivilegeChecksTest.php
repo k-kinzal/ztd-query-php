@@ -100,11 +100,13 @@ final class PrivilegeChecksTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]
-    public function testRevokeLegacyGlobalAllIsNotAnOrdinaryRoutineStatement(string $release): void
+    public function testRevokeRetainsTheLegacyGlobalRoutineCondition(string $release): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('The routine revocation does not name a routine object.');
-        (new Semantics(Dialect::MySql, $release))->analyze('REVOKE ALL ON FUNCTION *.* FROM u');
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze('REVOKE ALL ON FUNCTION *.* FROM u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition($statement->profile()->grammar));
+        self::assertInstanceOf(MisplacedPrivilege::class, $statement->diagnostics()[0]);
+        self::assertSame('REVOKE ALL ON FUNCTION *.* FROM u', $statement->toString());
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]

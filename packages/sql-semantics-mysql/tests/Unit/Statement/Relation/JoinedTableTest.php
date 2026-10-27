@@ -154,14 +154,17 @@ final class JoinedTableTest extends TestCase
         new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], $join));
     }
 
-    public function testRetainedConditionCannotEnterAnOrdinaryWriteRoot(): void
+    public function testRetainedConditionRemainsOnTheCompleteUpdate(): void
     {
         $table = new TableReference(new QualifiedName(new Name('t')));
         $clock = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9'));
         $join = new JoinedTable($table, JoinOperator::Join, new TableReference(new QualifiedName(new Name('u'))), $clock);
         $assignment = new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a'), new QualifiedName(new Name('t'))), new NumberLiteral('1'));
-        $this->expectExceptionMessage('An ordinary UPDATE has a coherent input-column namespace.');
-        new \SqlSemantics\Platform\MySql\Statement\Dml\Update(null, false, false, [$join], [$assignment]);
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Dml\Update(null, false, false, [$join], [$assignment]);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertSame([$join], $statement->tables);
+        self::assertSame([$assignment], $statement->assignments);
+        self::assertSame($clock, $join->on);
     }
 
     public function testRenderRetainsTheCompleteStoredConditionWithoutSourceInput(): void
