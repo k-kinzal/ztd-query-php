@@ -68,7 +68,7 @@ final class CreateTableRule
             'create2: ( create2a' => $this->enclosed($name, $this->lowering->productions->form($tail->node(1)), $temporary, $exists),
             'create2: opt_create_table_options opt_create_partitioning create3' => $this->create($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists),
             'create2: LIKE table_ident' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(1)), $temporary, $exists),
-            'create2: ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(2)), $temporary, $exists),
+            'create2: ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(2)), $temporary, $exists, enclosed: true),
             default => throw ImplementationGap::production($tail),
         };
     }
@@ -171,7 +171,7 @@ final class CreateTableRule
             'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( table_element_list ) opt_create_table_options_etc' => $this->rest($name, (new ElementRule($this->lowering))->elements($form->node(6)), $form->node(8), $temporary, $exists),
             'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident opt_create_table_options_etc' => $this->rest($name, [], $form->node(5), $temporary, $exists),
             'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident LIKE table_ident' => new CreateTableLike($name, $this->lowering->names->qualified($form->node(6)), $temporary, $exists),
-            'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($form->node(7)), $temporary, $exists),
+            'create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($form->node(7)), $temporary, $exists, enclosed: true),
             default => throw ImplementationGap::production($form),
         };
     }

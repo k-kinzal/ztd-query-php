@@ -4450,6 +4450,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\CreateTableLike": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "enclosed": "bool",
         "ifNotExists": "bool",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",

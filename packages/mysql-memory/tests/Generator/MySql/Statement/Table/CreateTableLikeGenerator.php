@@ -26,11 +26,12 @@ final class CreateTableLikeGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
+     * @param ErisGenerator<bool>|null $enclosed Generated constructor operand
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $source, ?ErisGenerator $temporaryWords = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $source, ?ErisGenerator $temporaryWords = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $enclosed = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike(name: $parts[0], source: $parts[1], temporaryWords: $parts[2], ifNotExists: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], relationInformation: $parts[6]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike(name: $parts[0], source: $parts[1], temporaryWords: $parts[2], ifNotExists: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], relationInformation: $parts[6], enclosed: $parts[7]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $source,
@@ -38,7 +39,8 @@ final class CreateTableLikeGenerator implements ErisGenerator
             $ifNotExists ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),
-            $relationInformation ?? Generators::constant(null)
+            $relationInformation ?? Generators::constant(null),
+            $enclosed ?? Generators::bool()
         ));
     }
     /**

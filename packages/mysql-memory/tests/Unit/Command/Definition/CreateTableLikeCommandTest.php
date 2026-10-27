@@ -33,7 +33,7 @@ final class CreateTableLikeCommandTest extends TestCase
         $session = (new Instance())->connect();
         $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY AUTO_INCREMENT, b VARCHAR(10) DEFAULT 'x', UNIQUE KEY kb (b)) AUTO_INCREMENT=50; INSERT INTO t (b) VALUES ('p')");
 
-        $session->query('CREATE TABLE c LIKE t');
+        $session->query('CREATE TABLE c (LIKE t)');
         $session->query("INSERT INTO c (b) VALUES ('q'), (DEFAULT)");
         $rows = $session->query('SELECT * FROM c')[0];
 
