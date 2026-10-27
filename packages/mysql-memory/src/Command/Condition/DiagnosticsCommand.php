@@ -34,11 +34,13 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  * In a stored program the items can be read into local variables, and GET STACKED DIAGNOSTICS
  * reads the conditions the running handler handles.
  *
- * The statement leaves the area as it is. NUMBER counts its conditions and ROW_COUNT is the
+ * The statement leaves the area as it is. Its reply counts only newly raised conditions.
+ * NUMBER counts the retained conditions and ROW_COUNT is the
  * row count of the statement before. A condition number that names no condition assigns
  * nothing and adds the error ER_DA_INVALID_CONDITION_NUMBER to the area, and the statement
  * still succeeds; so does a condition number that names no column or variable, which adds
- * ER_BAD_FIELD_ERROR instead. The text items are utf8mb3 strings and the numbers integers. GET STACKED
+ * ER_BAD_FIELD_ERROR instead. Text items are utf8mb3 strings. NUMBER and MYSQL_ERRNO
+ * are unsigned integers; ROW_COUNT is signed. GET STACKED
  * DIAGNOSTICS has no handler to read outside a handler (ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER),
  * an error the area does not record: it keeps the conditions of the statement before (verified
  * on live 8.0, 8.4 and 9.1 servers).
@@ -71,8 +73,11 @@ final class DiagnosticsCommand implements Command
             throw new SqlError(ProgramError::StackedWithoutHandler, ProgramError::StackedWithoutHandler->message(), null, [], null, null, true);
         }
         $diagnostics = $statement->area === DiagnosticsArea::Stacked ? $stacked[count($stacked) - 1] : $session->diagnostics;
+        $session->diagnostics->stale = false;
+        $before = $session->diagnostics->raised();
         $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $integer = $planner->compiler->names->stored(Domain::integer());
+        $unsigned = $planner->compiler->names->stored(Domain::integer(unsigned: true));
         $text = $planner->compiler->names->stored(Domain::string(0, Collation::known('utf8mb3_general_ci')));
         $information = $statement->information;
         $assignments = [];
@@ -82,29 +87,29 @@ final class DiagnosticsCommand implements Command
             } catch (SqlError $error) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
 
-                return new Completion(0, 0, $session->diagnostics->raised());
+                return new Completion(0, 0, $session->diagnostics->raised() - $before);
             }
             $position = $this->position($number->evaluate(new Frame(new Context($context->modes, new Diagnostics(), $context->variables, $context->started))), $number->domain(), $context, $diagnostics->count());
             if ($position === null) {
-                $diagnostics->error(ProgramError::InvalidConditionNumber->value, ProgramError::InvalidConditionNumber->message());
+                $session->diagnostics->error(ProgramError::InvalidConditionNumber->value, ProgramError::InvalidConditionNumber->message());
 
-                return new Completion(0, 0, $diagnostics->raised());
+                return new Completion(0, 0, $session->diagnostics->raised() - $before);
             }
             foreach ($information->items as $item) {
                 $name = $item->item;
                 assert($name instanceof ConditionItemName);
                 $assignments[] = $name === ConditionItemName::MysqlErrno
-                    ? [$item->target, $diagnostics->conditions[$position][1], $integer]
+                    ? [$item->target, $diagnostics->conditions[$position][1], $unsigned]
                     : [$item->target, $name === ConditionItemName::MessageText ? $diagnostics->conditions[$position][2] : $diagnostics->item($position, $name->value), $text];
             }
         } else {
             foreach ($information->items as $item) {
-                $assignments[] = [$item->target, $item->item === StatementItemName::Number ? $diagnostics->count() : $session->variables->rowCount, $integer];
+                $assignments[] = [$item->target, $item->item === StatementItemName::Number ? $diagnostics->count() : $session->variables->rowCount, $item->item === StatementItemName::Number ? $unsigned : $integer];
             }
         }
         $this->assign($assignments, $session, $context);
 
-        return new Completion(0, 0, $diagnostics->raised());
+        return new Completion(0, 0, $session->diagnostics->raised() - $before);
     }
 
     /**

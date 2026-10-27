@@ -41,11 +41,15 @@ final class DiagnosticsCommandTest extends TestCase
         $session = (new Instance())->connect();
 
         $session->query("SELECT 1/0, CAST('x' AS SIGNED)");
-        $session->query('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
+        $reply = $session->query('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT')[0];
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings());
 
         $result1 = $session->query('SELECT @n, @r')[0];
         self::assertInstanceOf(ResultSet::class, $result1);
         self::assertSame([['2', '-1']], $result1->rows);
+        self::assertTrue($session->variables->user('n')[1]->unsigned);
+        self::assertFalse($session->variables->user('r')[1]->unsigned);
     }
 
     public function testExecuteReadsTheItemsOfAnErrorTheServerRaised(): void
@@ -60,6 +64,7 @@ final class DiagnosticsCommandTest extends TestCase
         $result2 = $session->query('SELECT @m, @e, @s, @c, @t')[0];
         self::assertInstanceOf(ResultSet::class, $result2);
         self::assertSame([["Table 'd.nope' doesn't exist", '1146', '42S02', 'ISO 9075', '']], $result2->rows);
+        self::assertTrue($session->variables->user('e')[1]->unsigned);
     }
 
     public function testExecuteReadsTheItemsASignalSet(): void
@@ -83,6 +88,7 @@ final class DiagnosticsCommandTest extends TestCase
 
         self::assertInstanceOf(Completion::class, $reply);
         self::assertSame([['Warning', 1365, 'Division by 0'], ['Error', 1758, 'Invalid condition number']], $session->diagnostics->conditions);
+        self::assertSame(1, $reply->warnings());
     }
 
     public function testExecuteRefusesTheStackedArea(): void
@@ -147,4 +153,30 @@ final class DiagnosticsCommandTest extends TestCase
 
         (new DiagnosticsCommand())->assign([[new \SqlSemantics\Statement\Identifier\Name('v'), 3, Domain::integer()]], $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
     }
+    public function testExecuteCountsNewConditionsEvenWhenStorageIsDisabled(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET max_error_count = 0');
+        $session->query("SELECT CAST('x' AS SIGNED)");
+        $reply = $session->query('GET DIAGNOSTICS CONDITION 0 @m = MESSAGE_TEXT')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(1, $reply->warnings());
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertSame(2, $session->diagnostics->raised());
+    }
+
+    public function testExecutePreservesConditionsRetainedByALegacyRead(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("SELECT CAST('x' AS SIGNED)");
+        $session->query('SELECT 1');
+        $reply = $session->query('GET DIAGNOSTICS CONDITION 0 @m = MESSAGE_TEXT')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(1, $reply->warnings());
+        self::assertSame([1292, 1758], array_column($session->diagnostics->conditions, 1));
+    }
+
+
 }
