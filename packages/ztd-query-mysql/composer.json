@@ -10,7 +10,7 @@
     "require": {
         "php": "^8.1",
         "k-kinzal/ztd-query-core": "dev-main",
-        "phpmyadmin/sql-parser": "^5.11"
+        "phpmyadmin/sql-parser": "^6.0"
     },
     "require-dev": {
         "brianium/paratest": "^7.3",
