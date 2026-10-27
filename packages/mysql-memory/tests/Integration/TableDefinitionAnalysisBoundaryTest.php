@@ -19,6 +19,23 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 final class TableDefinitionAnalysisBoundaryTest extends TestCase
 {
     #[DataProvider('providerVersions')]
+    public function testQualifiedProgramReportsItsColumnConditionWithoutACurrentDatabase(string $version): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect();
+        $request = $session->analyze('CREATE PROCEDURE d.p() CREATE TABLE t(a BIT DEFAULT CURRENT_TIMESTAMP)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $request);
+        $session->text = 'opaque program with an incompatible column';
+        try {
+            (new Execution($session))->statement($request);
+            self::fail('The incompatible column prevents creation of the routine.');
+        } catch (SqlError $error) {
+            self::assertSame(1067, $error->getCode());
+        }
+        self::assertSame('opaque program with an incompatible column', $session->text);
+        self::assertSame([], $session->instance->dictionary->schema('d')?->tables);
+    }
+
+    #[DataProvider('providerVersions')]
     public function testAnalysisPreservesTheCatalogTransactionDiagnosticsAndCounters(string $version): void
     {
         $session = (new Instance($version, [], ['d']))->connect(database: 'd');

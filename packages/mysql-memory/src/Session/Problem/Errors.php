@@ -91,6 +91,9 @@ final class Errors
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
         $database = $session->variables->database;
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute && $statement !== null && \MySqlMemory\Command\Dispatcher::program($statement)) {
+            return (new TypeErrors())->columnAttribute($diagnostic);
+        }
         if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize) {
             return $diagnostic->scope !== null && $diagnostic->scope->schema === null && $database === ''
                 ? QueryError::NoDatabase->error()

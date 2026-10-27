@@ -24,6 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 #[Medium]
 final class ColumnRuleTest extends TestCase
 {
+    public function testSizeKeepsAnOutOfRangeTypeOutsideTheDeclaredDomain(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TABLE d.t(c BIT(65))');
+            self::fail('A BIT width above 64 cannot be published as a declared type.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize::class, $failure->problem);
+            self::assertSame('c', $failure->problem->name);
+        }
+    }
+
     public function testSpecificationLowersAGeneratedColumn(): void
     {
         $platform = new Platform();
@@ -46,17 +57,15 @@ final class ColumnRuleTest extends TestCase
         self::assertCount(1, $specification->attributes);
     }
 
-    public function testCompatibleRefusesATypeContradictionWithItsColumnIdentity(): void
+    public function testSpecificationRetainsATypeContradictionWithItsColumnIdentity(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT');
-            self::fail('The incompatible column must not be published.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute::class, $failure->problem);
-            self::assertSame('c', $failure->problem->column->value);
-            self::assertSame('d', $failure->problem->scope?->schema?->value);
-            self::assertSame('AUTO_INCREMENT', $failure->problem->attribute);
-        }
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT');
+        $conditions = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute));
+        self::assertCount(1, $conditions);
+        self::assertSame('c', $conditions[0]->column->value);
+        self::assertSame('d', $conditions[0]->scope?->schema?->value);
+        self::assertSame('AUTO_INCREMENT', $conditions[0]->attribute);
+        self::assertSame('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT', $operation->toString());
     }
 
     public function testAttributesLowersTheListInOrder(): void

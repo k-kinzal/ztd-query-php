@@ -38,10 +38,12 @@ final class OrdinaryColumnTest extends TestCase
      * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('providerContradictions')]
-    public function testIntrinsicAttributeContradictionsCannotBeConstructed(\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName $type, array $attributes): void
+    public function testIncompatibleAttributesRemainInTheDeclaredRequest(\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName $type, array $attributes): void
     {
-        $this->expectExceptionMessage('Column attributes must fit');
-        new OrdinaryColumn($type, $attributes);
+        $column = new OrdinaryColumn($type, $attributes);
+        self::assertSame($type, $column->dataType());
+        self::assertSame($attributes, $column->columnAttributes());
+        self::assertNotEmpty((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $attributes));
     }
 
     public function testDataTypeAnswersTheType(): void

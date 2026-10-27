@@ -73,7 +73,7 @@ final class TableChangeRules
         $form = $this->lowering->form($node);
         try {
             if ($rule->claims($form->signature)) {
-                $rule->item($form);
+                return (new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column\SyntaxColumns())->attributes($rule->item($form), $this->lowering, true);
             }
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, $failure->aborts);

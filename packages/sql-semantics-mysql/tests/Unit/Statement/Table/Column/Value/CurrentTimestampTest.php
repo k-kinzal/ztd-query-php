@@ -44,10 +44,10 @@ final class CurrentTimestampTest extends TestCase
         self::assertSame([$superseded, $effective], $column->columnAttributes());
     }
 
-    public function testDeclarationDomainRequiresACompatibleEffectiveDefault(): void
+    public function testDeclarationRetainsAnIncompatibleEffectiveDefault(): void
     {
         $value = new CurrentTimestamp(new Numeral('9'));
-        $this->expectExceptionMessage('Column attributes must fit the declared type and temporal precision.');
-        new OrdinaryColumn(new Temporal(TemporalKind::DateTime), [new DefaultLiteral($value)]);
+        $column = new OrdinaryColumn(new Temporal(TemporalKind::DateTime), [new DefaultLiteral($value)]);
+        self::assertSame(['DEFAULT'], (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($column->type, $column->attributes));
     }
 }

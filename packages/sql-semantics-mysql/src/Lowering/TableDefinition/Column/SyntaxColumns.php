@@ -57,22 +57,37 @@ final class SyntaxColumns
             return null;
         }
         try {
+            $definition = null;
             if ($node->name === 'opt_column_attribute_list') {
                 (new ColumnRule($lowering))->attributes($node);
             } elseif ($legacy && $node->name === 'field_ident') {
                 $lowering->names->columnName($node);
             } elseif ($legacy && $node->name === 'field_spec') {
-                $lowering->tableDefinitions->tableElement($node);
+                $definition = $lowering->tableDefinitions->tableElement($node);
             } elseif ($node->name === 'create_table_stmt') {
-                $lowering->tableDefinitions->statement($node);
+                $definition = $lowering->tableDefinitions->statement($node);
             } elseif ($node->name === 'alter_table_stmt') {
-                $lowering->tableChanges->statement($node);
+                $definition = $lowering->tableChanges->statement($node);
             }
+            return $definition === null ? null : $this->attributes($definition, $lowering, $legacy);
         } catch (RejectedInput $failure) {
             return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
                 ? new ParseFailure($failure->problem, $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $failure->aborts) : null;
         } catch (\SqlSemantics\Diagnostic\AnalysisException) {
             // Other refusals retain their own declaration and notice boundaries.
+        }
+        return null;
+    }
+
+    /**
+     * Reads the retained columns at the grammar boundary reached by an incomplete input.
+     */
+    public function attributes(\SqlSemantics\Statement\Node $definition, Lowering $lowering, bool $legacy): ?ParseFailure
+    {
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($definition) as $column) {
+            if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition && ($problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->problem($column, $lowering->programName ?? $lowering->columnTable)) !== null) {
+                return new ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+            }
         }
         return null;
     }

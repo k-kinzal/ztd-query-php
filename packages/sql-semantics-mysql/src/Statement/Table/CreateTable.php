@@ -146,6 +146,7 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
             $facts->element($element, $derivation, $scope, $table, $this->name);
         }
         $this->partitioning?->derivePartitioning($derivation, $scope);
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->notices($this, $derivation);
         $derivation->orderWarnings($this);
     }
 

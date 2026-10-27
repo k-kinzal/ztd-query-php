@@ -142,6 +142,8 @@ final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
                 }
             }
         }
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->notices($this, $derivation);
+        $derivation->orderWarnings($this);
     }
 
     /**

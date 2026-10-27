@@ -37,6 +37,36 @@ final class CreateTableExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * An incompatible effective default remains a semantic request and raises its SQL condition.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesIncompatibleDefaultsFailBeforeInstallingATable(GrammarRelease $release): void
+    {
+        $types = new \Tests\Generator\MySql\Statement\Type\TemporalGenerator(
+            Generators::elements([\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::DateTime, \SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Timestamp]),
+            Generators::elements(['1', '2', '3', '4', '5', '6']),
+        );
+        $attributes = \Tests\Generator\Operands::tuple(new \Tests\Generator\MySql\Statement\Table\Column\DefaultLiteralGenerator(new \Tests\Generator\MySql\Statement\Table\Column\Value\CurrentTimestampGenerator()));
+        $columns = new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(new ColumnNameGenerator($release), new \Tests\Generator\MySql\Statement\Table\Column\OrdinaryColumnGenerator($types, $attributes));
+        $requests = Generators::map(static fn (ColumnDefinition $column): CreateTable => new CreateTable($column->name->table ?? new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('target')), [$column]), $columns);
+        $this->forAll(new AnalyzedStatementGenerator($release, $requests))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $operation) use ($release): void {
+            self::assertInstanceOf(CreateTable::class, $operation);
+            $database = $operation->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), [], [$database]))->connect(database: $database);
+            $session->text = 'generated column attributes without SQL';
+            try {
+                (new Execution($session))->statement($operation);
+                self::fail('The clock default cannot initialize a column with a different precision.');
+            } catch (SqlError $error) {
+                self::assertSame(1067, $error->getCode());
+            }
+            self::assertSame([], $session->instance->dictionary->schema($database)?->tables);
+            self::assertSame('generated column attributes without SQL', $session->text);
+        });
+    }
+
+    /**
      * A fresh table must contain the generated decoded name after the semantic operation executes.
      */
     #[Test]

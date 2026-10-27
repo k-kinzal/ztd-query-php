@@ -55,6 +55,18 @@ final class SyntaxColumnsTest extends TestCase
         self::assertSame('d', $notices[0][1]->problem->scope?->schema?->value);
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
+    public function testAttributesKeepALegacyAlterationBeforeLaterMalformedInstructions(GrammarRelease $release): void
+    {
+        $sql = 'CREATE PROCEDURE d.p() BEGIN IF 0 THEN ALTER TABLE t MODIFY a BIT AUTO_INCREMENT; END IF; BOGUS; END';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser($release->value), $sql, strlen($sql), new LanguageProfile($release));
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertInstanceOf(InvalidColumnAttribute::class, $notices[0][1]->problem);
+        self::assertSame('AUTO_INCREMENT', $notices[0][1]->problem->attribute);
+        self::assertSame('d', $notices[0][1]->problem->scope?->schema?->value);
+    }
+
     public function testCompletedDoesNotRepeatAnInnerCastRefusalAtTableCompletion(): void
     {
         $sql = 'CREATE TABLE d.t(a INT, PRIMARY KEY ((CAST(1 AT LOCAL AS SIGNED))))';

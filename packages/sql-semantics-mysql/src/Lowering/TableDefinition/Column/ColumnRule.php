@@ -96,7 +96,7 @@ final class ColumnRule
             $type = $this->lowering->types->type($form->node(0));
             $attributes = $this->attributes($form->node($list));
             $this->refuse($attributes, $type);
-            $this->compatible($type, $attributes, $name, $definition);
+            $this->size($type, $name, $definition);
             $value = $this->expression($form->node($expression), $name);
             if (($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value)) {
                 return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references);
@@ -119,7 +119,7 @@ final class ColumnRule
     }
 
     /**
-     * Publishes an ordinary specification only after its intrinsic attributes agree.
+     * Retains the declared type and ordered attributes, including incompatible requests.
      *
      * @param list<ColumnAttribute> $trailing Attributes after the type's own list
      * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
@@ -128,17 +128,16 @@ final class ColumnRule
     {
         $type = $this->lowering->types->type($definition);
         $attributes = [...$this->attributes($list), ...$trailing];
-        $this->compatible($type, $attributes, $name, $list);
+        $this->size($type, $name, $list);
         return new OrdinaryColumn($type, $attributes, $references);
     }
 
     /**
-     * Converts a structural contradiction to a typed source refusal.
+     * Converts an out-of-range type size to a typed source refusal.
      *
-     * @param list<ColumnAttribute> $attributes The effective declaration operands
-     * @throws \SqlSemantics\Construction\RejectedInput When the type and an attribute disagree
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds its declared size bounds
      */
-    public function compatible(TypeName $type, array $attributes, ?\SqlSemantics\Statement\Identifier\Name $name, Node $boundary): void
+    public function size(TypeName $type, ?\SqlSemantics\Statement\Identifier\Name $name, Node $boundary): void
     {
         $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->type($type, $name->value ?? '');
         if ($size !== null) {
@@ -146,10 +145,6 @@ final class ColumnRule
             $problem = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($size->rule, $size->name, $size->actual, $size->maximum, $scope);
             $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, $legacy);
-        }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $attributes)[0] ?? null;
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute($name ?? new \SqlSemantics\Statement\Identifier\Name(''), $problem, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, true);
         }
     }
 

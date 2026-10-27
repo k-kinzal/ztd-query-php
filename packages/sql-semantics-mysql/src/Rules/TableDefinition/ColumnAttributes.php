@@ -26,6 +26,34 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 final class ColumnAttributes
 {
     /**
+     * Answers the first incompatible effective attribute of a retained column request.
+     */
+    public function problem(\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition $column, ?\SqlSemantics\Statement\Identifier\QualifiedName $scope): ?\SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute
+    {
+        $attribute = $this->incompatible($column->specification->dataType(), $column->specification->columnAttributes())[0] ?? null;
+        return $attribute === null ? null : new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute($column->name->column, $attribute, $scope);
+    }
+
+    /**
+     * Derives column conditions without discarding the complete CREATE or ALTER request.
+     * Legacy grammar actions finish each column; modern contextualization follows
+     * the complete statement's grammar notices. Both stop at the first bad column.
+     */
+    public function notices(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable|\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable $statement, \SqlSemantics\Construction\Derivation $derivation): void
+    {
+        $scope = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? $statement->name : $statement->table;
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($statement) as $column) {
+            if (!$column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition || ($problem = $this->problem($column, $scope)) === null) {
+                continue;
+            }
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $legacy ? $column : $statement);
+            return;
+        }
+    }
+
+    /**
      * Finds enforcement detached from a preceding CHECK or its enforcement chain.
      *
      * Repeated enforcement replaces the previous choice. Any other intervening
@@ -81,7 +109,7 @@ final class ColumnAttributes
      * Floating AUTO_INCREMENT remains a release constraint: MySQL 5.x accepts it.
      *
      * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes The written attributes
-     * @return list<'SRID'|'DEFAULT'|'ON UPDATE'|'AUTO_INCREMENT'> Incompatible effective attributes
+     * @return list<'SRID'|'DEFAULT'|'ON UPDATE'|'AUTO_INCREMENT'> Incompatible effective attributes in server validation order
      */
     public function incompatible(\SqlSemantics\Platform\MySql\Statement\Type\TypeName $type, array $attributes): array
     {
@@ -105,6 +133,8 @@ final class ColumnAttributes
             }
         }
 
+        $priority = ['DEFAULT' => 0, 'ON UPDATE' => 1, 'SRID' => 2, 'AUTO_INCREMENT' => 3];
+        usort($problems, static fn (string $left, string $right): int => $priority[$left] <=> $priority[$right]);
         return $problems;
     }
     /**

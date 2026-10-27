@@ -17,6 +17,30 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute;
 #[Small]
 final class ColumnAttributesTest extends TestCase
 {
+    public function testProblemPreservesTheColumnAndTargetWhilePrioritizingTheEffectiveDefault(): void
+    {
+        $request = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE d.t(c BIT SRID 1 DEFAULT CURRENT_TIMESTAMP)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $request);
+        $column = $request->elements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition::class, $column);
+        $problem = (new ColumnAttributes())->problem($column, $request->name);
+        self::assertNotNull($problem);
+        self::assertSame($column->name->column, $problem->column);
+        self::assertSame($request->name, $problem->scope);
+        self::assertSame('DEFAULT', $problem->attribute);
+    }
+
+    public function testNoticesRetainGrammarWarningsBeforeTheModernColumnCondition(): void
+    {
+        $request = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(c BIT SRID 1, b INT(3))');
+        $warnings = $request->warnings();
+        self::assertCount(2, $warnings);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[1]);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $warnings[1]->phase);
+        self::assertTrue($warnings[1]->aborts);
+    }
+
     public function testEnforcementRequiresAnUninterruptedCheckChain(): void
     {
         $rules = new ColumnAttributes();
@@ -59,6 +83,9 @@ final class ColumnAttributesTest extends TestCase
         yield 'replaced clock precision' => ['DATETIME(3) DEFAULT CURRENT_TIMESTAMP(2) DEFAULT CURRENT_TIMESTAMP(3)', []];
         yield 'replaced update precision' => ['DATETIME(3) ON UPDATE CURRENT_TIMESTAMP(2) ON UPDATE CURRENT_TIMESTAMP(3)', []];
         yield 'nonspatial SRID' => ['INT SRID 4326', ['SRID']];
+        yield 'generated nonspatial SRID' => ['INT AS (1) SRID 4326', ['SRID']];
+        yield 'default precedes SRID' => ['BIT SRID 1 DEFAULT CURRENT_TIMESTAMP', ['DEFAULT']];
+        yield 'update precedes SRID' => ['BIT SRID 1 ON UPDATE CURRENT_TIMESTAMP', ['ON UPDATE']];
         yield 'spatial SRID' => ['POINT SRID 4326', []];
         yield 'integer default' => ['INT DEFAULT CURRENT_TIMESTAMP', ['DEFAULT']];
         yield 'date default' => ['DATE DEFAULT CURRENT_TIMESTAMP', ['DEFAULT']];
@@ -74,15 +101,13 @@ final class ColumnAttributesTest extends TestCase
     #[DataProvider('providerAttributes')]
     public function testIncompatibleResolvesTheAttributeAgainstItsColumnType(string $definition, array $expected): void
     {
-        try {
-            $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(c ' . $definition . ')');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(InvalidColumnAttribute::class, $failure->problem);
-            self::assertSame($expected, [$failure->problem->attribute]);
-            return;
-        }
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = 'CREATE TABLE t(c ' . $definition . ')';
+        $operation = $semantics->analyze($sql);
         $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof InvalidColumnAttribute));
 
         self::assertSame($expected, array_map(static fn ($problem): string => $problem->attribute, $problems));
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        self::assertSame($formatter->format($sql), $formatter->format($operation->toString()));
     }
 }
