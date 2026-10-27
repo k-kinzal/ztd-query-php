@@ -75,7 +75,7 @@ final class NumberRule
         $hexadecimal = self::TOKENS[$form->signature] ?? throw ImplementationGap::production($form);
         $text = $form->token(0)->text;
 
-        return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal));
+        return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal, notation: $hexadecimal ? (new RadixSpelling())->notation($text) : null));
     }
 
     /**

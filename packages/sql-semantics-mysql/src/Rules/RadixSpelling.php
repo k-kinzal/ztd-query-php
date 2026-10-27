@@ -29,6 +29,18 @@ final class RadixSpelling
     }
 
     /**
+     * Reads the notation separately from the literal's digit value.
+     */
+    public function notation(string $text): \SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation
+    {
+        return match ($text[0] ?? '') {
+            '0' => \SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation::Prefixed,
+            'X', 'B' => \SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation::UpperQuoted,
+            default => \SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation::Quoted,
+        };
+    }
+
+    /**
      * Spells hexadecimal digits: quoted when their count is even, with the `0x` prefix otherwise.
      *
      * The quoted spelling requires an even count and is the only spelling of

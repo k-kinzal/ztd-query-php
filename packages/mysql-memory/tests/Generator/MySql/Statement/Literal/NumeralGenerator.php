@@ -22,15 +22,16 @@ final class NumeralGenerator implements ErisGenerator
      * @param ErisGenerator<string> $text Generated constructor operand
      * @param ErisGenerator<bool>|null $hexadecimal Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation|null>|null $notation Generated constructor operand
      */
-    public function __construct(ErisGenerator $text, ?ErisGenerator $hexadecimal = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $text, ?ErisGenerator $hexadecimal = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $notation = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Literal\Numeral {
-            return new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(text: $parts[0], hexadecimal: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $text,
             $hexadecimal ?? Generators::constant(false),
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static function (array $parts) use ($notation): ErisGenerator {
+            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation $selected): \SqlSemantics\Platform\MySql\Statement\Literal\Numeral => new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(text: $parts[0], hexadecimal: $parts[1], inputSource: $parts[2], notation: $selected), $notation ?? ($parts[1] ? RadixNotationGenerator::forDigits(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, $parts[0]) : Generators::constant(null)));
+        });
     }
 }

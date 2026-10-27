@@ -19,7 +19,7 @@ final class XidTest extends TestCase
 {
     public function testRenderWritesThePartsSeparatedByCommas(): void
     {
-        self::assertSame("XA START 'g', b'1', x'7fffffffffffffff'", (new Semantics(Dialect::MySql))->analyze("xa start 'g', b'1', 0x7fffffffffffffff")->toString());
+        self::assertSame("XA START 'g', b'1', 0x7fffffffffffffff", (new Semantics(Dialect::MySql))->analyze("xa start 'g', b'1', 0x7fffffffffffffff")->toString());
     }
 
     public function testTransactionIsTheFirstPart(): void

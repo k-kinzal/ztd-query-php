@@ -53,4 +53,11 @@ final class RadixSpellingTest extends TestCase
         self::assertSame("b''", (new RadixSpelling())->bits(''));
         self::assertSame('0011', (new RadixSpelling())->digits((new RadixSpelling())->bits('0011')));
     }
+
+    public function testNotationRetainsThePrefixAndItsLetterCase(): void
+    {
+        $spelling = new RadixSpelling();
+        $notation = \SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation::class;
+        self::assertSame([$notation::Prefixed, $notation::Prefixed, $notation::Quoted, $notation::Quoted, $notation::UpperQuoted, $notation::UpperQuoted], [$spelling->notation('0x01'), $spelling->notation('0b01'), $spelling->notation("x'01'"), $spelling->notation("b'01'"), $spelling->notation("X'01'"), $spelling->notation("B'01'")]);
+    }
 }

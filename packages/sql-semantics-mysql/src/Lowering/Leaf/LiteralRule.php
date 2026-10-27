@@ -161,10 +161,10 @@ final class LiteralRule
             'literal: NULL_SYM', 'null_as_literal: NULL_SYM' => new NullLiteral(),
             'literal: FALSE_SYM' => new BooleanLiteral(false),
             'literal: TRUE_SYM' => new BooleanLiteral(true),
-            'literal: HEX_NUM' => new RadixLiteral(Radix::Hexadecimal, $digits->digits($form->token(0)->text)),
-            'literal: BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(0)->text)),
-            'literal: UNDERSCORE_CHARSET HEX_NUM' => new RadixLiteral(Radix::Hexadecimal, $digits->digits($form->token(1)->text), $this->introducer($form)),
-            'literal: UNDERSCORE_CHARSET BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(1)->text), $this->introducer($form)),
+            'literal: HEX_NUM' => new RadixLiteral(Radix::Hexadecimal, $digits->digits($form->token(0)->text), notation: $digits->notation($form->token(0)->text)),
+            'literal: BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(0)->text), notation: $digits->notation($form->token(0)->text)),
+            'literal: UNDERSCORE_CHARSET HEX_NUM' => new RadixLiteral(Radix::Hexadecimal, $digits->digits($form->token(1)->text), $this->introducer($form), notation: $digits->notation($form->token(1)->text)),
+            'literal: UNDERSCORE_CHARSET BIN_NUM' => new RadixLiteral(Radix::Bit, $digits->digits($form->token(1)->text), $this->introducer($form), notation: $digits->notation($form->token(1)->text)),
             default => throw ImplementationGap::production($form),
         });
     }
@@ -301,7 +301,7 @@ final class LiteralRule
         $form = $this->lowering->productions->form($string);
         $radix = self::RADIX_TEXT[$form->signature] ?? null;
         if ($radix !== null) {
-            return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $radix));
+            return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $radix, notation: (new RadixSpelling())->notation($form->token(0)->text)));
         }
 
         $text = new Text($this->bytes($string));

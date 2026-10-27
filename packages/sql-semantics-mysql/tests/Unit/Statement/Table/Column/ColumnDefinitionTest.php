@@ -50,7 +50,7 @@ final class ColumnDefinitionTest extends TestCase
         self::assertInstanceOf(ColumnDefinition::class, $third);
 
         self::assertSame([4326, 0, null], [$first->srid(), $second->srid(), $third->srid()]);
-        self::assertStringContainsString("SRID 99999999 SRID x'10E6'", $operation->toString());
+        self::assertStringContainsString('SRID 99999999 SRID 0x10E6', $operation->toString());
     }
 
 }

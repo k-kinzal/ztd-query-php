@@ -71,12 +71,12 @@ final class RadixLiteralTest extends TestCase
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
-    public function testRenderQuotesAnEvenCountOfHexadecimalDigits(): void
+    public function testRenderRetainsTheNotationOfEvenHexadecimalDigits(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame("SELECT x'1F' AS v", $semantics->analyze('SELECT 0x1F AS v')->toString());
-        self::assertSame("SELECT x'1F' AS v", $semantics->analyze("SELECT X'1F' AS v")->toString());
+        self::assertSame('SELECT 0x1F AS v', $semantics->analyze('SELECT 0x1F AS v')->toString());
+        self::assertSame("SELECT X'1F' AS v", $semantics->analyze("SELECT X'1F' AS v")->toString());
         self::assertSame("SELECT x'' AS v", $semantics->analyze("SELECT x'' AS v")->toString());
         self::assertSame('SELECT 0x1F', $semantics->analyze('SELECT 0x1F')->toString());
     }
@@ -97,7 +97,7 @@ final class RadixLiteralTest extends TestCase
         self::assertSame('SELECT 0x1', $operation->toString());
     }
 
-    public function testRenderQuotesBitDigitsOfEitherSpelling(): void
+    public function testRenderRetainsTheNotationOfBitDigits(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0b01 AS v');
         $select = $operation;
@@ -110,13 +110,13 @@ final class RadixLiteralTest extends TestCase
         self::assertInstanceOf(RadixLiteral::class, $literal);
 
         self::assertSame('01', $literal->digits);
-        self::assertSame("SELECT b'01' AS v", $operation->toString());
-        self::assertSame("SELECT b'101' AS v", (new Semantics(Dialect::MySql))->analyze("SELECT B'101' AS v")->toString());
+        self::assertSame('SELECT 0b01 AS v', $operation->toString());
+        self::assertSame("SELECT B'101' AS v", (new Semantics(Dialect::MySql))->analyze("SELECT B'101' AS v")->toString());
     }
 
     public function testRenderWritesTheIntroducerInLowerCase(): void
     {
-        self::assertSame("SELECT _latin1 x'1F' AS v", (new Semantics(Dialect::MySql))->analyze('SELECT _Latin1 0x1F AS v')->toString());
+        self::assertSame('SELECT _latin1 0x1F AS v', (new Semantics(Dialect::MySql))->analyze('SELECT _Latin1 0x1F AS v')->toString());
     }
 
     public function testRejectsDigitsOutsideTheHexadecimalSystem(): void
@@ -154,4 +154,31 @@ final class RadixLiteralTest extends TestCase
         self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->warnings());
     }
 
+
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRadixStatements(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $release) {
+            foreach (['0x01AF', "X'01AF'", "x'01af'", '0xA', "X''", '0b01', "B'01'", "b''"] as $literal) {
+                foreach (["SELECT $literal AS v", "SELECT _latin1 $literal AS v", "CREATE TABLE t (c ENUM($literal))", "GET DIAGNOSTICS CONDITION $literal @localhost = CLASS_ORIGIN"] as $sql) {
+                    yield "$release: $sql" => [$release, $sql];
+                }
+                if (str_contains(strtolower($literal), 'x')) {
+                    $sql = "ALTER TABLE t COALESCE PARTITION $literal";
+                    yield "$release: $sql" => [$release, $sql];
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRadixStatements')]
+    public function testReconstructionRetainsRadixNotationInEveryLiteralRole(string $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $release);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        self::assertSame($formatter->format($sql), $formatter->format($semantics->analyze($sql)->toString()));
+    }
 }

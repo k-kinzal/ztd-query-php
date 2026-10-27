@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 
@@ -27,11 +26,19 @@ final class Numeral implements Node
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * The retained radix notation; absent for ordinary character text and decimal numbers.
+     */
+    public readonly ?RadixNotation $notation;
+
+    /**
      * @param string $text The number exactly as written, or the digits of a hexadecimal literal
      * @param bool $hexadecimal Whether the text is the digits of a hexadecimal literal
      */
-    public function __construct(public readonly string $text, public readonly bool $hexadecimal = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly string $text, public readonly bool $hexadecimal = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?RadixNotation $notation = null)
     {
+        Check::input($hexadecimal || $notation === null, 'Only radix values have a radix notation.');
+        $this->notation = !$hexadecimal ? null : ($notation ?? RadixNotation::canonical(Radix::Hexadecimal, $text));
+        Check::input($this->notation === null || $this->notation->permits(Radix::Hexadecimal, $text), 'A radix notation accepts the literal digit count.');
         Check::input(
             preg_match($hexadecimal ? '/\A[0-9A-Fa-f]*\z/' : '/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/', $text) === 1,
             'A numeral is an unsigned number or the digits of a hexadecimal literal.',
@@ -57,6 +64,6 @@ final class Numeral implements Node
      */
     public function render(Output $out): void
     {
-        $out->spelled($this->hexadecimal ? (new RadixSpelling())->hexadecimal($this->text) : $this->text);
+        $out->spelled($this->notation?->spell(Radix::Hexadecimal, $this->text) ?? $this->text);
     }
 }

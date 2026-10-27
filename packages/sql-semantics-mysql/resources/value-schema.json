@@ -1893,6 +1893,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral": {
         "hexadecimal": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "notation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\RadixNotation",
         "text": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter": {
@@ -1908,8 +1909,12 @@
         "digits": "string",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "introducer": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "notation": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\RadixNotation",
         "radix": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\RadixNotation": {
+        "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\SignedLiteral": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -1937,6 +1942,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "notation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\RadixNotation",
         "radix": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix",
         "value": "string"
     },

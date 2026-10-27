@@ -17,7 +17,7 @@ final class SourceValueRuleTest extends TestCase
 {
     public function testValueLowersStringsAndNumbers(): void
     {
-        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_USER = 'u', SOURCE_PORT = x'10'", (new Semantics(Dialect::MySql))->analyze("change replication source to source_user = 'u', source_port = 0x10")->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_USER = 'u', SOURCE_PORT = 0x10", (new Semantics(Dialect::MySql))->analyze("change replication source to source_user = 'u', source_port = 0x10")->toString());
     }
 
     public function testServerIdsLowersTheIdentifiers(): void

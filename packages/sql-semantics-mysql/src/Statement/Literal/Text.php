@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 
@@ -29,11 +28,19 @@ final class Text implements Node
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * The retained radix notation; absent for ordinary character text and decimal numbers.
+     */
+    public readonly ?RadixNotation $notation;
+
+    /**
      * @param string $value The decoded bytes of a quoted string, or the digits of a hexadecimal or bit literal
      * @param Radix|null $radix The digit system when the text is written as a hexadecimal or bit literal
      */
-    public function __construct(public readonly string $value, public readonly ?Radix $radix = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly string $value, public readonly ?Radix $radix = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?RadixNotation $notation = null)
     {
+        Check::input($radix !== null || $notation === null, 'Only radix values have a radix notation.');
+        $this->notation = $radix === null ? null : ($notation ?? RadixNotation::canonical($radix, $value));
+        Check::input($radix === null || $this->notation?->permits($radix, $value) === true, 'A radix notation accepts the literal digit count.');
         Check::input($radix !== Radix::Hexadecimal || preg_match('/\A[0-9A-Fa-f]*\z/', $value) === 1, 'A hexadecimal text holds hexadecimal digits.');
         Check::input($radix !== Radix::Bit || preg_match('/\A[01]*\z/', $value) === 1, 'A bit text holds binary digits.');
     }
@@ -43,11 +50,7 @@ final class Text implements Node
      */
     public function render(Output $out): void
     {
-        $out->spelled(match ($this->radix) {
-            null => $out->quote($this->value),
-            Radix::Hexadecimal => (new RadixSpelling())->hexadecimal($this->value),
-            Radix::Bit => (new RadixSpelling())->bits($this->value),
-        });
+        $out->spelled($this->radix !== null && $this->notation !== null ? $this->notation->spell($this->radix, $this->value) : $out->quote($this->value));
     }
 
     /**

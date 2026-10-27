@@ -413,4 +413,41 @@ final class QueryExecutionProperties extends TestCase
         });
     }
 
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
+     */
+    public static function providerRadixReleases(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
+     * Binary values preserve leading zero bytes through every generated literal notation.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRadixReleases')]
+    public function satisfiesGeneratedRadixNotationPreservesItsBinaryValue(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Literal\RadixLiteralGenerator::queries($release))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $statement) use ($release): void {
+            $literal = $statement->field(0)->expression;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral::class, $literal);
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $session->text = 'Generated binary literal without SQL input';
+            $reply = (new Execution($session))->statement($statement);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            $radix = $literal->radix === \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal ? 16 : 2;
+            $bytes = (int) ceil(strlen($literal->digits) * ($radix === 16 ? 4 : 1) / 8);
+            $expected = $literal->digits === '' ? '' : str_pad(base_convert($literal->digits, $radix, 16), $bytes * 2, '0', STR_PAD_LEFT);
+            self::assertCount(1, $reply->rows);
+            self::assertIsString($reply->rows[0][0]);
+            self::assertSame($expected, bin2hex($reply->rows[0][0]));
+            self::assertSame($statement->field(0)->name?->value, $reply->columns[0]->name);
+            self::assertSame('Generated binary literal without SQL input', $session->text);
+        });
+    }
 }
