@@ -32,11 +32,15 @@ final class ValueGraphTest extends TestCase
 {
     public function testObjectsTraversesBindingStateEvenAfterAnEarlierAudit(): void
     {
-        $name = new Name('prepared');
-        $graph = new ValueGraph(['SqlSemantics\\Statement\\']);
-        self::assertSame([$name], $graph->objects($name));
-        self::assertSame([$name], $graph->objects($name, true));
-        self::assertSame([$name], $graph->objects($name));
+        $literal = new IntegerLiteral('1');
+        $graph = new ValueGraph(['SqlSemantics\\']);
+        self::assertSame([$literal], $graph->objects($literal));
+        $information = new \SqlSemantics\Statement\Fact\ScalarFact(new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer), \SqlSemantics\Statement\Type\Nullability::NotNull);
+        $literal->initializeScalarInformation($information);
+
+        self::assertContains($information, $graph->objects($literal, true));
+        self::assertContains($information, $graph->objects($literal));
+        self::assertContains($information, (new ValueGraph(['SqlSemantics\\']))->objects($literal));
     }
 
     public function testObjectsListsEveryReachableObjectOnce(): void
