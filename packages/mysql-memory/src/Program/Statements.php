@@ -100,11 +100,13 @@ final class Statements
     /**
      * Publishes a procedure result before the next statement or an error handler runs.
      * Failed queries can still have sent their column definitions and some rows.
+     * Result-set terminators carry no warning count; CALL's final completion carries it.
+     * Verified with preparation and conversion warnings on MySQL 8.4.7.
      */
     public function publish(ResultSet $result): void
     {
-        if ($result->moreResults === null) {
-            $result = new ResultSet($result->columns, $result->rows, $result->warnings, $result->complete, $this->activation->announcesResults, $result->interruptions, $result->binaryValues);
+        if ($result->moreResults === null || $result->warnings !== 0) {
+            $result = new ResultSet($result->columns, $result->rows, 0, $result->complete, $result->moreResults ?? $this->activation->announcesResults, $result->interruptions, $result->binaryValues);
         }
         if ($this->activation->contained) {
             $this->session->running->embeddedResults[] = $result;

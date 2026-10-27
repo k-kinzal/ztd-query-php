@@ -74,11 +74,12 @@ final class ResolutionNotices
             $tables[] = $resolved instanceof DeclaredTable ? $resolved->table : null;
         }
         $cache = $session->preparation->resolutionNotices ??= new WeakMap();
-        $previous = $cache[$operation instanceof MySqlStatement ? $operation : $operation->statement] ?? null;
+        $instruction = $session->program->instruction ?? ($operation instanceof MySqlStatement ? $operation : $operation->statement);
+        $previous = $cache[$instruction] ?? null;
         if ($successful) {
-            $cache[$operation instanceof MySqlStatement ? $operation : $operation->statement] = $tables;
+            $cache[$instruction] = $tables;
         } else {
-            unset($cache[$operation instanceof MySqlStatement ? $operation : $operation->statement]);
+            unset($cache[$instruction]);
         }
         return $previous === null || $previous !== $tables;
     }
