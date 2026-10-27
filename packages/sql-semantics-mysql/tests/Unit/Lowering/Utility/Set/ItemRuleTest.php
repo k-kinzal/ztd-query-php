@@ -28,7 +28,7 @@ final class ItemRuleTest extends TestCase
 
     public function testConnectionLowersTheCharacterSets(): void
     {
-        self::assertSame('SET NAMES DEFAULT, CHARSET utf8mb4', (new Semantics(Dialect::MySql))->analyze('set names default, character set utf8mb4')->toString());
+        self::assertSame('SET NAMES DEFAULT, CHARACTER SET utf8mb4', (new Semantics(Dialect::MySql))->analyze('set names default, character set utf8mb4')->toString());
     }
 
     public function testScopedLowersANameAfterAScope(): void

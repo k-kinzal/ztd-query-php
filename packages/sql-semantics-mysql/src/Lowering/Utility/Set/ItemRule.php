@@ -103,9 +103,7 @@ final class ItemRule
         switch ($form->signature) {
             case 'option_value_no_option_type: charset old_or_new_charset_name_or_default':
             case 'option_value_no_option_type: character_set old_or_new_charset_name_or_default':
-                $this->lowering->options->skip($form->node(0));
-
-                return new SetCharacterSet($charsets->charset($form->node(1)));
+                return new SetCharacterSet($charsets->charset($form->node(1)), form: $this->lowering->types->parts->named($form->node(0)));
             case 'option_value_no_option_type: NAMES_SYM charset_name_or_default opt_collate':
             case 'option_value_no_option_type: NAMES_SYM charset_name opt_collate':
                 return new SetNames($charsets->charset($form->node(1)), $charsets->collation($form->node(2)));

@@ -79,7 +79,7 @@ final class DeclaredCollation
             CharsetForm::Ascii => 'latin1',
             CharsetForm::Unicode => 'ucs2',
             CharsetForm::Byte => 'binary',
-            CharsetForm::Named, CharsetForm::CharacterSet => $attribute->charset?->value,
+            CharsetForm::Named, CharsetForm::CharacterSet, CharsetForm::CharSet => $attribute->charset?->value,
             CharsetForm::Binary, null => null,
         };
     }

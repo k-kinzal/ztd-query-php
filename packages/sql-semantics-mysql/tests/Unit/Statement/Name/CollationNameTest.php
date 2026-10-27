@@ -68,7 +68,7 @@ final class CollationNameTest extends TestCase
         self::assertSame('utf8_bin', $plain?->name?->value);
         self::assertSame('utf8_bin', $quoted?->name?->value);
         self::assertSame('binary', $binary?->name?->value);
-        self::assertSame('`binary`', (new Lexical())->join($out->pieces()));
+        self::assertSame('binary', (new Lexical())->join($out->pieces()));
     }
 
     public function testLoweredDefaultHasNoName(): void

@@ -205,7 +205,7 @@ final class Declared
             CharsetForm::Ascii => Collation::known('latin1_swedish_ci'),
             CharsetForm::Unicode => Collation::known('ucs2_general_ci'),
             CharsetForm::Byte => Collation::binary(),
-            CharsetForm::Named, CharsetForm::CharacterSet => $attribute->charset === null ? $collation : (Charset::named($attribute->charset->value)?->defaultCollation($this->release) ?? $collation),
+            CharsetForm::Named, CharsetForm::CharacterSet, CharsetForm::CharSet => $attribute->charset === null ? $collation : (Charset::named($attribute->charset->value)?->defaultCollation($this->release) ?? $collation),
             CharsetForm::Binary, null => $collation,
         };
 

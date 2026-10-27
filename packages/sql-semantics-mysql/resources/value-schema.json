@@ -5071,6 +5071,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetCharacterSet": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetNames": {

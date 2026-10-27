@@ -75,7 +75,7 @@ Some tokens have no influence on meaning in the production they appear in: `WORK
 
 Some keywords are declared synonyms: different spellings that the database reads as the same request, such as MySQL `&&` and `AND`, or SQLite `TEMPORARY` and `TEMP`. They are compared as one key, listed in the same tables with the same kind of justification.
 
-MySQL index definitions, index hints, cache-index lists and index alterations retain `KEY` or `INDEX` as `IndexWord`. An optional omitted keyword remains absent. `IndexDefinition::$keyword` holds this enum or `null`, rather than a presence boolean.
+MySQL index definitions, index hints, cache-index lists and index alterations retain `KEY` or `INDEX` as `IndexWord`. An optional omitted keyword remains absent. `IndexDefinition::$keyword` holds this enum or `null`, rather than a presence boolean. MySQL character type attributes and `SetCharacterSet` retain `CHARSET`, `CHARACTER SET` and `CHAR SET` through `CharsetForm`. The `BINARY` character-set name retains its bare form separately from a quoted `binary` identifier.
 
 ## What the rendered SQL does not preserve
 

@@ -70,6 +70,8 @@ at the same time; they have separate listeners and state.
 The default root account has an empty password. Optional startup arguments supply
 initial databases, global variable values, and server capabilities. SQL errors are
 reported through the connected driver's usual exceptions and result APIs.
+Initial databases use the selected release's `collation_server`, including a
+configured override, just as `CREATE DATABASE` without a collation clause does.
 An internal implementation failure terminates the server rather than becoming
 an SQL error. Call `assertNoInternalFailure()` while retaining the database object
 to distinguish that failure from a driver-visible disconnect or SQL refusal.

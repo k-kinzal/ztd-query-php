@@ -8,13 +8,52 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 #[CoversClass(Instance::class)]
 #[Small]
 final class InstanceTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [substr($release->value, 6)];
+            }
+        }
+    }
+
+    #[DataProvider('providerReleases')]
+    public function testStartupDatabasesUseTheSameServerCollationAsSqlCreation(string $version): void
+    {
+        $instance = new Instance($version, databases: ['startup']);
+        $session = $instance->connect(database: 'startup');
+        $session->query('CREATE DATABASE created');
+
+        self::assertSame($session->variables->read('collation_server'), $instance->dictionary->schemas['startup']->collation);
+        self::assertSame($instance->dictionary->schemas['created']->collation, $instance->dictionary->schemas['startup']->collation);
+    }
+
+    public function testStartupDatabasesRespectTheConfiguredServerCollation(): void
+    {
+        $instance = new Instance('8.4.7', ['collation_server' => 'latin1_bin'], ['startup']);
+
+        self::assertSame('latin1_bin', $instance->dictionary->schemas['startup']->collation);
+    }
+
+    public function testRefusesAStartupCollationUnavailableInTheSelectedRelease(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The startup server collation must be available in MySQL 5.7.44.');
+        new Instance('5.7.44', ['collation_server' => 'utf8mb4_0900_ai_ci'], ['startup']);
+    }
+
     public function testConnectResolvesQualifiedTablesWithoutACurrentDatabase(): void
     {
         $instance = new Instance();

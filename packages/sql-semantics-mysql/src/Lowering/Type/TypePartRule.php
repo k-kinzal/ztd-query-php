@@ -213,7 +213,7 @@ final class TypePartRule
 
         return match ($form->signature) {
             'charset: CHARSET', 'character_set: CHARSET' => CharsetForm::Named,
-            'charset: CHAR_SYM SET', 'character_set: CHAR_SYM SET_SYM' => CharsetForm::CharacterSet,
+            'charset: CHAR_SYM SET', 'character_set: CHAR_SYM SET_SYM' => strcasecmp($form->token(0)->text, 'CHAR') === 0 ? CharsetForm::CharSet : CharsetForm::CharacterSet,
             default => throw ImplementationGap::production($form),
         };
     }

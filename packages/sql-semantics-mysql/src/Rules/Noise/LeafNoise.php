@@ -58,10 +58,8 @@ final class LeafNoise
      * - `charset: CHAR_SYM SET` and `character_set: CHAR_SYM SET_SYM`, position
      *   1: with the synonym key of position 0, the two keywords are the one
      *   keyword CHARSET (https://dev.mysql.com/doc/refman/8.4/en/create-table.html:
-     *   "CHARSET is a synonym for CHARACTER SET"). The character set attribute
-     *   of a type keeps the two-word form (CharsetForm::CharacterSet), since a
-     *   cast target is part of the text MySQL names an unaliased select list
-     *   expression after.
+     *   "CHARSET is a synonym for CHARACTER SET"). Type attributes and SET CHARACTER SET retain all three
+     *   forms through CharsetForm, including CHAR SET separately from CHARACTER SET.
      *
      * @return array<string, list<int>>
      */

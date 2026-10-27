@@ -25,6 +25,6 @@ final class SetCharacterSetTest extends TestCase
 
     public function testRenderWritesCharset(): void
     {
-        self::assertSame('SET CHARSET `binary`', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set char set binary')->toString());
+        self::assertSame('SET CHAR SET binary', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set char set binary')->toString());
     }
 }

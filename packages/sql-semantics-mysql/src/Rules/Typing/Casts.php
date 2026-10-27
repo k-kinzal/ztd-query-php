@@ -252,7 +252,7 @@ final class Casts
             CharsetForm::Ascii => Collation::known('ascii_general_ci'),
             CharsetForm::Unicode => Collation::known('utf8mb4_0900_ai_ci'),
             CharsetForm::Byte, CharsetForm::Binary => Collation::binary(),
-            CharsetForm::Named, CharsetForm::CharacterSet => $charset->charset === null ? $this->settings->connection : (Charset::named($charset->charset->value)?->defaultCollation($this->release) ?? $this->settings->connection),
+            CharsetForm::Named, CharsetForm::CharacterSet, CharsetForm::CharSet => $charset->charset === null ? $this->settings->connection : (Charset::named($charset->charset->value)?->defaultCollation($this->release) ?? $this->settings->connection),
         };
     }
 

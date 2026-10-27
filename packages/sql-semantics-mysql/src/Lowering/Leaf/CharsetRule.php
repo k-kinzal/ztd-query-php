@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * old_or_new_charset_name_or_default, default_charset, collation_name,
  * collation_name_or_default, opt_collate, opt_collate_explicit,
  * default_collation. A name is an identifier or a string; the keyword
- * BINARY at such a position is the name `binary`; the keyword DEFAULT is the
+ * BINARY at such a position is the bare name `binary`; the keyword DEFAULT is the
  * absence of a name. The optional DEFAULT before CHARACTER SET or COLLATE
  * and the optional equals sign of a table or database option are not kept.
  * Constructs: Name, CharsetName, CollationName. Terminates: unit
@@ -82,7 +82,7 @@ final class CharsetRule
             return $this->lowering->names->identifier($form->node(0));
         }
         if (isset(self::BINARY[$form->signature])) {
-            return $this->lowering->leaves->record(new Name('binary'));
+            return $this->lowering->leaves->record(new Name('binary', \SqlSemantics\Statement\Identifier\NameQuote::Bare));
         }
 
         return isset(self::UNNAMED[$form->signature]) ? null : throw ImplementationGap::production($form);

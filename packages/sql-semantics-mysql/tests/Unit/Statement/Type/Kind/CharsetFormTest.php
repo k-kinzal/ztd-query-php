@@ -15,12 +15,12 @@ final class CharsetFormTest extends TestCase
 {
     public function testCasesSpellTheKeywordOfEveryCharacterSetForm(): void
     {
-        self::assertSame(['Ascii', 'Unicode', 'Byte', 'Named', 'CharacterSet', 'Binary'], array_column(CharsetForm::cases(), 'name'));
-        self::assertSame(['ASCII', 'UNICODE', 'BYTE', 'CHARSET', 'CHARACTER SET', 'BINARY'], array_column(CharsetForm::cases(), 'value'));
+        self::assertSame(['Ascii', 'Unicode', 'Byte', 'Named', 'CharacterSet', 'CharSet', 'Binary'], array_column(CharsetForm::cases(), 'name'));
+        self::assertSame(['ASCII', 'UNICODE', 'BYTE', 'CHARSET', 'CHARACTER SET', 'CHAR SET', 'BINARY'], array_column(CharsetForm::cases(), 'value'));
     }
 
     public function testNamedTellsTheFormsThatNameACharacterSet(): void
     {
-        self::assertSame([CharsetForm::Named, CharsetForm::CharacterSet], array_values(array_filter(CharsetForm::cases(), static fn (CharsetForm $form): bool => $form->named())));
+        self::assertSame([CharsetForm::Named, CharsetForm::CharacterSet, CharsetForm::CharSet], array_values(array_filter(CharsetForm::cases(), static fn (CharsetForm $form): bool => $form->named())));
     }
 }

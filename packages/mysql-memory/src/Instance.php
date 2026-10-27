@@ -144,8 +144,12 @@ final class Instance
         if (isset($this->dictionary->schemas['sys'])) {
             \MySqlMemory\Dictionary\Program\InstalledCatalog::install($this->dictionary->schemas['sys'], $release, $routineTimestamps);
         }
+        $collation = $this->globals->value($this->catalog->definitions['collation_server']);
+        if (!is_string($collation) || \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($collation)?->availableIn($release) !== true) {
+            throw new RuntimeException('The startup server collation must be available in MySQL ' . $version . '.');
+        }
         foreach ($databases as $name) {
-            $this->dictionary->schemas[$name] ??= new Schema($name);
+            $this->dictionary->schemas[$name] ??= new Schema($name, $collation);
         }
         $this->dictionary->system = new SystemSchemas($this, $release);
         $this->started = microtime(true);
