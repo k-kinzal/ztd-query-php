@@ -33,9 +33,9 @@ final class DebugRequest
      */
     public function refusal(MySqlStatement $operation, SqlError $syntax, Session $session): SqlError
     {
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree && \MySqlMemory\Command\Dispatcher::program($operation)) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree && \MySqlMemory\Command\Dispatcher::program($operation->statement)) {
             try {
-                (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation, $session);
+                (new \MySqlMemory\Session\Access\DefaultDatabase())->check($operation->statement, $session);
             } catch (SqlError $header) {
                 return (new \MySqlMemory\Session\CacheOptions())->recorded([], null, $header, $session);
             }

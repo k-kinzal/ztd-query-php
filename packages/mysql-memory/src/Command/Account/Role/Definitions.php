@@ -120,6 +120,7 @@ final class Definitions
         if ($session->program === null || version_compare($session->instance->version, '8.4.0', '<')) {
             return;
         }
+        $instruction = $session->program->instruction instanceof CreateRole ? $session->program->instruction : $instruction;
         $cache = $session->preparation->roleCreations ??= new WeakMap();
         $states = $cache[$instruction] ?? [];
         $missing = $session->instance->accounts->find($role) === null;

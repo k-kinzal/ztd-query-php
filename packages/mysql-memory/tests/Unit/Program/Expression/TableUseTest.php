@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class TableUseTest extends TestCase
 {
-    public function testBoundKeepsTheSameCompleteDeclaration(): void
+    public function testBoundPreservesTheCompleteDeclarationWhileRebindingItsOccurrences(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $routineAnalysis = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,a INT)');
@@ -27,7 +27,8 @@ final class TableUseTest extends TestCase
         self::assertInstanceOf(M\Table\CreateTable::class, $routine->body);
         $session->text = 'unrelated invalid input';
         $prepared = (new TableUse())->bound($routine->body, $session);
-        self::assertSame($routine->body, $prepared);
+        self::assertNotSame($routine->body, $prepared);
+        self::assertSame($routine->body->toString(), $prepared->toString());
         self::assertCount(2, $prepared->declarations()[0]->columns);
         self::assertSame('unrelated invalid input', $session->text);
     }

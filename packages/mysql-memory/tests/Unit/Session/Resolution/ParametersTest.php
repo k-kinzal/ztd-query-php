@@ -22,7 +22,7 @@ final class ParametersTest extends TestCase
     public function testDerivationRetainsWrittenPositionsAndTheInitialPreparationType(): void
     {
         $first = new Parameter();
-        $second = new Parameter();
+        $second = new Parameter(position: 1);
         $row = new Row([$first, $second]);
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';

@@ -53,9 +53,10 @@ final class InspectionNotices
         if (!$operation instanceof ShowTables || array_filter($operation->statementInformation()->diagnostics, static fn ($problem): bool => $problem instanceof MissingColumn) === []) {
             return;
         }
+        $instruction = $session->program?->instruction instanceof ShowTables ? $session->program->instruction : $operation;
         $cache = $session->preparation->inspections ??= new WeakMap();
-        $seen = isset($cache[$operation]);
-        $cache[$operation] = true;
+        $seen = isset($cache[$instruction]);
+        $cache[$instruction] = true;
         foreach ($seen ? $operation->statementInformation()->warnings : [] as $warning) {
             if ($warning instanceof TrimmedName) {
                 $session->diagnostics->warning($warning->code(), $warning->message());

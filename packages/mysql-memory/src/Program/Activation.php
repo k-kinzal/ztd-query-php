@@ -36,6 +36,11 @@ final class Activation
     public int $sqlStatements = 0;
 
     /**
+     * The stored instruction currently executing, before its occurrences are rebound.
+     */
+    public ?\SqlSemantics\Statement\Statement $instruction = null;
+
+    /**
      * @var list<Row> The parameters, variables and trigger rows in scope, the innermost last
      */
     public array $scope = [];

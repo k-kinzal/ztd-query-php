@@ -59,6 +59,7 @@ final class RenameUserCommandTest extends TestCase
         $session->instance->accounts->add(new Account(new Identity('w', '%')));
         $session->instance->accounts->add(new Account(new Identity('v', '%')));
         $statement = new RenameUser(array_map(static fn (array $pair): UserRenaming => new UserRenaming(new AccountName(new Name($pair[0])), new AccountName(new Name($pair[1]))), [['a', 'b'], ['nobody', 'x'], ['w', 'v']]));
+        $statement = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $statement);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1396);

@@ -33,9 +33,10 @@ final class TemporaryStorage
         if ($session->program === null || !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
             return;
         }
+        $instruction = $session->program->instruction instanceof CreateTable ? $session->program->instruction : $definition;
         $cache = $session->preparation->storageCreations ??= new WeakMap();
-        $seen = isset($cache[$definition]);
-        $cache[$definition] = true;
+        $seen = isset($cache[$instruction]);
+        $cache[$instruction] = true;
         if (!$seen) {
             return;
         }

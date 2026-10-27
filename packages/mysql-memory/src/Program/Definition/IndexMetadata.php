@@ -32,12 +32,13 @@ final class IndexMetadata
         if (!$session->settings()->legacy() || $session->program === null || !(new Roles())->elements($definition->elements)) {
             return;
         }
+        $instruction = $session->program->instruction instanceof CreateTable ? $session->program->instruction : $definition;
         $cache = $session->preparation->indexCreations ??= new WeakMap();
         $current = $this->current($definition, $session);
-        if (isset($cache[$definition]) && $current !== null && $cache[$definition][0] !== $current) {
+        if (isset($cache[$instruction]) && $current !== null && $cache[$instruction][0] !== $current) {
             StatementCounters::command($session, 'Com_create_table');
         }
-        $cache[$definition] = [$current];
+        $cache[$instruction] = [$current];
     }
 
     /**
