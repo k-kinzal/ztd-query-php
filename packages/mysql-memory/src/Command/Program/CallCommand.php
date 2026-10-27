@@ -94,7 +94,7 @@ final class CallCommand implements Command
             throw $error;
         }
         $this->write($targets, $parameters, $session, $invocation->context((string) $session->variables->read('sql_mode')));
-        $completion = new Completion(max(0, $session->variables->rowCount), 0, $session->diagnostics->raised());
+        $completion = new Completion(max(0, $session->variables->rowCount), 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised());
 
         return $activation->results === [] ? $completion : new Batch([...$activation->results, $completion]);
     }

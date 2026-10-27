@@ -16,6 +16,21 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class ProcedureWarningRepliesTest extends TestCase
 {
+    public function testRetainedLegacyConditionsDoNotBecomeNewReplyWarnings(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query("CREATE PROCEDURE p() SELECT CAST('x' AS SIGNED)");
+        $session->query('CALL p()');
+        $session->query('DROP PROCEDURE p');
+        $created = $session->query("CREATE PROCEDURE p() SELECT BINARY 'hi'")[0];
+        $called = $session->query('CALL p()');
+
+        self::assertSame(0, $created->warnings());
+        self::assertCount(2, $called);
+        self::assertSame([0, 0], [$called[0]->warnings(), $called[1]->warnings()]);
+        self::assertSame([1292], array_column($session->diagnostics->conditions, 1));
+    }
+
     #[DataProvider('providerVersions')]
     public function testCallPublishesWarningsInItsFinalCompletion(string $version): void
     {

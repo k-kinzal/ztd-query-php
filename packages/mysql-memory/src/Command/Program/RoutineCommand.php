@@ -112,7 +112,7 @@ final class RoutineCommand implements Command
         }
         $session->instance->dictionary->routineGeneration++;
 
-        return new Completion(0, 0, $context->diagnostics->raised());
+        return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
     }
 
     /**
