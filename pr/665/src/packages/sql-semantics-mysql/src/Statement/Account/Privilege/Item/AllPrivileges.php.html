@@ -54,7 +54,8 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example Granting every privilege of a database</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;GRANT ALL PRIVILEGES ON db.* TO u&#039;)-&gt;toString() // =&gt; &#039;GRANT ALL ON db.* TO u&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;GRANT ALL PRIVILEGES ON db.* TO u&#039;)-&gt;toString() // =&gt; &#039;GRANT ALL ON db.* TO u&#039;</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;GRANT ALL PRIVILEGES ON db.* TO u&#039;)-&gt;toString() // =&gt; &#039;GRANT ALL PRIVILEGES ON db.* TO u&#039;</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AllPrivileges</span> <span class="tok-kw">implements</span> <span class="tok-id">Grantable</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AllPrivileges</span> <span class="tok-kw">implements</span> <span class="tok-id">Privilege</span></span>
@@ -68,15 +69,19 @@
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    {</span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ALL&#039;</span>);</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    }</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Constructs this SQL form with optional completed semantics and an input range.</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">privileges</span>) {</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;PRIVILEGES&#039;</span>);</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        }</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    }</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Constructs this SQL form with optional completed semantics and an input range.</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param bool $privileges Whether the optional PRIVILEGES word is written</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$privileges</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>}</span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

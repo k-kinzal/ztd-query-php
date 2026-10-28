@@ -45,19 +45,25 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Statement\Identifier</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com"> * The delimiter choice of an identifier, independent of its decoded value.</span></span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com"> * The delimiter or unquoted keyword form of a name, independent of its decoded value.</span></span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * @example Distinguishing a bare name from a backtick-delimited name</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> *     \SqlSemantics\Statement\Identifier\NameQuote::Bare !== \SqlSemantics\Statement\Identifier\NameQuote::Backtick // =&gt; true</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">enum</span> <span class="tok-id">NameQuote</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>{</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-kw">case</span> <span class="tok-id">Bare</span>;</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-kw">case</span> <span class="tok-id">Backtick</span>;</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-kw">case</span> <span class="tok-id">DoubleQuote</span>;</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>}</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Keyword keeps a bare keyword distinct from an ordinary bare identifier.</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * Its lexical boundary can matter before parentheses or a qualification dot.</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * No token, parser rule or original text fragment is retained.</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @example Distinguishing a bare name from a backtick-delimited name</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     \SqlSemantics\Statement\Identifier\NameQuote::Bare !== \SqlSemantics\Statement\Identifier\NameQuote::Backtick // =&gt; true</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">enum</span> <span class="tok-id">NameQuote</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>{</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-kw">case</span> <span class="tok-id">Bare</span>;</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-kw">case</span> <span class="tok-id">Keyword</span>;</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">case</span> <span class="tok-id">Backtick</span>;</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">case</span> <span class="tok-id">DoubleQuote</span>;</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">case</span> <span class="tok-id">SingleQuote</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>}</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

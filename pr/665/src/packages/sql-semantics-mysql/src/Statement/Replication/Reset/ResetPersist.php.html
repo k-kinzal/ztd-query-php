@@ -108,14 +108,20 @@
 <span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;IF&#039;</span>, <span class="tok-str">&#039;EXISTS&#039;</span>);</span>
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        }</span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">component</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">component</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;.&#039;</span>);</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>        }</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">variable</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">variable</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Identifier</span>);</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>        }</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    }</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>}</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">64</span>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">component</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;.&#039;</span>);</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">component</span>-&gt;<span class="tok-id">quote</span> === <span class="tok-id">\SqlSemantics\Statement\Identifier\NameQuote</span>::<span class="tok-id">Keyword</span> &amp;&amp; <span class="tok-id">strcasecmp</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">component</span>-&gt;<span class="tok-id">value</span>, <span class="tok-str">&#039;default&#039;</span>) === <span class="tok-num">0</span>) {</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>                <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DEFAULT&#039;</span>)-&gt;<span class="tok-id">separate</span>();</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>            } <span class="tok-kw">else</span> {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>                <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">component</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>);</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            }</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;.&#039;</span>);</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>        }</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">variable</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">variable</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Identifier</span>);</span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        }</span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>    }</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>}</span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
