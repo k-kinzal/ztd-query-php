@@ -53,7 +53,7 @@ final class LoadRendering
         if ($load->ignored !== null) {
             $out->keyword('IGNORE')->node($load->ignored)->keyword('LINES');
         }
-        if ($load->columns !== []) {
+        if ($load->columns !== null) {
             $out->symbol('(')->list($load->columns)->symbol(')');
         }
         if ($load->assignments !== []) {

@@ -30,7 +30,7 @@ final class LoadTableGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption>>|null $fields Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption>>|null $lines Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $ignored Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable>>|null $columns Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable>|null>|null $columns Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment>>|null $assignments Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions|null>|null $bulk Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
@@ -52,13 +52,51 @@ final class LoadTableGenerator implements ErisGenerator
             $fields ?? Generators::constant([]),
             $lines ?? Generators::constant([]),
             $ignored ?? Generators::constant(null),
-            $columns ?? Generators::constant([]),
+            $columns ?? Generators::constant(null),
             $assignments ?? Generators::constant([]),
             $bulk ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));
     }
+    /**
+     * Composes a declaration, its file input and all-column LOAD forms before execution.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, list<list<int>>, string}>
+     */
+    public static function imports(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
+        return \Tests\Generator\Operands::bind($definitions, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release): ErisGenerator {
+            return Generators::map(static fn (array $parts): array => self::import($create, $parts[0], $parts[1], $parts[2], $release), \Tests\Generator\Operands::tuple(Generators::vector(3, Generators::choose(-10000, 10000)), Generators::bool(), new LoadFormatGenerator()));
+        });
+    }
+
+    /**
+     * Binds one generated file to its declaration and retains the expected rows.
+     *
+     * @param list<int> $rows The generated input field values
+     * @return array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, list<list<int>>, string}
+     */
+    public static function import(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create, array $rows, bool $written, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat $format, \SqlSemantics\Contract\GrammarRelease $release): array
+    {
+        $database = $create->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt');
+        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [$database]);
+        $publication = new \SqlSemantics\Platform\MySql\Construction\Publication();
+        $definition = $publication->publish($context, $create);
+        $context = new \SqlSemantics\Contract\AnalysisContext($context->profile, [$database], $definition->declarations());
+        $load = new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable($format, null, new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('generated-input')), null, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget($create->name), columns: $written ? [] : null);
+        $name = $definition->declarations()[0]->columns[0]->name->value;
+        $contents = $format === \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Data
+            ? implode("\n", $rows) . "\n"
+            : '<rows>' . implode('', array_map(static fn (int $value): string => '<row><field name="' . htmlspecialchars($name, ENT_QUOTES | ENT_XML1, 'UTF-8') . '">' . $value . '</field></row>', $rows)) . '</rows>';
+        $expected = [];
+        foreach ($rows as $value) {
+            $expected[] = [$value];
+        }
+        return [$definition, $publication->publish($context, $load), $expected, $contents];
+    }
+
     /**
      * Composes the statement's SQL forms from typed operand generators.
      *
@@ -100,7 +138,7 @@ final class LoadTableGenerator implements ErisGenerator
             fields: Generators::constant([]),
             lines: Generators::constant([]),
             ignored: Generators::constant(null),
-            columns: Generators::constant([]),
+            columns: Generators::elements([null, []]),
             assignments: Generators::constant([]),
             bulk: Generators::constant(null)
         );
@@ -138,7 +176,7 @@ final class LoadTableGenerator implements ErisGenerator
             fields: Generators::constant([]),
             lines: Generators::constant([]),
             ignored: Generators::constant(null),
-            columns: Generators::constant([]),
+            columns: Generators::elements([null, []]),
             assignments: Generators::constant([]),
             bulk: new BulkOptionsGenerator(
                 parallel: Generators::constant(null),
@@ -186,7 +224,7 @@ final class LoadTableGenerator implements ErisGenerator
             fields: Generators::constant([]),
             lines: Generators::constant([]),
             ignored: Generators::constant(null),
-            columns: Generators::constant([]),
+            columns: Generators::elements([null, []]),
             assignments: Generators::constant([]),
             bulk: Generators::constant(null)
         );
@@ -232,7 +270,7 @@ final class LoadTableGenerator implements ErisGenerator
             ),
             lines: Generators::constant([]),
             ignored: Generators::constant(null),
-            columns: Generators::constant([]),
+            columns: Generators::elements([null, []]),
             assignments: Generators::constant([]),
             bulk: Generators::constant(null)
         );
@@ -278,7 +316,7 @@ final class LoadTableGenerator implements ErisGenerator
                 )
             ),
             ignored: Generators::constant(null),
-            columns: Generators::constant([]),
+            columns: Generators::elements([null, []]),
             assignments: Generators::constant([]),
             bulk: Generators::constant(null)
         );

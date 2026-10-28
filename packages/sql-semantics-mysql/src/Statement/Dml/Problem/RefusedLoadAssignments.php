@@ -47,9 +47,9 @@ final class RefusedLoadAssignments implements Diagnostic, Node
     public readonly array $lines;
 
     /**
-     * @var list<ColumnUse|UserVariable> The columns and user variables the fields are read into, in written order; empty for every column
+     * @var list<ColumnUse|UserVariable>|null Input destinations in written order; null omits the list and [] writes (), both selecting every column
      */
-    public readonly array $columns;
+    public readonly ?array $columns;
 
     /**
      * @var list<Assignment|DeferredColumnAssignment> The SET assignments in written order
@@ -68,7 +68,7 @@ final class RefusedLoadAssignments implements Diagnostic, Node
      * @param list<FieldOption> $fields The FIELDS options
      * @param list<LineOption> $lines The LINES options
      * @param Numeral|null $ignored The number of lines or rows skipped at the start
-     * @param list<ColumnUse|UserVariable> $columns The columns and user variables the fields are read into
+     * @param list<ColumnUse|UserVariable>|null $columns Input destinations; null omits the list and [] retains an explicit empty list
      * @param list<Assignment|DeferredColumnAssignment> $assignments The SET assignments
      * @param BulkOptions|null $bulk The options of a bulk load
      * @throws InvalidConstruction When the table has a correlation name or a member of a list is of the wrong class
@@ -85,7 +85,7 @@ final class RefusedLoadAssignments implements Diagnostic, Node
         array $fields = [],
         array $lines = [],
         public readonly ?Numeral $ignored = null,
-        array $columns = [],
+        ?array $columns = null,
         array $assignments = [],
         public readonly ?BulkOptions $bulk = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
@@ -96,18 +96,18 @@ final class RefusedLoadAssignments implements Diagnostic, Node
         $this->fields = Check::listOf($fields, FieldOption::class, 'The FIELDS clause holds field options.');
         $this->lines = Check::listOf($lines, LineOption::class, 'The LINES clause holds line options.');
         $list = [];
-        foreach (Check::listOf($columns, Node::class, 'The column list of LOAD is an ordered list.') as $column) {
+        foreach (Check::listOf($columns ?? [], Node::class, 'The column list of LOAD is an ordered list.') as $column) {
             Check::input($column instanceof ColumnUse || $column instanceof UserVariable, 'LOAD reads fields into columns and user variables.');
             $list[] = $column;
         }
-        $this->columns = $list;
+        $this->columns = $columns === null ? null : $list;
         $items = Check::listOf($assignments, Node::class, 'A retained LOAD holds ordered assignments.');
         $deferred = false;
         foreach ($items as $item) {
             Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'LOAD assignments retain scalar, default and non-scalar roles.');
             $deferred = $deferred || $item instanceof DeferredColumnAssignment;
         }
-        Check::input($deferred || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns), 'A retained LOAD requires a non-scalar SET assignment or a fixed-row input variable.');
+        Check::input($deferred || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns ?? []), 'A retained LOAD requires a non-scalar SET assignment or a fixed-row input variable.');
         $this->assignments = $items;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -124,7 +124,7 @@ final class RefusedLoadAssignments implements Diagnostic, Node
                 return (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$assignment->value])->message();
             }
         }
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($this->format, $this->fields, $this->columns)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($this->format, $this->fields, $this->columns ?? [])) {
             return 'Fixed-row LOAD DATA requires column destinations with defined widths.';
         }
         throw new LogicException('A retained LOAD has an intrinsic assignment condition.');

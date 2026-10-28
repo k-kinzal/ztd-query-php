@@ -53,9 +53,9 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
     public readonly array $lines;
 
     /**
-     * @var list<ColumnUse|UserVariable> The columns and user variables the fields are read into, in written order; empty for every column
+     * @var list<ColumnUse|UserVariable>|null Input destinations in written order; null omits the list and [] writes (), both selecting every column
      */
-    public readonly array $columns;
+    public readonly ?array $columns;
 
     /**
      * @var list<Assignment> The SET assignments in written order
@@ -74,7 +74,7 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      * @param list<FieldOption> $fields The FIELDS options
      * @param list<LineOption> $lines The LINES options
      * @param Numeral|null $ignored The number of lines or rows skipped at the start
-     * @param list<ColumnUse|UserVariable> $columns The columns and user variables the fields are read into
+     * @param list<ColumnUse|UserVariable>|null $columns Input destinations; null omits the list and [] retains an explicit empty list
      * @param list<Assignment> $assignments The SET assignments
      * @param BulkOptions|null $bulk The options of a bulk load
      * @throws InvalidConstruction When the table has a correlation name or a member of a list is of the wrong class
@@ -91,7 +91,7 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         array $fields = [],
         array $lines = [],
         public readonly ?Numeral $ignored = null,
-        array $columns = [],
+        ?array $columns = null,
         array $assignments = [],
         public readonly ?BulkOptions $bulk = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
@@ -106,13 +106,13 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         $this->fields = Check::listOf($fields, FieldOption::class, 'The FIELDS clause holds field options.');
         $this->lines = Check::listOf($lines, LineOption::class, 'The LINES clause holds line options.');
         $list = [];
-        foreach (Check::listOf($columns, Node::class, 'The column list of LOAD is an ordered list.') as $column) {
+        foreach (Check::listOf($columns ?? [], Node::class, 'The column list of LOAD is an ordered list.') as $column) {
             Check::input($column instanceof ColumnUse || $column instanceof UserVariable, 'LOAD reads fields into columns and user variables.');
             $list[] = $column;
         }
-        $this->columns = $list;
+        $this->columns = $columns === null ? null : $list;
         $this->assignments = Check::listOf($assignments, Assignment::class, 'The SET clause of LOAD holds assignments.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns), 'Fixed-row LOAD DATA requires column destinations with defined widths.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns ?? []), 'Fixed-row LOAD DATA requires column destinations with defined widths.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->compatible($input, $bulk, $compression, (new LoadFacts())->algorithm($this)), 'LOAD source features and algorithm options must share a supported language interpretation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

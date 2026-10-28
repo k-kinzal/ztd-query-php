@@ -103,7 +103,7 @@ final class LoadRuleTest extends TestCase
     public function testColumnsLowersColumnsAndVariables(): void
     {
         self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t (a, @b, t.c)', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' into table t (a, @b, t.c)')->toString());
-        self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' into table t ()')->toString());
+        self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t ()', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' into table t ()')->toString());
     }
 
     public function testAssignmentsLowersBothGenerations(): void

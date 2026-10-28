@@ -53,7 +53,7 @@ final class LoadFacts
         $fact = $derivation->relation($load->table, $base);
         $environment = new Environment($derivation->context, $base, [new VisibleRelation($load->table, $fact->shape, null, $load->table->name, [], (new TableShapes())->implicit($fact))]);
         $this->variables($load, $derivation);
-        foreach ($load->columns as $column) {
+        foreach ($load->columns ?? [] as $column) {
             $derivation->scalar($column, $column instanceof ColumnUse ? (new WriteScope())->written($environment) : $base);
         }
         (new WriteScope())->assign($load->assignments, $derivation, $environment, $environment, false);
@@ -73,7 +73,7 @@ final class LoadFacts
         $charset = $load->charset?->name === null ? null : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($load->charset->name->value);
         $collation = $charset?->defaultCollation($derivation->context->profile->grammar) ?? $settings->databaseCollation ?? $settings->server ?? $settings->connection;
         $variables = new \SqlSemantics\Platform\MySql\Rules\Typing\Variables($settings, $derivation->context->profile->grammar);
-        foreach ($load->columns as $column) {
+        foreach ($load->columns ?? [] as $column) {
             if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable) {
                 $name = strtolower($column->name->value);
                 $entry = $settings->userVariables[$name] ?? null;
@@ -93,6 +93,6 @@ final class LoadFacts
      */
     public function algorithm(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|LoadTable $load): ?LoadConflict
     {
-        return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, $load->columns !== [], $load->assignments !== [], $load->bulk, $load->lines);
+        return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, ($load->columns ?? []) !== [], $load->assignments !== [], $load->bulk, $load->lines);
     }
 }

@@ -25,6 +25,8 @@ final class RefusedLoadAssignmentsTest extends TestCase
             self::assertInstanceOf(RefusedLoadAssignments::class, $failure->problem);
             self::assertSame('Fixed-row LOAD DATA requires column destinations with defined widths.', $failure->problem->message());
             self::assertNotInstanceOf(\SqlSemantics\Statement\Statement::class, $failure->problem);
+            self::assertNotNull($failure->problem->columns);
+            self::assertCount(1, $failure->problem->columns);
             self::assertSame('v', $failure->problem->columns[0]->name->value);
         }
     }
@@ -32,11 +34,12 @@ final class RefusedLoadAssignmentsTest extends TestCase
     public function testMessageDescribesTheRetainedAssignmentCondition(): void
     {
         try {
-            (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(1,2)");
+            (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t () SET a=ROW(1,2)");
             self::fail('A non-scalar assignment must retain its LOAD request.');
         } catch (RejectedInput $failure) {
             self::assertInstanceOf(RefusedLoadAssignments::class, $failure->problem);
             self::assertSame('Operand should contain 1 column(s), not 2.', $failure->problem->message());
+            self::assertSame([], $failure->problem->columns);
         }
     }
 

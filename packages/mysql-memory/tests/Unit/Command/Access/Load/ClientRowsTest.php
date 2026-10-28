@@ -64,6 +64,8 @@ final class ClientRowsTest extends TestCase
         $planner = new \MySqlMemory\Plan\Planner($operation, $operation->statementInformation(), $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
+        self::assertNotNull($operation->columns);
+        self::assertCount(3, $operation->columns);
         self::assertSame([1, $operation->columns[1], 0], (new ClientRows())->targets($operation, $planner, $table));
     }
     public function testXmlBindsNamedFieldsInDestinationOrderAndSuppliesMissingNulls(): void

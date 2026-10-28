@@ -87,7 +87,7 @@ final class ClientRows
      */
     public function targets(LoadTable $statement, Planner $planner, StoredTable $table): array
     {
-        if ($statement->columns === []) {
+        if ($statement->columns === null || $statement->columns === []) {
             return array_values(array_filter(array_keys($table->definition->columns), static fn (int $index): bool => !$table->definition->columns[$index]->invisible));
         }
         return array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|UserVariable $target): int|UserVariable => $target instanceof UserVariable ? $target : (new Assignments($planner, $table))->position($target), $statement->columns);

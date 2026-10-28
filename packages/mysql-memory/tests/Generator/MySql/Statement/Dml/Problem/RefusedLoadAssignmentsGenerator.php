@@ -30,7 +30,7 @@ final class RefusedLoadAssignmentsGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption>>|null $fields Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption>>|null $lines Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $ignored Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable>>|null $columns Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable>|null>|null $columns Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>>|null $assignments Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions|null>|null $bulk Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
@@ -51,7 +51,7 @@ final class RefusedLoadAssignmentsGenerator implements ErisGenerator
             $fields ?? Generators::constant([]),
             $lines ?? Generators::constant([]),
             $ignored ?? Generators::constant(null),
-            $columns ?? Generators::constant([]),
+            $columns ?? Generators::constant(null),
             $assignments ?? Generators::constant([]),
             $bulk ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

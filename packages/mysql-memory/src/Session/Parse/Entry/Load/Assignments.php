@@ -89,7 +89,7 @@ final class Assignments
         $scope = new \MySqlMemory\Evaluation\Scope();
         $scope->place($load->table, array_map(static fn ($column) => $column->domain, $table->definition->columns), array_map(static fn ($column): string => $column->name, $table->definition->columns), $table->definition);
         $columns = new \MySqlMemory\Command\Write\Assignments($planner, $table);
-        foreach ($load->columns as $column) {
+        foreach ($load->columns ?? [] as $column) {
             if ($column instanceof ColumnUse) {
                 $columns->position($column);
             }
@@ -106,7 +106,7 @@ final class Assignments
                 throw (new \MySqlMemory\Program\Expression\RowUse())->error($assignment->value);
             }
         }
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($load->format, $load->fields, $load->columns)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($load->format, $load->fields, $load->columns ?? [])) {
             throw \MySqlMemory\Error\Family\StatementError::FixedRowsToVariable->error();
         }
         throw new LogicException('A retained LOAD has an intrinsic assignment condition.');

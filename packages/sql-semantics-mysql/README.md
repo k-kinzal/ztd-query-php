@@ -477,6 +477,13 @@ $semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->va
 $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->diagnostics()[0]->message(); // => 'v is not BASE TABLE.'
 ```
 
+### File input destinations
+
+`LoadTable::columns` and `RefusedLoadAssignments::columns` distinguish an omitted
+input destination list (`null`) from an explicit empty list (`[]`, rendered as
+`()`); both forms load every visible column in table order. A nonempty list
+retains its ordered column and user-variable destinations.
+
 ### Generated columns
 
 A column defined with `AS (expr)`, `VIRTUAL` or `STORED`, is declared generated (`Column::$generated`), also in a copy made with `CREATE TABLE ... LIKE`; a column that `CREATE TABLE ... SELECT` takes from a query, or a view column, is not. The server computes such a column and accepts only a default value for it: a value other than `DEFAULT` or `DEFAULT(col)` written into it by `INSERT` or `REPLACE` (a row of `VALUES`, with or without a column list, `SET`, a query source), by `ON DUPLICATE KEY UPDATE` or by `UPDATE` is reported (`GeneratedColumnWrite`), whatever `IGNORE` and the SQL mode say. A query source passes the default only through a select item `DEFAULT(col)` of a single query block, so the columns of a union, of `TABLE` or of an expanded `*` are reported. `CREATE TABLE ... SELECT` reports a generated column of its column list that the query fills. `LOAD DATA` computes generated columns and ignores what it reads for them. From MySQL 8.0 on, the parser refuses `DEFAULT`, `ON UPDATE`, `AUTO_INCREMENT`, `SERIAL DEFAULT VALUE`, `COLUMN_FORMAT` and `STORAGE` on a generated column, and the type `SERIAL`, so analyzing such a definition throws `AnalysisException`.

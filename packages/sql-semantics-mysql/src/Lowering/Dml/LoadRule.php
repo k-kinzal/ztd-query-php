@@ -122,7 +122,7 @@ final class LoadRule
             'columns' => $this->columns($parts['opt_field_or_var_spec']),
             'bulk' => $this->bulk($parts),
         ];
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], $operands['columns'] !== [], $parts['opt_load_data_set_spec']->children !== [], $operands['bulk'], $operands['lines']);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], ($operands['columns'] ?? []) !== [], $parts['opt_load_data_set_spec']->children !== [], $operands['bulk'], $operands['lines']);
         $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
         $retained = new LoadAssignments($this->lowering);
         $assignments = $retained->read($parts['opt_load_data_set_spec']);
@@ -131,7 +131,7 @@ final class LoadRule
         if ($problem !== null && (($active && $nonScalar) || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->modern($operands['input'], $operands['bulk'], $operands['compression']))) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions($operands['table']->name, $operands['format'], $problem, $operands['charset'], $assignments), $end, false);
         }
-        if ($nonScalar || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($operands['format'], $operands['fields'], $operands['columns'])) {
+        if ($nonScalar || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($operands['format'], $operands['fields'], $operands['columns'] ?? [])) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments(...$operands, assignments: $assignments), $end, false);
         }
         return new LoadTable(...$operands, assignments: $retained->ordinary($assignments, $end));
@@ -270,15 +270,18 @@ final class LoadRule
     }
 
     /**
-     * Lowers a node of `opt_field_or_var_spec`; an absent or empty list is empty.
+     * Lowers a node of `opt_field_or_var_spec`; null denotes absence and [] retains explicit parentheses.
      *
-     * @return list<ColumnUse|UserVariable>
+     * @return list<ColumnUse|UserVariable>|null
      * @throws ImplementationGap When a production has no rule
      */
-    public function columns(Node $spec): array
+    public function columns(Node $spec): ?array
     {
         $form = $this->lowering->form($spec);
-        if ($form->signature === 'opt_field_or_var_spec:' || $form->signature === 'opt_field_or_var_spec: ( )') {
+        if ($form->signature === 'opt_field_or_var_spec:') {
+            return null;
+        }
+        if ($form->signature === 'opt_field_or_var_spec: ( )') {
             return [];
         }
         if ($form->signature !== 'opt_field_or_var_spec: ( fields_or_vars )') {
