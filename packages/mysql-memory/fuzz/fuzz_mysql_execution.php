@@ -108,6 +108,10 @@ echo 'Execution profile: ' . json_encode(['grammar' => $grammarVersion, 'mode' =
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
 $config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $target, $duration): void {
+    if ($target->attempts !== $target->verified) {
+        fwrite(STDERR, "Stopping after the preceding execution counterexample.\n");
+        exit(1);
+    }
     /** @var int|float|null $started */
     static $started = null;
     $started ??= hrtime(true);

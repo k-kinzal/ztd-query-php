@@ -138,6 +138,9 @@ once on each connection and compares the actual replies, including rows, column
 metadata, affected rows, insert IDs, warning counts, completion information and
 SQL errors. Both connections retain the same statement history. A failure reports
 that history and the input bytes, so state-dependent differences can be reproduced.
+After PHP-Fuzzer saves the first counterexample, the campaign exits unsuccessfully
+before another input executes. Later comparisons must not use histories that have
+already diverged or connections that the failing input closed.
 
 ```sh
 MYSQL_VERSION=8.4.7 composer fuzz:smoke

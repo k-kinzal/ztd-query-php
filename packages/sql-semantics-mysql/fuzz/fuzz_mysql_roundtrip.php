@@ -102,6 +102,10 @@ echo 'Reconstruction profile: ' . json_encode(['grammar' => $grammarVersion, 'mo
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
 $config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $target, $duration, &$attempts, &$inputs): void {
+    if ($attempts !== $inputs) {
+        fwrite(STDERR, "Stopping after the preceding reconstruction counterexample.\n");
+        exit(1);
+    }
     /** @var int|float|null $started */
     static $started = null;
     $started ??= hrtime(true);
