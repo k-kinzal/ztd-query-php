@@ -1603,6 +1603,7 @@
         "left": "SqlSemantics\\Statement\\Scalar",
         "modWord": "bool",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator",
+        "precisionIncrement": "?int",
         "right": "SqlSemantics\\Statement\\Scalar",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },

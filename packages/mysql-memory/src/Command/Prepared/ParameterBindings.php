@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * an enclosing numeric context, or DOUBLE when no context supplies a type; DIV defaults
  * to BIGINT. NULL siblings supply VARCHAR and decimal siblings supply DECIMAL(65,30).
  * Repreparation replaces the derived domains; other executions retain those domains and convert
- * incoming values when they are evaluated. Execution resolves a fresh operation with these types.
+ * incoming values when they are evaluated. Compatible executions reuse the prepared expression information.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/prepare.html.
  *
  * @visibility MySqlMemory
@@ -95,17 +95,15 @@ final class ParameterBindings
     /**
      * Answers the parameter domains to resolve the next execution with.
      *
-     * CAST performs its own conversion, so its argument keeps the actual domain.
+     * CAST operands keep their inferred domains when another marker forces repreparation.
      *
      * @return array<int, Domain>
      */
     public function domains(): array
     {
         $domains = [];
-        foreach ($this->types as $position => [$domain, $cast]) {
-            if (!$cast) {
-                $domains[$position] = $domain;
-            }
+        foreach ($this->types as $position => [$domain]) {
+            $domains[$position] = $domain;
         }
 
         return $domains;

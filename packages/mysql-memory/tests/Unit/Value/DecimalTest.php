@@ -107,4 +107,12 @@ final class DecimalTest extends TestCase
     {
         self::assertSame(['0', '1.5', '-2'], [Decimal::numeric('abc'), Decimal::numeric('1.5'), Decimal::numeric('-2')]);
     }
+    public function testQuotientKeepsCalculationPrecisionBeforeDisplayRounding(): void
+    {
+        self::assertSame('0.166666666', Decimal::quotient('1', '6', 4));
+        self::assertSame('0.166666666666666666', Decimal::quotient('1.0', '6.0', 4));
+        self::assertSame('0', Decimal::quotient('1', '6', 0));
+        self::assertNull(Decimal::quotient('1', '0', 4));
+    }
+
 }

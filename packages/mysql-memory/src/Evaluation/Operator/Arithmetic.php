@@ -34,6 +34,7 @@ final class Arithmetic implements Evaluable
      * @param Evaluable $left The left operand
      * @param Evaluable $right The right operand
      * @param Domain $domain The domain of the result
+     * @param int $divisionPrecision The increment retained by a division during semantic construction
      * @param string $text The expression as the server prints it in messages
      */
     public function __construct(
@@ -42,6 +43,7 @@ final class Arithmetic implements Evaluable
         public readonly Evaluable $right,
         public readonly Domain $domain,
         public readonly string $text,
+        public readonly int $divisionPrecision = 4,
     ) {
     }
 
@@ -128,7 +130,7 @@ final class Arithmetic implements Evaluable
             ArithmeticOperator::Plus => Decimal::add($left, $right),
             ArithmeticOperator::Minus => Decimal::subtract($left, $right),
             ArithmeticOperator::Multiply => Decimal::multiply($left, $right),
-            ArithmeticOperator::Divide => Decimal::divide($left, $right, $this->domain->decimals),
+            ArithmeticOperator::Divide => Decimal::quotient($left, $right, $this->divisionPrecision),
             ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => Decimal::modulo($left, $right),
         };
         if ($result === null) {
@@ -148,16 +150,16 @@ final class Arithmetic implements Evaluable
     {
         $leftText = Decimal::numeric(Integer::text($left, $this->left->domain()->numericBytes || ($this->left->domain()->unsigned && (new Numbers())->operand($this->left->domain()->resolved()) === Kind::Integer)));
         $rightText = Decimal::numeric(Integer::text($right, $this->right->domain()->numericBytes || ($this->right->domain()->unsigned && (new Numbers())->operand($this->right->domain()->resolved()) === Kind::Integer)));
-        if ($this->operator === ArithmeticOperator::Modulo) {
+        if ($this->operator === ArithmeticOperator::Modulo || $this->operator === ArithmeticOperator::Divide) {
             if ($rightText === '0') {
                 return $this->byZero($frame);
             }
-            $result = bcmod($leftText, $rightText, 0);
+            $result = $this->operator === ArithmeticOperator::Divide ? bcdiv($leftText, $rightText, 0) : bcmod($leftText, $rightText, 0);
         } else {
             $result = match ($this->operator) {
                 ArithmeticOperator::Plus => bcadd($leftText, $rightText, 0),
                 ArithmeticOperator::Minus => bcsub($leftText, $rightText, 0),
-                ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Multiply, ArithmeticOperator::Divide, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => bcmul($leftText, $rightText, 0),
+                ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Multiply, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => bcmul($leftText, $rightText, 0),
             };
         }
 

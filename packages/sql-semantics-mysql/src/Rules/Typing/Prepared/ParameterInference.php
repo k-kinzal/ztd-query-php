@@ -27,9 +27,10 @@ use SqlSemantics\Statement\Type\Known;
  * integer division defaults to BIGINT. CASE and control-function result branches supply the
  * other branch types. A NULL sibling supplies binary VARCHAR; binding a numeric
  * value can then trigger automatic repreparation. CAST records that
- * its argument is fixed against automatic repreparation. Other positions retain
- * their supplied preparation domain. Consumers retain these domains between
- * executions and supply them as parameter settings when resolving again.
+ * its argument is fixed against automatic repreparation and numeric casts supply
+ * their target kind. Other positions retain their supplied preparation domain.
+ * Publication resolves the expression information with these domains before a
+ * prepared statement is exposed. Compatible executions retain that information.
  *
  * This rule inspects neither source text nor parser nodes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/prepare.html.
@@ -46,7 +47,7 @@ final class ParameterInference
      */
     public static function infer(Statement $operation): array
     {
-        $nodes = (new ParameterContexts())->expressions($operation);
+        $nodes = array_values(array_filter((new ParameterContexts())->expressions($operation), static fn (\SqlSemantics\Statement\Scalar $expression): bool => $expression->hasBinding()));
         $types = self::initial($operation, $nodes);
         foreach ($nodes as $expression) {
             if ($expression instanceof Unary && $expression->operator === UnaryOperator::Invert && $expression->operand instanceof Parameter) {
@@ -58,13 +59,26 @@ final class ParameterInference
                 $binding = $expression->operand->scalarInformation()->resolution;
                 Check::invariant($binding instanceof ParameterBinding, 'A CAST marker has a resolved input slot.');
                 Check::invariant(isset($types[$binding->position]), 'The CAST marker has an initial domain.');
-                $types[$binding->position] = [$types[$binding->position][0], true];
+                $types[$binding->position] = [self::cast($expression) ?? $types[$binding->position][0], true];
             }
         }
         $types = array_replace($types, self::contexts($operation, $nodes) + self::defaults($nodes));
         ksort($types);
 
         return $types;
+    }
+
+    /**
+     * Supplies the widened numeric operand type of an explicit CAST.
+     */
+    public static function cast(Cast $expression): ?Domain
+    {
+        return match ($expression->target->kind) {
+            \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Unsigned => Domain::integer(),
+            \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal => Domain::decimal(65, 30),
+            \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Float, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Real => Domain::double(),
+            \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Binary, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::NationalChar, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Date, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Time, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::DateTime, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Json, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Year, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::LineString, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Polygon, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::MultiPoint, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::MultiLineString, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::MultiPolygon, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::GeometryCollection => null,
+        };
     }
 
     /**
@@ -77,6 +91,12 @@ final class ParameterInference
     {
         $numeric = [];
         foreach ($nodes as $expression) {
+            if ($expression instanceof Cast && self::pending($expression->operand)) {
+                $domain = self::cast($expression);
+                if ($domain !== null) {
+                    $numeric += array_map(static fn (array $entry): array => [$entry[0], self::marker($expression->operand) !== null], self::propagate($expression->operand, $domain));
+                }
+            }
             if ($expression instanceof Arithmetic || $expression instanceof Comparison) {
                 foreach ([[$expression->left, $expression->right], [$expression->right, $expression->left]] as [$operand, $other]) {
                     if ($operand instanceof \SqlSemantics\Statement\Scalar && $other instanceof \SqlSemantics\Statement\Scalar && self::pending($operand) && !self::pending($other)) {

@@ -45,6 +45,14 @@ final class Publication
             $information = $node === $result ? $facts : $information;
             $node->initializeStatementInformation((new StatementResults())->statement($environment, $information));
         }
+        $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($context);
+        if ($settings->unboundParameters !== [] && !in_array($context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            $parameters = array_map(static fn (array $entry): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain => $entry[0], \SqlSemantics\Platform\MySql\Rules\Typing\Prepared\ParameterInference::infer($result));
+            $parameters = array_replace($settings->parameters, $parameters);
+            if ((new \SqlSemantics\Validation\Equivalence())->difference($parameters, $settings->parameters) !== null) {
+                return $this->publish($context->withSession($settings->withParameters($parameters, $settings->unboundParameters)), $statement, $sources);
+            }
+        }
         return $result;
     }
 }

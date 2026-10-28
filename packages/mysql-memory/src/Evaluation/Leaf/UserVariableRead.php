@@ -46,6 +46,7 @@ final class UserVariableRead implements Evaluable
             return $value;
         }
 
+        $domain = $domain->withQuiet(true);
         return match ($this->domain->kind) {
             Kind::Integer => Convert::toInteger($value, $domain, $frame->context),
             Kind::Decimal => Convert::toDecimal($value, $domain, $frame->context),

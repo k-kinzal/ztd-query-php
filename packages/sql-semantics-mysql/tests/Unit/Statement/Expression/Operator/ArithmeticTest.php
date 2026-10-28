@@ -80,4 +80,27 @@ final class ArithmeticTest extends TestCase
 
         self::assertEquals([new Known(Domain::integer(Field::LongLong, 3)), new Known(Domain::integer(Field::LongLong, 5)), new Known(Domain::integer(Field::LongLong, 1))], [$sum->type, $product->type, $quotient->type]);
     }
+    public function testInitializeDivisionPrecisionRetainsTheConstructionSetting(): void
+    {
+        $division = new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('6'));
+        $division->initializeDivisionPrecision(8);
+        self::assertSame(8, $division->divisionPrecision());
+        $this->expectExceptionMessage('Division precision is resolved once.');
+        $division->initializeDivisionPrecision(4);
+    }
+
+    public function testDivisionPrecisionRequiresResolvedInformation(): void
+    {
+        $division = new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('6'));
+        $this->expectExceptionMessage('A division must have calculation precision before execution.');
+        $division->divisionPrecision();
+    }
+
+    public function testPreparedTypeKeepsTheTypeOfOrdinaryArithmetic(): void
+    {
+        $expression = new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('2'));
+        $type = new Known(Domain::decimal(5, 4));
+        self::assertSame($type, $expression->preparedType($type, [Domain::integer(), Domain::integer()], \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
 }

@@ -116,6 +116,30 @@ final class Decimal
     }
 
     /**
+     * Computes the unrounded decimal quotient in MySQL's nine-digit fraction limbs.
+     *
+     * The calculation scale depends on the actual operands, not their declared
+     * types. The nine-limb buffer bounds the fractional capacity after integer
+     * digits. Result display rounding is a separate operation.
+     * Source: MySQL 8.4.7 mysys/decimal.cc, do_div_mod.
+     */
+    public static function quotient(string $left, string $right, int $increment): ?string
+    {
+        if (self::compare($right, '0') === 0) {
+            return null;
+        }
+        $leftScale = self::scale($left);
+        $rightScale = self::scale($right);
+        $leftFraction = intdiv($leftScale + 8, 9) * 9;
+        $rightFraction = intdiv($rightScale + 8, 9) * 9;
+        $extra = max(0, $increment - ($leftFraction - $leftScale) - ($rightFraction - $rightScale));
+        $fraction = intdiv($leftFraction + $rightFraction + $extra + 8, 9) * 9;
+        $integer = bcdiv(self::numeric($left), self::numeric($right), 0);
+        $integerLimbs = $integer === '0' ? 0 : intdiv(self::integerDigits($integer) + 8, 9);
+        return bcdiv(self::numeric($left), self::numeric($right), min($fraction, max(0, 9 - $integerLimbs) * 9));
+    }
+
+    /**
      * Answers the remainder of a division, with the sign of the dividend; null for a zero divisor.
      */
     public static function modulo(string $left, string $right): ?string

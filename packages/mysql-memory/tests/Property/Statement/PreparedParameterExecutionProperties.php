@@ -65,6 +65,43 @@ final class PreparedParameterExecutionProperties extends TestCase
     }
 
     /**
+     * Keeps prepared domains while converting new argument and user-variable values.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesPreparationRetainsTypesAndCalculationPrecision(GrammarRelease $release): void
+    {
+        $this->forAll(ParameterGenerator::lifetime($release))->then(static function (array $sample) use ($release): void {
+            [$statement, $parameters, $text, $precision, $expected] = $sample;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+            self::assertIsArray($parameters);
+            self::assertIsString($text);
+            self::assertIsInt($precision);
+            self::assertIsArray($expected);
+            $values = [];
+            foreach ($parameters as $parameter) {
+                self::assertIsArray($parameter);
+                self::assertTrue(is_int($parameter[0]) || is_string($parameter[0]));
+                self::assertInstanceOf(\MySqlMemory\Typing\Domain::class, $parameter[1]);
+                $values[] = [$parameter[0], $parameter[1]];
+            }
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $setting = $session->instance->catalog->find('div_precision_increment');
+            self::assertNotNull($setting);
+            $session->variables->set($setting, (string) $precision);
+            $session->variables->assign('typed', $text, \MySqlMemory\Typing\Domain::string(strlen($text), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary()));
+            $cache = PreparedCache::capture($statement, $session);
+            $bindings = ParameterBindings::capture($statement);
+            $before = $cache->definition;
+            $result = $cache->execute($session, 'generated type lifetime', $values, $bindings);
+            self::assertInstanceOf(ResultSet::class, $result);
+            self::assertSame([$expected], $result->rows);
+            self::assertSame($before, $cache->definition);
+            self::assertSame([], $session->preparation->domains);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

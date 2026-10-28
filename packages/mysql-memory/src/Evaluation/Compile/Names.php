@@ -232,9 +232,7 @@ final class Names
         if ($this->compiler->settings->legacy()) {
             $domain = $domain->withNullable($bound[$index][1]->nullable);
         }
-        $operand = new Constant($bound[$index][1], $bound[$index][0]);
-
-        return $domain->kind === $bound[$index][1]->kind ? new Constant($domain, $bound[$index][0]) : new \MySqlMemory\Evaluation\Operator\Conversion($operand, $domain, null, $domain->kind === Kind::Integer ? ($domain->unsigned ? 'UNSIGNED' : 'SIGNED') : $domain->resolved()->name());
+        return new \MySqlMemory\Evaluation\Leaf\ParameterRead($bound[$index][0], $bound[$index][1], $domain, !$this->compiler->settings->legacy());
     }
 
     /**
@@ -251,7 +249,7 @@ final class Names
             $domain = Domain::string(0, Collation::binary(), Field::MediumBlob)->withCollation($this->compiler->settings->connectionCollation, Coercibility::Implicit);
         }
 
-        return new UserVariableRead($variable->name->value, $domain->withNullable(true));
+        return new UserVariableRead($variable->name->value, ($this->compiler->resolved($variable) ?? $domain)->withNullable(true));
     }
 
     /**

@@ -119,4 +119,20 @@ final class PublicationTest extends TestCase
 
         self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
+    public function testPublishFinishesPreparedParameterTypesBeforeExposingFields(): void
+    {
+        $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults(\SqlSemantics\Contract\GrammarRelease::MySql847);
+        $placeholder = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(16383, $settings->connection);
+        $semantics = new Semantics(Dialect::MySql, '8.4.7', session: $settings->withParameters([$placeholder, $placeholder, $placeholder], [0, 1, 2]));
+        $query = $semantics->analyze('SELECT ? / 2 AS direct_value, (? / ?) + 1 AS nested_value');
+        self::assertInstanceOf(QueryRoot::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $query->field(0)->type);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $query->field(1)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $query->field(0)->type->descriptor);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $query->field(1)->type->descriptor);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, $query->field(0)->type->descriptor->kind);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, $query->field(1)->type->descriptor->kind);
+        self::assertSame(4, $query->field(1)->type->descriptor->displayDecimals);
+    }
+
 }

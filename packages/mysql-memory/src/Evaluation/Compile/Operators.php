@@ -89,7 +89,7 @@ final class Operators
             $right = $reads->double($right);
         }
 
-        return new ArithmeticEvaluable($node->operator, $left, $right, $domain, $text);
+        return new ArithmeticEvaluable($node->operator, $left, $right, $domain, $text, $node->operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Divide ? $node->divisionPrecision() : 4);
     }
 
     /**

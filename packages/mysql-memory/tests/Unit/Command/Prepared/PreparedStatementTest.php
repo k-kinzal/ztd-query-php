@@ -122,4 +122,19 @@ final class PreparedStatementTest extends TestCase
         self::assertInstanceOf(SqlError::class, $answers[0]);
         self::assertSame(2006, $answers[0]->getCode());
     }
+    public function testRebindRefreshesTypesAndKeepsTheDefinitionDatabase(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['original', 'caller']))->connect(database: 'original');
+        $prepared = PreparedStatement::capture($session->analyze('SELECT ? AS value', true), $session);
+        $session->use('caller');
+        $replacement = $prepared->rebind($session, [[12, \MySqlMemory\Typing\Domain::integer()]]);
+        $result = $replacement->execute($session, 'unrelated label', [[12, \MySqlMemory\Typing\Domain::integer()]]);
+        self::assertNotSame($prepared->statement, $replacement->statement);
+        self::assertSame('original', $replacement->database);
+        self::assertSame('caller', $session->variables->database);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['12']], $result->rows);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, $result->columns[0]->type);
+    }
+
 }

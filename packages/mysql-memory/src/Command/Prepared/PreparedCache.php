@@ -76,14 +76,20 @@ final class PreparedCache
     {
         $candidate = new ParameterBindings($bindings->types);
         $modern = version_compare($session->instance->version, '8.0.22', '>=');
-        if ($modern && $candidate->changed($parameters)) {
+        $changed = $modern && $candidate->changed($parameters);
+        if ($changed) {
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
             \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         }
         $previous = $session->preparation->domains;
         $session->preparation->domains = $modern ? $candidate->domains() : [];
         try {
+            $previousDefinition = $this->definition;
             $this->refresh($session, $candidate, $parameters);
+            if ($changed && $previousDefinition === $this->definition && $this->definition instanceof PreparedStatement) {
+                $replacement = $this->definition->rebind($session, $parameters);
+                $this->definition = $replacement;
+            }
             $bindings->types = $candidate->types;
             $session->preparation->domains = $modern ? $bindings->domains() : [];
             return $this->definition->execute($session, $label, $parameters);

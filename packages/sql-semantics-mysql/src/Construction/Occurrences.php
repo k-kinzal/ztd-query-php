@@ -95,7 +95,7 @@ final class Occurrences
                 $name = $parameter->getName();
                 if (array_key_exists($name, $changes)) {
                     $arguments[$name] = $this->value($changes[$name]);
-                } elseif (in_array($name, ['scalarInformation', 'relationInformation', 'queryInformation', 'statementInformation'], true)) {
+                } elseif (in_array($name, ['scalarInformation', 'relationInformation', 'queryInformation', 'statementInformation', 'divisionPrecision'], true)) {
                     $arguments[$name] = null;
                 } elseif ($name === 'inputSource' || $name === 'location') {
                     $origin = $this->sources->of($node);

@@ -34,7 +34,7 @@ final class ParameterBindingsTest extends TestCase
         $operation = (new Instance())->connect()->analyze('SELECT ?, CAST(? AS SIGNED)', true);
         $types = ParameterBindings::capture($operation);
 
-        self::assertSame([[Kind::String, false], [Kind::String, true]], array_map(static fn (array $entry): array => [$entry[0]->kind, $entry[1]], $types->types));
+        self::assertSame([[Kind::String, false], [Kind::Integer, true]], array_map(static fn (array $entry): array => [$entry[0]->kind, $entry[1]], $types->types));
     }
 
     public function testCaptureUsesSemanticParameterDomains(): void
@@ -65,12 +65,12 @@ final class ParameterBindingsTest extends TestCase
         self::assertFalse(ParameterBindings::accepts(Kind::Integer, true, Domain::integer()));
     }
 
-    public function testDomainsKeepsTheDerivedTypeForNullAndLeavesCastConversionToItsExpression(): void
+    public function testDomainsKeepsDerivedAndCastTypesForRepreparation(): void
     {
         $types = ParameterBindings::capture((new Instance())->connect()->analyze('SELECT ?, CAST(? AS SIGNED)', true));
         $types->changed([[1, Domain::integer()], [2, Domain::integer()]]);
 
-        self::assertSame([0], array_keys($types->domains()));
+        self::assertSame([0, 1], array_keys($types->domains()));
         self::assertSame(Kind::Integer, $types->domains()[0]->kind);
     }
 }

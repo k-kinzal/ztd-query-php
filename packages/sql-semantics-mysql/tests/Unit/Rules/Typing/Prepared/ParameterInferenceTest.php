@@ -24,7 +24,7 @@ final class ParameterInferenceTest extends TestCase
         $types = ParameterInference::infer($operation);
 
         self::assertSame([0, 1, 2, 3, 4, 5], array_keys($types));
-        self::assertSame([[Kind::String, false], [Kind::String, false], [Kind::String, false], [Kind::Integer, false], [Kind::String, true], [Kind::String, false]], array_map(static fn (array $entry): array => [$entry[0]->kind, $entry[1]], $types));
+        self::assertSame([[Kind::String, false], [Kind::String, false], [Kind::String, false], [Kind::Integer, false], [Kind::Integer, true], [Kind::String, false]], array_map(static fn (array $entry): array => [$entry[0]->kind, $entry[1]], $types));
         self::assertSame(65535, $types[5][0]->length);
         self::assertTrue($types[5][0]->collation->bytes());
     }
@@ -130,6 +130,12 @@ final class ParameterInferenceTest extends TestCase
         self::assertNotNull($expression);
         self::assertSame(Kind::Integer, ParameterInference::resolved($expression)?->kind);
         self::assertSame([Kind::Integer, Kind::Integer, Kind::Integer, Kind::Integer], array_map(static fn (array $entry): Kind => $entry[0]->kind, ParameterInference::infer($statement)));
+    }
+
+    public function testCastInfersNumericInputDomainsFromTheTarget(): void
+    {
+        $cast = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed));
+        self::assertEquals(Domain::integer(), ParameterInference::cast($cast));
     }
 
 }

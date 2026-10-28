@@ -14,13 +14,15 @@ use MySqlMemory\Session\Statement\Binding;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\AnalyzedStatement;
 
 /**
  * A prepared semantic statement with its definition-time name and literal context.
  *
- * Executions reuse this exact structure. Current declarations and parameters are
- * resolved again; source text is only an observable request label. SQL modes and
+ * Modern executions reuse the prepared structure and its expression information.
+ * Legacy executions bind current parameter and user-variable types. Incompatible
+ * modern parameters and changed declarations require explicit repreparation.
+ * Source text is only an observable request label. SQL modes and
  * exposed session variables retain their execution-time values. The default
  * database and literal encoding retain their preparation-time interpretation.
  * Observed through SQL PREPARE on MySQL 5.6.51, 5.7.44 and 8.4.7.
@@ -35,7 +37,7 @@ final class PreparedStatement
      * @param string|null $engine The selected table engine, resolved during preparation
      * @param GenerationMetadata|null $generation Destination changes observed by generation declarations
      */
-    public function __construct(public readonly Statement $statement, public readonly LanguageProfile $profile, public readonly Settings $literals, public readonly string $database, public readonly ?string $engine = null, public readonly ?GenerationMetadata $generation = null)
+    public function __construct(public readonly AnalyzedStatement $statement, public readonly LanguageProfile $profile, public readonly Settings $literals, public readonly string $database, public readonly ?string $engine = null, public readonly ?GenerationMetadata $generation = null)
     {
     }
 
@@ -44,7 +46,7 @@ final class PreparedStatement
      *
      * @throws LogicException When the statement has no preparation implementation
      */
-    public static function capture(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): self
+    public static function capture(AnalyzedStatement $operation, Session $session): self
     {
 
         if (!$operation instanceof MySqlStatement) {
@@ -56,7 +58,7 @@ final class PreparedStatement
     }
 
     /**
-     * Executes the original structure under a fresh declaration and parameter snapshot.
+     * Executes the prepared structure, retaining modern preparation-time types.
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @throws SqlError When the statement fails
@@ -79,13 +81,31 @@ final class PreparedStatement
         try {
             $this->generation?->refresh($session);
 
-            $operation = (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals);
+            $operation = $session->settings()->legacy() ? (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals) : $this->statement;
             $session->variables->preparedEngines = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable ? [spl_object_id($operation) => $this->engine] : [];
             return (new Execution($session))->statement($operation, $parameters);
         } finally {
             $session->variables->preparedEngines = $engines;
             $session->variables->database = $database;
             $session->replayed = $replayed;
+        }
+    }
+
+    /**
+     * Reconstructs the semantic types when incompatible parameter values require preparation again.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Current argument values
+     */
+    public function rebind(Session $session, array $parameters): self
+    {
+        $database = $session->variables->database;
+        $session->variables->database = $this->database;
+        try {
+            $operation = (new Binding())->operation($session, $this->statement, $parameters, $this->profile, $this->literals);
+            (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
+            return self::capture($operation, $session);
+        } finally {
+            $session->variables->database = $database;
         }
     }
 
