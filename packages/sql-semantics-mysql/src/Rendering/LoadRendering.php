@@ -50,7 +50,7 @@ final class LoadRendering
             $out->node($option);
         }
         if ($load->ignored !== null) {
-            $out->keyword('IGNORE')->node($load->ignored)->keyword('LINES');
+            $out->keyword('IGNORE')->node($load->ignored)->keyword($load->ignoreRows ? 'ROWS' : 'LINES');
         }
         if ($load->columns !== null) {
             $out->symbol('(')->list($load->columns)->symbol(')');

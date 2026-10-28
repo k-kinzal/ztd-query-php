@@ -214,6 +214,6 @@ final class ItemRule
         $charsets = $this->lowering->charsets;
         $charset = $form->node->children[3] instanceof Node ? $charsets->charset($form->node(3)) : $this->lowering->leaves->record(new CharsetName(null));
 
-        return new ConvertCharset($charset, $charsets->collation($form->node(4)));
+        return new ConvertCharset($charset, $charsets->collation($form->node(4)), form: \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::from(strtoupper(implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(2)->tokens())))));
     }
 }

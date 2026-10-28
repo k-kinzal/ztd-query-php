@@ -11,8 +11,7 @@ use SqlSemantics\Statement\Node;
 /**
  * The REQUIRE clause of CREATE USER, ALTER USER or MySQL 5.x GRANT: `REQUIRE NONE | SSL | X509 | condition [AND] …`.
  *
- * The conditions are kept in source order; AND between them is optional and
- * means nothing. Each property occurs at most once. SQL lowering reports
+ * The conditions are kept in source order; each condition records whether optional AND precedes it. Each property occurs at most once. SQL lowering reports
  * ER_DUP_ARGUMENT before constructing a requirement with repeated properties.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls.
  *
@@ -58,7 +57,7 @@ final class TlsRequirement implements Node
             TlsKind::Specified => null,
         };
         foreach ($this->conditions as $position => $condition) {
-            if ($position > 0) {
+            if ($position > 0 && $condition->and) {
                 $out->keyword('AND');
             }
             $out->node($condition);

@@ -51,13 +51,13 @@ final class GrantRuleTest extends TestCase
 
     public function testAllLowersAllPrivileges(): void
     {
-        self::assertSame('GRANT ALL ON FUNCTION f TO u WITH GRANT OPTION', (new Semantics(Dialect::MySql))->analyze('grant all privileges on function f to u with grant option')->toString());
+        self::assertSame('GRANT ALL PRIVILEGES ON FUNCTION f TO u WITH GRANT OPTION', (new Semantics(Dialect::MySql))->analyze('grant all privileges on function f to u with grant option')->toString());
     }
 
     public function testRevokeLowersEveryForm(): void
     {
         self::assertSame('REVOKE PROXY ON a FROM b', (new Semantics(Dialect::MySql))->analyze('revoke proxy on a from b')->toString());
-        self::assertSame('REVOKE SELECT ON t FROM u', (new Semantics(Dialect::MySql))->analyze('revoke select on table t from u')->toString());
+        self::assertSame('REVOKE SELECT ON TABLE t FROM u', (new Semantics(Dialect::MySql))->analyze('revoke select on table t from u')->toString());
     }
 
     public function testRevokePrivilegesRefusesRoutineColumnsBeforePublishingAStatement(): void

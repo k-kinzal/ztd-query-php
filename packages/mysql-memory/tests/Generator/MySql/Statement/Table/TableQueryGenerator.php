@@ -22,15 +22,17 @@ final class TableQueryGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Query> $query Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling|null>|null $duplicate Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $as The generated written alternative
      */
-    public function __construct(ErisGenerator $query, ?ErisGenerator $duplicate = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $query, ?ErisGenerator $duplicate = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $as = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\TableQuery {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery(query: $parts[0], duplicate: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery(query: $parts[0], duplicate: $parts[1], inputSource: $parts[2], as: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $query,
             $duplicate ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $as ?? Generators::bool()
         ));
     }
 }

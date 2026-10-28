@@ -23,7 +23,7 @@ final class XaRuleTest extends TestCase
 
     public function testStartLowersBeginAndResume(): void
     {
-        self::assertSame("XA START 'a' RESUME", (new Semantics(Dialect::MySql))->analyze("xa begin 'a' resume")->toString());
+        self::assertSame("XA BEGIN 'a' RESUME", (new Semantics(Dialect::MySql))->analyze("xa begin 'a' resume")->toString());
     }
 
     public function testEndOptionLowersThe56Migrate(): void

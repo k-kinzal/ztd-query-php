@@ -116,6 +116,15 @@ types, including national character forms and `DOUBLE PRECISION`. Constructors
 require aliases to match the kind and any national or optional-word role. Consumers
 can resolve and execute the canonical type without recovering its meaning from text.
 
+Written alternatives also belong to the statement or operand that uses them:
+for example, `MOD` and `%`, index `TYPE` and `USING`, optional `PRIVILEGES`,
+`FETCH NEXT FROM`, and the character-set forms of `SHOW` and `ALTER TABLE`.
+Execution uses the canonical operation while rendering uses these explicit fields.
+Names retain their decoded value and delimiter choice, including string-delimited
+aliases. The `Keyword` name form distinguishes a keyword used as a name from an
+ordinary bare identifier. Rendering keeps its required boundary before a dot or
+parenthesis; consumers do not need the original token to identify the object.
+
 Stored-routine `ParameterList` values retain every parameter, including duplicate
 case- and accent-insensitive names and parameters after the first duplicate.
 `repeated()` identifies that occurrence. Analysis derives the duplicate-name

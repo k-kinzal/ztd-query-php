@@ -58,6 +58,6 @@ final class ConvertCharsetTest extends TestCase
 
     public function testRenderWritesTheCharsetAndTheCollation(): void
     {
-        self::assertSame('ALTER TABLE t CONVERT TO CHARACTER SET DEFAULT COLLATE latin1_bin', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t CONVERT TO CHAR SET DEFAULT COLLATE latin1_bin')->toString());
+        self::assertSame('ALTER TABLE t CONVERT TO CHAR SET DEFAULT COLLATE latin1_bin', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t CONVERT TO CHAR SET DEFAULT COLLATE latin1_bin')->toString());
     }
 }

@@ -39,7 +39,7 @@ final class SyntaxFormatsTest extends TestCase
         $sql = "EXPLAIN FORMAT = '" . $name . "' SELECT ?";
         $notices = (new SyntaxWarnings())->completed(new MySqlParser($release->value), $sql, (int) strpos($sql, '?'), new LanguageProfile($release));
 
-        self::assertEquals($refused ? [new ParseFailure(new UnknownExplainFormat(new Name($name)), true)] : [], array_column($notices, 1));
+        self::assertEquals($refused ? [new ParseFailure(new UnknownExplainFormat(new Name($name, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote)), true)] : [], array_column($notices, 1));
     }
     /**
      * @return iterable<string, array{GrammarRelease, string, ?Name}>

@@ -263,12 +263,12 @@ final class BlockRuleTest extends TestCase
 
         self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new OpenCursor(new Name('k')),
-            new FetchCursor(new Name('k'), [new Name('a')]),
-            new FetchCursor(new Name('k'), [new Name('a')]),
+            new FetchCursor(new Name('k'), [new Name('a')], from: true, next: true),
+            new FetchCursor(new Name('k'), [new Name('a')], from: true),
             new FetchCursor(new Name('k'), [new Name('a')]),
             new CloseCursor(new Name('k')),
         ], $statement->body->statements));
-        self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE a INT; DECLARE k CURSOR FOR SELECT 1; OPEN k; FETCH k INTO a; FETCH k INTO a; FETCH k INTO a; CLOSE k; END', $operation->toString());
+        self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE a INT; DECLARE k CURSOR FOR SELECT 1; OPEN k; FETCH NEXT FROM k INTO a; FETCH FROM k INTO a; FETCH k INTO a; CLOSE k; END', $operation->toString());
         self::assertSame([], $operation->diagnostics());
     }
 }

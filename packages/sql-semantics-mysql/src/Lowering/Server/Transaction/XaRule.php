@@ -99,7 +99,7 @@ final class XaRule
         $this->flag($form->node(1));
         $option = $this->option($form->node(3));
 
-        return new XaStart($this->xid($form->node(2)), $option instanceof XaStartOption ? $option : null, profile: $this->lowering->profile, client: $this->lowering->client, source: $source);
+        return new XaStart($this->xid($form->node(2)), $option instanceof XaStartOption ? $option : null, profile: $this->lowering->profile, client: $this->lowering->client, source: $source, begin: strtoupper($form->node(1)->tokens()[0]->text) === 'BEGIN');
     }
 
     /**

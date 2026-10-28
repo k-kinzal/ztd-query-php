@@ -22,15 +22,19 @@ final class FetchCursorGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $cursor Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\Name>> $targets Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $from The generated written alternative
+     * @param ErisGenerator<bool>|null $next The generated written alternative
      */
-    public function __construct(ErisGenerator $cursor, ErisGenerator $targets, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $cursor, ErisGenerator $targets, ?ErisGenerator $inputSource = null, ?ErisGenerator $from = null, ?ErisGenerator $next = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor(cursor: $parts[0], targets: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor(cursor: $parts[0], targets: $parts[1], inputSource: $parts[2], from: $parts[3], next: $parts[4] && $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $cursor,
             $targets,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $from ?? Generators::bool(),
+            $next ?? Generators::bool()
         ));
     }
 

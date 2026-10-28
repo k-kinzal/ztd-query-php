@@ -31,7 +31,7 @@ final class RevokePrivilegesTest extends TestCase
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('REVOKE IF EXISTS ALL ON PROCEDURE p FROM u IGNORE UNKNOWN USER', (new Semantics(Dialect::MySql))->analyze('revoke if exists all privileges on procedure p from u ignore unknown user')->toString());
+        self::assertSame('REVOKE IF EXISTS ALL PRIVILEGES ON PROCEDURE p FROM u IGNORE UNKNOWN USER', (new Semantics(Dialect::MySql))->analyze('revoke if exists all privileges on procedure p from u ignore unknown user')->toString());
     }
     /**
      * @return iterable<string, array{bool, bool}>

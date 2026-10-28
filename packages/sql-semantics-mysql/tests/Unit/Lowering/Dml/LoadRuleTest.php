@@ -51,7 +51,7 @@ final class LoadRuleTest extends TestCase
     public function testStatementLowersEveryGeneration(): void
     {
         self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('load data infile \'f\' into table t')->toString());
-        self::assertSame('LOAD DATA S3 \'f\' INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('load data from s3 \'f\' into table t')->toString());
+        self::assertSame('LOAD DATA FROM S3 \'f\' INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('load data from s3 \'f\' into table t')->toString());
     }
 
     public function testStatementRejectsAnotherWordThanCount(): void
@@ -79,7 +79,7 @@ final class LoadRuleTest extends TestCase
 
     public function testFlagLowersTheOptionalWords(): void
     {
-        self::assertSame('LOAD DATA LOCAL INFILE \'f\' INTO TABLE t ALGORITHM = BULK', (new Semantics(Dialect::MySql))->analyze('load data from local infile \'f\' into table t algorithm = bulk')->toString());
+        self::assertSame('LOAD DATA FROM LOCAL INFILE \'f\' INTO TABLE t ALGORITHM = BULK', (new Semantics(Dialect::MySql))->analyze('load data from local infile \'f\' into table t algorithm = bulk')->toString());
     }
 
     public function testInputLowersTheSource(): void
@@ -94,7 +94,7 @@ final class LoadRuleTest extends TestCase
 
     public function testIgnoredLowersTheCount(): void
     {
-        self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t IGNORE 3 LINES', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' into table t ignore 3 rows')->toString());
+        self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t IGNORE 3 ROWS', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' into table t ignore 3 rows')->toString());
     }
 
     public function testColumnsLowersColumnsAndVariables(): void

@@ -15,6 +15,6 @@ final class NameQuoteTest extends TestCase
 {
     public function testIdentifierDelimitersRemainDistinct(): void
     {
-        self::assertSame(['Bare', 'Backtick', 'DoubleQuote'], array_map(static fn (NameQuote $quote): string => $quote->name, NameQuote::cases()));
+        self::assertSame(['Bare', 'Keyword', 'Backtick', 'DoubleQuote', 'SingleQuote'], array_map(static fn (NameQuote $quote): string => $quote->name, NameQuote::cases()));
     }
 }

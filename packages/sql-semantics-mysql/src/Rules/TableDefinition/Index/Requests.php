@@ -65,7 +65,7 @@ final class Requests
         }
         $out->keyword('INDEX')->name($statement->name, NameUse::Label);
         if ($statement->algorithm !== null) {
-            $out->keyword('USING', $statement->algorithm->value);
+            $out->keyword($statement->typeKeyword ? 'TYPE' : 'USING', $statement->algorithm->value);
         }
         $out->keyword('ON');
         if ($statement->table->schema !== null) {

@@ -21,9 +21,9 @@ final class ClauseRuleTest extends TestCase
         self::assertSame('CREATE USER u REQUIRE NONE', (new Semantics(Dialect::MySql))->analyze('create user u require none')->toString());
     }
 
-    public function testConditionsSkipsTheOptionalAnd(): void
+    public function testConditionsRetainsTheOptionalAnd(): void
     {
-        self::assertSame("CREATE USER u REQUIRE SUBJECT 's' AND ISSUER 'i' AND CIPHER 'c'", (new Semantics(Dialect::MySql))->analyze("create user u require subject 's' and issuer 'i' cipher 'c'")->toString());
+        self::assertSame("CREATE USER u REQUIRE SUBJECT 's' AND ISSUER 'i' CIPHER 'c'", (new Semantics(Dialect::MySql))->analyze("create user u require subject 's' and issuer 'i' cipher 'c'")->toString());
     }
 
     public function testLimitsLowersTheWithClause(): void

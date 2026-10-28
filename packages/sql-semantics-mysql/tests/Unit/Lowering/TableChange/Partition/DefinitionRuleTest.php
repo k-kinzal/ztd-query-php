@@ -103,6 +103,6 @@ final class DefinitionRuleTest extends TestCase
 
     public function testSubpartitionLowersAStringName(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION a (SUBPARTITION s))', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("ALTER TABLE t ADD PARTITION (PARTITION a (SUBPARTITION 's'))")->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION a (SUBPARTITION \'s\'))', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("ALTER TABLE t ADD PARTITION (PARTITION a (SUBPARTITION 's'))")->toString());
     }
 }

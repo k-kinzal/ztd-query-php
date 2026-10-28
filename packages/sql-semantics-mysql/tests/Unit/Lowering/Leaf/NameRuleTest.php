@@ -28,6 +28,36 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 #[Medium]
 final class NameRuleTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerKeywordBoundaries(): iterable
+    {
+        foreach (['ADDDATE', 'SUBDATE', 'ST_COLLECT', 'adddate'] as $name) {
+            yield $name . ' as keyword' => ['CREATE TABLE ' . $name . '(a INT)'];
+            yield $name . ' as identifier' => ['CREATE TABLE ' . $name . ' (a INT)'];
+        }
+        yield 'default assignment keyword' => ['SET DEFAULT .key_buffer_size = 1024'];
+        yield 'default assignment identifier' => ['SET DEFAULT.key_buffer_size = 1024'];
+        yield 'default variable keyword' => ['SET @@DEFAULT .key_buffer_size = 1024'];
+        yield 'default variable identifier' => ['SET @@DEFAULT.key_buffer_size = 1024'];
+        yield 'default persisted keyword' => ['RESET PERSIST DEFAULT .missing_variable'];
+        yield 'default persisted identifier' => ['RESET PERSIST DEFAULT.missing_variable'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordBoundaries')]
+    public function testIdentifierRetainsKeywordBoundariesWithoutOriginalTokens(string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
+        $statement = $semantics->analyze($sql);
+        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $statement->render($out);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+
+        self::assertSame($formatter->format($sql), $formatter->format((new \SqlSemantics\Rendering\Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
+
     public function testDecodedLeavesOperandRecordingToTheNameRole(): void
     {
         $platform = new Platform();
@@ -75,7 +105,7 @@ final class NameRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         self::assertInstanceOf(Select::class, $operation->query);
         self::assertSame("it's", $operation->query->items[0]->alias?->value);
-        self::assertSame("SELECT a AS `it's` FROM t", $operation->toString());
+        self::assertSame("SELECT a AS 'it''s' FROM t", $operation->toString());
     }
 
     public function testIdentifierLowersALegacyKeywordAsTheNameItSpells(): void

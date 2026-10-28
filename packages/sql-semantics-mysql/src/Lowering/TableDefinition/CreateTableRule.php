@@ -147,8 +147,8 @@ final class CreateTableRule
         $this->lowering->options->present($form->node(1));
 
         return match ($form->signature) {
-            'create3: opt_duplicate opt_as create_select union_clause', 'create3: opt_duplicate opt_as create_select opt_union_clause' => new TableQuery($queries->legacyQuery($form->node(2), $form->node(3)), $duplicate),
-            'create3: opt_duplicate opt_as ( create_select ) union_opt' => new TableQuery($queries->legacyParenthesizedQuery($form->node(3), $form->node(5)), $duplicate),
+            'create3: opt_duplicate opt_as create_select union_clause', 'create3: opt_duplicate opt_as create_select opt_union_clause' => new TableQuery($queries->legacyQuery($form->node(2), $form->node(3)), $duplicate, as: $form->node(1)->children !== []),
+            'create3: opt_duplicate opt_as ( create_select ) union_opt' => new TableQuery($queries->legacyParenthesizedQuery($form->node(3), $form->node(5)), $duplicate, as: $form->node(1)->children !== []),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -232,10 +232,10 @@ final class CreateTableRule
             default => throw ImplementationGap::production($as),
         };
         if (!$retained) {
-            return new TableQuery($this->lowering->queries->embedded($node), $duplicate);
+            return new TableQuery($this->lowering->queries->embedded($node), $duplicate, as: str_starts_with($as->signature, 'as_create_query_expression: AS '));
         }
         $body = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($node) ?? $this->lowering->queries->query($node);
-        return new TableQuery($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection ? new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($body) : $body, $duplicate);
+        return new TableQuery($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection ? new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($body) : $body, $duplicate, as: str_starts_with($as->signature, 'as_create_query_expression: AS '));
     }
 
     /**

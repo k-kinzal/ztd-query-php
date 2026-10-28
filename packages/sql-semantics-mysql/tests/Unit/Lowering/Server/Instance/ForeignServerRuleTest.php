@@ -22,7 +22,7 @@ final class ForeignServerRuleTest extends TestCase
 
     public function testCreateLowersNameAndWrapper(): void
     {
-        self::assertSame("CREATE SERVER s FOREIGN DATA WRAPPER w OPTIONS (USER 'u')", (new Semantics(Dialect::MySql))->analyze("create server 's' foreign data wrapper w options (user 'u')")->toString());
+        self::assertSame("CREATE SERVER 's' FOREIGN DATA WRAPPER w OPTIONS (USER 'u')", (new Semantics(Dialect::MySql))->analyze("create server 's' foreign data wrapper w options (user 'u')")->toString());
     }
 
     public function testCreateRefusesAnEmptyNameBeforeConstructingTheDefinition(): void

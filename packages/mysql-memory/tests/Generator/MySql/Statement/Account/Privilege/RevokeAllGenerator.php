@@ -24,17 +24,19 @@ final class RevokeAllGenerator implements ErisGenerator
      * @param ErisGenerator<bool>|null $ignoreUnknownUser Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $privileges The generated written alternative
      */
-    public function __construct(ErisGenerator $ifExists, ErisGenerator $users, ?ErisGenerator $ignoreUnknownUser = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $ifExists, ErisGenerator $users, ?ErisGenerator $ignoreUnknownUser = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $privileges = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll(ifExists: $parts[0], users: $parts[1], ignoreUnknownUser: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
+            return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll(ifExists: $parts[0], users: $parts[1], ignoreUnknownUser: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], privileges: $parts[5]);
         }, \Tests\Generator\Operands::tuple(
             $ifExists,
             $users,
             $ignoreUnknownUser ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $privileges ?? Generators::bool()
         ));
     }
     /**

@@ -43,6 +43,6 @@ final class ItemRuleTest extends TestCase
 
     public function testVariableLowersTheDefaultInstance(): void
     {
-        self::assertSame('SET `default`.key_buffer_size = 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set default .key_buffer_size = 1')->toString());
+        self::assertSame('SET DEFAULT .key_buffer_size = 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set default .key_buffer_size = 1')->toString());
     }
 }

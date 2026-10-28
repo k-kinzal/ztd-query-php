@@ -31,7 +31,7 @@ final class DeferredExplainTest extends TestCase
     public function testRenderRetainsTheDeferredExplainedOperand(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze("CREATE PROCEDURE p() EXPLAIN FORMAT=JSON INTO @'' SELECT ROW(1,2)");
-        self::assertSame('CREATE PROCEDURE p() EXPLAIN FORMAT = JSON INTO @`` SELECT ROW(1, 2)', $operation->toString());
+        self::assertSame('CREATE PROCEDURE p() EXPLAIN FORMAT = JSON INTO @\'\' SELECT ROW(1, 2)', $operation->toString());
     }
 
     public function testDeriveProgramUsesForDatabaseWhileRetainingRoutineLocals(): void

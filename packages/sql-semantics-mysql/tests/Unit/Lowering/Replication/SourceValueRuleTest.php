@@ -23,7 +23,7 @@ final class SourceValueRuleTest extends TestCase
     public function testServerIdsLowersTheIdentifiers(): void
     {
         self::assertSame('CHANGE REPLICATION SOURCE TO IGNORE_SERVER_IDS = (1, 2, 3)', (new Semantics(Dialect::MySql))->analyze('change replication source to ignore_server_ids = (1, 2, 3)')->toString());
-        self::assertSame('CHANGE REPLICATION SOURCE TO IGNORE_SERVER_IDS = (2)', (new Semantics(Dialect::MySql))->analyze('change replication source to ignore_server_ids = ( , 2)')->toString());
+        self::assertSame('CHANGE REPLICATION SOURCE TO IGNORE_SERVER_IDS = (, 2)', (new Semantics(Dialect::MySql))->analyze('change replication source to ignore_server_ids = ( , 2)')->toString());
     }
 
     public function testPrivilegeChecksLowersAnAccount(): void

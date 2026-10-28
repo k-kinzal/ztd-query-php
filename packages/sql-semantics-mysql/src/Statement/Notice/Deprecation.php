@@ -45,7 +45,7 @@ final class Deprecation implements CodedWarning
      */
     public static function unqualifiedName(\SqlSemantics\Statement\Identifier\Name $name, \SqlSemantics\Contract\GrammarRelease $release): ?self
     {
-        return $name->quote === \SqlSemantics\Statement\Identifier\NameQuote::Bare
+        return in_array($name->quote, [\SqlSemantics\Statement\Identifier\NameQuote::Bare, \SqlSemantics\Statement\Identifier\NameQuote::Keyword], true)
             && strcasecmp($name->value, 'FULL') === 0
             && Deprecated::UnquotedFull->warnedIn($release)
             ? new self(Deprecated::UnquotedFull) : null;

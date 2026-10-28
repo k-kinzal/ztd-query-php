@@ -35,6 +35,6 @@ final class KeywordAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT PRIMARY KEY)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT KEY)')->toString());
+        self::assertSame('CREATE TABLE t (a INT KEY)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT KEY)')->toString());
     }
 }

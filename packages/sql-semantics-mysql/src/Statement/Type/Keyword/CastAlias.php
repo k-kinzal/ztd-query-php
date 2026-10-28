@@ -26,6 +26,7 @@ enum CastAlias: string
     case Float8 = 'FLOAT8';
     case Float8Precision = 'FLOAT8 PRECISION';
     case GeomCollection = 'GEOMCOLLECTION';
+    case SqlTsiYear = 'SQL_TSI_YEAR';
 
     /**
      * Answers the canonical type requested by this keyword alternative.
@@ -41,6 +42,7 @@ enum CastAlias: string
             self::Float4 => CastKind::Float,
             self::Float8, self::Float8Precision => CastKind::Double,
             self::GeomCollection => CastKind::GeometryCollection,
+            self::SqlTsiYear => CastKind::Year,
         };
     }
 
@@ -51,7 +53,7 @@ enum CastAlias: string
     {
         return match ($this) {
             self::NationalCharacter, self::SignedInteger, self::SignedInt4, self::UnsignedInteger, self::UnsignedInt4, self::Float8Precision => \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written,
-            self::Character, self::Dec, self::Float4, self::Float8, self::GeomCollection => \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted,
+            self::Character, self::Dec, self::Float4, self::Float8, self::GeomCollection, self::SqlTsiYear => \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted,
         };
     }
 }

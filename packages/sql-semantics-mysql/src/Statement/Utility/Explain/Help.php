@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
  * @visibility public
  * @example Reading the topic
  *     $help = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("HELP 'contents'");
- *     [$help->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, 'HELP contents']
+ *     [$help->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, "HELP 'contents'"]
  */
 final class Help extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

@@ -53,6 +53,7 @@ final class RevokePrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlS
      * @param PrivilegeLevel $level The privilege level
      * @param list<UserSpecification> $users The accounts privileges are revoked from; at least one
      * @param bool $ignoreUnknownUser Whether IGNORE UNKNOWN USER is written
+     * @param bool $tableKeyword Whether TABLE is explicitly written for a table revocation
      */
     public function __construct(
         public readonly bool $ifExists,
@@ -63,7 +64,9 @@ final class RevokePrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlS
         public readonly bool $ignoreUnknownUser = false,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $tableKeyword = false
     ) {
+        Check::input(!$tableKeyword || $kind === ObjectKind::Table, 'TABLE names a table-level privilege object.');
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
@@ -108,7 +111,7 @@ final class RevokePrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlS
             $out->keyword('IF', 'EXISTS');
         }
         $out->list($this->privileges)->keyword('ON');
-        $keyword = $this->kind->keyword();
+        $keyword = $this->tableKeyword ? 'TABLE' : $this->kind->keyword();
         if ($keyword !== null) {
             $out->keyword($keyword);
         }

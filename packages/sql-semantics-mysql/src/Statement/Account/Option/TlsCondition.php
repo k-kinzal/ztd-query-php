@@ -24,8 +24,9 @@ final class TlsCondition implements Node
     /**
      * @param TlsAttribute $attribute The property
      * @param Text $value The value the property must have
+     * @param bool $and Whether optional AND precedes this condition in its list
      */
-    public function __construct(public readonly TlsAttribute $attribute, public readonly Text $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly TlsAttribute $attribute, public readonly Text $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $and = true)
     {
     }
 

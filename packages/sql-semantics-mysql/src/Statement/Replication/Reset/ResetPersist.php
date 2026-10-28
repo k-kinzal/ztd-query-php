@@ -64,7 +64,12 @@ final class ResetPersist extends \SqlSemantics\Platform\MySql\Statement\SqlState
             $out->keyword('IF', 'EXISTS');
         }
         if ($this->component !== null) {
-            $out->name($this->component, NameUse::Qualifier)->symbol('.');
+            if ($this->component->quote === \SqlSemantics\Statement\Identifier\NameQuote::Keyword && strcasecmp($this->component->value, 'default') === 0) {
+                $out->keyword('DEFAULT')->separate();
+            } else {
+                $out->name($this->component, NameUse::Qualifier);
+            }
+            $out->symbol('.');
         }
         if ($this->variable !== null) {
             $out->name($this->variable, NameUse::Identifier);

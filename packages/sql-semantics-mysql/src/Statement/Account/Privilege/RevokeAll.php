@@ -21,7 +21,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Revoking everything
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL PRIVILEGES, GRANT OPTION FROM u'
  */
 final class RevokeAll extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -36,8 +36,9 @@ final class RevokeAll extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<UserSpecification> $users The accounts; at least one
      * @param bool $ignoreUnknownUser Whether IGNORE UNKNOWN USER is written
+     * @param bool $privileges Whether the optional PRIVILEGES word is written
      */
-    public function __construct(public readonly bool $ifExists, array $users, public readonly bool $ignoreUnknownUser = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly bool $ifExists, array $users, public readonly bool $ignoreUnknownUser = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $privileges = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -66,7 +67,11 @@ final class RevokeAll extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }
-        $out->keyword('ALL')->symbol(',')->keyword('GRANT', 'OPTION', 'FROM')->list($this->users);
+        $out->keyword('ALL');
+        if ($this->privileges) {
+            $out->keyword('PRIVILEGES');
+        }
+        $out->symbol(',')->keyword('GRANT', 'OPTION', 'FROM')->list($this->users);
         if ($this->ignoreUnknownUser) {
             $out->keyword('IGNORE', 'UNKNOWN', 'USER');
         }

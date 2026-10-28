@@ -34,9 +34,11 @@ final class Temporal implements DeclaredName
      * @param TemporalKind $kind The temporal type
      * @param string|null $precision The fractional seconds precision, or the display width of YEAR, exactly as written; DATE takes none
      * @param list<NumericModifier> $modifiers The numeric attributes written after YEAR
+     * @param bool $sqlTsiYear Whether YEAR is written SQL_TSI_YEAR
      */
-    public function __construct(public readonly TemporalKind $kind, public readonly ?string $precision = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly TemporalKind $kind, public readonly ?string $precision = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $sqlTsiYear = false)
     {
+        Check::input(!$sqlTsiYear || $kind === TemporalKind::Year, 'SQL_TSI_YEAR names the YEAR type.');
         Check::input($precision === null || $kind !== TemporalKind::Date, 'DATE takes no precision.');
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($precision === null || $kind === TemporalKind::Year || (new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($precision))->isIntegerToken(), 'A fractional seconds precision is a decimal NUM integer token.');
@@ -57,7 +59,7 @@ final class Temporal implements DeclaredName
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->value);
+        $out->keyword($this->sqlTsiYear ? 'SQL_TSI_YEAR' : $this->kind->value);
         if ($this->precision !== null) {
             $out->glue()->symbol('(')->spelled($this->precision)->symbol(')');
         }

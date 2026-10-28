@@ -13,7 +13,7 @@ use SqlSemantics\Rendering\Output;
  * `CLONE LOCAL DATA DIRECTORY [=] 'directory'`: a request to clone the local server's data into a directory (MySQL 8.0.17 and later).
  *
  * Mirrors Sql_cmd_clone for a local clone. Rule: MYSQL-CLONE-LOCAL-001. The
- * equals sign is optional and not written. The statement names no relation
+ * assignment sign is optional; its presence and choice of = or := are retained. The statement names no relation
  * and has no facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/clone.html.
  * Status: Implemented.
@@ -30,8 +30,9 @@ final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
     /**
      * @param Text $directory The directory the data is cloned into
      * @param bool $equals Whether the optional equals sign is written
+     * @param bool $assignment Whether a written assignment sign is := instead of =
      */
-    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
+    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $assignment = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -54,7 +55,7 @@ final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
     {
         $out->keyword('CLONE', 'LOCAL', 'DATA', 'DIRECTORY');
         if ($this->equals) {
-            $out->symbol('=');
+            $out->symbol($this->assignment ? ':=' : '=');
         }
         $out->node($this->directory);
     }

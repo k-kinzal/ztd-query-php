@@ -18,7 +18,7 @@ final class RotateMasterKeyTest extends TestCase
 {
     public function testRenderWritesTheKeyringName(): void
     {
-        self::assertSame('ALTER INSTANCE ROTATE innodb MASTER KEY', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("alter instance rotate 'innodb' master key")->toString());
+        self::assertSame('ALTER INSTANCE ROTATE \'innodb\' MASTER KEY', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("alter instance rotate 'innodb' master key")->toString());
     }
 
     public function testBinaryLogTellsTheKeyring(): void

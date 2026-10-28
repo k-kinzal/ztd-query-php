@@ -167,7 +167,7 @@ final class ResetRule
         return match ($variable->signature) {
             'persisted_variable_ident: ident' => new ResetPersist($ifExists, $names->identifier($variable->node(0))),
             'persisted_variable_ident: ident . ident' => new ResetPersist($ifExists, $names->identifier($variable->node(2)), $names->identifier($variable->node(0))),
-            'persisted_variable_ident: DEFAULT_SYM . ident' => new ResetPersist($ifExists, $names->identifier($variable->node(2)), $this->lowering->leaves->record(new Name('default'))),
+            'persisted_variable_ident: DEFAULT_SYM . ident' => new ResetPersist($ifExists, $names->identifier($variable->node(2)), $this->lowering->leaves->record(new Name('default', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))),
             default => throw ImplementationGap::production($variable),
         };
     }

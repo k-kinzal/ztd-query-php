@@ -92,7 +92,12 @@ final class NameAssignment implements SetItem
             $out->keyword($this->scope->value);
         }
         if ($this->qualifier !== null) {
-            $out->name($this->qualifier, NameUse::Label)->symbol('.');
+            if ($this->qualifier->quote === \SqlSemantics\Statement\Identifier\NameQuote::Keyword && strcasecmp($this->qualifier->value, 'default') === 0) {
+                $out->keyword('DEFAULT')->separate();
+            } else {
+                $out->name($this->qualifier, NameUse::Label);
+            }
+            $out->symbol('.');
         }
         $out->name($this->name, NameUse::Label)->symbol('=');
         if ($this->value instanceof SetWord) {

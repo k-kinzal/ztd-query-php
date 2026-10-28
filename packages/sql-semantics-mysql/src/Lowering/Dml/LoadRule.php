@@ -118,6 +118,7 @@ final class LoadRule
             'fields' => $format->fields($parts['opt_field_term']),
             'lines' => $format->lines($parts['opt_line_term']),
             'ignored' => $this->ignored($parts['opt_ignore_lines']),
+            'ignoreRows' => strtoupper($parts['opt_ignore_lines']->tokens()[2]->text ?? '') === 'ROWS',
             'columns' => $this->columns($parts['opt_field_or_var_spec']),
             'bulk' => $this->bulk($parts),
         ];
@@ -193,7 +194,7 @@ final class LoadRule
         $order = $this->flag($parts['opt_source_order'] ?? null);
         $count = isset($parts['opt_source_count']) ? $this->lowering->form($parts['opt_source_count']) : null;
         if ($count === null || $count->signature === 'opt_source_count:') {
-            return new LoadInput($local, $source, $file, null, $order);
+            return new LoadInput($local, $source, $file, null, $order, from: $this->flag($parts['opt_from_keyword'] ?? null));
         }
         $number = $this->lowering->numbers->token($count->token(1));
         $failure = (new SyntaxLoadInput())->rejected($parts['opt_source_count'], $this->lowering);
@@ -201,21 +202,21 @@ final class LoadRule
             throw $failure;
         }
         if ($count->signature === 'opt_source_count: COUNT_SYM NUM') {
-            return new LoadInput($local, $source, $file, $number, $order);
+            return new LoadInput($local, $source, $file, $number, $order, from: $this->flag($parts['opt_from_keyword'] ?? null));
         }
         if ($count->signature !== 'opt_source_count: IDENT_sys NUM') {
             throw ImplementationGap::production($count);
         }
         $spelling = $this->lowering->form($count->node(0))->token(0)->text;
         if ((new \SqlSemantics\Platform\MySql\Rules\Identifiers())->decode($spelling) === 'COUNT') {
-            return new LoadInput($local, $source, $file, $number, $order);
+            return new LoadInput($local, $source, $file, $number, $order, from: $this->flag($parts['opt_from_keyword'] ?? null));
         }
         $word = $this->lowering->names->identifier($count->node(0));
         if (strcasecmp($word->value, 'count') !== 0) {
             throw new AnalysisException('Syntax error: COUNT expected before the number of files.');
         }
 
-        return new LoadInput($local, $source, $file, $number, $order, $word);
+        return new LoadInput($local, $source, $file, $number, $order, $word, from: $this->flag($parts['opt_from_keyword'] ?? null));
     }
 
     /**

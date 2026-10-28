@@ -80,6 +80,7 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      * @param list<Assignment|DeferredColumnAssignment> $assignments The SET assignments
      * @param BulkOptions|null $bulk The options of a bulk load
      * @throws InvalidConstruction When the table has a correlation name or a member of a list is of the wrong class
+     * @param bool $ignoreRows Whether ignored input lines are written as ROWS
      */
     public function __construct(
         public readonly LoadFormat $format,
@@ -98,6 +99,7 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         public readonly ?BulkOptions $bulk = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $ignoreRows = false
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);

@@ -54,6 +54,7 @@ final class CastTargetGenerator implements ErisGenerator
     {
         return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(Keyword\CastAliasGenerator::forRelease($release), Generators::choose(0, 100)), static function (array $parts) use ($release): ErisGenerator {
             [$alias, $number] = $parts;
+            $number = $alias->kind() === M\Type\Kind\CastKind::Year ? 2000 + $number : $number;
             $targets = new self(Generators::constant($alias->kind()), words: Generators::constant($alias->words()), alias: Generators::constant($alias));
             $queries = Generators::map(static function (M\Type\CastTarget $target) use ($number): M\QueryRoot {
                 $operand = $target->kind === M\Type\Kind\CastKind::GeometryCollection ? new M\Literal\NullLiteral() : new M\Literal\NumberLiteral((string) $number);

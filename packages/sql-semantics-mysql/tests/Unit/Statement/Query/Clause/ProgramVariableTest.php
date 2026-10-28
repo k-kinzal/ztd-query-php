@@ -32,7 +32,7 @@ final class ProgramVariableTest extends TestCase
 
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('SELECT a FROM t INTO x, `select`', (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t INTO x, 'select'")->toString());
+        self::assertSame('SELECT a FROM t INTO x, \'select\'', (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t INTO x, 'select'")->toString());
     }
 
     public function testDeriveScalarTypesAVariableARunningProgramDeclares(): void

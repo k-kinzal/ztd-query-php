@@ -67,11 +67,12 @@ final class RevokePrivilegesGenerator implements ErisGenerator
      * @param ErisGenerator<M\Account\Privilege\Level\PrivilegeLevel> $level The generated semantic operand
      * @param ErisGenerator<list<M\Account\User\UserSpecification>> $users The generated semantic operand
      * @param ErisGenerator<bool> $ignoreUnknownUser The generated semantic operand
+     * @param ErisGenerator<bool>|null $tableKeyword The optional table keyword
      * @return ErisGenerator<RevokePrivileges>
      */
-    public static function fromOperands(ErisGenerator $ifExists, ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $users, ErisGenerator $ignoreUnknownUser): ErisGenerator
+    public static function fromOperands(ErisGenerator $ifExists, ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $users, ErisGenerator $ignoreUnknownUser, ?ErisGenerator $tableKeyword = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): RevokePrivileges => new RevokePrivileges(ifExists: $parts[0], privileges: $parts[1], kind: $parts[2], level: $parts[3], users: $parts[4], ignoreUnknownUser: $parts[5]), \Tests\Generator\Operands::tuple($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser));
+        return Generators::map(static fn (array $parts): RevokePrivileges => new RevokePrivileges(ifExists: $parts[0], privileges: $parts[1], kind: $parts[2], level: $parts[3], users: $parts[4], ignoreUnknownUser: $parts[5], tableKeyword: $parts[6] && $parts[2] === M\Account\Privilege\Level\ObjectKind::Table), \Tests\Generator\Operands::tuple($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser, $tableKeyword ?? Generators::bool()));
     }
 
     /**

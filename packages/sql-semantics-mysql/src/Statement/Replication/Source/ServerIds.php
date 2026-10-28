@@ -29,10 +29,12 @@ final class ServerIds implements Node
 
     /**
      * @param list<Numeral> $ids The server identifiers in written order; empty to clear the setting
+     * @param bool $leadingComma Whether the first server identifier follows an empty list element
      */
-    public function __construct(array $ids, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(array $ids, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $leadingComma = false)
     {
         $this->ids = Check::listOf($ids, Numeral::class, 'IGNORE_SERVER_IDS lists numbers.');
+        Check::input(!$leadingComma || $this->ids !== [], 'A leading empty server-ID element precedes an identifier.');
     }
 
     /**
@@ -40,6 +42,10 @@ final class ServerIds implements Node
      */
     public function render(Output $out): void
     {
-        $out->symbol('(')->list($this->ids)->symbol(')');
+        $out->symbol('(');
+        if ($this->leadingComma) {
+            $out->symbol(',');
+        }
+        $out->list($this->ids)->symbol(')');
     }
 }

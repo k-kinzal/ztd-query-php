@@ -147,9 +147,11 @@ final class ClauseRule
     {
         $conditions = [];
         $seen = [];
+        $and = false;
         foreach ($this->spine($list) as $item) {
             $form = $this->lowering->form($item);
             if ($form->signature === 'opt_and:' || $form->signature === 'opt_and: AND_SYM') {
+                $and = $form->node->children !== [];
                 continue;
             }
             $attribute = self::CONDITIONS[$form->signature] ?? throw ImplementationGap::production($form);
@@ -157,7 +159,7 @@ final class ClauseRule
                 throw new RejectedInput(new RepeatedTlsAttribute($attribute), (new SourceRanges())->span($item)[1] ?? 0);
             }
             $seen[$attribute->value] = true;
-            $conditions[] = new TlsCondition($attribute, $this->string($form, 1));
+            $conditions[] = new TlsCondition($attribute, $this->string($form, 1), and: $and);
         }
 
         return $conditions;

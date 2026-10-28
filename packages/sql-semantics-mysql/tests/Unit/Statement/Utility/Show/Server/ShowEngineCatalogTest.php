@@ -24,6 +24,6 @@ final class ShowEngineCatalogTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW ENGINES', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW STORAGE ENGINES')->toString());
+        self::assertSame('SHOW STORAGE ENGINES', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW STORAGE ENGINES')->toString());
     }
 }

@@ -26,9 +26,11 @@ final class KeywordAttribute implements ColumnAttribute
 
     /**
      * @param ColumnKeyword $keyword The attribute
+     * @param bool $keyAlternative Whether primary-key or unique syntax uses the KEY alternative
      */
-    public function __construct(public readonly ColumnKeyword $keyword, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ColumnKeyword $keyword, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $keyAlternative = false)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$keyAlternative || in_array($keyword, [ColumnKeyword::PrimaryKey, ColumnKeyword::Unique], true), 'Only PRIMARY KEY and UNIQUE have a KEY alternative.');
     }
 
     /**
@@ -43,6 +45,7 @@ final class KeywordAttribute implements ColumnAttribute
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->keyword->value));
+        $words = $this->keyAlternative ? ($this->keyword === ColumnKeyword::PrimaryKey ? 'KEY' : 'UNIQUE KEY') : $this->keyword->value;
+        $out->keyword(...explode(' ', $words));
     }
 }

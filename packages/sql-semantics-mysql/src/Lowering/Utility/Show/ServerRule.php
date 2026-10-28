@@ -65,7 +65,7 @@ final class ServerRule
             case 'show_engines_stmt: SHOW opt_storage ENGINES_SYM':
                 $this->lowering->options->present($form->node(1));
 
-                return new ShowEngineCatalog();
+                return new ShowEngineCatalog(storage: $form->node(1)->children !== []);
             case 'show_status_stmt: SHOW opt_var_type STATUS_SYM opt_wild_or_where':
                 return $clauses->inspection(new ShowStatus($clauses->scope($form->node(1))), $form->node(3));
             case 'show_variables_stmt: SHOW opt_var_type VARIABLES opt_wild_or_where':
@@ -75,7 +75,7 @@ final class ServerRule
             case 'show_character_set_stmt: SHOW character_set opt_wild_or_where':
                 $this->lowering->options->skip($form->node(1));
 
-                return $clauses->inspection(new ShowCharacterSet(), $form->node(2));
+                return $clauses->inspection(new ShowCharacterSet(form: \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::from(strtoupper(implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(1)->tokens()))))), $form->node(2));
             case 'show_collation_stmt: SHOW COLLATION_SYM opt_wild_or_where':
                 return $clauses->inspection(new ShowCollation(), $form->node(2));
             case 'show_privileges_stmt: SHOW PRIVILEGES':

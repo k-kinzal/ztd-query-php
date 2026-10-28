@@ -62,7 +62,7 @@ final class VariableRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(UserVariable::class, $item1->expression);
         self::assertSame('b c', $item1->expression->name->value);
-        self::assertSame('SELECT @a AS a, @`b c` AS b, @d AS d, @e AS e, @localhost AS f', $operation->toString());
+        self::assertSame('SELECT @a AS a, @`b c` AS b, @\'d\' AS d, @\'e\' AS e, @localhost AS f', $operation->toString());
     }
 
     public function testAssignmentLowersAnAssignmentInsideAnExpression(): void

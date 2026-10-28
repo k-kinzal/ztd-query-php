@@ -35,11 +35,12 @@ final class LoadTableGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions|null>|null $bulk Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $ignoreRows The generated written alternative
      */
-    public function __construct(ErisGenerator $format, ErisGenerator $lock, ErisGenerator $input, ErisGenerator $duplicates, ErisGenerator $table, ?ErisGenerator $charset = null, ?ErisGenerator $compression = null, ?ErisGenerator $rowTag = null, ?ErisGenerator $fields = null, ?ErisGenerator $lines = null, ?ErisGenerator $ignored = null, ?ErisGenerator $columns = null, ?ErisGenerator $assignments = null, ?ErisGenerator $bulk = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $format, ErisGenerator $lock, ErisGenerator $input, ErisGenerator $duplicates, ErisGenerator $table, ?ErisGenerator $charset = null, ?ErisGenerator $compression = null, ?ErisGenerator $rowTag = null, ?ErisGenerator $fields = null, ?ErisGenerator $lines = null, ?ErisGenerator $ignored = null, ?ErisGenerator $columns = null, ?ErisGenerator $assignments = null, ?ErisGenerator $bulk = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $ignoreRows = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(format: $parts[0], lock: $parts[1], input: $parts[2], duplicates: $parts[3], table: $parts[4], charset: $parts[5], compression: $parts[6], rowTag: $parts[7], fields: $parts[8], lines: $parts[9], ignored: $parts[10], columns: $parts[11], assignments: $parts[12], bulk: $parts[13], statementInformation: $parts[14], inputSource: $parts[15]);
+            return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(format: $parts[0], lock: $parts[1], input: $parts[2], duplicates: $parts[3], table: $parts[4], charset: $parts[5], compression: $parts[6], rowTag: $parts[7], fields: $parts[8], lines: $parts[9], ignored: $parts[10], columns: $parts[11], assignments: $parts[12], bulk: $parts[13], statementInformation: $parts[14], inputSource: $parts[15], ignoreRows: $parts[16] && $parts[10] !== null);
         }, \Tests\Generator\Operands::tuple(
             $format,
             $lock,
@@ -56,7 +57,8 @@ final class LoadTableGenerator implements ErisGenerator
             $assignments ?? Generators::constant([]),
             $bulk ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $ignoreRows ?? Generators::bool()
         ));
     }
     /**

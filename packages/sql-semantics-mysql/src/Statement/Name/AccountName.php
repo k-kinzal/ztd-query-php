@@ -44,8 +44,8 @@ final class AccountName implements Account
      */
     public function __construct(public readonly Name $user, public readonly ?Name $host = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $userString = false, public readonly bool $hostString = false)
     {
-        \SqlSemantics\Diagnostic\Check::input(!$userString || $user->quote === null, 'A string account operand has no identifier delimiter.');
-        \SqlSemantics\Diagnostic\Check::input(!$hostString || ($host !== null && $host->quote === null), 'A string host operand is present and has no identifier delimiter.');
+        \SqlSemantics\Diagnostic\Check::input(!$userString || in_array($user->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true), 'A string account operand has no identifier delimiter.');
+        \SqlSemantics\Diagnostic\Check::input(!$hostString || ($host !== null && in_array($host->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true)), 'A string host operand is present and has no identifier delimiter.');
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($user, $host) === null, 'An account name satisfies the supported user and host domains.');
     }
 

@@ -91,7 +91,7 @@ final class AttributeRule
         if ($keyword !== null) {
             $this->marks($form);
 
-            return new KeywordAttribute($keyword);
+            return new KeywordAttribute($keyword, keyAlternative: in_array(strtoupper(implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node->tokens()))), ['KEY', 'UNIQUE KEY'], true));
         }
         $format = self::FORMATS[$form->signature] ?? null;
         if ($format !== null) {

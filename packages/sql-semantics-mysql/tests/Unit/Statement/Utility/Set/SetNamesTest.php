@@ -37,6 +37,6 @@ final class SetNamesTest extends TestCase
 
     public function testRenderWritesTheCollation(): void
     {
-        self::assertSame('SET NAMES utf8 COLLATE DEFAULT', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set names 'utf8' collate default")->toString());
+        self::assertSame('SET NAMES \'utf8\' COLLATE DEFAULT', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set names 'utf8' collate default")->toString());
     }
 }

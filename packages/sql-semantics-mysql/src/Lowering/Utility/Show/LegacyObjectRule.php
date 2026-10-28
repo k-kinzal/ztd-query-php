@@ -152,7 +152,7 @@ final class LegacyObjectRule
         $clauses = new ClauseRule($this->lowering);
         $clauses->preposition($form->node(2));
 
-        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4))), $form->node(5));
+        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), tableIn: strtoupper($form->node(2)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(4)->tokens()[0]->text ?? '') === 'IN'), $form->node(5));
     }
 
     /**
@@ -189,7 +189,7 @@ final class LegacyObjectRule
             'status' => $clauses->inspection(new ShowStatus($clauses->scope($form->node(0))), $form->node(2)),
             'variables' => $clauses->inspection(new ShowVariables($clauses->scope($form->node(0))), $form->node(2)),
             'processlist' => new ShowProcesslist($clauses->listing($form->node(0)) !== null),
-            'charset' => $clauses->inspection(new ShowCharacterSet(), $form->node(1)),
+            'charset' => $clauses->inspection(new ShowCharacterSet(form: \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::from(strtoupper(implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()))))), $form->node(1)),
             'collation' => $clauses->inspection(new ShowCollation(), $form->node(1)),
             'grants' => new ShowGrants(),
             'grantsFor' => new ShowGrants($this->lowering->users->account($form->node(2))),
@@ -209,7 +209,7 @@ final class LegacyObjectRule
     {
         $this->lowering->options->present($form->node(0));
 
-        return new ShowEngineCatalog();
+        return new ShowEngineCatalog(storage: $form->node(0)->children !== []);
     }
 
     /**

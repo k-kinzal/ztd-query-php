@@ -20,13 +20,15 @@ final class AllPrivilegesGenerator implements ErisGenerator
 
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $privileges The generated written alternative
      */
-    public function __construct(?ErisGenerator $inputSource = null)
+    public function __construct(?ErisGenerator $inputSource = null, ?ErisGenerator $privileges = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges(inputSource: $parts[0]);
+            return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges(inputSource: $parts[0], privileges: $parts[1]);
         }, \Tests\Generator\Operands::tuple(
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $privileges ?? Generators::bool()
         ));
     }
 }

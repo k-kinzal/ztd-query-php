@@ -111,6 +111,8 @@ final class CodecTest extends TestCase
     public function testNameReconstructsAnExplicitDelimiterChoice(): void
     {
         $codec = new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('ANSI_QUOTES'));
+        self::assertSame("'a''b'", $codec->name(new Name("a'b", \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote), NameUse::Alias));
+        self::assertSame('ADDDATE', $codec->name(new Name('ADDDATE', \SqlSemantics\Statement\Identifier\NameQuote::Keyword), NameUse::Relation));
         self::assertSame('BINLOG', $codec->name(new Name('BINLOG', \SqlSemantics\Statement\Identifier\NameQuote::Bare), NameUse::Identifier));
         self::assertSame('`ordinary`', $codec->name(new Name('ordinary', \SqlSemantics\Statement\Identifier\NameQuote::Backtick), NameUse::Identifier));
         self::assertSame('"a""b"', $codec->name(new Name('a"b', \SqlSemantics\Statement\Identifier\NameQuote::DoubleQuote), NameUse::Identifier));

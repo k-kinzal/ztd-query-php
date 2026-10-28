@@ -9,7 +9,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 /**
  * The binary arithmetic and bit operators of the bit_expr level.
  *
- * `%` and MOD are one operator and are written `%`. Each case holds the
+ * `%` and MOD are one operator; the expression retains the written form. Each case holds the
  * written operator.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/bit-functions.html.

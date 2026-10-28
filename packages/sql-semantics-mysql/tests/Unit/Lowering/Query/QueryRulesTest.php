@@ -254,7 +254,7 @@ final class QueryRulesTest extends TestCase
         self::assertInstanceOf(Select::class, $operation->query);
         self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
         self::assertSame('x y', $operation->query->items[0]->alias?->value);
-        self::assertSame('SELECT a AS `x y`, b z FROM t AS u', $operation->toString());
+        self::assertSame('SELECT a AS `x y`, b \'z\' FROM t AS u', $operation->toString());
     }
 
     public function testColumnAliasesAnswersNothingForNoList(): void

@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Source\Span;
  * @visibility public
  * @example Reading the request
  *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa begin 'g', 'b' resume");
- *     [$xa->toString(), $xa->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume] // => ["XA START 'g', 'b' RESUME", true]
+ *     [$xa->toString(), $xa->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume] // => ["XA BEGIN 'g', 'b' RESUME", true]
  * @example Refusing a format identifier outside the selected release
  *     new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
@@ -41,8 +41,9 @@ final class XaStart extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
      * @param LanguageProfile $profile The selected grammar and lexical interpretation; MySQL 8.4.7 by default
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
+     * @param bool $begin Whether BEGIN is written instead of START
      */
-    public function __construct(public readonly Xid $xid, public readonly ?XaStartOption $option = null, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
+    public function __construct(public readonly Xid $xid, public readonly ?XaStartOption $option = null, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null, public readonly bool $begin = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -67,7 +68,7 @@ final class XaStart extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
      */
     public function render(Output $out): void
     {
-        $out->keyword('XA', 'START')->node($this->xid);
+        $out->keyword('XA', $this->begin ? 'BEGIN' : 'START')->node($this->xid);
         if ($this->option !== null) {
             $out->keyword($this->option->value);
         }

@@ -44,6 +44,38 @@ final class ProgramColumnsTest extends TestCase
         self::assertSame([32768, 32768, 32897, 32896, 32768], array_column($result->columns, 'flags'));
     }
 
+    /**
+     * @return iterable<string, array{string, list<string>, list<int>}>
+     */
+    public static function providerVariableNames(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            yield $release->value => [substr($release->value, 6), ['a', 'a', 'a', '', $legacy ? '' : 'a', 'v'], [32768, 32768, 32768, 32896, $legacy ? 32896 : 32768, 32768]];
+        }
+    }
+
+    /**
+     * @param list<string> $originals
+     * @param list<int> $flags
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerVariableNames')]
+    public function testFlaggedPreservesVariableNamesThroughAliasesAndParentheses(string $release, array $originals, array $flags): void
+    {
+        $session = (new Instance($release, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE PROCEDURE p(a INT) BEGIN DECLARE v INT DEFAULT 3; SELECT a, a AS aliased, (a) AS parens, a+1 AS expr, (SELECT a) AS nested, v; END');
+        $result = $session->query('CALL p(5)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['5', '5', '5', '6', '5', '3']], $result->rows);
+        self::assertSame(['a', 'aliased', 'parens', 'expr', 'nested', 'v'], array_column($result->columns, 'name'));
+        self::assertSame($originals, array_column($result->columns, 'originalName'));
+        self::assertSame($flags, array_column($result->columns, 'flags'));
+    }
+
     public function testFlaggedGivesAVariableTheFlagsOfAColumnWithoutBinary(): void
     {
         $session = (new Instance())->connect();

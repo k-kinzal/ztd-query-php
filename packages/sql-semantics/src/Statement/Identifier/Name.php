@@ -28,6 +28,6 @@ final class Name
      */
     public function __construct(public readonly string $value, public readonly ?NameQuote $quote = null)
     {
-        \SqlSemantics\Diagnostic\Check::input($quote !== NameQuote::Bare || preg_match('/\\A[A-Za-z0-9_$\\x80-\\xff]+\\z/', $value) === 1, 'A bare identifier contains only identifier characters.');
+        \SqlSemantics\Diagnostic\Check::input(!in_array($quote, [NameQuote::Bare, NameQuote::Keyword], true) || preg_match('/\\A[A-Za-z0-9_$\\x80-\\xff]+\\z/', $value) === 1, 'A bare identifier contains only identifier characters.');
     }
 }

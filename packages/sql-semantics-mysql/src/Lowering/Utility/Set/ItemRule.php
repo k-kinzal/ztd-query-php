@@ -162,7 +162,7 @@ final class ItemRule
         return match ($form->signature) {
             'internal_variable_name: ident', 'lvalue_variable: lvalue_ident' => [$names->identifier($form->node(0)), null],
             'internal_variable_name: ident . ident', 'lvalue_variable: lvalue_ident . ident' => [$names->identifier($form->node(2)), $names->identifier($form->node(0))],
-            'internal_variable_name: DEFAULT . ident', 'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default'))],
+            'internal_variable_name: DEFAULT . ident', 'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))],
             default => throw ImplementationGap::production($form),
         };
     }

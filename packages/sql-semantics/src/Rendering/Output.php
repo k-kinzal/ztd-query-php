@@ -33,6 +33,10 @@ final class Output
 
     private bool $glue = false;
 
+    private bool $separate = false;
+
+    private bool $keywordName = false;
+
     private bool $spelling = false;
 
     private ?string $trail = null;
@@ -77,6 +81,11 @@ final class Output
     public function symbol(string $symbol): self
     {
         Check::invariant(preg_match('/\A[][(){}.,;:=<>!+*\/%^|&~@#?$-]+\z/', $symbol) === 1, 'A symbol piece contains punctuation only.');
+        if ($this->keywordName && $symbol === '(' && !$this->separate) {
+            $this->glue();
+        } elseif ($this->keywordName && $symbol === '.') {
+            $this->separate();
+        }
         $this->add(PieceKind::Symbol, $symbol);
 
         return $this;
@@ -90,6 +99,7 @@ final class Output
     public function name(Name $name, NameUse $use = NameUse::Column): self
     {
         $this->add(PieceKind::Name, $this->codec->name($name, $use));
+        $this->keywordName = $name->quote === \SqlSemantics\Statement\Identifier\NameQuote::Keyword;
 
         return $this;
     }
@@ -164,6 +174,20 @@ final class Output
     public function glue(): self
     {
         $this->glue = true;
+        $this->separate = false;
+
+        return $this;
+    }
+
+    /**
+     * Keeps a required lexical separator in both the structural and public output.
+     *
+     * @return $this
+     */
+    public function separate(): self
+    {
+        $this->separate = true;
+        $this->glue = false;
 
         return $this;
     }
@@ -258,9 +282,11 @@ final class Output
      */
     public function add(PieceKind $kind, string $text): void
     {
-        $this->pieces[] = new Piece($kind, $text, $this->glue, $this->trail);
-        $this->canonical[] = new Piece($kind, $text, $this->glue);
+        $this->pieces[] = new Piece($kind, $text, $this->glue, $this->separate ? ' ' : $this->trail);
+        $this->canonical[] = new Piece($kind, $text, $this->glue, $this->separate ? ' ' : null);
         $this->glue = false;
+        $this->separate = false;
+        $this->keywordName = false;
         $this->trail = null;
     }
 

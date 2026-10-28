@@ -139,7 +139,7 @@ final class NameRule
     {
         $form = $this->identifierForm($name);
         if ($form->node->name === 'TEXT_STRING_sys' || $form->node->name === 'TEXT_STRING_validated') {
-            return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->lowering->literals->bytes($form->node), $this->lowering->inputClient));
+            return new Name((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->lowering->literals->bytes($form->node), $this->lowering->inputClient), \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote);
         }
         $kind = self::TOKENS[$form->signature] ?? ($this->keyword($form->signature) ? 'word' : null);
         if ($kind === null) {
@@ -153,6 +153,9 @@ final class NameRule
             default => \SqlSemantics\Statement\Identifier\NameQuote::Bare,
         };
         $value = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($kind === 'identifier' ? (new Identifiers())->decode($text) : $text, $this->lowering->inputClient);
+        if ($this->keyword($form->signature)) {
+            return new Name($value, \SqlSemantics\Statement\Identifier\NameQuote::Keyword);
+        }
         $automatic = new Name($value);
         $codec = new \SqlSemantics\Platform\MySql\Rendering\Codec($this->lowering->profile->grammar, $this->lowering->profile->lexical, $this->lowering->inputClient);
         return $codec->name($automatic, \SqlSemantics\Contract\NameUse::Identifier) === $text ? $automatic : new Name($value, $quote);

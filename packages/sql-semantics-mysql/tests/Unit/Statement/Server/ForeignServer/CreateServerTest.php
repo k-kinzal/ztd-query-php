@@ -17,7 +17,7 @@ final class CreateServerTest extends TestCase
 {
     public function testRenderWritesNameWrapperAndOptions(): void
     {
-        self::assertSame("CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (OWNER 'o')", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("create server s foreign data wrapper 'mysql' options (owner 'o')")->toString());
+        self::assertSame("CREATE SERVER s FOREIGN DATA WRAPPER 'mysql' OPTIONS (OWNER 'o')", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("create server s foreign data wrapper 'mysql' options (owner 'o')")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

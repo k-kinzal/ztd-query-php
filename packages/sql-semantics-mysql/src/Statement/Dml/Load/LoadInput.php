@@ -47,6 +47,7 @@ final class LoadInput implements Node
      * @param bool $primaryKeyOrder Whether the files are sorted by primary key
      * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier, which may be quoted; null for the keyword
      * @throws InvalidConstruction When the word COUNT is given without a count or is another word
+     * @param bool $from Whether FROM precedes the input source
      */
     public function __construct(
         public readonly bool $local,
@@ -56,6 +57,7 @@ final class LoadInput implements Node
         public readonly bool $primaryKeyOrder = false,
         ?Name $countWord = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $from = false
     ) {
         Check::input($file->radix === null, 'A LOAD file name is quoted text.');
         Check::input($count === null || $count->isIntegerToken(), 'A LOAD file count is a decimal integer token no greater than 2147483647.');
@@ -68,6 +70,9 @@ final class LoadInput implements Node
      */
     public function render(Output $out): void
     {
+        if ($this->from) {
+            $out->keyword('FROM');
+        }
         if ($this->local) {
             $out->keyword('LOCAL');
         }

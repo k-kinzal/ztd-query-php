@@ -19,7 +19,7 @@ final class CastAliasTest extends TestCase
 {
     public function testKindKeepsTheCanonicalTypeSeparateFromTheKeyword(): void
     {
-        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::NationalChar, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Unsigned, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Unsigned, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Float, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::GeometryCollection], array_map(static fn (CastAlias $alias): \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind => $alias->kind(), CastAlias::cases()));
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::NationalChar, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Unsigned, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Unsigned, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Float, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::GeometryCollection, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Year], array_map(static fn (CastAlias $alias): \SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind => $alias->kind(), CastAlias::cases()));
     }
 
     public function testWordsRetainsTheOptionalCastWords(): void
@@ -39,7 +39,7 @@ final class CastAliasTest extends TestCase
                 continue;
             }
             foreach (CastAlias::cases() as $alias) {
-                if (($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) && in_array($alias, [CastAlias::Float4, CastAlias::Float8, CastAlias::Float8Precision, CastAlias::GeomCollection], true)) {
+                if (($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) && in_array($alias, [CastAlias::Float4, CastAlias::Float8, CastAlias::Float8Precision, CastAlias::GeomCollection, CastAlias::SqlTsiYear], true)) {
                     continue;
                 }
                 if (($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) && $alias === CastAlias::NationalCharacter) {

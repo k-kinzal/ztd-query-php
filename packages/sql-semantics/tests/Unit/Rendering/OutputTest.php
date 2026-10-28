@@ -31,6 +31,24 @@ final class OutputTest extends TestCase
         self::assertSame('SELECT /* prefix */ 7', (new Lexical())->join($output->pieces()));
     }
 
+    public function testSeparateKeepsARequiredBoundaryInCanonicalPieces(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $output->keyword('SET', 'DEFAULT')->separate()->symbol('.')->name(new Name('key_buffer_size'))->symbol('=')->spelled('1');
+
+        self::assertSame('SET DEFAULT .key_buffer_size = 1', (new Lexical())->join($output->pieces()));
+        self::assertSame('SET DEFAULT .key_buffer_size = 1', (new Lexical())->join($output->canonical()));
+    }
+
+    public function testNameKeepsAKeywordAdjacentToItsFollowingParenthesis(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $output->keyword('CREATE', 'TABLE')->name(new Name('ADDDATE', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))->symbol('(')->name(new Name('id'))->keyword('INT')->symbol(')');
+
+        self::assertSame('CREATE TABLE ADDDATE(id INT)', (new Lexical())->join($output->pieces()));
+        self::assertSame('CREATE TABLE ADDDATE(id INT)', (new Lexical())->join($output->canonical()));
+    }
+
     public function testQuoteUsesTheDialectStringCodec(): void
     {
         $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));

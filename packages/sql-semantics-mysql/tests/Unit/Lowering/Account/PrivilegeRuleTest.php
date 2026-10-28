@@ -90,12 +90,12 @@ final class PrivilegeRuleTest extends TestCase
 
     public function testPrivilegesLowersTheLegacyList(): void
     {
-        self::assertSame('GRANT ALL ON *.* TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant all privileges on *.* to u')->toString());
+        self::assertSame('GRANT ALL PRIVILEGES ON *.* TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant all privileges on *.* to u')->toString());
     }
 
     public function testWordsConfirmsTheOptionalWord(): void
     {
-        self::assertSame('REVOKE ALL ON *.* FROM u', (new Semantics(Dialect::MySql))->analyze('revoke all privileges on *.* from u')->toString());
+        self::assertSame('REVOKE ALL PRIVILEGES ON *.* FROM u', (new Semantics(Dialect::MySql))->analyze('revoke all privileges on *.* from u')->toString());
     }
 
     public function testColumnsLowersTheColumnList(): void

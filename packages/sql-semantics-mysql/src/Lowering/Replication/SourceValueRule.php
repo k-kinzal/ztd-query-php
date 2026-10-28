@@ -93,7 +93,7 @@ final class SourceValueRule
             $ids[] = $this->lowering->numbers->numeral($form->node(0));
         }
 
-        return new ServerIds($ids);
+        return new ServerIds($ids, leadingComma: ($list->tokens()[0]->text ?? null) === ',');
     }
 
     /**

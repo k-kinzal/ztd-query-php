@@ -61,7 +61,12 @@ final class SystemNames
             $out->keyword($scope->value)->symbol('.');
         }
         if ($instance !== null) {
-            $out->name($instance, NameUse::Label)->symbol('.');
+            if ($instance->quote === \SqlSemantics\Statement\Identifier\NameQuote::Keyword && strcasecmp($instance->value, 'default') === 0) {
+                $out->keyword('DEFAULT')->separate();
+            } else {
+                $out->name($instance, NameUse::Label);
+            }
+            $out->symbol('.');
         }
         $out->name($name, NameUse::Label);
     }

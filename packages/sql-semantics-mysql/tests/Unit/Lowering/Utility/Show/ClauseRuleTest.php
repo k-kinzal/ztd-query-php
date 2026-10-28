@@ -58,7 +58,7 @@ final class ClauseRuleTest extends TestCase
 
     public function testPrepositionAcceptsFromAndIn(): void
     {
-        self::assertSame('SHOW COLUMNS FROM t FROM db', (new Semantics(Dialect::MySql))->analyze('show columns in t in db')->toString());
+        self::assertSame('SHOW COLUMNS IN t IN db', (new Semantics(Dialect::MySql))->analyze('show columns in t in db')->toString());
     }
 
     public function testListingLowersFullAndExtended(): void

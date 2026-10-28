@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Removing a server
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop server if exists 's'");
- *     [$drop->toString(), $drop->name->value] // => ['DROP SERVER IF EXISTS s', 's']
+ *     [$drop->toString(), $drop->name->value] // => ["DROP SERVER IF EXISTS 's'", 's']
  */
 final class DropServer extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

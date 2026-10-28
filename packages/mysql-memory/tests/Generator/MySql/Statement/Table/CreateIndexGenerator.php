@@ -71,11 +71,12 @@ final class CreateIndexGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm|null> $algorithm The generated semantic operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption>> $options The generated semantic operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Alter\AlterOption>> $alterOptions The generated semantic operand
+     * @param ErisGenerator<bool>|null $typeKeyword The generated algorithm keyword
      * @return ErisGenerator<CreateIndex>
      */
-    public static function fromOperands(ErisGenerator $name, ErisGenerator $table, ErisGenerator $parts, ErisGenerator $kind, ErisGenerator $algorithm, ErisGenerator $options, ErisGenerator $alterOptions): ErisGenerator
+    public static function fromOperands(ErisGenerator $name, ErisGenerator $table, ErisGenerator $parts, ErisGenerator $kind, ErisGenerator $algorithm, ErisGenerator $options, ErisGenerator $alterOptions, ?ErisGenerator $typeKeyword = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CreateIndex => new CreateIndex(name: $parts[0], table: $parts[1], parts: $parts[2], kind: $parts[3], algorithm: $parts[4], options: $parts[5], alterOptions: $parts[6]), \Tests\Generator\Operands::tuple($name, $table, $parts, $kind, $algorithm, $options, $alterOptions));
+        return Generators::map(static fn (array $parts): CreateIndex => new CreateIndex(name: $parts[0], table: $parts[1], parts: $parts[2], kind: $parts[3], algorithm: $parts[4], options: $parts[5], alterOptions: $parts[6], typeKeyword: $parts[7] && $parts[4] !== null), \Tests\Generator\Operands::tuple($name, $table, $parts, $kind, $algorithm, $options, $alterOptions, $typeKeyword ?? Generators::bool()));
     }
 
     /**

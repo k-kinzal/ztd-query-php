@@ -167,7 +167,7 @@ final class BlockRule
                 throw ImplementationGap::production($words);
             }
 
-            return new FetchCursor($this->lowering->names->identifier($form->node(2)), $this->names($form->node(4), 'sp_fetch_list'));
+            return new FetchCursor($this->lowering->names->identifier($form->node(2)), $this->names($form->node(4), 'sp_fetch_list'), from: $words->node->children !== [], next: count($words->node->tokens()) === 2);
         }
 
         return match ($form->signature) {

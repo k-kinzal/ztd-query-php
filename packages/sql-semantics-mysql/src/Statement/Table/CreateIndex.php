@@ -68,6 +68,7 @@ final class CreateIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      * @param IndexAlgorithm|null $algorithm The USING clause written before ON
      * @param list<IndexOption> $options The options after the key parts, in written order
      * @param list<AlterOption> $alterOptions The ALGORITHM and LOCK clauses in written order
+     * @param bool $typeKeyword Whether TYPE introduces the algorithm instead of USING
      */
     public function __construct(
         public readonly Name $name,
@@ -80,6 +81,7 @@ final class CreateIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         ?RelationFact $relationInformation = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $typeKeyword = false
     ) {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);

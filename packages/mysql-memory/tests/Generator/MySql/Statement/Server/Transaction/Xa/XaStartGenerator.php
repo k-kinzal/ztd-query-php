@@ -31,9 +31,9 @@ final class XaStartGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(static function (array $data) use ($release): XaStart {
-            [$xid, $option] = $data;
-            return new XaStart($xid, $option, profile: new LanguageProfile($release));
-        }, \Tests\Generator\Operands::tuple(new XidGenerator(), Generators::elements(null, XaStartOption::Join, XaStartOption::Resume)));
+            [$xid, $option, $begin] = $data;
+            return new XaStart($xid, $option, profile: new LanguageProfile($release), begin: $begin);
+        }, \Tests\Generator\Operands::tuple(new XidGenerator(), Generators::elements(null, XaStartOption::Join, XaStartOption::Resume), Generators::bool()));
     }
 
     /**
@@ -60,11 +60,12 @@ final class XaStartGenerator implements ErisGenerator
      * @param ErisGenerator<XaStartOption|null> $option The generated semantic operand
      * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
+     * @param ErisGenerator<bool>|null $begin The generated START or BEGIN form
      * @return ErisGenerator<XaStart>
      */
-    public static function fromOperands(ErisGenerator $xid, ErisGenerator $option, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
+    public static function fromOperands(ErisGenerator $xid, ErisGenerator $option, ErisGenerator $profile, ErisGenerator $client, ?ErisGenerator $begin = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): XaStart => new XaStart(xid: $parts[0], option: $parts[1], profile: $parts[2], client: $parts[3]), \Tests\Generator\Operands::tuple($xid, $option, $profile, $client));
+        return Generators::map(static fn (array $parts): XaStart => new XaStart(xid: $parts[0], option: $parts[1], profile: $parts[2], client: $parts[3], begin: $parts[4]), \Tests\Generator\Operands::tuple($xid, $option, $profile, $client, $begin ?? Generators::bool()));
     }
 
     /**

@@ -115,7 +115,7 @@ final class GeneratedColumnTest extends TestCase
 
     public function testRenderRetainsGeneratedAlways(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE KEY)')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE KEY)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE KEY)')->toString());
     }
 
     public function testRenderExcludesDefaultCollationInAGenerationDeclaration(): void

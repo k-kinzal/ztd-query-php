@@ -104,14 +104,14 @@ final class GrantRule
             $this->privileges->words($form->node(2));
         }
         $offset = $all ? 1 : 0;
-        $items = $all ? [new AllPrivileges()] : $this->privileges->granted($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        $items = $all ? [new AllPrivileges(privileges: $form->node(2)->children !== [])] : $this->privileges->granted($form->node(1), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         $kind = $this->privileges->kind($form->node(3 + $offset));
         $level = $this->privileges->level($form->node(4 + $offset));
         $grantees = $this->specifications($form->node(6 + $offset));
         $options = (new ClauseRule($this->lowering))->grantOptions($form->node(7 + $offset));
         $as = $this->grantAs($form->node(8 + $offset));
         $this->privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
-        return new GrantPrivileges($items, $kind, $level, $grantees, options: $options, as: $as);
+        return new GrantPrivileges($items, $kind, $level, $grantees, options: $options, as: $as, tableKeyword: strtoupper($form->node(3 + $offset)->tokens()[0]->text ?? '') === 'TABLE');
     }
 
     /**
@@ -157,7 +157,7 @@ final class GrantRule
         $level = $this->privileges->level($form->node(5));
         $users = $this->specifications($form->node(7));
         $this->privileges->columnKind($items, $kind, $level, $end);
-        return (new Privilege\RevokeRule($this->lowering))->statement($ifExists, $items, $kind, $level, $users, $ignore, $end);
+        return (new Privilege\RevokeRule($this->lowering))->statement($ifExists, $items, $kind, $level, $users, $ignore, $end, tableKeyword: strtoupper($form->node(4)->tokens()[0]->text ?? '') === 'TABLE');
     }
 
     /**
@@ -167,7 +167,7 @@ final class GrantRule
     {
         $this->privileges->words($form->node(3));
 
-        return (new Privilege\RevokeRule($this->lowering))->statement($ifExists, [new AllPrivileges()], $this->privileges->kind($form->node(5)), $this->privileges->level($form->node(6)), $this->specifications($form->node(8)), $ignore, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        return (new Privilege\RevokeRule($this->lowering))->statement($ifExists, [new AllPrivileges(privileges: $form->node(3)->children !== [])], $this->privileges->kind($form->node(5)), $this->privileges->level($form->node(6)), $this->specifications($form->node(8)), $ignore, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, tableKeyword: strtoupper($form->node(5)->tokens()[0]->text ?? '') === 'TABLE');
     }
 
     /**
@@ -177,7 +177,7 @@ final class GrantRule
     {
         $this->privileges->words($form->node(3));
 
-        return new RevokeAll($ifExists, $this->specifications($form->node(8)), $ignore);
+        return new RevokeAll($ifExists, $this->specifications($form->node(8)), $ignore, privileges: $form->node(3)->children !== []);
     }
 
     /**

@@ -31,8 +31,8 @@ final class RevokeRule
      * @param list<Privilege> $privileges The ordered privileges
      * @param list<UserSpecification> $users The ordered recipients
      */
-    public function statement(bool $ifExists, array $privileges, ObjectKind $kind, PrivilegeLevel $level, array $users, bool $ignoreUnknownUser = false, int $end = 0): RevokePrivileges
+    public function statement(bool $ifExists, array $privileges, ObjectKind $kind, PrivilegeLevel $level, array $users, bool $ignoreUnknownUser = false, int $end = 0, bool $tableKeyword = false): RevokePrivileges
     {
-        return new RevokePrivileges($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser);
+        return new RevokePrivileges($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser, tableKeyword: $tableKeyword);
     }
 }

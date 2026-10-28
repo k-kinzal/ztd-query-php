@@ -21,6 +21,8 @@ enum KeywordAlias: string
     case Substr = 'SUBSTR';
     case Mid = 'MID';
     case GeomCollection = 'GEOMCOLLECTION';
+    case SqlTsiYear = 'SQL_TSI_YEAR';
+    case SqlTsiWeek = 'SQL_TSI_WEEK';
 
     /**
      * Answers the built-in function named by this synonym.
@@ -32,6 +34,8 @@ enum KeywordAlias: string
             self::SessionUser, self::SystemUser => KeywordFunction::User,
             self::Substr, self::Mid => KeywordFunction::Substring,
             self::GeomCollection => KeywordFunction::GeometryCollection,
+            self::SqlTsiYear => KeywordFunction::Year,
+            self::SqlTsiWeek => KeywordFunction::Week,
         };
     }
 }

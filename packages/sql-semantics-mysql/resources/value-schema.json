@@ -113,6 +113,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsCondition": {
+        "and": "bool",
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsAttribute",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
@@ -156,6 +157,7 @@
         "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
         "options": "array",
         "privileges": "array",
+        "tableKeyword": "bool",
         "tls": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantProxy": {
@@ -177,7 +179,8 @@
         "withAdminOption": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\AllPrivileges": {
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "privileges": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\DynamicPrivilege": {
         "columns": "array",
@@ -223,6 +226,7 @@
         "ifExists": "bool",
         "ignoreUnknownUser": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "privileges": "bool",
         "users": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokePrivileges": {
@@ -233,6 +237,7 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
         "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
         "privileges": "array",
+        "tableKeyword": "bool",
         "users": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokeProxy": {
@@ -519,6 +524,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ConvertCharset": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\DropElement": {
@@ -1273,6 +1279,7 @@
         "count": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "countWord": "?SqlSemantics\\Statement\\Identifier\\Name",
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "from": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "local": "bool",
         "primaryKeyOrder": "bool",
@@ -1296,6 +1303,7 @@
         "duplicates": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
         "fields": "array",
         "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat",
+        "ignoreRows": "bool",
         "ignored": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "input": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadInput",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -1593,6 +1601,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\Arithmetic": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "left": "SqlSemantics\\Statement\\Scalar",
+        "modWord": "bool",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator",
         "right": "SqlSemantics\\Statement\\Scalar",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
@@ -2700,7 +2709,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\ServerIds": {
         "ids": "array",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "leadingComma": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Source\\SourceOption": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -3027,7 +3037,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\FetchCursor": {
         "cursor": "SqlSemantics\\Statement\\Identifier\\Name",
+        "from": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "next": "bool",
         "targets": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Cursor\\OpenCursor": {
@@ -3261,6 +3273,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredArithmetic": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "left": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "modWord": "bool",
         "operator": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Operator\\ArithmeticOperator",
         "right": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
@@ -3779,6 +3792,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneInstance": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "assignment": "bool",
         "directory": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "donor": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
         "equals": "bool",
@@ -3789,6 +3803,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneLocal": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "assignment": "bool",
         "directory": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
@@ -4327,6 +4342,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStart": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "begin": "bool",
         "client": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Charset",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "option": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Transaction\\Xa\\XaStartOption",
@@ -4454,6 +4470,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\KeywordAttribute": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "keyAlternative": "bool",
         "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnKeyword"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\ColumnFormat": {
@@ -4506,7 +4523,8 @@
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "options": "array",
         "parts": "array",
-        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "typeKeyword": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\CreateTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -4588,7 +4606,8 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
         "name": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName",
         "options": "array",
-        "parts": "array"
+        "parts": "array",
+        "typeKeyword": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind": {
         "name": "string",
@@ -4610,7 +4629,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexUsing": {
         "algorithm": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexAlgorithm",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "typeKeyword": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexVisibility": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -4822,6 +4842,7 @@
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery": {
+        "as": "bool",
         "duplicate": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "query": "SqlSemantics\\Statement\\Query"
@@ -5075,7 +5096,8 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\TemporalKind",
         "modifiers": "array",
-        "precision": "?string"
+        "precision": "?string",
+        "sqlTsiYear": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\DescribeTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -5327,11 +5349,13 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowColumns": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "database": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "databaseIn": "bool",
         "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "listing": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowListing",
-        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable",
+        "tableIn": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowCreateDatabase": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -5407,6 +5431,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowCharacterSet": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
@@ -5423,7 +5448,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowEngineCatalog": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "storage": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Server\\ShowEngineLogs": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",

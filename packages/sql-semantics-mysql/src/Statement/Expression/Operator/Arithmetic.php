@@ -42,7 +42,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Writing MOD as the remainder operator
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a % 2 = 1'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a MOD 2 = 1'
  * @example Typing a division of integers as DECIMAL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE 1 / 2');
  *     $query->query->where->scalarInformation()->type->descriptor->name() // => 'DECIMAL'
@@ -56,12 +56,14 @@ final class Arithmetic implements Scalar
      * @param ArithmeticOperator $operator The operator
      * @param Scalar $left The left operand
      * @param Scalar $right The right operand
+     * @param bool $modWord Whether modulo is written MOD instead of %
      */
-    public function __construct(public readonly ArithmeticOperator $operator, public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ArithmeticOperator $operator, public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $modWord = false)
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
+        Check::input(!$modWord || $operator === ArithmeticOperator::Modulo, 'MOD names the modulo operation.');
         $precedence = new Precedence();
         Check::input($precedence->fits($left, $operator->level(), $operator->level()), 'The left operand of ' . $operator->value . ' needs a grouping to keep its place.');
         Check::input($precedence->opening($right) > $operator->level(), 'The right operand of ' . $operator->value . ' needs a grouping to keep its place.');
@@ -105,7 +107,9 @@ final class Arithmetic implements Scalar
     public function render(Output $out): void
     {
         $out->node($this->left);
-        if ($this->operator === ArithmeticOperator::IntegerDivide) {
+        if ($this->modWord) {
+            $out->keyword('MOD');
+        } elseif ($this->operator === ArithmeticOperator::IntegerDivide) {
             $out->keyword('DIV');
         } else {
             $out->symbol($this->operator->value);

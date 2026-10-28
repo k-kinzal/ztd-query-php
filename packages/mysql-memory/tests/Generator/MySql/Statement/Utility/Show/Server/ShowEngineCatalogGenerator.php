@@ -21,14 +21,16 @@ final class ShowEngineCatalogGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $storage The generated written alternative
      */
-    public function __construct(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $storage = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowEngineCatalog {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowEngineCatalog(statementInformation: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowEngineCatalog(statementInformation: $parts[0], inputSource: $parts[1], storage: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $storage ?? Generators::bool()
         ));
     }
     /**

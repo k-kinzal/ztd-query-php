@@ -24,6 +24,6 @@ final class HelpTest extends TestCase
 
     public function testRenderWritesTheTopic(): void
     {
-        self::assertSame('HELP `SHOW TABLES`', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("help 'SHOW TABLES'")->toString());
+        self::assertSame('HELP \'SHOW TABLES\'', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("help 'SHOW TABLES'")->toString());
     }
 }

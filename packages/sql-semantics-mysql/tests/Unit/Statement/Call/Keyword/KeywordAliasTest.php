@@ -22,7 +22,7 @@ final class KeywordAliasTest extends TestCase
     {
         self::assertSame([
             KeywordFunction::Database, KeywordFunction::User, KeywordFunction::User,
-            KeywordFunction::Substring, KeywordFunction::Substring, KeywordFunction::GeometryCollection,
+            KeywordFunction::Substring, KeywordFunction::Substring, KeywordFunction::GeometryCollection, KeywordFunction::Year, KeywordFunction::Week,
         ], array_map(static fn (KeywordAlias $alias): KeywordFunction => $alias->function(), KeywordAlias::cases()));
     }
 
@@ -35,7 +35,7 @@ final class KeywordAliasTest extends TestCase
             if ($release->database() !== 'mysql') {
                 continue;
             }
-            foreach (['SCHEMA()', 'SESSION_USER()', 'SYSTEM_USER()', "SUBSTR('abcd', 2, 1)", "MID('abcd', 2)"] as $call) {
+            foreach (['SCHEMA()', 'SESSION_USER()', 'SYSTEM_USER()', "SUBSTR('abcd', 2, 1)", "MID('abcd', 2)", "SQL_TSI_YEAR('2026-10-29')", "SQL_TSI_WEEK('2026-10-29')"] as $call) {
                 yield "$release->value/$call" => [$release, 'SELECT ' . $call];
             }
             if (!in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {

@@ -73,7 +73,7 @@ final class BitRule
             $operator = self::OPERATORS[$operation->signature] ?? null;
             $result = $operator === null
                 ? (new IntervalRule($this->lowering))->arithmetic($result, $operation->node(3), $operation->node(4), self::INTERVALS[$operation->signature])
-                : $this->arithmetic($operator, $result, $this->bitExpression($operation->node(2)));
+                : $this->arithmetic($operator, $result, $this->bitExpression($operation->node(2)), $operation->signature === 'bit_expr: bit_expr MOD_SYM bit_expr');
         }
 
         return $this->lowering->origins->record($result, $expression);
@@ -82,8 +82,8 @@ final class BitRule
     /**
      * Keeps row-containing arithmetic in the stored computation domain.
      */
-    public function arithmetic(ArithmeticOperator $operator, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $right): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+    public function arithmetic(ArithmeticOperator $operator, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $right, bool $modWord = false): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
-        return $left instanceof Scalar && $right instanceof Scalar ? new Arithmetic($operator, $left, $right) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic($operator, $left, $right);
+        return $left instanceof Scalar && $right instanceof Scalar ? new Arithmetic($operator, $left, $right, modWord: $modWord) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic($operator, $left, $right, modWord: $modWord);
     }
 }

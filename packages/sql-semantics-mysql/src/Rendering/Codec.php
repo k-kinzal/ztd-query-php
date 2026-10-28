@@ -59,7 +59,8 @@ final class Codec implements \SqlSemantics\Contract\StringCodec
         if ($name->quote !== null) {
             $value = $this->spelling($name->value);
             return match ($name->quote) {
-                \SqlSemantics\Statement\Identifier\NameQuote::Bare => $value,
+                \SqlSemantics\Statement\Identifier\NameQuote::Bare, \SqlSemantics\Statement\Identifier\NameQuote::Keyword => $value,
+                \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote => $this->quote($value),
                 \SqlSemantics\Statement\Identifier\NameQuote::Backtick => '`' . str_replace('`', '``', $value) . '`',
                 \SqlSemantics\Statement\Identifier\NameQuote::DoubleQuote => '"' . str_replace('"', '""', $value) . '"',
             };

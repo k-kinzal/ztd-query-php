@@ -57,7 +57,7 @@ final class CreateIndexTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('CREATE UNIQUE INDEX i USING BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Semantics(Dialect::MySql))->analyze('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
+        self::assertSame('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Semantics(Dialect::MySql))->analyze('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
     }
 
     public function testDeriveStatementRefusesAView(): void

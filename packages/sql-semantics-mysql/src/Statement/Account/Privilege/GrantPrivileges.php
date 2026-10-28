@@ -38,7 +38,7 @@ use SqlSemantics\Rendering\Output;
  * @example Refusing column privileges on a routine
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Granting table privileges with the grant option
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON shop.t TO app@localhost WITH GRANT OPTION'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON TABLE shop.t TO app@localhost WITH GRANT OPTION'
  */
 final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -67,6 +67,7 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
      * @param TlsRequirement|null $tls The REQUIRE clause of MySQL 5.x, when written
      * @param list<WithOption> $options The options of the WITH clause in order
      * @param GrantAs|null $as The AS clause, when written
+     * @param bool $tableKeyword Whether TABLE is explicitly written for a table grant
      */
     public function __construct(
         array $privileges,
@@ -78,7 +79,9 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
         public readonly ?GrantAs $as = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $tableKeyword = false
     ) {
+        Check::input(!$tableKeyword || $kind === ObjectKind::Table, 'TABLE names a table-level privilege object.');
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
@@ -182,7 +185,7 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     public function render(Output $out): void
     {
         $out->keyword('GRANT')->list($this->privileges)->keyword('ON');
-        $keyword = $this->kind->keyword();
+        $keyword = $this->tableKeyword ? 'TABLE' : $this->kind->keyword();
         if ($keyword !== null) {
             $out->keyword($keyword);
         }

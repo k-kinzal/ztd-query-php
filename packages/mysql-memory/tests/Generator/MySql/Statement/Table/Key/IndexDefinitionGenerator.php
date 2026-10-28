@@ -28,8 +28,9 @@ final class IndexDefinitionGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\ConstraintName|null>|null $constraint Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\IndexWord|null>|null $keyword Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $typeKeyword The generated algorithm keyword
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $parts, ?ErisGenerator $name = null, ?ErisGenerator $algorithm = null, ?ErisGenerator $options = null, ?ErisGenerator $constraint = null, ?ErisGenerator $keyword = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ErisGenerator $parts, ?ErisGenerator $name = null, ?ErisGenerator $algorithm = null, ?ErisGenerator $options = null, ?ErisGenerator $constraint = null, ?ErisGenerator $keyword = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $typeKeyword = null)
     {
         $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $kind,
@@ -38,9 +39,10 @@ final class IndexDefinitionGenerator implements ErisGenerator
             $algorithm ?? Generators::constant(null),
             $options ?? Generators::constant([]),
             $constraint ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $typeKeyword ?? Generators::bool()
         ), static function (array $parts) use ($keyword): ErisGenerator {
-            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition(kind: $parts[0], parts: $parts[1], name: $parts[2], algorithm: $parts[3], options: $parts[4], constraint: $parts[5], keyword: $selected, inputSource: $parts[6]), $keyword ?? ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary ? Generators::constant(null) : ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index ? new IndexWordGenerator() : \Tests\Generator\Operands::oneOf([Generators::constant(null), new IndexWordGenerator()]))));
+            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition(kind: $parts[0], parts: $parts[1], name: $parts[2], algorithm: $parts[3], options: $parts[4], constraint: $parts[5], keyword: $selected, inputSource: $parts[6], typeKeyword: $parts[7] && $parts[3] !== null), $keyword ?? ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary ? Generators::constant(null) : ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index ? new IndexWordGenerator() : \Tests\Generator\Operands::oneOf([Generators::constant(null), new IndexWordGenerator()]))));
         });
     }
 

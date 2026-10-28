@@ -26,7 +26,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Reading SET NAMES
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SET NAMES 'utf8mb4' COLLATE utf8mb4_bin");
- *     [$set->items[0]->charset->name?->value, $set->items[0]->collation?->name?->value, $set->toString()] // => ['utf8mb4', 'utf8mb4_bin', 'SET NAMES utf8mb4 COLLATE utf8mb4_bin']
+ *     [$set->items[0]->charset->name?->value, $set->items[0]->collation?->name?->value, $set->toString()] // => ['utf8mb4', 'utf8mb4_bin', "SET NAMES 'utf8mb4' COLLATE utf8mb4_bin"]
  */
 final class SetNames implements SetItem
 {

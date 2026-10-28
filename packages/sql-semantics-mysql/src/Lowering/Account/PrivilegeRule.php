@@ -257,7 +257,7 @@ final class PrivilegeRule
         if ($form->signature === 'grant_privileges: ALL opt_privileges') {
             $this->words($form->node(1));
 
-            return [new AllPrivileges()];
+            return [new AllPrivileges(privileges: $form->node(1)->children !== [])];
         }
         if ($form->signature !== 'grant_privileges: object_privilege_list') {
             throw ImplementationGap::production($form);

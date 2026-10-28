@@ -112,6 +112,7 @@ final class KeyRule
             $indexOptions,
             null,
             $word,
+            typeKeyword: $algorithm !== null && $rule->typeKeyword($form->node($structure ?? 1)),
         );
     }
 
@@ -133,7 +134,7 @@ final class KeyRule
 
         $indexOptions = (new KeyOptionRule($this->lowering))->options($form->node($options));
         $keyParts = (new OrderingRule())->parts($this->lowering, $form->node, $form->node($parts), $kind, $algorithm, $indexOptions);
-        return new IndexDefinition($kind, $keyParts, $name, $algorithm, $indexOptions, $constraint, $keyword);
+        return new IndexDefinition($kind, $keyParts, $name, $algorithm, $indexOptions, $constraint, $keyword, typeKeyword: $algorithm !== null && (new KeyOptionRule($this->lowering))->typeKeyword($form->node($parts - 2)));
     }
 
     /**

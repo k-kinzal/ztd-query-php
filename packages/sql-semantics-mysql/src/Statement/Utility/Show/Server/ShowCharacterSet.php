@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Relation;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW CHARACTER SET WHERE Maxlen > 1");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Charset', "SHOW CHARSET WHERE Maxlen > 1"]
+ *     [$show->field(0)->name?->value, $show->toString()] // => ['Charset', "SHOW CHARACTER SET WHERE Maxlen > 1"]
  */
 final class ShowCharacterSet extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
@@ -37,9 +37,11 @@ final class ShowCharacterSet extends \SqlSemantics\Platform\MySql\Statement\SqlS
 
     /**
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $form The written named character-set form
      */
-    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $form = \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named)
     {
+        \SqlSemantics\Diagnostic\Check::input($form->named(), 'SHOW character sets uses a named character-set form.');
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
         }
@@ -70,6 +72,6 @@ final class ShowCharacterSet extends \SqlSemantics\Platform\MySql\Statement\SqlS
      */
     public function render(Output $out): void
     {
-        $out->keyword('SHOW', 'CHARSET')->node($this->filter);
+        $out->keyword('SHOW')->keyword(...explode(' ', $this->form->value))->node($this->filter);
     }
 }

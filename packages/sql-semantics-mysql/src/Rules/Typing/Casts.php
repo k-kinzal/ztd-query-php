@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * temporal targets keep the fractional digits written; CHAR is a string in the connection
  * collation or the character set written, BINARY a binary string, both as long as written or as
  * the operand written as text; JSON is JSON; YEAR is four digits wide, five in MySQL 8.0 (verified
- * on a live 8.0.44 server). The spatial targets have the GEOMETRY field type and binary collation.
+ * on a live 8.0.44 server). MySQL 8.0 reports YEAR casts as signed, later releases as unsigned. The spatial targets have the GEOMETRY field type and binary collation.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -65,7 +65,7 @@ final class Casts
             CastKind::Date => new Domain(Kind::Date, Field::Date, 10),
             CastKind::Time => new Domain(Kind::Time, Field::Time, 10 + $fraction, $decimals),
             CastKind::DateTime => new Domain(Kind::DateTime, Field::DateTime, 19 + $fraction, $decimals),
-            CastKind::Year => new Domain(Kind::Year, Field::Year, $this->release === GrammarRelease::MySql8044 ? 5 : 4, 0, true),
+            CastKind::Year => new Domain(Kind::Year, Field::Year, $this->release === GrammarRelease::MySql8044 ? 5 : 4, 0, $this->release !== GrammarRelease::MySql8044),
             CastKind::Char, CastKind::NationalChar => $this->string($operand, $target, $this->collation($target)),
             CastKind::Binary => $this->string($operand, $target, Collation::binary()),
             CastKind::Json => $this->release === GrammarRelease::MySql5744 ? new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::known('utf8mb4_bin')) : JsonResults::json($this->release),

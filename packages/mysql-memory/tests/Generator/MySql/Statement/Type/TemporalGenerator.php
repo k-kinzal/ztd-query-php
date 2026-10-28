@@ -23,16 +23,18 @@ final class TemporalGenerator implements ErisGenerator
      * @param ErisGenerator<string|null>|null $precision Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier>>|null $modifiers Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $sqlTsiYear The generated written alternative
      */
-    public function __construct(ErisGenerator $kind, ?ErisGenerator $precision = null, ?ErisGenerator $modifiers = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ?ErisGenerator $precision = null, ?ErisGenerator $modifiers = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $sqlTsiYear = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Temporal {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(kind: $parts[0], precision: $parts[1], modifiers: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(kind: $parts[0], precision: $parts[1], modifiers: $parts[2], inputSource: $parts[3], sqlTsiYear: $parts[4] && $parts[0] === \SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Year);
         }, \Tests\Generator\Operands::tuple(
             $kind,
             $precision ?? Generators::constant(null),
             $modifiers ?? Generators::constant([]),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $sqlTsiYear ?? Generators::bool()
         ));
     }
 }

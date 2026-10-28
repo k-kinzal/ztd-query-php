@@ -68,8 +68,8 @@ final class FetchCursorTest extends TestCase
      */
     public static function providerRenderWritesTheStatement(): iterable
     {
-        yield 'NEXT FROM in 5.6' => ['mysql-5.6.51', 'create procedure p(x int) begin declare c cursor for select x; fetch next from c into x, x; end', 'CREATE PROCEDURE p(x INT) BEGIN DECLARE c CURSOR FOR SELECT x; FETCH c INTO x, x; END'];
-        yield 'FROM in 5.7' => ['mysql-5.7.44', 'create procedure p(x int) begin declare c cursor for select x; fetch from c into x; end', 'CREATE PROCEDURE p(x INT) BEGIN DECLARE c CURSOR FOR SELECT x; FETCH c INTO x; END'];
+        yield 'NEXT FROM in 5.6' => ['mysql-5.6.51', 'create procedure p(x int) begin declare c cursor for select x; fetch next from c into x, x; end', 'CREATE PROCEDURE p(x INT) BEGIN DECLARE c CURSOR FOR SELECT x; FETCH NEXT FROM c INTO x, x; END'];
+        yield 'FROM in 5.7' => ['mysql-5.7.44', 'create procedure p(x int) begin declare c cursor for select x; fetch from c into x; end', 'CREATE PROCEDURE p(x INT) BEGIN DECLARE c CURSOR FOR SELECT x; FETCH FROM c INTO x; END'];
         yield 'no keyword in 9.1' => ['mysql-9.1.0', 'create procedure p(x int) begin declare c cursor for select x; fetch c into x; end', 'CREATE PROCEDURE p(x INT) BEGIN DECLARE c CURSOR FOR SELECT x; FETCH c INTO x; END'];
     }
 

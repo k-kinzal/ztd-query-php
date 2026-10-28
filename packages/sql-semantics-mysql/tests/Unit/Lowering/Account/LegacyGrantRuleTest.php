@@ -32,12 +32,12 @@ final class LegacyGrantRuleTest extends TestCase
     public function testRevokeLowersEveryCommand(): void
     {
         self::assertSame('REVOKE PROXY ON a FROM b', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('revoke proxy on a from b')->toString());
-        self::assertSame('REVOKE ALL, GRANT OPTION FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('revoke all privileges, grant option from u')->toString());
+        self::assertSame('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('revoke all privileges, grant option from u')->toString());
     }
 
     public function testTableConfirmsTheOptionalWord(): void
     {
-        self::assertSame('GRANT SELECT ON t TO u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('grant select on table t to u')->toString());
+        self::assertSame('GRANT SELECT ON TABLE t TO u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('grant select on table t to u')->toString());
     }
 
     public function testUsersLowersBothListKinds(): void

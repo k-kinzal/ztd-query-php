@@ -23,8 +23,9 @@ final class IndexUsing implements IndexOption
 
     /**
      * @param IndexAlgorithm $algorithm The index structure
+     * @param bool $typeKeyword Whether TYPE introduces the algorithm instead of USING
      */
-    public function __construct(public readonly IndexAlgorithm $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly IndexAlgorithm $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $typeKeyword = false)
     {
     }
 
@@ -33,6 +34,6 @@ final class IndexUsing implements IndexOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('USING', $this->algorithm->value);
+        $out->keyword($this->typeKeyword ? 'TYPE' : 'USING', $this->algorithm->value);
     }
 }

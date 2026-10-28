@@ -26,11 +26,12 @@ final class LoadInputGenerator implements ErisGenerator
      * @param ErisGenerator<bool>|null $primaryKeyOrder Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $countWord Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $from The generated written alternative
      */
-    public function __construct(ErisGenerator $local, ErisGenerator $source, ErisGenerator $file, ?ErisGenerator $count = null, ?ErisGenerator $primaryKeyOrder = null, ?ErisGenerator $countWord = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $local, ErisGenerator $source, ErisGenerator $file, ?ErisGenerator $count = null, ?ErisGenerator $primaryKeyOrder = null, ?ErisGenerator $countWord = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $from = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(local: $parts[0], source: $parts[1], file: $parts[2], count: $parts[3], primaryKeyOrder: $parts[4], countWord: $parts[5], inputSource: $parts[6]);
+            return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(local: $parts[0], source: $parts[1], file: $parts[2], count: $parts[3], primaryKeyOrder: $parts[4], countWord: $parts[5], inputSource: $parts[6], from: $parts[7]);
         }, \Tests\Generator\Operands::tuple(
             $local,
             $source,
@@ -38,7 +39,8 @@ final class LoadInputGenerator implements ErisGenerator
             $count ?? Generators::constant(null),
             $primaryKeyOrder ?? Generators::constant(false),
             $countWord ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $from ?? Generators::bool()
         ));
     }
 }

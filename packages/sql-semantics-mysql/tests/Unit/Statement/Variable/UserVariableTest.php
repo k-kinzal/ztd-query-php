@@ -64,7 +64,7 @@ final class UserVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame('SELECT @`my var` AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
+        self::assertSame('SELECT @\'my var\' AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
         self::assertSame('SELECT @`x` AS v', $semantics->analyze('SELECT @`x` AS v')->toString());
         self::assertSame("SELECT @'my var'", $semantics->analyze("SELECT @'my var'")->toString());
     }

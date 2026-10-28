@@ -83,6 +83,7 @@ final class IndexRule
             $algorithm,
             $indexOptions,
             $this->lowering->tableChanges->alterOptions($form->node($alter)),
+            typeKeyword: $structure !== null && $rule->typeKeyword($form->node($structure)),
         );
         return $index;
     }

@@ -12,6 +12,7 @@ use SqlSemantics\Statement\Shape\Field;
  * A column that reads a variable carries the flags of a column of its type, without BINARY
  * unless it is a string, and BLOB for a BLOB or TEXT type; a column a stored function returns
  * is flagged BLOB for a BLOB or TEXT type, without BINARY for numeric returns.
+ * Variable outputs retain the referenced variable name, including through result aliases.
  * Stored function outputs report the output name as their original name, including aliases
  * (verified through mysqli on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1).
  * Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_query_response_text_resultset_column_definition.html.
@@ -52,6 +53,8 @@ final class ProgramColumns
         }
         $flags = $domain->flags() | $blob;
 
-        return new ColumnOrigin('', '', '', '', $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $flags : $flags & ~\MySqlMemory\Result\ColumnFlag::Binary->value, true);
+        $name = $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse ? $field->expression->name->value : '';
+
+        return new ColumnOrigin('', '', '', $name, $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $flags : $flags & ~\MySqlMemory\Result\ColumnFlag::Binary->value, true);
     }
 }

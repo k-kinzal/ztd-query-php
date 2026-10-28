@@ -16,14 +16,14 @@ use SqlSemantics\Statement\Identifier\Name;
 /**
  * FETCH: reads the next row of an open cursor into local variables.
  *
- * The optional words NEXT FROM and FROM carry no meaning and are not kept.
+ * The optional words NEXT FROM and FROM are retained separately from the cursor and targets.
  * The facts follow MYSQL-PROGRAM-CURSORS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/fetch.html.
  *
  * @visibility public
  * @example Reading the targets of a FETCH
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH NEXT FROM c INTO a; END');
- *     [$create->body->statements[0]->targets[0]->value, $create->toString()] // => ['a', 'CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO a; END']
+ *     [$create->body->statements[0]->targets[0]->value, $create->toString()] // => ['a', 'CREATE PROCEDURE p(OUT a INT) BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH NEXT FROM c INTO a; END']
  */
 final class FetchCursor implements ProgramStatement
 {
@@ -37,10 +37,13 @@ final class FetchCursor implements ProgramStatement
     /**
      * @param Name $cursor The cursor name
      * @param list<Name> $targets The variables that receive the row; at least one
+     * @param bool $from Whether FROM precedes the cursor
+     * @param bool $next Whether NEXT precedes FROM
      */
-    public function __construct(public readonly Name $cursor, array $targets, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $cursor, array $targets, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $from = false, public readonly bool $next = false)
     {
         $this->targets = Check::listOf($targets, Name::class, 'FETCH names at least one variable.', 1);
+        Check::input(!$next || $from, 'FETCH NEXT includes FROM.');
     }
 
     /**
@@ -57,7 +60,14 @@ final class FetchCursor implements ProgramStatement
      */
     public function render(Output $out): void
     {
-        $out->keyword('FETCH')->name($this->cursor, NameUse::Identifier)->keyword('INTO');
+        $out->keyword('FETCH');
+        if ($this->next) {
+            $out->keyword('NEXT');
+        }
+        if ($this->from) {
+            $out->keyword('FROM');
+        }
+        $out->name($this->cursor, NameUse::Identifier)->keyword('INTO');
         foreach ($this->targets as $position => $target) {
             if ($position > 0) {
                 $out->symbol(',');

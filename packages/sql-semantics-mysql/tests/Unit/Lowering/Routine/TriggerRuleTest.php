@@ -120,7 +120,7 @@ final class TriggerRuleTest extends TestCase
     public static function providerOrderLowersFollowsAndPrecedes(): iterable
     {
         yield 'follows on 5.7' => ['mysql-5.7.44', 'create trigger tr before update on t for each row follows other set @a = 1', OrderPlacement::Follows, 'CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET @a = 1'];
-        yield 'precedes a string on 8.0' => ['mysql-8.0.44', "create trigger tr after insert on t for each row precedes 'other' set @a = 1", OrderPlacement::Precedes, 'CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW PRECEDES other SET @a = 1'];
+        yield 'precedes a string on 8.0' => ['mysql-8.0.44', "create trigger tr after insert on t for each row precedes 'other' set @a = 1", OrderPlacement::Precedes, "CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW PRECEDES 'other' SET @a = 1"];
         yield 'follows on 9.1' => ['mysql-9.1.0', 'create trigger tr before delete on t for each row follows other set @a = 1', OrderPlacement::Follows, 'CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW FOLLOWS other SET @a = 1'];
         yield 'precedes on 9.1' => ['mysql-9.1.0', 'create trigger tr before delete on t for each row precedes other set @a = 1', OrderPlacement::Precedes, 'CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW PRECEDES other SET @a = 1'];
     }

@@ -24,6 +24,6 @@ final class TableQueryTest extends TestCase
         self::assertInstanceOf(CreateTable::class, $statement);
 
         self::assertSame(DuplicateHandling::Replace, $statement->query?->duplicate);
-        self::assertSame('CREATE TABLE t REPLACE AS SELECT 1 AS a', $create->toString());
+        self::assertSame('CREATE TABLE t REPLACE SELECT 1 AS a', $create->toString());
     }
 }

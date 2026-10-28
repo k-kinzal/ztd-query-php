@@ -18,9 +18,9 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 #[Medium]
 final class XaStartTest extends TestCase
 {
-    public function testRenderWritesStartForBegin(): void
+    public function testRenderRetainsBegin(): void
     {
-        self::assertSame("XA START 'g' JOIN", (new Semantics(Dialect::MySql))->analyze("xa begin 'g' join")->toString());
+        self::assertSame("XA BEGIN 'g' JOIN", (new Semantics(Dialect::MySql))->analyze("xa begin 'g' join")->toString());
     }
 
     public function testDeriveStatementPublishesTheConcreteTransaction(): void

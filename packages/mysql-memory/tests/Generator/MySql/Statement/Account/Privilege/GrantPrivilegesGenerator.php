@@ -32,11 +32,12 @@ final class GrantPrivilegesGenerator implements ErisGenerator
      * @param ErisGenerator<M\Account\Privilege\GrantAs|null>|null $as Generated constructor operand
      * @param ErisGenerator<M\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $tableKeyword The optional TABLE keyword
      */
-    public function __construct(ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $grantees, ?ErisGenerator $tls = null, ?ErisGenerator $options = null, ?ErisGenerator $as = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $grantees, ?ErisGenerator $tls = null, ?ErisGenerator $options = null, ?ErisGenerator $as = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableKeyword = null)
     {
         $this->delegate = new PrivilegeChangeGenerator([Generators::map(static function (array $parts): M\Account\Privilege\GrantPrivileges {
-            return new M\Account\Privilege\GrantPrivileges(privileges: $parts[0], kind: $parts[1], level: $parts[2], grantees: $parts[3], tls: $parts[4], options: $parts[5], as: $parts[6], statementInformation: $parts[7], inputSource: $parts[8]);
+            return new M\Account\Privilege\GrantPrivileges(privileges: $parts[0], kind: $parts[1], level: $parts[2], grantees: $parts[3], tls: $parts[4], options: $parts[5], as: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], tableKeyword: $parts[9] && $parts[1] === M\Account\Privilege\Level\ObjectKind::Table);
         }, \Tests\Generator\Operands::tuple(
             $privileges,
             $kind,
@@ -46,7 +47,8 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             $options ?? Generators::constant([]),
             $as ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableKeyword ?? Generators::bool()
         ))]);
     }
     /**

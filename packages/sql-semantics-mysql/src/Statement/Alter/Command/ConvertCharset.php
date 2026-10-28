@@ -16,14 +16,13 @@ use SqlSemantics\Resolution\Environment;
  * `CONVERT TO CHARACTER SET name | DEFAULT [COLLATE name]`: a request to convert every character column and the table default.
  *
  * Mirrors PT_alter_table_convert_to_charset. DEFAULT means the character
- * set selected by the session variable character_set_database. CHARACTER SET and CHARSET are synonyms; CHARACTER
- * SET is written.
+ * set selected by the session variable character_set_database. CHARACTER SET, CHAR SET and CHARSET are synonyms; the written form is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-character-set.
  *
  * @visibility public
  * @example Converting a table to utf8mb4
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4');
- *     [$alter->commands[0]->charset->name?->value, $alter->toString()] // => ['utf8mb4', 'ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4']
+ *     [$alter->commands[0]->charset->name?->value, $alter->toString()] // => ['utf8mb4', 'ALTER TABLE t CONVERT TO CHARSET utf8mb4']
  */
 final class ConvertCharset implements AlterCommand
 {
@@ -32,9 +31,11 @@ final class ConvertCharset implements AlterCommand
     /**
      * @param CharsetName $charset The character set, or DEFAULT
      * @param CollationName|null $collation The COLLATE clause, when written
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $form The written named character-set form
      */
-    public function __construct(public readonly CharsetName $charset, public readonly ?CollationName $collation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly CharsetName $charset, public readonly ?CollationName $collation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $form = \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet)
     {
+        \SqlSemantics\Diagnostic\Check::input($form->named(), 'A conversion names its character set.');
     }
 
     /**
@@ -82,7 +83,7 @@ final class ConvertCharset implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword('CONVERT', 'TO', 'CHARACTER', 'SET')->node($this->charset);
+        $out->keyword('CONVERT', 'TO')->keyword(...explode(' ', $this->form->value))->node($this->charset);
         if ($this->collation !== null) {
             $out->keyword('COLLATE')->node($this->collation);
         }

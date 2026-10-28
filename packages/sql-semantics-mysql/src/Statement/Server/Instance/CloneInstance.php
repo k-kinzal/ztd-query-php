@@ -19,8 +19,7 @@ use SqlSemantics\Rendering\Output;
  * The account, the colon and the port are written without spaces: the
  * server rejects a space around the colon as a syntax error. Without a
  * directory the clone replaces the data of the local server; without an
- * SSL choice the server's clone_ssl settings decide. The equals sign is
- * optional and not written. The statement names no relation and has no
+ * SSL choice the server's clone_ssl settings decide. The optional assignment sign retains its choice of = or :=. The statement names no relation and has no
  * facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/clone.html.
  * Status: Implemented.
@@ -41,6 +40,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      * @param Text|null $directory The directory the data is cloned into, when written
      * @param bool|null $requireSsl Whether REQUIRE SSL (true) or REQUIRE NO SSL (false) is written; null when absent
      * @param bool $equals Whether the optional equals sign is written
+     * @param bool $assignment Whether a written assignment sign is := instead of =
      */
     public function __construct(
         public readonly Account $donor,
@@ -51,6 +51,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
         public readonly bool $equals = false,
+        public readonly bool $assignment = false
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -77,7 +78,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         if ($this->directory !== null) {
             $out->keyword('DATA', 'DIRECTORY');
             if ($this->equals) {
-                $out->symbol('=');
+                $out->symbol($this->assignment ? ':=' : '=');
             }
             $out->node($this->directory);
         }

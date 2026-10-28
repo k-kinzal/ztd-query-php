@@ -212,6 +212,7 @@ final class CastsTest extends TestCase
     public function testCastMakesAYearOfFiveDigitsIn80(): void
     {
         self::assertSame([5, 4], [(new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql8044))->cast(Domain::integer(), new CastTarget(CastKind::Year))->length, (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->cast(Domain::integer(), new CastTarget(CastKind::Year))->length]);
+        self::assertSame([false, true], [(new Casts(new Settings(Collation::binary()), GrammarRelease::MySql8044))->cast(Domain::integer(), new CastTarget(CastKind::Year))->unsigned, (new Casts(new Settings(Collation::binary()), GrammarRelease::MySql847))->cast(Domain::integer(), new CastTarget(CastKind::Year))->unsigned]);
     }
 
     public function testStringIsAMediumBlobBeyond65535Bytes(): void

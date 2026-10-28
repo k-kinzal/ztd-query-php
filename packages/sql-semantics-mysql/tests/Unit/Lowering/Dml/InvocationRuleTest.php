@@ -48,6 +48,6 @@ final class InvocationRuleTest extends TestCase
 
     public function testVariablesLowersTheUsingList(): void
     {
-        self::assertSame('EXECUTE s USING @a, @`b c`', (new Semantics(Dialect::MySql))->analyze('execute s using @a, @\'b c\'')->toString());
+        self::assertSame('EXECUTE s USING @a, @\'b c\'', (new Semantics(Dialect::MySql))->analyze('execute s using @a, @\'b c\'')->toString());
     }
 }

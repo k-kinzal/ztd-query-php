@@ -59,7 +59,7 @@ final class KeywordCallGenerator implements ErisGenerator
                 ? \Tests\Generator\Operands::oneOf([
                     \Tests\Generator\Operands::tuple(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 5)))),
                     \Tests\Generator\Operands::tuple(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 5))), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 5)))),
-                ]) : Generators::constant([]);
+                ]) : (in_array($alias->function(), [\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Year, \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Week], true) ? \Tests\Generator\Operands::tuple(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $year): string => (string) $year . '-01-01', Generators::choose(2000, 2100)))) : Generators::constant([]));
             return new self(Generators::constant($alias->function()), $arguments, alias: Generators::constant($alias));
         });
         $queries = Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Call\KeywordCall $call): \SqlSemantics\Platform\MySql\Statement\QueryRoot {

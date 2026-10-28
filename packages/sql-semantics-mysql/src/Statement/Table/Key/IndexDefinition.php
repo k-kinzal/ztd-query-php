@@ -59,6 +59,7 @@ final class IndexDefinition implements TableElement
      * @param list<IndexOption> $options The options after the key parts, in written order
      * @param ConstraintName|null $constraint The CONSTRAINT clause of a PRIMARY KEY or UNIQUE index
      * @param IndexWord|null $keyword The written INDEX or KEY; optional after UNIQUE, FULLTEXT and SPATIAL
+     * @param bool $typeKeyword Whether TYPE introduces the algorithm instead of USING
      */
     public function __construct(
         public readonly IndexKind $kind,
@@ -69,6 +70,7 @@ final class IndexDefinition implements TableElement
         public readonly ?ConstraintName $constraint = null,
         ?IndexWord $keyword = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $typeKeyword = false
     ) {
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
@@ -112,7 +114,7 @@ final class IndexDefinition implements TableElement
         }
         $out->node($this->name);
         if ($this->algorithm !== null) {
-            $out->keyword('USING', $this->algorithm->value);
+            $out->keyword($this->typeKeyword ? 'TYPE' : 'USING', $this->algorithm->value);
         }
         $out->symbol('(')->list($this->parts)->symbol(')');
         foreach ($this->options as $option) {

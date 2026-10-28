@@ -97,7 +97,7 @@ final class LegacyGrantRule
         $options = $clauses->grantOptions($command->node(7));
         $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
 
-        return new GrantPrivileges($items, $kind, $level, $users, $tls, $options);
+        return new GrantPrivileges($items, $kind, $level, $users, $tls, $options, tableKeyword: $command->node->children[2] instanceof Node && $command->node(2)->children !== []);
     }
 
     /**
@@ -116,7 +116,7 @@ final class LegacyGrantRule
         if ($command->signature === 'revoke_command: ALL opt_privileges , GRANT OPTION FROM grant_list' || $command->signature === 'revoke_command: ALL opt_privileges , GRANT OPTION FROM user_list') {
             $privileges->words($command->node(1));
 
-            return new RevokeAll(false, $this->users($command->node(6)));
+            return new RevokeAll(false, $this->users($command->node(6)), privileges: $command->node(1)->children !== []);
         }
         if ($command->signature === 'revoke_command: PROXY_SYM ON user FROM grant_list' || $command->signature === 'revoke_command: PROXY_SYM ON user FROM user_list') {
             return new RevokeProxy(false, $this->lowering->users->account($command->node(2)), $this->users($command->node(4)));
@@ -129,7 +129,7 @@ final class LegacyGrantRule
         (new Privilege\LegacyColumns())->requireTable($items, $level, (new \SqlSemantics\Construction\SourceRanges())->span($command->node(3))[1] ?? 0);
         $users = $this->users($command->node(5));
         $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
-        return (new Privilege\RevokeRule($this->lowering))->statement(false, $items, $kind, $level, $users, end: (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        return (new Privilege\RevokeRule($this->lowering))->statement(false, $items, $kind, $level, $users, end: (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, tableKeyword: $command->node->children[2] instanceof Node && $command->node(2)->children !== []);
     }
 
     /**

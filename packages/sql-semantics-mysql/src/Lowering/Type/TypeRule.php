@@ -257,7 +257,7 @@ final class TypeRule
             return new Temporal($kind, $position === null ? null : $this->parts->length($form->node($position)));
         }
         if ($form->signature === 'type: YEAR_SYM opt_field_length field_options') {
-            return new Temporal(TemporalKind::Year, $this->parts->length($form->node(1)), $this->parts->modifiers($form->node(2)));
+            return new Temporal(TemporalKind::Year, $this->parts->length($form->node(1)), $this->parts->modifiers($form->node(2)), sqlTsiYear: strtoupper($form->node->tokens()[0]->text) === 'SQL_TSI_YEAR');
         }
         if ($form->signature !== 'type: spatial_type') {
             return null;
