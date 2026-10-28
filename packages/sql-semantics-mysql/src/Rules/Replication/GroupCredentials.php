@@ -25,17 +25,26 @@ final class GroupCredentials
     {
         $credentials = [];
         foreach ($options as $option) {
-            if ($option->credential === Credential::Password && strlen($option->value->value) > 32) {
-                return new RefusedSetting(ReplicationError::GroupPasswordTooLong);
+            $problem = $this->credential($option);
+            if ($problem !== null) {
+                return $problem;
             }
             $credentials[$option->credential->value] = $option->value->value;
-        }
-        if (($credentials['USER'] ?? null) === '') {
-            return new RefusedSetting(ReplicationError::GroupUserEmpty);
         }
         if (isset($credentials['PASSWORD']) && !isset($credentials['USER'])) {
             return new RefusedSetting(ReplicationError::GroupUserMissing);
         }
         return null;
     }
+    /**
+     * Reports credential conditions checked while reading an individual option.
+     */
+    public function credential(CredentialOption $option): ?RefusedSetting
+    {
+        if ($option->credential === Credential::User && $option->value->value === '') {
+            return new RefusedSetting(ReplicationError::GroupUserEmpty);
+        }
+        return $option->credential === Credential::Password && strlen($option->value->value) > 32 ? new RefusedSetting(ReplicationError::GroupPasswordTooLong) : null;
+    }
+
 }

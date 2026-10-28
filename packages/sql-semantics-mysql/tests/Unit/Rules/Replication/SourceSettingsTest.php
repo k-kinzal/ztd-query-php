@@ -106,4 +106,24 @@ final class SourceSettingsTest extends TestCase
         self::assertSame(ReplicationError::HeartbeatOutOfRange, $rule->heartbeat(new NumberLiteral('1e300')));
     }
 
+    public function testConditionRetainsTheNumeralAndItsInputPosition(): void
+    {
+        $number = new Numeral('2', inputSource: new \SqlSemantics\Statement\Source\Span(59, 1));
+        $condition = (new SourceSettings())->condition(new SourceOption(Terminology::Current, SourceOptionKind::GtidOnly, $number), GrammarRelease::MySql847);
+
+        self::assertNotNull($condition);
+        self::assertTrue($condition->aborts);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber(SourceOptionKind::GtidOnly, $number, 59), $condition->problem);
+    }
+
+    public function testConditionKeepsNonAbortingSourceSwitchesAndAbsentConditions(): void
+    {
+        $settings = new SourceSettings();
+        $condition = $settings->condition(new SourceOption(Terminology::Current, SourceOptionKind::RequireRowFormat, new Numeral('2')), GrammarRelease::MySql847);
+
+        self::assertNotNull($condition);
+        self::assertFalse($condition->aborts);
+        self::assertNull($settings->condition(new SourceOption(Terminology::Current, SourceOptionKind::GtidOnly, new Numeral('1')), GrammarRelease::MySql847));
+    }
+
 }

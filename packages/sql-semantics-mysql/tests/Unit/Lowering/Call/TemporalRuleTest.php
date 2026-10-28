@@ -98,7 +98,7 @@ final class TemporalRuleTest extends TestCase
         $rule = new TemporalRule($lowering);
         $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand => $rule->call($lowering->form($node)), $list->find('function_call_nonkeyword'));
 
-        self::assertEquals(new ClockCall(Clock::UtcTime, new Numeral('2')), $calls[0]);
+        self::assertEquals(new ClockCall(Clock::UtcTime, new Numeral('2', inputSource: new \SqlSemantics\Statement\Source\Span(16, 1))), $calls[0]);
         self::assertEquals(new ClockCall(Clock::CurrentDate, null, OptionalWords::Omitted, alias: \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::CurrentDate), $calls[1]);
         self::assertInstanceOf(DateArithmetic::class, $calls[2]);
         self::assertTrue($calls[2]->subtract);
@@ -136,7 +136,7 @@ final class TemporalRuleTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (c TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6))')->find('now')[0];
-        self::assertEquals(new ClockCall(Clock::Now, new Numeral('6'), alias: \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::CurrentTimestamp), (new TemporalRule($lowering))->currentTimestamp($node));
+        self::assertEquals(new ClockCall(Clock::Now, new Numeral('6', inputSource: new \SqlSemantics\Statement\Source\Span(57, 1)), alias: \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::CurrentTimestamp), (new TemporalRule($lowering))->currentTimestamp($node));
     }
 
     public function testCurrentTimestampReportsAnotherNode(): void

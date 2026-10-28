@@ -36,15 +36,13 @@ final class SyntaxSettingsTest extends TestCase
         self::assertCount(1, (new SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile, 200));
     }
 
-    public function testRejectedFindsAUuidOutsideItsConstructorDomain(): void
+    public function testRejectedLeavesUuidValidationToTheCompleteOwner(): void
     {
         $profile = new LanguageProfile(GrammarRelease::MySql847);
         $tree = (new MySqlParser($profile->grammar->value))->parse("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS='bad'");
         $refusal = (new SyntaxWarnings())->rejected($tree, $profile);
 
-        self::assertNotNull($refusal);
-        self::assertEquals(new RefusedSetting(ReplicationError::InvalidUuid, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('bad')), $refusal->problem);
-        self::assertTrue($refusal->aborts);
+        self::assertNull($refusal);
     }
 
     public function testConvertedRetainsAChannelConversionBeforeALaterSyntaxError(): void
@@ -63,11 +61,13 @@ final class SyntaxSettingsTest extends TestCase
     {
         foreach ([GrammarRelease::MySql8044, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
             $prefix = $release === GrammarRelease::MySql8044 ? 'RESET MASTER' : 'RESET BINARY LOGS AND GTIDS';
-            yield $release->value . ': zero' => [$release, $prefix . ' TO 0, QUERY CACHE', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('0')), true)]];
-            yield $release->value . ': large' => [$release, $prefix . ' TO 2000000001, SELECT', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('2000000001')), true)]];
+            yield $release->value . ': zero' => [$release, $prefix . ' TO 0, QUERY CACHE', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('0', inputSource: new \SqlSemantics\Statement\Source\Span(strlen($prefix) + 4, 1))), true)]];
+            yield $release->value . ': large' => [$release, $prefix . ' TO 2000000001, SELECT', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('2000000001', inputSource: new \SqlSemantics\Statement\Source\Span(strlen($prefix) + 4, 10))), true)]];
             yield $release->value . ': earlier line feed' => [$release, "RESET REPLICA FOR CHANNEL 'a\nb', " . ($release === GrammarRelease::MySql8044 ? 'MASTER' : 'BINARY LOGS AND GTIDS') . ' TO 0', [new ParseFailure(new RefusedSetting(ReplicationError::LineFeed, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")), true)]];
             yield $release->value . ': invalid UUID' => [$release, "CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS='invalid' trailing", [new ParseFailure(new RefusedSetting(ReplicationError::InvalidUuid, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid')), true)]];
             yield $release->value . ': heartbeat' => [$release, 'CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=18446744073709551615 trailing', [new ParseFailure(new RefusedSetting(ReplicationError::HeartbeatOutOfRange), true)]];
+            yield $release->value . ': empty group user' => [$release, "START GROUP_REPLICATION USER='' trailing", [new ParseFailure(new RefusedSetting(ReplicationError::GroupUserEmpty), true)]];
+            yield $release->value . ': long group password' => [$release, "START GROUP_REPLICATION PASSWORD='" . str_repeat('p', 33) . "' trailing", [new ParseFailure(new RefusedSetting(ReplicationError::GroupPasswordTooLong), true)]];
             yield $release->value . ': accepted'  => [$release, $prefix . ' TO 2000000000, SELECT', []];
         }
     }

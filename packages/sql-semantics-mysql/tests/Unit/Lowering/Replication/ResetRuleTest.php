@@ -44,7 +44,7 @@ final class ResetRuleTest extends TestCase
             (new Semantics(Dialect::MySql))->analyze('RESET BINARY LOGS AND GTIDS TO 0, BINARY LOGS AND GTIDS TO 9');
             self::fail('An out-of-range binary log index cannot become a reset target.');
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::FileNumberOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')), $failure->problem);
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::FileNumberOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0', inputSource: new \SqlSemantics\Statement\Source\Span(31, 1))), $failure->problem);
             self::assertSame(32, $failure->end);
             self::assertTrue($failure->aborts);
         }

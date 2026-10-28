@@ -2612,9 +2612,6 @@
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedGroupStart": {
-        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredGroupStart"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Problem\\RefusedLogSubquery": {
         "offset": "int"
     },

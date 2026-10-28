@@ -21,8 +21,8 @@ use SqlSemantics\Statement\Node;
  * PRIVILEGE_CHECKS_USER and SOURCE_TLS_CIPHERSUITES. The option is written in
  * the vocabulary of its statement; in 8.0 to 8.3 an option of the current
  * vocabulary may be spelled with MASTER, its synonym ($synonym). The three
- * Boolean switch options exclude numerals outside their 0/1 domain. An
- * anonymous-GTID assignment string begins with a complete textual UUID.
+ * Boolean switch options retain their written numerals. Their 0/1 bounds and
+ * anonymous-GTID UUID validation are diagnostics on the complete request.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
@@ -34,8 +34,6 @@ use SqlSemantics\Statement\Node;
  * @example Holding a typed option value
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3306'));
  *     $option->kind->value // => 'SOURCE_PORT'
- * @example Refusing a GTID assignment without a UUID prefix
- *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::AssignGtidsToAnonymousTransactions, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class SourceOption implements Node
 {

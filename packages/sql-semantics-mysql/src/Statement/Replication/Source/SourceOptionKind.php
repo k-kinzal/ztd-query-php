@@ -100,14 +100,14 @@ enum SourceOptionKind: string
             self::Port, self::ConnectRetry, self::RetryCount, self::Delay, self::Ssl, self::SslVerifyServerCert, self::GetPublicKey,
             self::ZstdCompressionLevel, self::AutoPosition,
             self::RelayLogPosition => $value instanceof Numeral,
-            self::RequireRowFormat, self::ConnectionAutoFailover, self::GtidOnly => $value instanceof Numeral && (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->number($this, $value) === null,
+            self::RequireRowFormat, self::ConnectionAutoFailover, self::GtidOnly => $value instanceof Numeral,
             self::LogPosition => $value instanceof Numeral && !$value->hexadecimal,
             self::HeartbeatPeriod => $value instanceof NumberLiteral,
             self::IgnoreServerIds => $value instanceof ServerIds,
             self::PrivilegeChecksUser => $value === null || $value instanceof AccountName,
             self::TlsCiphersuites => $value === null || $value instanceof Text,
             self::RequireTablePrimaryKeyCheck => $value instanceof PrimaryKeyCheck,
-            self::AssignGtidsToAnonymousTransactions => $value instanceof AnonymousGtids || ($value instanceof Text && (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->text($this, $value, \SqlSemantics\Contract\GrammarRelease::MySql8044) === null),
+            self::AssignGtidsToAnonymousTransactions => $value instanceof AnonymousGtids || $value instanceof Text,
         };
     }
 

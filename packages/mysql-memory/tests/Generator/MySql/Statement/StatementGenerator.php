@@ -116,4 +116,38 @@ final class StatementGenerator implements ErisGenerator
         return array_map(static fn (ErisGenerator $form): ErisGenerator => Operands::tuple($form, Generators::constant(3980)), $forms);
     }
 
+    /**
+     * Composes a channel configuration with related requests before and after it exists.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function replicationConditions(GrammarRelease $release): ErisGenerator
+    {
+        $channels = $release === GrammarRelease::MySql5651 ? Generators::constant(null) : new Literal\TextGenerator(Generators::map(static fn (int $value): string => 'channel' . $value, Generators::choose(0, 1000)));
+        return Operands::bind($channels, static function (?M\Literal\Text $channel) use ($release): ErisGenerator {
+            $terminology = (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($release);
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
+            $configure = \SqlSemantics\Facade\Semantics::fromStatement($context, new M\Replication\Source\ChangeReplicationSource($terminology, [new M\Replication\Source\SourceOption($terminology, M\Replication\Source\SourceOptionKind::Host, new M\Literal\Text('source.example'))], $channel));
+            $choices = [Generators::map(static fn (M\Replication\Replica\ReplicaUntil $until): array => [new M\Replication\Replica\StartReplica($terminology, until: $until, channel: $channel), 1277], Replication\Replica\ReplicaUntilGenerator::conditions($release))];
+            foreach (Replication\Source\SourceOptionGenerator::conditions($release) as $option) {
+                $choices[] = Generators::map(static fn (array $parts): array => self::replicationSource($parts, $terminology, $channel), $option);
+            }
+            if (!(new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->legacy($release)) {
+                array_push($choices, ...Replication\Group\StartGroupReplicationGenerator::conditions());
+            }
+            return Generators::map(static fn (array $parts): array => self::definitionInput($parts, $configure, $context, $context), Operands::oneOf($choices));
+        });
+    }
+
+    /**
+     * Retains the generated source option and the channel it depends on.
+     *
+     * @param array{M\Replication\Source\SourceOption, int} $parts The option and expected SQL condition
+     * @return array{M\Replication\Source\ChangeReplicationSource, int}
+     */
+    public static function replicationSource(array $parts, M\Replication\Terminology $terminology, ?M\Literal\Text $channel): array
+    {
+        return [new M\Replication\Source\ChangeReplicationSource($terminology, [$parts[0], new M\Replication\Source\SourceOption($terminology, M\Replication\Source\SourceOptionKind::Port, new M\Literal\Numeral('3307'))], $channel), $parts[1]];
+    }
+
 }

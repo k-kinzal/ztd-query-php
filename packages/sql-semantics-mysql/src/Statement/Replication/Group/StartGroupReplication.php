@@ -45,7 +45,6 @@ final class StartGroupReplication extends \SqlSemantics\Platform\MySql\Statement
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = Check::listOf($options, CredentialOption::class, 'START GROUP_REPLICATION sets a list of options.');
-        Check::input((new GroupCredentials())->problem($this->options) === null, 'Group recovery credentials require a nonempty user with a password of at most 32 bytes.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -57,7 +56,18 @@ final class StartGroupReplication extends \SqlSemantics\Platform\MySql\Statement
         $release = $derivation->context->profile->grammar;
         Check::input($release !== GrammarRelease::MySql5651, 'Group replication needs MySQL 5.7 or later.');
         Check::input($this->options === [] || !(new Releases())->legacy($release), 'The options of START GROUP_REPLICATION need MySQL 8.0 or later.');
-
+        $credentials = new GroupCredentials();
+        foreach ($this->options as $option) {
+            $problem = $credentials->credential($option);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
+            }
+        }
+        $problem = $credentials->problem($this->options);
+        if ($problem?->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing) {
+            $derivation->report($problem);
+        }
     }
 
     /**

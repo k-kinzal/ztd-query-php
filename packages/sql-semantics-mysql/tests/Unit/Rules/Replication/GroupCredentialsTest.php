@@ -24,6 +24,14 @@ final class GroupCredentialsTest extends TestCase
         self::assertSame(ReplicationError::GroupUserMissing, $rule->problem([new CredentialOption(Credential::Password, new Text('p'))])?->error);
         self::assertSame(ReplicationError::GroupUserEmpty, $rule->problem([new CredentialOption(Credential::User, new Text('u')), new CredentialOption(Credential::User, new Text('')), new CredentialOption(Credential::Password, new Text('p'))])?->error);
         self::assertSame(ReplicationError::GroupPasswordTooLong, $rule->problem([new CredentialOption(Credential::Password, new Text(str_repeat('p', 33)))])?->error);
-        self::assertNull($rule->problem([new CredentialOption(Credential::User, new Text('')), new CredentialOption(Credential::User, new Text('u')), new CredentialOption(Credential::Password, new Text('p'))]));
+        self::assertSame(ReplicationError::GroupUserEmpty, $rule->problem([new CredentialOption(Credential::User, new Text('')), new CredentialOption(Credential::User, new Text('u')), new CredentialOption(Credential::Password, new Text('p'))])?->error);
     }
+    public function testCredentialDistinguishesReadTimeChecksFromMissingCredentials(): void
+    {
+        $rule = new GroupCredentials();
+        self::assertNull($rule->credential(new CredentialOption(Credential::Password, new Text('p'))));
+        self::assertSame(ReplicationError::GroupUserEmpty, $rule->credential(new CredentialOption(Credential::User, new Text('')))?->error);
+        self::assertSame(ReplicationError::GroupPasswordTooLong, $rule->credential(new CredentialOption(Credential::Password, new Text(str_repeat('p', 33))))?->error);
+    }
+
 }

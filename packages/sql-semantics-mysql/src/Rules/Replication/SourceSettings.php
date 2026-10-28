@@ -29,10 +29,9 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
  * REQUIRE_ROW_FORMAT, SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY other
  * than 0 or 1, and a fraction in the last two; an anonymous GTID UUID whose
  * first 36 characters are not a UUID in its text form. UUID values are
- * refused during lowering, before the SourceOption constructor publishes
- * them. Heartbeat requests retain their numeric value and an aborting notice
- * when the period exceeds its bound. Completed input checks retain RefusedSetting
- * descriptors. Terminates: one pass over the options.
+ * retained with the complete option and reported during derivation. Numeric
+ * switches retain their numeral and source position. The same conditions are
+ * available to incomplete input checks. Terminates: one pass over the options.
  * Source: sql/sql_yacc.yy (source_def, master_def, TEXT_STRING_sys_nonewline,
  * assign_gtids_to_anonymous_transactions_def),
  * https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
@@ -80,18 +79,32 @@ final class SourceSettings
         if ($option->value instanceof NumberLiteral) {
             $derivation->scalar($option->value, $derivation->environment());
         }
-        $error = $this->error($option, $release);
+        $condition = $this->condition($option, $release);
         $warning = $this->warning($option, $release, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->replicaNetTimeout);
         if ($warning !== null) {
             $derivation->warn($warning, $option);
         }
-        if ($error !== null) {
-            $problem = new RefusedSetting($error, text: in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) && $option->value instanceof Text ? $option->value : null);
-            $derivation->report($problem);
-            if ($error === ReplicationError::HeartbeatOutOfRange) {
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
-            }
+        if ($condition !== null) {
+            $derivation->report($condition->problem);
+            $derivation->warn($condition, $option);
         }
+    }
+
+    /**
+     * Retains a source option's condition and its parsing phase without discarding the request.
+     */
+    public function condition(SourceOption $option, GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        $error = $this->error($option, $release);
+        if ($error === null) {
+            return null;
+        }
+        if ($option->value instanceof Numeral && in_array($option->kind, [SourceOptionKind::RequireRowFormat, SourceOptionKind::ConnectionAutoFailover, SourceOptionKind::GtidOnly], true)) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber($option->kind, $option->value, $option->value->inputSource->offset ?? 0);
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, $option->kind !== SourceOptionKind::RequireRowFormat);
+        }
+        $problem = new RefusedSetting($error, $error === ReplicationError::DelayOutOfRange && $option->value instanceof Numeral ? $option->value : null, in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) && $option->value instanceof Text ? $option->value : null);
+        return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, $error !== ReplicationError::DelayOutOfRange);
     }
 
     /**

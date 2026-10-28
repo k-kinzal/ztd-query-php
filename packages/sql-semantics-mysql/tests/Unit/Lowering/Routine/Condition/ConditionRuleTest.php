@@ -54,7 +54,7 @@ final class ConditionRuleTest extends TestCase
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         self::assertEquals([
-            new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051')), inputSource: new \SqlSemantics\Statement\Source\Span(27, 28)),
+            new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051', inputSource: new \SqlSemantics\Statement\Source\Span(51, 4))), inputSource: new \SqlSemantics\Statement\Source\Span(27, 28)),
             new ConditionDeclaration(new Name('d'), new SqlState(new Text('42S02')), inputSource: new \SqlSemantics\Statement\Source\Span(57, 40)),
             new ConditionDeclaration(new Name('e'), new SqlState(new Text('42S01')), inputSource: new \SqlSemantics\Statement\Source\Span(99, 46)),
         ], $statement->body->declarations);
@@ -103,7 +103,7 @@ final class ConditionRuleTest extends TestCase
         self::assertSame(HandlerAction::Continue, $handler->action);
         self::assertEquals([
             new ConditionName(new Name('c')),
-            new ErrorCode(new Numeral('1052')),
+            new ErrorCode(new Numeral('1052', inputSource: new \SqlSemantics\Statement\Source\Span(89, 4))),
             new SqlState(new Text('42000')),
             new GeneralCondition(ConditionClass::SqlWarning),
             new GeneralCondition(ConditionClass::NotFound),

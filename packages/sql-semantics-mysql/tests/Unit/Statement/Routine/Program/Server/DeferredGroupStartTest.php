@@ -28,9 +28,9 @@ final class DeferredGroupStartTest extends TestCase
         self::assertSame("CREATE PROCEDURE p() START GROUP_REPLICATION USER = 'u', USER = '', PASSWORD = 'p'", (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() START GROUP_REPLICATION USER = 'u', USER = '', PASSWORD = 'p'")->toString());
     }
 
-    public function testProblemRetainsTheCompleteRequest(): void
+    public function testProblemReportsTheRetainedCredentialCondition(): void
     {
         $request = new DeferredGroupStart([new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('p'))]);
-        self::assertSame($request, $request->problem()->request);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing, $request->problem()->error);
     }
 }

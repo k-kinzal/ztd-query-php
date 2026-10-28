@@ -9,7 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedGroupStart;
+use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 
@@ -39,7 +39,7 @@ final class DeferredGroupStart implements ProgramStatement
     public function __construct(array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, CredentialOption::class, 'A deferred group start retains credentials.', 1);
-        Check::input((new GroupCredentials())->problem($this->options) !== null, 'A deferred group start retains an intrinsic credential condition.');
+        Check::input((new GroupCredentials())->problem($this->options)?->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing, 'A deferred group start retains a password without a user.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -53,9 +53,11 @@ final class DeferredGroupStart implements ProgramStatement
     /**
      * Describes the retained condition using semantic values only.
      */
-    public function problem(): RefusedGroupStart
+    public function problem(): RefusedSetting
     {
-        return new RefusedGroupStart($this);
+        $problem = (new GroupCredentials())->problem($this->options);
+        Check::invariant($problem !== null, 'A deferred group start retains an intrinsic credential condition.');
+        return $problem;
     }
 
     /**

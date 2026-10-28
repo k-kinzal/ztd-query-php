@@ -75,7 +75,7 @@ final class NumberRule
         $hexadecimal = self::TOKENS[$form->signature] ?? throw ImplementationGap::production($form);
         $text = $form->token(0)->text;
 
-        return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal, notation: $hexadecimal ? (new RadixSpelling())->notation($text) : null));
+        return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal, inputSource: new \SqlSemantics\Statement\Source\Span($form->token(0)->offset, strlen($text)), notation: $hexadecimal ? (new RadixSpelling())->notation($text) : null));
     }
 
     /**
@@ -121,7 +121,7 @@ final class NumberRule
     {
         Check::invariant($token->is('NUM'), 'A bare number is a NUM token.');
 
-        return $this->lowering->leaves->record(new Numeral($token->text));
+        return $this->lowering->leaves->record(new Numeral($token->text, inputSource: new \SqlSemantics\Statement\Source\Span($token->offset, strlen($token->text))));
     }
 
     /**

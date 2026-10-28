@@ -56,7 +56,7 @@ final class UntilRule
     /**
      * Lowers an optional UNTIL clause; an absent clause is null.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the condition kinds are intrinsically incompatible
+     * @throws \SqlSemantics\Construction\RejectedInput When a log filename contains a line feed
      * @throws ImplementationGap When a production has no rule
      */
     public function until(Node $clause, Terminology $terminology): ?ReplicaUntil
@@ -73,8 +73,8 @@ final class UntilRule
     /**
      * Lowers the condition list.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the condition kinds are intrinsically incompatible
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a log filename contains a line feed
      * @throws ImplementationGap When a production has no rule
      */
     public function conditions(Node $list, Terminology $terminology): ReplicaUntil
@@ -94,11 +94,6 @@ final class UntilRule
             $point = self::POINTS[$form->signature] ?? throw ImplementationGap::production($form);
             $gtids = $point === UntilPoint::AfterGaps ? null : $this->lowering->literals->text($form->node(2));
         }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions())->combination($point, $gtids, $positions);
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($problem), (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
-        }
-
         return new ReplicaUntil($point, $gtids, $positions);
     }
 }

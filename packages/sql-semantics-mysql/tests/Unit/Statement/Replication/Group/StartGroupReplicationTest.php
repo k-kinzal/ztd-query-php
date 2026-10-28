@@ -21,10 +21,12 @@ final class StartGroupReplicationTest extends TestCase
         self::assertSame([], $start->diagnostics());
     }
 
-    public function testRenderRequiresConsistentCredentials(): void
+    public function testRenderRetainsConflictingCredentials(): void
     {
-        $this->expectExceptionMessage('Group recovery credentials require a nonempty user with a password of at most 32 bytes.');
-        new StartGroupReplication([new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::Password, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('p'))]);
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = 'p'");
+        self::assertInstanceOf(StartGroupReplication::class, $start);
+        self::assertSame("START GROUP_REPLICATION PASSWORD = 'p'", $start->toString());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing), $start->diagnostics()[0]);
     }
 
     public function testDeriveStatementRejectsMySql56(): void

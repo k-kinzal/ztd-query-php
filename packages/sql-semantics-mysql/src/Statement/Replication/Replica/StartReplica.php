@@ -97,7 +97,9 @@ final class StartReplica extends \SqlSemantics\Platform\MySql\Statement\SqlState
             (new SourceSettings())->options($derivation, $this->until->positions);
             $error = $conditions->until($this->until);
             if ($error !== null) {
-                $derivation->report(new RefusedSetting($error));
+                $problem = new RefusedSetting($error);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->until);
             }
         }
         $credentials = $this->user !== null || $this->password !== null || $this->defaultAuth !== null || $this->pluginDir !== null;

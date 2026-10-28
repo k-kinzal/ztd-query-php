@@ -91,7 +91,7 @@ final class Refusals
             return DataError::WrongValue->error($uuid ? 'UUID' : 'argument contains not-allowed LF', (new DiagnosticText())->bytes($uuid ? explode("\0", $value, 2)[0] : $value, 128, $legacy));
         }
         if ($problem->number !== null) {
-            return $problem->error === ReplicationError::DelayOutOfRange ? AdministrationError::SourceDelayOutOfRange->error((new Literals())->number($problem->number), '2147483647') : AdministrationError::BinlogIndexOutOfRange->error((new Literals())->number($problem->number));
+            return $problem->error === ReplicationError::DelayOutOfRange ? $this->delay((new Literals())->number($problem->number), $legacy) : AdministrationError::BinlogIndexOutOfRange->error((new Literals())->number($problem->number));
         }
 
         return $this->replication($problem->error, $statement, $text, $legacy);
@@ -140,7 +140,7 @@ final class Refusals
             ReplicationError::GroupPasswordTooLong => AdministrationError::GroupPasswordTooLong->error(),
             ReplicationError::GroupUserMissing => AdministrationError::GroupUserMissing->error(),
             ReplicationError::GroupUserEmpty => AdministrationError::GroupUserEmpty->error(),
-            ReplicationError::DelayOutOfRange => AdministrationError::SourceDelayOutOfRange->error($this->option($statement, SourceOptionKind::Delay), '2147483647'),
+            ReplicationError::DelayOutOfRange => $this->delay($this->option($statement, SourceOptionKind::Delay), $legacy),
             ReplicationError::HeartbeatOutOfRange => AdministrationError::HeartbeatOutOfRange->error('4294967'),
             ReplicationError::RowFormatValue => AdministrationError::RowFormatValue->error($this->option($statement, SourceOptionKind::RequireRowFormat)),
             ReplicationError::SwitchValue => $this->switch($statement, $text),
@@ -230,4 +230,14 @@ final class Refusals
 
         return '0';
     }
+    /**
+     * Formats a retained source delay in the vocabulary of the selected release.
+     */
+    public function delay(string $value, bool $legacy): SqlError
+    {
+        return $legacy
+            ? new SqlError(AdministrationError::SourceDelayOutOfRange, 'The requested value ' . $value . ' for the master delay exceeds the maximum 2147483647')
+            : AdministrationError::SourceDelayOutOfRange->error($value, '2147483647');
+    }
+
 }

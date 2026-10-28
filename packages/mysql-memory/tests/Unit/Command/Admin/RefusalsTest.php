@@ -214,4 +214,11 @@ final class RefusalsTest extends TestCase
         self::assertSame("The requested value '2000000001' for the next binary log index is out of range. Please use a value between '1' and '2000000000'.", $refusals->setting($index, null, 'unrelated invalid input')->getMessage());
     }
 
+    public function testDelayUsesTheRequestedReplicationVocabulary(): void
+    {
+        $rule = new Refusals();
+        self::assertSame('The requested value 2147483648 for the master delay exceeds the maximum 2147483647', $rule->delay('2147483648', true)->getMessage());
+        self::assertSame('The requested value 2147483648 for the source delay exceeds the maximum 2147483647', $rule->delay('2147483648', false)->getMessage());
+    }
+
 }

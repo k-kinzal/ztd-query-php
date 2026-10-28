@@ -26,7 +26,7 @@ final class SyntaxSettings
     public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
     {
         $setting = $this->completed($node, $lowering);
-        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && in_array($setting->problem->error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::UntilCondition, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid], true))) {
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && $setting->problem->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed) {
             return new \SqlSemantics\Construction\RejectedInput($setting->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
         }
 
@@ -77,17 +77,16 @@ final class SyntaxSettings
         if (in_array($node->name, ['source_def', 'master_def'], true)) {
             try {
                 $option = (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
-                $error = (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->error($option, $lowering->profile->grammar);
-                if (in_array($error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::DelayOutOfRange, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::HeartbeatOutOfRange, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::PasswordTooLong], true)) {
-                    return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($error, $option->value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Numeral ? $option->value : null), $error !== \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::DelayOutOfRange);
-                }
+                return (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->condition($option, $lowering->profile->grammar);
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 return new ParseFailure($failure->problem, $failure->aborts);
             }
         }
         if (in_array($node->name, ['slave_until', 'opt_replica_until'], true)) {
             try {
-                (new UntilRule($lowering))->until($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+                $until = (new UntilRule($lowering))->until($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+                $error = $until === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions())->until($until);
+                return $error === null ? null : new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($error), true);
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 return new ParseFailure($failure->problem, $failure->aborts);
             }
@@ -98,6 +97,15 @@ final class SyntaxSettings
             $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text);
 
             return $problem === null ? null : new ParseFailure($problem, true);
+        }
+        if (in_array($node->name, ['group_replication_user', 'group_replication_password'], true)) {
+            try {
+                $option = (new LogRule($lowering))->option($node);
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials())->credential($option);
+                return $problem === null ? null : new ParseFailure($problem, true);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, $failure->aborts);
+            }
         }
         if ($node->name !== 'source_reset_options') {
             return null;

@@ -17,12 +17,10 @@ use SqlSemantics\Statement\Node;
  * two parts keep the written order exactly. All positions use the same
  * release vocabulary; legacy MASTER options and modern SOURCE synonyms
  * cannot belong to the same structure. Which combinations the server
- * accepts is checked before the value is retained (MYSQL-REPLICA-UNTIL-001).
+ * accepts is reported while deriving its owning statement (MYSQL-REPLICA-UNTIL-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html.
  *
  * @visibility public
- * @example Rejecting a lone log position before deriving an operation
- *     new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(null, null, [new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::LogPosition, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a GTID condition
  *     $until = new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('3E11FA47-71CA-11E1-9E33-C80AA9429562:1-5'));
  *     $until->positions // => []
@@ -50,7 +48,6 @@ final class ReplicaUntil implements Node
         foreach ($this->positions as $position) {
             Check::input($position->kind->position(), 'UNTIL lists only log file and position options.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions())->until($this) === null, 'UNTIL requires a complete log coordinate or an unmixed GTID or gap condition.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

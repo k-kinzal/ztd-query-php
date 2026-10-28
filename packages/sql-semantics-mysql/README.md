@@ -749,6 +749,19 @@ Legacy INSERT statements retain their optimizer hints in the semantic head. Qual
 
 `SetItem` contains only accepted assignment roles. `SET NAMES = expression` has no public expression-assignment type: input lowering raises `RefusedNamesAssignment`, carrying the assignment and operand offsets and whether a local `names` variable is visible. The refused expression and its parser nodes are discarded. `SetNames` still represents character-set changes, and `NameAssignment` can assign a declared local variable named `names`.
 
+Replication requests retain their complete option lists when a source switch is
+outside its numeric domain, an anonymous-GTID UUID is invalid, or an `UNTIL`
+coordinate is incomplete or mixed with a GTID/gap condition. Derivation publishes
+`RefusedSourceNumber` or `RefusedSetting` and an ordered `ParseFailure`; rendering
+still includes all options. Numerals own their input byte spans, so diagnostic
+formatting can locate the operand without recovering its position from SQL.
+
+`StartGroupReplication` also retains conflicting credentials and publishes their
+`RefusedSetting`. Empty user names and oversized passwords publish parsing
+conditions on the complete statement. A stored routine uses `DeferredGroupStart`
+for a password supplied without a user; that condition is checked when the
+instruction runs, so defining the routine can succeed before invocation fails. These checks do not consult or change replication configuration.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

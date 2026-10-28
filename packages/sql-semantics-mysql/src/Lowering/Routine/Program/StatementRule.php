@@ -139,6 +139,10 @@ final class StatementRule
      */
     public function retained(Statement $statement, Node $node): ProgramStatement|Statement
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication && (new \SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials())->problem($statement->options)?->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing) {
+            $this->lowering->origins->forget($statement);
+            return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart($statement->options), $node);
+        }
         if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery) && $statement->hasExecutionCondition()) {
             $this->lowering->origins->forget($statement);
             $retained = match (true) {
@@ -261,7 +265,6 @@ final class StatementRule
     public function administrativeRefusal(\SqlSemantics\Statement\Fact\Diagnostic $problem): ?ProgramStatement
     {
         return match (true) {
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedGroupStart => $problem->request,
             $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($problem->moment),
             default => null,
         };

@@ -189,7 +189,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Partition\Problem\DefinitionIssueGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Server\Database\Problem\CharsetConflictGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Expression\Problem\TimeZoneConversionGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Replication\Problem\RefusedGroupStartGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperandGenerator::executionForms();
     }
 

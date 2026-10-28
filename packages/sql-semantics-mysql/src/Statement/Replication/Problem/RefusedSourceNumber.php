@@ -12,9 +12,10 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A numeric source option refused before constructing its semantic value.
+ * A numeric source option whose retained numeral violates its server constraint.
  *
- * Only the option kind, numeric operand and byte position survive lowering.
+ * The diagnostic keeps the option kind, numeric operand and byte position.
+ * A complete request retains the entire ordered option list independently.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public

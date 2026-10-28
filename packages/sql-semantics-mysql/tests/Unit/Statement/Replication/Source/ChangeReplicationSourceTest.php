@@ -26,8 +26,10 @@ final class ChangeReplicationSourceTest extends TestCase
     {
         $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648 FOR CHANNEL 'a'");
 
+        self::assertInstanceOf(ChangeReplicationSource::class, $change);
+        self::assertInstanceOf(Numeral::class, $change->options[1]->value);
         self::assertEquals([
-            new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange),
+            new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange, $change->options[1]->value),
         ], $change->diagnostics());
     }
 
