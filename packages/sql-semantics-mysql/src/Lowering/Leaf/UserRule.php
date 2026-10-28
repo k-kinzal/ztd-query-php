@@ -40,7 +40,6 @@ final class UserRule
      * Lowers one account.
      *
      * @throws ImplementationGap When the production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When an account operand exceeds its release's domain
      */
     public function account(Node $account): Account
     {
@@ -59,17 +58,11 @@ final class UserRule
     }
 
     /**
-     * Publishes an account only after checking the current language's operand limits.
+     * Publishes the complete decoded account, retaining operands outside its release's domain.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When an account operand exceeds its release's domain
      */
     public function named(\SqlSemantics\Statement\Identifier\Name $user, ?\SqlSemantics\Statement\Identifier\Name $host, ?Node $source = null): AccountName
     {
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($user, $host, $this->lowering->profile->grammar);
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput($problem, $source === null ? 0 : ((new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0));
-        }
-
         $form = $source === null ? null : $this->lowering->form($source);
         return new AccountName(
             $user,
@@ -84,7 +77,6 @@ final class UserRule
      *
      * @return list<Account>
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When a decoded account exceeds the language's limits
      */
     public function accounts(Node $list): array
     {

@@ -62,10 +62,11 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     }
 
     /**
-     * Has nothing to derive: the request names no relation and no value.
+     * Derives the donor account name conditions.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->donor]);
     }
 
     /**

@@ -70,10 +70,13 @@ final class GrantRoles extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
     }
 
     /**
-     * Derives nothing: role operands have no relation or expression bindings.
+     * Derives recipient account conditions before the completed role-list conditions.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $names = new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames();
+        $names->derive($derivation, $this->users);
+        $names->roles($derivation, $this->roles, $this);
     }
 
     /**

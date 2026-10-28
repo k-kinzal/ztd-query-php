@@ -83,6 +83,7 @@ final class CreateProcedure extends \SqlSemantics\Platform\MySql\Statement\SqlSt
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Procedure, $this->name, $derivation);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
     }

@@ -119,6 +119,16 @@ final class DefaultDatabaseTest extends TestCase
         self::assertSame('unrelated invalid input', $session->text);
     }
 
+    public function testCheckPreservesAnEarlierDefinerConditionWithoutADatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("CREATE DEFINER='u'@'bad@host' EVENT e ON SCHEDULE EVERY 1 DAY DO SIGNAL c");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1105);
+
+        (new DefaultDatabase())->check($operation, $session);
+    }
+
     public function testCheckRequiresAViewDatabaseBeforeItsQueryLimits(): void
     {
         $session = (new Instance())->connect();

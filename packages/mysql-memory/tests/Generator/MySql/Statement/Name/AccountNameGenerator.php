@@ -24,7 +24,7 @@ final class AccountNameGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * @param ErisGenerator<string>|null $users User operands within the account domain
+     * @param ErisGenerator<string>|null $users Decoded user operands, including values outside the account domain
      * @param ErisGenerator<Name|null>|null $hosts Optional host operands
      */
     public function __construct(?ErisGenerator $users = null, ?ErisGenerator $hosts = null)
@@ -63,6 +63,27 @@ final class AccountNameGenerator implements ErisGenerator
     public static function fromOperands(ErisGenerator $user, ErisGenerator $host, ?ErisGenerator $userString = null, ?ErisGenerator $hostString = null): ErisGenerator
     {
         return Generators::map(static fn (array $parts): AccountName => new AccountName(user: $parts[0], host: $parts[1], userString: $parts[0]->quote === null && $parts[2], hostString: $parts[1] !== null && $parts[1]->quote === null && $parts[3]), \Tests\Generator\Operands::tuple($user, $host, $userString ?? Generators::bool(), $hostString ?? Generators::bool()));
+    }
+
+    /**
+     * Composes invalid user-character and host-byte domains with retained notation.
+     *
+     * @return ErisGenerator<array{AccountName, int}>
+     */
+    public static function refusedOperands(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        [$users, $hosts] = (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->limits($release);
+        return Generators::map(static function (array $parts) use ($users, $hosts): array {
+            [$kind, $excess, $unit, $quoted] = $parts;
+            $user = $kind === 'user' ? str_repeat($unit, $users + $excess) : 'account_subject';
+            $host = match ($kind) {
+                'user' => null,
+                'host' => str_repeat($unit, intdiv($hosts, strlen($unit)) + $excess),
+                default => 'bad@host',
+            };
+            $account = new AccountName(new Name($user), $host === null ? null : new Name($host), userString: $quoted, hostString: $host !== null && $quoted);
+            return [$account, $kind === 'separator' ? 1105 : 1470];
+        }, \Tests\Generator\Operands::tuple(Generators::elements('user', 'host', 'separator'), Generators::choose(1, 9), Generators::elements('u', '猫'), Generators::bool()));
     }
 
 }

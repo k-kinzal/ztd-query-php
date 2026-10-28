@@ -159,6 +159,7 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
             }
             return;
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [...$this->grantees, $this->as]);
         $condition = $this->condition();
         if ($condition !== null && !$derivation->inProgram()) {
             $derivation->report($condition);

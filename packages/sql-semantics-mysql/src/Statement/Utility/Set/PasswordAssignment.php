@@ -44,6 +44,7 @@ final class PasswordAssignment implements SetItem
      */
     public function deriveItem(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
         $this->password->derivePassword($derivation);
     }
 

@@ -52,6 +52,7 @@ final class AlterView extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definition->definer]);
         $fact = $derivation->target($this, (new TableTargets())->existing($derivation, $this->definition->name));
         (new RelationKinds())->require($derivation, $this->definition->name, $fact->table, RelationKind::View);
         (new ViewFacts())->derive($this->definition, $derivation);

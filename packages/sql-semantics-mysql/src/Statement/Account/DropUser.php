@@ -44,10 +44,11 @@ final class DropUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the account name conditions without resolving a runtime catalog.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->users);
     }
 
     /**

@@ -40,4 +40,28 @@ final class AccountNamesTest extends TestCase
         self::assertNull($names->problem($user, new Name('%'), GrammarRelease::MySql5744));
         self::assertEquals(new AccountNameFailure(str_repeat('h', 61), true, 60), $names->problem(new Name('u'), new Name(str_repeat('h', 61)), GrammarRelease::MySql5744));
     }
+    public function testDeriveRetainsTheAccountListAndItsOrderedConditions(): void
+    {
+        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(GrammarRelease::MySql5651), [new Name('test')]);
+        $long = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name(str_repeat('u', 17)));
+        $host = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new Name('u'), new Name('bad@host'));
+        $statement = \SqlSemantics\Facade\Semantics::fromStatement($context, new \SqlSemantics\Platform\MySql\Statement\Account\DropUser(false, [new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser(), $long, $host]));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\DropUser::class, $statement);
+        self::assertCount(3, $statement->users);
+        self::assertEquals([new AccountNameFailure(str_repeat('u', 17), false, 16), new AccountNameFailure('bad@host', true)], $statement->diagnostics());
+        self::assertSame(['The account user exceeds its limit of 16.', 'The account host contains an illegal at sign.'], array_map(static fn ($warning): string => $warning->message(), $statement->warnings()));
+    }
+
+    public function testRolesRetainsCompleteGrantsAndContinuesAfterEachRoleCondition(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("GRANT 'r'@'bad@host', 's'@'other@host' TO CURRENT_USER");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles::class, $statement);
+        self::assertCount(2, $statement->roles);
+        self::assertCount(2, $statement->statementInformation()->notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->statementInformation()->notices[0]->warning);
+        self::assertFalse($statement->statementInformation()->notices[0]->warning->aborts);
+        self::assertFalse($statement->statementInformation()->notices[0]->warning->endsProgramStatement);
+        self::assertSame("GRANT 'r'@'bad@host', 's'@'other@host' TO CURRENT_USER", $statement->toString());
+    }
+
 }

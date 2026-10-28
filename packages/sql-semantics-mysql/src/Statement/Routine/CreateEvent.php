@@ -82,6 +82,7 @@ final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         if ($this->status === EventStatus::DisableOnSlave) {
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
         }

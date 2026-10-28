@@ -54,20 +54,20 @@ final class SyntaxRoles
         if ($indices === null) {
             return [];
         }
-        try {
-            $lowering->users->accounts($form->node($indices[1]));
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            return [new ParseFailure($failure->problem, true)];
+        $names = new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames();
+        foreach ($lowering->users->accounts($form->node($indices[1])) as $account) {
+            $problem = $account instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName ? $names->problem($account->user, $account->host, $lowering->profile->grammar) : null;
+            if ($problem !== null) {
+                return [new ParseFailure($problem, true)];
+            }
         }
         $rule = new PrivilegeRule($lowering);
         $failures = [];
         foreach ($rule->spine($form->node($indices[0])) as $operand) {
-            try {
-                $item = $rule->item($operand, true);
-                $problem = $item instanceof GrantedRole ? null : new RoleOrPrivilegeMismatch((new PrivilegeChecks())->describe($item), true, (new SourceRanges())->span($operand)[0] ?? 0);
-            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                $problem = $failure->problem;
-            }
+            $item = $rule->item($operand, true);
+            $problem = $item instanceof GrantedRole
+                ? $names->problem($item->role->user, $item->role->host, $lowering->profile->grammar)
+                : new RoleOrPrivilegeMismatch((new PrivilegeChecks())->describe($item), true, (new SourceRanges())->span($operand)[0] ?? 0);
             if ($problem !== null) {
                 $failures[] = new ParseFailure($problem, endsProgramStatement: false);
             }

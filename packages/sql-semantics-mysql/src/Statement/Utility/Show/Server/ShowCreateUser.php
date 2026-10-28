@@ -48,6 +48,7 @@ final class ShowCreateUser extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
         $facts = new ShowFacts();
         if (!$this->user instanceof AccountName) {
             $derivation->output($facts->query($facts->open(new SessionState('the current user'))->shape, $derivation->context->columnNames));

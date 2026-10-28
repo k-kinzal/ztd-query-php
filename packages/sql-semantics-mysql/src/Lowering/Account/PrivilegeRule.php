@@ -213,7 +213,6 @@ final class PrivilegeRule
      * Lowers one role_or_privilege or object_privilege.
      *
      * @throws ImplementationGap When the production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When a role name exceeds the language's account limits
      */
     public function item(Node $item, bool $roles): Grantable
     {

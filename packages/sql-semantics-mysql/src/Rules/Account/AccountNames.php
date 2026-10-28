@@ -39,7 +39,7 @@ final class AccountNames
     }
 
     /**
-     * Reports a refused decoded operand without constructing an account value.
+     * Answers the name-domain condition for decoded account operands in the selected release.
      */
     public function problem(Name $user, ?Name $host, GrammarRelease $release = GrammarRelease::MySql847): ?AccountNameFailure
     {
@@ -56,4 +56,47 @@ final class AccountNames
 
         return str_contains($hostname, '@') ? new AccountNameFailure($hostname, true) : null;
     }
+    /**
+     * Derives name conditions only within the supplied account-bearing operands.
+     *
+     * The caller selects its header or account list, so a nested stored body is
+     * checked in its own instruction and lexical order. Every complete account
+     * remains available to rendering and execution.
+     *
+     * @param list<\SqlSemantics\Statement\Node|null> $inputs Account operands and their owning clauses
+     */
+    public function derive(\SqlSemantics\Construction\Derivation $derivation, array $inputs): void
+    {
+        $roots = array_values(array_filter($inputs, static fn (?\SqlSemantics\Statement\Node $input): bool => $input !== null));
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->inputs($roots) as $node) {
+            if (!$node instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
+                continue;
+            }
+            $problem = $this->problem($node->user, $node->host, $derivation->context->profile->grammar);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $node);
+            }
+        }
+    }
+
+    /**
+     * Derives role identifiers after recipients when a GRANT or REVOKE completes.
+     *
+     * A role-name failure continues through the remaining roles and later stored
+     * instructions. Recipient account failures still abort at their own operands.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole> $roles The ordered role operands
+     */
+    public function roles(\SqlSemantics\Construction\Derivation $derivation, array $roles, \SqlSemantics\Statement\Node $statement): void
+    {
+        foreach ($roles as $role) {
+            $problem = $this->problem($role->role->user, $role->role->host, $derivation->context->profile->grammar);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, endsProgramStatement: false), $statement);
+            }
+        }
+    }
+
 }

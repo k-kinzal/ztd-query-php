@@ -43,10 +43,9 @@ final class SyntaxPasswords
         if (array_column(array_slice($following, 0, 4), 'name') !== ['IDENTIFIED_SYM', 'BY', 'PASSWORD', 'TEXT_STRING']) {
             return null;
         }
-        try {
-            $lowering->users->account($node);
-        } catch (RejectedInput $failure) {
-            return $failure;
+        $notice = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxNames())->account($node, $lowering);
+        if ($notice !== null) {
+            return new RejectedInput($notice->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
         }
 
         return new RejectedInput(new RejectedPasswordHash(), $following[3]->offset);

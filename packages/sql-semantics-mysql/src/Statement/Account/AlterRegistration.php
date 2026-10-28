@@ -58,6 +58,7 @@ final class AlterRegistration extends \SqlSemantics\Platform\MySql\Statement\Sql
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
     }
 
     /**

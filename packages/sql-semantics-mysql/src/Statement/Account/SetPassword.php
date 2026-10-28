@@ -52,6 +52,7 @@ final class SetPassword extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
         $this->password?->derivePassword($derivation);
     }
 

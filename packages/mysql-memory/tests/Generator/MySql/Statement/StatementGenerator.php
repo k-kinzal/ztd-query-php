@@ -220,4 +220,124 @@ final class StatementGenerator implements ErisGenerator
         }, Operands::tuple(Literal\NumeralGenerator::refusedIntegers(), Generators::bool(), Generators::elements('named', 'explicit', 'deferred'), Generators::bool(), Generators::bool(), Generators::choose(1, 99), Generators::bool(), Generators::bool()));
     }
 
+    /**
+     * Composes complete account-bearing requests and their selected-release name conditions.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function accountRequests(GrammarRelease $release): ErisGenerator
+    {
+        return Operands::bind(\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::refusedOperands($release), static function (array $input) use ($release): ErisGenerator {
+            [$account, $code] = $input;
+            $requests = self::accountStatements($account, $release);
+            array_push($requests, ...self::accountDefinitions($account));
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
+            return Generators::map(static fn (M\Statement $statement): array => self::accountCondition($context, $statement, $code), Generators::elements($requests));
+        });
+    }
+
+    /**
+     * Selects account commands while preserving each release's structural alternatives.
+     *
+     * @return non-empty-list<M\Statement>
+     */
+    public static function accountStatements(M\Name\AccountName $account, GrammarRelease $release): array
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile($release);
+        $user = new M\Account\User\UserSpecification($account);
+        $current = new M\Name\CurrentUser();
+        $grantee = new M\Account\User\Grantee($account);
+        $all = [new M\Account\Privilege\Item\AllPrivileges()];
+        $global = new M\Account\Privilege\Level\GlobalLevel();
+        $table = M\Account\Privilege\Level\ObjectKind::Table;
+        $requests = [
+            new M\Account\CreateUser(false, [$user]),
+            new M\Account\DropUser(false, [$account]),
+            new M\Account\RenameUser([new M\Account\User\UserRenaming($current, $account)], $profile),
+            new M\Account\SetPassword($account, new M\Account\Password(new M\Literal\Text('secret'))),
+            new M\Account\Privilege\GrantPrivileges($all, $table, $global, [$grantee]),
+            new M\Account\Privilege\GrantProxy($current, [$grantee]),
+            new M\Account\Privilege\RevokeAll(false, [$user]),
+            new M\Account\Privilege\RevokePrivileges(false, $all, $table, $global, [$user]),
+            new M\Account\Privilege\RevokeProxy(false, $current, [$user]),
+            new M\Utility\Show\Server\ShowGrants($account),
+        ];
+        if ($release === GrammarRelease::MySql5651) {
+            $requests[] = new M\Account\ExpireUserPasswords([$account]);
+            $requests[] = new M\Utility\Set\SetVariables([new M\Utility\Set\PasswordAssignment(new M\Account\Password(new M\Literal\Text('secret')), $account), new M\Utility\Set\UserAssignment(new M\Variable\UserVariable(new Name('after_password')), new M\Literal\NumberLiteral('1'))]);
+        } else {
+            $requests[] = new M\Account\AlterUser(false, [$user]);
+            $requests[] = new M\Utility\Show\Server\ShowCreateUser($account);
+        }
+        if (!in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+            $roles = new M\Account\User\RoleSelection(M\Account\User\RoleSet::Named, [$account]);
+            array_push(
+                $requests,
+                new M\Account\CreateRole(false, [$account], $profile),
+                new M\Account\DropRole(false, [$account]),
+                new M\Account\AlterDefaultRole(false, $current, $roles),
+                new M\Account\SetDefaultRole($roles, [new M\Name\AccountName(new Name('root'))]),
+                new M\Account\SetRole($roles),
+                new M\Account\Privilege\GrantRoles([new M\Account\Privilege\Item\GrantedRole($account)], [$current], profile: $profile),
+                new M\Account\Privilege\RevokeRoles(false, [new M\Account\Privilege\Item\GrantedRole($account)], [$current]),
+                new M\Account\AlterRegistration(false, $account, M\Account\User\Factor::Second, M\Account\User\RegistrationStep::Initiate),
+                new M\Server\Instance\CloneInstance($account, new M\Literal\Numeral('3306'), new M\Literal\Text('secret')),
+                new M\Replication\Source\ChangeReplicationSource(M\Replication\Terminology::Current, [new M\Replication\Source\SourceOption(M\Replication\Terminology::Current, M\Replication\Source\SourceOptionKind::PrivilegeChecksUser, $account)])
+            );
+        }
+        return $requests;
+    }
+
+    /**
+     * Builds all stored-object headers from the same generated account operand.
+     *
+     * @return non-empty-list<M\Statement>
+     */
+    public static function accountDefinitions(M\Name\AccountName $account): array
+    {
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('account_definition'));
+        $body = new M\Routine\Program\Block();
+        $view = new M\View\ViewDefinition($name, new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]), definer: $account);
+        $schedule = new M\Routine\Event\OnceSchedule(new M\Literal\StringLiteral(['2030-01-01 00:00:00']));
+        return [
+            new M\Routine\CreateProcedure($name, new M\Routine\ParameterList([]), $body, definer: $account),
+            new M\Routine\CreateFunction($name, new M\Routine\ParameterList([]), new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Routine\Definition\FunctionImplementation(new M\Routine\Program\Flow\ReturnStatement(new M\Literal\NumberLiteral('1'))), definer: $account),
+            new M\Routine\CreateTrigger($name, M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Insert, new M\Routine\Trigger\TriggerTable($name), $body, definer: $account),
+            new M\Routine\CreateEvent($name, $schedule, $body, definer: $account),
+            new M\Routine\AlterEvent($name, schedule: $schedule, definer: $account),
+            new M\View\CreateView($view),
+            new M\View\AlterView($view),
+        ];
+    }
+
+    /**
+     * Composes unreachable stored account commands with earlier and later variable failures.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function accountPrograms(GrammarRelease $release): ErisGenerator
+    {
+        return Operands::bind(Operands::tuple(\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::refusedOperands($release), Generators::bool(), Generators::choose(1, 99)), static function (array $parts) use ($release): ErisGenerator {
+            [[$account, $code], $earlier, $suffix] = $parts;
+            $requests = self::accountStatements($account, $release);
+            return Generators::map(static function (M\Statement $request) use ($code, $earlier, $suffix, $release): array {
+                $assignment = new M\Utility\Set\SetVariables([new M\Utility\Set\NameAssignment(new Name('account_missing_' . $suffix), new M\Literal\NumberLiteral('1'))]);
+                $body = new M\Routine\Program\Block([], [new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), $earlier ? [$assignment, $request] : [$request, $assignment])])]);
+                $statement = new M\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('account_program_' . $suffix)), new M\Routine\ParameterList([]), $body);
+                $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
+                return self::accountCondition($context, $statement, $earlier ? 1193 : $code);
+            }, Generators::elements($requests));
+        });
+    }
+
+    /**
+     * Publishes a generated request together with its account-domain condition.
+     *
+     * @return array{\SqlSemantics\Statement\AnalyzedStatement, int}
+     */
+    public static function accountCondition(\SqlSemantics\Contract\AnalysisContext $context, M\Statement $statement, int $code): array
+    {
+        return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement), $code];
+    }
+
 }

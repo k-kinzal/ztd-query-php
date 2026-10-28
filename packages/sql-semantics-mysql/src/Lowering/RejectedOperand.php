@@ -39,9 +39,10 @@ final class RejectedOperand
         if ($aborting !== null) {
             return new RejectedInput($aborting->problem, (new SourceRanges())->span($node)[1] ?? 0, $aborting->aborts);
         }
-        $roles = (new Account\SyntaxRoles())->completed($node, $lowering);
-        if ($roles !== []) {
-            return new RejectedInput($roles[0]->problem, (new SourceRanges())->span($node)[1] ?? 0, $roles[0]->aborts);
+        foreach ((new Account\SyntaxRoles())->completed($node, $lowering) as $role) {
+            if ($role->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch) {
+                return new RejectedInput($role->problem, (new SourceRanges())->span($node)[1] ?? 0, $role->aborts);
+            }
         }
         $database = $node->name === 'default_encryption' ? null : (new Server\Instance\SyntaxOptions())->rejected($node, $lowering);
         if ($database !== null) {

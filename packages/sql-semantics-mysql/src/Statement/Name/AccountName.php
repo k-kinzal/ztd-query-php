@@ -16,10 +16,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * operands retain their spelling for rendering; username() and hostname()
  * remove surrounding ASCII whitespace for account resolution. This behavior
  * was verified on MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
- * Construction excludes names outside every supported release's domain:
- * more than 32 trimmed user characters, more than 255 trimmed host bytes,
- * or an at sign in the host. Older release limits remain explicit inputs
- * to account interpretation.
+ * Construction preserves operands outside the selected release's name domain.
+ * The owning request derives the user-character and host-byte conditions without
+ * discarding the account, its notation or the following clauses.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/account-names.html,
  * https://dev.mysql.com/doc/refman/8.4/en/role-names.html.
  *
@@ -27,10 +26,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * @example Reading the parts of an account name
  *     $account = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('app'), new \SqlSemantics\Statement\Identifier\Name('10.0.%'));
  *     [$account->user->value, $account->host?->value] // => ['app', '10.0.%']
- * @example Refusing a user name outside every supported release
- *     new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(str_repeat('u', 33))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing an illegal host separator
- *     new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u'), new \SqlSemantics\Statement\Identifier\Name('a@b')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an operand outside the account domain
+ *     $account = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name(str_repeat('u', 33)), new \SqlSemantics\Statement\Identifier\Name('a@b'));
+ *     [$account->username(), $account->hostname()] // => [str_repeat('u', 33), 'a@b']
  */
 final class AccountName implements Account
 {
@@ -46,7 +44,6 @@ final class AccountName implements Account
     {
         \SqlSemantics\Diagnostic\Check::input(!$userString || in_array($user->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true), 'A string account operand has no identifier delimiter.');
         \SqlSemantics\Diagnostic\Check::input(!$hostString || ($host !== null && in_array($host->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true)), 'A string host operand is present and has no identifier delimiter.');
-        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($user, $host) === null, 'An account name satisfies the supported user and host domains.');
     }
 
     /**

@@ -81,4 +81,18 @@ final class SyntaxNamesTest extends TestCase
         self::assertEquals([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull, new ParseFailure(new UnknownCollation('missing')), new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'))], array_column($warnings, 1));
     }
 
+    public function testAccountKeepsTheCompletedNameConditionBeforeLaterSyntax(): void
+    {
+        $platform = new Platform();
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse("DROP USER 'u'@'bad@host', CURRENT_USER");
+        $rule = new SyntaxNames();
+        self::assertEquals(new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure('bad@host', true), true), $rule->account($tree->find('user')[0], $lowering));
+        self::assertNull($rule->account($tree->find('user')[1], $lowering));
+        $sql = "DROP USER 'u'@'bad@host',";
+        $warnings = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser($profile->grammar->value), $sql, strlen($sql), $profile);
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure('bad@host', true), true)], array_column($warnings, 1));
+    }
+
 }

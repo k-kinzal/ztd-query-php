@@ -56,6 +56,7 @@ final class RevokeAll extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->users);
     }
 
     /**

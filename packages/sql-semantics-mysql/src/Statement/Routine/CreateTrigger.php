@@ -88,6 +88,7 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         (new ProgramFacts())->trigger($this->table, $this->time, $this->event, $this->body, $derivation);
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
     }

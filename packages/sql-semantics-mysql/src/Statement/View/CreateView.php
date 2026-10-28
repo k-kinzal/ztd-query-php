@@ -53,6 +53,7 @@ final class CreateView extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definition->definer]);
         if ($this->orReplace) {
             $name = $this->definition->name;
             (new RelationKinds())->require($derivation, $name, $derivation->table($name, $derivation->environment()), RelationKind::View);

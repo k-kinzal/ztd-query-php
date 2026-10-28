@@ -42,15 +42,14 @@ final class UserRuleTest extends TestCase
         self::assertSame('r1', $role->user->value);
     }
 
-    public function testNamedRejectsANameBeforeConstructingTheAccount(): void
+    public function testNamedRetainsANameOutsideTheSelectedReleaseDomain(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
         $rule = new UserRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('The account user exceeds its limit of 16.');
-
-        $rule->named(new \SqlSemantics\Statement\Identifier\Name(str_repeat('u', 17)), null);
+        $account = $rule->named(new \SqlSemantics\Statement\Identifier\Name(str_repeat('u', 17)), null);
+        self::assertSame(str_repeat('u', 17), $account->user->value);
+        self::assertSame('The account user exceeds its limit of 16.', (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($account->user, $account->host, $profile->grammar)?->message());
     }
 
     public function testAccountsFlattensAUserList(): void

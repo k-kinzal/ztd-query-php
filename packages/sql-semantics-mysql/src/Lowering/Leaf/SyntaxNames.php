@@ -35,6 +35,9 @@ final class SyntaxNames
         if ($deprecated !== null) {
             return $deprecated;
         }
+        if (in_array($node->name, ['user', 'user_ident_or_text', 'role'], true)) {
+            return $this->account($node, $lowering);
+        }
         $first = $node->children[0] ?? null;
         if ($lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $first instanceof \SqlParser\Lexer\Token && $first->text === '.') {
             return match ($node->name) {
@@ -76,6 +79,19 @@ final class SyntaxNames
         $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull;
 
         return $node->name === 'ident_keywords_unambiguous' && $token instanceof \SqlParser\Lexer\Token && $token->name === 'FULL' && $deprecated->warnedIn($release) ? $deprecated : null;
+    }
+
+    /**
+     * Keeps the completed account's condition when later input cannot be parsed.
+     */
+    public function account(Node $node, Lowering $lowering): ?ParseFailure
+    {
+        $account = (new UserRule($lowering))->account($node);
+        if (!$account instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
+            return null;
+        }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($account->user, $account->host, $lowering->profile->grammar);
+        return $problem === null ? null : new ParseFailure($problem, true);
     }
 
 }

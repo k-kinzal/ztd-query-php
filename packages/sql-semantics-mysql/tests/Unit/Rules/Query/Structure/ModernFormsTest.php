@@ -58,13 +58,13 @@ final class ModernFormsTest extends TestCase
         self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions(bulk: true)));
     }
 
-    public function testDefinitionDistinguishesAccountHostLimits(): void
+    public function testDefinitionKeepsAccountHostLimitsIndependentOfGrammarForms(): void
     {
         $forms = new ModernForms();
         $user = new \SqlSemantics\Statement\Identifier\Name('u');
 
         self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($user, new \SqlSemantics\Statement\Identifier\Name(str_repeat('h', 60)))));
-        self::assertTrue($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($user, new \SqlSemantics\Statement\Identifier\Name(str_repeat('h', 61)))));
+        self::assertFalse($forms->definition(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName($user, new \SqlSemantics\Statement\Identifier\Name(str_repeat('h', 61)))));
     }
 
     public function testAuthenticationDistinguishesPasswordManagementFromAnOrdinaryAccount(): void

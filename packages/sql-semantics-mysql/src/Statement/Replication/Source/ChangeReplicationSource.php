@@ -69,6 +69,7 @@ final class ChangeReplicationSource extends \SqlSemantics\Platform\MySql\Stateme
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->options);
         (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $releases = new Releases();
         $release = $derivation->context->profile->grammar;

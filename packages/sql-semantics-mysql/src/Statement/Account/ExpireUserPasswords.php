@@ -18,9 +18,9 @@ use SqlSemantics\Rendering\Output;
  * Source: https://dev.mysql.com/doc/refman/5.6/en/alter-user.html. Status: Implemented.
  *
  * @visibility public
- * @example Requiring account names from the same release as the expiration form
- *     $user = new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('seventeen_letters'));
- *     new \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords([$user]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an account outside the legacy name domain
+ *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER USER seventeen_letters PASSWORD EXPIRE');
+ *     [$statement->users[0]->user->value, $statement->warnings()[0]->message()] // => ['seventeen_letters', 'The account user exceeds its limit of 16.']
  * @example Expiring two passwords
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('alter user a password expire, b password expire')->toString() // => 'ALTER USER a PASSWORD EXPIRE, b PASSWORD EXPIRE'
  */
@@ -46,10 +46,11 @@ final class ExpireUserPasswords extends \SqlSemantics\Platform\MySql\Statement\S
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the account name conditions without resolving a runtime catalog.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->users);
     }
 
     /**

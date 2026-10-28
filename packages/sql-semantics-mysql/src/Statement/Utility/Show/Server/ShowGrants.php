@@ -59,6 +59,7 @@ final class ShowGrants extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user, ...$this->using]);
         $facts = new ShowFacts();
         if (!$this->user instanceof AccountName) {
             $derivation->output($facts->query($facts->open(new SessionState('the current user'))->shape, $derivation->context->columnNames));

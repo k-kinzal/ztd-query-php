@@ -93,6 +93,7 @@ final class CreateUser extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [...$this->users, ...$this->defaultRoles]);
         $checks = new AccountChecks();
         $checks->options($derivation, $this->options);
         $checks->comment($derivation, $this->comment);

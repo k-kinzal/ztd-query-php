@@ -30,6 +30,7 @@ final class DefaultDatabase
      * Checks the names whose implicit database is needed before their later clauses.
      * Modern DELETE collects grammar notices before resolving its target names;
      * MySQL 5.6 DELETE and stored-definition names resolve while reading the header.
+     * A definition's preceding account operand is checked before its implicit database.
      *
      * @param bool $afterParsing Whether grammar notices have been recorded
      * @throws SqlError When an unqualified name requires a current database
@@ -66,6 +67,7 @@ final class DefaultDatabase
         };
         foreach ($names as $name) {
             if ($name->schema === null) {
+                (new \MySqlMemory\Command\Program\ProgramProblems())->definer($statement, $session->settings()->release());
                 if (\MySqlMemory\Command\Dispatcher::program($statement)) {
                     $session->diagnostics->clear();
                 }
