@@ -219,7 +219,8 @@
 <span class="src-line" id="L159" data-diff="same"><a class="ln" href="#L159">159</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 8.0 IF NOT EXISTS&#039;</span> =&gt; [</span>
 <span class="src-line" id="L160" data-diff="same"><a class="ln" href="#L160">160</a>            <span class="tok-str">&#039;mysql-8.0.44&#039;</span>,</span>
 <span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a>            <span class="tok-str">&quot;create definer = &#039;admin&#039;@&#039;%&#039; procedure if not exists shop.p(out total decimal(10,2)) modifies sql data set total = 1&quot;</span>,</span>
-<span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a>            <span class="tok-str">&#039;CREATE DEFINER = `admin`@`%` PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">147</span>            <span class="tok-str">&#039;CREATE DEFINER = `admin`@`%` PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1&#039;</span>,</span>
+<span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>            <span class="tok-str">&#039;CREATE DEFINER = \&#039;admin\&#039;@\&#039;%\&#039; PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1&#039;</span>,</span>
 <span class="src-line" id="L163" data-diff="same"><a class="ln" href="#L163">163</a>        ];</span>
 <span class="src-line" id="L164" data-diff="same"><a class="ln" href="#L164">164</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;MySQL 9.1 external body&#039;</span> =&gt; [</span>
 <span class="src-line" id="L165" data-diff="same"><a class="ln" href="#L165">165</a>            <span class="tok-str">&#039;mysql-9.1.0&#039;</span>,</span>

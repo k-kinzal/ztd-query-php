@@ -59,9 +59,11 @@
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * collation_name_or_default, opt_collate, opt_collate_explicit,</span></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * default_collation. A name is an identifier or a string; the keyword</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> * BINARY at such a position is the name `binary`; the keyword DEFAULT is the</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> * absence of a name. The optional DEFAULT before CHARACTER SET or COLLATE</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> * and the optional equals sign of a table or database option are not kept.</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * BINARY at such a position is the bare name `binary`; the keyword DEFAULT is the</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * absence of a name. The optional DEFAULT before CHARACTER SET or COLLATE</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * and the optional equals sign of a table or database option are not kept.</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * absence of a name. Table and database option owners retain DEFAULT, the</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * introducing keyword and optional equals sign separately from this name.</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * Constructs: Name, CharsetName, CollationName. Terminates: unit</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * productions over strict subtrees.</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-syntax.html.</span></span>
