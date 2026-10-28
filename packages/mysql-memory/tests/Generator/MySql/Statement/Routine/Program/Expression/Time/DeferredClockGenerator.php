@@ -23,16 +23,20 @@ final class DeferredClockGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $precision Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias|null>|null $alias Generated keyword synonym
      */
-    public function __construct(ErisGenerator $clock, ErisGenerator $precision, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $clock, ErisGenerator $precision, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(clock: $parts[0], precision: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
-            $clock,
-            $precision,
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = \Tests\Generator\Operands::bind($clock, static function (\SqlSemantics\Platform\MySql\Statement\Call\Clock $selected) use ($precision, $scalarInformation, $inputSource, $alias): ErisGenerator {
+            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock {
+                return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(clock: $parts[0], precision: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3], alias: $parts[4]);
+            }, \Tests\Generator\Operands::tuple(
+                Generators::constant($selected),
+                $precision,
+                $scalarInformation ?? Generators::constant(null),
+                $inputSource ?? Generators::constant(null),
+                $alias ?? \Tests\Generator\MySql\Statement\Call\Keyword\ClockAliasGenerator::forClock($selected)
+            ));
+        });
     }
 }

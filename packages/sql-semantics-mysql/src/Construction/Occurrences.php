@@ -150,7 +150,7 @@ final class Occurrences
                 ? new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate($arguments[0], $arguments[1], $node->all, $node->valueAll)
                 : new DeferredJsonObjectAggregate($arguments[0], $arguments[1], $node->all, $node->valueAll);
         }
-        return new Aggregate($node->function, $arguments, $node->distinct, $node->all);
+        return new Aggregate($node->function, $arguments, $node->distinct, $node->all, alias: $node->alias);
     }
 
     /**

@@ -67,7 +67,7 @@ final class CallRulesTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (c DATETIME ON UPDATE NOW())')->find('now')[0];
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(), (new CallRules($lowering))->currentTimestamp($node));
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(alias: null), (new CallRules($lowering))->currentTimestamp($node));
     }
 
     public function testWindowNameLowersAWindowName(): void

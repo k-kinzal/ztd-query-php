@@ -105,7 +105,7 @@ final class CallRules
     public function currentTimestamp(Node $now): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp
     {
         $call = (new TemporalRule($this->lowering))->currentTimestamp($now);
-        return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp($call->precision, $call instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall ? $call->parentheses : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
+        return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp($call->precision, $call instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall ? $call->parentheses : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, alias: $call->alias);
     }
 
     /**

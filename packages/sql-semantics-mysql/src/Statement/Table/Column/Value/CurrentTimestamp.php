@@ -31,8 +31,10 @@ final class CurrentTimestamp implements Node
      * @param Numeral|null $precision The optional decimal NUM precision
      * @param OptionalWords $parentheses Whether empty parentheses are written
      */
-    public function __construct(public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias $alias = \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::CurrentTimestamp)
     {
+        Check::input($alias === null || $alias->clock() === \SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, 'A timestamp clause retains a timestamp clock keyword.');
+        Check::input($alias !== null || $parentheses === OptionalWords::Written, 'NOW is written with parentheses.');
         Check::input($precision === null || $precision->isIntegerToken(), 'A timestamp clause precision is a decimal NUM token.');
         Check::input($precision === null || $parentheses === OptionalWords::Written, 'A timestamp clause precision is written in parentheses.');
     }
@@ -50,7 +52,7 @@ final class CurrentTimestamp implements Node
      */
     public function render(Output $out): void
     {
-        $out->keyword('CURRENT_TIMESTAMP');
+        $out->keyword($this->alias->value ?? 'NOW');
         if ($this->parentheses === OptionalWords::Written) {
             $out->glue()->symbol('(')->node($this->precision)->symbol(')');
         }

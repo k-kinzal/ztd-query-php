@@ -50,8 +50,9 @@ final class ClockCall implements Scalar
      * @param Numeral|null $precision The fractional seconds precision, when written
      * @param OptionalWords $parentheses Whether the parentheses are written when they hold no precision
      */
-    public function __construct(public readonly Clock $clock, public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Clock $clock, public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?Keyword\ClockAlias $alias = null)
     {
+        Check::input($alias === null || $alias->clock() === $clock, 'A clock synonym identifies its clock operation.');
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
@@ -85,10 +86,10 @@ final class ClockCall implements Scalar
     public function render(Output $out): void
     {
         if ($this->parentheses === OptionalWords::Omitted) {
-            $out->keyword((string) $this->clock->bare());
+            $out->keyword($this->alias->value ?? (string) $this->clock->bare());
 
             return;
         }
-        $out->keyword($this->clock->value)->glue()->symbol('(')->node($this->precision)->symbol(')');
+        $out->keyword($this->alias->value ?? $this->clock->value)->glue()->symbol('(')->node($this->precision)->symbol(')');
     }
 }

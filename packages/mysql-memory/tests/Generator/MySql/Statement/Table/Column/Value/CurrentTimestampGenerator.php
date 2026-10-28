@@ -22,15 +22,19 @@ final class CurrentTimestampGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $precision Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $parentheses Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias|null>|null $alias Generated timestamp keyword
      */
-    public function __construct(?ErisGenerator $precision = null, ?ErisGenerator $parentheses = null, ?ErisGenerator $inputSource = null)
+    public function __construct(?ErisGenerator $precision = null, ?ErisGenerator $parentheses = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(precision: $parts[0], parentheses: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
-            $precision ?? Generators::constant(null),
-            $parentheses ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = \Tests\Generator\Operands::bind($parentheses ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), static function (\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $words) use ($precision, $inputSource, $alias): ErisGenerator {
+            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp {
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(precision: $parts[0], parentheses: $parts[1], inputSource: $parts[2], alias: $parts[3]);
+            }, \Tests\Generator\Operands::tuple(
+                $precision ?? Generators::constant(null),
+                Generators::constant($words),
+                $inputSource ?? Generators::constant(null),
+                $alias ?? ($words === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written ? \Tests\Generator\MySql\Statement\Call\Keyword\ClockAliasGenerator::forClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now) : \Tests\Generator\MySql\Statement\Call\Keyword\ClockAliasGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::CurrentTimestamp, \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::LocalTime, \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::LocalTimestamp]))
+            ));
+        });
     }
 }

@@ -72,7 +72,9 @@ final class Aggregate implements SetFunction
         public readonly Name|WindowSpecification|null $over = null,
         ?ScalarFact $scalarInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?AggregateAlias $alias = null,
     ) {
+        Check::input($alias === null || $alias->function() === $function, 'An aggregate synonym identifies its aggregate operation.');
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
@@ -136,7 +138,7 @@ final class Aggregate implements SetFunction
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value)->glue()->symbol('(');
+        $out->keyword($this->alias->value ?? $this->function->value)->glue()->symbol('(');
         if ($this->distinct) {
             $out->keyword('DISTINCT');
         }

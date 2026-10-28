@@ -27,6 +27,56 @@ final class QueryExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Every clock synonym reads the same statement instant and exposes the same temporal domain.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordReleases')]
+    public function satisfiesClockSynonymsReadTheSameStatementInstant(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Call\ClockCallGenerator::queries($release))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $session->text = 'Generated clock alternatives without SQL';
+            $reply = (new Execution($session))->statement($statement);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertCount(1, $reply->rows);
+            self::assertSame($reply->rows[0][1], $reply->rows[0][0]);
+            self::assertSame($reply->columns[1]->type, $reply->columns[0]->type);
+            self::assertSame($reply->columns[1]->length, $reply->columns[0]->length);
+            self::assertSame($reply->columns[1]->decimals, $reply->columns[0]->decimals);
+            self::assertSame($reply->columns[1]->flags, $reply->columns[0]->flags);
+            self::assertSame($reply->columns[1]->charset, $reply->columns[0]->charset);
+            self::assertSame('Generated clock alternatives without SQL', $session->text);
+        });
+    }
+
+    /**
+     * Population synonyms consume their generated rows and compute the expected statistic.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordReleases')]
+    public function satisfiesAggregateSynonymsComputeTheirGeneratedPopulation(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator::populations($release))->then(static function (array $sample) use ($release): void {
+            [$statement, $expected] = $sample;
+            self::assertInstanceOf(\SqlSemantics\Statement\AnalyzedStatement::class, $statement);
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $session->text = 'Generated aggregate alternatives without SQL';
+            $reply = (new Execution($session))->statement($statement);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertCount(1, $reply->rows);
+            self::assertNotNull($reply->rows[0][0]);
+            self::assertEqualsWithDelta($expected, (float) $reply->rows[0][0], 0.000001);
+            self::assertSame($reply->rows[0][1], $reply->rows[0][0]);
+            self::assertSame($reply->columns[1]->type, $reply->columns[0]->type);
+            self::assertSame($reply->columns[1]->length, $reply->columns[0]->length);
+            self::assertSame($reply->columns[1]->decimals, $reply->columns[0]->decimals);
+            self::assertSame($reply->columns[1]->flags, $reply->columns[0]->flags);
+            self::assertSame($reply->columns[1]->charset, $reply->columns[0]->charset);
+            self::assertSame('Generated aggregate alternatives without SQL', $session->text);
+        });
+    }
+
+    /**
      * Typed keyword alternatives preserve the function value and protocol metadata.
      */
     #[Test]

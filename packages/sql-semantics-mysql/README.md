@@ -374,6 +374,11 @@ and `ShowDatabases::$listing` retain INDEX/INDEXES/KEYS and DATABASES/SCHEMAS.
 These choices survive publication and rendering without keeping SQL fragments.
 `Statement\Server\Database\DatabaseWord` similarly retains DATABASE or SCHEMA
 on CREATE, ALTER, DROP, legacy directory-name upgrades and SHOW CREATE requests.
+Clock calls and column timestamp clauses retain `ClockAlias` alternatives such
+as CURRENT_TIMESTAMP and LOCALTIME. `AggregateAlias` retains population-statistic
+names such as STDDEV_POP and VAR_POP. Their operation identities still determine
+typing and execution; ordinary calls, deferred calls and window aggregates retain
+the same keyword choices during publication.
 
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With

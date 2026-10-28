@@ -49,6 +49,11 @@ final class DeferredWindowAggregate implements DeferredOperand
     public readonly AggregateFunction|DeferredAggregateKind $function;
 
     /**
+     * @var \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateAlias|null The aggregate keyword synonym
+     */
+    public readonly ?\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateAlias $alias;
+
+    /**
      * @var list<Scalar> The original arguments in order
      */
     public readonly array $arguments;
@@ -90,6 +95,7 @@ final class DeferredWindowAggregate implements DeferredOperand
         Check::input($aggregate->over === null, 'A retained aggregate has one OVER clause.');
         $json = $aggregate instanceof JsonObjectAggregate || $aggregate instanceof DeferredJsonObjectAggregate;
         $this->function = $aggregate instanceof Aggregate ? $aggregate->function : ($aggregate instanceof GroupConcat ? DeferredAggregateKind::GroupConcat : DeferredAggregateKind::JsonObject);
+        $this->alias = $aggregate instanceof Aggregate ? $aggregate->alias : null;
         $this->arguments =  $json ? [$aggregate->key, $aggregate->value] : $aggregate->arguments;
         $this->distinct =  $json ? false : $aggregate->distinct;
         $this->all = $aggregate instanceof Aggregate ? $aggregate->all : ($json && $aggregate->keyAll);
@@ -143,7 +149,7 @@ final class DeferredWindowAggregate implements DeferredOperand
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value)->glue()->symbol('(');
+        $out->keyword($this->alias->value ?? $this->function->value)->glue()->symbol('(');
         if ($this->distinct) {
             $out->keyword('DISTINCT');
         }

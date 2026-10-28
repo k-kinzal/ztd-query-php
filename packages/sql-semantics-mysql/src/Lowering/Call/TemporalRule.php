@@ -101,10 +101,10 @@ final class TemporalRule
         if (isset(self::CLOCKS[$form->signature])) {
             [$clock, $precise] = self::CLOCKS[$form->signature];
             if ($precise) {
-                return $this->clock($clock, $form->node(1));
+                return $this->clock($clock, $form->node(1), \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::tryFrom(strtoupper($form->token(0)->text)));
             }
 
-            return new ClockCall($clock, null, $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
+            return new ClockCall($clock, null, $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted, alias: \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::tryFrom(strtoupper($form->token(0)->text)));
         }
         if (isset(self::ARITHMETIC[$form->signature])) {
             return $this->arithmetic($form, self::ARITHMETIC[$form->signature]);
@@ -176,18 +176,18 @@ final class TemporalRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->clock(Clock::Now, $form->node(1));
+        return $this->clock(Clock::Now, $form->node(1), \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::tryFrom(strtoupper($form->token(0)->text)));
     }
 
     /**
      * Separates an ordinary scalar clock from a stored precision condition.
      */
-    public function clock(Clock $clock, Node $operand): ClockCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock
+    public function clock(Clock $clock, Node $operand, ?\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias $alias = null): ClockCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock
     {
         $precision = $this->precision($operand);
         return $precision !== null && (int) $precision->text % 256 > 6
-            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock($clock, $precision)
-            : new ClockCall($clock, $precision, $this->parentheses($operand));
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock($clock, $precision, alias: $alias)
+            : new ClockCall($clock, $precision, $this->parentheses($operand), alias: $alias);
     }
 
     /**

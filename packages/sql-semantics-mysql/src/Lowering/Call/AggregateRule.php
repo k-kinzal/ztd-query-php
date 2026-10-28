@@ -132,15 +132,16 @@ final class AggregateRule
             'star' => [$this->lowering->options->present($form->node($position)), []],
         };
 
+        $alias = \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateAlias::tryFrom(strtoupper($form->token(0)->text));
         $over = $window === null ? null : $this->windows->windowing($form->node($window));
         if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
             \SqlSemantics\Diagnostic\Check::invariant($arguments !== [], 'A retained aggregate has arguments.');
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate($function, $arguments, $distinct, $all, $over);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate($function, $arguments, $distinct, $all, $over, alias: $alias);
         }
         /**
  * @var list<Scalar> $arguments
  */
-        return $this->windowed(new Aggregate($function, $arguments, $distinct, $all), $over);
+        return $this->windowed(new Aggregate($function, $arguments, $distinct, $all, alias: $alias), $over);
     }
 
     /**
@@ -269,7 +270,7 @@ final class AggregateRule
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate($aggregate->key, $aggregate->value, $aggregate->keyAll, $aggregate->valueAll, $over);
         }
         return match (true) {
-            $aggregate instanceof Aggregate => new Aggregate($aggregate->function, $aggregate->arguments, $aggregate->distinct, $aggregate->all, $over),
+            $aggregate instanceof Aggregate => new Aggregate($aggregate->function, $aggregate->arguments, $aggregate->distinct, $aggregate->all, $over, alias: $aggregate->alias),
             $aggregate instanceof GroupConcat => new GroupConcat($aggregate->arguments, $aggregate->distinct, $aggregate->order, $aggregate->separator, $over),
             default => new JsonObjectAggregate($aggregate->key, $aggregate->value, $aggregate->keyAll, $aggregate->valueAll, $over),
         };

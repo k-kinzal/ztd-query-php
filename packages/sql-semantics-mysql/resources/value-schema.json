@@ -715,6 +715,7 @@
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias",
         "all": "bool",
         "arguments": "array",
         "distinct": "bool",
@@ -722,6 +723,10 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateFunction": {
         "name": "string",
@@ -764,6 +769,7 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\ClockCall": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ClockAlias",
         "clock": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Clock",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
@@ -855,6 +861,10 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ArgumentSyntax": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ClockAlias": {
         "name": "string",
         "value": "string"
     },
@@ -3155,6 +3165,7 @@
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredAggregate": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias",
         "all": "bool",
         "arguments": "array",
         "distinct": "bool",
@@ -3240,6 +3251,7 @@
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredWindowAggregate": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias",
         "all": "bool",
         "arguments": "array",
         "distinct": "bool",
@@ -3452,6 +3464,7 @@
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Time\\DeferredClock": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ClockAlias",
         "clock": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Clock",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "precision": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
@@ -4527,6 +4540,7 @@
         "medium": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Value\\CurrentTimestamp": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ClockAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "precision": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"

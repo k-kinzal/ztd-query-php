@@ -48,8 +48,9 @@ final class DeferredAggregate implements DeferredOperand
      * @param bool $all Whether ALL is written
      * @param Name|WindowSpecification|null $over The optional window
      */
-    public function __construct(public readonly AggregateFunction $function, array $arguments, public readonly bool $distinct = false, public readonly bool $all = false, public readonly Name|WindowSpecification|null $over = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly AggregateFunction $function, array $arguments, public readonly bool $distinct = false, public readonly bool $all = false, public readonly Name|WindowSpecification|null $over = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateAlias $alias = null)
     {
+        Check::input($alias === null || $alias->function() === $function, 'An aggregate synonym identifies its aggregate operation.');
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
@@ -98,7 +99,7 @@ final class DeferredAggregate implements DeferredOperand
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value)->glue()->symbol('(');
+        $out->keyword($this->alias->value ?? $this->function->value)->glue()->symbol('(');
         if ($this->distinct) {
             $out->keyword('DISTINCT');
         }

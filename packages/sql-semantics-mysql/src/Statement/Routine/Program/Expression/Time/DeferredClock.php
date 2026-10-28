@@ -37,8 +37,9 @@ final class DeferredClock implements DeferredOperand
      * @param Clock $clock The time function
      * @param Numeral $precision The complete decimal NUM operand
      */
-    public function __construct(public readonly Clock $clock, public readonly Numeral $precision, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Clock $clock, public readonly Numeral $precision, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias $alias = null)
     {
+        Check::input($alias === null || $alias->clock() === $clock, 'A clock synonym identifies its clock operation.');
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
@@ -74,6 +75,6 @@ final class DeferredClock implements DeferredOperand
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->clock->value)->glue()->symbol('(')->node($this->precision)->symbol(')');
+        $out->keyword($this->alias->value ?? $this->clock->value)->glue()->symbol('(')->node($this->precision)->symbol(')');
     }
 }
