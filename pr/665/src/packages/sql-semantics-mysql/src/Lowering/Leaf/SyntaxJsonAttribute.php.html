@@ -56,8 +56,8 @@
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Interprets an engine attribute before a later token can obscure its refusal.</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * The same JSON domain guards direct construction and SQL input. Rejection</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * retains only decoded operand data and its completed input boundary.</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * Complete definitions retain their operands and publish the same JSON condition.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * An unfinished input retains the decoded operand and its completion boundary.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility SqlSemantics\Platform\MySql</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
@@ -73,7 +73,7 @@
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    }</span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * Refuses invalid decoded JSON before publishing the enclosing structure.</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * Answers the completed JSON condition when later syntax prevents publication.</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rejected</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, <span class="tok-id">Lowering</span> <span class="tok-var">$lowering</span>): ?<span class="tok-id">RejectedInput</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    {</span>

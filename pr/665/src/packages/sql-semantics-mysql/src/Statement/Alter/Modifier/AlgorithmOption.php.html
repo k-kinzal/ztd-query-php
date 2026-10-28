@@ -59,13 +59,13 @@
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * INPLACE and COPY, INSTANT from 8.0 on, and the word DEFAULT spelled as an</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * identifier in 5.6 and 5.7, compared without regard to case. Any other name</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> * is the diagnostic UnknownAlterChoice (MYSQL-ALTER-CHOICES-001). The name is</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * is refused before construction (MYSQL-ALTER-CHOICES-001). The name is</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * is retained with a definition condition (MYSQL-ALTER-CHOICES-001). The name is</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * kept as written; the keyword DEFAULT is the absent name.</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Refusing an unknown option name</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name(&#039;unknown&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Retaining an unknown option name</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name(&#039;unknown&#039;)))-&gt;algorithm?-&gt;value // =&gt; &#039;unknown&#039;</span></span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Requesting an in-place change</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $option = new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Statement\Identifier\Name(&#039;INPLACE&#039;));</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> *     $option-&gt;algorithm?-&gt;value // =&gt; &#039;INPLACE&#039;</span></span>
@@ -82,43 +82,43 @@
 <span class="src-line" data-diff="removed"><span class="ln">38</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Name</span> <span class="tok-var">$algorithm</span>)</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Name</span> <span class="tok-var">$algorithm</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$equals</span> = <span class="tok-id">true</span>)</span>
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    {</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-id">\SqlSemantics\Diagnostic\Check</span>::<span class="tok-id">input</span>((<span class="tok-kw">new</span> <span class="tok-id">Choices</span>())-&gt;<span class="tok-id">known</span>(<span class="tok-var">$algorithm</span>, <span class="tok-id">false</span>), <span class="tok-str">&#039;The algorithm is a known table-change option.&#039;</span>);</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * Reports an algorithm the server of the release does not know.</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveOption</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    {</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>        (<span class="tok-kw">new</span> <span class="tok-id">Choices</span>())-&gt;<span class="tok-id">algorithm</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span>, <span class="tok-var">$derivation</span>);</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    }</span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a></span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     * Derives the option as an action of ALTER TABLE.</span></span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveCommand</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    {</span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">deriveOption</span>(<span class="tok-var">$derivation</span>);</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>    }</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a></span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     * Writes the option.</span></span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>    {</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * Reports an algorithm the server of the release does not know.</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveOption</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span>        (<span class="tok-kw">new</span> <span class="tok-id">Choices</span>())-&gt;<span class="tok-id">algorithm</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span>, <span class="tok-var">$derivation</span>);</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        (<span class="tok-kw">new</span> <span class="tok-id">Choices</span>())-&gt;<span class="tok-id">algorithm</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span>, <span class="tok-var">$derivation</span>, <span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     * Derives the option as an action of ALTER TABLE.</span></span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveCommand</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    {</span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">deriveOption</span>(<span class="tok-var">$derivation</span>);</span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    }</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a><span class="tok-com">     * Writes the option.</span></span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">63</span>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ALGORITHM&#039;</span>)-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;=&#039;</span>);</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ALGORITHM&#039;</span>);</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">equals</span>) {</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;=&#039;</span>);</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        }</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DEFAULT&#039;</span>);</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>        } <span class="tok-kw">else</span> {</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Label</span>);</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        }</span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>    }</span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>}</span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ALGORITHM&#039;</span>);</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">equals</span>) {</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;=&#039;</span>);</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        }</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DEFAULT&#039;</span>);</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>        } <span class="tok-kw">else</span> {</span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">algorithm</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Label</span>);</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>        }</span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    }</span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>}</span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
