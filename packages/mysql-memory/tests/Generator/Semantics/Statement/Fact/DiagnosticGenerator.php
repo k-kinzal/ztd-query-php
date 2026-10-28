@@ -56,6 +56,7 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Server\Problem\SpatialProblemGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Alter\Problem\UnknownAlterChoiceGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Table\Problem\Generation\RefusedOperandGenerator::executionForms();
+        yield from \Tests\Generator\MySql\Statement\Table\Problem\Generation\InvalidAttributeGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Expression\Problem\UnknownCharsetGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Expression\Problem\CollationMismatchGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Call\Problem\InvalidJsonPathGenerator::executionForms();

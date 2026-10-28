@@ -141,6 +141,7 @@ final class TableExpressions
         foreach ($this->elements() as $position => $element) {
             $specification = $element->specification;
             if ($specification instanceof GeneratedColumn) {
+                \SqlSemantics\Diagnostic\Check::invariant($specification->expression instanceof Scalar, 'A generation expression reaches compilation only after its row and deferred operand conditions pass.');
                 (new ExpressionRules())->grouped($specification->expression);
                 $this->generatedReferences($specification->expression, $position, $columns);
                 array_splice($columns, $position, 1, [$columns[$position]->withGeneration($this->compiled($specification->expression, $scope), $specification->storage === GeneratedStorage::Stored, $text->text($specification->expression))]);

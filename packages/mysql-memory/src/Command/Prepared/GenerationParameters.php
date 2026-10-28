@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Prepared;
 
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement as M;
-use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
 
@@ -22,23 +19,23 @@ use SqlSemantics\Statement\Scalar;
 final class GenerationParameters
 {
     /**
-     * Returns the written marker occurrences without retaining rendered SQL.
+     * Reads marker occurrences in their semantic input-slot order.
      *
-     * @return list<Node>
+     * @return list<M\Literal\Parameter>
      */
-    public function occurrences(Node $definition, GrammarRelease $release): array
+    public function occurrences(Node $definition): array
     {
-        $output = new Output(new Codec($release));
-        $definition->render($output);
-        return $output->parameters();
+        $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($definition, M\Literal\Parameter::class);
+        usort($markers, static fn (M\Literal\Parameter $left, M\Literal\Parameter $right): int => $left->position <=> $right->position);
+        return $markers;
     }
 
     /**
      * Supplies a preparation slot for each marker in a complete table instruction.
      */
-    public function capture(Node $definition, GrammarRelease $release): ParameterBindings
+    public function capture(Node $definition): ParameterBindings
     {
-        return new ParameterBindings(array_fill(0, count($this->occurrences($definition, $release)), [Domain::string(16383, M\Type\Resolved\Collation::binary()), false]));
+        return new ParameterBindings(array_fill(0, max([0, ...array_map(static fn (M\Literal\Parameter $marker): int => $marker->position + 1, $this->occurrences($definition))]), [Domain::string(16383, M\Type\Resolved\Collation::binary()), false]));
     }
 
     /**
@@ -47,12 +44,12 @@ final class GenerationParameters
      * @param list<array{int|float|string|null, Domain}> $parameters Bound protocol values
      * @return array<int, Scalar> Literal values indexed by original occurrence identity
      */
-    public function values(Node $definition, GrammarRelease $release, array $parameters): array
+    public function values(Node $definition, array $parameters): array
     {
         $values = [];
-        foreach ($this->occurrences($definition, $release) as $position => $occurrence) {
-            \SqlSemantics\Diagnostic\Check::invariant(isset($parameters[$position]), 'A retained generation marker has a bound execution value.');
-            $values[spl_object_id($occurrence)] = $this->literal(...$parameters[$position]);
+        foreach ($this->occurrences($definition) as $occurrence) {
+            \SqlSemantics\Diagnostic\Check::invariant(isset($parameters[$occurrence->position]), 'A retained generation marker has a bound execution value.');
+            $values[spl_object_id($occurrence)] = $this->literal(...$parameters[$occurrence->position]);
         }
         return $values;
     }

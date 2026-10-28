@@ -47,7 +47,7 @@ final class ParameterBindings
             throw new LogicException('No parameter capture for ' . $operation::class);
         }
         if (\MySqlMemory\Session\Problem\Stages::definitionCondition($operation) && !($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $operation->query !== null)) {
-            return (new GenerationParameters())->capture($operation, $operation->profile()->grammar);
+            return (new GenerationParameters())->capture($operation);
         }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update && $operation->hasExecutionCondition()) {
             $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($operation, Parameter::class);

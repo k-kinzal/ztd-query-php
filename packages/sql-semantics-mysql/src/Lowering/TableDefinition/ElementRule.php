@@ -120,7 +120,6 @@ final class ElementRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
-     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function column(Node $spec, ?References $references = null, ?CheckConstraint $check = null): ColumnDefinition
     {

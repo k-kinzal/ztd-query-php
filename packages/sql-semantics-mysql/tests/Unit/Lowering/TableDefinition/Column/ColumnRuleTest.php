@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Dialect;
@@ -78,38 +77,35 @@ final class ColumnRuleTest extends TestCase
         self::assertCount(3, (new ColumnRule($lowering))->attributes($node));
     }
 
-    public function testSpecificationRefusesAnAttributeOfAGeneratedColumn(): void
+    public function testSpecificationRetainsAnAttributeOfAGeneratedColumn(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT, g INT AS (a) NOT NULL DEFAULT 1)')->find('field_def')[1];
 
-        $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('Incorrect usage of DEFAULT and generated column');
-
-        (new ColumnRule($lowering))->specification($node);
+        $specification = (new ColumnRule($lowering))->specification($node);
+        self::assertInstanceOf(GeneratedColumn::class, $specification);
+        self::assertCount(2, $specification->attributes);
     }
 
-    public function testRefuseNamesTheFirstRefusedAttribute(): void
+    public function testSpecificationReportsTheFirstIncompatibleAttribute(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('Incorrect usage of COLUMN_FORMAT and generated column');
-
-        $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+        $statement = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+        $conditions = array_values(array_filter($statement->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute));
+        self::assertSame('Incorrect usage of COLUMN_FORMAT and generated column', $conditions[0]->message());
     }
 
-    public function testRefuseNamesTheTypeSerial(): void
+    public function testSpecificationReportsTheTypeSerial(): void
     {
-        $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('Incorrect usage of SERIAL and generated column');
-
-        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        $statement = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        $conditions = array_values(array_filter($statement->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute));
+        self::assertSame('Incorrect usage of SERIAL and generated column', $conditions[0]->message());
     }
 
-    public function testRefuseAcceptsTheOtherAttributes(): void
+    public function testSpecificationAcceptsTheOtherAttributes(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
 

@@ -46,29 +46,30 @@ final class GeneratedColumnTest extends TestCase
      * @param list<Column\ColumnAttribute> $attributes
      */
     #[DataProvider('providerContradictorySpecifications')]
-    public function testRejectsAnIntrinsicGeneratedColumnContradiction(Type\DeclaredName $type, array $attributes): void
+    public function testRetainsAnIntrinsicGeneratedColumnContradiction(Type\DeclaredName $type, array $attributes): void
     {
-        $this->expectExceptionMessage('A generated column cannot have a DEFAULT');
-
-        new GeneratedColumn($type, new NumberLiteral('1'), attributes: $attributes);
+        $specification = new GeneratedColumn($type, new NumberLiteral('1'), attributes: $attributes);
+        self::assertSame($type, $specification->type);
+        self::assertSame($attributes, $specification->attributes);
     }
 
-    public function testRejectsASessionFunctionBeforeOperationConstruction(): void
+    public function testRetainsASessionFunctionBeforeDerivingItsCondition(): void
     {
-        $this->expectExceptionMessage('A generation expression excludes subqueries, session variables, parameter markers and forbidden functions.');
-        new GeneratedColumn(new Integral(Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []));
+        $column = new GeneratedColumn(new Integral(Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\KeywordCall::class, $column->expression);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, $column->expression->function);
     }
 
-    public function testRejectsFullTextSearchBeforeOperationConstruction(): void
+    public function testRetainsFullTextSearchBeforeDerivingItsCondition(): void
     {
-        $this->expectExceptionMessage('A generation expression excludes subqueries, session variables, parameter markers and forbidden functions.');
-        new GeneratedColumn(
+        $column = new GeneratedColumn(
             new Integral(Type\Kind\IntegralKind::Int),
             new \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch(
                 [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))],
                 new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['x']),
             ),
         );
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch::class, $column->expression);
     }
 
     public function testDeriveSpecificationResolvesItsLeadingCollation(): void
@@ -112,9 +113,9 @@ final class GeneratedColumnTest extends TestCase
         self::assertSame('Column c does not exist.', $create->diagnostics()[0]->message());
     }
 
-    public function testRenderLeavesOutGeneratedAlways(): void
+    public function testRenderRetainsGeneratedAlways(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin AS (a) STORED UNIQUE)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE KEY)')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, b TEXT COLLATE utf8mb4_bin GENERATED ALWAYS AS (a) STORED UNIQUE KEY)')->toString());
     }
 
     public function testRenderExcludesDefaultCollationInAGenerationDeclaration(): void

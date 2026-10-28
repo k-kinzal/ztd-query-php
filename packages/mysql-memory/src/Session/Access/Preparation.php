@@ -272,7 +272,7 @@ final class Preparation
      */
     public function alterParameters(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable|\SqlSemantics\Platform\MySql\Statement\Table\CreateIndex $definition, Session $session): void
     {
-        if (!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true) || (new \MySqlMemory\Command\Prepared\GenerationParameters())->occurrences($definition, $session->settings()->release()) === []) {
+        if (!in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true) || (new \MySqlMemory\Command\Prepared\GenerationParameters())->occurrences($definition) === []) {
             return;
         }
         $error = \MySqlMemory\Error\Family\StatementError::DynamicParametersRequireDml;

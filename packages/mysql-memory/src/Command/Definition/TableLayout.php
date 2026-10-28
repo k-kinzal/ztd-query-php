@@ -225,7 +225,7 @@ final class TableLayout
     public static function specified(OrdinaryColumn|GeneratedColumn $specification, array $attributes): OrdinaryColumn|GeneratedColumn
     {
         if ($specification instanceof GeneratedColumn) {
-            return new GeneratedColumn($specification->type, $specification->expression, $specification->collation, $specification->storage, $attributes, $specification->references);
+            return new GeneratedColumn($specification->type, $specification->expression, $specification->collation, $specification->storage, $attributes, $specification->references, generatedAlways: $specification->generatedAlways);
         }
 
         return new OrdinaryColumn($specification->type, $attributes, $specification->references);

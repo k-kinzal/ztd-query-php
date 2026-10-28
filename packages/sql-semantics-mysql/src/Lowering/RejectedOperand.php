@@ -63,7 +63,8 @@ final class RejectedOperand
         if (in_array($node->name, ['alter_algorithm_option', 'alter_lock_option'], true)) {
             return null;
         }
-        return ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node, false) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        $notice = ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node, false) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
+        return $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand || $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute ? null : $notice;
     }
 
     /**

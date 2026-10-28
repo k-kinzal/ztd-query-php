@@ -4459,7 +4459,8 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\GeneratedColumn": {
         "attributes": "array",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
-        "expression": "SqlSemantics\\Statement\\Scalar",
+        "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "generatedAlways": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
         "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
@@ -4469,6 +4470,7 @@
         "attributes": "array",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "expression": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
+        "generatedAlways": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "references": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\References",
         "storage": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\GeneratedStorage",
@@ -4785,6 +4787,10 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\IndexKind",
         "options": "array",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\InvalidAttribute": {
+        "attribute": "string",
+        "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Generation\\OperandKind": {
         "name": "string"

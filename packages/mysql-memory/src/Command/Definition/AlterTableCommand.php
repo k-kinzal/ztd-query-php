@@ -76,7 +76,7 @@ final class AlterTableCommand implements Command
     {
         assert($operation instanceof MySqlStatement && ($operation instanceof AlterTable || $operation instanceof CreateIndex || $operation instanceof DropIndex));
         if ($operation instanceof AlterTable && $operation->hasExecutionCondition()) {
-            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation, $session->settings()->release(), $connection->parameters));
+            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation, $connection->parameters));
             return (new \MySqlMemory\Program\Expression\AlterUse($rewrite))->raise($operation, $session);
         }
         if ($operation instanceof CreateIndex && $operation->hasExecutionCondition()) {

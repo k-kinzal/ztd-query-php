@@ -83,6 +83,9 @@ final class StatementGenerator implements ErisGenerator
         if (version_compare(substr($release->value, 6), '8.0.21', '>=')) {
             array_push($choices, ...self::attributeForms($create));
         }
+        if ($release !== GrammarRelease::MySql5651) {
+            array_push($choices, ...Table\Column\GeneratedColumnGenerator::definitionForms($release, $create));
+        }
         return $choices;
     }
 

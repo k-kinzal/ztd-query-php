@@ -43,7 +43,7 @@ final class ColumnDefinition implements TableElement
      */
     public function deriveElement(Derivation $derivation, Environment $scope): void
     {
-        $this->specification->deriveSpecification($derivation, $scope);
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Conditions())->derive($this, $derivation, $scope);
     }
 
     /**

@@ -91,6 +91,7 @@ final class InputErrors
     public function query(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute => \MySqlMemory\Error\Family\StatementError::WrongUsage->error($diagnostic->attribute, 'generated column'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand => (new \MySqlMemory\Session\Parse\Definition\GeneratedInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause => new SqlError(\MySqlMemory\Error\Family\StatementError::WrongUsage, $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar => \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error(),

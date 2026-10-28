@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Spine;
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Scalar;
  * writes the type and the attributes directly in field_spec. A CHECK clause
  * after a 5.x column definition is the last attribute; an inline
  * REFERENCES clause is the reference of the specification. GENERATED
- * ALWAYS is optional and not kept. The parser of MySQL 8.0 and later reads
+ * ALWAYS is optional and retained on the generation specification. The parser of MySQL 8.0 and later reads
  * every column attribute after a generation expression and then refuses
  * DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT
  * and STORAGE there, and the type SERIAL, with ER_WRONG_USAGE ("Incorrect
@@ -80,7 +79,6 @@ final class ColumnRule
      *
      * @param list<ColumnAttribute> $trailing Attributes written after the specification, such as a 5.x column CHECK
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When a generated column has an attribute or type the server refuses for it
      * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
      */
     public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = [], ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
@@ -92,16 +90,14 @@ final class ColumnRule
         $positions = self::GENERATED[$form->signature] ?? null;
         if ($positions !== null) {
             [$collation, $always, $expression, $storage, $list] = $positions;
-            $this->always($form->node($always));
+            $written = $this->always($form->node($always));
             $type = $this->lowering->types->type($form->node(0));
             $attributes = $this->attributes($form->node($list));
-            $this->refuse($attributes, $type);
             $this->size($type, $name, $definition);
             $value = $this->expression($form->node($expression), $name);
             if (($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value)) {
-                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references);
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references, generatedAlways: $written);
             }
-            \SqlSemantics\Diagnostic\Check::invariant($value instanceof Scalar, 'An ordinary generation expression has a scalar role.');
             return new GeneratedColumn(
                 $type,
                 $value,
@@ -109,6 +105,7 @@ final class ColumnRule
                 $this->storage($form->node($storage)),
                 [...$attributes, ...$trailing],
                 $references,
+                generatedAlways: $written,
             );
         }
 
@@ -177,32 +174,17 @@ final class ColumnRule
     }
 
     /**
-     * Refuses, as the server's parser does, the attributes and the type a generated column cannot have.
-     *
-     * The first such attribute in written order is named, then the type SERIAL.
-     *
-     * @param list<ColumnAttribute> $attributes The attributes in written order
-     * @throws AnalysisException When the generated column has DEFAULT, ON UPDATE, AUTO_INCREMENT, SERIAL DEFAULT VALUE, COLUMN_FORMAT or STORAGE, or the type SERIAL
-     */
-    public function refuse(array $attributes, TypeName $type): void
-    {
-        $word = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->generated($type, $attributes);
-        if ($word !== null) {
-            throw new AnalysisException('Incorrect usage of ' . $word . ' and generated column');
-        }
-    }
-
-    /**
      * Confirms the optional words GENERATED ALWAYS: a node of `opt_generated_always`.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function always(Node $words): void
+    public function always(Node $words): \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords
     {
         $form = $this->lowering->productions->form($words);
         if ($form->signature !== 'opt_generated_always:' && $form->signature !== 'opt_generated_always: GENERATED ALWAYS_SYM') {
             throw ImplementationGap::production($form);
         }
+        return $form->signature === 'opt_generated_always:' ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written;
     }
 
     /**
@@ -225,7 +207,6 @@ final class ColumnRule
     /**
      * Lowers a generation expression: a node of `generated_column_func` or `expr`.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the generation role excludes an operand
      * @throws ImplementationGap When a production has no rule
      */
     public function expression(Node $expression, ?\SqlSemantics\Statement\Identifier\Name $column = null): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
@@ -237,15 +218,7 @@ final class ColumnRule
             }
             $expression = $form->node(0);
         }
-        $operand = $this->lowering->expressions->operand($expression);
-        if ($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($operand)) {
-            return $operand;
-        }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($operand, $column ?? new \SqlSemantics\Statement\Identifier\Name(''), $this->lowering->profile->grammar);
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($problem->column, $problem->kind, $problem->function, $this->lowering->programName ?? $this->lowering->columnTable, $operand), (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
-        }
-        return (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $expression);
+        return $this->lowering->expressions->operand($expression);
     }
 
     /**

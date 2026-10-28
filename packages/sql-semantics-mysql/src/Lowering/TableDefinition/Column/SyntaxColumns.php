@@ -85,7 +85,19 @@ final class SyntaxColumns
     public function attributes(\SqlSemantics\Statement\Node $definition, Lowering $lowering, bool $legacy): ?ParseFailure
     {
         foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($definition) as $column) {
-            if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition && ($problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->problem($column, $lowering->programName ?? $lowering->columnTable)) !== null) {
+            if (!$column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) {
+                continue;
+            }
+            $scope = $lowering->programName ?? $lowering->columnTable;
+            $generation = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Conditions())->problem($column, $lowering->profile->grammar, $scope);
+            if ($generation instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand) {
+                \SqlSemantics\Diagnostic\Check::invariant($column->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn, 'An eager generation condition retains its complete expression.');
+                $generation = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($generation->column, $generation->kind, $generation->function, $scope, $column->specification->expression);
+            }
+            if ($generation !== null) {
+                return new ParseFailure($generation, $generation instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+            }
+            if (($problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->problem($column, $scope)) !== null) {
                 return new ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
             }
         }

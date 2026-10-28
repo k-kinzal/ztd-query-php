@@ -122,7 +122,6 @@ final class TableDefinitionRules
      *
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
-     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function columnSpecification(Node $definition, ?Node $second = null, ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
     {

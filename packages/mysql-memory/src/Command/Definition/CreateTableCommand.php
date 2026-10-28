@@ -51,7 +51,7 @@ final class CreateTableCommand implements Command
     {
         assert($operation instanceof MySqlStatement);
         if ($operation instanceof CreateTable && $operation->hasExecutionCondition()) {
-            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation, $session->settings()->release(), $connection->parameters));
+            $rewrite = new Expression\GenerationRewrite((new \MySqlMemory\Command\Prepared\GenerationParameters())->values($operation, $connection->parameters));
             return (new \MySqlMemory\Program\Expression\TableUse($rewrite))->raise($operation, $session);
         }
         return $this->create($operation, $session, $context, $connection);

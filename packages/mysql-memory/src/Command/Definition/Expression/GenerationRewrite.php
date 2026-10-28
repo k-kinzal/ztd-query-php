@@ -70,7 +70,7 @@ final class GenerationRewrite
         if ((new Operands())->problem($expression, $column->name->column) !== null || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->contains($expression)) {
             return $column;
         }
-        return new M\Table\Column\ColumnDefinition($column->name, new M\Table\Column\GeneratedColumn($specification->type, $expression, $specification->collation, $specification->storage, $specification->attributes, $specification->references));
+        return new M\Table\Column\ColumnDefinition($column->name, new M\Table\Column\GeneratedColumn($specification->type, $expression, $specification->collation, $specification->storage, $specification->attributes, $specification->references, generatedAlways: $specification->generatedAlways));
     }
 
     /**
