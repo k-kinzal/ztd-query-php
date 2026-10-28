@@ -37,13 +37,12 @@ final class ConstraintsTest extends TestCase
         self::assertSame(M\Query\Problem\MisuseRule::RecursiveWithoutUnion, (new Constraints())->problem(new M\Query\QueryExpression($with, new M\Query\ExplicitTable(new QualifiedName(new Name('c')))))?->rule);
     }
 
-    public function testReadRoleExcludesAContradictionBeforeOperationConstruction(): void
+    public function testReadRoleRetainsTheContradictionForExecution(): void
     {
         $table = new M\Query\ExplicitTable(new QualifiedName(new Name('c')));
         $query = new M\Query\QueryExpression(new M\Query\With\With(true, [new M\Query\With\CommonTableExpression(new Name('c'), [], $table)]), new M\Query\ExplicitTable(new QualifiedName(new Name('c'))));
         self::assertSame($query, (new M\Routine\Program\Selection\DeferredQuery($query))->query);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new M\QueryRoot($query);
+        self::assertTrue((new M\QueryRoot($query))->hasExecutionCondition());
     }
 
     public function testDefinitionsRetainsLaterLexicalErrorsAfterAnEarlierDeferredCondition(): void

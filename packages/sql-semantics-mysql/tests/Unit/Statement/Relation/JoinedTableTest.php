@@ -144,14 +144,13 @@ final class JoinedTableTest extends TestCase
 
         new JoinedTable(new TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t')))]), JoinOperator::Cross, new TableReference(new QualifiedName(new Name('t'))));
     }
-    public function testRetainedConditionCannotEnterAnOrdinaryReadRoot(): void
+    public function testRetainedConditionSurvivesAnOrdinaryReadRoot(): void
     {
         $table = new TableReference(new QualifiedName(new Name('t')));
         $clock = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9'));
         $join = new JoinedTable($table, JoinOperator::Join, new TableReference(new QualifiedName(new Name('u'))), $clock);
         self::assertSame($clock, $join->on);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], $join));
+        self::assertTrue((new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], $join)))->hasExecutionCondition());
     }
 
     public function testRetainedConditionRemainsOnTheCompleteUpdate(): void

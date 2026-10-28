@@ -44,12 +44,11 @@ final class DeferredBodyTest extends TestCase
         self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, $body->problem());
     }
 
-    public function testAReachedDefinitionCannotBeConstructedAsAnOrdinaryRead(): void
+    public function testAReachedDefinitionRetainsItsExecutionCondition(): void
     {
         $body = new DeferredBody(new M\Routine\Program\DeferredSelection([new M\Routine\Program\DeferredProjection(new M\Expression\Row([new M\Literal\NumberLiteral('1'), new M\Literal\NumberLiteral('2')]))]));
         $with = new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], $body)]);
         $query = new M\Query\QueryExpression($with, new M\Query\ExplicitTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('c'))));
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new M\QueryRoot($query);
+        self::assertTrue((new M\QueryRoot($query))->hasExecutionCondition());
     }
 }

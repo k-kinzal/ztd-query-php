@@ -23,6 +23,19 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 #[Small]
 final class StatementQueryTest extends TestCase
 {
+    public function testProblemChecksTheCompleteDeferredBlock(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)], options: [\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct], where: new NumberLiteral('1'));
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        $rules = new StatementQuery();
+        self::assertSame([$selection], $rules->blocks($query));
+        self::assertNotNull($rules->problem($query));
+        self::assertTrue($rules->requiresModern($query));
+        $this->expectExceptionMessage('A statement query cannot combine ALL and DISTINCT in one query block.');
+        $rules->check($query);
+    }
+
     public function testProblemFindsContradictoryQuantifiersOnlyOnTheStatementSpine(): void
     {
         $query = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct], [new SelectExpression(new NumberLiteral('1'))]);

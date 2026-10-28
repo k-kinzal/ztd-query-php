@@ -25,13 +25,10 @@ final class RecursiveReferenceTest extends TestCase
 
     public function testAReferenceWithoutAnchorDependsOnTheMissingPart(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze('WITH RECURSIVE c AS (SELECT x FROM c) SELECT 1 FROM c', []);
-            self::fail('An unanchored recursive read is not an ordinary statement.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery::class, $failure->problem);
-            $problem = $failure->problem->query->problem();
-        }
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH RECURSIVE c AS (SELECT x FROM c) SELECT 1 FROM c', []);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($statement->query);
 
         self::assertInstanceOf(Misuse::class, $problem);
         self::assertSame(MisuseRule::RecursiveWithoutUnion, $problem->rule);

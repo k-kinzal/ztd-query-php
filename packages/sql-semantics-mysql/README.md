@@ -576,9 +576,16 @@ conditions are derived after the name, parameters and body are combined, so a
 function implementation can retain an SQL instruction without `RETURN` and
 report why its enclosing function cannot be defined.
 
-Ordinary read roots and scalar subqueries exclude exact repeated input names
-within one fixed database namespace. A stored query can retain those names;
-its declaration reports the first reached input condition. A query body can also
+`QueryRoot` retains complete reads with fixed output or input conditions, such as
+tableless stars, incompatible row widths, non-scalar operands, invalid output
+ordinals and repeated input names. `hasExecutionCondition()` identifies these
+requests; diagnostics describe their conditions, and preparation checks earlier
+dependencies before reporting the applicable error. Reconstruction retains every
+clause, including output destinations and `QUALIFY`.
+
+Scalar subqueries still exclude exact repeated input names within one fixed
+database namespace. A stored query retains those names and its declaration
+reports the first reached input condition. A query body can also
 retain such a template inside an unused CTE; only references reached from its
 owner activate that definition. Names whose equality depends on the default
 database or case-comparison settings remain resolution dependencies.

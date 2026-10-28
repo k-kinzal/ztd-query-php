@@ -2549,4 +2549,35 @@ final class QueryRootGenerator implements ErisGenerator
         }, $warnings);
     }
 
+    /**
+     * Composes complete read requests and their intrinsic or earlier dependency errors.
+     * Constructor operands precede the bound graph so Eris can compare shrink inputs
+     * without traversing diagnostic back references. An irreducible bind retains its value.
+     *
+     * @return ErisGenerator<array{list<mixed>, QueryRoot, int, int}>
+     */
+    public static function constrainedReads(GrammarRelease $release): ErisGenerator
+    {
+        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(Generators::choose(0, 4), new NameGenerator(), Generators::choose(0, 1000), Generators::bool(), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
+            [$kind, $name, $value, $qualified, $missing] = $parts;
+            $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $value), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+            $number = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $value);
+            $table = new \SqlSemantics\Statement\Identifier\QualifiedName($name);
+            $query = match ($kind) {
+                0 => new Select([], [$qualified ? new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard($table) : new \SqlSemantics\Platform\MySql\Statement\Query\Star()]),
+                1 => new Select([], [new SelectExpression($number)], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) ($value + 2))))]),
+                2 => new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($qualified ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('assigned')), $row) : $row)], $missing ? new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($table) : null)),
+                3 => new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new SelectExpression($number)], new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), $row)),
+                default => new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression($number)]), \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))])),
+            };
+            $error = match ($kind) {
+                0 => $qualified ? 1051 : 1096, 1 => 1054, 2 => $missing ? 1146 : 1241, 3 => 1241, default => 1222
+            };
+            $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value, searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
+            $statement = \SqlSemantics\Facade\Semantics::fromStatement($semantics->context([], true), new QueryRoot($query));
+            \SqlSemantics\Diagnostic\Check::invariant($statement instanceof QueryRoot, 'The generated read remains a concrete query statement.');
+            return Generators::constant([$parts, $statement, $error, $kind === 2 && $qualified && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 1 : 0]);
+        });
+    }
+
 }

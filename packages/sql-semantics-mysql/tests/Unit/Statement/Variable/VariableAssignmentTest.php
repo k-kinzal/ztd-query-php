@@ -89,9 +89,10 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarReportsARowOnceAndPassesOnAValueWithoutType(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
-        (new Semantics(Dialect::MySql))->analyze('SELECT @a := (1, 2)');
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT @a := (1, 2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertContains('Operand should contain 1 column(s), not 2.', array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheTargetTheOperatorAndTheValue(): void

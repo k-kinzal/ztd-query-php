@@ -265,14 +265,12 @@ final class CommonTablesTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerRecursiveRefusals')]
-    public function testBindRetainsARefusedReadWithoutConstructingAnOrdinaryStatement(string $sql, MisuseRule $rule): void
+    public function testBindRetainsTheCompleteReadAndItsRecursiveCondition(string $sql, MisuseRule $rule): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze($sql);
-            self::fail('A contradictory recursive read cannot become an ordinary statement.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery::class, $failure->problem);
-            self::assertEquals(new Misuse($rule, new Name('c')), $failure->problem->query->problem());
-        }
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertContainsEquals(new Misuse($rule, new Name('c')), $statement->diagnostics());
+        self::assertSame($sql, $statement->toString());
     }
 }

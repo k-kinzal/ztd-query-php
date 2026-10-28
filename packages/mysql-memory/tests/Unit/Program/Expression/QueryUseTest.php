@@ -18,6 +18,16 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class QueryUseTest extends TestCase
 {
+    public function testStatementPreparesTheRetainedQueryWithoutSqlInput(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $statement = new M\QueryRoot(new M\Query\Select([], [new M\Query\Star()]));
+        $session->text = 'Unrelated query label';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1096);
+        (new QueryUse())->statement($statement, $session);
+    }
+
     public function testTemplatesPrepareInnerOperandsBeforeOuterColumns(): void
     {
         $session = (new Instance())->connect();

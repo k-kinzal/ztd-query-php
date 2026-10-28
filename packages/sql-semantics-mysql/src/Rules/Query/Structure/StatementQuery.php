@@ -12,6 +12,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection;
 use SqlSemantics\Statement\Query;
 
 /**
@@ -33,8 +35,8 @@ final class StatementQuery
         Check::input($this->problem($query) === null, 'A statement query cannot combine ALL and DISTINCT in one query block.');
         foreach ($this->blocks($query) as $block) {
             Check::input(!$block instanceof OrderedSetOperation, 'An ordered legacy set operation belongs to a subquery only.');
-            if ($block instanceof Select) {
-                Check::input($block->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
+            if ($block instanceof Select || $block instanceof DeferredSelection) {
+                Check::input(!$block instanceof Select || $block->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
                 Check::input($block->procedure === null || $block->from !== null, 'A standalone PROCEDURE ANALYSE query requires a FROM clause.');
             }
         }
@@ -47,7 +49,7 @@ final class StatementQuery
     public function problem(Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict
     {
         foreach ($this->blocks($query) as $block) {
-            if ($block instanceof Select && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, $block->options, true) && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $block->options, true)) {
+            if (($block instanceof Select || $block instanceof DeferredSelection) && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, $block->options, true) && in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $block->options, true)) {
                 return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct);
             }
         }
@@ -60,7 +62,7 @@ final class StatementQuery
     public function requiresModern(Query $query): bool
     {
         foreach ($this->blocks($query) as $block) {
-            if ($block instanceof Select && $block->from === null && ($block->where !== null || $block->groupBy !== null || $block->having !== null)) {
+            if (($block instanceof Select || $block instanceof DeferredSelection) && $block->from === null && ($block->where !== null || $block->groupBy !== null || $block->having !== null)) {
                 return true;
             }
         }
@@ -71,11 +73,12 @@ final class StatementQuery
     /**
      * Collects statement-level bodies without entering scalar subqueries or CTE definitions.
      *
-     * @return non-empty-list<Query>
+     * @return non-empty-list<Query|DeferredSelection>
      */
     public function blocks(Query|LeadingUnion $query): array
     {
         return match (true) {
+            $query instanceof DeferredBody => [$query->selection],
             $query instanceof QueryExpression => $this->blocks($query->body),
             $query instanceof ParenthesizedQuery, $query instanceof QueryStatement => $this->blocks($query->query),
             $query instanceof SetOperation, $query instanceof LeadingUnion => [...$this->blocks($query->left), ...$this->blocks($query->right)],

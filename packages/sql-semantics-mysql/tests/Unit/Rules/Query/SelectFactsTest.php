@@ -66,9 +66,10 @@ final class SelectFactsTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerScalarPositions')]
     public function testDeriveReportsARowWhereTheServerTakesOneValue(string $sql, int $width): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Operand should contain 1 column(s), not ' . $width . '.');
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertContains('Operand should contain 1 column(s), not ' . $width . '.', array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testWindowsReportsANameDefinedTwice(): void

@@ -68,10 +68,12 @@ final class QuantifiedComparisonTest extends TestCase
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->diagnostics());
     }
 
-    public function testEqualAllCannotPublishARowOperand(): void
+    public function testEqualAllRetainsARowOperandForExecution(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ALL (SELECT 1, 2)');
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ALL (SELECT 1, 2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertNotEmpty($statement->diagnostics());
     }
 
     public function testNullSafeEqualityCannotBeQuantified(): void

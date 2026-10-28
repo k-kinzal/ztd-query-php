@@ -9,7 +9,6 @@ use MySqlMemory\Session\Parse\LocatedErrors;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
 
 #[CoversClass(LocatedErrors::class)]
@@ -51,13 +50,10 @@ final class LocatedErrorsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $session->text = "ALTER TABLE missing\nPARTITION BY HASH ( /* marker */ (USER ( )))";
-        try {
-            $session->semantics()->analyze($session->text);
-            self::fail('Session-dependent partition methods have no constructible interpretation.');
-        } catch (RejectedInput $failure) {
-            self::assertInstanceOf(InvalidPartitionExpression::class, $failure->problem);
-            $error = (new LocatedErrors())->located($failure->problem, $failure->sources, $session);
-        }
+        $statement = $session->analyze($session->text);
+        $problems = array_values(array_filter($statement->statementInformation()->diagnostics, static fn ($problem): bool => $problem instanceof InvalidPartitionExpression));
+        self::assertCount(1, $problems);
+        $error = (new LocatedErrors())->error($problems[0], $statement, $session);
         self::assertNotNull($error);
         self::assertSame(1064, $error->getCode());
         self::assertStringEndsWith("near '(USER ( )))' at line 2", $error->getMessage());

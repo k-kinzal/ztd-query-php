@@ -72,6 +72,9 @@ final class Problems
      */
     public function check(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\QueryUse())->statement($operation, $session);
+        }
         $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
         if ($operation instanceof MySqlStatement) {

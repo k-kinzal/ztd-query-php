@@ -23,6 +23,20 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class QueryRootTest extends TestCase
 {
+    public function testHasExecutionConditionKeepsAReadRequestAndItsDiagnostic(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $runnable = $semantics->analyze('SELECT 1');
+        $refused = $semantics->analyze('SELECT *');
+        self::assertInstanceOf(QueryRoot::class, $runnable);
+        self::assertInstanceOf(QueryRoot::class, $refused);
+        self::assertFalse($runnable->hasExecutionCondition());
+        self::assertTrue($refused->hasExecutionCondition());
+        self::assertCount(1, $refused->diagnostics());
+        self::assertSame('No tables used', $refused->diagnostics()[0]->message());
+        self::assertSame('SELECT *', $refused->toString());
+    }
+
     public function testDeriveStatementPublishesTheQueryOutput(): void
     {
         $body = new ValuesQuery([new ValueRow([new NumberLiteral('1')])]);
@@ -44,42 +58,37 @@ final class QueryRootTest extends TestCase
         self::assertNull((new QueryRoot(new ValuesQuery([new ValueRow([new NumberLiteral('1')])])))->input());
     }
 
-    public function testRenderRefusesADeferredSortInAReadRoot(): void
+    public function testRenderRetainsADeferredSortInAReadRoot(): void
     {
         $order = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]));
         $body = new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))]), \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('2'))])), [$order]);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new QueryRoot($body);
+        self::assertTrue((new QueryRoot($body))->hasExecutionCondition());
     }
 
-    public function testTheConstructorRejectsAPositionBeyondTheFixedProjection(): void
+    public function testTheConstructorRetainsAPositionBeyondTheFixedProjection(): void
     {
         $query = new Select([], [new SelectExpression(new NumberLiteral('1'))], orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')))]);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new QueryRoot($query);
+        self::assertTrue((new QueryRoot($query))->hasExecutionCondition());
     }
 
-    public function testTheConstructorRejectsZeroEvenWhenTheProjectionDependsOnTheCatalog(): void
+    public function testTheConstructorRetainsZeroEvenWhenTheProjectionDependsOnTheCatalog(): void
     {
         $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new TableReference(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('0')))]);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new QueryRoot($query);
+        self::assertTrue((new QueryRoot($query))->hasExecutionCondition());
     }
 
-    public function testTheConstructorRejectsAPositionBeyondADerivedStar(): void
+    public function testTheConstructorRetainsAPositionBeyondADerivedStar(): void
     {
         $source = new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new Select([], [new SelectExpression(new NumberLiteral('1'))]), new Name('q'));
         $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], $source, orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')))]);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new QueryRoot($query);
+        self::assertTrue((new QueryRoot($query))->hasExecutionCondition());
     }
 
-    public function testTheConstructorRejectsAPositionBeyondACommonStar(): void
+    public function testTheConstructorRetainsAPositionBeyondACommonStar(): void
     {
         $with = new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression(new Name('c'), [], new Select([], [new SelectExpression(new NumberLiteral('1'))]))]);
         $body = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new TableReference(new QualifiedName(new Name('c'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal(new NumberLiteral('2')))]);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression($with, $body));
+        self::assertTrue((new QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression($with, $body)))->hasExecutionCondition());
     }
 
     public function testRenderRetainsTheQueryBody(): void

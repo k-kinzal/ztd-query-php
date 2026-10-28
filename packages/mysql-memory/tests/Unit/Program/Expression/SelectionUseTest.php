@@ -61,6 +61,7 @@ final class SelectionUseTest extends TestCase
         $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AssignmentInExpression);
         $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: null, diagnostics: [], warnings: [$notice]);
         (new SelectionUse())->diagnosed($facts, $session);
+        (new SelectionUse())->diagnosed($facts, $session, readingNotices: false);
         self::assertSame([['Warning', 1287, $notice->message()]], $session->diagnostics->conditions);
     }
 }

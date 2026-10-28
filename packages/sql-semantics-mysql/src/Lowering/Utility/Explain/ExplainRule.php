@@ -227,6 +227,11 @@ final class ExplainRule
      */
     public function deferred(Form $form): Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets
     {
+        $node = $form->node(self::EXPLAINED[$form->signature] ?? throw ImplementationGap::production($form));
+        if (isset(self::QUERIES[$node->name])) {
+            return (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->read($node)
+                ?? $this->lowering->origins->record((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($this->lowering->queries->query($node), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0), $node);
+        }
         try {
             return $this->explained($form);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {

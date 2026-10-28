@@ -16,14 +16,13 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class ScopedOperandsTest extends TestCase
 {
-    public function testProblemRejectsAValueWhoseEnclosingDefinitionSuppliesTwoColumns(): void
+    public function testProblemRetainsAValueWhoseEnclosingDefinitionSuppliesTwoColumns(): void
     {
         $value = new M\Query\SelectExpression(new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new QualifiedName(new Name('c'))))));
         $rules = new ScopedOperands();
         self::assertNull($rules->problem($value, []));
         self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, $rules->problem($value, ['c' => [new Name('a'), new Name('b')]]));
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new M\QueryRoot(new M\Query\QueryExpression(new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1')), new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]))]), new M\Query\Select([], [$value])));
+        self::assertTrue((new M\QueryRoot(new M\Query\QueryExpression(new M\Query\With\With(false, [new M\Query\With\CommonTableExpression(new Name('c'), [], new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1')), new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]))]), new M\Query\Select([], [$value]))))->hasExecutionCondition());
     }
 
     public function testProblemPreservesRowsInComparisonsAndMembership(): void

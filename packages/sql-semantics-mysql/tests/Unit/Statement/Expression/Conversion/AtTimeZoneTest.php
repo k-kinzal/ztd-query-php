@@ -29,16 +29,14 @@ final class AtTimeZoneTest extends TestCase
     public function testInputRefusalRetainsAnUnsupportedZoneAsADeferredCondition(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
-        try {
-            $semantics->analyze("SELECT CAST(NULL AT TIME ZONE '10' AS DATETIME)");
-            self::fail('An unsupported zone must not become an ordinary scalar.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection::class, $failure->problem);
-            $diagnostic = $failure->problem->problem();
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
-            self::assertFalse($diagnostic->operand);
-            self::assertSame('10', $diagnostic->expression->zone->value);
-        }
+        $statement = $semantics->analyze("SELECT CAST(NULL AT TIME ZONE '10' AS DATETIME)");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $statement->query);
+        $diagnostic = $statement->query->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
+        self::assertFalse($diagnostic->operand);
+        self::assertSame('10', $diagnostic->expression->zone->value);
+        self::assertSame("SELECT CAST(NULL AT TIME ZONE '10' AS DATETIME)", $statement->toString());
     }
 
     public function testDeriveScalarIsADateTimeOfThePrecision(): void
@@ -63,19 +61,16 @@ final class AtTimeZoneTest extends TestCase
     public function testInputRefusalRetainsTheConversionWithoutPublishingAnImpossibleScalar(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
-        try {
-            $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
-            self::fail('An intrinsically incompatible conversion must not become an ordinary query.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection::class, $failure->problem);
-            $diagnostic = $failure->problem->problem();
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
-            $item = $failure->problem->selection->items[0];
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $item);
-            self::assertSame($item->expression, $diagnostic->expression);
-            self::assertTrue($diagnostic->operand);
-            self::assertSame('Cannot cast value to TIMESTAMP WITH TIME ZONE.', $diagnostic->message());
-        }
+        $statement = $semantics->analyze("SELECT CAST(CAST(1 AS SIGNED) AT TIME ZONE '+00:00' AS DATETIME), missing");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $statement->query);
+        $diagnostic = $statement->query->problem();
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion::class, $diagnostic);
+        $item = $statement->query->selection->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $item);
+        self::assertSame($item->expression, $diagnostic->expression);
+        self::assertTrue($diagnostic->operand);
+        self::assertSame('Cannot cast value to TIMESTAMP WITH TIME ZONE.', $diagnostic->message());
     }
 
 

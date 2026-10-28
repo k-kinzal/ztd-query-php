@@ -19,8 +19,8 @@ use SqlSemantics\Statement\Query;
  * A query template whose retained operands are checked when a read reaches it.
  *
  * CTE definitions are not themselves read statements. An unused definition can
- * retain a row where a scalar would be required on reference. QueryRoot excludes
- * this template from reached read positions, while retaining unused definitions.
+ * retain a row where a scalar would be required on reference. QueryRoot retains
+ * this template and its read condition; unused definitions remain inactive.
  * No source SQL, parser node or substitute scalar is kept.
  *
  * @visibility public

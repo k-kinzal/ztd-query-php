@@ -22,6 +22,19 @@ use WeakReference;
 final class QueryUse
 {
     /**
+     * Prepares a complete standalone query with an intrinsic read condition.
+     *
+     * @throws \MySqlMemory\Error\SqlError Always, after checking earlier dependencies
+     */
+    public function statement(\SqlSemantics\Platform\MySql\Statement\QueryRoot $statement, Session $session): never
+    {
+        if ($statement->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            (new SelectionUse())->raise($statement->query->selection, $session, false, readingNotices: false);
+        }
+        $this->raise(new DeferredQuery($statement->query), $session, false);
+    }
+
+    /**
      * Prepares the query's already resolved dependencies without sibling conditions.
      */
     public function prepare(\SqlSemantics\Statement\Query $query, \MySqlMemory\Evaluation\Compile\Compiler $compiler, bool $exists = false, bool $deferSetWidth = false, ?\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $write = null): void

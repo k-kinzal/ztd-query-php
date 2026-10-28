@@ -19,16 +19,16 @@ use SqlSemantics\Statement\Query;
 /**
  * A VALUES query template with a retained operand preparation condition.
  *
- * QueryRoot excludes reached templates. CTE and stored instruction roles retain
- * every row, including rows before and after the first deferred operand.
+ * QueryRoot, CTE and stored instruction roles retain every row, including rows
+ * before and after the first deferred operand. Reading checks the condition.
  *
  * @visibility public
  * @example Refusing a template without a deferred row
  *     new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a reached template as an ordinary read statement
+ * @example Retaining a reached template with its execution condition
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow([$row])]);
- *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query))->hasExecutionCondition() // => true
  */
 final class DeferredValuesQuery implements Query
 {

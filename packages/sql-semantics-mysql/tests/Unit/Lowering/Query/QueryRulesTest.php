@@ -28,6 +28,16 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 #[Medium]
 final class QueryRulesTest extends TestCase
 {
+    public function testStatementRetainsTheTablelessQualifySeed(): void
+    {
+        $sql = "SELECT * INTO DUMPFILE 'text' QUALIFY ((((USER()))))";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertSame($sql, $statement->toString());
+        self::assertSame('No tables used', $statement->diagnostics()[0]->message());
+    }
+
     public function testNamedRetainsTheSpellingOfAnAlreadyLoweredCallArgument(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT ABS(cast('123' as decimal(1))) AS result");

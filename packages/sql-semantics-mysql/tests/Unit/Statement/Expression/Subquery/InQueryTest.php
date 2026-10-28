@@ -29,10 +29,12 @@ final class InQueryTest extends TestCase
         self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
     }
 
-    public function testFixedWidthMismatchCannotBePublished(): void
+    public function testFixedWidthMismatchRemainsAnExecutionCondition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 IN (SELECT NULL, 2)');
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 IN (SELECT NULL, 2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertNotEmpty($statement->diagnostics());
     }
 
     public function testNestedRowCannotMatchAnUnknownFlatProjection(): void

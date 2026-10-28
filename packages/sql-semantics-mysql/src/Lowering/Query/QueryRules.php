@@ -62,18 +62,19 @@ final class QueryRules
      * Lowers a query statement: a node of `select` (5.6, 5.7) or `select_stmt` (8.0 and later).
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When a standalone selection has deferred operands
+     * @throws \SqlSemantics\Construction\RejectedInput When statement-level quantifiers conflict
      */
     public function statement(Node $statement): Statement
     {
-        $selection = (new Shared\StoredSelections($this->lowering))->read($statement) ?? $this->lowering->origins->record((new Shared\QueryMeaning())->of($this->query($statement), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0), $statement);
+        $selection = (new Shared\StoredSelections($this->lowering))->body($statement) ?? $this->query($statement);
         if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
+            $selection = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
         }
-        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery($selection), (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($selection);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
         }
-        return $selection;
+        return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($selection), $statement);
     }
 
     /**

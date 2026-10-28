@@ -43,10 +43,9 @@ final class JsonDocumentTest extends TestCase
     }
 
     #[DataProvider('providerDocuments')]
-    public function testOrdinaryReadCannotPublishAFixedDocumentContradiction(M\Query\Select $query): void
+    public function testOrdinaryReadRetainsAFixedDocumentContradiction(M\Query\Select $query): void
     {
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new M\QueryRoot($query);
+        self::assertTrue((new M\QueryRoot($query))->hasExecutionCondition());
     }
 
     #[DataProvider('providerDocuments')]
@@ -58,8 +57,7 @@ final class JsonDocumentTest extends TestCase
         self::assertInstanceOf(M\Query\QueryExpression::class, $root->query);
         self::assertSame($with, $root->query->with);
         self::assertSame($query, $with->tables[0]->query);
-        $this->expectExceptionMessage('A read statement has coherent fixed output columns.');
-        new M\QueryRoot(new M\Query\QueryExpression($with, new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new QualifiedName(new Name('c'))))));
+        self::assertTrue((new M\QueryRoot(new M\Query\QueryExpression($with, new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference(new QualifiedName(new Name('c')))))))->hasExecutionCondition());
     }
 
     public function testProblemAcceptsAScalarDocumentWithoutAQuery(): void

@@ -14,14 +14,13 @@ final class RefusedSelectionTest extends TestCase
 {
     public function testMessageDescribesTheRefusalWithoutHoldingInputText(): void
     {
-        try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (1,2)');
-            self::fail('A row projection has no ordinary scalar SELECT representation.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection::class, $failure->problem);
-            self::assertSame('Operand should contain 1 column(s), not 2.', $failure->problem->message());
-            self::assertCount(1, $failure->problem->selection->items);
-        }
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (1,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $statement->query);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($statement->query->selection);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $problem->message());
+        self::assertCount(1, $problem->selection->items);
+        self::assertSame('SELECT (1, 2)', $statement->toString());
     }
     public function testProblemRetainsTheRowPredicateConstraint(): void
     {

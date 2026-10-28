@@ -28,9 +28,10 @@ final class SelectionUse
     /**
      * Raises the first binding condition or the retained scalar-use width error.
      *
+     * @param bool $readingNotices Whether the caller has yet to emit expression input notices
      * @throws \MySqlMemory\Error\SqlError Always, after binding the reached operands
      */
-    public function raise(DeferredSelection $selection, Session $session, bool $instruction = true, bool $viewDefinition = false): never
+    public function raise(DeferredSelection $selection, Session $session, bool $instruction = true, bool $viewDefinition = false, bool $readingNotices = true): never
     {
         $selection = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($selection);
         if ($instruction) {
@@ -46,7 +47,7 @@ final class SelectionUse
         if ($instruction) {
             (new \MySqlMemory\Program\Routine\SelectionNotices())->start($selection, (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session);
         }
-        $this->diagnosed((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session, $selection, viewDefinition: $viewDefinition);
+        $this->diagnosed((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation), $session, $selection, viewDefinition: $viewDefinition, readingNotices: $readingNotices);
         if ($instruction) {
             (new \MySqlMemory\Program\Routine\SelectionNotices())->failed($selection, $session);
         }
@@ -61,9 +62,10 @@ final class SelectionUse
      *
      * @param bool $qualifiers Whether projection qualifiers are reached before a surrounding command opens its target
      * @param bool $viewDefinition Whether repeated relation aliases belong to a stored view definition
+     * @param bool $readingNotices Whether expression input notices still need emission
      * @throws \MySqlMemory\Error\SqlError When a retained diagnostic precedes preparation
      */
-    public function diagnosed(\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true, bool $viewDefinition = false): void
+    public function diagnosed(\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session, ?DeferredSelection $selection = null, bool $qualifiers = true, bool $viewDefinition = false, bool $readingNotices = true): void
     {
         if ($selection !== null) {
             (new \MySqlMemory\Session\Access\RelationEntry())->check($selection, $facts, $session);
@@ -89,7 +91,7 @@ final class SelectionUse
                 throw (new Errors())->error($problem, $session);
             }
         }
-        foreach ($facts->warnings as $warning) {
+        foreach ($readingNotices ? $facts->warnings : [] as $warning) {
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation && $warning->construct === \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AssignmentInExpression) {
                 $session->diagnostics->warning($warning->code(), $warning->message());
             }

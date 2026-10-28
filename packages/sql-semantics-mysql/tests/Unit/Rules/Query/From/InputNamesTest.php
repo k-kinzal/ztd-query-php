@@ -43,15 +43,14 @@ final class InputNamesTest extends TestCase
         self::assertSame('b', (new InputNames())->problem($reordered)?->alias->value);
     }
 
-    public function testProblemRejectsRepeatedDerivedAliasesInTheReadRole(): void
+    public function testProblemRetainsRepeatedDerivedAliasesInTheReadRole(): void
     {
         $body = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);
         $first = new M\Relation\DerivedTable($body, new Name('a'));
         $second = new M\Relation\DerivedTable(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]), new Name('a'));
         $query = new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableList([$first, $second]));
         self::assertSame($second, (new InputNames())->problem($query)?->relation);
-        $this->expectExceptionMessage('coherent fixed output columns');
-        new M\QueryRoot($query);
+        self::assertTrue((new M\QueryRoot($query))->hasExecutionCondition());
     }
 
     public function testProblemLeavesDistinctDatabaseNamespacesForBinding(): void
@@ -76,8 +75,7 @@ final class InputNamesTest extends TestCase
         self::assertNull((new InputNames())->problem($unused));
         self::assertSame($unused, (new M\QueryRoot($unused))->query);
         self::assertInstanceOf(M\Server\Problem\NonUniqueTable::class, (new InputNames())->problem($active));
-        $this->expectExceptionMessage('coherent fixed output columns');
-        new M\QueryRoot($active);
+        self::assertTrue((new M\QueryRoot($active))->hasExecutionCondition());
     }
 
     public function testProblemPreventsAnOrdinaryScalarWithFixedInputCollisions(): void

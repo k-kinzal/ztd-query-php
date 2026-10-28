@@ -24,8 +24,8 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-restrictions.html.
  *
  * @visibility public
- * @example Refusing an unsupported frame in an ordinary scalar role
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)') // throws \SqlSemantics\Construction\RejectedInput
+ * @example Retaining an unsupported frame as a query execution condition
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)')->diagnostics()[0]->message() // => "This version of MySQL doesn't yet support 'GROUPS'"
  * @example Refusing an owner that does not use the unsupported feature
  *     $call = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing(\SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::GroupConcat, $call) // throws \SqlSemantics\Diagnostic\InvalidConstruction
