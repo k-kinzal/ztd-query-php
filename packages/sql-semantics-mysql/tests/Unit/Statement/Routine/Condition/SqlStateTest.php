@@ -58,12 +58,12 @@ final class SqlStateTest extends TestCase
     }
 
     #[DataProvider('providerInvalidValues')]
-    public function testRefusesValuesOutsideTheSqlStateDomain(string $value): void
+    public function testRetainsValuesOutsideTheSqlStateDomain(string $value): void
     {
+        $state = new SqlState(new Text($value));
         self::assertFalse(SqlState::accepts($value));
-        $this->expectExceptionMessage('An SQLSTATE value has five uppercase letters or digits and excludes class 00.');
-
-        new SqlState(new Text($value));
+        self::assertFalse($state->valid());
+        self::assertSame($value, $state->state->value);
     }
 
     public function testRenderWritesTheKeywordAndTheQuotedValue(): void
@@ -77,7 +77,7 @@ final class SqlStateTest extends TestCase
     /**
      * @return iterable<string, array{string}>
      */
-    public static function providerRenderDropsTheWordValue(): iterable
+    public static function providerRenderRetainsTheWordValue(): iterable
     {
         yield 'mysql 5.6' => ['mysql-5.6.51'];
         yield 'mysql 5.7' => ['mysql-5.7.44'];
@@ -85,8 +85,8 @@ final class SqlStateTest extends TestCase
         yield 'mysql 9.1' => ['mysql-9.1.0'];
     }
 
-    #[DataProvider('providerRenderDropsTheWordValue')]
-    public function testRenderDropsTheWordValue(string $release): void
+    #[DataProvider('providerRenderRetainsTheWordValue')]
+    public function testRenderRetainsTheWordValue(string $release): void
     {
         $signal = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate value '42S02'");
         $statement = $signal;
@@ -94,7 +94,7 @@ final class SqlStateTest extends TestCase
         self::assertInstanceOf(SqlState::class, $statement->condition);
 
         self::assertSame('42S02', $statement->condition->state->value);
-        self::assertSame("SIGNAL SQLSTATE '42S02'", $signal->toString());
+        self::assertSame("SIGNAL SQLSTATE VALUE '42S02'", $signal->toString());
     }
 
     public function testRefusesAHexadecimalText(): void

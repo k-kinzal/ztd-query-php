@@ -71,7 +71,8 @@ final class DebugRequest
     {
         return $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree
             && $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics
-            && $this->operand($operation) === null;
+            && $this->operand($operation) === null
+            && array_filter($operation->statementInformation()->warnings, static fn (Warning $warning): bool => $warning instanceof ParseFailure && $warning->phase === NoticePhase::Syntax) === [];
     }
 
     /**

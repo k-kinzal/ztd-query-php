@@ -727,7 +727,18 @@ such as `BIT(0)`, accepted by MySQL 5.6, remain representable and are resolved
 against the selected release. These checks do not inspect a catalog or certify
 whether a statement will execute successfully.
 
-`Statement\Routine\Condition\SqlState` accepts quoted values containing five uppercase letters or digits, excluding success class `00`. Invalid PHP construction raises `InvalidConstruction`. An invalid SQL operand such as `SIGNAL SQLSTATE '00000'` instead raises `SqlSemantics\Construction\RejectedInput`; its `problem` is a typed `ProgramProblem`, and `end` is the exclusive byte offset of the operand. No operation containing that invalid value is returned.
+`Statement\Routine\Condition\SqlState` retains the quoted operand and optional
+`VALUE` word. Its `valid()` method checks for five uppercase letters or digits
+outside success class `00`. `ErrorCode` likewise retains zero-prefix operands.
+Analysis returns the complete statement with a `ProgramProblem` and an ordered
+`ParseFailure`, including inside routine declarations and handlers.
+
+`TemporalLiteral` retains invalid decoded DATE, TIME and TIMESTAMP operands.
+Their `RefusedTemporalLiteral` diagnostic accompanies the original expression;
+`valid()` checks its representation, while calendar rules can still depend on
+session modes. SIGNAL and RESIGNAL also retain repeated information items.
+Their conditions are evaluated in semantic operand order, so directly constructed
+statements need no SQL text or source locations to reproduce that order.
 
 Additional authentication factors use `Statement\Account\User\Factor`, whose cases are `Second` and `Third`. Registration and factor-change constructors accept this enum; factor changes also reject duplicates and adding the third factor before the second. Invalid SQL operands produce a typed input refusal during lowering instead of a statement that is intrinsically invalid. Account existence and installed authentication plugins remain execution-state concerns.
 

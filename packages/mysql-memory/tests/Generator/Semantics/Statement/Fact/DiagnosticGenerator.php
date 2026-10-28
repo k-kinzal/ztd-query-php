@@ -46,7 +46,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Routine\Problem\ProgramProblemGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Routine\Problem\RefusedProgramBodyGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Routine\Problem\EmptyEventAlterationGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Routine\Problem\RefusedSignalItemsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Query\Problem\UnknownQualifierGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Utility\Problem\InvalidExplainTargetGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Query\Problem\CountMismatchGenerator::executionForms();

@@ -44,8 +44,6 @@ final class Resignal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement
             $this->initializeStatementInformation($statementInformation);
         }
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
-        $repeated = (new ConditionFacts())->repeated($this->items);
-        Check::input($repeated === null, "Duplicate condition information item '" . ($repeated?->name->value ?? '') . "'");
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

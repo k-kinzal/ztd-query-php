@@ -11,9 +11,8 @@ use SqlSemantics\Rendering\Output;
 /**
  * An SQLSTATE value: `SQLSTATE [VALUE] 'xxxxx'`.
  *
- * The optional word VALUE carries no meaning and is not kept. Construction
- * requires five digits or upper-case letters and excludes the success class
- * `00`. SQL lowering reports an invalid operand as RejectedInput.
+ * The quoted operand and optional VALUE word remain in the request. Derivation
+ * reports an invalid SQLSTATE without replacing the containing statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html.
  *
  * @visibility public
@@ -26,12 +25,12 @@ final class SqlState implements Condition
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Text $state The five characters of the value, written as a quoted string
+     * @param Text $state The decoded operand, written as a quoted string
+     * @param \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $valueWord Whether VALUE is written before the operand
      */
-    public function __construct(public readonly Text $state, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Text $state, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $valueWord = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)
     {
         Check::input($state->radix === null, 'An SQLSTATE value is written as a quoted string.');
-        Check::input(self::accepts($state->value), 'An SQLSTATE value has five uppercase letters or digits and excludes class 00.');
     }
 
     /**
@@ -55,6 +54,10 @@ final class SqlState implements Condition
      */
     public function render(Output $out): void
     {
-        $out->keyword('SQLSTATE')->node($this->state);
+        $out->keyword('SQLSTATE');
+        if ($this->valueWord === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+            $out->keyword('VALUE');
+        }
+        $out->node($this->state);
     }
 }

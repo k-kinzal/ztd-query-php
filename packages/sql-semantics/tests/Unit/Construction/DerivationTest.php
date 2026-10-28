@@ -131,6 +131,28 @@ final class DerivationTest extends TestCase
         self::assertSame([$fact->resolution], $derivation->facts()->diagnostics);
     }
 
+    public function testScalarRecordsADialectSpecificOperandDerivation(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $use = new ColumnUse(new Name('a'));
+        $environment = $derivation->environment();
+        $warning = new class () implements Warning {
+            public function message(): string
+            {
+                return 'The operand was interpreted in its enclosing role.';
+            }
+        };
+        $fact = $derivation->scalar($use, $environment, static function () use ($use, $derivation, $environment, $warning): \SqlSemantics\Statement\Fact\ScalarFact {
+            $derivation->warn($warning);
+            return $use->deriveScalar($derivation, $environment);
+        });
+
+        self::assertSame($fact, $use->scalarInformation());
+        self::assertSame($fact, $derivation->facts()->scalar($use));
+        self::assertSame([$fact->resolution], $derivation->diagnostics());
+        self::assertSame([$warning], $derivation->facts()->warnings);
+    }
+
     public function testRelationRecordsTheFactOfAnOccurrence(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context());

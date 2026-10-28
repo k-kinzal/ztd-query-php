@@ -252,7 +252,7 @@ final class ConditionFactsTest extends TestCase
     /**
      * @return iterable<string, array{string, list<string>}>
      */
-    public static function providerSignalRejectsRepeatedItemsBeforePublication(): iterable
+    public static function providerSignalReportsRepeatedItemsWithTheCompleteStatement(): iterable
     {
         yield 'an item set twice by SIGNAL' => ["CREATE PROCEDURE p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MYSQL_ERRNO = 1, MESSAGE_TEXT = 'b'", ["Duplicate condition information item 'MESSAGE_TEXT'"]];
         yield 'an item set twice by RESIGNAL' => ["CREATE PROCEDURE p() RESIGNAL SET CLASS_ORIGIN = 'a', CLASS_ORIGIN = 'b'", ["Duplicate condition information item 'CLASS_ORIGIN'"]];
@@ -261,12 +261,29 @@ final class ConditionFactsTest extends TestCase
     /**
      * @param list<string> $messages
      */
-    #[DataProvider('providerSignalRejectsRepeatedItemsBeforePublication')]
-    public function testSignalRejectsRepeatedItemsBeforePublication(string $sql, array $messages): void
+    #[DataProvider('providerSignalReportsRepeatedItemsWithTheCompleteStatement')]
+    public function testSignalReportsRepeatedItemsWithTheCompleteStatement(string $sql, array $messages): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($messages[0]);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        self::assertSame($messages, array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
+        self::assertSame($sql, $statement->toString());
+    }
+
+    public function testOperandInterpretsTemporalValuesDuringGrammarActions(): void
+    {
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'bad');
+        (new ConditionFacts())->operand($literal, $derivation, new ProgramScope($derivation->environment()));
+
+        $facts = $derivation->facts();
+        self::assertCount(1, $facts->warnings);
+        $notice = $facts->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $notice->phase);
+        self::assertTrue($notice->aborts);
+        self::assertEquals([$notice->problem], $facts->diagnostics);
+        self::assertEquals(new \SqlSemantics\Statement\Type\Invalid($notice->problem), $literal->scalarInformation()->type);
     }
 
     public function testRepeatedFindsTheFirstRepeatedAssignment(): void
@@ -275,5 +292,23 @@ final class ConditionFactsTest extends TestCase
         $second = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem($first->name, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'));
         self::assertNull((new ConditionFacts())->repeated([$first]));
         self::assertSame($second, (new ConditionFacts())->repeated([$first, $second]));
+    }
+
+    #[DataProvider('providerProblemRetainsLiteralOperands')]
+    public function testProblemRetainsLiteralOperands(Condition $value, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem $expected): void
+    {
+        self::assertEquals($expected, (new ConditionFacts())->problem($value));
+    }
+
+    /**
+     * @return iterable<string, array{Condition, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem}>
+     */
+    public static function providerProblemRetainsLiteralOperands(): iterable
+    {
+        yield 'bad SQLSTATE' => [new SqlState(new Text('bad')), new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState, 'bad')];
+        yield 'zero error code' => [new ErrorCode(new Numeral('0')), new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ZeroErrorCode)];
+        yield 'accepted SQLSTATE' => [new SqlState(new Text('45000')), null];
+        yield 'accepted error code' => [new ErrorCode(new Numeral('1051')), null];
+        yield 'named condition' => [new ConditionName(new Name('c')), null];
     }
 }

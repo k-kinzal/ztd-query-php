@@ -36,12 +36,12 @@ final class SyntaxStatements
         $prefix = new InputPrefix($lowering);
         $frame = new PrefixFrame();
         try {
-            $parameters = $prefix->completed($node, $frame, new ParameterList([]), true);
+            $parameters = $prefix->completed($node, $frame, new ParameterList([]));
         } catch (\SqlSemantics\Diagnostic\AnalysisException $failure) {
             throw $failure->getPrevious() instanceof \SqlParser\Lexer\SourceException ? $failure->getPrevious() : $failure;
         }
         if ($parameters instanceof RejectedInput) {
-            if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch || $parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
+            if ($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch) {
                 return null;
             }
             if (($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName || $parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns) && !$parameters->aborts) {

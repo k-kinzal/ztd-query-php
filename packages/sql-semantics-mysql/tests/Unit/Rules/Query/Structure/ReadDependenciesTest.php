@@ -91,4 +91,13 @@ final class ReadDependenciesTest extends TestCase
         self::assertSame(['a' => 0], $scopes[$definitions[1][1]]);
     }
 
+
+    public function testChildrenReadsTheSignalConditionBeforeItsAssignments(): void
+    {
+        $state = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('bad'));
+        $item = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem(\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MessageText, new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'bad'));
+        self::assertSame([$state, $item], (new ReadDependencies())->children(new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal($state, [$item])));
+        self::assertSame([$state, $item], (new ReadDependencies())->children(new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal($state, [$item])));
+        self::assertSame([$item], (new ReadDependencies())->children(new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(null, [$item])));
+    }
 }

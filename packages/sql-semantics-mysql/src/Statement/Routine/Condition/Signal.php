@@ -23,7 +23,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Reading the statement
  *     $signal = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'");
- *     [$signal->condition->state->value, $signal->toString()] // => ['45000', "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no'"]
+ *     [$signal->condition->state->value, $signal->toString()] // => ['45000', "SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'"]
  */
 final class Signal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, ProgramStatement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -44,8 +44,6 @@ final class Signal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
             $this->initializeStatementInformation($statementInformation);
         }
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
-        $repeated = (new ConditionFacts())->repeated($this->items);
-        Check::input($repeated === null, "Duplicate condition information item '" . ($repeated?->name->value ?? '') . "'");
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine\Condition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
@@ -16,15 +14,12 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 
 /**
  * Lowers condition values: error codes, SQLSTATE values, condition names and condition classes.
  *
  * Rule: MYSQL-CONDITION-LOWERING-001. Scope: sp_cond, sqlstate, opt_value,
- * sp_hcond, sp_hcond_element, sp_hcond_list. The optional word VALUE holds
- * no operand. Constructs: ErrorCode, SqlState, ConditionName,
+ * sp_hcond, sp_hcond_element, sp_hcond_list. The optional word VALUE is retained for reconstruction. Constructs: ErrorCode, SqlState, ConditionName,
  * GeneralCondition. Terminates: the list is flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html,
  * https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
@@ -45,7 +40,6 @@ final class ConditionRule
      * Lowers an error code or an SQLSTATE value: a node of `sp_cond` or `sqlstate`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When a condition operand is outside its constructor domain
      */
     public function value(Node $condition): ErrorCode|SqlState
     {
@@ -55,11 +49,7 @@ final class ConditionRule
         }
         if ($form->signature === 'sp_cond: ulong_num') {
             $code = $this->lowering->numbers->numeral($form->node(0));
-            if (!ErrorCode::accepts($code)) {
-                throw new RejectedInput(new ProgramProblem(ProgramRule::ZeroErrorCode), (new SourceRanges())->span($condition)[1] ?? 0);
-            }
-
-            return new ErrorCode($code);
+            return $this->lowering->origins->record(new ErrorCode($code), $condition);
         }
         if ($form->signature !== 'sqlstate: SQLSTATE_SYM opt_value TEXT_STRING_literal') {
             throw ImplementationGap::production($form);
@@ -70,11 +60,7 @@ final class ConditionRule
         }
 
         $text = $this->lowering->literals->text($form->node(2));
-        if (!SqlState::accepts($text->value)) {
-            throw new RejectedInput(new ProgramProblem(ProgramRule::BadSqlState, $text->value), (new SourceRanges())->span($condition)[1] ?? 0);
-        }
-
-        return new SqlState($text);
+        return $this->lowering->origins->record(new SqlState($text, valueWord: $word->signature === 'opt_value: VALUE_SYM' ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), $condition);
     }
 
     /**

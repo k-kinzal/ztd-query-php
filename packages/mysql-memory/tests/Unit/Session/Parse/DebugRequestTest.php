@@ -116,6 +116,19 @@ final class DebugRequestTest extends TestCase
         self::assertSame([1327, 1064], array_column($session->diagnostics->conditions, 1));
     }
 
+    public function testPreservesDoesNotHideAnInvalidConditionNumber(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'unrelated input';
+        $statement = new ShowParseTree(new D\GetDiagnostics(new D\ConditionDiagnostics(new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'bad'), [new D\InformationItem(new UserVariable(new Name('m')), \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MessageText)])));
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement);
+        self::assertFalse((new DebugRequest())->preserves($operation));
+        $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
+        self::assertSame(1525, $error->getCode());
+        self::assertSame("Incorrect DATE value: 'bad'", $error->getMessage());
+        self::assertSame('unrelated input', $session->text);
+    }
+
     /**
      * @return iterable<string, array{Scalar, list<int>}>
      */
@@ -123,6 +136,9 @@ final class DebugRequestTest extends TestCase
     {
         yield 'continuing parse error' => [new Collated(new NumberLiteral('1'), new Name('missing')), [1273, 1064]];
         yield 'aborting charset' => [new CharsetConversion(new NumberLiteral('1'), new CharsetName(new Name('missing'))), [1115]];
+        yield 'later date interpretation' => [new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'bad'), [1064]];
+        yield 'later time interpretation' => [new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, 'bad'), [1064]];
+        yield 'later timestamp interpretation' => [new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, 'bad'), [1064]];
         yield 'later binding diagnostic' => [new ColumnUse(new Name('absent')), [1064]];
     }
 

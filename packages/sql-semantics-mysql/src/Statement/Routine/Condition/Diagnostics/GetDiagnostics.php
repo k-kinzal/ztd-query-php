@@ -53,7 +53,7 @@ final class GetDiagnostics extends \SqlSemantics\Platform\MySql\Statement\SqlSta
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
         if ($this->information instanceof ConditionDiagnostics) {
-            $derivation->scalar($this->information->number, $scope->environment);
+            (new ConditionFacts())->operand($this->information->number, $derivation, $scope);
         }
         (new ConditionFacts())->targets($this->information->items, $derivation, $scope);
     }

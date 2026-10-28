@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
@@ -75,11 +74,12 @@ final class ErrorCodeTest extends TestCase
     }
 
     #[DataProvider('providerZeroPrefixes')]
-    public function testRejectsZeroPrefixes(string $text, bool $hexadecimal): void
+    public function testRetainsZeroPrefixes(string $text, bool $hexadecimal): void
     {
-        $this->expectExceptionMessage('A condition error code has a nonzero integer prefix.');
-
-        new ErrorCode(new Numeral($text, $hexadecimal));
+        $code = new ErrorCode(new Numeral($text, $hexadecimal));
+        self::assertFalse($code->valid());
+        self::assertSame($text, $code->code->text);
+        self::assertSame($hexadecimal, $code->code->hexadecimal);
     }
 
     public function testValidHoldsForAnAcceptedPrefix(): void
@@ -144,12 +144,19 @@ final class ErrorCodeTest extends TestCase
         yield 'a hexadecimal literal' => ['0aF', true, '0aF'];
     }
 
-    public function testLoweringRejectsAZeroPrefixBeforePublishingAStructure(): void
+    public function testLoweringRetainsAZeroPrefixInTheCompleteDeclaration(): void
     {
-        $this->expectException(RejectedInput::class);
-        $this->expectExceptionMessage("Incorrect CONDITION value: '0'");
-
-        (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
+        $sql = 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END';
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze($sql);
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        self::assertInstanceOf(Block::class, $statement->body);
+        $declaration = $statement->body->declarations[0];
+        self::assertInstanceOf(ConditionDeclaration::class, $declaration);
+        self::assertInstanceOf(ErrorCode::class, $declaration->value);
+        self::assertSame('0.5', $declaration->value->code->text);
+        self::assertFalse($declaration->value->valid());
+        self::assertSame("Incorrect CONDITION value: '0'", $statement->diagnostics()[0]->message());
+        self::assertSame($sql, $statement->toString());
     }
 
     public function testAcceptsChecksBeforeTheThirtyTwoBitConversion(): void

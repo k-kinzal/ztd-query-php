@@ -107,10 +107,9 @@ final class InputPrefix
     /**
      * Adds a completed declaration or statement, preserving an input-operand refusal.
      *
-     * @param bool $isolated Whether enclosing declarations are unavailable to this prefix
      * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed instruction contains a syntax refusal
      */
-    public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters, bool $isolated = false): ParameterList|RejectedInput
+    public function completed(Node $node, PrefixFrame $frame, ParameterList $parameters): ParameterList|RejectedInput
     {
         $name = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->within($node, $this->lowering);
         if ($name !== null) {
@@ -139,13 +138,6 @@ final class InputPrefix
                 $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
             }
         } catch (RejectedInput $failure) {
-            if (!$isolated && $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems) {
-                $frame->statements[] = $failure->problem->prefix;
-                if ($failure->problem->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem) {
-                    $frame->statements[] = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal(null, [$failure->problem->problem]);
-                }
-                return new RejectedInput($this->diagnostic($frame->body(), $parameters) ?? $failure->problem->diagnostic(), $failure->end);
-            }
             return $failure;
         }
 
@@ -178,7 +170,7 @@ final class InputPrefix
         $derivation = new Derivation(new AnalysisContext($this->lowering->profile, [new Name(SessionDatabase::UNNAMED)], complete: false, columnNames: Comparison::AsciiInsensitive));
         (new ProgramFacts())->routine($parameters, $body, ProgramKind::Procedure, new QualifiedName(new Name('prefix')), $derivation, scopeComplete: $scopeComplete);
         foreach ($derivation->facts()->diagnostics as $problem) {
-            if ($problem instanceof UnknownSystemVariable || ($problem instanceof ProgramProblem && in_array($problem->rule, [ProgramRule::IncorrectName, ProgramRule::NameTooLong, ProgramRule::DuplicateVariable, ProgramRule::DuplicateCondition, ProgramRule::DuplicateCursor, ProgramRule::DuplicateHandler, ProgramRule::DuplicateParameter, ProgramRule::UndefinedCondition, ProgramRule::UndefinedCursor, ProgramRule::SignalConditionKind, ProgramRule::ZeroErrorCode, ProgramRule::DuplicateSignalItem, ProgramRule::DeclarationAfterCursorOrHandler, ProgramRule::CursorAfterHandler], true))) {
+            if ($problem instanceof UnknownSystemVariable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral || ($problem instanceof ProgramProblem && in_array($problem->rule, [ProgramRule::BadSqlState, ProgramRule::IncorrectName, ProgramRule::NameTooLong, ProgramRule::DuplicateVariable, ProgramRule::DuplicateCondition, ProgramRule::DuplicateCursor, ProgramRule::DuplicateHandler, ProgramRule::DuplicateParameter, ProgramRule::UndefinedCondition, ProgramRule::UndefinedCursor, ProgramRule::SignalConditionKind, ProgramRule::ZeroErrorCode, ProgramRule::DuplicateSignalItem, ProgramRule::DeclarationAfterCursorOrHandler, ProgramRule::CursorAfterHandler], true))) {
                 return $problem;
             }
         }

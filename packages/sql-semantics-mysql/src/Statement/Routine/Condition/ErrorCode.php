@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
 
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 
@@ -15,8 +14,8 @@ use SqlSemantics\Rendering\Output;
  * sql_yacc.yy): the leading decimal digits of a decimal or floating number
  * (`1e2` is 1, `0.5` is 0), or the digits of a hexadecimal literal; a value
  * beyond the range of the conversion is its largest value. The code 0 is
- * rejected at construction; SQL lowering reports it as RejectedInput
- * (ER_WRONG_VALUE). The server keeps an accepted code as a 32-bit
+ * retained in the request and reported during derivation (ER_WRONG_VALUE).
+ * The server keeps an accepted code as a 32-bit
  * error number.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html,
  * https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_yacc.yy (rules `sp_cond`, `ulong_num`).
@@ -36,7 +35,6 @@ final class ErrorCode implements Condition
      */
     public function __construct(public readonly Numeral $code, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        Check::input(self::accepts($code), 'A condition error code has a nonzero integer prefix.');
     }
 
     /**

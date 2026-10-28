@@ -21,14 +21,16 @@ final class SqlStateGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $state Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $valueWord Generated optional VALUE word
      */
-    public function __construct(ErisGenerator $state, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $state, ?ErisGenerator $inputSource = null, ?ErisGenerator $valueWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState(state: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState(state: $parts[0], inputSource: $parts[1], valueWord: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $state,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $valueWord ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)
         ));
     }
 }

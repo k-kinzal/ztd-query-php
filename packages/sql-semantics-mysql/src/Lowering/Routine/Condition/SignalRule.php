@@ -73,7 +73,7 @@ final class SignalRule
         if ($form->signature === 'signal_stmt: SIGNAL_SYM signal_value opt_set_signal_information') {
             $condition = $this->condition($form->node(1));
 
-            return new Signal($condition, $this->items($form->node(2), $condition));
+            return new Signal($condition, $this->items($form->node(2)));
         }
         if ($form->signature !== 'resignal_stmt: RESIGNAL_SYM opt_signal_value opt_set_signal_information') {
             throw ImplementationGap::production($form);
@@ -86,7 +86,7 @@ final class SignalRule
             default => throw ImplementationGap::production($value),
         };
 
-        return new Resignal($condition, $this->items($form->node(2), $condition));
+        return new Resignal($condition, $this->items($form->node(2)));
     }
 
     /**
@@ -112,7 +112,7 @@ final class SignalRule
      * @throws \SqlSemantics\Construction\RejectedInput When an item operand is outside its value domain
      * @throws ImplementationGap When a production has no rule
      */
-    public function items(Node $clause, ConditionName|SqlState|null $condition = null): array
+    public function items(Node $clause): array
     {
         $form = $this->lowering->form($clause);
         if ($form->signature === 'opt_set_signal_information:') {
@@ -138,18 +138,7 @@ final class SignalRule
         $items = [];
         foreach (array_reverse($pending) as [$item, $offset]) {
             $name = $this->lowering->form($item->node($offset));
-            try {
-                $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
-            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral) {
-                    throw $failure;
-                }
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $failure->problem), $failure->end);
-            }
-            if (in_array($candidate->name, array_column($items, 'name'), true)) {
-                $tokens = $item->node($offset + 2)->tokens();
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedSignalItems(new Resignal($condition, $items), $candidate), $tokens[count($tokens) - 1]->end());
-            }
+            $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
             $items[] = $candidate;
         }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -13,7 +12,6 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Lowering\Call\FunctionRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
@@ -36,7 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 final class ContextualReading
 {
     /**
-     * @return list<array{int, int, TemporalLiteral|RefusedTemporalLiteral|SystemVariable|UserVariable, bool}> Start, end, decoded value and view-body context; no retained source tree
+     * @return list<array{int, int, TemporalLiteral|SystemVariable|UserVariable, bool}> Start, end, decoded value and view-body context; no retained source tree
      */
     public function read(Node $tree, LanguageProfile $profile, ?Charset $client = null): array
     {
@@ -71,17 +69,12 @@ final class ContextualReading
     }
 
     /**
-     * Decodes a leaf without converting a refused temporal input into a Scalar.
+     * Decodes a complete leaf, retaining invalid temporal operands.
      */
-    public function value(Node $node, Lowering $lowering): TemporalLiteral|RefusedTemporalLiteral|SystemVariable|UserVariable|null
+    public function value(Node $node, Lowering $lowering): TemporalLiteral|SystemVariable|UserVariable|null
     {
         if ($node->name === 'temporal_literal') {
-            try {
-                return $lowering->literals->temporal($lowering->form($node));
-            } catch (RejectedInput $failure) {
-                assert($failure->problem instanceof RefusedTemporalLiteral);
-                return $failure->problem;
-            }
+            return $lowering->literals->temporal($lowering->form($node));
         }
         if (in_array($node->name, ['variable_aux', 'rvalue_system_or_user_variable', 'in_expression_user_variable_assignment'], true)) {
             $form = $lowering->form($node);

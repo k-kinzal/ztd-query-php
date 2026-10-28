@@ -47,10 +47,17 @@ final class LiteralRuleTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('SELECT 2e381');
     }
 
-    public function testTemporalRefusesDateTextOutsideTheValueDomain(): void
+    public function testTemporalRetainsDateTextOutsideTheValueDomain(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze("SELECT DATE 'not a date'");
+        $statement = (new Semantics(Dialect::MySql))->analyze("SELECT DATE 'not a date'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertInstanceOf(Select::class, $statement->query);
+        $item = $statement->query->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
+        self::assertInstanceOf(TemporalLiteral::class, $item->expression);
+        self::assertFalse($item->expression->valid());
+        self::assertSame('not a date', $item->expression->text);
+        self::assertSame("SELECT DATE 'not a date'", $statement->toString());
     }
 
     public function testLiteralLowersEveryLiteralForm(): void

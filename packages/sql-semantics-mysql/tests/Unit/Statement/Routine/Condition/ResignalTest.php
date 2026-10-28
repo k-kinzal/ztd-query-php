@@ -88,7 +88,7 @@ final class ResignalTest extends TestCase
     /**
      * @return iterable<string, array{string, list<string>}>
      */
-    public static function providerDeriveProgramRejectsRepeatedItems(): iterable
+    public static function providerDeriveProgramReportsRepeatedItems(): iterable
     {
         yield 'item set twice in a handler' => [
             "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'; END; END",
@@ -114,12 +114,13 @@ final class ResignalTest extends TestCase
     /**
      * @param list<string> $messages
      */
-    #[DataProvider('providerDeriveProgramRejectsRepeatedItems')]
-    public function testDeriveProgramRejectsRepeatedItems(string $sql, array $messages): void
+    #[DataProvider('providerDeriveProgramReportsRepeatedItems')]
+    public function testDeriveProgramReportsRepeatedItems(string $sql, array $messages): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($messages[0]);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        self::assertSame($messages, array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
+        self::assertSame($sql, $statement->toString());
     }
 
     /**
@@ -143,7 +144,7 @@ final class ResignalTest extends TestCase
     {
         yield 'mysql 5.6' => ['mysql-5.6.51', 'resignal', 'RESIGNAL'];
         yield 'mysql 5.7' => ['mysql-5.7.44', 'RESIGNAL SET MYSQL_ERRNO = 5', 'RESIGNAL SET MYSQL_ERRNO = 5'];
-        yield 'mysql 8.0' => ['mysql-8.0.44', "resignal sqlstate value '01000' set class_origin = 'x'", "RESIGNAL SQLSTATE '01000' SET CLASS_ORIGIN = 'x'"];
+        yield 'mysql 8.0' => ['mysql-8.0.44', "resignal sqlstate value '01000' set class_origin = 'x'", "RESIGNAL SQLSTATE VALUE '01000' SET CLASS_ORIGIN = 'x'"];
         yield 'mysql 9.1' => ['mysql-9.1.0', "RESIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @m, MYSQL_ERRNO = NULL", "RESIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @m, MYSQL_ERRNO = NULL"];
     }
 
@@ -163,17 +164,22 @@ final class ResignalTest extends TestCase
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = 'x'; END", $create->toString());
     }
 
-    public function testDeriveStatementRejectsRepeatedItemsBeforePublication(): void
+    public function testDeriveStatementRetainsRepeatedItemsAndReportsTheirCondition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage("Duplicate condition information item 'MESSAGE_TEXT'");
-        (new Semantics(Dialect::MySql))->analyze("RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'");
+        $sql = "RESIGNAL SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(Resignal::class, $statement);
+        self::assertCount(2, $statement->items);
+        self::assertSame("Duplicate condition information item 'MESSAGE_TEXT'", $statement->diagnostics()[0]->message());
+        self::assertSame($sql, $statement->toString());
     }
 
-    public function testRefusesRepeatedItemsWithoutAnOperation(): void
+    public function testRetainsRepeatedItemsWithoutAnOperation(): void
     {
         $item = new SignalItem(ConditionItemName::MysqlErrno, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1234'));
-        $this->expectExceptionMessage("Duplicate condition information item 'MYSQL_ERRNO'");
-        new Resignal(null, [$item, $item]);
+        $statement = new Resignal(null, [$item, new SignalItem($item->name, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('5678'))]);
+        self::assertSame([$item->name, $item->name], array_column($statement->items, 'name'));
+        self::assertSame($item, $statement->items[0]);
+        self::assertNotSame($item, $statement->items[1]);
     }
 }

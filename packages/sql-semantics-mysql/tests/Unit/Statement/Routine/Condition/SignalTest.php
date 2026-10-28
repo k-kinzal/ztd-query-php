@@ -75,7 +75,7 @@ final class SignalTest extends TestCase
     /**
      * @return iterable<string, array{string, list<string>}>
      */
-    public static function providerDeriveProgramRejectsRepeatedItems(): iterable
+    public static function providerDeriveProgramReportsRepeatedItems(): iterable
     {
         yield 'item set twice' => [
             "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MYSQL_ERRNO = 1, MESSAGE_TEXT = 'a', MYSQL_ERRNO = 2; END",
@@ -109,12 +109,13 @@ final class SignalTest extends TestCase
     /**
      * @param list<string> $messages
      */
-    #[DataProvider('providerDeriveProgramRejectsRepeatedItems')]
-    public function testDeriveProgramRejectsRepeatedItems(string $sql, array $messages): void
+    #[DataProvider('providerDeriveProgramReportsRepeatedItems')]
+    public function testDeriveProgramReportsRepeatedItems(string $sql, array $messages): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($messages[0]);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        self::assertSame($messages, array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
+        self::assertSame($sql, $statement->toString());
     }
 
     /**
@@ -136,7 +137,7 @@ final class SignalTest extends TestCase
      */
     public static function providerRenderWritesTheStatement(): iterable
     {
-        yield 'mysql 5.6' => ['mysql-5.6.51', "signal sqlstate value '45000' set message_text = 'no'", "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no'"];
+        yield 'mysql 5.6' => ['mysql-5.6.51', "signal sqlstate value '45000' set message_text = 'no'", "SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'"];
         yield 'mysql 5.7' => ['mysql-5.7.44', "SIGNAL SQLSTATE '01000'", "SIGNAL SQLSTATE '01000'"];
         yield 'mysql 8.0' => ['mysql-8.0.44', "SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 1001, SCHEMA_NAME = @s", "SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 1001, SCHEMA_NAME = @s"];
         yield 'mysql 8.4' => ['mysql-8.4.7', "SIGNAL SQLSTATE '45000' SET CONSTRAINT_CATALOG = 'a', CONSTRAINT_SCHEMA = 'b', CONSTRAINT_NAME = 'c'", "SIGNAL SQLSTATE '45000' SET CONSTRAINT_CATALOG = 'a', CONSTRAINT_SCHEMA = 'b', CONSTRAINT_NAME = 'c'"];
@@ -156,20 +157,25 @@ final class SignalTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE VALUE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END");
 
-        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END", $create->toString());
+        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE VALUE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END", $create->toString());
     }
 
-    public function testDeriveStatementRejectsRepeatedItemsBeforePublication(): void
+    public function testDeriveStatementRetainsRepeatedItemsAndReportsTheirCondition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage("Duplicate condition information item 'MESSAGE_TEXT'");
-        (new Semantics(Dialect::MySql))->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'");
+        $sql = "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'a', MESSAGE_TEXT = 'b'";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(Signal::class, $statement);
+        self::assertCount(2, $statement->items);
+        self::assertSame("Duplicate condition information item 'MESSAGE_TEXT'", $statement->diagnostics()[0]->message());
+        self::assertSame($sql, $statement->toString());
     }
 
-    public function testRefusesRepeatedItemsWithoutAnOperation(): void
+    public function testRetainsRepeatedItemsWithoutAnOperation(): void
     {
         $item = new SignalItem(ConditionItemName::MysqlErrno, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1234'));
-        $this->expectExceptionMessage("Duplicate condition information item 'MYSQL_ERRNO'");
-        new Signal(new SqlState(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('45000')), [$item, $item]);
+        $statement = new Signal(new SqlState(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('45000')), [$item, new SignalItem($item->name, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('5678'))]);
+        self::assertSame([$item->name, $item->name], array_column($statement->items, 'name'));
+        self::assertSame($item, $statement->items[0]);
+        self::assertNotSame($item, $statement->items[1]);
     }
 }

@@ -54,19 +54,19 @@ final class ConditionRuleTest extends TestCase
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
         self::assertEquals([
-            new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051', inputSource: new \SqlSemantics\Statement\Source\Span(51, 4))), inputSource: new \SqlSemantics\Statement\Source\Span(27, 28)),
-            new ConditionDeclaration(new Name('d'), new SqlState(new Text('42S02')), inputSource: new \SqlSemantics\Statement\Source\Span(57, 40)),
-            new ConditionDeclaration(new Name('e'), new SqlState(new Text('42S01')), inputSource: new \SqlSemantics\Statement\Source\Span(99, 46)),
+            new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051', inputSource: new \SqlSemantics\Statement\Source\Span(51, 4)), inputSource: new \SqlSemantics\Statement\Source\Span(51, 4)), inputSource: new \SqlSemantics\Statement\Source\Span(27, 28)),
+            new ConditionDeclaration(new Name('d'), new SqlState(new Text('42S02'), inputSource: new \SqlSemantics\Statement\Source\Span(81, 16)), inputSource: new \SqlSemantics\Statement\Source\Span(57, 40)),
+            new ConditionDeclaration(new Name('e'), new SqlState(new Text('42S01'), inputSource: new \SqlSemantics\Statement\Source\Span(123, 22), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), inputSource: new \SqlSemantics\Statement\Source\Span(99, 46)),
         ], $statement->body->declarations);
-        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE d CONDITION FOR SQLSTATE '42S02'; DECLARE e CONDITION FOR SQLSTATE '42S01'; END", $operation->toString());
+        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE d CONDITION FOR SQLSTATE '42S02'; DECLARE e CONDITION FOR SQLSTATE VALUE '42S01'; END", $operation->toString());
     }
 
     public function testValueLowersTheSqlstateOfResignal(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("resignal sqlstate value '45000'");
 
-        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Resignal(new SqlState(new Text('45000'))), $operation));
-        self::assertSame("RESIGNAL SQLSTATE '45000'", $operation->toString());
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Resignal(new SqlState(new Text('45000'), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)), $operation));
+        self::assertSame("RESIGNAL SQLSTATE VALUE '45000'", $operation->toString());
     }
 
     public function testValueRefusesANodeOfNoProduction(): void
@@ -103,13 +103,13 @@ final class ConditionRuleTest extends TestCase
         self::assertSame(HandlerAction::Continue, $handler->action);
         self::assertEquals([
             new ConditionName(new Name('c')),
-            new ErrorCode(new Numeral('1052', inputSource: new \SqlSemantics\Statement\Source\Span(89, 4))),
-            new SqlState(new Text('42000')),
+            new ErrorCode(new Numeral('1052', inputSource: new \SqlSemantics\Statement\Source\Span(89, 4)), inputSource: new \SqlSemantics\Statement\Source\Span(89, 4)),
+            new SqlState(new Text('42000'), inputSource: new \SqlSemantics\Statement\Source\Span(95, 22), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),
             new GeneralCondition(ConditionClass::SqlWarning),
             new GeneralCondition(ConditionClass::NotFound),
             new GeneralCondition(ConditionClass::SqlException),
         ], $handler->conditions);
-        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052, SQLSTATE '42000', SQLWARNING, NOT FOUND, SQLEXCEPTION SET @x = 1; END", $operation->toString());
+        self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052, SQLSTATE VALUE '42000', SQLWARNING, NOT FOUND, SQLEXCEPTION SET @x = 1; END", $operation->toString());
         self::assertSame([], $operation->diagnostics());
     }
 
@@ -127,7 +127,7 @@ final class ConditionRuleTest extends TestCase
     /**
      * @return iterable<string, array{string, string, string}>
      */
-    public static function providerRejectedSqlStates(): iterable
+    public static function providerInvalidSqlStates(): iterable
     {
         $inputs = [
             ["SIGNAL SQLSTATE '00000'", '00000'],
@@ -151,20 +151,16 @@ final class ConditionRuleTest extends TestCase
         }
     }
 
-    #[DataProvider('providerRejectedSqlStates')]
-    public function testValueRejectsAnInvalidOperandBeforePublishingAStructure(string $release, string $sql, string $value): void
+    #[DataProvider('providerInvalidSqlStates')]
+    public function testValueRetainsAnInvalidOperandInItsCompleteStatement(string $release, string $sql, string $value): void
     {
-        $failure = null;
-        try {
-            (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze($sql);
-        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
-            $failure = $caught;
-        }
-
-        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState, $value), $failure->problem);
-        $offset = strpos($sql, "'" . $value . "'");
-        self::assertNotFalse($offset);
-        self::assertSame($offset + strlen($value) + 2, $failure->end);
+        $statement = (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState, $value)], $statement->diagnostics());
+        self::assertSame($sql, $statement->toString());
+        self::assertCount(1, $statement->statementInformation()->warnings);
+        $notice = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertTrue($notice->aborts);
     }
 }

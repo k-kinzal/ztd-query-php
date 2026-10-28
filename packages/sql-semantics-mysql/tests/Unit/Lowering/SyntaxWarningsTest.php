@@ -129,15 +129,17 @@ final class SyntaxWarningsTest extends TestCase
         self::assertSame([], (new SyntaxWarnings())->completed(new MySqlParser('mysql-5.7.44'), $sql, (int) strpos($sql, '?'), new LanguageProfile(GrammarRelease::MySql5744)));
     }
 
-    public function testRejectedRetainsTheFirstInvalidConditionOperand(): void
+    public function testRejectedLeavesCompleteConditionsToTheirSemanticOwners(): void
     {
         $sql = "CREATE PROCEDURE p() BEGIN SIGNAL SQLSTATE '00000'; SIGNAL SQLSTATE 'bad'; END";
         $parser = new MySqlParser('mysql-8.4.7');
         $profile = new LanguageProfile(GrammarRelease::MySql847);
         $failure = (new SyntaxWarnings())->rejected($parser->parse($sql), $profile);
 
-        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
-        self::assertSame("Bad SQLSTATE: '00000'", $failure->problem->message());
+        self::assertNull($failure);
+        $notices = (new SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile);
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertSame("Bad SQLSTATE: '00000'", $notices[0][1]->message());
         self::assertNull((new SyntaxWarnings())->rejected($parser->parse("SIGNAL SQLSTATE '45000'"), $profile));
     }
     /**
@@ -151,11 +153,12 @@ final class SyntaxWarningsTest extends TestCase
     }
 
     #[DataProvider('providerConditionOrder')]
-    public function testRejectedPreservesOrderAcrossConditionKinds(string $sql, string $expected): void
+    public function testCompletedPreservesOrderAcrossConditionKinds(string $sql, string $expected): void
     {
-        $failure = (new SyntaxWarnings())->rejected((new MySqlParser('mysql-8.4.7'))->parse($sql), new LanguageProfile(GrammarRelease::MySql847));
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
 
-        self::assertSame($expected, $failure?->problem->message());
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertSame($expected, $notices[0][1]->message());
     }
 
     public function testCompletedDiscardsNameConversionsAfterAnAbortingCondition(): void

@@ -22,31 +22,32 @@ use SqlSemantics\Statement\Type\Nullability;
  * TIME, and TIMESTAMP yields DATETIME; the fractional seconds precision of
  * TIME and DATETIME is the number of digits written after the last decimal
  * point, before an optional time zone offset, at most 6; never NULL. Text
- * outside the temporal representation domain is refused during construction.
+ * outside the temporal representation domain remains part of the request and
+ * publishes its SQL condition during derivation.
  * Calendar validity and zero dates can depend on session modes;
  * precision: exact for text the server
- * accepts. Diagnostics: none. The text holds decoded bytes independent of
+ * accepts. Diagnostics retain refused temporal values. The text holds decoded bytes independent of
  * the lexical mode used to write them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html. Status: Implemented.
  *
  * @visibility public
- * @example Refusing text outside the DATE domain
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'not a date') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing text outside the TIME domain
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '839:00:00') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing an arbitrary TIME operand
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, 'bad') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a TIME offset
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '10:11:12.123-01:00') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing an oversized compact TIME token
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '000000000001') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a TIMESTAMP without a clock
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing an arbitrary TIMESTAMP operand
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, 'bad') // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a TIMESTAMP that overflows during fractional rounding
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '9999-12-31 23:59:59.9999999') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining text outside the DATE domain
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'not a date'))->valid() // => false
+ * @example Retaining text outside the TIME domain
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '839:00:00'))->valid() // => false
+ * @example Retaining an arbitrary TIME operand
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, 'bad'))->valid() // => false
+ * @example Retaining a TIME offset
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '10:11:12.123-01:00'))->valid() // => false
+ * @example Retaining an oversized compact TIME token
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, '000000000001'))->valid() // => false
+ * @example Retaining a TIMESTAMP without a clock
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '2024-01-02'))->valid() // => false
+ * @example Retaining an arbitrary TIMESTAMP operand
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, 'bad'))->valid() // => false
+ * @example Retaining a TIMESTAMP that overflows during fractional rounding
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, '9999-12-31 23:59:59.9999999'))->valid() // => false
  * @example Retaining a date permitted by ALLOW_INVALID_DATES
  *     (new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, '2024-02-31'))->text // => '2024-02-31'
  * @example Reading a temporal literal
@@ -67,7 +68,15 @@ final class TemporalLiteral implements LiteralExpression
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
-        \SqlSemantics\Diagnostic\Check::input($form === TemporalForm::Timestamp ? \SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::valid($text) : \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($form->value, $text, 6, false, false, true) !== null, 'A temporal literal requires a bounded representation.');
+    }
+
+    /**
+     * Tells whether the decoded operand has a bounded temporal representation.
+     * Session modes can impose further calendar and zero-date conditions.
+     */
+    public function valid(): bool
+    {
+        return $this->form === TemporalForm::Timestamp ? \SqlSemantics\Platform\MySql\Rules\Literal\Timestamp::valid($this->text) : \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($this->form->value, $this->text, 6, false, false, true) !== null;
     }
 
     /**
@@ -85,9 +94,18 @@ final class TemporalLiteral implements LiteralExpression
 
     /**
      * Derives the temporal type; a literal is never NULL.
+     *
+     * @param \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase|null $phase An enclosing role can interpret the literal during grammar actions
      */
-    public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
+    public function deriveScalar(Derivation $derivation, Environment $environment, ?\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase $phase = null): ScalarFact
     {
+        if (!$this->valid()) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral($this->text, $this->form);
+            $derivation->report($problem);
+            $phase ??= $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization;
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $phase), $this);
+            return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($problem), Nullability::NotNull);
+        }
         return new ScalarFact(new Known(Literals::of($derivation->context)->temporal($this)), Nullability::NotNull);
     }
 

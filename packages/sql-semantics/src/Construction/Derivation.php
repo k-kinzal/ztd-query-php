@@ -256,12 +256,15 @@ final class Derivation
 
     /**
      * Derives and records the facts of a scalar expression at its position.
+     *
+     * @param Closure(): ScalarFact|null $derive A dialect-specific derivation for an operand role
+     * @param-immediately-invoked-callable $derive
      */
-    public function scalar(Operand $node, Environment $environment): ScalarFact
+    public function scalar(Operand $node, Environment $environment, ?Closure $derive = null): ScalarFact
     {
         $outer = $this->reading;
         $this->reading = $node;
-        $fact = $node->deriveScalar($this, $environment);
+        $fact = $derive === null ? $node->deriveScalar($this, $environment) : $derive();
         $this->reading = $outer;
         $this->scalars[] = [$node, $fact];
         $node->initializeScalarInformation($fact);

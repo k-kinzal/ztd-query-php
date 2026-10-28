@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 #[Small]
 final class SignalProblemsTest extends TestCase
 {
-    public function testRefusedChecksTheEarlierConditionBeforeTheDateOperand(): void
+    public function testCheckKeepsTheEarlierConditionBeforeTheDateOperand(): void
     {
         $session = (new Instance())->connect();
 

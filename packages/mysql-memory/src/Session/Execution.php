@@ -159,6 +159,7 @@ final class Execution
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree) {
             throw (new Parse\DebugRequest())->refusal($operation, (new \MySqlMemory\Command\InternalCommand())->error($operation), $session);
         }
+        (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $session);
         (new Access\TableCreation())->database($operation, $session);
         (new Access\DefaultDatabase())->check($operation, $session);
         (new Access\LockNames())->check($operation, $session, $read);

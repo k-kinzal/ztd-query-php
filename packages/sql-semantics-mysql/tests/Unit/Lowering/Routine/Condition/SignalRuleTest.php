@@ -136,8 +136,8 @@ final class SignalRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("signal sqlstate value '01000'");
 
-        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('01000'))), $operation));
-        self::assertSame("SIGNAL SQLSTATE '01000'", $operation->toString());
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('01000'), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)), $operation));
+        self::assertSame("SIGNAL SQLSTATE VALUE '01000'", $operation->toString());
     }
 
     /**

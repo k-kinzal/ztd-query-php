@@ -93,6 +93,9 @@ final class ReadDependencies
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery && ($values = $node->values()) !== null) {
             return [$node->into, $values, ...$node->onDuplicate];
         }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal) {
+            return [...($node->condition === null ? [] : [$node->condition]), ...$node->items];
+        }
         $children = [];
         foreach (get_object_vars($node) as $property => $value) {
             if ($property === 'with' && $this->with($node) !== null) {

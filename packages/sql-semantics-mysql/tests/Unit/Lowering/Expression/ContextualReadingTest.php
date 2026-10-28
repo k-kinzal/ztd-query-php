@@ -13,7 +13,6 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Expression\ContextualReading;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 
@@ -62,14 +61,17 @@ final class ContextualReadingTest extends TestCase
         self::assertCount(1, $children[1]->find('temporal_literal'));
     }
 
-    public function testValueSeparatesARefusedLiteralFromAnOrdinaryScalar(): void
+    public function testValueRetainsInvalidAndValidLiteralOperands(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $tree = $platform->parser($profile)->parse("SELECT DATE 'bad', DATE '2026-10-20', @@missing, @a");
         $reader = new ContextualReading();
-        self::assertInstanceOf(RefusedTemporalLiteral::class, $reader->value($tree->find('temporal_literal')[0], $lowering));
+        $invalid = $reader->value($tree->find('temporal_literal')[0], $lowering);
+        self::assertInstanceOf(TemporalLiteral::class, $invalid);
+        self::assertFalse($invalid->valid());
+        self::assertSame('bad', $invalid->text);
         self::assertInstanceOf(TemporalLiteral::class, $reader->value($tree->find('temporal_literal')[1], $lowering));
         self::assertInstanceOf(SystemVariable::class, $reader->value($tree->find('rvalue_system_or_user_variable')[0], $lowering));
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class, $reader->value($tree->find('rvalue_system_or_user_variable')[1], $lowering));
