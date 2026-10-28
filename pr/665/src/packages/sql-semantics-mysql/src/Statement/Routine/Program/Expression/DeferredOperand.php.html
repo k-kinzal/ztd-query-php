@@ -49,9 +49,9 @@
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * A stored computation whose intrinsic operand constraint is checked on invocation.</span></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * This domain belongs to program instructions, not general Scalar positions.</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Its operands retain their own semantic roles and resolve in the invocation&#039;s</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * scope. An unreachable instruction does not evaluate or prepare this value.</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * Program instructions and complete requests that explicitly admit refused</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * operands use this domain; general Scalar positions do not. Its operands</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * retain their semantic roles and resolve in the request or invocation scope. An unreachable instruction does not evaluate or prepare this value.</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Keeping stored arithmetic outside Scalar</span></span>
