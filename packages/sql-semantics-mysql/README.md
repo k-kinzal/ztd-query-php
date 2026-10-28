@@ -116,11 +116,14 @@ types, including national character forms and `DOUBLE PRECISION`. Constructors
 require aliases to match the kind and any national or optional-word role. Consumers
 can resolve and execute the canonical type without recovering its meaning from text.
 
-Stored-routine `ParameterList` values require distinct case- and accent-insensitive
-parameter names, and `Parameter` excludes NUL. Empty names, names longer than 64
-characters and names ending in an ASCII space require MySQL 5.6 or 5.7. They
-cannot be composed with modern-only syntax. Modern SQL lowering refuses those
-names with a typed `Construction\RejectedInput` before publishing a list.
+Stored-routine `ParameterList` values retain every parameter, including duplicate
+case- and accent-insensitive names and parameters after the first duplicate.
+`repeated()` identifies that occurrence. Analysis derives the duplicate-name
+condition beside the complete SQL or external routine definition. Empty names,
+names longer than 64 characters and names ending in an ASCII space likewise remain
+available; MySQL 8.0 and later report their definition-time conditions. `Parameter`
+excludes NUL, which cannot form a parameter identifier. These conditions do not
+prevent consumers from inspecting or reconstructing the complete definition.
 
 ### Releases
 

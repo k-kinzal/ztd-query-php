@@ -194,12 +194,14 @@ final class ParameterRuleTest extends TestCase
     }
 
     #[DataProvider('providerRepeatedParameters')]
-    public function testParametersRefuseTheFirstDuplicateBeforePublishingAList(string $sql, string $message): void
+    public function testParametersRetainTheCompleteDefinitionWithItsFirstDuplicate(string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
+        $statement = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
 
-        (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
+        self::assertTrue($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
+        self::assertNotNull($statement->parameters->repeated());
+        self::assertSame($message, $statement->diagnostics()[0]->message());
+        self::assertSame($sql, $statement->toString());
     }
 
 }

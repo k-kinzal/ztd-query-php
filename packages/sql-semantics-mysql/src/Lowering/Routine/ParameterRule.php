@@ -13,8 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 
 /**
@@ -55,7 +53,7 @@ final class ParameterRule
      * Lowers a parameter list: a node of `sp_fdparam_list` or `sp_pdparam_list`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When a completed parameter repeats an earlier name
+     * @throws RejectedInput When a parameter collation has no compatible declared character set
      */
     public function parameters(Node $list): ParameterList
     {
@@ -67,15 +65,8 @@ final class ParameterRule
             'sp_fdparams: sp_fdparams , sp_fdparam', 'sp_fdparams: sp_fdparam', 'sp_pdparams: sp_pdparams , sp_pdparam', 'sp_pdparams: sp_pdparam' => (new Sequence($this->lowering))->items($list, self::LISTS),
             default => throw ImplementationGap::production($form),
         };
-        $seen = [];
         foreach ($items as $item) {
-            $parameter = $this->parameter($item);
-            $key = $parameter->key();
-            if (isset($seen[$key])) {
-                throw new RejectedInput(new ProgramProblem(ProgramRule::DuplicateParameter, $parameter->name->value), (new SourceRanges())->span($item)[1] ?? 0);
-            }
-            $seen[$key] = true;
-            $parameters[] = $parameter;
+            $parameters[] = $this->parameter($item);
         }
 
         return new ParameterList($parameters);
@@ -85,7 +76,7 @@ final class ParameterRule
      * Lowers one parameter: a node of `sp_fdparam` or `sp_pdparam`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When a parameter name is outside its intrinsic domain
+     * @throws RejectedInput When the collation has no compatible declared character set
      */
     public function parameter(Node $parameter): Parameter
     {
@@ -111,13 +102,7 @@ final class ParameterRule
         [$declared, $collate] = $this->declared($form->node($type), $collation === null ? null : $form->node($collation));
 
         $identifier = $this->lowering->names->identifier($form->node($name));
-        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        $problem = $legacy ? null : Parameter::nameProblem($identifier);
-        if ($problem !== null) {
-            throw new RejectedInput($problem, (new SourceRanges())->span($parameter)[1] ?? 0);
-        }
-
-        return new Parameter($identifier, $declared, $collate, $direction);
+        return $this->lowering->origins->record(new Parameter($identifier, $declared, $collate, $direction), $parameter);
     }
 
     /**

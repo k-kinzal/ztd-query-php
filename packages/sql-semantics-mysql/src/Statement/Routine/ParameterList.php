@@ -44,7 +44,6 @@ final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
 
     /**
      * @param list<Parameter> $parameters The parameters in order
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When two parameters denote the same name
      */
     public function __construct(array $parameters, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
@@ -52,12 +51,24 @@ final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
             $this->initializeRelationInformation($relationInformation);
         }
         $this->parameters = Check::listOf($parameters, Parameter::class, 'A parameter list holds parameters.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Answers the first parameter whose case- and accent-insensitive name repeats.
+     * The complete list remains available, including parameters after the duplicate.
+     */
+    public function repeated(): ?Parameter
+    {
         $seen = [];
         foreach ($this->parameters as $parameter) {
             $key = $parameter->key();
-            Check::input(!isset($seen[$key]), 'A routine parameter list has distinct case- and accent-insensitive names.');
+            if (isset($seen[$key])) {
+                return $parameter;
+            }
             $seen[$key] = true;
         }
+        return null;
     }
 
     /**
@@ -66,15 +77,17 @@ final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
         $slots = [];
+        $repeated = $this->repeated();
         foreach ($this->parameters as $parameter) {
             (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($parameter->type, $derivation);
             (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->warn($parameter->collation, $derivation);
             $problem = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? null : Parameter::nameProblem($parameter->name);
+            $problem ??= $parameter === $repeated ? new Problem\ProgramProblem(Problem\ProgramRule::DuplicateParameter, $parameter->name->value) : null;
             if ($problem !== null) {
                 $derivation->report($problem);
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $parameter);
             }
-            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation, $parameter->collation ?? $parameter->type);
+            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation, $parameter);
             $slots[] = new OutputSlot($parameter->name, new Known((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->type($parameter->type, $parameter->collation, $derivation->context)), Nullability::Nullable);
         }
 

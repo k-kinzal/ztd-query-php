@@ -46,6 +46,14 @@ final class SyntaxParametersTest extends TestCase
 
         self::assertSame([], $notices);
     }
+
+    public function testCompletedPreservesAnUnsupportedParameterCollationBeforeLaterSyntax(): void
+    {
+        $sql = 'CREATE PROCEDURE p(x INT COLLATE utf8mb4_bin) nonsense';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('COLLATE with no CHARACTER SET in SP parameters, RETURNS, DECLARE'), true)], array_column($notices, 1));
+    }
     /**
      * @return iterable<string, array{string, string}>
      */
@@ -61,6 +69,24 @@ final class SyntaxParametersTest extends TestCase
     {
         $notices = (new SyntaxWarnings())->completed(new MySqlParser($release), $sql, strlen($sql), new LanguageProfile(GrammarRelease::from($release)));
         self::assertEquals([new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision, '', 7459, 6), true)], array_column($notices, 1));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerInvalidNames(): iterable
+    {
+        yield 'empty procedure name' => ['CREATE PROCEDURE p(`` INT, later INT) nonsense', ''];
+        yield 'trailing space' => ['CREATE PROCEDURE p(`x ` INT) nonsense', 'x '];
+        yield 'empty function name' => ['CREATE FUNCTION f(`` INT) RETURNS INT nonsense', ''];
+    }
+
+    #[DataProvider('providerInvalidNames')]
+    public function testCompletedKeepsInvalidNamesBeforeLaterSyntax(string $sql, string $name): void
+    {
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
+
+        self::assertEquals([new ParseFailure(new ProgramProblem(ProgramRule::IncorrectName, $name), true)], array_column($notices, 1));
     }
 
 }

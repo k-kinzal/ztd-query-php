@@ -111,20 +111,35 @@ final class ParameterListTest extends TestCase
     }
 
     #[DataProvider('providerRepeatedNames')]
-    public function testParametersHaveDistinctIdentities(string $first, string $second): void
+    public function testRepeatedRetainsTheFirstDuplicateAndAllLaterParameters(string $first, string $second): void
     {
-        $this->expectExceptionMessage('A routine parameter list has distinct case- and accent-insensitive names.');
+        $duplicate = new Parameter(new Name($second), new Integral(IntegralKind::Int));
+        $parameters = new ParameterList([new Parameter(new Name($first), new Integral(IntegralKind::Int)), $duplicate, new Parameter(new Name('later'), new Integral(IntegralKind::Int))]);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $fact = $derivation->relation($parameters, $derivation->environment());
 
-        new ParameterList([new Parameter(new Name($first), new Integral(IntegralKind::Int)), new Parameter(new Name($second), new Integral(IntegralKind::Int))]);
+        self::assertSame($duplicate, $parameters->repeated());
+        self::assertCount(3, $fact->shape->slots);
+        self::assertSame(['Duplicate parameter: ' . $second], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics));
     }
 
-    public function testLegacyNamesCannotAccompanyModernQuerySyntax(): void
+    public function testDeriveRelationRetainsInvalidNamesBesideModernQuerySyntax(): void
     {
         $parameters = new ParameterList([new Parameter(new Name(''), new Integral(IntegralKind::Int))]);
         $body = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]));
-        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+        $statement = new CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('p')), $parameters, $body);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $statement->deriveStatement($derivation);
 
-        new CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('p')), $parameters, $body);
+        self::assertSame($body, $statement->body);
+        self::assertSame("Incorrect routine name ''", $derivation->facts()->diagnostics[0]->message());
+    }
+
+    public function testRepeatedAcceptsDistinctNames(): void
+    {
+        $parameters = new ParameterList([new Parameter(new Name('x'), new Integral(IntegralKind::Int)), new Parameter(new Name('y'), new Integral(IntegralKind::Int))]);
+
+        self::assertNull($parameters->repeated());
     }
 
     public function testDeriveRelationReportsANameWhenTheSessionUsesAModernRelease(): void

@@ -85,12 +85,14 @@ final class CreateProcedureTest extends TestCase
         self::assertSame([], $create->diagnostics());
     }
 
-    public function testDuplicateParametersAreRefusedBeforeTheStatementIsPublished(): void
+    public function testDeriveStatementKeepsDuplicateParametersInTheCompleteDefinition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Duplicate parameter: X');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
 
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        self::assertCount(2, $statement->parameters->parameters);
+        self::assertSame('Duplicate parameter: X', $statement->diagnostics()[0]->message());
+        self::assertSame('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1', $statement->toString());
     }
 
     /**

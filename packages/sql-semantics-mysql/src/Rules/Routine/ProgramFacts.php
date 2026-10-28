@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Node;
  * Rule: MYSQL-ROUTINE-001, MYSQL-TRIGGER-001, MYSQL-EVENT-001. A routine
  * body uses the routine's database, independent of the caller's current
  * database, and is derived in a scope whose outermost level holds the parameters as
- * one row (MYSQL-ROUTINE-PARAMETERS-001), with distinct identities enforced
+ * one row (MYSQL-ROUTINE-PARAMETERS-001), with duplicate identities reported
  * by ParameterList. A stored function
  * whose SQL body holds no RETURN is reported (ER_SP_NORETURN). A trigger
  * body is derived in a scope where NEW and OLD denote the row of the

@@ -36,9 +36,6 @@ use SqlSemantics\Statement\Node;
  *     $x = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('X')));
  *     $regexp = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('REGEXP_LIKE')));
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [$x, $regexp]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a legacy parameter name combined with a vector parameter
- *     $parameter = new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name(''), new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector));
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([$parameter]), new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers(false)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a legacy default collation in a transactional table definition
  *     new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), options: [new \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction(), new \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption(new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a legacy empty partition list with a modern table query
