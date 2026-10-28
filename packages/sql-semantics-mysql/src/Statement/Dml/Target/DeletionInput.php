@@ -12,14 +12,14 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * The target namespace of a multiple-table DELETE and its input occurrences.
  *
- * Every target can name an input occurrence. Database selection and instance
- * name comparison are resolved later, while an intrinsically absent or repeated
- * name is excluded here. Constructing this operand does not require unrelated
+ * Targets retain their written order, including absent and repeated names.
+ * Database selection, name comparison and target legality are resolved later. Constructing this operand does not require unrelated
  * predicates, hints or statement options.
  *
  * @visibility public
- * @example Refusing a target hidden by an alias
- *     new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\Name('alias'))], [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Keeping an unmatched target until preparation
+ *     $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\Name('alias'))], [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))]);
+ *     $input->targets[0]->name->value // => 't'
  */
 final class DeletionInput
 {
@@ -41,12 +41,18 @@ final class DeletionInput
     private ?array $resolutions = null;
 
     /**
+     * @var non-empty-list<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords> The optional .* suffix of each written target
+     */
+    public readonly array $wildcards;
+
+    /**
      * @param list<Relation> $tables The input relation trees
      * @param list<QualifiedName>|null $targets The requested targets; null selects every visible input occurrence
      * @param list<Relation|null>|null $resolutions The completed target bindings, when supplied directly
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the supplied target namespace contradicts this role
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $wildcards The written target suffixes; null omits every suffix
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When target operands or binding positions are malformed
      */
-    public function __construct(array $tables, ?array $targets = null, ?array $resolutions = null)
+    public function __construct(array $tables, ?array $targets = null, ?array $resolutions = null, ?array $wildcards = null)
     {
         $members = [];
         foreach (Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1) as $table) {
@@ -57,8 +63,8 @@ final class DeletionInput
         foreach ($this->targets as $target) {
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) === null, 'A multiple-table DELETE cannot repeat an identical target.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) === null, 'Every DELETE target must name a possible input occurrence.');
+        $this->wildcards = Check::listOf($wildcards ?? array_fill(0, count($this->targets), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::class, 'DELETE target suffixes are optional wildcards.', 1);
+        Check::input(count($this->wildcards) === count($this->targets), 'Every DELETE target has one wildcard choice.');
         if ($resolutions !== null) {
             $this->initializeResolutions($resolutions);
         }

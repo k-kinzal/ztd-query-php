@@ -1382,9 +1382,6 @@
         "near": "string",
         "offset": "int"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Delete\\RefusedDelete": {
-        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\DuplicateColumn": {
         "column": "SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -1408,14 +1405,6 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Read\\OrderingPosition": {
         "position": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\NumberLiteral|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\BooleanLiteral"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedDeleteTargets": {
-        "missing": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
-        "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
-        "tables": "array",
-        "targets": "array",
-        "where": "?SqlSemantics\\Statement\\Scalar",
-        "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RepeatedDeleteTarget": {
         "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
@@ -1443,8 +1432,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteMisuse": {
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteRule",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\MultipleDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete|null",
-        "table": "?SqlSemantics\\Statement\\Identifier\\Name"
+        "table": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "target": "?SqlSemantics\\Platform\\MySql\\Statement\\Relation\\TableSource"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\WriteRule": {
         "name": "string",
@@ -1463,7 +1452,8 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Target\\DeletionInput": {
         "resolutions": "?array",
         "tables": "array",
-        "targets": "array"
+        "targets": "array",
+        "wildcards": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Update": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -5172,15 +5162,6 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainInto": {
         "analyze": "bool",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedExplainTargets": {
-        "analyze": "bool",
-        "database": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "emptyInto": "bool",
-        "format": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
-        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "targets": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedDeleteTargets"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Problem\\RefusedNamesAssignment": {
         "end": "int",

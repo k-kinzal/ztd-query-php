@@ -144,7 +144,7 @@ final class ChangeFactsTest extends TestCase
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete::class, $operation->body);
-        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->body)], $operation->diagnostics());
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'), $operation->body->tables[0])], $operation->diagnostics());
     }
 
     public function testDeleteFindsTheInvisibleColumnsOfTheTable(): void

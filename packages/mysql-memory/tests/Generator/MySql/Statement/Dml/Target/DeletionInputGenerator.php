@@ -22,15 +22,17 @@ final class DeletionInputGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource>> $tables Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\QualifiedName>|null>|null $targets Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource|null>|null>|null $resolutions Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null>|null $wildcards Generated target suffixes
      */
-    public function __construct(ErisGenerator $tables, ?ErisGenerator $targets = null, ?ErisGenerator $resolutions = null)
+    public function __construct(ErisGenerator $tables, ?ErisGenerator $targets = null, ?ErisGenerator $resolutions = null, ?ErisGenerator $wildcards = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput(tables: $parts[0], targets: $parts[1], resolutions: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput(tables: $parts[0], targets: $parts[1], resolutions: $parts[2], wildcards: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $tables,
             $targets ?? Generators::constant(null),
-            $resolutions ?? Generators::constant(null)
+            $resolutions ?? Generators::constant(null),
+            $wildcards ?? Generators::constant(null)
         ));
     }
 }

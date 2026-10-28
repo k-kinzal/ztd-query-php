@@ -47,18 +47,17 @@ final class ColumnNameGenerator implements ErisGenerator
             ]),
         ), Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)));
         $unqualified = Generators::map(static fn (Name $name): ColumnName => new ColumnName($name), $column);
-        $qualified = Generators::associative([
-            'column' => $column,
-            'table' => Generators::map(static fn (int $id): Name => new Name('table_' . $id), Generators::choose(0, 100000)),
-            'schema' => Generators::map(static fn (int $id): Name => new Name('schema_' . $id), Generators::choose(0, 100000)),
-        ]);
+        $table = Generators::map(static fn (int $id): Name => new Name('table_' . $id), \Tests\Generator\Operands::sized(Generators::nat(), 100000));
+        $schema = Generators::map(static fn (int $id): Name => new Name('schema_' . $id), \Tests\Generator\Operands::sized(Generators::nat(), 100000));
+        $qualified = \Tests\Generator\Operands::tuple($column, $table);
+        $qualifiedSchema = \Tests\Generator\Operands::tuple($column, $table, $schema);
         $this->delegate = match ($release) {
-            GrammarRelease::MySql5651, GrammarRelease::MySql5744 => Generators::oneOf(
+            GrammarRelease::MySql5651, GrammarRelease::MySql5744 => \Tests\Generator\Operands::oneOf([
                 $unqualified,
                 Generators::map(static fn (Name $name): ColumnName => new ColumnName($name, dot: OptionalWords::Written), $column),
-                Generators::map(static fn (array $data): ColumnName => new ColumnName($data['column'], new QualifiedName($data['table'])), $qualified),
-                Generators::map(static fn (array $data): ColumnName => new ColumnName($data['column'], new QualifiedName($data['table'], $data['schema'])), $qualified),
-            ),
+                Generators::map(static fn (array $data): ColumnName => new ColumnName($data[0], new QualifiedName($data[1])), $qualified),
+                Generators::map(static fn (array $data): ColumnName => new ColumnName($data[0], new QualifiedName($data[1], $data[2])), $qualifiedSchema),
+            ]),
             GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820,
             GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901,
             GrammarRelease::MySql910 => $unqualified,

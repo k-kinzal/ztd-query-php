@@ -58,21 +58,23 @@ final class DeleteTest extends TestCase
     {
         self::assertSame('DELETE /*+ BKA() */ FROM t', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA() */ FROM t')->toString());
     }
-    public function testCommonTableCannotSupplyAnOrdinaryDeletionTarget(): void
+    public function testHasExecutionConditionRetainsACommonTableTarget(): void
     {
         $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
         $name = new Name('c');
         $with = new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression($name, [], $query)]);
         $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName($name));
-        $this->expectExceptionMessage('An ordinary DELETE cannot target its own common-table declaration.');
-        new Delete($with, [], $target);
+        $delete = new Delete($with, [], $target);
+        self::assertSame($with, $delete->with);
+        self::assertTrue($delete->hasExecutionCondition());
     }
 
-    public function testValueRejectsAnIntegerUnderParenthesesAndUnaryPlus(): void
+    public function testHasExecutionConditionRetainsIntegerOrdering(): void
     {
         $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
-        $this->expectExceptionMessage('DELETE ordering cannot refer to an output position.');
-        new Delete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem($operand)]);
+        $delete = new Delete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new QualifiedName(new Name('t'))), orderBy: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem($operand)]);
+        self::assertTrue($delete->hasExecutionCondition());
+        self::assertSame($operand, $delete->orderBy[0]->expression);
     }
 
 }

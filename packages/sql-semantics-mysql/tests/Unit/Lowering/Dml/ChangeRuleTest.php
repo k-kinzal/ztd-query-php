@@ -29,14 +29,12 @@ final class ChangeRuleTest extends TestCase
     }
 
     #[DataProvider('providerTargetRefusalReleases')]
-    public function testMultipleKeepsTheReleaseSpecificInputStoppingRule(string $release, bool $aborts): void
+    public function testMultiplePublishesCompleteUnmatchedTargetsInEveryRelease(string $release, bool $aborts): void
     {
-        try {
-            (new Semantics(Dialect::MySql, $release))->analyze('DELETE x FROM t AS y');
-            self::fail('An absent target must be refused.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertSame($aborts, $failure->aborts);
-        }
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze('DELETE QUICK x.* FROM t AS y WHERE y.a = 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertSame('DELETE QUICK x.* FROM t AS y WHERE y.a = 1', $statement->toString());
     }
 
 
@@ -90,14 +88,15 @@ final class ChangeRuleTest extends TestCase
 
     public function testWildTargetsLowersQualifiedNames(): void
     {
-        self::assertSame('DELETE db.t, u FROM db.t, u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete db.t.*, u from db.t, u')->toString());
+        self::assertSame('DELETE db.t.*, u FROM db.t, u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete db.t.*, u from db.t, u')->toString());
     }
 
-    public function testTargetsRefusesAnIntrinsicRepetitionBeforeReadingRelations(): void
+    public function testTargetsRetainsAnIntrinsicRepetitionWithTheCompleteInputs(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage("Not unique table/alias: 'a'");
-        (new Semantics(Dialect::MySql))->analyze('DELETE a, a FROM missing');
+        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE a, a FROM missing');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+        self::assertCount(2, $statement->targets);
+        self::assertTrue($statement->hasExecutionCondition());
     }
 
     public function testCompletedKeepsTheLegacyPrefixBeforeAnInvalidSuffix(): void
@@ -108,17 +107,20 @@ final class ChangeRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
         self::assertSame("Not unique table/alias: 'a'", $notices[0][1]->problem->message());
     }
-    public function testMultipleRefusesAnUnmatchedTargetWithoutPublishingAStatement(): void
+    public function testMultiplePublishesAnUnmatchedTargetWithItsMissingBinding(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage("Unknown table 'x' in MULTI DELETE");
-        (new Semantics(Dialect::MySql))->analyze('DELETE x FROM t AS y');
+        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE x FROM t AS y');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertNull($statement->input->relation($statement->targets[0]));
     }
 
-    public function testSingleRefusesAStandaloneCommonTableTarget(): void
+    public function testSinglePublishesTheCompleteCommonTableTarget(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze('WITH c AS(SELECT 1) DELETE FROM c');
+        $statement = (new Semantics(Dialect::MySql))->analyze('WITH c AS(SELECT 1) DELETE FROM c');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Delete::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertSame('WITH c AS (SELECT 1) DELETE FROM c', $statement->toString());
     }
 
 }

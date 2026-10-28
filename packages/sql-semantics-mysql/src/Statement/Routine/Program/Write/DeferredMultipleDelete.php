@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Scalar;
  * A stored deletion retaining a target, input-column or sampling condition and all its dependencies.
  *
  * An unvisited instruction opens no tables. Reaching it resolves its input before
- * reporting the condition; ordinary MultipleDelete values exclude these contradictions.
+ * reporting the condition. Immediate MultipleDelete values retain the same operands.
  *
  * @visibility public
  * @example Keeping a deferred target in a stored definition
@@ -78,7 +78,7 @@ final class DeferredMultipleDelete implements ProgramStatement
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = $input->targets;
         $this->tables = $input->tables;
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null, 'A deferred DELETE retains a target, input-column or sampling contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null, 'A deferred DELETE retains a target, input-column or sampling contradiction.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -114,6 +114,9 @@ final class DeferredMultipleDelete implements ProgramStatement
                 $out->name($target->schema, NameUse::Qualifier)->symbol('.');
             }
             $out->name($target->name, NameUse::Relation);
+            if ($this->input->wildcards[$position] === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+                $out->symbol('.')->symbol('*');
+            }
         }
         $out->keyword($this->form === MultipleDeleteForm::Using ? 'USING' : 'FROM')->list($this->tables);
         if ($this->where !== null) {

@@ -54,9 +54,7 @@ final class DerivedInput
      */
     public function refusal(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session, ?SqlError $resolved = null): ?SqlError
     {
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
-            return $resolved ?? (new Dml\Targets())->unmatched($failure->problem, $session);
-        }
+
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate) {
             return $resolved ?? (new \MySqlMemory\Program\Write\UpdateUse())->error($failure->problem, $session);
         }

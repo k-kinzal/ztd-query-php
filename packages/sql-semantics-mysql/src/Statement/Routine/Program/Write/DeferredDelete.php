@@ -20,8 +20,8 @@ use SqlSemantics\Statement\Scalar;
 /**
  * A stored single-table DELETE retaining an intrinsic target, sampling or ordering condition.
  *
- * The complete instruction is retained until invocation; ordinary Delete values
- * exclude these intrinsic write-role contradictions.
+ * The complete instruction is retained until invocation. Immediate Delete values
+ * retain the same operands and prepare them when the request executes.
  *
  * @visibility public
  * @example Retaining a common-table deletion in a stored program

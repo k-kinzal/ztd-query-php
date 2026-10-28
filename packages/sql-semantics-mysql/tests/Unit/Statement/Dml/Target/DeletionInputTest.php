@@ -27,10 +27,12 @@ final class DeletionInputTest extends TestCase
         self::assertEquals([$table->name], (new DeletionInput([$table]))->targets);
     }
 
-    public function testAnAbsentTargetIsRejected(): void
+    public function testAnAbsentTargetRetainsItsWrittenOperand(): void
     {
-        $this->expectExceptionMessage('Every DELETE target must name a possible input occurrence.');
-        new DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [new QualifiedName(new Name('x'))]);
+        $target = new QualifiedName(new Name('x'));
+        $input = new DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [$target]);
+        self::assertSame([$target], $input->targets);
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted], $input->wildcards);
     }
 
     public function testInitializeResolutionsKeepsTheBoundInputOccurrence(): void

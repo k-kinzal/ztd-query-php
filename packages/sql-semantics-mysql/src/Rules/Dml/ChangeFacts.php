@@ -113,6 +113,10 @@ final class ChangeFacts
         if (($sampling = (new Read\Sampling())->of($delete)) !== null) {
             $derivation->report($sampling);
         }
+        $repeated = (new TargetNames())->duplicate($delete->targets);
+        if ($repeated !== null) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($delete->targets[$repeated]->name));
+        }
         $base = $this->base($delete->with, $derivation, $outer);
         $visible = $this->references($delete->tables, $derivation, $base);
         $this->targets($delete->targets, $visible, $derivation, $delete);
@@ -138,12 +142,12 @@ final class ChangeFacts
                 $name = $relation->alias === null ? new QualifiedName($target->name, $target->schema ?? $derivation->context->searchPath[0]) : $target;
                 $found ??= $projection->admits($derivation, $relation, $name) ? $relation : null;
             }
+            \SqlSemantics\Diagnostic\Check::invariant($found === null || $found->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource, 'A DELETE target belongs to its table inputs.');
             if ($found === null) {
                 $derivation->report(new UnknownDeleteTable($target));
             } elseif (!$this->updatable($found->relation, $derivation)) {
-                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation), $statement));
+                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation), $found->relation));
             }
-            \SqlSemantics\Diagnostic\Check::invariant($found === null || $found->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableSource, 'A DELETE target belongs to its table inputs.');
             $resolutions[] = $found?->relation;
         }
         $statement?->input->initializeResolutions($resolutions);

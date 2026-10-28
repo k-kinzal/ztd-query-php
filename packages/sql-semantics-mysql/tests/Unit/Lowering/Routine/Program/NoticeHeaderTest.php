@@ -83,15 +83,11 @@ final class NoticeHeaderTest extends TestCase
         self::assertSame('db', $notice->problem->program?->schema?->value);
     }
 
-    public function testScopedRetainsTheDatabaseForAnAbsentDeleteTarget(): void
+    public function testScopedLeavesCompleteDeleteInputsForStatementPublication(): void
     {
         $sql = 'CREATE PROCEDURE db.p() BEGIN DELETE x FROM db.t AS y; END';
         $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen($sql), new LanguageProfile(GrammarRelease::MySql847));
-        $notice = $notices[0][1];
-
-        self::assertInstanceOf(ParseFailure::class, $notice);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets::class, $notice->problem);
-        self::assertSame('db', $notice->problem->program?->schema?->value);
+        self::assertSame([], $notices);
     }
 
 }

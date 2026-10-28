@@ -12,6 +12,8 @@ use MySqlMemory\Session\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
+use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -60,6 +62,51 @@ final class DeleteUse
         $derivation = new Derivation($context);
         $write->deriveProgram($derivation, new ProgramScope($derivation->environment()));
         $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
+        $this->check($write, $facts, $session);
+    }
+
+    /**
+     * Prepares an immediate deletion using its published occurrence bindings.
+     *
+     * @throws SqlError When a target or operand condition is reached
+     */
+    public function statement(Delete|MultipleDelete $write, Session $session): never
+    {
+        $this->check($write, $write->statementInformation(), $session);
+    }
+
+    /**
+     * Prepares an explained deletion using the enclosing published bindings.
+     *
+     * @throws SqlError When explanation options or deletion operands cannot prepare
+     */
+    public function explained(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain $explain, Session $session): void
+    {
+        $write = $explain->statement;
+        if (!($write instanceof Delete || $write instanceof MultipleDelete) || !$write->hasExecutionCondition()) {
+            return;
+        }
+        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explain, $session);
+        $database = $session->variables->database;
+        $session->variables->database = $explain->database->value ?? $database;
+        try {
+            $this->check($write, $explain->statementInformation(), $session);
+        } finally {
+            $session->variables->database = $database;
+        }
+    }
+
+    /**
+     * Resolves a complete deletion's target namespace before reached read operands.
+     *
+     * @throws SqlError When a retained condition refuses preparation
+     * @throws LogicException When a conditional deletion has no preparation error
+     */
+    public function check(Delete|MultipleDelete|DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): never
+    {
+        if ($write instanceof MultipleDelete || $write instanceof DeferredMultipleDelete) {
+            (new \MySqlMemory\Session\Parse\Entry\Dml\Targets())->statement($write, $facts, $session);
+        }
         foreach ($facts->diagnostics as $problem) {
             if (\MySqlMemory\Session\Problem\Stages::parsed($problem) || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable) {
                 throw (new Errors())->error($problem, $session);
@@ -79,23 +126,23 @@ final class DeleteUse
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
         }
-        throw new LogicException('A retained deletion has a read-only target condition.');
+        throw new LogicException('A conditional deletion retains a target or operand condition.');
     }
     /**
      * Prepares retained relation operands before the destination role is reported.
      *
      * @throws SqlError When a reached JSON document or join cannot bind
      */
-    public function inputs(DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
+    public function inputs(Delete|MultipleDelete|DeferredDelete|DeferredMultipleDelete $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
-        if ($write instanceof DeferredDelete && (((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($write->orderBy) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($write) === null) || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($write->with, $write->table->name))) {
+        if (($write instanceof Delete || $write instanceof DeferredDelete) && (((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($write->orderBy) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($write) === null) || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($write->with, $write->table->name))) {
             return;
         }
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, program: $session->program, session: WeakReference::create($session));
         $planner = new \MySqlMemory\Plan\Planner($write, $facts, $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $scope = new \MySqlMemory\Evaluation\Scope();
-        if ($write instanceof DeferredDelete) {
+        if ($write instanceof Delete || $write instanceof DeferredDelete) {
             $slots = $write->table->relationInformation()->shape->slots;
             $scope->place($write->table, $planner->relations->shaped($write->table, []), array_map(static fn ($slot): string => $slot->name->value ?? '', $slots));
             $operands = new \MySqlMemory\Program\Write\UpdateOperands();

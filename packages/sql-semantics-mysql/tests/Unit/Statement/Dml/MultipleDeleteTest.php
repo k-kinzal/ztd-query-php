@@ -24,10 +24,10 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class MultipleDeleteTest extends TestCase
 {
-    public function testAnAbsentTargetIsRejected(): void
+    public function testHasExecutionConditionRetainsAnAbsentTarget(): void
     {
-        $this->expectExceptionMessage('Every DELETE target must name a possible input occurrence.');
-        new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [new QualifiedName(new Name('z'))]), MultipleDeleteForm::BeforeFrom);
+        $delete = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [new QualifiedName(new Name('z'))]), MultipleDeleteForm::BeforeFrom);
+        self::assertTrue($delete->hasExecutionCondition());
     }
 
     public function testDeriveStatementMatchesCorrelationNames(): void
@@ -42,7 +42,7 @@ final class MultipleDeleteTest extends TestCase
 
     public function testRenderWritesBothSpellings(): void
     {
-        self::assertSame('DELETE QUICK t, db.u FROM t JOIN db.u ON t.a = u.a', (new Semantics(Dialect::MySql))->analyze('delete quick t.*, db.u.* from t join db.u on t.a = u.a')->toString());
+        self::assertSame('DELETE QUICK t.*, db.u.* FROM t JOIN db.u ON t.a = u.a', (new Semantics(Dialect::MySql))->analyze('delete quick t.*, db.u.* from t join db.u on t.a = u.a')->toString());
         self::assertSame('DELETE FROM t USING t, u WHERE t.a = u.a', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete from t using t, u where t.a = u.a')->toString());
     }
 
@@ -71,11 +71,11 @@ final class MultipleDeleteTest extends TestCase
         self::assertSame([$first, $second, $third], $delete->tables);
         self::assertSame('DELETE a FROM a, b, (c, d)', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context([]), $delete, new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
-    public function testReadOnlyTargetCannotDescribeAnOrdinaryDeletion(): void
+    public function testHasExecutionConditionRetainsADerivedTarget(): void
     {
         $derived = new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), new Name('q'));
-        $this->expectExceptionMessage('An ordinary DELETE target cannot be a derived, JSON or common-table relation.');
-        new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$derived]), MultipleDeleteForm::BeforeFrom);
+        $delete = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$derived]), MultipleDeleteForm::BeforeFrom);
+        self::assertTrue($delete->hasExecutionCondition());
     }
 
 }

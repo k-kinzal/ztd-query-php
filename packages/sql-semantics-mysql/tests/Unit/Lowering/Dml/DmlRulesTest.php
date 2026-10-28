@@ -41,7 +41,7 @@ final class DmlRulesTest extends TestCase
 
     public function testDeleteTargetsLowersTheTableNames(): void
     {
-        self::assertSame('DELETE t, u FROM t, u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('delete t.*, u from t, u')->toString());
+        self::assertSame('DELETE t.*, u FROM t, u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('delete t.*, u from t, u')->toString());
         self::assertSame('SELECT 1 FROM t FOR UPDATE OF t', (new Semantics(Dialect::MySql))->analyze('select 1 from t for update of t')->toString());
     }
 

@@ -17,7 +17,7 @@ final class TargetRuleTest extends TestCase
 {
     public function testTablesLowersEveryTableName(): void
     {
-        self::assertSame('DELETE FROM t, db.u USING t, db.u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete from t, db.u.* using t, db.u')->toString());
+        self::assertSame('DELETE FROM t, db.u.* USING t, db.u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete from t, db.u.* using t, db.u')->toString());
     }
 
     public function testDuplicatesLowersReplaceAndIgnore(): void

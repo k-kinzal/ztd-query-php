@@ -129,6 +129,16 @@ final class StatementRule
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             return $this->rejected($failure);
         }
+        return $this->retained($statement, $node);
+    }
+
+    /**
+     * Retains complete writes and reads in their stored invocation roles.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a connection explanation is not standalone
+     */
+    public function retained(Statement $statement, Node $node): ProgramStatement|Statement
+    {
         if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery) && $statement->hasExecutionCondition()) {
             $this->lowering->origins->forget($statement);
             $retained = match (true) {
@@ -136,6 +146,13 @@ final class StatementRule
                 $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet($statement->into, $statement->assignments, $statement->alias, $statement->onDuplicate),
                 default => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery($statement->into, $statement->source, $statement->onDuplicate),
             };
+            return $this->lowering->origins->record($retained, $node);
+        }
+        if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete) && $statement->hasExecutionCondition()) {
+            $this->lowering->origins->forget($statement);
+            $retained = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete
+                ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete($statement->with, $statement->options, $statement->table, $statement->where, $statement->orderBy, $statement->limit, $statement->hints)
+                : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($statement->with, $statement->options, $statement->input, $statement->form, $statement->where, $statement->hints);
             return $this->lowering->origins->record($retained, $node);
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $statement->hasExecutionCondition()) {
@@ -158,9 +175,6 @@ final class StatementRule
         $administrative = $this->administrativeRefusal($failure->problem);
         if ($administrative !== null) {
             return $administrative;
-        }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete) {
-            return $failure->problem->write;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
             return $failure->problem->explanation;

@@ -324,8 +324,14 @@ UPDATE retains bare integer ORDER BY operands, including integers under
 parentheses or unary plus, as execution conditions: a write has no select list
 in which an output position could resolve. Row-valued assignments and predicates
 also remain on the complete UPDATE request. Top-level and stored UPDATE use the
-same statement type. DELETE still uses `DeferredDelete` for these stored
-conditions, so an unreached branch remains dormant.
+same statement type. Complete `Delete` and `MultipleDelete` requests retain
+read-only, absent and repeated targets, sampling conditions and invalid ordering
+operands. Their `hasExecutionCondition()` methods identify preparation work;
+execution consumes the published bindings without rebuilding or reparsing the
+request. Multiple-table targets also retain their optional `.*` suffixes.
+Stored deletions use `DeferredDelete` and `DeferredMultipleDelete` so an
+unreached branch remains dormant. A non-updatable-target diagnostic refers to
+the input relation itself rather than back to its containing statement.
 `OrderingPosition` retains the offending literal, including unsigned values
 beyond PHP's signed integer range and written leading zeros. The MySQL 5.6 and
 5.7 profiles also diagnose boolean ordering positions; modern profiles treat

@@ -117,8 +117,12 @@ final class Problems
      */
     public function operands(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
+        if (($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete) && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\DeleteUse())->statement($operation, $session);
+        }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
             (new \MySqlMemory\Program\Expression\InsertUse())->explained($operation, $session);
+            (new \MySqlMemory\Program\Expression\DeleteUse())->explained($operation, $session);
         }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $operation->hasExecutionCondition()) {
             (new \MySqlMemory\Command\Access\Load\Preparation())->check($operation, $session);

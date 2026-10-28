@@ -78,10 +78,7 @@ final class NoticeHeader
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel($notice->problem->privilege, $notice->problem->level, $this->name), $notice->aborts, $notice->phase);
         }
-        if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets && $this->kind !== null) {
-            $problem = $notice->problem;
-            return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets($problem->targets, $problem->tables, $problem->with, $problem->where, $this->name), $notice->aborts, $notice->phase);
-        }
+
         if ($notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget && $this->kind !== null) {
             return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget($notice->problem->targets, $this->name), $notice->aborts, $notice->phase);
         }

@@ -235,4 +235,12 @@ final class StatementRuleTest extends TestCase
         self::assertEquals(new ExternalBody($expected), $operation->body);
         self::assertSame('CREATE PROCEDURE p() LANGUAGE javascript AS ' . $rendering, $operation->toString());
     }
+    public function testRetainedPublishesTheCompleteConditionalDeletionInAStoredRole(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DELETE q.* FROM (SELECT 1) q');
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete::class, $statement->body);
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written], $statement->body->input->wildcards);
+    }
+
 }

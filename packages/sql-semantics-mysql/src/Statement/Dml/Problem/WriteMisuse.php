@@ -23,9 +23,9 @@ final class WriteMisuse implements Diagnostic
     /**
      * @param WriteRule $rule The broken rule
      * @param Name|null $table The correlation name of the target table that is not updatable, or its name when it has none
-     * @param \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|null $statement The owning write, when its preparation role matters
+     * @param \SqlSemantics\Platform\MySql\Statement\Relation\TableSource|null $target The non-updatable DELETE input occurrence, prepared before its write-role condition
      */
-    public function __construct(public readonly WriteRule $rule, public readonly ?Name $table = null, public readonly \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|null $statement = null)
+    public function __construct(public readonly WriteRule $rule, public readonly ?Name $table = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Relation\TableSource $target = null)
     {
     }
 

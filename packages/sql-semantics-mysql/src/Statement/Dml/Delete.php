@@ -77,11 +77,18 @@ final class Delete extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'DELETE ordering uses expressions, not output-column positions.');
         }
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) === null, 'An ordinary DELETE has coherent input and operand columns.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($this->orderBy) === null, 'DELETE ordering cannot refer to an output position.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($with, $table->name), 'An ordinary DELETE cannot target its own common-table declaration.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) === null, 'An ordinary DELETE cannot sample its read dependencies.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Whether preparation must resolve a retained target or operand condition.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($this->orderBy) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($this->with, $this->table->name)
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null;
     }
 
     /**

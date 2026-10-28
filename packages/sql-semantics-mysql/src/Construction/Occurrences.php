@@ -120,7 +120,7 @@ final class Occurrences
     {
         if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput) {
             $tables = Check::listOf(array_map($this->copy(...), $value->tables), \SqlSemantics\Platform\MySql\Statement\Relation\TableSource::class, 'A replacement preserves DELETE table inputs.');
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $value->targets);
+            return new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $value->targets, wildcards: $value->wildcards);
         }
         if ($value instanceof Node) {
             return $this->copy($value);

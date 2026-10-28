@@ -95,9 +95,7 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\View\Problem\BodyRestrictionGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Handler\RefusedSubqueryGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Handler\RefusedReadGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\RefusedDeleteTargetsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\RepeatedDeleteTargetGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\Delete\RefusedDeleteGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\ZeroFileCountGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Routine\Event\Problem\RefusedOperandGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Server\Problem\RefusedXaIdentifierGenerator::executionForms();
@@ -185,7 +183,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\View\Problem\RefusedQueryGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Partition\Problem\RefusedScalarGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Partition\Problem\RefusedKeyAlgorithmGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Utility\Problem\RefusedExplainTargetsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Name\Problem\NameTooLongGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Account\Problem\ResourceGroupNameTooLongGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Partition\Problem\DefinitionIssueGenerator::executionForms();

@@ -46,7 +46,7 @@ final class RefusedExplain implements Diagnostic
             }
         }
         if ($statement instanceof W\DeferredDelete || $statement instanceof W\DeferredMultipleDelete) {
-            return (new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete($statement))->message();
+            return (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($statement)?->message() ?? (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($statement)?->message() ?? ($statement instanceof W\DeferredDelete ? (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($statement->orderBy)?->message() : null) ?? 'A retained deletion cannot prepare its target or operands.';
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
             return $statement->problem()->message();

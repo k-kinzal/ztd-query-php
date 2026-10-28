@@ -25,7 +25,7 @@ final class DeferredMultipleDeleteTest extends TestCase
         self::assertTrue($delete->tables[0]->hasBinding());
         $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof M\Dml\Problem\WriteMisuse));
         self::assertCount(1, $problems);
-        self::assertSame($delete, $problems[0]->statement);
+        self::assertSame($delete->tables[0], $problems[0]->target);
     }
 
     public function testRenderRetainsTargetOrderPredicateAndModifiers(): void

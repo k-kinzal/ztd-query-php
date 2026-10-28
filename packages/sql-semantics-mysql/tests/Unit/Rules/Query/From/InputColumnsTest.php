@@ -47,7 +47,8 @@ final class InputColumnsTest extends TestCase
         $target = new M\Dml\WriteTarget(new QualifiedName(new Name('t')));
         $write = new M\Routine\Program\Write\DeferredDelete($with, [], $target, $value);
         self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, $rules->of($write));
-        $this->expectExceptionMessage('An ordinary DELETE has coherent input and operand columns.');
-        new M\Dml\Delete($with, [], $target, $value);
+        $delete = new M\Dml\Delete($with, [], $target, $value);
+        self::assertTrue($delete->hasExecutionCondition());
+        self::assertInstanceOf(M\Expression\Problem\OperandColumns::class, $rules->of($delete));
     }
 }

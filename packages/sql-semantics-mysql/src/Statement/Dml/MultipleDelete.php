@@ -29,10 +29,8 @@ use SqlSemantics\Statement\Scalar;
  * @visibility public
  * @example Reading a multiple-table DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
- *     [count($delete->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
- * @example Rejecting an intrinsically repeated target before deriving an operation
- *     $target = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
- *     new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($target)], [$target, $target]), \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     [count($delete->targets), $delete->toString()] // => [2, 'DELETE t.*, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
+
  */
 final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -65,7 +63,7 @@ final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      * @param MultipleDeleteForm $form Where the tables to delete from are written
      * @param Scalar|null $where The row predicate
      * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
-     * @throws InvalidConstruction When a target is repeated or absent from the input namespace, or targets or references are empty
+     * @throws InvalidConstruction When target or reference operands are malformed
      */
     public function __construct(
         public readonly ?WithClause $with,
@@ -84,10 +82,19 @@ final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = $input->targets;
         $this->tables = $input->tables;
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) === null, 'An ordinary DELETE target cannot be a derived, JSON or common-table relation.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) === null, 'An ordinary DELETE has a coherent input-column namespace.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) === null, 'An ordinary DELETE cannot sample its read dependencies.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Whether preparation must resolve a retained target or operand condition.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $this->with) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null;
     }
 
     /**
@@ -122,6 +129,9 @@ final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlSta
                 $out->name($target->schema, NameUse::Qualifier)->symbol('.');
             }
             $out->name($target->name, NameUse::Relation);
+            if ($this->input->wildcards[$position] === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+                $out->symbol('.')->symbol('*');
+            }
         }
         $out->keyword($this->form === MultipleDeleteForm::Using ? 'USING' : 'FROM')->list($this->tables);
         if ($this->where !== null) {

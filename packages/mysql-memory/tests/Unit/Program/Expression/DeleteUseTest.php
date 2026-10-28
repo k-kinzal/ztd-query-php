@@ -100,4 +100,49 @@ final class DeleteUseTest extends TestCase
         self::assertSame('opaque request label', $session->text);
     }
 
+    public function testStatementUsesThePublishedReadOnlyTarget(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $statement = $session->semantics()->analyze('DELETE q FROM (SELECT 1) q');
+        self::assertInstanceOf(M\Dml\MultipleDelete::class, $statement);
+        $session->text = 'opaque request label';
+        $this->expectExceptionCode(1288);
+        (new DeleteUse())->statement($statement, $session);
+    }
+
+    public function testCheckUsesTheAlreadyBoundDeletionOperands(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $statement = $session->semantics()->analyze('DELETE q FROM (SELECT 1) q');
+        self::assertInstanceOf(M\Dml\MultipleDelete::class, $statement);
+        $session->text = 'opaque request label';
+        $this->expectExceptionCode(1288);
+        (new DeleteUse())->check($statement, $statement->statementInformation(), $session);
+    }
+
+    public function testExplainedChecksOptionsBeforeTheDeletionNamespace(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $statement = $session->semantics()->analyze('EXPLAIN FORMAT=XML DELETE x FROM t');
+        self::assertInstanceOf(M\Utility\Explain\Explain::class, $statement);
+        $session->text = 'opaque request label';
+        $this->expectExceptionCode(1791);
+        (new DeleteUse())->explained($statement, $session);
+    }
+
+    public function testExplainedRestoresTheCallerDatabaseAfterTargetFailure(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d', 'other']))->connect(database: 'other');
+        $statement = $session->semantics()->analyze('EXPLAIN FOR DATABASE d DELETE x FROM t');
+        self::assertInstanceOf(M\Utility\Explain\Explain::class, $statement);
+        $session->text = 'opaque explanation label';
+        $this->expectExceptionCode(1109);
+        try {
+            (new DeleteUse())->explained($statement, $session);
+        } finally {
+            self::assertSame('other', $session->variables->database);
+            self::assertSame('opaque explanation label', $session->text);
+        }
+    }
+
 }

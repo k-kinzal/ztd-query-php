@@ -56,10 +56,11 @@ final class OccurrencesTest extends TestCase
     {
         $name = new QualifiedName(new Name('items'));
         $table = new TableReference($name);
-        $input = new DeletionInput([$table], [$name], [$table]);
+        $input = new DeletionInput([$table], [$name], [$table], [\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written]);
         $copy = (new Occurrences())->value($input);
         self::assertInstanceOf(DeletionInput::class, $copy);
         self::assertSame($input->targets, $copy->targets);
+        self::assertSame($input->wildcards, $copy->wildcards);
         self::assertNotSame($table, $copy->tables[0]);
         self::assertSame($table, $input->relation($name));
         $this->expectExceptionMessage('Deletion targets must be bound before execution.');

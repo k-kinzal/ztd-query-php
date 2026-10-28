@@ -94,7 +94,6 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand => (new \MySqlMemory\Session\Parse\Definition\GeneratedInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause => new SqlError(\MySqlMemory\Error\Family\StatementError::WrongUsage, $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar => \MySqlMemory\Error\Family\PartitionError::FunctionNotAllowed->error(),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets => (new ExplainInput())->targets($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain => (new \MySqlMemory\Program\Expression\ExplainUse())->error($diagnostic->explanation, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead => (new Dml\HandlerInput())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter => (new \MySqlMemory\Session\Parse\Definition\ShowInput())->error($diagnostic, $session),
@@ -223,8 +222,6 @@ final class InputErrors
     {
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete => (new \MySqlMemory\Program\Expression\DeleteUse())->error($diagnostic->write, $session),
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets => (new Dml\Targets())->unmatched($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
             default => null,
         };

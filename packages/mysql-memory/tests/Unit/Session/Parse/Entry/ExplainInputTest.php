@@ -34,31 +34,7 @@ final class ExplainInputTest extends TestCase
         self::assertSame(3061, $error->getCode());
         self::assertSame("User variable name '" . str_repeat('a', 100) . "' is illegal", $error->getMessage());
     }
-    public function testTargetsKeepsTheSameNamespaceAcrossDatabaseCreation(): void
-    {
-        $target = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('x'));
-        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), new Name('y'));
-        $targets = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table]);
-        $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($targets, database: new Name('d'));
-        $session = (new \MySqlMemory\Instance('8.4.7', [], ['other']))->connect(database: 'other');
-        $input = new ExplainInput();
-        self::assertSame(1049, $input->targets($problem, $session)->getCode());
-        $session->query('CREATE DATABASE d');
-        self::assertSame(1109, $input->targets($problem, $session)->getCode());
-        self::assertSame('other', $session->variables->database);
-        self::assertSame($targets, $problem->targets);
-    }
-    public function testTargetsChecksOptionsBeforeTheDatabaseAndDeleteNamespace(): void
-    {
-        $target = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('x'));
-        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')), new Name('y'));
-        $targets = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets([$target], [$table]);
-        $session = (new \MySqlMemory\Instance('8.4.7'))->connect();
-        $input = new ExplainInput();
-        $unknown = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($targets, new Name('XML'), database: new Name('absent'));
-        $into = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($targets, into: new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('plan')));
-        self::assertSame(1791, $input->targets($unknown, $session)->getCode());
-        self::assertSame(6006, $input->targets($into, $session)->getCode());
-    }
+
+
 
 }
