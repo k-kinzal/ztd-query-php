@@ -86,29 +86,36 @@ final class PreparedCommand implements Command
             [$value, $domain] = $session->variables->user($statement->source->name->value);
             $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         }
-        $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
-        if ($prepared instanceof PendingTable) {
-            $bindings = $prepared->parameters();
-            $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
-            return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');
-        }
-        if ($prepared instanceof MySqlStatement && ($prepared instanceof Prepare || $prepared instanceof Execute || $prepared instanceof Deallocate)) {
-            throw StatementError::UnsupportedPreparedStatement->error();
-        }
-        $node = $prepared;
-        (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
-        (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
-        $bindings = ParameterBindings::capture($prepared);
-        $cache = PreparedCache::capture($prepared, $session);
-        if ($cache->tables !== []) {
-            $cache = new PreparedCache($cache->definition, $cache->tables, (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session));
-        }
-        if ($cache->definition instanceof PreparedStatement && $cache->definition->generation !== null) {
-            $cache->definition->generation->sqlPrepared = true;
-        }
-        $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, $cache];
+        [$previousText, $previousFollowing] = [$session->text, $session->following];
+        $session->text = $text;
+        $session->following = '';
+        try {
+            $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
+            if ($prepared instanceof PendingTable) {
+                $bindings = $prepared->parameters();
+                $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
+                return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');
+            }
+            if ($prepared instanceof MySqlStatement && ($prepared instanceof Prepare || $prepared instanceof Execute || $prepared instanceof Deallocate)) {
+                throw StatementError::UnsupportedPreparedStatement->error();
+            }
+            $node = $prepared;
+            (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
+            (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
+            $bindings = ParameterBindings::capture($prepared);
+            $cache = PreparedCache::capture($prepared, $session);
+            if ($cache->tables !== []) {
+                $cache = new PreparedCache($cache->definition, $cache->tables, (new \MySqlMemory\Session\Parse\Preparation\Alternatives())->read($text, $session));
+            }
+            if ($cache->definition instanceof PreparedStatement && $cache->definition->generation !== null) {
+                $cache->definition->generation->sqlPrepared = true;
+            }
+            $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, $cache];
 
-        return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');
+            return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');
+        } finally {
+            [$session->text, $session->following] = [$previousText, $previousFollowing];
+        }
     }
 
     /**

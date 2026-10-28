@@ -23,9 +23,9 @@ use SqlSemantics\Statement\Scalar;
  * @example Holding a range partitioning by an expression
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('id')));
  *     $method->kind // => \SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range
- * @example Excluding session-dependent partition methods
+ * @example Retaining a session-dependent request for execution validation
  *     $expression = new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []);
- *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, $expression) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, $expression))->expression === $expression // => true
  */
 final class ExpressionMethod implements PartitionMethod
 {
@@ -38,7 +38,6 @@ final class ExpressionMethod implements PartitionMethod
     public function __construct(public readonly PartitionKind $kind, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
-        Check::input($rules->possible($expression), 'A partition method cannot depend on session state or stored functions.');
         Check::input($rules->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A partition subquery needs a retained instruction.');
         Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

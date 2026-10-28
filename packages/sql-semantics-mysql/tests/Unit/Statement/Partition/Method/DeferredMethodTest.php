@@ -17,12 +17,11 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod;
 #[Medium]
 final class DeferredMethodTest extends TestCase
 {
-    public function testRetainedSubqueryExcludesAModernNativeFunction(): void
+    public function testRetainedSubqueryKeepsAFunctionNameForVersionedValidation(): void
     {
         $call = new M\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ST_LATITUDE'), [new M\Call\CallArgument(new M\Literal\NumberLiteral('1'))]);
         $query = new M\Expression\Subquery\ScalarSubquery(new M\Query\Select([], [new M\Query\SelectExpression($call)]));
-        $this->expectExceptionMessage('The retained operands must share a supported MySQL release.');
-        new DeferredMethod($query);
+        self::assertSame($query, (new DeferredMethod($query))->expression);
     }
 
     public function testRetainedSubqueryExcludesAWithClause(): void

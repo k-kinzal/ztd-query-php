@@ -315,7 +315,6 @@ final class PartitionRule
         if ($function->name === 'bit_expr') {
             try {
                 $expression = $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
-                $this->possible($expression, $function);
                 if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($expression, $this->lowering->profile->grammar) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
                     throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($expression, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0, true, $this->lowering->origins->publish());
                 }
@@ -323,7 +322,6 @@ final class PartitionRule
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar) {
                     $this->lowering->origins->record($failure->problem->operand, $function);
-                    $this->possible($failure->problem->operand, $function);
                 }
                 throw $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar
                     ? new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($failure->problem->operand, (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($failure->problem->operand, $this->lowering->profile->grammar), (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), $failure->end, $failure->aborts, $this->lowering->origins->publish())
@@ -338,18 +336,6 @@ final class PartitionRule
             'part_func_expr: bit_expr' => $this->expression($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
-    }
-
-    /**
-     * Refuses a method unavailable in the selected language before a value is built.
-     *
-     * @throws \SqlSemantics\Construction\RejectedInput When the selected release refuses the operand
-     */
-    public function possible(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Node $function): void
-    {
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->forbidden($operand, $this->lowering->profile->grammar)) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression($operand), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0, true, $this->lowering->origins->publish());
-        }
     }
 
     /**

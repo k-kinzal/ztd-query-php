@@ -21,15 +21,15 @@ use SqlSemantics\Statement\Scalar;
 #[Small]
 final class PartitionExpressionsTest extends TestCase
 {
-    public function testReleasesIntersectsStoredSubqueriesWithNativeFunctionAvailability(): void
+    public function testReleasesRetainsTheStructuralRoleIndependentlyOfExecutionRestrictions(): void
     {
         $json = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('JSON_VALID'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
         $latitude = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ST_LATITUDE'), [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
         $query = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($json)]));
         $impossible = new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($latitude)]));
-        self::assertSame(2, (new PartitionExpressions())->releases($query));
-        self::assertSame(508, (new PartitionExpressions())->releases($latitude));
-        self::assertSame(0, (new PartitionExpressions())->releases($impossible));
+        self::assertSame(3, (new PartitionExpressions())->releases($query));
+        self::assertSame(511, (new PartitionExpressions())->releases($latitude));
+        self::assertSame(3, (new PartitionExpressions())->releases($impossible));
     }
 
     public function testConditionDistinguishesTheRetainedPartitionRoles(): void
@@ -96,33 +96,25 @@ final class PartitionExpressionsTest extends TestCase
     {
         $sql = 'ALTER TABLE missing PARTITION BY HASH ((FOUND_ROWS()))';
         $semantics = new Semantics(Dialect::MySql);
-        try {
-            $semantics->analyze($sql);
-            self::fail('An intrinsic partition restriction is reported before statement construction.');
-        } catch (\SqlSemantics\Construction\RejectedInput $input) {
-            self::assertInstanceOf(InvalidPartitionExpression::class, $input->problem);
-        }
-        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
-        (new PartitionExpressions())->derive($input->problem->expression, $derivation, $derivation->environment());
-        self::assertInstanceOf(Deprecation::class, $derivation->facts()->warnings[0]);
-        $failure = $derivation->facts()->warnings[1];
+        $statement = $semantics->analyze($sql);
+        self::assertInstanceOf(Deprecation::class, $statement->warnings()[0]);
+        $failure = $statement->warnings()[1];
         self::assertInstanceOf(ParseFailure::class, $failure);
         self::assertTrue($failure->aborts);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $failure->phase);
         self::assertInstanceOf(InvalidPartitionExpression::class, $failure->problem);
-        $origin = $input->sources->of($failure->problem->expression);
+        $origin = $failure->problem->expression->source();
         self::assertNotNull($origin);
         self::assertSame('(FOUND_ROWS())', substr($sql, $origin->offset, $origin->length));
     }
-    public function testPossibleSeparatesIntrinsicStateDependenceFromVersionedNativeFunctions(): void
+    public function testForbiddenSeparatesIntrinsicStateDependenceFromVersionedNativeFunctions(): void
     {
         $rules = new PartitionExpressions();
         $name = new \SqlSemantics\Statement\Identifier\Name('JSON_VALID');
         $call = new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall($name, [new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
         self::assertTrue($rules->forbidden($call, GrammarRelease::MySql5651));
         self::assertFalse($rules->forbidden($call, GrammarRelease::MySql847));
-        self::assertTrue($rules->possible($call));
-        self::assertFalse($rules->possible(new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, [])));
+        self::assertTrue($rules->forbidden(new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []), GrammarRelease::MySql847));
     }
 
     public function testDeriveCannotReceiveAnInvalidNativeSignature(): void

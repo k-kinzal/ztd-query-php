@@ -22,9 +22,9 @@ use SqlSemantics\Statement\Scalar;
  * @example Holding a hash partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('id')));
  *     [$method->linear, $method->expression->name->value] // => [false, 'id']
- * @example Excluding session-dependent partition methods
+ * @example Retaining a session-dependent request for execution validation
  *     $expression = new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []);
- *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, $expression) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, $expression))->expression === $expression // => true
  */
 final class HashMethod implements PartitionMethod
 {
@@ -37,7 +37,6 @@ final class HashMethod implements PartitionMethod
     public function __construct(public readonly bool $linear, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
-        Check::input($rules->possible($expression), 'A partition method cannot depend on session state or stored functions.');
         Check::input($rules->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A partition subquery needs a retained instruction.');
         Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

@@ -43,37 +43,12 @@ final class PartitionExpressions
     public const EARLY = ['USER', 'CURRENT_USER', 'SESSION_USER', 'SYSTEM_USER', 'DATABASE', 'SCHEMA', 'CONNECTION_ID', 'FOUND_ROWS', 'LAST_INSERT_ID', 'ROW_COUNT', 'RAND', 'RANDOM_BYTES', 'UUID', 'UUID_SHORT', 'SLEEP', 'BENCHMARK', 'GET_LOCK', 'IS_FREE_LOCK', 'IS_USED_LOCK', 'RELEASE_LOCK', 'RELEASE_ALL_LOCKS', 'LOAD_FILE'];
 
     /**
-     * Tells whether a partition operand has an interpretation in a supported release.
-     * Release-specific native functions remain possible; session state and stored
-     * calls cannot become partition expressions by changing the execution state.
-     */
-    public function possible(\SqlSemantics\Statement\Operand $expression): bool
-    {
-        foreach (GrammarRelease::cases() as $release) {
-            if ($release->database() === 'mysql' && !$this->forbidden($expression, $release)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Retains the releases in which a method can be defined, independently of table state.
-     * Subqueries survive stored definition only in 5.6 and 5.7. The remaining
-     * partition restrictions intersect with function and enclosing language requirements.
+     * Retains the generations that can store the operand's structural role.
+     * Session dependence is an execution condition, not a missing SQL interpretation.
      */
     public function releases(\SqlSemantics\Statement\Operand $expression): int
     {
-        $languages = new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain();
-        $subquery = $this->condition($expression, GrammarRelease::MySql847) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery;
-        $domain = 0;
-        foreach (GrammarRelease::cases() as $release) {
-            $bit = $languages->bit($release);
-            if ($bit !== 0 && (!$subquery || ($bit & 3) !== 0) && !$this->forbidden($expression, $release)) {
-                $domain |= $bit;
-            }
-        }
-        return $domain;
+        return $this->condition($expression, GrammarRelease::MySql847) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery ? 3 : \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain::ALL;
     }
 
     /**

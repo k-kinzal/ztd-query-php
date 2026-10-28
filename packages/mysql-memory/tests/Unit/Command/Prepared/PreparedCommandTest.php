@@ -185,4 +185,22 @@ final class PreparedCommandTest extends TestCase
         self::assertSame([null, Field::VarString, true], [$null[0], $null[1]->field, $null[1]->nullable]);
         self::assertSame([Field::NewDecimal, 30], [$command->parameter($session, '1.5', Domain::decimal(2, 1))[1]->field, $command->parameter($session, '1.5', Domain::decimal(2, 1))[1]->decimals]);
     }
+    public function testPrepareUsesInnerLocationsAndRestoresTheCallerInput(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
+        $statement = $session->semantics()->analyze("PREPARE p FROM 'ALTER TABLE absent PARTITION BY HASH(USER())'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare::class, $statement);
+        $session->text = 'Outer prepared request';
+        $session->following = 'Later outer statements';
+        try {
+            (new PreparedCommand())->prepare($statement, $session);
+            self::fail('The inner partition expression must fail preparation.');
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            self::assertSame(1064, $error->getCode());
+            self::assertSame("Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near 'USER())' at line 1", $error->getMessage());
+        }
+        self::assertSame('Outer prepared request', $session->text);
+        self::assertSame('Later outer statements', $session->following);
+    }
+
 }

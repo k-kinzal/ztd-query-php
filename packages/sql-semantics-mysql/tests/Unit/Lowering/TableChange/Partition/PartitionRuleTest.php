@@ -15,18 +15,16 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\PartitionRule;
 #[Medium]
 final class PartitionRuleTest extends TestCase
 {
-    public function testPossibleRefusesIntrinsicOperandsWithTheirOccurrenceRanges(): void
+    public function testExpressionRetainsIntrinsicOperandsWithTheirOccurrenceRanges(): void
     {
         $sql = 'ALTER TABLE t PARTITION BY HASH(USER())';
-        try {
-            (new Semantics(Dialect::MySql))->analyze($sql);
-            self::fail('A session-dependent method cannot be published.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $failure->problem);
-            $origin = $failure->sources->of($failure->problem->expression);
-            self::assertSame(strpos($sql, 'USER()'), $origin?->offset);
-            self::assertSame(6, $origin->length);
-        }
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        $problem = $statement->diagnostics()[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $problem);
+        $origin = $problem->expression->source();
+        self::assertSame(strpos($sql, 'USER()'), $origin?->offset);
+        self::assertSame(6, $origin->length);
+        self::assertSame('ALTER TABLE t PARTITION BY HASH (USER())', $statement->toString());
     }
 
     public function testPartitioningLowersTheClauseOfEveryGeneration(): void
@@ -116,4 +114,12 @@ final class PartitionRuleTest extends TestCase
     {
         self::assertSame('ALTER TABLE t PARTITION BY KEY (a, b)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t PARTITION BY KEY (a, b)')->toString());
     }
+    public function testPartitioningRetainsTheSubpartitionFuzzerCounterexample(): void
+    {
+        $sql = 'ALTER TABLE t PARTITION BY KEY () SUBPARTITION BY HASH ((USER())) SUBPARTITIONS 1';
+        $statement = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $statement->diagnostics()[0]);
+    }
+
 }

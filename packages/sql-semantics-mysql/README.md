@@ -504,6 +504,16 @@ operand. These values can be constructed and executed without recovering options
 from SQL. Deferred explained operands and invalid ordinary output targets retain
 their existing refusal paths.
 
+### Partition expressions
+
+HASH, RANGE and LIST methods retain their complete expressions even when those
+expressions read session state or call stored functions. The same applies to
+HASH subpartitioning and retained row-valued methods. Derivation reports
+`InvalidPartitionExpression` with its expression occurrence and ordered notice;
+consumers can reject the request before table lookup without losing its operands.
+Native-function availability remains a versioned execution check. Subquery methods
+retain their existing generation restrictions.
+
 ### File input destinations
 
 `LoadTable::columns` and `RefusedLoadAssignments::columns` distinguish an omitted
