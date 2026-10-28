@@ -69,8 +69,8 @@
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> * innermost outwards, so the structure associates as the grammar does.</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> * `&amp;&amp;` is AND and `||` without PIPES_AS_CONCAT is OR (their nonterminals are</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">31</span><span class="tok-com"> * synonyms); SOME is the keyword ANY. Constructs: Logical, Not, TruthTest,</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * synonyms), and the operation keeps which spelling was written; SOME is the</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> * keyword ANY. Constructs: Logical, Not, TruthTest,</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * synonyms), and the operation keeps which spelling was written; SOME retains</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> * its keyword while sharing the behavior of ANY. Constructs: Logical, Not, TruthTest,</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com"> * NullTest, Comparison, QuantifiedComparison. Terminates: the spine loop</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com"> * descends one left child per step; every other child is a strict subtree.</span></span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com"> * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html.</span></span>
@@ -282,8 +282,9 @@
 <span class="src-line" id="L220" data-diff="same"><a class="ln" href="#L220">220</a>    }</span>
 <span class="src-line" id="L221" data-diff="same"><a class="ln" href="#L221">221</a></span>
 <span class="src-line" id="L222" data-diff="same"><a class="ln" href="#L222">222</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">204</span><span class="tok-com">     * Lowers ALL or ANY.</span></span>
 <span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a><span class="tok-com">     * Refuses the null-safe operator in a quantified comparison, as native MySQL does.</span></span>
-<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L224" data-diff="same"><a class="ln" href="#L224">224</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a><span class="tok-com">     * @throws \SqlSemantics\Diagnostic\AnalysisException When null-safe equality is followed by ALL, ANY or SOME</span></span>
 <span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a><span class="tok-com">     * @throws ImplementationGap When the production has no operator rule</span></span>
 <span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a><span class="tok-com">     */</span></span>
@@ -299,34 +300,37 @@
 <span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>    }</span>
 <span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a></span>
 <span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L240" data-diff="same"><a class="ln" href="#L240">240</a><span class="tok-com">     * Lowers ALL or ANY.</span></span>
-<span class="src-line" id="L241" data-diff="same"><a class="ln" href="#L241">241</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a><span class="tok-com">     * Lowers ALL, ANY or SOME without discarding the keyword choice.</span></span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L242" data-diff="same"><a class="ln" href="#L242">242</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
 <span class="src-line" id="L243" data-diff="same"><a class="ln" href="#L243">243</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L244" data-diff="same"><a class="ln" href="#L244">244</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">quantifier</span>(<span class="tok-id">Node</span> <span class="tok-var">$quantifier</span>): <span class="tok-id">Quantifier</span></span>
 <span class="src-line" id="L245" data-diff="same"><a class="ln" href="#L245">245</a>    {</span>
 <span class="src-line" id="L246" data-diff="same"><a class="ln" href="#L246">246</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$quantifier</span>);</span>
 <span class="src-line" id="L247" data-diff="same"><a class="ln" href="#L247">247</a></span>
-<span class="src-line" id="L248" data-diff="same"><a class="ln" href="#L248">248</a>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">QUANTIFIERS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>] ?? <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
-<span class="src-line" id="L249" data-diff="same"><a class="ln" href="#L249">249</a>    }</span>
-<span class="src-line" id="L250" data-diff="same"><a class="ln" href="#L250">250</a></span>
-<span class="src-line" id="L251" data-diff="same"><a class="ln" href="#L251">251</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L252" data-diff="same"><a class="ln" href="#L252">252</a><span class="tok-com">     * Confirms that a node is one of the synonym keywords of AND or OR.</span></span>
-<span class="src-line" id="L253" data-diff="same"><a class="ln" href="#L253">253</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L254" data-diff="same"><a class="ln" href="#L254">254</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
-<span class="src-line" id="L255" data-diff="same"><a class="ln" href="#L255">255</a><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">212</span>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">QUANTIFIERS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>] ?? <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>        <span class="tok-var">$quantifier</span> = <span class="tok-id">self</span>::<span class="tok-id">QUANTIFIERS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>] ?? <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a></span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>        <span class="tok-kw">return</span> <span class="tok-var">$quantifier</span> === <span class="tok-id">Quantifier</span>::<span class="tok-id">Any</span> &amp;&amp; <span class="tok-id">strtoupper</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">token</span>(<span class="tok-num">0</span>)-&gt;<span class="tok-id">text</span>) === <span class="tok-str">&#039;SOME&#039;</span> ? <span class="tok-id">Quantifier</span>::<span class="tok-id">Some</span> : <span class="tok-var">$quantifier</span>;</span>
+<span class="src-line" id="L251" data-diff="same"><a class="ln" href="#L251">251</a>    }</span>
+<span class="src-line" id="L252" data-diff="same"><a class="ln" href="#L252">252</a></span>
+<span class="src-line" id="L253" data-diff="same"><a class="ln" href="#L253">253</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L254" data-diff="same"><a class="ln" href="#L254">254</a><span class="tok-com">     * Confirms that a node is one of the synonym keywords of AND or OR.</span></span>
+<span class="src-line" id="L255" data-diff="same"><a class="ln" href="#L255">255</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L256" data-diff="same"><a class="ln" href="#L256">256</a><span class="tok-com">     * @throws ImplementationGap When the production has no rule</span></span>
+<span class="src-line" id="L257" data-diff="same"><a class="ln" href="#L257">257</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">220</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">synonym</span>(<span class="tok-id">Node</span> <span class="tok-var">$keyword</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">synonym</span>(<span class="tok-id">Node</span> <span class="tok-var">$keyword</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L257" data-diff="same"><a class="ln" href="#L257">257</a>    {</span>
-<span class="src-line" id="L258" data-diff="same"><a class="ln" href="#L258">258</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$keyword</span>);</span>
-<span class="src-line" id="L259" data-diff="same"><a class="ln" href="#L259">259</a>        <span class="tok-kw">if</span> (!<span class="tok-kw">isset</span>(<span class="tok-id">self</span>::<span class="tok-id">SYNONYMS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>])) {</span>
-<span class="src-line" id="L260" data-diff="same"><a class="ln" href="#L260">260</a>            <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
-<span class="src-line" id="L261" data-diff="same"><a class="ln" href="#L261">261</a>        }</span>
-<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a></span>
-<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">SYNONYMS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>];</span>
-<span class="src-line" id="L264" data-diff="same"><a class="ln" href="#L264">264</a>    }</span>
-<span class="src-line" id="L265" data-diff="same"><a class="ln" href="#L265">265</a>}</span>
-<span class="src-line" id="L266" data-diff="same"><a class="ln" href="#L266">266</a></span>
+<span class="src-line" id="L258" data-diff="added"><a class="ln" href="#L258">258</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">synonym</span>(<span class="tok-id">Node</span> <span class="tok-var">$keyword</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L259" data-diff="same"><a class="ln" href="#L259">259</a>    {</span>
+<span class="src-line" id="L260" data-diff="same"><a class="ln" href="#L260">260</a>        <span class="tok-var">$form</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$keyword</span>);</span>
+<span class="src-line" id="L261" data-diff="same"><a class="ln" href="#L261">261</a>        <span class="tok-kw">if</span> (!<span class="tok-kw">isset</span>(<span class="tok-id">self</span>::<span class="tok-id">SYNONYMS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>])) {</span>
+<span class="src-line" id="L262" data-diff="same"><a class="ln" href="#L262">262</a>            <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
+<span class="src-line" id="L263" data-diff="same"><a class="ln" href="#L263">263</a>        }</span>
+<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a></span>
+<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">SYNONYMS</span>[<span class="tok-var">$form</span>-&gt;<span class="tok-id">signature</span>];</span>
+<span class="src-line" id="L266" data-diff="same"><a class="ln" href="#L266">266</a>    }</span>
+<span class="src-line" id="L267" data-diff="same"><a class="ln" href="#L267">267</a>}</span>
+<span class="src-line" id="L268" data-diff="same"><a class="ln" href="#L268">268</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
