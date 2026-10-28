@@ -26,11 +26,11 @@ final class TableChangeRulesTest extends TestCase
         self::assertSame([], (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, 'UPDATE IGNORE t SET a=', 21, $profile));
     }
 
-    public function testCompletedRefusesAnUnknownModifierInAProgramBody(): void
+    public function testCompletedRetainsAnUnknownModifierInAProgramBody(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('bad is not a LOCK the server knows.');
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t LOCK=bad');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t LOCK=bad');
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t LOCK = bad', $statement->toString());
+        self::assertSame('bad is not a LOCK the server knows.', $statement->diagnostics()[0]->message());
     }
 
     public function testStatementLowersAStatementNode(): void

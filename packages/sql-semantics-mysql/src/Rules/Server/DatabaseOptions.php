@@ -125,6 +125,7 @@ final class DatabaseOptions
         return match (true) {
             $option instanceof DatabaseCollation && $option->collation->name !== null && Collation::forName($option->collation->name->value, $release) === null => new UnknownCollation($option->collation->name->value),
             $option instanceof DatabaseCharset && $option->charset->name !== null && Charset::named($option->charset->name->value) === null => new UnknownCharset($option->charset->name->value),
+            $option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption && $option->encryption instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Text => new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption($option->encryption),
             default => null,
         };
     }

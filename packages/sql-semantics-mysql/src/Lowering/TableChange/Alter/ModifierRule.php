@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableChange\Alter;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -27,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * alter_commands_modifier_list, alter_commands_modifier, opt_validation,
  * alter_opt_validation, opt_with_validation, with_validation. The `=` is
  * an optional word; the keyword DEFAULT is the absent name; the name of an
- * algorithm or lock level is checked before constructing its public option
+ * algorithm or lock level remains available when its definition condition is published
  * (MYSQL-ALTER-CHOICES-001). Constructs: AlgorithmOption,
  * LockOption, ValidationOption. Terminates: lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
@@ -80,7 +78,6 @@ final class ModifierRule
      * Lowers an ALGORITHM or LOCK option: a node of `alter_algorithm_option` or `alter_lock_option`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When the option name is unknown in this release
      */
     public function option(Node $option): AlgorithmOption|LockOption
     {
@@ -88,11 +85,6 @@ final class ModifierRule
         [$lock, $value] = self::OPTIONS[$form->signature] ?? throw ImplementationGap::production($form);
         $equals = $this->lowering->options->present($form->node(1));
         $name = $value === null ? null : $this->value($form->node($value));
-
-        $refusal = (new Choices())->refusal($name, $lock, $this->lowering->profile->grammar);
-        if ($refusal !== null) {
-            throw new RejectedInput($refusal, (new SourceRanges())->span($option)[1] ?? 0);
-        }
 
         return $lock ? new LockOption($name, equals: $equals) : new AlgorithmOption($name, equals: $equals);
     }
@@ -105,12 +97,10 @@ final class ModifierRule
         if (!in_array($node->name, ['alter_algorithm_option', 'alter_lock_option'], true)) {
             return null;
         }
-        try {
-            $this->option($node);
-        } catch (RejectedInput $failure) {
-            return new ParseFailure($failure->problem, true);
-        }
-        return null;
+        $option = $this->option($node);
+        $lock = $option instanceof LockOption;
+        $problem = (new Choices())->refusal($lock ? $option->lock : $option->algorithm, $lock, $this->lowering->profile->grammar);
+        return $problem === null ? null : new ParseFailure($problem, true);
     }
 
     /**

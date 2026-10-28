@@ -19,7 +19,7 @@ final class DatabaseEncryptionGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption> $encryption Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption|\SqlSemantics\Platform\MySql\Statement\Literal\Text> $encryption Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $spelling Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<bool>|null $equals Generated constructor operand

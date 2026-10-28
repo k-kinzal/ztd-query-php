@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute;
 /**
  * Interprets an engine attribute before a later token can obscure its refusal.
  *
- * The same JSON domain guards direct construction and SQL input. Rejection
- * retains only decoded operand data and its completed input boundary.
+ * Complete definitions retain their operands and publish the same JSON condition.
+ * An unfinished input retains the decoded operand and its completion boundary.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -33,7 +33,7 @@ final class SyntaxJsonAttribute
     }
 
     /**
-     * Refuses invalid decoded JSON before publishing the enclosing structure.
+     * Answers the completed JSON condition when later syntax prevents publication.
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput
     {

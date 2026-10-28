@@ -40,7 +40,11 @@ final class SyntaxStorageOptions
             return null;
         }
         try {
-            (new StorageOptionRule($lowering))->options($node);
+            $options = (new StorageOptionRule($lowering))->options($node);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, in_array($lowering->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true));
+            if ($problem !== null) {
+                return new ParseFailure($problem, true);
+            }
         } catch (RejectedInput $failure) {
             return new ParseFailure($failure->problem, true);
         }

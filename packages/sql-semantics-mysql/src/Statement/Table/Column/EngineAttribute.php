@@ -34,10 +34,11 @@ final class EngineAttribute implements ColumnAttribute
     }
 
     /**
-     * Derives nothing: the attribute holds no expression.
+     * Publishes the JSON document condition without discarding its enclosing definition.
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
+        \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::derive($this->attribute, $derivation, $this);
     }
 
     /**

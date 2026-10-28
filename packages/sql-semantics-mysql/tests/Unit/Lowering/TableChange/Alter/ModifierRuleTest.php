@@ -27,18 +27,18 @@ final class ModifierRuleTest extends TestCase
         self::assertSame('bad is not an ALGORITHM the server knows.', $notices[0][1]->problem->message());
     }
 
-    public function testOptionRefusesUnknownInputBeforeConstruction(): void
+    public function testOptionRetainsUnknownInputWithItsCondition(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('bad is not an ALGORITHM the server knows.');
-        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM=bad');
+        $statement = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM=bad');
+        self::assertSame('ALTER TABLE t ALGORITHM = bad', $statement->toString());
+        self::assertSame('bad is not an ALGORITHM the server knows.', $statement->diagnostics()[0]->message());
     }
 
-    public function testOptionRefusesANameAbsentFromTheRelease(): void
+    public function testOptionRetainsANameAbsentFromTheRelease(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('INSTANT is not an ALGORITHM the server knows.');
-        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t ALGORITHM=INSTANT');
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t ALGORITHM=INSTANT');
+        self::assertSame('ALTER TABLE t ALGORITHM = INSTANT', $statement->toString());
+        self::assertSame('INSTANT is not an ALGORITHM the server knows.', $statement->diagnostics()[0]->message());
     }
 
     public function testOptionLowersTheValue(): void

@@ -87,8 +87,8 @@ final class StorageOptions
      * @param list<string> $accepted The keywords of the accepted options
      * @param int $minimum The least number of options
      * @return list<StorageOption>
-     * @example Refusing two effective engine settings
-     *     (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->checked([new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB')), new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB'))], \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions::DROP) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+     * @example Retaining two effective engine settings for definition diagnostics
+     *     count((new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->checked([new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB')), new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB'))], \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions::DROP)) // => 2
      */
     public function checked(array $options, array $accepted, int $minimum = 0): array
     {
@@ -96,7 +96,6 @@ final class StorageOptions
         foreach ($checked as $option) {
             Check::input(in_array($option->keyword(), $accepted, true), 'The statement takes no ' . $option->keyword() . ' option.');
         }
-        Check::input($this->repeated($checked) === null, 'A storage setting accepted once cannot be repeated.');
 
         return $checked;
     }
@@ -137,16 +136,23 @@ final class StorageOptions
         $wait = true;
         $magnitudes = new Magnitudes();
         foreach ($options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineAttributeOption) {
+                \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::derive($option->attribute, $derivation, $option);
+            }
             $keyword = $option->keyword();
             if (isset(self::ONCE[$keyword], $set[$keyword])) {
-                $derivation->report(new StorageProblem(StorageRule::RepeatedOption, $keyword));
+                $problem = new StorageProblem(StorageRule::RepeatedOption, $keyword);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
             }
             if (isset(self::ONCE[$keyword]) && !$this->unset($option)) {
                 $set[$keyword] = true;
             }
             if ($option instanceof WaitOption) {
                 if ($legacy && !$option->wait && !$wait) {
-                    $derivation->report(new StorageProblem(StorageRule::RepeatedOption, 'NO_WAIT'));
+                    $problem = new StorageProblem(StorageRule::RepeatedOption, 'NO_WAIT');
+                    $derivation->report($problem);
+                    $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
                 }
                 $wait = $option->wait;
             }

@@ -294,10 +294,6 @@ final class LiteralRule
      */
     public function text(Node $string): Text
     {
-        $failure = (new SyntaxJsonAttribute())->rejected($string, $this->lowering);
-        if ($failure !== null) {
-            throw $failure;
-        }
         $form = $this->lowering->productions->form($string);
         $radix = self::RADIX_TEXT[$form->signature] ?? null;
         if ($radix !== null) {

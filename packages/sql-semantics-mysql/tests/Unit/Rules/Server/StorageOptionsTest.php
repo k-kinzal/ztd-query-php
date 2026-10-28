@@ -30,8 +30,10 @@ final class StorageOptionsTest extends TestCase
 
     public function testDeriveReportsARepeatedOption(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze('CREATE TABLESPACE ts FILE_BLOCK_SIZE 4K FILE_BLOCK_SIZE 8K');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLESPACE ts FILE_BLOCK_SIZE 4K FILE_BLOCK_SIZE 8K');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace::class, $statement);
+        self::assertCount(2, $statement->options);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem::class, $statement->diagnostics()[0]);
     }
 
     public function testDeriveAcceptsARepeatedNoWaitInMysql8(): void

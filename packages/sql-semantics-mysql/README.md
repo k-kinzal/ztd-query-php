@@ -356,8 +356,14 @@ for the release-specific meaning of global ALL; modern account flags still
 constrain the request's language domain. `CreateTrigger` retains its body when
 the explicit trigger and table databases differ. Catalog lookup and protocol
 restrictions belong to the consumer. These concrete statement types own their conditions and resolved operands.
-These retained conditions do not cover every grammar-valid refusal: unknown
-index algorithms and invalid JSON ENGINE_ATTRIBUTE still fail during lowering.
+Definition options also remain on complete statements when their values are invalid.
+`ALGORITHM` and `LOCK` keep unknown names and publish `UnknownAlterChoice`.
+Column, index, table and tablespace engine attributes retain their quoted `Text`
+and publish `RefusedJsonAttribute` for invalid JSON. Repeated storage settings
+remain ordered options with a `StorageProblem`. Their aborting `ParseFailure`
+notices preserve definition-time checks, including inside an unreachable routine
+branch. The same conditions are derived for directly constructed statements;
+consumers do not need the input SQL to discover them.
 
 `Settings::$fullTextParsers` supplies the available full-text parser plugins as
 a list of `Name` values. An empty list means no parser plugins are available;
@@ -737,7 +743,7 @@ operands; supplied comma lists must contain exactly one boolean per boundary.
 Resource-group CPU ranges hold `Numeral` operands, including leading zeros.
 Consumers obtain numeric indices from those operands without parsing rendered SQL.
 
-Database encryption uses `Statement\Server\Database\Encryption::Enabled` or `Disabled`. `DatabaseEncryption` accepts this setting and an optional decoded `Text` spelling that must denote the same value. SQL lowering validates case-insensitive Y/N operands before their first NUL and refuses other values before publishing a statement. An entire `N` operand disables encryption; a NUL suffix enables it, including after `N`, matching the server's separate validation and setting conversion. Hexadecimal and bit spellings are excluded. Database existence and storage-engine capabilities remain execution-state concerns.
+Database encryption uses `Statement\Server\Database\Encryption::Enabled` or `Disabled`. `DatabaseEncryption` accepts this setting and an optional decoded `Text` spelling that must denote the same value. SQL lowering resolves case-insensitive Y/N operands before their first NUL. An unrecognized operand remains a `Text` in `DatabaseEncryption::$encryption`; the complete CREATE or ALTER DATABASE publishes `InvalidEncryption` and an aborting `ParseFailure`. An entire `N` operand disables encryption; a NUL suffix enables it, including after `N`, matching the server's separate validation and setting conversion. Hexadecimal and bit spellings are excluded. Database existence and storage-engine capabilities remain execution-state concerns.
 
 Legacy INSERT statements retain their optimizer hints in the semantic head. Qualified wildcards in an INSERT column list require a legacy grammar and cannot compose with modern-only hints.
 

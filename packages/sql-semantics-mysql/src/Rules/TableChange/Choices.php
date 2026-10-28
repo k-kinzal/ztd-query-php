@@ -35,7 +35,7 @@ final class Choices
     }
 
     /**
-     * Refuses an input name outside the selected release before a public option is constructed.
+     * Identifies an option name outside the selected release without discarding its value.
      */
     public function refusal(?Name $name, bool $lock, GrammarRelease $grammar): ?UnknownAlterChoice
     {
@@ -50,22 +50,24 @@ final class Choices
     /**
      * Reports an ALGORITHM name the release does not know.
      */
-    public function algorithm(?Name $name, Derivation $derivation): void
+    public function algorithm(?Name $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $owner = null): void
     {
         $problem = $this->refusal($name, false, $derivation->context->profile->grammar);
         if ($problem !== null) {
             $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $owner);
         }
     }
 
     /**
      * Reports a LOCK name the release does not know.
      */
-    public function lock(?Name $name, Derivation $derivation): void
+    public function lock(?Name $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $owner = null): void
     {
         $problem = $this->refusal($name, true, $derivation->context->profile->grammar);
         if ($problem !== null) {
             $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $owner);
         }
     }
 

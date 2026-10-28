@@ -101,6 +101,9 @@ final class ElementFacts
     {
         Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
         foreach ($options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption && in_array($option->kind, [\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::EngineAttribute, \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::SecondaryEngineAttribute], true)) {
+                \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::derive($option->value, $derivation, $option);
+            }
             $name = match (true) {
                 $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption => $option->collation,
                 $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption => $option->charset,

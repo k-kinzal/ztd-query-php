@@ -34,13 +34,9 @@ final class SyntaxOptions
         if ($node->name !== 'default_encryption') {
             return null;
         }
-        try {
-            (new DatabaseRule($lowering))->encryption($node);
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            return $failure;
-        }
-
-        return null;
+        $option = (new DatabaseRule($lowering))->encryption($node);
+        $problem = (new DatabaseOptions())->invalid($option, $lowering->profile->grammar);
+        return $problem === null ? null : new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
     }
 
     /**

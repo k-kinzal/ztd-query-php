@@ -7,7 +7,6 @@ namespace Tests\Unit\Lowering\Leaf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxJsonAttribute;
@@ -28,16 +27,22 @@ final class SyntaxJsonAttributeTest extends TestCase
         self::assertNull((new SyntaxJsonAttribute())->completed($tree, $lowering));
     }
 
-    public function testRejectedPreventsPublishingAnInvalidProgramInstruction(): void
+    public function testRejectedRemainsAvailableForAnUnfinishedInput(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN IF FALSE THEN CREATE TABLE t(a INT ENGINE_ATTRIBUTE 'bad'); END IF; END");
-            self::fail('An unreachable instruction must still have valid JSON operands.');
-        } catch (RejectedInput $failure) {
-            self::assertInstanceOf(RefusedJsonAttribute::class, $failure->problem);
-            self::assertSame('bad', $failure->problem->attribute->value);
-            self::assertSame(0, $failure->problem->position);
-            self::assertTrue($failure->aborts);
-        }
+        $semantics = new Semantics(Dialect::MySql);
+        $tree = $semantics->parser()->parse("CREATE TABLE t(a INT) ENGINE_ATTRIBUTE 'bad'");
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering(\SqlSemantics\Contract\Platforms::of('mysql')->productions($semantics->profile()), new \SqlSemantics\Lowering\Leaves(), $semantics->profile());
+        $failure = (new SyntaxJsonAttribute())->rejected($tree->find('json_attribute')[0], $lowering);
+        self::assertInstanceOf(RefusedJsonAttribute::class, $failure?->problem);
+        self::assertSame('bad', $failure->problem->attribute->value);
+    }
+
+    public function testCompletedDefinitionRetainsAnUnreachableInstructionAndItsCondition(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN IF FALSE THEN CREATE TABLE t(a INT ENGINE_ATTRIBUTE 'bad'); END IF; END");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
+        self::assertInstanceOf(RefusedJsonAttribute::class, $statement->diagnostics()[0]);
+        self::assertSame('bad', $statement->diagnostics()[0]->attribute->value);
+        self::assertStringContainsString("ENGINE_ATTRIBUTE 'bad'", $statement->toString());
     }
 }

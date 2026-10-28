@@ -46,6 +46,9 @@ final class IndexOptions
     public function parsers(array $options, Derivation $derivation): void
     {
         foreach ($options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute) {
+                \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::derive($option->attribute, $derivation, $option);
+            }
             if (!$option instanceof IndexParser) {
                 continue;
             }

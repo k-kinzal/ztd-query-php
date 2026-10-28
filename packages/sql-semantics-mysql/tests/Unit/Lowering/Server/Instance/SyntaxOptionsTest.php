@@ -24,7 +24,9 @@ final class SyntaxOptionsTest extends TestCase
         $value = str_repeat('a', 200);
         $sql = "ALTER DATABASE d ENCRYPTION '" . $value . "'";
         $tree = (new MySqlParser('mysql-8.4.7'))->parse($sql);
-        $failure = (new SyntaxWarnings())->rejected($tree, new LanguageProfile(GrammarRelease::MySql847));
+        $profile = new LanguageProfile(GrammarRelease::MySql847);
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering(\SqlSemantics\Contract\Platforms::of('mysql')->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $failure = (new SyntaxOptions())->rejected($tree->find('default_encryption')[0], $lowering);
 
         self::assertNotNull($failure);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption::class, $failure->problem);

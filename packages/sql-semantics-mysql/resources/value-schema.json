@@ -3694,7 +3694,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseEncryption": {
         "defaultKeyword": "bool",
-        "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Encryption",
+        "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Encryption|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "spelling": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"

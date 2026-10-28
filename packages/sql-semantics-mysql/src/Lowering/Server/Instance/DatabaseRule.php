@@ -170,7 +170,6 @@ final class DatabaseRule
      * Lowers ENCRYPTION: a node of `default_encryption`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When the input does not denote Y or N
      */
     public function encryption(Node $encryption): DatabaseEncryption
     {
@@ -184,7 +183,7 @@ final class DatabaseRule
         $text = $this->lowering->literals->bytes($form->node(3));
         $value = \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::fromOperand($text);
         if ($value === null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), (new \SqlSemantics\Construction\SourceRanges())->span($encryption)[1] ?? 0);
+            return new DatabaseEncryption($this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), equals: $equals, defaultKeyword: $default);
         }
 
         $spelling = $text === $value->value ? null : $this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text));

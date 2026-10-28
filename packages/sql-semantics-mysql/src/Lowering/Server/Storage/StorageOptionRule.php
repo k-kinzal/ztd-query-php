@@ -163,12 +163,11 @@ final class StorageOptionRule
      *
      * @return list<StorageOption>
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When an option is repeated outside its constructor domain
+     * @throws \SqlSemantics\Construction\RejectedInput When a size operand is invalid
      */
     public function options(Node $list): array
     {
         $options = [];
-        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         $pending = [$list];
         while ($pending !== []) {
             $node = array_pop($pending);
@@ -178,10 +177,6 @@ final class StorageOptionRule
             }
             if (isset(self::SLOTS[$form->signature])) {
                 $options[] = $this->option($form->node(0));
-                $problem = $legacy ? (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, true) : null;
-                if ($problem !== null) {
-                    throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
-                }
                 continue;
             }
             if (!in_array($form->signature, self::LISTS, true)) {
@@ -197,11 +192,6 @@ final class StorageOptionRule
             }
         }
 
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, $legacy);
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
-        }
-
         return $options;
     }
 
@@ -209,6 +199,7 @@ final class StorageOptionRule
      * Lowers one option: a node of an opt_ts_* or ts_option_* rule, or of ts_wait.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a size operand is invalid
      */
     public function option(Node $option): StorageOption
     {

@@ -23,11 +23,11 @@ final class DropIndexTest extends TestCase
         self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $drop->diagnostics()));
     }
 
-    public function testDeriveStatementRequiresKnownInputOptions(): void
+    public function testDeriveStatementRetainsUnknownOptionsAndTargetBindings(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('FAST is not an ALGORITHM the server knows.');
-        (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = FAST', []);
+        $statement = (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = FAST', []);
+        self::assertSame('DROP INDEX i ON t ALGORITHM = FAST', $statement->toString());
+        self::assertSame(['Relation t does not exist.', 'FAST is not an ALGORITHM the server knows.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheOptionsInOrder(): void

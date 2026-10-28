@@ -42,7 +42,6 @@ final class StorageOptionRuleTest extends TestCase
     {
         return [
             ['ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a ENGINE b'],
-            ["ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1X"],
             ['ALTER TABLESPACE ts ENGINE a ENGINE b'],
             ["CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a' COMMENT 'b'"],
             ["CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu' ENGINE a ENGINE b"],
@@ -55,9 +54,15 @@ final class StorageOptionRuleTest extends TestCase
     }
 
     #[DataProvider('providerRefusedOptions')]
-    public function testOptionsRefusesConflictsBeforePublishingAnOrdinaryStructure(string $sql): void
+    public function testOptionsRetainsConflictsOnTheCompleteStatement(string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem::class, $statement->diagnostics()[0]);
+        self::assertSame($sql, $statement->toString());
+    }
+    public function testOptionsRetainsTheUnrepresentableSizeBoundary(): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        (new Semantics(Dialect::MySql))->analyze("ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1X");
     }
 }

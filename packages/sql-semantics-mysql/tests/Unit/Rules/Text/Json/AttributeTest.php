@@ -45,10 +45,19 @@ final class AttributeTest extends TestCase
      * @param Closure(Text): Node $construct A public attribute constructor
      */
     #[DataProvider('providerRoles')]
-    public function testCheckProtectsEveryAttributeRole(Closure $construct): void
+    public function testDeriveRetainsTheInvalidDocumentInEveryAttributeRole(Closure $construct): void
     {
-        $this->expectExceptionMessage('An engine attribute requires an empty string or a valid JSON document.');
-        $construct(new Text('bad'));
+        $text = new Text('bad');
+        $owner = $construct($text);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context());
+        Attribute::derive($text, $derivation, $owner);
+        $problem = $derivation->facts()->diagnostics[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute::class, $problem);
+        self::assertSame($text, $problem->attribute);
+        self::assertSame(0, $problem->position);
+        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $owner->render($output);
+        self::assertStringContainsString("'bad'", (new \SqlSemantics\Rendering\Lexical())->join($output->pieces()));
     }
 
     /**

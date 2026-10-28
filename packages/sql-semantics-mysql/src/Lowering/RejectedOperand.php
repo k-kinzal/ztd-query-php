@@ -44,7 +44,7 @@ final class RejectedOperand
         if ($roles !== []) {
             return new RejectedInput($roles[0]->problem, (new SourceRanges())->span($node)[1] ?? 0, $roles[0]->aborts);
         }
-        $database = (new Server\Instance\SyntaxOptions())->rejected($node, $lowering);
+        $database = $node->name === 'default_encryption' ? null : (new Server\Instance\SyntaxOptions())->rejected($node, $lowering);
         if ($database !== null) {
             return $database;
         }
@@ -60,6 +60,9 @@ final class RejectedOperand
      */
     public function completed(Node $node, Lowering $lowering): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
     {
+        if (in_array($node->name, ['alter_algorithm_option', 'alter_lock_option'], true)) {
+            return null;
+        }
         return ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node, false) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
     }
 
@@ -84,9 +87,6 @@ final class RejectedOperand
         try {
             if ($node->name === 'key_part') {
                 return (new TableDefinition\Key\SyntaxPrefixes())->rejected($node, $lowering);
-            }
-            if ($node->name === 'json_attribute') {
-                return (new Leaf\SyntaxJsonAttribute())->rejected($node, $lowering);
             }
             if ($node->name === 'bool_pri') {
                 return (new Expression\ComparisonRule())->rejected($node, $lowering);

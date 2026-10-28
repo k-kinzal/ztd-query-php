@@ -71,6 +71,9 @@ final class AlterDatabaseCommand implements Command
 
         foreach ($statement->options as $option) {
             if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption) {
+                if ($option->encryption instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Text) {
+                    throw (new \MySqlMemory\Session\Problem\Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption($option->encryption), $session);
+                }
                 $schema->encryption = $option->encryption;
             }
         }

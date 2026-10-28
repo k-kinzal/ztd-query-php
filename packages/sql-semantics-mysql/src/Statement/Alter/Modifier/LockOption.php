@@ -18,13 +18,13 @@ use SqlSemantics\Statement\Identifier\Name;
  * The grammar reads the lock level as an identifier; the server accepts
  * NONE, SHARED and EXCLUSIVE, and the word DEFAULT spelled as an identifier
  * in 5.6 and 5.7, compared without regard to case. Any other name is the
- * input refusal UnknownAlterChoice (MYSQL-ALTER-CHOICES-001). The name is kept
+ * definition condition UnknownAlterChoice (MYSQL-ALTER-CHOICES-001). The name is kept
  * as written; the keyword DEFAULT is the absent name.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
  *
  * @visibility public
- * @example Refusing an unknown option name
- *     new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(new \SqlSemantics\Statement\Identifier\Name('unknown')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an unknown option name
+ *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(new \SqlSemantics\Statement\Identifier\Name('unknown')))->lock?->value // => 'unknown'
  * @example Requesting a change that blocks no reader or writer
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(new \SqlSemantics\Statement\Identifier\Name('NONE')))->lock?->value // => 'NONE'
  */
@@ -38,7 +38,6 @@ final class LockOption implements AlterOption, AlterModifier
      */
     public function __construct(public readonly ?Name $lock, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = true)
     {
-        \SqlSemantics\Diagnostic\Check::input((new Choices())->known($lock, true), 'The lock is a known table-change option.');
     }
 
     /**
@@ -46,7 +45,7 @@ final class LockOption implements AlterOption, AlterModifier
      */
     public function deriveOption(Derivation $derivation): void
     {
-        (new Choices())->lock($this->lock, $derivation);
+        (new Choices())->lock($this->lock, $derivation, $this);
     }
 
     /**
