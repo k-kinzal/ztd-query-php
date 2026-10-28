@@ -392,7 +392,10 @@ Clock calls and column timestamp clauses retain `ClockAlias` alternatives such
 as CURRENT_TIMESTAMP and LOCALTIME. `AggregateAlias` retains population-statistic
 names such as STDDEV_POP and VAR_POP. Their operation identities still determine
 typing and execution; ordinary calls, deferred calls and window aggregates retain
-the same keyword choices during publication.
+the same keyword choices during publication. Interval arithmetic retains ADDDATE
+and SUBDATE in `DateArithmeticAlias`, constrained to the matching subtraction
+choice. `Quantifier` keeps SOME separately from ANY; `comparesRows()` exposes
+the shared row-operand constraint for analysis and execution.
 
 `Statement\Dml\Evaluation` retains every grammatical DO item, including a
 wildcard or a non-scalar projection. `hasExecutionCondition()` identifies a

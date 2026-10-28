@@ -25,18 +25,21 @@ final class DeferredDateArithmeticGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit> $unit Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias|null>|null $alias Generated matching synonym
      */
-    public function __construct(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic(subtract: $parts[0], date: $parts[1], quantity: $parts[2], unit: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
-            $subtract,
-            $date,
-            $quantity,
-            $unit,
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = \Tests\Generator\Operands::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $scalarInformation, $inputSource, $alias): ErisGenerator {
+            return Generators::map(static function (array $parts) use ($selected): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic {
+                return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic(subtract: $selected, date: $parts[0], quantity: $parts[1], unit: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], alias: $parts[5]);
+            }, \Tests\Generator\Operands::tuple(
+                $date,
+                $quantity,
+                $unit,
+                $scalarInformation ?? Generators::constant(null),
+                $inputSource ?? Generators::constant(null),
+                $alias ?? \Tests\Generator\MySql\Statement\Call\Keyword\DateArithmeticAliasGenerator::forOperation($selected)
+            ));
+        });
     }
 }

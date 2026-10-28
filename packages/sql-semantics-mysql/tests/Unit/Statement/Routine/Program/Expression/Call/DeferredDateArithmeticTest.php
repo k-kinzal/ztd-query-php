@@ -49,4 +49,33 @@ final class DeferredDateArithmeticTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns::class, $problem);
         self::assertSame([1, 2], [$problem->expected, $problem->actual]);
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['ADDDATE((1, 2), INTERVAL 1 DAY)', 'SUBDATE((1, 2), INTERVAL 1 DAY)'] as $expression) {
+                foreach (['', ' AS chosen'] as $alias) {
+                    yield $release->value . '/program/' . $expression . $alias => [$release, 'CREATE PROCEDURE wrapper() SELECT ' . $expression . $alias];
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesTheStructureBeforeOutputSpelling(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($release, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new \SqlSemantics\Rendering\Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
 }

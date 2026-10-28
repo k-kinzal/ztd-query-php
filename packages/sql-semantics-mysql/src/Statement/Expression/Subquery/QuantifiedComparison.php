@@ -18,14 +18,14 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
 
 /**
- * A comparison with every or any row of a subquery: `x op ALL|ANY (SELECT …)` (`Item_allany_subselect`).
+ * A comparison with every or any row of a subquery: `x op ALL|ANY|SOME (SELECT …)` (`Item_allany_subselect`).
  *
  * It belongs to the bool_pri level like the plain comparisons and takes a
  * bool_pri operand (MYSQL-PRECEDENCE-001).
  *
  * Rule: MYSQL-QUANTIFIED-COMPARISON-001. Facts: 1, 0 or NULL, an integer;
  * NULL fact by MYSQL-SUBQUERY-ROWS-001. Null-safe equality cannot be quantified;
- * it is a plain comparison operator only. Only `= ANY` and `<> ALL` compare rows, as IN and
+ * it is a plain comparison operator only. Only `= ANY`, `= SOME` and `<> ALL` compare rows, as IN and
  * NOT IN do; another quantified comparison with a subquery of several columns
  * is refused as needing one (verified on a live 8.4 server). Terminates: the
  * operand and the query are strict parts.
@@ -60,8 +60,8 @@ final class QuantifiedComparison implements Scalar
         Check::input($operator !== ComparisonOperator::NullSafeEqual, 'Null-safe equality is not a quantified comparison operator.');
         Check::input((new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The operand of a quantified comparison needs a grouping to keep its place.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->query($operand, $query) === null, 'Compared operand and subquery have compatible row shapes.');
-        $rows = ($quantifier === Quantifier::Any && $operator === ComparisonOperator::Equal) || ($quantifier === Quantifier::All && $operator === ComparisonOperator::NotEqual);
-        Check::input($rows || ($operand instanceof Scalar && ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query) ?? 1) === 1), 'Only = ANY and <> ALL accept row operands.');
+        $rows = $quantifier->comparesRows($operator);
+        Check::input($rows || ($operand instanceof Scalar && ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query) ?? 1) === 1), 'Only = ANY, = SOME and <> ALL accept row operands.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery predicate has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -75,7 +75,7 @@ final class QuantifiedComparison implements Scalar
         (new SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
-        $rows = ($this->quantifier === Quantifier::Any && $this->operator === ComparisonOperator::Equal) || ($this->quantifier === Quantifier::All && $this->operator === ComparisonOperator::NotEqual);
+        $rows = $this->quantifier->comparesRows($this->operator);
         if (!$rows && $query->shape->complete() && count($query->shape->slots) > 1) {
             $derivation->report(new OperandColumns(1, count($query->shape->slots), $this));
 

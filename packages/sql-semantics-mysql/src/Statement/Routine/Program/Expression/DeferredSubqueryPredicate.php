@@ -83,7 +83,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
      */
     public function rows(): bool
     {
-        return $this->operator === null || ($this->operator === ComparisonOperator::Equal && $this->quantifier === Quantifier::Any) || ($this->operator === ComparisonOperator::NotEqual && $this->quantifier === Quantifier::All);
+        return $this->operator === null || ($this->quantifier?->comparesRows($this->operator) ?? false);
     }
 
     /**

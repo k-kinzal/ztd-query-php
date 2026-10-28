@@ -49,4 +49,34 @@ final class DateArithmeticTest extends TestCase
 
         self::assertSame('DATE_SUB(a, INTERVAL 1 SECOND)', (new Lexical())->join($out->pieces()));
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (["ADDDATE('2020-01-01', INTERVAL 1 DAY)", "SUBDATE('2020-01-01', INTERVAL 1 DAY)", "DATE_ADD('2020-01-01', INTERVAL 1 DAY)", "DATE_SUB('2020-01-01', INTERVAL 1 DAY)"] as $expression) {
+                foreach (['', ' AS chosen'] as $alias) {
+                    yield $release->value . '/statement/' . $expression . $alias => [$release, 'SELECT ' . $expression . $alias];
+                    yield $release->value . '/program/' . $expression . $alias => [$release, 'CREATE PROCEDURE wrapper() SELECT ' . $expression . $alias];
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesTheStructureBeforeOutputSpelling(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($release, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
 }

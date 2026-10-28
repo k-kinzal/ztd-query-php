@@ -27,6 +27,27 @@ final class QueryExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Quantified comparisons consume matching row shapes, NULLs and empty subqueries directly.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordReleases')]
+    public function satisfiesQuantifiedRowMembership(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Expression\Subquery\QuantifiedComparisonGenerator::rowQueries($release))->then(static function (array $input) use ($release): void {
+            [$statement, $expected] = $input;
+            self::assertInstanceOf(QueryRoot::class, $statement);
+            $session = (new Instance(substr($release->value, 6), [], ['pbt']))->connect(database: 'pbt');
+            $session->text = 'not SQL: generated quantified row comparison';
+            $reply = (new Execution($session))->statement($statement);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertSame([[$expected]], $reply->rows);
+            self::assertCount(1, $reply->columns);
+            self::assertSame('chosen', $reply->columns[0]->name);
+            self::assertSame(0, $reply->warnings());
+        });
+    }
+
+    /**
      * Typed cast synonyms consume the same generated operand and preserve its result metadata.
      */
     #[Test]

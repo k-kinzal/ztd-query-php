@@ -65,7 +65,7 @@ final class ScopedOperands
      */
     public function quantified(E\Subquery\QuantifiedComparison $node, array $common): ?Diagnostic
     {
-        $rows = ($node->quantifier === E\Subquery\Quantifier::Any && $node->operator === E\ComparisonOperator::Equal) || ($node->quantifier === E\Subquery\Quantifier::All && $node->operator === E\ComparisonOperator::NotEqual);
+        $rows = $node->quantifier->comparesRows($node->operator);
         $width = (new QueryWidth())->of($node->query, common: $common);
         if (!$rows && $width !== null && $width !== 1) {
             return new E\Problem\OperandColumns(1, $width, $node);

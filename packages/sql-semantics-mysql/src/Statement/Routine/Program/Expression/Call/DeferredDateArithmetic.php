@@ -36,13 +36,15 @@ final class DeferredDateArithmetic implements DeferredOperand
      * @param Scalar|RowOperand|DeferredOperand $date The date operand
      * @param Scalar|RowOperand|DeferredOperand $quantity The interval quantity
      * @param IntervalUnit $unit The interval unit
+     * @param \SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias|null $alias A synonym matching the subtraction choice
      */
-    public function __construct(public readonly bool $subtract, public readonly Scalar|RowOperand|DeferredOperand $date, public readonly Scalar|RowOperand|DeferredOperand $quantity, public readonly IntervalUnit $unit, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly bool $subtract, public readonly Scalar|RowOperand|DeferredOperand $date, public readonly Scalar|RowOperand|DeferredOperand $quantity, public readonly IntervalUnit $unit, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias $alias = null)
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input(!$date instanceof Scalar || !$quantity instanceof Scalar, 'A deferred date call retains a non-scalar operand.');
+        Check::input($alias === null || $alias->subtracts() === $subtract, 'A date-arithmetic alias names the retained operation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -77,6 +79,6 @@ final class DeferredDateArithmetic implements DeferredOperand
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->subtract ? 'DATE_SUB' : 'DATE_ADD')->glue()->symbol('(')->node($this->date)->symbol(',')->keyword('INTERVAL')->node($this->quantity)->keyword($this->unit->value)->symbol(')');
+        $out->keyword($this->alias->value ?? ($this->subtract ? 'DATE_SUB' : 'DATE_ADD'))->glue()->symbol('(')->node($this->date)->symbol(',')->keyword('INTERVAL')->node($this->quantity)->keyword($this->unit->value)->symbol(')');
     }
 }

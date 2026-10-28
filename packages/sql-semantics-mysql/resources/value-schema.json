@@ -874,6 +874,10 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\DateArithmeticAlias": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\KeywordAlias": {
         "name": "string",
         "value": "string"
@@ -950,6 +954,7 @@
         "function": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Temporal\\DateArithmetic": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\DateArithmeticAlias",
         "date": "SqlSemantics\\Statement\\Scalar",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "quantity": "SqlSemantics\\Statement\\Scalar",
@@ -3194,6 +3199,7 @@
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredDateArithmetic": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\DateArithmeticAlias",
         "date": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "quantity": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",

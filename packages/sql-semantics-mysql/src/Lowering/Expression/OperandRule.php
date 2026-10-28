@@ -140,7 +140,7 @@ final class OperandRule
      */
     public function quantified(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, ComparisonOperator $operator, Subquery\Quantifier $quantifier, Query $query, Node $source): Subquery\QuantifiedComparison|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate
     {
-        $rows = ($quantifier === Subquery\Quantifier::Any && $operator === ComparisonOperator::Equal) || ($quantifier === Subquery\Quantifier::All && $operator === ComparisonOperator::NotEqual);
+        $rows = $quantifier->comparesRows($operator);
         if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null || (!$rows && ($operand instanceof RowOperand || ((new QueryWidth())->of($query) ?? 1) > 1)) || (new RowShapes())->query($operand, $query) !== null) {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate($operand, $query, $operator, $quantifier);
         }

@@ -12,12 +12,10 @@ use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
-use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
@@ -350,8 +348,7 @@ final class Locator
     {
         return !in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)
             && $predicate instanceof QuantifiedComparison
-            && !($predicate->quantifier === Quantifier::Any && $predicate->operator === ComparisonOperator::Equal)
-            && !($predicate->quantifier === Quantifier::All && $predicate->operator === ComparisonOperator::NotEqual);
+            && !$predicate->quantifier->comparesRows($predicate->operator);
     }
 
     /**

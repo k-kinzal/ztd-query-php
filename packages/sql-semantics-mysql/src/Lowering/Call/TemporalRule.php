@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Scalar;
  * clock function are optional and change nothing; whether they are written
  * is kept (OptionalWords), since it is part of the text MySQL names an
  * unaliased select list expression after;
- * ADDDATE and SUBDATE with INTERVAL are DATE_ADD and DATE_SUB (CallNoise).
+ * ADDDATE and SUBDATE with INTERVAL retain their names and the matching operation.
  * Constructs: ClockCall, DateArithmetic, Extract, GetFormat, TimestampCall.
  * Terminates: every child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html.
@@ -128,7 +128,8 @@ final class TemporalRule
         $date = $this->lowering->expressions->operand($form->node(2));
         $quantity = $this->lowering->expressions->operand($form->node(5));
         $unit = $this->lowering->expressions->intervalUnit($form->node(6));
-        return $date instanceof Scalar && $quantity instanceof Scalar ? new DateArithmetic($subtract, $date, $quantity, $unit) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic($subtract, $date, $quantity, $unit);
+        $alias = \SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias::tryFrom(strtoupper($form->token(0)->text));
+        return $date instanceof Scalar && $quantity instanceof Scalar ? new DateArithmetic($subtract, $date, $quantity, $unit, alias: $alias) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic($subtract, $date, $quantity, $unit, alias: $alias);
     }
 
     /**

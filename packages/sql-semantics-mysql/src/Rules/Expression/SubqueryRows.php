@@ -222,7 +222,7 @@ final class SubqueryRows
             return null;
         }
         $membership = ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery && !$expression->negated)
-            || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any);
+            || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal && $expression->quantifier->comparesRows($expression->operator));
 
         return $membership && (new ScalarReduction())->predicate($expression->query, $release) === null ? Domain::integer() : null;
     }

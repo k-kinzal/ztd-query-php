@@ -64,4 +64,33 @@ final class DeferredSubqueryPredicateTest extends TestCase
     {
         yield [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')),new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3'))]))];
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['(1, 2) > SOME(SELECT 1, 2)', '(1, 2) = SOME(SELECT 1)'] as $expression) {
+                foreach (['', ' AS chosen'] as $alias) {
+                    yield $release->value . '/program/' . $expression . $alias => [$release, 'CREATE PROCEDURE wrapper() SELECT ' . $expression . $alias];
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerWrittenForms')]
+    public function testRenderPreservesTheStructureBeforeOutputSpelling(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($release, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new \SqlSemantics\Rendering\Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
 }

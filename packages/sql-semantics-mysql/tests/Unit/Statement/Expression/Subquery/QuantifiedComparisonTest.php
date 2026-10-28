@@ -36,7 +36,7 @@ final class QuantifiedComparisonTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], true));
 
         self::assertInstanceOf(QuantifiedComparison::class, $comparison);
-        self::assertSame(Quantifier::Any, $comparison->quantifier);
+        self::assertSame(Quantifier::Some, $comparison->quantifier);
         self::assertSame(Nullability::NotNull, $derivation->scalar($comparison, $derivation->environment())->nullability);
     }
 
@@ -90,5 +90,35 @@ final class QuantifiedComparisonTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         $this->expectExceptionMessage('An expression subquery cannot have an INTO destination.');
         new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $operation->query);
+    }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['1 = SOME(SELECT 1)', '(1, 2) = SOME(SELECT 1, 2)', '1 <> ALL(SELECT 1)', '1 = ANY(SELECT 1)'] as $expression) {
+                foreach (['', ' AS chosen'] as $alias) {
+                    yield $release->value . '/statement/' . $expression . $alias => [$release, 'SELECT ' . $expression . $alias];
+                    yield $release->value . '/program/' . $expression . $alias => [$release, 'CREATE PROCEDURE wrapper() SELECT ' . $expression . $alias];
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesTheStructureBeforeOutputSpelling(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($release, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
 }

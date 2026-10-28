@@ -115,7 +115,7 @@ final class ConditionRuleTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
 
-        self::assertSame(Quantifier::Any, (new ConditionRule($lowering))->quantifier($platform->parser($profile)->parse('SELECT 1 = SOME (SELECT 2)')->find('all_or_any')[0]));
+        self::assertSame(Quantifier::Some, (new ConditionRule($lowering))->quantifier($platform->parser($profile)->parse('SELECT 1 = SOME (SELECT 2)')->find('all_or_any')[0]));
     }
 
     public function testSynonymRejectsANodeThatIsNoLogicalKeyword(): void

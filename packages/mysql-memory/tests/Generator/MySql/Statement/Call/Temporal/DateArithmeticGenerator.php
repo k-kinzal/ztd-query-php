@@ -9,7 +9,6 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use LogicException;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 
 /**
@@ -29,17 +28,12 @@ final class DateArithmeticGenerator implements ErisGenerator
      */
     public function __construct()
     {
-        $this->delegate = Generators::map(static function (array $data): DateArithmetic {
-            if (!is_bool($data['subtract']) || !$data['date'] instanceof \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral || !$data['quantity'] instanceof \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral || !$data['unit'] instanceof \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit) {
-                throw new LogicException('Date arithmetic generation requires literal operands and an interval unit.');
-            }
-            return new DateArithmetic($data['subtract'], $data['date'], $data['quantity'], $data['unit']);
-        }, Generators::associative([
-            'subtract' => Generators::bool(),
-            'date' => new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::constant('2024-06-15 12:34:56.123456')),
-            'quantity' => new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $number): string => (string) $number, Generators::int())),
-            'unit' => new \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator(),
-        ]));
+        $this->delegate = self::fromOperands(
+            Generators::bool(),
+            new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::constant('2024-06-15 12:34:56.123456')),
+            new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $number): string => (string) $number, Generators::int())),
+            new \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator()
+        );
     }
 
     /**
@@ -66,11 +60,19 @@ final class DateArithmeticGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $date The generated semantic operand
      * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $quantity The generated semantic operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit> $unit The generated semantic operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias|null>|null $alias The generated matching synonym
      * @return ErisGenerator<DateArithmetic>
      */
-    public static function fromOperands(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit): ErisGenerator
+    public static function fromOperands(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $alias = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $parts[0], date: $parts[1], quantity: $parts[2], unit: $parts[3]), \Tests\Generator\Operands::tuple($subtract, $date, $quantity, $unit));
+        return \Tests\Generator\Operands::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $alias): ErisGenerator {
+            return Generators::map(static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $selected, date: $parts[0], quantity: $parts[1], unit: $parts[2], alias: $parts[3]), \Tests\Generator\Operands::tuple(
+                $date,
+                $quantity,
+                $unit,
+                $alias ?? \Tests\Generator\MySql\Statement\Call\Keyword\DateArithmeticAliasGenerator::forOperation($selected)
+            ));
+        });
     }
 
 }

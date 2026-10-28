@@ -28,8 +28,8 @@ use SqlSemantics\Statement\Scalar;
  * left spine is walked in a loop and the operations are built from the
  * innermost outwards, so the structure associates as the grammar does.
  * `&&` is AND and `||` without PIPES_AS_CONCAT is OR (their nonterminals are
- * synonyms), and the operation keeps which spelling was written; SOME is the
- * keyword ANY. Constructs: Logical, Not, TruthTest,
+ * synonyms), and the operation keeps which spelling was written; SOME retains
+ * its keyword while sharing the behavior of ANY. Constructs: Logical, Not, TruthTest,
  * NullTest, Comparison, QuantifiedComparison. Terminates: the spine loop
  * descends one left child per step; every other child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html.
@@ -237,7 +237,7 @@ final class ConditionRule
     }
 
     /**
-     * Lowers ALL or ANY.
+     * Lowers ALL, ANY or SOME without discarding the keyword choice.
      *
      * @throws ImplementationGap When the production has no rule
      */
@@ -245,7 +245,9 @@ final class ConditionRule
     {
         $form = $this->lowering->form($quantifier);
 
-        return self::QUANTIFIERS[$form->signature] ?? throw ImplementationGap::production($form);
+        $quantifier = self::QUANTIFIERS[$form->signature] ?? throw ImplementationGap::production($form);
+
+        return $quantifier === Quantifier::Any && strtoupper($form->token(0)->text) === 'SOME' ? Quantifier::Some : $quantifier;
     }
 
     /**
