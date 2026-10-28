@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Reading a DEALLOCATE PREPARE
  *     $deallocate = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP PREPARE stmt');
- *     [$deallocate->name->value, $deallocate->toString()] // => ['stmt', 'DEALLOCATE PREPARE stmt']
+ *     [$deallocate->name->value, $deallocate->toString()] // => ['stmt', 'DROP PREPARE stmt']
  */
 final class Deallocate extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -28,8 +28,9 @@ final class Deallocate extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
 
     /**
      * @param Name $name The name of the prepared statement
+     * @param DeallocationWord $word The verb releasing the prepared statement
      */
-    public function __construct(public readonly Name $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DeallocationWord $word = DeallocationWord::Deallocate)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -49,6 +50,6 @@ final class Deallocate extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function render(Output $out): void
     {
-        $out->keyword('DEALLOCATE', 'PREPARE')->name($this->name, NameUse::Label);
+        $out->keyword($this->word->value, 'PREPARE')->name($this->name, NameUse::Label);
     }
 }

@@ -30,6 +30,46 @@ final class AlterTableExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Rename connectors preserve generated rows and either TRUNCATE form removes them.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesRenameAndTruncateConsumeDependentValues(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Alter\TruncateTableGenerator::renamedTables($release))->then(
+            /** @param array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement} $inputs */
+            static function (array $inputs) use ($release): void {
+                [$create, $insert, $before, $rename, $after, $truncate] = $inputs;
+                self::assertInstanceOf(CreateTable::class, $create);
+                self::assertInstanceOf(InsertRows::class, $insert);
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $before);
+                self::assertInstanceOf(AlterTable::class, $rename);
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $after);
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable::class, $truncate);
+                $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+                $session->text = 'generated rename and truncate without SQL';
+                $execution = new Execution($session);
+                self::assertInstanceOf(Completion::class, $execution->statement($create));
+                self::assertInstanceOf(Completion::class, $execution->statement($insert));
+                $original = $execution->statement($before);
+                self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $original);
+                self::assertCount(1, $original->rows);
+                self::assertInstanceOf(Completion::class, $execution->statement($rename));
+                $renamed = $execution->statement($after);
+                self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $renamed);
+                self::assertSame($original->rows, $renamed->rows);
+                self::assertNull($session->instance->dictionary->schema('pbt')?->table('type_pair'));
+                self::assertInstanceOf(Completion::class, $execution->statement($truncate));
+                $empty = $execution->statement($after);
+                self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $empty);
+                self::assertSame([], $empty->rows);
+                self::assertSame('generated rename and truncate without SQL', $session->text);
+                self::assertSame([], $session->transaction->statements->running);
+            }
+        );
+    }
+
+    /**
      * Dependent generated statements retain rows and the completion expected for their engine.
      */
     #[Test]

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -32,6 +33,11 @@ final class ProcedureCall extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * The retained parentheses, required when arguments are present.
+     */
+    public readonly OptionalWords $parentheses;
+
+    /**
      * @var list<Scalar> The arguments in written order
      */
     public readonly array $arguments;
@@ -39,14 +45,17 @@ final class ProcedureCall extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     /**
      * @param QualifiedName $procedure The procedure name with its optional database
      * @param list<Scalar> $arguments The arguments
+     * @param OptionalWords|null $parentheses The written parentheses; null defaults to parentheses only for a nonempty argument list
      */
-    public function __construct(public readonly QualifiedName $procedure, array $arguments = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly QualifiedName $procedure, array $arguments = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?OptionalWords $parentheses = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($procedure);
         Check::input($procedure->catalog === null, 'A procedure is qualified by at most a database.');
+        $this->parentheses = $parentheses ?? ($arguments === [] ? OptionalWords::Omitted : OptionalWords::Written);
+        Check::input($arguments === [] || $this->parentheses === OptionalWords::Written, 'CALL arguments require parentheses.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'The arguments of CALL are expressions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -62,7 +71,7 @@ final class ProcedureCall extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     }
 
     /**
-     * Writes the statement; the parentheses are written when there are arguments.
+     * Writes the statement with its retained parentheses.
      */
     public function render(Output $out): void
     {
@@ -71,7 +80,7 @@ final class ProcedureCall extends \SqlSemantics\Platform\MySql\Statement\SqlStat
             $out->name($this->procedure->schema, NameUse::Qualifier)->symbol('.');
         }
         $out->name($this->procedure->name, NameUse::Routine);
-        if ($this->arguments !== []) {
+        if ($this->parentheses === OptionalWords::Written) {
             $out->glue()->symbol('(')->list($this->arguments)->symbol(')');
         }
     }

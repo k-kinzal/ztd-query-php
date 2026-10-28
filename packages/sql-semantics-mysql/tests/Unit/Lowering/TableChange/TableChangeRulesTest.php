@@ -35,7 +35,7 @@ final class TableChangeRulesTest extends TestCase
 
     public function testStatementLowersAStatementNode(): void
     {
-        self::assertSame('TRUNCATE TABLE t', (new Semantics(Dialect::MySql))->analyze('TRUNCATE t')->toString());
+        self::assertSame('TRUNCATE t', (new Semantics(Dialect::MySql))->analyze('TRUNCATE t')->toString());
     }
 
     public function testDefinitionLowersARoutedProduction(): void

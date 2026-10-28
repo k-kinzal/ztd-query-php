@@ -21,14 +21,16 @@ final class RenameToGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $table Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameMark>|null $mark Generated written alternative
      */
-    public function __construct(ErisGenerator $table, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $table, ?ErisGenerator $inputSource = null, ?ErisGenerator $mark = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameTo {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameTo(table: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameTo(table: $parts[0], inputSource: $parts[1], mark: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $table,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $mark ?? new RenameMarkGenerator()
         ));
     }
 }

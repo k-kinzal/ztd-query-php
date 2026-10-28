@@ -365,6 +365,12 @@ can differ for system views. Use `dimensions` for column dimensions and
 `columnType` only for the server's display text. The release catalogs retain
 these dimensions from the server rather than inferring them from that text.
 
+Statement values also retain `TRUNCATE`'s optional TABLE keyword, CALL's
+parentheses, the DEALLOCATE/DROP verb of a prepared-statement release, and
+RENAME's TO/AS/equals/omitted connector. CALL requires parentheses for nonempty
+arguments. These choices survive publication inside stored programs as well as
+immediate statements; execution consumes the same target and operands.
+
 Maintenance and partition operations expose `binlog` as a nullable
 `Statement\Server\BinlogOption`: `Local` and `NoWriteToBinlog` both suppress
 binary logging, and null means the modifier was omitted. Legacy OPTIMIZE

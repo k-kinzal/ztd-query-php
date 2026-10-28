@@ -178,6 +178,6 @@ final class StatementRule
             throw ImplementationGap::production($word);
         }
 
-        return new TruncateTable($this->lowering->names->qualified($form->node(2)));
+        return new TruncateTable($this->lowering->names->qualified($form->node(2)), tableWord: $word->node->children === [] ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
     }
 }

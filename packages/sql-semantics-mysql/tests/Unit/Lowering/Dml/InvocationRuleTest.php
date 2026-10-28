@@ -30,8 +30,8 @@ final class InvocationRuleTest extends TestCase
 
     public function testArgumentsLowersEveryList(): void
     {
-        self::assertSame('CALL p', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('call p()')->toString());
-        self::assertSame('CALL p', (new Semantics(Dialect::MySql))->analyze('call p()')->toString());
+        self::assertSame('CALL p()', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('call p()')->toString());
+        self::assertSame('CALL p()', (new Semantics(Dialect::MySql))->analyze('call p()')->toString());
         self::assertSame('CALL p(1, 2)', (new Semantics(Dialect::MySql))->analyze('call p(1, 2)')->toString());
     }
 

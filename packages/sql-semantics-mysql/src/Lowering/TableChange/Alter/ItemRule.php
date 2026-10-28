@@ -200,7 +200,7 @@ final class ItemRule
             throw ImplementationGap::production($to);
         }
 
-        return new RenameTo($this->lowering->names->qualified($form->node(2)));
+        return new RenameTo($this->lowering->names->qualified($form->node(2)), mark: \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameMark::from($to->node->children === [] ? '' : strtoupper($to->token(0)->text)));
     }
 
     /**

@@ -23,17 +23,21 @@ final class ProcedureCallGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar>>|null $arguments Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $parentheses Generated parentheses compatible with the arguments
      */
-    public function __construct(ErisGenerator $procedure, ?ErisGenerator $arguments = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $procedure, ?ErisGenerator $arguments = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $parentheses = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall(procedure: $parts[0], arguments: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
-            $procedure,
-            $arguments ?? Generators::constant([]),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = \Tests\Generator\Operands::bind($arguments ?? Generators::constant([]), static function (array $values) use ($procedure, $statementInformation, $inputSource, $parentheses): ErisGenerator {
+            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall {
+                return new \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall(procedure: $parts[0], arguments: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], parentheses: $parts[4]);
+            }, \Tests\Generator\Operands::tuple(
+                $procedure,
+                Generators::constant($values),
+                $statementInformation ?? Generators::constant(null),
+                $inputSource ?? Generators::constant(null),
+                $parentheses ?? ($values === [] ? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator() : Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written))
+            ));
+        });
     }
     /**
      * Composes the statement's SQL forms from typed operand generators.

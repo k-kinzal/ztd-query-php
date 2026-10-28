@@ -22,15 +22,17 @@ final class DeallocateGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\DeallocationWord>|null $word Generated written alternative
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $word = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate(name: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate(name: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], word: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $word ?? new DeallocationWordGenerator()
         ));
     }
     /**

@@ -75,7 +75,7 @@ final class InvocationRule
             throw ImplementationGap::production($form);
         }
 
-        return new ProcedureCall($this->lowering->names->qualified($form->node(1)), $this->arguments($form->node(2)));
+        return new ProcedureCall($this->lowering->names->qualified($form->node(1)), $this->arguments($form->node(2)), parentheses: $form->node(2)->children === [] ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
     }
 
     /**
@@ -150,7 +150,7 @@ final class InvocationRule
                     throw ImplementationGap::production($verb);
                 }
 
-                return new Deallocate($this->lowering->names->identifier($form->node(2)));
+                return new Deallocate($this->lowering->names->identifier($form->node(2)), word: \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\DeallocationWord::from(strtoupper($verb->token(0)->text)));
             default:
                 throw ImplementationGap::production($form);
         }

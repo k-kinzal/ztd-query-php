@@ -25,8 +25,33 @@ final class RenameToTest extends TestCase
         self::assertSame([], $semantics->analyze('ALTER TABLE t RENAME TO t', [$table, $other])->diagnostics());
     }
 
-    public function testRenderWritesTo(): void
+    public function testRenderPreservesTheEqualsConnector(): void
     {
-        self::assertSame('ALTER TABLE t RENAME TO db.u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t RENAME = db.u')->toString());
+        self::assertSame('ALTER TABLE t RENAME = db.u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t RENAME = db.u')->toString());
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['ALTER TABLE t RENAME u', 'ALTER TABLE t RENAME TO u', 'ALTER TABLE t RENAME AS u', 'ALTER TABLE t RENAME = u'] as $sql) {
+                yield "$release->value/statement/$sql" => [$release, $sql];
+                yield "$release->value/program/$sql" => [$release, 'CREATE PROCEDURE wrapper() ' . $sql];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesWrittenFormsThroughPublication(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
+
 }

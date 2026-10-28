@@ -563,8 +563,13 @@
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\ElementKind",
         "to": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnName"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameMark": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameTo": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "mark": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\RenameMark",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Command\\Reorder": {
@@ -712,7 +717,8 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate": {
         "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias",
@@ -1338,7 +1344,12 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Deallocate": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "name": "SqlSemantics\\Statement\\Identifier\\Name"
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "word": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\DeallocationWord"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\DeallocationWord": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Prepared\\Definition": {
         "alternatives": "array",
@@ -1474,6 +1485,7 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "arguments": "array",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "procedure": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Target\\DeletionInput": {
