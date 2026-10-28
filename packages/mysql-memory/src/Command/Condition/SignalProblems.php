@@ -11,7 +11,6 @@ use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Value\Temporal;
-use SqlParser\Parser\Node as Tree;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
@@ -40,14 +39,6 @@ use SqlSemantics\Statement\Node;
  */
 final class SignalProblems
 {
-    /**
-     * Tells whether a statement is SIGNAL or RESIGNAL, whose temporal literals are checked with its other parse-time problems rather than first.
-     */
-    public function signals(Tree $tree): bool
-    {
-        return in_array($tree->tokens()[0]->name ?? '', ['SIGNAL_SYM', 'RESIGNAL_SYM'], true);
-    }
-
     /**
      * Raises the first parse-time problem of a SIGNAL or RESIGNAL statement.
      *

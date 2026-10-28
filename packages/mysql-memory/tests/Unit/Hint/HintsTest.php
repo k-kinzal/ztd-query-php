@@ -32,7 +32,7 @@ use Tests\Generator\Embedding;
 #[Small]
 final class HintsTest extends TestCase
 {
-    public function testTypingTypesTheStatementWithTheValuesOfSetVar(): void
+    public function testTypingTypesParsedStatementsWithTheValuesOfSetVar(): void
     {
         $session = (new Instance())->connect();
         $result = $session->query('SELECT /*+ SET_VAR(div_precision_increment = 10) */ 1/3')[0];
@@ -42,12 +42,12 @@ final class HintsTest extends TestCase
         self::assertSame(4, $session->variables->read('div_precision_increment'));
     }
 
-    public function testTypingValueReadsTheOriginalStructureWithoutInputText(): void
+    public function testTypingReadsTheOriginalStructureWithoutInputText(): void
     {
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
         $query = new QueryRoot(new Select([], [new SelectExpression(new NumberLiteral('1'))], hints: [new VariableHint('div_precision_increment', new HintLiteral(HintLiteralKind::Integer, '10'))]));
-        $application = (new Hints())->typingValue($query, $session);
+        $application = (new Hints())->typing($query, $session);
 
         self::assertSame(10, $session->variables->read('div_precision_increment'));
         self::assertSame([], $application->warnings);
@@ -181,7 +181,7 @@ final class HintsTest extends TestCase
     }
 
     #[DataProvider('providerTypedHintsPrecisions')]
-    public function testTypingValueOperationAndExecutionHonorTypedHintsBeforeDerivingDomains(string $release, int $precision): void
+    public function testTypingOperationAndExecutionHonorTypedHintsBeforeDerivingDomains(string $release, int $precision): void
     {
         $session = (new Instance($release))->connect();
         $session->text = 'unrelated invalid input';

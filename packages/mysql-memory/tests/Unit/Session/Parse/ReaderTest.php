@@ -7,15 +7,10 @@ namespace Tests\Unit\Session\Parse;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Parse\Reader;
-use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 #[CoversClass(Reader::class)]
 #[Small]
@@ -96,31 +91,16 @@ final class ReaderTest extends TestCase
         self::assertSame([['Error', 1064, $error->getMessage()]], $session->diagnostics->conditions);
     }
 
-    public function testBoundTypesAMarkerOfAPreparedStatementAsAVarchar(): void
+    public function testLowerRetainsConcreteOperandsAndTheirInputLocations(): void
     {
         $session = (new Instance())->connect();
         $tree = $session->semantics()->parser()->parse('SELECT ? + ?');
-        $unbound = Resolved::string(16383, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible);
-
-        self::assertEquals([0 => $unbound, 1 => $unbound], (new Reader())->bound($tree, [], true, $session));
-    }
-
-    public function testBoundRetainsTheLegacyNullMarkerDomain(): void
-    {
-        $session = (new Instance('5.7.44'))->connect();
-        $tree = $session->semantics()->parser()->parse('SELECT ?');
-        $types = (new Reader())->bound($tree, [[null, Domain::null()]], true, $session);
-
-        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, Field::VarString, Coercibility::Coercible], [$types[0]->kind, $types[0]->field, $types[0]->coercibility]);
-    }
-
-    public function testBoundTypesAMarkerByItsValue(): void
-    {
-        $session = (new Instance())->connect();
-        $tree = $session->semantics()->parser()->parse('SELECT ? + ?');
-
-        self::assertEquals([0 => Domain::integer()->resolved()], (new Reader())->bound($tree, [[1, Domain::integer()]], false, $session));
-        self::assertSame([], (new Reader())->bound($tree, [], false, $session));
+        [$statement, $sources] = (new Reader())->lower($tree, $session);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class);
+        self::assertSame([0, 1], [$markers[0]->position, $markers[1]->position]);
+        self::assertSame([7, 11], [$sources->of($markers[0])?->offset, $sources->of($markers[1])?->offset]);
+        self::assertFalse($statement->hasStatementInformation());
     }
 
     public function testRefusedRecordsAParameterMarkerBeforeALaterSyntaxError(): void

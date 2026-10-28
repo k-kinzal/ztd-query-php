@@ -49,4 +49,49 @@ final class HintExecutionProperties extends TestCase
             self::assertSame('Generated hint meaning without source SQL', $session->text);
         });
     }
+    /**
+     * Preparation and execution share semantic slot and hint binding without SQL input.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReleases')]
+    public function satisfiesPreparedHintsAndParameterSlotsSurviveRebinding(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Literal\ParameterGenerator::preparedDivision($release))->then(
+            static function (array $sample) use ($release): void {
+                [$statement, $parameters, $expected] = $sample;
+                self::assertInstanceOf(QueryRoot::class, $statement);
+                $session = (new Instance(substr($release->value, 6)))->connect();
+                $session->text = 'Generated preparation without SQL';
+                $prepared = \MySqlMemory\Command\Prepared\PreparedStatement::capture($statement, $session);
+                self::assertIsArray($parameters);
+                $bindings = [];
+                foreach ($parameters as $parameter) {
+                    self::assertIsArray($parameter);
+                    self::assertIsInt($parameter[0]);
+                    self::assertInstanceOf(\MySqlMemory\Typing\Domain::class, $parameter[1]);
+                    $bindings[] = [$parameter[0], $parameter[1]];
+                }
+                $reply = $prepared->execute($session, 'Generated preparation without SQL', $bindings);
+                self::assertInstanceOf(ResultSet::class, $reply);
+                self::assertSame([[$expected]], $reply->rows);
+                self::assertSame('quotient', $reply->columns[0]->name);
+                self::assertSame(4, $session->variables->read('div_precision_increment'));
+                self::assertSame('Generated preparation without SQL', $session->text);
+                self::assertSame([], $session->transaction->statements->running);
+            }
+        );
+    }
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
 }

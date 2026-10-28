@@ -118,6 +118,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
 
     /**
      * Lowers a parse tree into its statements.
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When grammar-action constraints reject complete input
      */
     public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?\SqlSemantics\Contract\Session $session = null, bool $canonicalNames = false): array
     {

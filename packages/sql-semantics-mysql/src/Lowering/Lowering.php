@@ -269,6 +269,7 @@ final class Lowering
      * @return list<Statement>
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When an input operand has no semantic value
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When grammar-action constraints reject complete input
      */
     public function statements(Node $input): array
     {

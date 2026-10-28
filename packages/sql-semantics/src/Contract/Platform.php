@@ -47,6 +47,7 @@ interface Platform
      * @param bool $canonicalNames Whether identifier bytes use the model encoding while session settings remain attached to the resulting values
      * @return list<Statement>
      * @throws \SqlSemantics\Construction\RejectedInput When an operand is outside a semantic constructor domain
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When grammar-action constraints reject complete input
      */
     public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?Session $session = null, bool $canonicalNames = false): array;
 

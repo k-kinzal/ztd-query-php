@@ -27,13 +27,6 @@ final class SignalProblemsTest extends TestCase
         $session->query("SIGNAL missing SET MESSAGE_TEXT = DATE 'bad'");
     }
 
-    public function testSignalsTellsSignalAndResignalFromOtherStatements(): void
-    {
-        $parser = (new Instance())->connect()->semantics()->parser();
-
-        self::assertSame([true, true, false], [(new SignalProblems())->signals($parser->parse("SIGNAL SQLSTATE '45000'")), (new SignalProblems())->signals($parser->parse('RESIGNAL')), (new SignalProblems())->signals($parser->parse('SELECT 1'))]);
-    }
-
     public function testCheckRaisesAnUndefinedConditionBeforeAnUnknownSystemVariable(): void
     {
         $session = (new Instance())->connect();

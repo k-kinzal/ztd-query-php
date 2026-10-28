@@ -11,7 +11,6 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Statement\AnalyzedStatement;
 use SqlSemantics\Statement\Source\SourceMap;
 use SqlSemantics\Statement\Statement;
 
@@ -32,11 +31,7 @@ final class Binding
      */
     public function operation(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null): MySqlStatement
     {
-        $result = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, new SourceMap());
-        if ($statement instanceof MySqlStatement && isset($session->preparation->programSources[$statement])) {
-            $session->preparation->programSources[$result] = $session->preparation->programSources[$statement];
-        }
-        return $result;
+        return $this->statement($session, $statement, $parameters, $profile, $literals);
     }
 
     /**
@@ -44,9 +39,9 @@ final class Binding
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      */
-    public function statement(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null, SourceMap $sources = new SourceMap()): AnalyzedStatement
+    public function statement(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null, SourceMap $sources = new SourceMap(), bool $prepared = false): MySqlStatement
     {
-        $result = Platforms::of('mysql')->publish($this->context($session, $statement, $parameters, $profile, $literals), $statement, $sources);
+        $result = Platforms::of('mysql')->publish($this->context($session, $statement, $parameters, $profile, $literals, $prepared), $statement, $sources);
         \SqlSemantics\Diagnostic\Check::invariant($result instanceof MySqlStatement, 'MySQL binding publishes a MySQL statement.');
         if ($statement instanceof MySqlStatement && isset($session->preparation->programSources[$statement])) {
             $session->preparation->programSources[$result] = $session->preparation->programSources[$statement];
@@ -59,14 +54,21 @@ final class Binding
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      */
-    public function context(Session $session, Statement $statement, array $parameters, ?LanguageProfile $profile, ?Settings $literals): AnalysisContext
+    public function context(Session $session, Statement $statement, array $parameters, ?LanguageProfile $profile, ?Settings $literals, bool $prepared = false): AnalysisContext
     {
-        $typing = (new Hints())->typingValue($statement, $session);
+        $typing = (new Hints())->typing($statement, $session);
         try {
             $profile ??= $session->semantics()->profile();
             $database = $session->variables->database;
             $context = Platforms::of('mysql')->context($profile, $database === '' ? null : [$database], Catalog::declarations($session), true);
-            return $context->withSession($session->resolution($this->parameters($session, $parameters), $literals));
+            $domains = $this->parameters($session, $parameters, $prepared);
+            if ($prepared) {
+                $unbound = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(16383, $session->resolution()->connection, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
+                foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class) as $marker) {
+                    $domains[$marker->position] ??= $unbound;
+                }
+            }
+            return $context->withSession($session->resolution($domains, $literals, $prepared && $parameters === [] ? array_keys($domains) : []));
         } finally {
             $typing->restore($session);
         }
@@ -78,11 +80,11 @@ final class Binding
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @return array<int, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain>
      */
-    public function parameters(Session $session, array $parameters): array
+    public function parameters(Session $session, array $parameters, bool $prepared = false): array
     {
         $domains = [];
         foreach ($parameters as $position => [$value, $domain]) {
-            $domains[$position] = $session->replayed && $session->settings()->legacy() && $value === null
+            $domains[$position] = ($prepared || $session->replayed) && $session->settings()->legacy() && $value === null
                 ? new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible)
                 : ($session->preparation->domains[$position] ?? $domain)->resolved();
         }

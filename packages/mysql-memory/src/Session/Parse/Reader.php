@@ -12,7 +12,6 @@ use SqlParser\Lexer\SourceException;
 use SqlParser\Parser\Node;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 
 /**
  * Reads the text of a statement as the parser of the server does, and raises the problems it finds there before the statement is resolved.
@@ -59,7 +58,7 @@ final class Reader
         }
         $tokens = $tree->tokens();
         $inspected = ($tokens[0]->name ?? '') === 'SHOW' && ($tokens[1]->name ?? '') === 'PARSE_TREE_SYM';
-        if (!$inspected && !(new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
+        if (!$inspected && !in_array($tokens[0]->name ?? '', ['SIGNAL_SYM', 'RESIGNAL_SYM'], true)) {
             (new TemporalInput())->check($tree, $statement, $rejection->end ?? PHP_INT_MAX, $session);
         }
         if ($rejection !== null) {
@@ -282,33 +281,23 @@ final class Reader
     }
 
     /**
-     * Answers the type of the value bound to each parameter marker of a statement, by the position of the marker.
+     * Lowers complete input to concrete operands before session-dependent binding.
+     * Locations and spelling notices are temporary construction inputs; the
+     * published statement attaches them to their owning SQL occurrences.
      *
-     * A statement prepared before any value is bound types each marker as the server types a lone
-     * marker then: a VARCHAR of 16383 characters in the connection collation.
-     *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound in the order of the markers
-     * @return array<int, Domain>
+     * @return array{\SqlSemantics\Statement\Statement, \SqlSemantics\Statement\Source\SourceMap}
+     * @throws \SqlSemantics\Construction\RejectedInput When an operand cannot be represented
+     * @throws AnalysisException When grammar-action constraints reject complete input
      */
-    public function bound(Node $tree, array $parameters, bool $prepared, Session $session): array
+    public function lower(Node $tree, Session $session): array
     {
-        $bound = [];
-        $index = 0;
-        $unbound = Domain::string(16383, $session->resolution()->connection, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
-        foreach ($tree->tokens() as $token) {
-            if ($token->name !== 'PARAM_MARKER') {
-                continue;
-            }
-            if (isset($parameters[$index])) {
-                $bound[$index] = $prepared && $session->settings()->legacy() && $parameters[$index][0] === null
-                    ? new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible)
-                    : ($session->preparation->domains[$index] ?? $parameters[$index][1])->resolved();
-            } elseif ($prepared) {
-                $bound[$index] = $unbound;
-            }
-            $index++;
-        }
-
-        return $bound;
+        $platform = \SqlSemantics\Contract\Platforms::of('mysql');
+        $leaves = new \SqlSemantics\Lowering\Leaves();
+        $origins = new \SqlSemantics\Construction\Origins();
+        $statement = (new \SqlSemantics\Validation\Publication())->root($platform->lower($tree, $session->semantics()->profile(), $leaves, $origins, $session->resolution()));
+        $graph = new \SqlSemantics\Validation\ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $platform->statementNamespace()]);
+        $dropped = (new \SqlSemantics\Validation\LeafEmbedding())->dropped($leaves, $graph->objects($statement, complete: false));
+        \SqlSemantics\Diagnostic\Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
+        return [$statement, $origins->publish()];
     }
 }

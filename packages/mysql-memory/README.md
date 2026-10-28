@@ -117,6 +117,13 @@ composer test
 ERIS_SEED=20261025 vendor/bin/phpunit --testsuite property
 ```
 
+SQL input is lowered to concrete statement operands before session-dependent
+binding. Ordinary input, directly constructed statements and prepared execution
+use the same binding path: parameter slots come from semantic parameter values,
+and typing hints come from semantic hint values. Source locations and spelling
+notices remain attached to their owning occurrences. Binding neither tokenizes
+nor reparses the request text.
+
 The property suite composes semantic statements with Eris and executes them
 directly. Dependent requests, such as a table definition and an INSERT using its
 columns, are generated together before execution. Shrinking retains their

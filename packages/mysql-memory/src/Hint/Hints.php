@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Hint;
 
 use MySqlMemory\Session\Session;
-use SqlParser\Parser\Node as Tree;
-use SqlSemantics\Platform\MySql\Lowering\Hint\HintReader;
 use SqlSemantics\Platform\MySql\Statement\Hint\Form\KeyHint;
-use SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint;
 use SqlSemantics\Statement\Node;
 use WeakMap;
 
@@ -35,34 +32,10 @@ final class Hints
 
 
     /**
-     * Applies the SET_VAR hints of a statement that change how it is typed, silently, while it is analyzed; the first hint of a variable counts.
-     */
-    public function typing(Tree $tree, string $text, Session $session): Application
-    {
-        $application = new Application();
-        if (!str_contains($text, '/*+') || $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            return $application;
-        }
-        $registration = new Registration(new Blocks($session->instance->dictionary, $session->variables->database, $session->temporaries), $session->variables->catalog, new Printer());
-        foreach ((new HintReader($session->settings()->release()))->comments($tree) as $comment) {
-            foreach ($comment->hints as $hint) {
-                $definition = $hint instanceof VariableHint ? $session->variables->catalog->find($hint->variable) : null;
-                if ($hint instanceof VariableHint && $definition !== null && in_array($definition->name, self::TYPING, true)) {
-                    $registration->variables[$definition->name] ??= $hint;
-                }
-            }
-        }
-        $application->apply($registration, $session);
-        $application->warnings = [];
-
-        return $application;
-    }
-
-    /**
      * Applies typing variables from the semantic hint values before direct construction
      * derives expression domains. No input text or parser state is consulted.
      */
-    public function typingValue(Node $statement, Session $session): Application
+    public function typing(Node $statement, Session $session): Application
     {
         if (!$this->hinted($session)) {
             return new Application();

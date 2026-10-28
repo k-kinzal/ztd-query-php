@@ -49,6 +49,29 @@ final class BindingTest extends TestCase
         self::assertSame([Kind::Decimal, 2], [$numeric->kind, $numeric->decimals]);
     }
 
+    public function testContextPreparesTheSemanticSlotsWithoutAssumingTraversalOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = 'No source SQL for these reordered parameter slots';
+        $statement = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [
+            new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(position: 3)),
+            new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(position: 1)),
+        ]));
+        $context = (new Binding())->context($session, $statement, [], null, null, true);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::class, $context->session);
+        self::assertSame([3, 1], array_keys($context->session->parameters));
+        self::assertSame([3, 1], $context->session->unboundParameters);
+        self::assertEquals(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(16383, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible), $context->session->parameters[3]);
+        self::assertSame('No source SQL for these reordered parameter slots', $session->text);
+    }
+
+    public function testParametersRetainTheLegacyNullDomainDuringInitialPreparation(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $types = (new Binding())->parameters($session, [[null, Domain::null()]], true);
+        self::assertSame([Kind::Null, Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible], [$types[0]->kind, $types[0]->field, $types[0]->coercibility]);
+    }
+
     public function testStatementPublishesConcreteInsertValuesAgainstCurrentDeclarations(): void
     {
         $session = (new Instance())->connect();

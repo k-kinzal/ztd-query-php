@@ -12,7 +12,6 @@ use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Reply;
 use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
@@ -313,31 +312,24 @@ final class Session
         $this->preparation->inputPrepared = $prepared;
         $this->text = $statement;
         try {
-            $semantics = $this->semantics();
             $this->dots = [];
             $reader = new Parse\Reader();
             $tree = $reader->read($statement, $prepared, $this);
             $database = $this->variables->database;
-            $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
             try {
-                $bindings = $reader->bound($tree, $parameters, $prepared, $this);
-                $operation = $semantics->analyze($tree, $semantics->context(Statement\Catalog::declarations($this), true, $database === '' ? null : new SearchPath($database), $this->resolution($bindings, unboundParameters: $prepared && $parameters === [] ? array_keys($bindings) : [])));
-                \SqlSemantics\Diagnostic\Check::invariant($operation instanceof MySqlStatement, 'A MySQL session analyzes concrete MySQL statements.');
+                [$structure, $sources] = $reader->lower($tree, $this);
+                $operation = (new Statement\Binding())->statement($this, $structure, $parameters, sources: $sources, prepared: $prepared);
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
                 throw $reader->operand($failure, $tree, $statement, $this);
             } catch (AnalysisException $error) {
                 throw $reader->refusal($tree, $error, $statement, $database, $this);
-            } finally {
-                $typing->restore($this);
             }
             try {
                 (new Syntax(Charset::named((string) $this->variables->read('character_set_client'))))->debugOnly($tree, $statement);
             } catch (SqlError $error) {
                 throw (new Parse\DebugRequest())->refusal($operation, $error, $this);
             }
-            if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
-                (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
-            }
+            (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
 
             (new \MySqlMemory\Hint\Hints())->messages($operation, $statement, $this);
 
