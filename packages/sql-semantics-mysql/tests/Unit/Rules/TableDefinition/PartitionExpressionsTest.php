@@ -89,7 +89,9 @@ final class PartitionExpressionsTest extends TestCase
         $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
         (new PartitionExpressions())->derive($operand, $derivation, $derivation->environment());
         self::assertNotEmpty($derivation->facts()->diagnostics);
-        self::assertSame([], array_values(array_filter($derivation->facts()->warnings, static fn ($warning): bool => $warning instanceof ParseFailure)));
+        self::assertCount(1, $derivation->facts()->warnings);
+        self::assertInstanceOf(ParseFailure::class, $derivation->facts()->warnings[0]);
+        self::assertSame($derivation->facts()->diagnostics[0], $derivation->facts()->warnings[0]->problem);
     }
 
     public function testDerivePreservesWarningsAndTheOriginalOccurrenceLocation(): void

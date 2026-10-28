@@ -45,6 +45,22 @@ final class DoCommandTest extends TestCase
         self::assertSame([['Warning', '1365', 'Division by 0'], ['Warning', '1292', "Truncated incorrect INTEGER value: 'x'"]], $warnings->rows);
     }
 
+    public function testExecuteDoesNotCountRetainedConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $failure = $session->run('SELECT @@missing')[0];
+        self::assertInstanceOf(SqlError::class, $failure);
+        self::assertSame(1193, $failure->getCode());
+
+        $reply = $session->query('DO 1')[0];
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertTrue($session->diagnostics->stale);
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Error', '1193', "Unknown system variable 'missing'"]], $warnings->rows);
+    }
+
     public function testExecuteRaisesTheErrorOfAnExpression(): void
     {
         $session = (new Instance())->connect();

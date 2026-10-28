@@ -70,8 +70,7 @@ final class RejectedOperand
     public function initial(Node $node, Lowering $lowering): ?RejectedInput
     {
         return (new Account\Privilege\LegacyColumns())->rejected($node, $lowering)
-            ?? (new Dml\SyntaxLoadInput())->rejected($node, $lowering)
-            ?? (new Utility\Set\SyntaxNames())->assignment($node, $lowering);
+            ?? (new Dml\SyntaxLoadInput())->rejected($node, $lowering);
     }
 
     /**

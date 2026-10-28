@@ -43,7 +43,7 @@ final class StoredItems
         if (in_array($form->signature, ['option_value_no_option_type: @ @ opt_var_ident_type internal_variable_name equal set_expr_or_default', 'option_value_no_option_type: @ @ opt_set_var_ident_type lvalue_variable equal set_expr_or_default'], true)) {
             [$name, $instance] = $rule->variable($form->node(3));
             $this->lowering->options->skip($form->node(4));
-            $target = $this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance));
+            $target = $this->lowering->origins->record($this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance)), $form->node(3));
             $value = (new ValueRule($this->lowering))->operand($form->node(5), true);
             return $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new SystemAssignment($target, $value) : new DeferredAssignment($target, $value);
         }

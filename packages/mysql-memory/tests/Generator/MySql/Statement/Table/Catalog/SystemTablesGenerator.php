@@ -41,10 +41,11 @@ final class SystemTablesGenerator implements ErisGenerator
      */
     public static function inspections(GrammarRelease $release = GrammarRelease::MySql847): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(Generators::elements(M\Table\Catalog\SystemTables::of($release)->tables), static function (M\Table\Catalog\SystemTable $table) use ($release): ErisGenerator {
+        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(Generators::elements(M\Table\Catalog\SystemTables::of($release)->tables), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
+            [$table, $fieldsKeyword] = $parts;
             $remaining = array_values(array_filter(M\Table\Catalog\SystemTables::of($release)->tables, static fn (M\Table\Catalog\SystemTable $entry): bool => $entry->schema !== $table->schema || $entry->name !== $table->name));
             $catalog = new M\Table\Catalog\SystemTables([$table, ...$remaining]);
-            $show = new M\Utility\Show\Schema\ShowColumns(new M\Utility\Show\InspectedTable($table->declaration->name), M\Utility\Show\ShowListing::Full);
+            $show = new M\Utility\Show\Schema\ShowColumns(new M\Utility\Show\InspectedTable($table->declaration->name), M\Utility\Show\ShowListing::Full, fieldsKeyword: $fieldsKeyword);
             $fields = ['DATA_TYPE', 'CHARACTER_MAXIMUM_LENGTH', 'CHARACTER_OCTET_LENGTH', 'NUMERIC_PRECISION', 'NUMERIC_SCALE', 'DATETIME_PRECISION', 'COLUMN_COMMENT'];
             $items = array_map(static fn (string $name): M\Query\SelectExpression => new M\Query\SelectExpression(new M\Name\ColumnUse(new Name($name))), $fields);
             $where = new M\Expression\Logical(

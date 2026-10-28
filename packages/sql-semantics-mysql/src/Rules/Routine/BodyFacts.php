@@ -65,11 +65,11 @@ final class BodyFacts
         if ($statement instanceof SetVariables && $scope->time !== null && $scope->event !== null) {
             (new TriggerAssignments())->check($statement, $scope->time, $scope->event, $derivation, $scope);
         }
-        if ($statement instanceof SetVariables) {
-            $derivation->stored($statement, fn () => $this->targets($statement, $derivation, $scope));
-        }
         if ($statement instanceof Statement) {
             $derivation->program($statement, $scope->environment);
+        }
+        if ($statement instanceof SetVariables) {
+            $derivation->stored($statement, fn () => $this->targets($statement, $derivation, $scope));
         }
     }
     /**
@@ -78,12 +78,16 @@ final class BodyFacts
     public function targets(SetVariables $statement, Derivation $derivation, ProgramScope $scope): void
     {
         foreach ($statement->items as $item) {
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesAssignment) {
+                $item->condition($derivation, $scope->variable(new \SqlSemantics\Statement\Identifier\Name('names')));
+                continue;
+            }
             if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment) {
                 continue;
             }
             if ($item->qualifier === null) {
                 if ($scope->complete && !$scope->variable($item->name)) {
-                    $prefix = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+                    $prefix = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
                     $boundary = !$prefix && $item->value instanceof Node ? $item->value : $item;
                     (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($item->name->value, $derivation, true, $boundary, !$prefix);
                 }

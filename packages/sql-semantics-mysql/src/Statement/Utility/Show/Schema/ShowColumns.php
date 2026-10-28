@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Relation;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW FULL FIELDS IN t FROM shop LIKE 'a%'");
- *     [count($show->fields()), $show->toString()] // => [9, "SHOW FULL COLUMNS IN t FROM shop LIKE 'a%'"]
+ *     [count($show->fields()), $show->toString()] // => [9, "SHOW FULL FIELDS IN t FROM shop LIKE 'a%'"]
  */
 final class ShowColumns extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
@@ -52,8 +52,9 @@ final class ShowColumns extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
      * @param bool $tableIn Whether IN introduces the table
      * @param bool $databaseIn Whether IN introduces the database
+     * @param bool $fieldsKeyword Whether FIELDS is written instead of COLUMNS
      */
-    public function __construct(public readonly InspectedTable $table, public readonly ?ShowListing $listing = null, public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $tableIn = false, public readonly bool $databaseIn = false)
+    public function __construct(public readonly InspectedTable $table, public readonly ?ShowListing $listing = null, public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $tableIn = false, public readonly bool $databaseIn = false, public readonly bool $fieldsKeyword = false)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -91,7 +92,7 @@ final class ShowColumns extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         if ($this->listing !== null) {
             $out->keyword(...explode(' ', $this->listing->value));
         }
-        $out->keyword('COLUMNS', $this->tableIn ? 'IN' : 'FROM')->node($this->table);
+        $out->keyword($this->fieldsKeyword ? 'FIELDS' : 'COLUMNS', $this->tableIn ? 'IN' : 'FROM')->node($this->table);
         if ($this->database !== null) {
             $out->keyword($this->databaseIn ? 'IN' : 'FROM')->name($this->database, NameUse::Qualifier);
         }

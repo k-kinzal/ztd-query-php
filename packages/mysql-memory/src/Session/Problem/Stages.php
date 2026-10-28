@@ -86,7 +86,8 @@ final class Stages
     }
 
     /**
-     * Finishes grammar notices before contextualizing each stored instruction, then stops at its error.
+     * Finishes grammar notices before contextualizing an ordinary statement or stored instruction.
+     * A failed stored instruction prevents later instructions from contributing notices.
      *
      * @param array<int, Warning> $warnings Conditions from the reached stages
      * @return array<int, Warning> Conditions reached before the failed instruction ends
@@ -98,7 +99,7 @@ final class Stages
         $group = -1;
         foreach ($warnings as $index => $warning) {
             $instruction = $facts?->warningInstruction($warning);
-            if ($group < 0 || $instruction === null || $instruction !== $owner) {
+            if ($group < 0 || $instruction !== $owner) {
                 ++$group;
             }
             $groups[$group][$index] = $warning;
@@ -107,7 +108,7 @@ final class Stages
         $retained = [];
         foreach ($groups as $conditions) {
             $instruction = $facts?->warningInstruction(reset($conditions));
-            if (!$legacy && $instruction !== null) {
+            if (!$legacy) {
                 $contextual = static fn (Warning $warning): bool => ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization) || ($warning instanceof Deprecation && $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
                 uasort($conditions, static fn (Warning $left, Warning $right): int => $contextual($left) <=> $contextual($right));
             }

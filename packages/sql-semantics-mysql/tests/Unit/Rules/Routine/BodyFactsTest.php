@@ -215,9 +215,25 @@ final class BodyFactsTest extends TestCase
     {
         foreach (['missing', '@@missing'] as $target) {
             yield '5.6 ' . $target => ['mysql-5.6.51', $target, \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class];
-            yield '5.7 ' . $target => ['mysql-5.7.44', $target, \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class];
+            yield '5.7 ' . $target => ['mysql-5.7.44', $target, \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class];
             yield '8.4 ' . $target => ['mysql-8.4.7', $target, \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class];
         }
+    }
+
+    public function testStatementRetainsTheLaterSyntaxConditionAfterAContextualTarget(): void
+    {
+        $definition = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("CREATE PROCEDURE p() SET missing=WEIGHT_STRING('value' AS CHAR(1.5))");
+        self::assertInstanceOf(CreateProcedure::class, $definition);
+        self::assertCount(3, $definition->warnings());
+        $target = $definition->warnings()[0];
+        $value = $definition->warnings()[2];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $target);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $value);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $target->phase);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $value->phase);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $value->problem);
+        self::assertSame($definition->body, $definition->statementInformation()->warningInstruction($target));
+        self::assertSame($definition->body, $definition->statementInformation()->warningInstruction($value));
     }
 
     public function testTargetsPreservesTheInstructionOfMixedAssignmentItems(): void

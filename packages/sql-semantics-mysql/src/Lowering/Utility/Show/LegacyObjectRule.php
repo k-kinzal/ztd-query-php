@@ -152,7 +152,7 @@ final class LegacyObjectRule
         $clauses = new ClauseRule($this->lowering);
         $clauses->preposition($form->node(2));
 
-        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), tableIn: strtoupper($form->node(2)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(4)->tokens()[0]->text ?? '') === 'IN'), $form->node(5));
+        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), tableIn: strtoupper($form->node(2)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(4)->tokens()[0]->text ?? '') === 'IN', fieldsKeyword: strtoupper($form->token(1)->text) === 'FIELDS'), $form->node(5));
     }
 
     /**

@@ -9,14 +9,14 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A NAMES assignment has no SET-item meaning; only its diagnostic positions escape lowering.
+ * The definition condition of NAMES = expression, beside the complete SET item.
  *
  * The offset points to the assignment operator and end follows the expression.
  * A visible local variable named names changes the diagnostic, but does not
  * make the unquoted assignment valid. Quoted variable assignments use NameAssignment.
  *
  * @visibility public
- * @example Retaining an input refusal without an expression or parser tree
+ * @example Retaining the diagnostic positions independently of the assigned expression
  *     $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment(10, 13);
  *     [$problem->offset, $problem->end, $problem->shadowed] // => [10, 13, false]
  */

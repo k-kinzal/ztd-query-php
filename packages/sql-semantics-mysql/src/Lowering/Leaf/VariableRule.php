@@ -131,7 +131,7 @@ final class VariableRule
             default => throw ImplementationGap::production($form),
         };
 
-        return $this->lowering->leaves->record($assigned ? new SystemTarget($variable, $scope, $instance) : new SystemVariable($variable, $scope, $instance));
+        return $this->lowering->origins->record($this->lowering->leaves->record($assigned ? new SystemTarget($variable, $scope, $instance) : new SystemVariable($variable, $scope, $instance)), $name);
     }
 
     /**

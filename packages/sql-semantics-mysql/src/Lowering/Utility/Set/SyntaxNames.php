@@ -19,11 +19,11 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
- * Rejects NAMES = expression before publishing a SET item.
+ * Retains NAMES assignment conditions when a later input error prevents publication.
  *
  * MySQL 5.6 stops at that item; later releases finish the assignment
  * list first. Earlier variable lookups and lexical program scopes use the
- * ordinary semantic rules. No refused expression enters the retained graph.
+ * ordinary semantic rules. Complete statements retain their expressions as NamesAssignment values.
  *
  * @visibility SqlSemantics\Platform\MySql
  */

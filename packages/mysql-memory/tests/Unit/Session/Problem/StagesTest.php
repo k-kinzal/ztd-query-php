@@ -39,6 +39,14 @@ final class StagesTest extends TestCase
         self::assertSame([$failure, $same], Stages::instructions([$failure, $same, $later], true, $facts));
     }
 
+    public function testInstructionsFinishesOrdinaryGrammarNoticesBeforeContextualization(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('SET NAMES = !1, @after = !2');
+        self::assertSame([1287, 1287, 1064], array_column($session->diagnostics->conditions, 1));
+        self::assertSame([], $session->variables->user);
+    }
+
     public function testDefinitionConditionKeepsCompleteRequestsSeparateFromInstallableActions(): void
     {
         $name = new QualifiedName(new Name('t'));
@@ -66,7 +74,7 @@ final class StagesTest extends TestCase
 
         self::assertSame([1 => $syntax, 2 => $operator], Stages::grammar($warnings, false));
         self::assertSame($warnings, Stages::grammar($warnings, true));
-        self::assertSame([$call, $operator, $context], Stages::grammar([$call, $operator, $context], false));
+        self::assertSame([1 => $operator, 0 => $call, 2 => $context], Stages::grammar([$call, $operator, $context], false));
     }
 
     public function testPlannedLeavesWindowOptionsAndFramesToThePlanner(): void

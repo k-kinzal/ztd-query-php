@@ -95,6 +95,9 @@ final class TemporalInput
         $derivation = new \SqlSemantics\Construction\Derivation($session->semantics()->context([], session: $session->resolution()));
         \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($variable)->deriveScalar($derivation, $derivation->environment());
         foreach ((new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation)->warnings as $warning) {
+            if ($warning instanceof ParseFailure) {
+                return (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session);
+            }
             Check::invariant($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation, 'System-variable warnings describe deprecated names.');
             $notices[$offset] = $warning;
         }

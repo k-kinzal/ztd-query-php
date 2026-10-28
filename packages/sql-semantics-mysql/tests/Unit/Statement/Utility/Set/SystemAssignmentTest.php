@@ -51,6 +51,15 @@ final class SystemAssignmentTest extends TestCase
         self::assertTrue($diagnostics[1]->assigned);
     }
 
+    public function testDeriveItemPreservesAnEarlierKeywordFailureInLegacyStoredLists(): void
+    {
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() SET NAMES=1, @@missing=2');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment::class, $statement->warnings()[0]->problem);
+        self::assertNotNull($statement->statementInformation()->notices[1]->inputSource);
+    }
+
     public function testRenderWritesTheKeywordValue(): void
     {
         self::assertSame('SET @@LOCAL.x = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.x = on')->toString());

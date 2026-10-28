@@ -49,7 +49,7 @@ final class DeferredAssignment implements Node
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
-        $legacy = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         if ($this->target instanceof SystemTarget) {
             $derivation->scalar($this->target, $scope->environment);
             if ($this->target->instance === null) {

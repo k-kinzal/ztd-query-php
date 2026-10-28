@@ -217,6 +217,15 @@ $named->analyze('SELECT :id, ?')->field(0)->type->missing[0]->describe(); // => 
 
 ### Names
 
+`NamesAssignment` retains the complete expression in `SET NAMES = expression`,
+including row-valued operands and later assignments. It is distinct from
+`SetNames`, which selects a character set, and from a quoted `NameAssignment`.
+Analysis publishes `RefusedNamesAssignment` beside this complete item. A local
+variable named `names` changes the condition. An unquoted NAMES assignment never
+evaluates its operand.
+Stored instructions retain the same item and their enclosing lexical scope.
+
+
 - Table and database names are compared exactly. Column names and output field names are compared without regard to ASCII letter case.
 - Names are rendered bare when they are no keyword, function name or introducer of the release, and in backticks otherwise. Backticks are identifiers under every mode.
 - User variables (`@total`) and system variables are session state; their facts depend on it.
@@ -784,7 +793,7 @@ Database encryption uses `Statement\Server\Database\Encryption::Enabled` or `Dis
 
 Legacy INSERT statements retain their optimizer hints in the semantic head. Qualified wildcards in an INSERT column list require a legacy grammar and cannot compose with modern-only hints.
 
-`SetItem` contains only accepted assignment roles. `SET NAMES = expression` has no public expression-assignment type: input lowering raises `RefusedNamesAssignment`, carrying the assignment and operand offsets and whether a local `names` variable is visible. The refused expression and its parser nodes are discarded. `SetNames` still represents character-set changes, and `NameAssignment` can assign a declared local variable named `names`.
+`SetItem` retains complete assignments even when the server refuses their definition. `NamesAssignment` retains the expression in `SET NAMES = expression` and publishes `RefusedNamesAssignment`, including whether a local `names` variable is visible. Its operand is available for rendering and analysis without execution. `SetNames` represents character-set changes, and `NameAssignment` can assign a declared local variable with a quoted `names` target.
 
 Replication requests retain their complete option lists when a source switch is
 outside its numeric domain, an anonymous-GTID UUID is invalid, or an `UNTIL`

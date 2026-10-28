@@ -28,11 +28,12 @@ final class ShowColumnsGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<bool>|null $tableIn The generated written alternative
      * @param ErisGenerator<bool>|null $databaseIn The generated written alternative
+     * @param ErisGenerator<bool>|null $fieldsKeyword Whether FIELDS is written
      */
-    public function __construct(ErisGenerator $table, ?ErisGenerator $listing = null, ?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableIn = null, ?ErisGenerator $databaseIn = null)
+    public function __construct(ErisGenerator $table, ?ErisGenerator $listing = null, ?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableIn = null, ?ErisGenerator $databaseIn = null, ?ErisGenerator $fieldsKeyword = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(table: $parts[0], listing: $parts[1], database: $parts[2], filter: $parts[3], relationInformation: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], tableIn: $parts[7], databaseIn: $parts[8] && $parts[2] !== null);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(table: $parts[0], listing: $parts[1], database: $parts[2], filter: $parts[3], relationInformation: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], tableIn: $parts[7], databaseIn: $parts[8] && $parts[2] !== null, fieldsKeyword: $parts[9]);
         }, \Tests\Generator\Operands::tuple(
             $table,
             $listing ?? Generators::constant(null),
@@ -42,7 +43,8 @@ final class ShowColumnsGenerator implements ErisGenerator
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),
             $tableIn ?? Generators::bool(),
-            $databaseIn ?? Generators::bool()
+            $databaseIn ?? Generators::bool(),
+            $fieldsKeyword ?? Generators::bool()
         ));
     }
     /**

@@ -13,7 +13,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment;
 
 /**
- * Formats the input-only refusal of NAMES = expression from typed positions.
+ * Formats the definition condition of NAMES = expression from typed positions.
  *
  * @visibility MySqlMemory
  */

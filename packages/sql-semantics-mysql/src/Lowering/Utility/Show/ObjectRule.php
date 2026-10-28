@@ -76,7 +76,7 @@ final class ObjectRule
             case 'show_columns_stmt: SHOW opt_show_cmd_type COLUMNS from_or_in table_ident opt_db opt_wild_or_where':
                 $clauses->preposition($form->node(3));
 
-                return $clauses->inspection(new ShowColumns($this->table($form, 4), $clauses->listing($form->node(1)), $clauses->database($form->node(5)), tableIn: strtoupper($form->node(3)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(5)->tokens()[0]->text ?? '') === 'IN'), $form->node(6));
+                return $clauses->inspection(new ShowColumns($this->table($form, 4), $clauses->listing($form->node(1)), $clauses->database($form->node(5)), tableIn: strtoupper($form->node(3)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(5)->tokens()[0]->text ?? '') === 'IN', fieldsKeyword: strtoupper($form->token(2)->text) === 'FIELDS'), $form->node(6));
             case 'show_keys_stmt: SHOW opt_extended keys_or_index from_or_in table_ident opt_db opt_where_clause':
                 $this->lowering->options->skip($form->node(2));
                 $clauses->preposition($form->node(3));

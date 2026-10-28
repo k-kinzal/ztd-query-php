@@ -28,7 +28,7 @@ final class LegacyObjectRuleTest extends TestCase
 
     public function testColumnsLowersShowColumns(): void
     {
-        self::assertSame('SHOW FULL COLUMNS FROM t', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('show full fields from t')->toString());
+        self::assertSame('SHOW FULL FIELDS FROM t', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('show full fields from t')->toString());
     }
 
     public function testKeysLowersShowIndex(): void

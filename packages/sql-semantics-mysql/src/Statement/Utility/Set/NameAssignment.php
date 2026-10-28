@@ -71,9 +71,9 @@ final class NameAssignment implements SetItem
         if ($this->qualifier === null && !$derivation->inProgram() && ($this->scope !== null || $settings->variable($this->name->value) === null)) {
             $access = new VariableAccess();
             if ($this->scope === null) {
-                $access->find($this->name->value, $derivation, true);
+                $access->find($this->name->value, $derivation, true, $valueFirst && $this->value instanceof \SqlSemantics\Statement\Node ? $this->value : $this, $valueFirst);
             } else {
-                $access->assign($this->name->value, $this->scope, $derivation);
+                $access->assign($this->name->value, $this->scope, $derivation, $valueFirst && $this->value instanceof \SqlSemantics\Statement\Node ? $this->value : $this, $valueFirst);
             }
         } elseif ($this->qualifier !== null && !$derivation->inProgram() && $settings->row($this->qualifier->value) === null) {
             (new SystemTarget($this->name, null, $this->qualifier))->structured($derivation);

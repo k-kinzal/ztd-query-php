@@ -57,9 +57,9 @@ final class VariableAccess
      *
      * @param VariableScope|null $scope The scope written, null for the session
      */
-    public function assign(string $name, ?VariableScope $scope, Derivation $derivation): void
+    public function assign(string $name, ?VariableScope $scope, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null, bool $after = true): void
     {
-        $definition = $this->find($name, $derivation, true);
+        $definition = $this->find($name, $derivation, true, $at, $after);
         if ($definition === null) {
             return;
         }
@@ -85,14 +85,13 @@ final class VariableAccess
         if ($definition === null) {
             $problem = new UnknownSystemVariable($name, $assigned);
             $derivation->report($problem);
-            if ($derivation->inProgram()) {
-                $legacy = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || (!$assigned && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744);
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $at, $after);
+            $release = $derivation->context->profile->grammar;
+            $legacy = $release === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+            $phase = $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization;
+            if ($assigned && in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, phase: $phase), $at, $after);
             }
-            if ($assigned && !$derivation->inProgram() && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem));
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
-            }
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $phase), $at, $after);
         }
 
         return $definition;

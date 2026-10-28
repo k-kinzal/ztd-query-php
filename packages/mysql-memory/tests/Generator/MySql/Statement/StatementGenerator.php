@@ -232,7 +232,7 @@ final class StatementGenerator implements ErisGenerator
             $requests = self::accountStatements($account, $release);
             array_push($requests, ...self::accountDefinitions($account));
             $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
-            return Generators::map(static fn (M\Statement $statement): array => self::accountCondition($context, $statement, $code), Generators::elements($requests));
+            return Generators::map(static fn (M\Statement $statement): array => self::definitionCondition($context, $statement, $code), Generators::elements($requests));
         });
     }
 
@@ -325,17 +325,66 @@ final class StatementGenerator implements ErisGenerator
                 $body = new M\Routine\Program\Block([], [new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), $earlier ? [$assignment, $request] : [$request, $assignment])])]);
                 $statement = new M\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('account_program_' . $suffix)), new M\Routine\ParameterList([]), $body);
                 $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
-                return self::accountCondition($context, $statement, $earlier ? 1193 : $code);
+                return self::definitionCondition($context, $statement, $earlier ? 1193 : $code);
             }, Generators::elements($requests));
         });
     }
 
     /**
-     * Publishes a generated request together with its account-domain condition.
+     * Composes keyword assignments with complete values, lexical scopes and competing instructions.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function namesRequests(GrammarRelease $release, bool $stored): ErisGenerator
+    {
+        $values = Generators::map(static function (array $parts): \SqlSemantics\Statement\Scalar|M\Expression\RowOperand|M\Routine\Program\Expression\DeferredOperand {
+            [$kind, $number] = $parts;
+            $scalar = new M\Literal\NumberLiteral((string) $number);
+            $row = new M\Expression\Row([new M\Literal\NumberLiteral((string) $number), new M\Literal\NumberLiteral((string) ($number + 1))]);
+            return match ($kind) {
+                'scalar' => $scalar,
+                'row' => $row,
+                'variable' => new M\Variable\SystemVariable(new Name('names_value_' . $number)),
+                default => new M\Routine\Program\Expression\DeferredArithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $row, $scalar),
+            };
+        }, Operands::tuple(Generators::elements('scalar', 'row', 'deferred', 'variable'), Generators::choose(0, 1000)));
+        return Generators::map(static function (array $parts) use ($release, $stored): array {
+            [$assignment, $position, $shadowed, $mixed, $suffix, $target] = $parts;
+            $unknown = match ($target) {
+                'system' => new M\Utility\Set\SystemAssignment(new M\Variable\SystemTarget(new Name('names_missing_' . $suffix)), new M\Literal\NumberLiteral('1')),
+                'scoped' => new M\Utility\Set\NameAssignment(new Name('names_missing_' . $suffix), new M\Literal\NumberLiteral('1'), M\Variable\VariableScope::Session),
+                default => new M\Utility\Set\NameAssignment(new Name('names_missing_' . $suffix), new M\Literal\NumberLiteral('1')),
+            };
+            $before = new M\Utility\Set\UserAssignment(new M\Variable\UserVariable(new Name('names_before')), new M\Literal\NumberLiteral('1'));
+            $after = new M\Utility\Set\UserAssignment(new M\Variable\UserVariable(new Name('names_after')), new M\Literal\NumberLiteral('2'));
+            $items = match ($position) {
+                'before' => [$before, $unknown, $assignment, $after],
+                'after' => [$before, $assignment, $unknown, $after],
+                default => [$before, $assignment, $after],
+            };
+            $request = new M\Utility\Set\SetVariables($items);
+            if ($stored) {
+                $requests = $mixed ? [$request] : match ($position) {
+                    'before' => [new M\Utility\Set\SetVariables([$unknown]), new M\Utility\Set\SetVariables([$assignment])],
+                    'after' => [new M\Utility\Set\SetVariables([$assignment]), new M\Utility\Set\SetVariables([$unknown])],
+                    default => [new M\Utility\Set\SetVariables([$assignment])],
+                };
+                $declarations = $shadowed ? [new M\Routine\Program\VariableDeclaration([new Name('names')], new M\Type\Integral(M\Type\Kind\IntegralKind::Int))] : [];
+                $body = new M\Routine\Program\Block($declarations, [new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), $requests)])]);
+                $request = new M\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('names_program_' . $suffix)), new M\Routine\ParameterList([]), $body);
+            }
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
+            $code = $position === 'before' || ($release === GrammarRelease::MySql5651 && $assignment->value instanceof M\Variable\SystemVariable) ? 1193 : ($stored && $shadowed ? 1453 : 1064);
+            return self::definitionCondition($context, $request, $code);
+        }, Operands::tuple(new Utility\Set\NamesAssignmentGenerator($values), Generators::elements('none', 'before', 'after'), Generators::bool(), Generators::bool(), Generators::choose(1, 99), Generators::elements('named', 'system', 'scoped')));
+    }
+
+    /**
+     * Publishes a generated request together with its expected definition condition.
      *
      * @return array{\SqlSemantics\Statement\AnalyzedStatement, int}
      */
-    public static function accountCondition(\SqlSemantics\Contract\AnalysisContext $context, M\Statement $statement, int $code): array
+    public static function definitionCondition(\SqlSemantics\Contract\AnalysisContext $context, M\Statement $statement, int $code): array
     {
         return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement), $code];
     }
