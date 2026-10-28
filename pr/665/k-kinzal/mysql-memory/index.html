@@ -88,6 +88,7 @@
 <pre class="code"><code>composer lint
 composer test
 ERIS_SEED=20261025 vendor/bin/phpunit --testsuite property</code></pre>
+<p>SQL input is lowered to concrete statement operands before session-dependent binding. Ordinary input, directly constructed statements and prepared execution use the same binding path: parameter slots come from semantic parameter values, and typing hints come from semantic hint values. Source locations and spelling notices remain attached to their owning occurrences. Binding neither tokenizes nor reparses the request text.</p>
 <p>The property suite composes semantic statements with Eris and executes them directly. Dependent requests, such as a table definition and an INSERT using its columns, are generated together before execution. Shrinking retains their relationships. These checks do not render or reparse generated values.</p>
 <p>Every public core and MySQL semantic type has a corresponding generator under <code>tests/Generator</code>. PHPStan checks this mapping and whether the generators are used. The configurable unused-class rule accepts fully qualified names or <code>*</code> patterns through <code>parameters.unusedClasses</code> in <code>phpstan.neon</code>. References must be reachable from outside the selected classes; disconnected cycles do not count. Run PHPStan over the complete configured paths. Generator mapping and usage are static checks; they do not establish complete SQL behavior coverage.</p>
 <h4>Compare SQL execution</h4>
