@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
@@ -61,9 +60,7 @@ final class BinaryCast implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
-        if (Deprecated::BinaryOperator->warnedIn($derivation->context->profile->grammar)) {
-            $derivation->warn(new Deprecation(Deprecated::BinaryOperator));
-        }
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->binary($this->operand, $derivation);
 
         $operand = (new Precision())->domain($fact->type);
 

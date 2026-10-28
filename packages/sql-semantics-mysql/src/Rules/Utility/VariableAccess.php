@@ -85,6 +85,10 @@ final class VariableAccess
         if ($definition === null) {
             $problem = new UnknownSystemVariable($name, $assigned);
             $derivation->report($problem);
+            if (!$assigned && $derivation->inProgram()) {
+                $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
+            }
             if ($assigned && !$derivation->inProgram() && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem));
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));

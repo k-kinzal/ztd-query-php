@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices;
-use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
@@ -29,8 +28,6 @@ use SqlSemantics\Statement\Type\Invalid;
  * No expression is substituted to publish an ordinary scalar call.
  *
  * @visibility public
- * @example Refusing a spatial return type outside JSON_VALUE's domain
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Retaining a document condition in an unexecuted instruction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() DO JSON_VALUE((1,2), '$')");
  *     $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure // => true
@@ -53,7 +50,6 @@ final class DeferredJsonValueCall implements DeferredOperand
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input((new Precedence())->admits($document, Precedence::SIMPLE_EXPR), 'The document of JSON_VALUE needs a grouping.');
-        Check::input((new CastProblems())->returning($returning) === null, 'JSON_VALUE needs a nonspatial return type with valid width, precision and scale.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -69,8 +65,9 @@ final class DeferredJsonValueCall implements DeferredOperand
                 $derivation->scalar($default, $environment);
             }
         }
-        if ($this->returning !== null) {
-            (new CastNotices())->derive($this->returning, $derivation);
+        $problem = (new CastNotices())->returning($this->returning, $this->document, $derivation);
+        if ($problem !== null) {
+            return new ScalarFact(new Invalid($problem), $document->nullability);
         }
         return new ScalarFact(new Invalid($this->problem()), $document->nullability);
     }

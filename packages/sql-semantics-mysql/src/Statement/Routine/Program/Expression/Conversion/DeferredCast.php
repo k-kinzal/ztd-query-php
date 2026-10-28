@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conve
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices;
-use SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
@@ -19,8 +19,8 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 /**
  * A stored cast around an expression whose preparation is deferred until invocation.
  *
- * The target and operand retain their semantic roles. ARRAY is deliberately
- * absent: stored definitions reject array casts even in unreachable branches.
+ * The target, request form and ARRAY clause retain their semantic roles.
+ * Definition-time cast conditions are derived even in unreachable branches.
  * This value never implements Scalar.
  *
  * @visibility public
@@ -37,13 +37,12 @@ final class DeferredCast implements DeferredOperand
      * @param RowOperand|DeferredOperand $operand The retained invocation-time expression
      * @param CastTarget $target The scalar cast target
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CastTarget $target, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly CastTarget $target, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $array = false, public readonly CastForm $form = CastForm::Cast)
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
-        Check::input((new CastProblems())->precision($target) === null, 'A CAST precision must fit its target type.');
-        Check::input((new CastProblems())->size($target) === null, 'A CAST width, precision and scale must fit its target type.');
+        Check::input($form !== CastForm::Convert || !$array, 'Typed CONVERT has no ARRAY clause.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -52,11 +51,10 @@ final class DeferredCast implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        Check::input((new CastProblems())->size($this->target, $derivation->context->profile->grammar) === null, 'A CAST width must fit its language profile.');
         $fact = $derivation->scalar($this->operand, $environment);
-        (new CastNotices())->derive($this->target, $derivation);
+        $problem = (new CastNotices())->cast($this->target, $this->operand, $derivation, $this->array, $this->form);
 
-        return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($this->problem()), $fact->nullability);
+        return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($problem ?? $this->problem()), $fact->nullability);
     }
 
     /**
@@ -80,6 +78,19 @@ final class DeferredCast implements DeferredOperand
      */
     public function render(Output $out): void
     {
-        $out->keyword('CAST')->glue()->symbol('(')->node($this->operand)->keyword('AS')->node($this->target)->symbol(')');
+        $out->keyword($this->form === CastForm::Convert ? 'CONVERT' : 'CAST')->glue()->symbol('(')->node($this->operand);
+        if ($this->form === CastForm::Convert) {
+            $out->symbol(',');
+        } else {
+            if ($this->form === CastForm::AtLocal) {
+                $out->keyword('AT', 'LOCAL');
+            }
+            $out->keyword('AS');
+        }
+        $out->node($this->target);
+        if ($this->array) {
+            $out->keyword('ARRAY');
+        }
+        $out->symbol(')');
     }
 }

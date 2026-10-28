@@ -47,10 +47,15 @@ final class CastTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidBounds')]
-    public function testBoundsExcludeContradictoryTargetsBeforeAnOperationExists(CastTarget $target): void
+    public function testDeriveScalarRetainsInvalidBoundsOnTheCompleteCast(CastTarget $target): void
     {
-        $this->expectExceptionMessage('A CAST width, precision and scale must fit its target type.');
-        new Cast(new NumberLiteral('1'), $target);
+        $cast = new Cast(new NumberLiteral('1'), $target);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $fact = $derivation->scalar($cast, $derivation->environment());
+
+        self::assertSame($target, $cast->target);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Invalid::class, $fact->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
     }
 
     public function testDeriveScalarHasTheTargetTypeAndADateCanBeNull(): void

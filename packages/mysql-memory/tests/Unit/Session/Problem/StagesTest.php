@@ -26,6 +26,19 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
+    public function testInstructionsKeepsSameInstructionNoticesBeforeItsContextualFailure(): void
+    {
+        $first = new \SqlSemantics\Platform\MySql\Statement\EmptyStatement();
+        $second = new \SqlSemantics\Platform\MySql\Statement\EmptyStatement();
+        $failure = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new UnknownSystemVariable('missing'), true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+        $same = new Deprecation(Deprecated::BinaryOperator);
+        $later = new Deprecation(Deprecated::BinaryOperator);
+        $facts = new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), warnings: [new \SqlSemantics\Statement\Fact\Notice($failure, instruction: $first), new \SqlSemantics\Statement\Fact\Notice($same, instruction: $first), new \SqlSemantics\Statement\Fact\Notice($later, instruction: $second)]);
+
+        self::assertSame([1 => $same, 0 => $failure], Stages::instructions([$failure, $same, $later], false, $facts));
+        self::assertSame([$failure, $same], Stages::instructions([$failure, $same, $later], true, $facts));
+    }
+
     public function testDefinitionConditionKeepsCompleteRequestsSeparateFromInstallableActions(): void
     {
         $name = new QualifiedName(new Name('t'));

@@ -697,14 +697,14 @@ and lexical-scope constraint.
 
 ## Limitations
 
-`CAST(... AT LOCAL AS ...)` has no public expression type: every supported
-MySQL release rejects this form. Lowering reports `Construction\RejectedInput`
-with the typed `NotSupportedYet` problem before publishing a structure. The
-failure's `aborts` field distinguishes an immediate input stop from a refusal
-that still permits later grammar conditions. It is an input diagnostic, not an
-execution approval flag. SQL input remains accepted by SQL Parser wherever the
-grammar permits it; `Lowering\SyntaxWarnings` preserves the ordered observations
-of the rejected input, including a stored-program statement's stopping boundary.
+CAST, typed CONVERT, AT TIME ZONE and JSON_VALUE retain their complete operands
+when target bounds or target kinds are invalid. `Statement\Expression\Conversion\CastForm`
+distinguishes CAST, CONVERT and AT LOCAL for reconstruction. `ParseFailure`
+notices carry the ordered SQL conditions; their `aborts` flag distinguishes
+releases that stop reading at that condition. Invalid targets have an `Invalid`
+type fact. Deferred operands retain their preparation dependencies independently
+of these definition-time conditions, including in unexecuted routine branches.
+Optional source ranges format diagnostic labels without supplying SQL meaning.
 
 - Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.
 - Version comments (`/*!80000 ... */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.

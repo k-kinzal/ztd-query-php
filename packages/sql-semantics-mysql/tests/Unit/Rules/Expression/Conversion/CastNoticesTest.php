@@ -44,4 +44,66 @@ final class CastNoticesTest extends TestCase
         self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset('missing_charset')], $derivation->facts()->diagnostics);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
     }
+
+    public function testCastRetainsTheTargetBoundBeforeResolvingAnUnknownOperand(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $problem = (new CastNotices())->cast(new CastTarget(CastKind::Time, '7'), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), $derivation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision::class, $problem);
+        self::assertSame($problem, $derivation->facts()->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+        self::assertTrue($derivation->facts()->warnings[0]->aborts);
+    }
+
+    public function testPrecisionRetainsTheCompletedTimeZoneBound(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $problem = (new CastNotices())->precision('8', $derivation);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(8, 'CAST'), $problem);
+        self::assertSame($problem, $derivation->facts()->diagnostics[0]);
+    }
+
+    public function testReturningContinuesAfterASpatialTargetCondition(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $problem = (new CastNotices())->returning(new CastTarget(CastKind::Point), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), $derivation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidJsonCast::class, $problem);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+        self::assertFalse($derivation->facts()->warnings[0]->aborts);
+    }
+
+
+    public function testLabelUsesOnlyTheOwningOperandSourceWhenPresent(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('123', inputSource: new \SqlSemantics\Statement\Source\Span(12, 3));
+        $bound = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision, '', 66, 65);
+        $problem = (new CastNotices())->label($bound, new CastTarget(CastKind::Decimal, '66'), $operand, $derivation);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput($bound, 12, 15), $problem);
+    }
+
+    public function testFailurePublishesTheSameConditionAsDiagnosticAndOrderedNotice(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL');
+        self::assertSame($problem, (new CastNotices())->failure($problem, $derivation, false));
+        self::assertSame([$problem], $derivation->facts()->diagnostics);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem)], $derivation->facts()->warnings);
+    }
+
+    public function testAbortsDistinguishesContinuingLegacyCastConditions(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        self::assertFalse((new CastNotices())->aborts($derivation));
+    }
+
+
+    public function testBinaryStopsAfterItsUnavailableLocalCastOperand(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new CastTarget(CastKind::Signed), form: \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal));
+        (new CastNotices())->binary($operand, $derivation);
+        self::assertEquals([new Deprecation(Deprecated::BinaryOperator, aborts: true)], $derivation->facts()->warnings);
+    }
+
 }

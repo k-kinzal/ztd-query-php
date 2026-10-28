@@ -23,16 +23,20 @@ final class DeferredCastGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\CastTarget> $target Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $array The generated ARRAY clause
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm>|null $form The written cast form
      */
-    public function __construct(ErisGenerator $operand, ErisGenerator $target, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $operand, ErisGenerator $target, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $array = null, ?ErisGenerator $form = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast(operand: $parts[0], target: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast(operand: $parts[0], target: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3], array: $parts[4], form: $parts[5]);
         }, \Tests\Generator\Operands::tuple(
             $operand,
             $target,
             $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $array ?? Generators::constant(false),
+            $form ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Cast)
         ));
     }
 }

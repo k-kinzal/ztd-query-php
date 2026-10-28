@@ -25,19 +25,15 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Medium]
 final class ConstructRuleTest extends TestCase
 {
-    public function testAtLocalIsRejectedBeforePublishingAnExpression(): void
+    public function testCastRetainsAtLocalAndTheLaterProjection(): void
     {
-        $failure = null;
-        try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AT LOCAL AS DATE), BINARY 2');
-        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
-            $failure = $caught;
-        }
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AT LOCAL AS DATE), BINARY 2');
+        $failure = $statement->warnings()[0];
 
-        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $failure);
         self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), $failure->problem);
         self::assertFalse($failure->aborts);
-        self::assertSame(strlen('SELECT CAST(1 AT LOCAL AS DATE)'), $failure->end);
+        self::assertSame('SELECT CAST(1 AT LOCAL AS DATE), BINARY 2', $statement->toString());
     }
 
     public function testLowerLowersTheKeywordConstructs(): void
@@ -79,19 +75,15 @@ final class ConstructRuleTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerPrecisionRefusals')]
-    public function testZoneRefusesAnExcessivePrecisionBeforePublishingAnExpression(string $release, bool $aborts): void
+    public function testZoneRetainsExcessivePrecisionAndLaterExpressions(string $release, bool $aborts): void
     {
-        $failure = null;
-        try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1");
-        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
-            $failure = $caught;
-        }
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1");
+        $failure = $statement->warnings()[0];
 
-        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $failure);
         self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, 'CAST'), $failure->problem);
         self::assertSame($aborts, $failure->aborts);
-        self::assertSame(strlen("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7))"), $failure->end);
+        self::assertSame("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1", $statement->toString());
     }
 
     /**
@@ -109,19 +101,15 @@ final class ConstructRuleTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerCastPrecisions')]
-    public function testCastPublishesAPrecisionRefusalWithoutAnInvalidScalar(string $release, string $cast, int $precision, int $maximum, bool $aborts): void
+    public function testCastRetainsItsPrecisionConditionOnTheCompleteStatement(string $release, string $cast, int $precision, int $maximum, bool $aborts): void
     {
-        $failure = null;
-        try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT ' . $cast . ', BINARY 1');
-        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
-            $failure = $caught;
-        }
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT ' . $cast . ', BINARY 1');
+        $failure = $statement->warnings()[0];
 
-        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $failure);
         self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision($precision, 'CAST', $maximum), $failure->problem);
         self::assertSame($aborts, $failure->aborts);
-        self::assertSame(strlen('SELECT ' . $cast), $failure->end);
+        self::assertStringEndsWith(', BINARY 1', $statement->toString());
     }
 
     /**
@@ -137,19 +125,15 @@ final class ConstructRuleTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerArrayTargets')]
-    public function testCastPublishesAnElementTypeRefusalWithoutAnInvalidScalar(string $release, string $type, string $problem, bool $aborts): void
+    public function testCastRetainsArrayConditionsAndAllOperands(string $release, string $type, string $problem, bool $aborts): void
     {
-        $failure = null;
-        try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1');
-        } catch (\SqlSemantics\Construction\RejectedInput $caught) {
-            $failure = $caught;
-        }
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1');
+        $failures = array_values(array_filter($statement->warnings(), static fn ($warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
 
-        self::assertInstanceOf(\SqlSemantics\Construction\RejectedInput::class, $failure);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet($problem), $failure->problem);
-        self::assertSame($aborts, $failure->aborts);
-        self::assertSame(strlen('SELECT CAST(NULL AS ' . $type . ' ARRAY)'), $failure->end);
+        self::assertCount(1, $failures);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet($problem), $failures[0]->problem);
+        self::assertSame($aborts, $failures[0]->aborts);
+        self::assertSame('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1', $statement->toString());
     }
 
     public function testOptionalLowersTheOperandAndTheElseOfCase(): void

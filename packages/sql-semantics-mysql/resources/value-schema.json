@@ -1533,10 +1533,14 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\Cast": {
         "array": "bool",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CastForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "operand": "SqlSemantics\\Statement\\Scalar",
         "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CastForm": {
+        "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CharsetConversion": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
@@ -3241,6 +3245,8 @@
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Conversion\\DeferredCast": {
+        "array": "bool",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\CastForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "target": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget",

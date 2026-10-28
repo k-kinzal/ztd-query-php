@@ -31,12 +31,6 @@ use SqlSemantics\Statement\Type\Nullability;
  * Status: Implemented.
  *
  * @visibility public
- * @example Refusing an impossible spatial result before derivation
- *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Point)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a return precision outside its type
- *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal, '66', '0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a return width outside its type
- *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$']), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Char, '4294967296')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Typing JSON_VALUE() with RETURNING
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE('{\"a\": 1}', '$.a' RETURNING SIGNED NULL ON EMPTY)");
  *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
@@ -73,7 +67,6 @@ final class JsonValueCall implements Scalar
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input((new Precedence())->admits($document, Precedence::SIMPLE_EXPR), 'The document of JSON_VALUE needs a grouping.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->returning($returning) === null, 'JSON_VALUE needs a nonspatial return type with valid width, precision and scale.');
         $interpreted = Path::read($path->value());
         Check::input($pathValue === null || (new \SqlSemantics\Validation\Equivalence())->difference($pathValue, $interpreted) === null, 'JSON path steps must agree with the decoded path literal.');
         $this->pathValue = $pathValue ?? $interpreted;
@@ -99,8 +92,9 @@ final class JsonValueCall implements Scalar
             }
         }
 
-        if ($this->returning !== null) {
-            (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->derive($this->returning, $derivation);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->returning($this->returning, $this->document, $derivation);
+        if ($problem !== null) {
+            return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($problem), $document->nullability);
         }
         $domain = (new Casts(Settings::of($derivation->context), $derivation->context->profile->grammar))->returning($this->returning);
 

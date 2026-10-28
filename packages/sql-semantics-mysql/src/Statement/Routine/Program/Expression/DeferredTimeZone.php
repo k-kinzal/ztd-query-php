@@ -50,7 +50,6 @@ final class DeferredTimeZone implements DeferredOperand
         Check::input(!$operand instanceof Scalar || (new TimeZoneOperands())->input($operand) === false || !(new TimeZoneOperands())->zone($zone), 'A deferred time-zone conversion retains an incompatible operand or zone.');
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
-        Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -60,6 +59,10 @@ final class DeferredTimeZone implements DeferredOperand
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->precision($this->precision, $derivation);
+        if ($problem !== null) {
+            return new ScalarFact(new Invalid($problem), $fact->nullability);
+        }
         return new ScalarFact(new Invalid($this->problem()), $fact->nullability);
     }
 

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
@@ -20,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -56,7 +53,6 @@ final class ConstructRule
      * Lowers one of the constructs.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When the construct has no semantic expression domain
      */
     public function lower(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
@@ -65,7 +61,7 @@ final class ConstructRule
         return match ($form->signature) {
             'simple_expr: CASE_SYM opt_expr when_list opt_else END' => $this->caseExpression($form),
             'simple_expr: CAST_SYM ( expr AS cast_type )', 'simple_expr: CONVERT_SYM ( expr , cast_type )', 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' => $this->cast($form),
-            'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => throw new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($form->node)[1] ?? 0, false),
+            'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )' => $this->cast($form),
             'simple_expr: CAST_SYM ( expr AT_SYM TIME_SYM ZONE_SYM opt_interval TEXT_STRING_literal AS DATETIME_SYM type_datetime_precision )' => $this->zone($form),
             'simple_expr: CONVERT_SYM ( expr USING charset_name )' => $this->charset($form),
             'simple_expr: BINARY simple_expr', 'simple_expr: BINARY_SYM simple_expr' => $this->binary((new PrimaryRule($this->lowering))->simpleExpression($form->node(1))),
@@ -83,26 +79,18 @@ final class ConstructRule
     }
 
     /**
-     * Lowers a CAST or typed CONVERT after checking its target kind and precision.
-     *
-     * @throws RejectedInput When the target kind or precision cannot denote a cast
+     * Lowers the complete cast request, including invalid target bounds and AT LOCAL.
      */
     public function cast(Form $form): Cast|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast
     {
         $operand = $this->lowering->expressions->operand($form->node(2));
-        $target = $this->lowering->types->castTarget($form->node(4));
-        $array = $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )' && $this->flag($form->node(5));
-        $problem = (new SyntaxCasts())->problem($form, $this->lowering, $array, $target);
-        if ($problem !== null) {
-            throw new RejectedInput($problem, (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
-        }
-        if (!$operand instanceof Scalar) {
-            if ($array) {
-                throw new RejectedInput(new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX), (new SourceRanges())->span($form->node)[1] ?? 0, false);
-            }
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($operand, $target);
-        }
-        return new Cast((new OperandRule())->scalar($operand, $form->node(2)), $target, $array);
+        $local = $form->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )';
+        $target = $this->lowering->types->castTarget($form->node($local ? 6 : 4));
+        $array = ($local || $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )') && $this->flag($form->node($local ? 7 : 5));
+        $syntax = $local ? \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal
+            : ($form->signature === 'simple_expr: CONVERT_SYM ( expr , cast_type )' ? \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Convert : \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Cast);
+        return $operand instanceof Scalar ? new Cast($operand, $target, $array, form: $syntax)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($operand, $target, array: $array, form: $syntax);
     }
 
     /**
@@ -119,16 +107,12 @@ final class ConstructRule
      * Lowers CAST … AT TIME ZONE.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When the fractional precision exceeds six
      */
     public function zone(Form $form): AtTimeZone|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone
     {
         $operand = $this->lowering->expressions->operand($form->node(2));
         $zone = new \SqlSemantics\Platform\MySql\Statement\Literal\Text($this->lowering->literals->bytes($form->node(7)));
         $precision = $this->lowering->types->precision($form->node(10));
-        if ((int) ($precision ?? '0') > 6) {
-            throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST'), (new SourceRanges())->span($form->node)[1] ?? 0, !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true));
-        }
 
         return !$operand instanceof Scalar || (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) === false || !(new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->zone($zone)
             ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, $this->lowering->leaves->record($zone), $this->flag($form->node(6)), $precision)

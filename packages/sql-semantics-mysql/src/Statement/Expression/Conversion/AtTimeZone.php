@@ -28,8 +28,8 @@ use SqlSemantics\Statement\Type\Known;
  * dependencies for resolution against the current schema.
  *
  * Rule: MYSQL-AT-TIME-ZONE-001. Facts: a DATETIME of the given precision;
- * Nullable, including for a non-null operand, because conversion can fail. Precision is between zero and six; input lowering
- * reports a larger precision before publishing a scalar. Terminates: the operand is a strict part.
+ * Nullable, including for a non-null operand, because conversion can fail. Precision beyond six is a completed-cast
+ * condition retained beside the full conversion. Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
  *
@@ -45,8 +45,6 @@ use SqlSemantics\Statement\Type\Known;
  * @example Reading the zone
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CAST(a AT TIME ZONE 'UTC' AS DATETIME(6))");
  *     [$query->query->where->zone->value, $query->query->where->precision] // => ['UTC', '6']
- * @example Refusing an impossible fractional precision
- *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::ZeroOffset, precision: '7') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a fixed predicate result even when its operands are unresolved
  *     $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Comparison(\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter());
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone($operand, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\TimeZone::ZeroOffset) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -68,7 +66,6 @@ final class AtTimeZone implements Scalar
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
-        Check::input((int) ($precision ?? '0') <= 6, 'A DATETIME fractional precision is at most six.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) !== false, 'An AT TIME ZONE operand must admit a TIMESTAMP or NULL input role.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -79,6 +76,10 @@ final class AtTimeZone implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->precision($this->precision, $derivation);
+        if ($problem !== null) {
+            return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($problem), $fact->nullability);
+        }
         $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type);
         if ($domain !== null && $domain->field !== Field::Timestamp && $domain->kind !== Kind::Null && (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->literal($this->operand) !== true) {
             $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion($this, true));

@@ -169,7 +169,12 @@ final class InputPrefix
         $parameters = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($parameters);
         $derivation = new Derivation(new AnalysisContext($this->lowering->profile, [new Name(SessionDatabase::UNNAMED)], complete: false, columnNames: Comparison::AsciiInsensitive));
         (new ProgramFacts())->routine($parameters, $body, ProgramKind::Procedure, new QualifiedName(new Name('prefix')), $derivation, scopeComplete: $scopeComplete);
-        foreach ($derivation->facts()->diagnostics as $problem) {
+        $facts = $derivation->facts();
+        $parsed = array_map(static fn ($warning): Diagnostic => $warning->problem, array_filter($facts->warnings, static fn ($warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax));
+        foreach ($facts->diagnostics as $problem) {
+            if (in_array($problem, $parsed, true)) {
+                return $problem;
+            }
             if ($problem instanceof UnknownSystemVariable || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral || ($problem instanceof ProgramProblem && in_array($problem->rule, [ProgramRule::BadSqlState, ProgramRule::IncorrectName, ProgramRule::NameTooLong, ProgramRule::DuplicateVariable, ProgramRule::DuplicateCondition, ProgramRule::DuplicateCursor, ProgramRule::DuplicateHandler, ProgramRule::DuplicateParameter, ProgramRule::UndefinedCondition, ProgramRule::UndefinedCursor, ProgramRule::SignalConditionKind, ProgramRule::ZeroErrorCode, ProgramRule::DuplicateSignalItem, ProgramRule::DeclarationAfterCursorOrHandler, ProgramRule::CursorAfterHandler], true))) {
                 return $problem;
             }

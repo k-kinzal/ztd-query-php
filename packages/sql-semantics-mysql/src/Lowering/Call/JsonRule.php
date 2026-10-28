@@ -47,18 +47,12 @@ final class JsonRule
     /**
      * Lowers JSON_VALUE.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When its return target has no value domain
-     *
      * @throws ImplementationGap When a production has no rule
      */
     public function value(Form $form): JsonValueCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall
     {
         $this->lowering->names->claimed($form, ['function_call_keyword: JSON_VALUE_SYM ( simple_expr , text_literal opt_returning_type opt_on_empty_or_error )']);
         $target = $this->returning($form->node(5));
-        $problem = $this->problem($form, $target);
-        if ($problem !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
         [$onEmpty, $onError] = $this->responses($form->node(6));
 
         $document = (new \SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule($this->lowering))->simpleExpression($form->node(2));

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Lowering;
 use SqlParser\Parser\Node;
 use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Construction\SourceRanges;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 
 /**
  * Reads operands that cannot be published as semantic values.
@@ -47,9 +46,6 @@ final class RejectedOperand
         $database = $node->name === 'default_encryption' ? null : (new Server\Instance\SyntaxOptions())->rejected($node, $lowering);
         if ($database !== null) {
             return $database;
-        }
-        if ($node->name === 'simple_expr' && $lowering->form($node)->signature === 'simple_expr: CAST_SYM ( expr AT_SYM LOCAL_SYM AS cast_type opt_array_cast )') {
-            return new RejectedInput(new NotSupportedYet('AT LOCAL'), (new SourceRanges())->span($node)[1] ?? 0, false);
         }
         return $this->lowered($node, $lowering);
     }

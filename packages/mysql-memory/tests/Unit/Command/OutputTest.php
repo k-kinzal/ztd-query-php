@@ -148,6 +148,20 @@ final class OutputTest extends TestCase
         self::assertSame(0, $result->warnings);
     }
 
+    public function testResultDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $failure = $session->run('DO CAST(123 AS DECIMAL(66,2))')[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $failure);
+        self::assertSame(1426, $failure->getCode());
+        $result = $session->query('SELECT CONVERT(123, SIGNED)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['123']], $result->rows);
+        self::assertSame(0, $result->warnings);
+        self::assertSame(1426, $session->diagnostics->conditions[0][1]);
+        self::assertTrue($session->diagnostics->stale);
+    }
+
     public function testResultCountsTheRowsItFound(): void
     {
         $session = (new Instance())->connect();

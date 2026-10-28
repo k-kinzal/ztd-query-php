@@ -67,7 +67,7 @@ final class Stages
     {
         $warnings = array_filter($warnings, static fn (Warning $warning): bool => !$warning instanceof Deprecation || $warning->phase() !== \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Resolution);
         if ($legacy) {
-            return $warnings;
+            return self::instructions($warnings, true, $facts);
         }
         $failed = [];
         foreach ($warnings as $warning) {
@@ -76,11 +76,46 @@ final class Stages
                 $failed[$instruction === null ? 0 : spl_object_id($instruction)] = true;
             }
         }
-        return array_filter($warnings, static fn (Warning $warning): bool => !isset($failed[($instruction = $facts?->warningInstruction($warning)) === null ? 0 : spl_object_id($instruction)]) || match (true) {
+        $warnings = array_filter($warnings, static fn (Warning $warning): bool => !isset($failed[($instruction = $facts?->warningInstruction($warning)) === null ? 0 : spl_object_id($instruction)]) || match (true) {
             $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure => $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax,
             $warning instanceof Deprecation => $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax,
             default => true,
         });
+        return self::instructions($warnings, false, $facts);
+    }
+
+    /**
+     * Finishes grammar notices before contextualizing each stored instruction, then stops at its error.
+     *
+     * @param array<int, Warning> $warnings Conditions from the reached stages
+     * @return array<int, Warning> Conditions reached before the failed instruction ends
+     */
+    public static function instructions(array $warnings, bool $legacy, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts): array
+    {
+        $groups = [];
+        $owner = null;
+        $group = -1;
+        foreach ($warnings as $index => $warning) {
+            $instruction = $facts?->warningInstruction($warning);
+            if ($group < 0 || $instruction === null || $instruction !== $owner) {
+                ++$group;
+            }
+            $groups[$group][$index] = $warning;
+            $owner = $instruction;
+        }
+        $retained = [];
+        foreach ($groups as $conditions) {
+            $instruction = $facts?->warningInstruction(reset($conditions));
+            if (!$legacy && $instruction !== null) {
+                $contextual = static fn (Warning $warning): bool => ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization) || ($warning instanceof Deprecation && $warning->phase() === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+                uasort($conditions, static fn (Warning $left, Warning $right): int => $contextual($left) <=> $contextual($right));
+            }
+            $retained += $conditions;
+            if ($instruction !== null && array_filter($conditions, static fn (Warning $warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->endsProgramStatement) !== []) {
+                break;
+            }
+        }
+        return $retained;
     }
 
     /**

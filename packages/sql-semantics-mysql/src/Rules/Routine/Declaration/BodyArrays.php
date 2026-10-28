@@ -28,7 +28,7 @@ final class BodyArrays
         $pending = [$body];
         while ($pending !== []) {
             $node = array_pop($pending);
-            if (($node instanceof Cast && $node->array) || $node instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart) {
+            if ((($node instanceof Cast || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast) && $node->array) || $node instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart) {
                 return new ProgramProblem(ProgramRule::ArrayCast);
             }
             if (is_array($node)) {

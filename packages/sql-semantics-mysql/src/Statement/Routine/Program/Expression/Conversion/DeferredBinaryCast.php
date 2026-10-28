@@ -47,9 +47,7 @@ final class DeferredBinaryCast implements DeferredOperand
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
-        if (\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->warnedIn($derivation->context->profile->grammar)) {
-            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator));
-        }
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->binary($this->operand, $derivation);
 
         return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($this->problem()), $fact->nullability);
     }

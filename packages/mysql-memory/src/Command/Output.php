@@ -89,7 +89,7 @@ final class Output
         $context->variables->foundRows = $frame->foundBeforeProjection ?? $found;
         $interruptions->collect(count($rows));
 
-        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->raised(), interruptions: $interruptions->results, binaryValues: $binaryValues);
+        return new ResultSet($this->columns($plan, $charset, $release, $resultCollation), $rows, $context->diagnostics->stale ? 0 : $context->diagnostics->raised(), interruptions: $interruptions->results, binaryValues: $binaryValues);
     }
 
     /**

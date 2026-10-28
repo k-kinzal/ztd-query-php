@@ -50,6 +50,9 @@ final class LocatedErrors
      */
     public function located(Diagnostic $problem, ?\SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
     {
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput) {
+            return (new Entry\InputErrors())->castSize($problem, $session->text, $session);
+        }
         if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
             $origin = $problem->operand->source() ?? $sources?->of($problem->operand);
             $offset = $this->subquery($problem->operand, $sources) ?? $origin?->offset;
