@@ -18,6 +18,48 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class KillCommandTest extends TestCase
 {
+    public function testPrepareRetainsTheRowFailureUntilExecute(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('KILL ROW(1,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::class, $statement);
+        (new KillCommand())->prepare($statement, $session);
+        self::assertSame([], $session->diagnostics->conditions);
+        $this->expectExceptionCode(1241);
+        (new \MySqlMemory\Session\Execution($session))->statement($statement);
+    }
+
+    public function testPrepareRefusesAnUnknownSystemVariableBeforeExecution(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('KILL ROW(@@missing,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::class, $statement);
+        $this->expectExceptionCode(1193);
+        (new KillCommand())->prepare($statement, $session);
+    }
+
+    public function testProcessReturnsAScalarWithoutEvaluatingItsIdentifier(): void
+    {
+        $session = (new Instance())->connect();
+        $kill = $session->analyze('KILL 0');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::class, $kill);
+        self::assertSame($kill->process, (new KillCommand())->process($kill, $session));
+    }
+
+    public function testProcessRetainsTheFailureFollowingAnUnknownColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $kill = $session->analyze('KILL ROW(missing,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::class, $kill);
+        try {
+            (new KillCommand())->process($kill, $session);
+            self::fail('An unknown process dependency must fail before execution.');
+        } catch (SqlError $error) {
+            self::assertSame(1054, $error->getCode());
+            self::assertSame([[1204, 'You may only use constant expressions with SET']], $error->following);
+        }
+    }
+
     public function testExecuteDoesNotFindAClosedSessionThatIsStillReferenced(): void
     {
         $instance = new Instance();

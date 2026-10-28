@@ -54,9 +54,10 @@ final class KillCommand implements Command
         assert($operation instanceof MySqlStatement);
         $statement = $operation;
         assert($statement instanceof Kill);
+        $process = $this->process($statement, $session);
         $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         try {
-            $operand = $planner->compiler->compile($statement->process, new Scope());
+            $operand = $planner->compiler->compile($process, new Scope());
         } catch (SqlError $error) {
             throw self::preparation($error, $statement);
         }
@@ -76,6 +77,34 @@ final class KillCommand implements Command
         }
 
         return new Completion(0, 0, $context->diagnostics->raised());
+    }
+
+    /**
+     * Validates syntax-time dependencies while deferring the process expression to EXECUTE.
+     *
+     * @throws SqlError When a variable, function spelling or character-set condition prevents preparation
+     */
+    public function prepare(Kill $statement, Session $session): void
+    {
+        (new \MySqlMemory\Session\Problem\Reading())->parsed($statement, $session);
+        foreach ($statement->statementInformation()->diagnostics as $problem) {
+            if (\MySqlMemory\Session\Problem\Stages::parsed($problem)) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+            }
+        }
+    }
+
+    /**
+     * Prepares a retained process operand before statement access or identifier evaluation.
+     *
+     * @throws SqlError When the operand has a scalar-use or dependency condition
+     */
+    public function process(Kill $statement, Session $session): \SqlSemantics\Statement\Scalar
+    {
+        if (!$statement->process instanceof \SqlSemantics\Statement\Scalar) {
+            throw (new \MySqlMemory\Program\Expression\KillUse())->error($statement->process, $session);
+        }
+        return $statement->process;
     }
 
     /**

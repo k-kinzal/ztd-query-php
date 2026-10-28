@@ -477,6 +477,16 @@ $semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->va
 $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->diagnostics()[0]->message(); // => 'v is not BASE TABLE.'
 ```
 
+### Process expressions
+
+`Kill` retains complete process expressions, including row-valued computations
+that execution must refuse. Such requests expose `RefusedKillOperand` alongside
+their dependency conditions; the scope and expression remain available for SQL
+reconstruction. Preparation checks syntax-time conditions such as unknown system
+variables; process dependencies and row-width failures are checked at execution.
+Stored `DeferredKill` instructions apply these conditions when control reaches
+the instruction.
+
 ### File input destinations
 
 `LoadTable::columns` and `RefusedLoadAssignments::columns` distinguish an omitted

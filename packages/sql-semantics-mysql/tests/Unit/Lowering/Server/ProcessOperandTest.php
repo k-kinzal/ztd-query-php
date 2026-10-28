@@ -15,17 +15,14 @@ use SqlSemantics\Platform\MySql\Lowering\Server\ProcessOperand;
 #[Medium]
 final class ProcessOperandTest extends TestCase
 {
-    public function testStatementRefusalRetainsItsCompleteOperand(): void
+    public function testStatementRetainsItsCompleteNonScalarOperand(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze('KILL ROW(missing,2)');
-            self::fail('A standalone process identifier must be scalar.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand::class, $failure->problem);
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Row::class, $failure->problem->process);
-            self::assertCount(2, $failure->problem->process->elements);
-            self::assertFalse($failure->aborts);
-        }
+        $kill = (new Semantics(Dialect::MySql))->analyze('KILL QUERY ROW(missing,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::class, $kill);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Row::class, $kill->process);
+        self::assertCount(2, $kill->process->elements);
+        self::assertSame('KILL QUERY ROW(missing, 2)', $kill->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand::class, $kill->diagnostics()[1]);
     }
 
     public function testProgramScalarKillKeepsItsOrdinaryRole(): void

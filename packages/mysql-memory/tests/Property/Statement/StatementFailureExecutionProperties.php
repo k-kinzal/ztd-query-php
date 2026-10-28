@@ -34,6 +34,30 @@ final class StatementFailureExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Generated process computations fail preparation without evaluating or closing a session.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesGeneratedKillOperandsRetainTheirPreparationFailure(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Server\Instance\KillGenerator::refusedProcesses($release))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated process request without SQL';
+            (new \MySqlMemory\Session\Access\Preparation())->check($statement, $session);
+            try {
+                (new Execution($session))->statement($statement);
+                self::fail('A generated multi-column process expression cannot be scalar.');
+            } catch (SqlError $error) {
+                self::assertSame(1241, $error->getCode());
+                self::assertSame([[1204, 'You may only use constant expressions with SET']], $error->following);
+            }
+            self::assertFalse($session->released);
+            self::assertFalse($session->interrupted);
+            self::assertSame('Generated process request without SQL', $session->text);
+        });
+    }
+
+    /**
      * A refused heartbeat stops at its own option after the generated preceding notices.
      */
     #[Test]

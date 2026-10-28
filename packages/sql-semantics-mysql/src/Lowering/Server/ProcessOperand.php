@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -29,17 +26,12 @@ final class ProcessOperand
     }
 
     /**
-     * Publishes only a scalar standalone process identifier.
-     *
-     * @throws RejectedInput When the process operand is not scalar
+     * Retains every complete standalone process expression and its preparation conditions.
      */
     public function statement(Form $form): Kill
     {
         $statement = $this->read($form);
-        if ($statement instanceof DeferredKill) {
-            throw new RejectedInput(new RefusedKillOperand($statement->process), (new SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
-        return $statement;
+        return $statement instanceof DeferredKill ? new Kill($statement->scope, $statement->process) : $statement;
     }
 
     /**

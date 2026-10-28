@@ -90,7 +90,7 @@ final class PreparedCommand implements Command
         if ($prepared instanceof PendingTable) {
             $bindings = $prepared->parameters();
             $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
-            return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
+            return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');
         }
         if ($prepared instanceof MySqlStatement && ($prepared instanceof Prepare || $prepared instanceof Execute || $prepared instanceof Deallocate)) {
             throw StatementError::UnsupportedPreparedStatement->error();
@@ -108,7 +108,7 @@ final class PreparedCommand implements Command
         }
         $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, $cache];
 
-        return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
+        return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');
     }
 
     /**

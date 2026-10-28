@@ -302,7 +302,7 @@ final class Execution
             return true;
         }
         $kept = [
-            \MySqlMemory\Command\EmptyCommand::class, \MySqlMemory\Command\Admin\KillCommand::class,
+            \MySqlMemory\Command\EmptyCommand::class,
             \MySqlMemory\Command\TransactionCommand::class, \MySqlMemory\Command\Transaction\SetTransactionCommand::class, \MySqlMemory\Command\Transaction\SavepointCommand::class,
             \MySqlMemory\Command\Transaction\XaCommand::class, \MySqlMemory\Command\DatabaseCommand::class, \MySqlMemory\Command\Definition\Database\AlterDatabaseCommand::class, \MySqlMemory\Command\Definition\Database\UpgradeDatabaseCommand::class, \MySqlMemory\Command\Account\CreateUserCommand::class,
             \MySqlMemory\Command\Account\DropUserCommand::class, \MySqlMemory\Command\Account\AlterUserCommand::class, \MySqlMemory\Command\Account\RenameUserCommand::class,
@@ -333,7 +333,7 @@ final class Execution
             return $level === null || in_array($level::class, [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel::class, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel::class], true);
         }
 
-        return ($command instanceof \MySqlMemory\Command\QueryCommand || $command instanceof \MySqlMemory\Command\SetCommand || $command instanceof \MySqlMemory\Command\DoCommand || $command instanceof \MySqlMemory\Command\Explain\ExplainCommand)
+        return in_array($command::class, [\MySqlMemory\Command\Admin\KillCommand::class, \MySqlMemory\Command\QueryCommand::class, \MySqlMemory\Command\SetCommand::class, \MySqlMemory\Command\DoCommand::class, \MySqlMemory\Command\Explain\ExplainCommand::class], true)
             && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) === []
             && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable::class) === []
             && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget::class) === [];

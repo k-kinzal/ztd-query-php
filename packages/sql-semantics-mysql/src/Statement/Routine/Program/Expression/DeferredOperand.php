@@ -9,9 +9,9 @@ use SqlSemantics\Statement\Operand;
 /**
  * A stored computation whose intrinsic operand constraint is checked on invocation.
  *
- * This domain belongs to program instructions, not general Scalar positions.
- * Its operands retain their own semantic roles and resolve in the invocation's
- * scope. An unreachable instruction does not evaluate or prepare this value.
+ * Program instructions and complete requests that explicitly admit refused
+ * operands use this domain; general Scalar positions do not. Its operands
+ * retain their semantic roles and resolve in the request or invocation scope. An unreachable instruction does not evaluate or prepare this value.
  *
  * @visibility public
  * @example Keeping stored arithmetic outside Scalar

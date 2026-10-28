@@ -3781,7 +3781,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\Kill": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "process": "SqlSemantics\\Statement\\Scalar",
+        "process": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\KillScope"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\KillScope": {

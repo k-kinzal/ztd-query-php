@@ -26,6 +26,15 @@ final class KillTest extends TestCase
         self::assertSame('missing', $operation->diagnostics()[0]->name->value);
     }
 
+    public function testRenderRetainsTheRejectedTruthComputation(): void
+    {
+        $kill = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('KILL (USER() = (USER() MEMBER (ROW(USER(), USER())))) IS TRUE');
+        self::assertInstanceOf(Kill::class, $kill);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest::class, $kill->process);
+        self::assertSame('KILL (USER() = (USER() MEMBER (ROW(USER(), USER())))) IS TRUE', $kill->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand::class, $kill->diagnostics()[0]);
+    }
+
     public function testRenderWritesTheScopeAndTheIdentifier(): void
     {
         self::assertSame('KILL CONNECTION 1 + 2', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('kill connection 1 + 2')->toString());

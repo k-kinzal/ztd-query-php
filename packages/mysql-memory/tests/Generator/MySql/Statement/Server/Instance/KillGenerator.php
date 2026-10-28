@@ -20,7 +20,7 @@ final class KillGenerator implements ErisGenerator
 
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope|null> $scope Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $process Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $process Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
@@ -35,6 +35,24 @@ final class KillGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+    /**
+     * Composes complete process requests whose generated row computations cannot be scalar.
+     *
+     * @return ErisGenerator<\SqlSemantics\Statement\AnalyzedStatement>
+     */
+    public static function refusedProcesses(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
+        $rows = \Tests\Generator\Operands::bind(Generators::choose(2, 4), static fn (int $count): ErisGenerator => new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector($count, $numbers)));
+        $processes = \Tests\Generator\Operands::oneOf([
+            $rows,
+            Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Expression\Row $row): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, $row, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), $rows),
+            Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Expression\Row $row): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest($row, \SqlSemantics\Platform\MySql\Statement\Expression\Truth::True), $rows),
+        ]);
+        $requests = new self(Generators::elements([null, ...\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::cases()]), $processes);
+        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $requests);
+    }
+
     /**
      * Composes the statement's SQL forms from typed operand generators.
      *

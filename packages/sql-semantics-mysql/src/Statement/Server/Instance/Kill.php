@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Utility\ProcessReferences;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
@@ -16,7 +18,9 @@ use SqlSemantics\Statement\Scalar;
  *
  * Mirrors SQLCOM_KILL with LEX::kill_value_list. Rule: MYSQL-KILL-001. The
  * identifier is an expression the server evaluates where no relation is
- * visible; its facts are derived there. The statement returns no rows.
+ * visible; its facts are derived there. Row-valued and intrinsically refused
+ * computations remain in the request with RefusedKillOperand; execution applies
+ * their scalar-use constraint. The statement returns no rows.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/kill.html.
  * Status: Implemented.
  *
@@ -36,9 +40,9 @@ final class Kill extends \SqlSemantics\Platform\MySql\Statement\SqlStatement imp
 
     /**
      * @param KillScope|null $scope CONNECTION or QUERY, when written
-     * @param Scalar $process The processlist identifier
+     * @param Scalar|RowOperand|DeferredOperand $process The processlist expression, including retained scalar-use conditions
      */
-    public function __construct(public readonly ?KillScope $scope, public readonly Scalar $process, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?KillScope $scope, public readonly Scalar|RowOperand|DeferredOperand $process, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -51,7 +55,12 @@ final class Kill extends \SqlSemantics\Platform\MySql\Statement\SqlStatement imp
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new Operands())->single($derivation->scalar($this->process, $derivation->environment()), $derivation);
+        $fact = $derivation->scalar($this->process, $derivation->environment());
+        if (!$this->process instanceof Scalar) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand($this->process));
+            return;
+        }
+        (new Operands())->single($fact, $derivation);
         if ($derivation->inProgram()) {
             return;
         }

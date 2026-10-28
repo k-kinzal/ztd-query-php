@@ -21,6 +21,26 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class PreparedCommandTest extends TestCase
 {
+    public function testPrepareExcludesRetainedConditionsFromTheLegacyWarningCount(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->diagnostics->warning(1105, 'earlier condition');
+        $reply = $session->query("PREPARE s FROM 'KILL ROW(1,2)'")[0];
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertSame([['Warning', 1105, 'earlier condition']], $session->diagnostics->conditions);
+    }
+
+    public function testPrepareClearsLegacyConditionsWhenTheProcessExpressionNamesATable(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->diagnostics->warning(1105, 'earlier condition');
+        $reply = $session->query("PREPARE s FROM 'KILL ROW((SELECT a FROM absent),2)'")[0];
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testLegacyParameterKeepsNumericMeaningWithStringMetadata(): void
     {
         $command = new PreparedCommand();

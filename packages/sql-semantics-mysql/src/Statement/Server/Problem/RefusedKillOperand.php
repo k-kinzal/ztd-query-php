@@ -10,21 +10,22 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A standalone KILL input whose process identifier cannot have a scalar role.
+ * A KILL process expression that requires a scalar-use preparation failure.
  *
  * Complete typed dependencies retain earlier name and variable failures.
  * This diagnostic is not an executable Statement and retains no SQL or AST.
  *
  * @visibility public
- * @example Refusing a standalone row-valued process identifier
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('KILL ROW(1,2)') // throws \SqlSemantics\Construction\RejectedInput
+ * @example Retaining a row-valued process identifier and its condition
+ *     $kill = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('KILL ROW(1,2)');
+ *     [$kill->toString(), $kill->diagnostics()[0]->message()] // => ['KILL ROW(1, 2)', 'A standalone KILL requires a scalar process identifier.']
  */
 final class RefusedKillOperand implements Diagnostic
 {
     use Snapshot;
 
     /**
-     * @param RowOperand|DeferredOperand $process The refused identifier and all its dependencies
+     * @param RowOperand|DeferredOperand $process The retained identifier and all its dependencies
      */
     public function __construct(public readonly RowOperand|DeferredOperand $process)
     {
