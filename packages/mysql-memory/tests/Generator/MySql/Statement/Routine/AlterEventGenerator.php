@@ -29,11 +29,12 @@ final class AlterEventGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account|null>|null $definer Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $schedule = null, ?ErisGenerator $completion = null, ?ErisGenerator $newName = null, ?ErisGenerator $status = null, ?ErisGenerator $comment = null, ?ErisGenerator $body = null, ?ErisGenerator $definer = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $schedule = null, ?ErisGenerator $completion = null, ?ErisGenerator $newName = null, ?ErisGenerator $status = null, ?ErisGenerator $comment = null, ?ErisGenerator $body = null, ?ErisGenerator $definer = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(name: $parts[0], schedule: $parts[1], completion: $parts[2], newName: $parts[3], status: $parts[4], comment: $parts[5], body: $parts[6], definer: $parts[7], statementInformation: $parts[8], inputSource: $parts[9]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(name: $parts[0], schedule: $parts[1], completion: $parts[2], newName: $parts[3], status: $parts[4], comment: $parts[5], body: $parts[6], definer: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $schedule ?? Generators::constant(null),
@@ -44,7 +45,8 @@ final class AlterEventGenerator implements ErisGenerator
             $body ?? Generators::constant(null),
             $definer ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())
         ));
     }
     /**

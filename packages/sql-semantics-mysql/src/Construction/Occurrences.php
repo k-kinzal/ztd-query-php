@@ -135,7 +135,7 @@ final class Occurrences
     {
         if ($node instanceof CreateFunction && $name === 'implementation') {
             $body = $this->copy($node->body);
-            Check::input($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody || $body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody, 'A replacement preserves a function implementation body.');
+            Check::input($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody || $body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement || $body instanceof \SqlSemantics\Platform\MySql\Statement\Statement, 'A replacement preserves a function implementation body.');
             $characteristics = Check::listOf(array_map($this->copy(...), $node->characteristics), \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic::class, 'A replacement preserves routine characteristics.');
             return new FunctionImplementation($body, $characteristics);
         }

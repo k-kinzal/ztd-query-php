@@ -37,9 +37,11 @@ final class CreateProcedureTest extends TestCase
     #[DataProvider('providerLegacyUpgradeBodies')]
     public function testLegacyUpgradeCannotBeAStoredInstruction(\SqlSemantics\Statement\Node $body): void
     {
-        $this->expectExceptionMessage("Can't drop or alter a DATABASE from within another stored routine");
-
-        new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), $body);
+        $statement = Semantics::fromStatement((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context(), new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), $body));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame("Can't drop or alter a DATABASE from within another stored routine", $notices[0]->message());
     }
 
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
@@ -103,21 +105,21 @@ final class CreateProcedureTest extends TestCase
         yield 'LOAD XML' => ["LOAD XML INFILE 'f' INTO TABLE t", 'LOAD XML is not allowed in stored procedures'];
         yield 'ALTER VIEW' => ['ALTER VIEW v AS SELECT 1', 'ALTER VIEW is not allowed in stored procedures'];
         yield 'RETURN' => ['RETURN 1', 'RETURN is only allowed in a FUNCTION'];
-        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE q() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
-        yield 'CREATE FUNCTION' => ['CREATE FUNCTION g() RETURNS INT RETURN 1', "Can't create a FUNCTION from within another stored routine"];
-        yield 'CREATE TRIGGER' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1', "Can't create a TRIGGER from within another stored routine"];
         yield 'DROP PROCEDURE' => ['DROP PROCEDURE q', "Can't drop or alter a PROCEDURE from within another stored routine"];
         yield 'ALTER FUNCTION' => ["ALTER FUNCTION g COMMENT 'x'", "Can't drop or alter a FUNCTION from within another stored routine"];
-        yield 'CREATE EVENT' => ['CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
         yield 'nested in a block' => ['BEGIN IF 1 THEN LOCK TABLES t READ; END IF; END', 'LOCK is not allowed in stored procedures'];
     }
 
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**
@@ -192,4 +194,23 @@ final class CreateProcedureTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
         self::assertSame($sql, $operation->toString());
     }
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $body, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE q() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
+        yield 'CREATE FUNCTION' => ['CREATE FUNCTION g() RETURNS INT RETURN 1', "Can't create a FUNCTION from within another stored routine"];
+        yield 'CREATE TRIGGER' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1', "Can't create a TRIGGER from within another stored routine"];
+        yield 'CREATE EVENT' => ['CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
+    }
+
 }

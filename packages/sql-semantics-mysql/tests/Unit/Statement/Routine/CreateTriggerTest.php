@@ -132,7 +132,6 @@ final class CreateTriggerTest extends TestCase
         yield 'PREPARE' => ['PREPARE s FROM @q', 'Dynamic SQL is not allowed in stored function or trigger'];
         yield 'RETURN' => ['RETURN 1', 'RETURN is only allowed in a FUNCTION'];
         yield 'LOCK TABLES' => ['LOCK TABLES t READ', 'LOCK is not allowed in stored procedures'];
-        yield 'CREATE TRIGGER' => ['CREATE TRIGGER other AFTER INSERT ON t FOR EACH ROW SET @a = 1', "Can't create a TRIGGER from within another stored routine"];
     }
 
     #[DataProvider('providerDeriveStatementReportsAStatementATriggerMayNotContain')]
@@ -141,9 +140,11 @@ final class CreateTriggerTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);
+        $statement = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
     }
 
     /**
@@ -198,4 +199,20 @@ final class CreateTriggerTest extends TestCase
 
         new CreateTrigger(new QualifiedName(new Name('tr')), TriggerTime::Before, TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'))), new Parameter(new Name('x'), new Integral(IntegralKind::Int)));
     }
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $body, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'CREATE TRIGGER' => ['CREATE TRIGGER other AFTER INSERT ON t FOR EACH ROW SET @a = 1', "Can't create a TRIGGER from within another stored routine"];
+    }
+
 }

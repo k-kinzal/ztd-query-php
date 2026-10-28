@@ -22,6 +22,85 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 final class ProgramInput
 {
     /**
+     * Interleaves typed header conditions with retained body notices without reading SQL.
+     *
+     * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings The ordered statement notices
+     * @return list<\SqlSemantics\Statement\Fact\Warning|InputNote|SqlError>
+     */
+    public function retained(\SqlSemantics\Platform\MySql\Statement\Statement $statement, array $warnings, Session $session): array
+    {
+        $refusal = $this->refusal($warnings);
+        if ($refusal === null) {
+            return array_values($warnings);
+        }
+        $inputs = array_filter([$refusal->parameters, $refusal->returns, $refusal->collation], static fn ($node): bool => $node !== null);
+        $ranks = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->inputs(array_values($inputs), childrenFirst: true) as $index => $node) {
+            $ranks[spl_object_id($node)] = $index + 1;
+        }
+        $located = $statement->source() !== null;
+        $positions = [];
+        foreach ($statement->statementInformation()->notices as $notice) {
+            $positions[spl_object_id($notice->warning)] = $located ? ($notice->inputSource->offset ?? PHP_INT_MAX) : ($ranks[spl_object_id($notice->subject ?? $statement)] ?? PHP_INT_MAX);
+        }
+        $ordered = array_map(static fn ($warning): array => [$positions[spl_object_id($warning)] ?? PHP_INT_MAX, $warning], array_values($warnings));
+        foreach ($this->header($refusal, $session) as [$index, $notice]) {
+            $type = $index === null ? null : ((new \MySqlMemory\Command\Program\RoutineDeclarations())->items($refusal)[$index] ?? null);
+            $completion = $type === null ? null : ($type[1] ?? $type[0]);
+            $position = $located ? ($index === null ? $refusal->nameEnd : ($refusal->typeEnds[$index] ?? 0)) : ($completion === null ? 0 : ($ranks[spl_object_id($completion)] ?? 0));
+            $ordered[] = [$position, $notice];
+        }
+        usort($ordered, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+        return array_column($ordered, 1);
+    }
+
+    /**
+     * Finds the typed definition header attached to its first body condition.
+     *
+     * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings The statement's ordered notices
+     */
+    public function refusal(array $warnings): ?RefusedProgramBody
+    {
+        foreach ($warnings as $warning) {
+            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof RefusedProgramBody) {
+                return $warning->problem;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks the declaration name and each parameter or return type before its body.
+     *
+     * @return list<array{int|null, InputNote|SqlError}> The parameter index, or null for the name
+     */
+    public function header(RefusedProgramBody $refusal, Session $session): array
+    {
+        try {
+            (new Names($session->settings()->release()))->check([$refusal->definer]);
+            \MySqlMemory\Command\Program\ProgramSource::database($refusal->name->schema, $session);
+        } catch (SqlError $error) {
+            return [[null, $error]];
+        }
+        $types = new \MySqlMemory\Command\Program\RoutineDeclarations();
+        $notices = [];
+        foreach ($types->items($refusal) as $index => $type) {
+            $diagnostics = new \MySqlMemory\Session\Diagnostics();
+            $diagnostics->limit = PHP_INT_MAX;
+            try {
+                $types->check($refusal->name, [$type], $session, new \MySqlMemory\Evaluation\Context($session->modes(), $diagnostics, $session->variables, microtime(true)));
+            } catch (SqlError $error) {
+                $notices[] = [$index, $error];
+                return $notices;
+            }
+            foreach ($diagnostics->conditions as $condition) {
+                $notices[] = [$index, new InputNote(\MySqlMemory\Error\ErrorNumbers::from($condition[1]), $condition[2])];
+            }
+        }
+        return $notices;
+    }
+
+    /**
      * Preserves a routine's completed header notes before an unprepared marker.
      * The full input has already parsed; only the refused declaration's typed
      * header is inspected. Later body conditions do not replace the marker.
@@ -33,7 +112,11 @@ final class ProgramInput
             return $syntax;
         }
         try {
-            $session->semantics()->analyze($tree);
+            $statement = $session->semantics()->analyze($tree);
+            $refusal = $this->refusal($statement->warnings());
+            if ($refusal !== null) {
+                return $this->markerNotes($refusal, $syntax, $cause->token->offset, $session);
+            }
         } catch (\SqlSemantics\Construction\RejectedInput $refused) {
             if ($refused->problem instanceof RefusedProgramBody) {
                 return $this->markerNotes($refused->problem, $syntax, $cause->token->offset, $session);

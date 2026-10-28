@@ -12,7 +12,7 @@ use SqlSemantics\Statement\Snapshot;
  * An input declaration whose body representation contradicts its language.
  *
  * The numeric location formats an input diagnostic without retaining SQL,
- * parser nodes, or an invalid routine declaration.
+ * parser nodes. A complete routine retains its body beside this condition.
  *
  * @visibility public
  * @example Reading the language constraint

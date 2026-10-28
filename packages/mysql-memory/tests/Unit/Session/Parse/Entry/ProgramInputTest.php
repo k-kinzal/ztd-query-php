@@ -7,6 +7,7 @@ namespace Tests\Unit\Session\Parse\Entry;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Parse\Entry\ProgramInput;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
@@ -20,6 +21,107 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class ProgramInputTest extends TestCase
 {
+    public function testRefusalFindsTheFirstTypedBodyConditionAmongOtherNotices(): void
+    {
+        $warning = new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisplayWidth);
+        $first = new RefusedProgramBody(new QualifiedName(new Name('f')), ProgramKind::Function, new ProgramProblem(ProgramRule::MissingReturn, 'f'));
+        $second = new RefusedProgramBody(new QualifiedName(new Name('g')), ProgramKind::Function, new ProgramProblem(ProgramRule::MissingReturn, 'g'));
+        $input = new ProgramInput();
+        self::assertNull($input->refusal([$warning]));
+        self::assertSame($first, $input->refusal([$warning, new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($first), new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($second)]));
+    }
+
+    /**
+     * @return iterable<string, array{string, list<int>}>
+     */
+    public static function providerTypeCompletions(): iterable
+    {
+        yield 'parameter' => ["CREATE PROCEDURE p(x ENUM('v','v'), a INT(256)) SELECT SQL_NO_CACHE 1", [1291, 1681, 1439]];
+        yield 'return' => ["CREATE FUNCTION f(x ENUM('v','v')) RETURNS INT(256) RETURN 1", [1291, 1681, 1439]];
+        yield 'local' => ['CREATE PROCEDURE p() BEGIN DECLARE a INT(256); SELECT SQL_NO_CACHE 1; END', [1681, 1439]];
+        yield 'local default' => ['CREATE PROCEDURE p() BEGIN DECLARE a INT(256) DEFAULT (SELECT SQL_NO_CACHE 1); SELECT SQL_CALC_FOUND_ROWS 1; END', [1681, 1681, 1439]];
+    }
+
+    /**
+     * @param list<int> $codes
+     */
+    #[DataProvider('providerTypeCompletions')]
+    public function testRetainedStopsAtTheCompletedTypeAfterItsPrecedingNotices(string $sql, array $codes): void
+    {
+        $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
+        $session->run($sql);
+        self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testRetainedOrdersDirectTypeFailureAfterTheEarlierParameterNote(): void
+    {
+        $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('v'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('v')]);
+        $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([
+            new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('x'), $type),
+            new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int, '256')),
+        ]);
+        $create = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('p')), $parameters, new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block());
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $create);
+        $session->text = 'A direct type declaration without SQL';
+        try {
+            (new \MySqlMemory\Session\Execution($session))->statement($statement);
+            self::fail('The completed type exceeds the integer display-width limit.');
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            self::assertSame(1439, $error->getCode());
+        }
+        self::assertSame([1291, 1681, 1439], array_column($session->diagnostics->conditions, 1));
+        self::assertSame('A direct type declaration without SQL', $session->text);
+    }
+
+    public function testRetainedInterleavesHeaderNotesAndStopsAtTheBodyCondition(): void
+    {
+        $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
+        $session->run("CREATE FUNCTION f(a INT(11), b ENUM('x','x')) RETURNS ENUM('y','y') BEGIN SELECT SQL_NO_CACHE 1; FETCH c INTO x; SELECT SQL_CALC_FOUND_ROWS 2; END");
+        self::assertSame([1681, 1291, 1291, 1681, 1324], array_column($session->diagnostics->conditions, 1));
+        self::assertSame(['Warning', 'Note', 'Note', 'Warning', 'Error'], array_column($session->diagnostics->conditions, 0));
+    }
+
+    public function testRetainedOrdersDirectHeaderConditionsWithoutSourcePositions(): void
+    {
+        $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a')]);
+        $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\OpenCursor(new Name('c'));
+        $create = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('a'), $type)]), $body);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $create);
+        $session->text = 'Unrelated input without SQL';
+        try {
+            (new \MySqlMemory\Session\Execution($session))->statement($statement);
+            self::fail('The generated body references an undeclared cursor.');
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            self::assertSame(1324, $error->getCode());
+        }
+        self::assertSame([['Note', 1291, "Column '' has duplicated value 'a' in ENUM"], ['Error', 1324, 'Undefined CURSOR: c']], $session->diagnostics->conditions);
+        self::assertSame('Unrelated input without SQL', $session->text);
+    }
+
+    public function testHeaderStopsAtAStrictEnumerationCondition(): void
+    {
+        $session = (new Instance('8.4.7', ['sql_mode' => 'STRICT_ALL_TABLES'], ['d']))->connect(database: 'd');
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a')]);
+        $refusal = new RefusedProgramBody(new QualifiedName(new Name('f')), ProgramKind::Function, new ProgramProblem(ProgramRule::MissingReturn, 'f'), returns: $type);
+        $notices = (new ProgramInput())->header($refusal, $session);
+        self::assertCount(1, $notices);
+        self::assertSame(0, $notices[0][0]);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $notices[0][1]);
+        self::assertSame(1291, $notices[0][1]->getCode());
+    }
+
+    public function testHeaderRequiresADatabaseBeforeCheckingTypes(): void
+    {
+        $refusal = new RefusedProgramBody(new QualifiedName(new Name('p')), ProgramKind::Procedure, new ProgramProblem(ProgramRule::MissingReturn, 'p'));
+        $notices = (new ProgramInput())->header($refusal, (new Instance())->connect());
+        self::assertCount(1, $notices);
+        self::assertNull($notices[0][0]);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $notices[0][1]);
+        self::assertSame(1046, $notices[0][1]->getCode());
+    }
+
     public function testMarkerKeepsTheCompletedHeaderNoteBeforeTheTextProtocolRefusal(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Lowering\Routine;
+namespace SqlSemantics\Platform\MySql\Rules\Routine\Definition;
 
 use SqlSemantics\Platform\MySql\Rules\Query\From\InputNames;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies;
@@ -24,13 +24,13 @@ use SqlSemantics\Statement\Source\SourceMap;
  *
  * @visibility SqlSemantics\Platform\MySql
  */
-final class DefinitionInputs
+final class BodyInputs
 {
     /**
      * @param list<Name> $locals The enclosing routine parameters
-     * @return array{ProgramProblem|ScopedLocalAssignment|NonUniqueTable, int}|null The first condition and its input boundary
+     * @return array{ProgramProblem|ScopedLocalAssignment|NonUniqueTable, Node}|null The first condition and its input boundary
      */
-    public function first(Node $body, array $locals, int $end, ?SourceMap $sources): ?array
+    public function first(Node $body, array $locals, ?SourceMap $sources = null): ?array
     {
         $candidates = [];
         $binding = (new ConditionBindings())->find($body, $locals);
@@ -49,9 +49,7 @@ final class DefinitionInputs
         foreach ((new ReadDependencies())->nodes($body, childrenFirst: true) as $node) {
             $problem = $candidates[spl_object_id($node)] ?? null;
             if ($problem !== null) {
-                $origin = $sources?->of($node);
-                $boundary = $origin === null ? $end : $origin->offset + $origin->length;
-                return [$problem, $problem instanceof NonUniqueTable ? $this->activation($body, $node, $boundary, $sources) : $boundary];
+                return [$problem, $problem instanceof NonUniqueTable ? $this->activation($body, $node, $sources) : $node];
             }
         }
         return null;
@@ -60,17 +58,23 @@ final class DefinitionInputs
     /**
      * Includes CTE references reached before interpreting an earlier definition.
      */
-    public function activation(Node $body, Node $subject, int $end, ?SourceMap $sources): int
+    public function activation(Node $body, Node $subject, ?SourceMap $sources): Node
     {
+        $at = $subject;
+        $origin = $sources?->of($subject);
+        $end = $origin === null ? 0 : $origin->offset + $origin->length;
         foreach ((new ReadDependencies())->nodes($body) as $node) {
             $origin = $node instanceof TableReference ? $sources?->of($node) : null;
             if ($origin !== null) {
-                $end = max($end, $origin->offset + $origin->length);
+                if ($origin->offset + $origin->length > $end) {
+                    $end = $origin->offset + $origin->length;
+                    $at = $node;
+                }
             }
             if ($node === $subject) {
                 break;
             }
         }
-        return $end;
+        return $at;
     }
 }

@@ -46,11 +46,32 @@ final class TypeLimitsTest extends TestCase
     {
         foreach (self::providerInvalidTypeSizes() as $label => [$type, $rule]) {
             yield $label . ' column' => ['CREATE TABLE t(a ' . $type . ')', $rule, 'a'];
-            yield $label . ' parameter' => ['CREATE PROCEDURE p(a ' . $type . ') SELECT 1', $rule, ''];
-            yield $label . ' return' => ['CREATE FUNCTION f() RETURNS ' . $type . ' RETURN 1', $rule, ''];
             yield $label . ' alteration' => ['ALTER TABLE t ADD a ' . $type, $rule, 'a'];
-            yield $label . ' local' => ['CREATE PROCEDURE p() BEGIN DECLARE a ' . $type . '; END', $rule, ''];
         }
+    }
+
+    /**
+     * @return iterable<string, array{string, TypeLimit}>
+     */
+    public static function providerStoredDeclarations(): iterable
+    {
+        foreach (self::providerInvalidTypeSizes() as $label => [$type, $rule]) {
+            yield $label . ' parameter' => ['CREATE PROCEDURE p(a ' . $type . ') SELECT 1', $rule];
+            yield $label . ' return' => ['CREATE FUNCTION f() RETURNS ' . $type . ' RETURN 1', $rule];
+            yield $label . ' local' => ['CREATE PROCEDURE p() BEGIN DECLARE a ' . $type . '; END', $rule];
+        }
+    }
+
+    #[DataProvider('providerStoredDeclarations')]
+    public function testCheckRetainsFixedBoundsInCompleteStoredDefinitions(string $sql, TypeLimit $rule): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $statement = $semantics->analyze($sql);
+        $problem = $statement->diagnostics()[0];
+        self::assertInstanceOf(InvalidTypeSize::class, $problem);
+        self::assertSame([$rule, ''], [$problem->rule, $problem->name]);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
 
     #[DataProvider('providerDeclarations')]

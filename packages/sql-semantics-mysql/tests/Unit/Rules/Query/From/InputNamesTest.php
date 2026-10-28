@@ -90,7 +90,7 @@ final class InputNamesTest extends TestCase
         new M\Expression\Subquery\ScalarSubquery($query);
     }
 
-    public function testProblemPreventsADeclarationContainingAnUnreachableCollision(): void
+    public function testProblemRetainsADeclarationContainingAnUnreachableCollision(): void
     {
         $query = new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableList([
             new M\Relation\TableReference(new QualifiedName(new Name('t'))),
@@ -98,7 +98,10 @@ final class InputNamesTest extends TestCase
         ]));
         $instruction = new M\Routine\Program\Selection\DeferredQuery($query);
         $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\BooleanLiteral(false), [$instruction])]);
-        $this->expectExceptionMessage("Not unique table/alias: 't'");
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body);
+        $create = new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), [new Name('test')]), $create);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $statement);
+        self::assertInstanceOf(M\Routine\Program\Flow\IfStatement::class, $statement->body);
+        self::assertSame("Not unique table/alias: 't'.", $statement->warnings()[0]->message());
     }
 }

@@ -44,8 +44,11 @@ final class DeclarationNamesTest extends TestCase
         $names = [];
         $stage = 0;
         self::assertSame('Duplicate variable: X', (new DeclarationNames())->add($variable, $names, $stage)?->message());
-        $this->expectExceptionMessage('Duplicate variable: X');
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Block([$variable]));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Block([$variable])));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Duplicate variable: X', $notices[0]->message());
+
     }
 
     public function testAddRejectsVariablesAfterHandlersBeforePublishingAProcedure(): void
@@ -57,7 +60,10 @@ final class DeclarationNamesTest extends TestCase
         $rule = new DeclarationNames();
         self::assertNull($rule->add($handler, $names, $stage));
         self::assertSame(M\Routine\Problem\ProgramRule::DeclarationAfterCursorOrHandler, $rule->add($variable, $names, $stage)?->rule);
-        $this->expectExceptionMessage('Variable or condition declaration after cursor or handler declaration');
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Block([$handler, $variable]));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Block([$handler, $variable])));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Variable or condition declaration after cursor or handler declaration', $notices[0]->message());
+
     }
 }

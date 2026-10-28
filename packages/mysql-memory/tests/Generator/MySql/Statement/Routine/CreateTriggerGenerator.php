@@ -70,11 +70,12 @@ final class CreateTriggerGenerator implements ErisGenerator
      * @param ErisGenerator<M\Routine\Trigger\TriggerOrder|null> $order The generated semantic operand
      * @param ErisGenerator<M\Name\Account|null> $definer The generated semantic operand
      * @param ErisGenerator<bool> $ifNotExists The generated semantic operand
+     * @param ErisGenerator<M\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
      * @return ErisGenerator<CreateTrigger>
      */
-    public static function fromOperands(ErisGenerator $name, ErisGenerator $time, ErisGenerator $event, ErisGenerator $table, ErisGenerator $body, ErisGenerator $order, ErisGenerator $definer, ErisGenerator $ifNotExists): ErisGenerator
+    public static function fromOperands(ErisGenerator $name, ErisGenerator $time, ErisGenerator $event, ErisGenerator $table, ErisGenerator $body, ErisGenerator $order, ErisGenerator $definer, ErisGenerator $ifNotExists, ?ErisGenerator $definitionSource = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7]), \Tests\Generator\Operands::tuple($name, $time, $event, $table, $body, $order, $definer, $ifNotExists));
+        return Generators::map(static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], definitionSource: $parts[8]), \Tests\Generator\Operands::tuple($name, $time, $event, $table, $body, $order, $definer, $ifNotExists, $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
     }
 
     /**

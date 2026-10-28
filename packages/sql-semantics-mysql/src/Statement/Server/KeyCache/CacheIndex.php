@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Assigning indexes to a key cache
  *     $cache = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('cache index t key (primary, i), u in hot');
- *     [$cache->toString(), $cache->cache?->value] // => ['CACHE INDEX t INDEX (PRIMARY, i), u IN hot', 'hot']
+ *     [$cache->toString(), $cache->cache?->value] // => ['CACHE INDEX t KEY (PRIMARY, i), u IN hot', 'hot']
  */
 final class CacheIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

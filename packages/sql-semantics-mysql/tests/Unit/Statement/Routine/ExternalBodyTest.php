@@ -60,8 +60,9 @@ final class ExternalBodyTest extends TestCase
 
     public function testRenderRefusesTheOriginalSqlLanguageAndExternalCodeExample(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("create procedure p() language sql as 'x'");
+        $statement = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("create procedure p() language sql as 'x'");
+        self::assertSame("CREATE PROCEDURE p() LANGUAGE SQL AS 'x'", $statement->toString());
+        self::assertContains('The routine language and body representation disagree.', array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesAConstructedBody(): void

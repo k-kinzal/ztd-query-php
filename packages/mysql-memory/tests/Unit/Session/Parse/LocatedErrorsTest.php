@@ -16,6 +16,25 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpr
 #[Small]
 final class LocatedErrorsTest extends TestCase
 {
+    public function testParsedPreservesTheSpecificConditionWithoutALocation(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('SELECT 1');
+        $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('missing'));
+        $error = (new LocatedErrors())->parsed($notice, $statement, $session);
+        self::assertSame(1273, $error->getCode());
+        self::assertSame("Unknown collation: 'missing'", $error->getMessage());
+    }
+
+    public function testParsedRequiresTheReferencedDatabaseBeforeALockingCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('SELECT 1 FROM t');
+        $notice = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownLockedTable, new \SqlSemantics\Statement\Identifier\Name('missing')));
+        $this->expectExceptionCode(1046);
+        (new LocatedErrors())->parsed($notice, $statement, $session);
+    }
+
     public function testSubqueryUsesTheNestedOccurrenceInsteadOfTheEnclosingCall(): void
     {
         $session = (new Instance())->connect();

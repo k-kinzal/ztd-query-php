@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine\Declaration;
 
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramRestrictions;
 use SqlSemantics\Platform\MySql\Rules\Routine\ReturnSearch;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
@@ -30,23 +29,6 @@ use SqlSemantics\Statement\Node;
  */
 final class BodyStructure
 {
-    /**
-     * Refuses an instruction arrangement with no interpretation for its declaration kind.
-     */
-    public function check(Node $body, ProgramKind $kind, ?QualifiedName $name = null, ?\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters = null): void
-    {
-        $recursive = (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputNames())->problem($body) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($body);
-        Check::input($recursive === null, $recursive?->message() ?? 'Recursive references occupy their own query block.');
-        $locals = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
-        $binding = (new ConditionBindings())->find($body, $locals);
-        Check::input($binding === null, $binding === null ? 'Condition targets have lexical bindings.' : $binding[0]->message());
-        Check::input((new LocalAssignments())->scoped($body, $locals) === null, (new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment())->message());
-        $problem = $this->problem($body, $kind, $name, $parameters);
-        Check::input($problem === null, $problem?->message() ?? 'The body fits its declaration kind.');
-        (new BodyBindings())->check($body, $kind);
-        (new BodyArrays())->check($body);
-    }
-
     /**
      * Answers the first immediate restriction or the highest-priority body-wide restriction.
      */

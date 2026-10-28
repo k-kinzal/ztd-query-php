@@ -59,23 +59,32 @@ final class CursorFactsTest extends TestCase
 
     public function testVariablesReportsATargetOfGetDiagnosticsThatIsNoVariable(): void
     {
-        $this->expectExceptionMessage('Undeclared variable: r');
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
+
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Undeclared variable: r', $notices[0]->message());
+
     }
 
 
-    #[DataProvider('providerCursorReportsACursorDeclaredNowhereAroundRejectsBeforePublication')]
-    public function testCursorReportsACursorDeclaredNowhereAroundRejectsBeforePublication(string $release, string $sql, string $message): void
+    #[DataProvider('providerCursorReportsACursorDeclaredNowhereAroundRetainsDefinitionCondition')]
+    public function testCursorReportsACursorDeclaredNowhereAroundRetainsDefinitionCondition(string $release, string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql, $release))->analyze($sql);
+
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+
     }
 
     /**
      * @return iterable<string, array{string, string, string}>
      */
-    public static function providerCursorReportsACursorDeclaredNowhereAroundRejectsBeforePublication(): iterable
+    public static function providerCursorReportsACursorDeclaredNowhereAroundRetainsDefinitionCondition(): iterable
     {
         yield 'OPEN without a declaration in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() OPEN c', 'Undefined CURSOR: c'];
         yield 'CLOSE of another cursor in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; CLOSE d; END', 'Undefined CURSOR: d'];
@@ -85,18 +94,22 @@ final class CursorFactsTest extends TestCase
     }
 
 
-    #[DataProvider('providerVariablesReportsEveryTargetThatIsNoVariableRejectsBeforePublication')]
-    public function testVariablesReportsEveryTargetThatIsNoVariableRejectsBeforePublication(string $sql, string $message): void
+    #[DataProvider('providerVariablesReportsEveryTargetThatIsNoVariableRetainsDefinitionCondition')]
+    public function testVariablesReportsEveryTargetThatIsNoVariableRetainsDefinitionCondition(string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+
     }
 
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerVariablesReportsEveryTargetThatIsNoVariableRejectsBeforePublication(): iterable
+    public static function providerVariablesReportsEveryTargetThatIsNoVariableRetainsDefinitionCondition(): iterable
     {
         yield 'two undeclared targets' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1, 2, 3; FETCH NEXT FROM c INTO y, x, z; END', 'Undeclared variable: y'];
         yield 'a variable of a closed block' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; BEGIN DECLARE x INT; END; FETCH c INTO x; END', 'Undeclared variable: x'];

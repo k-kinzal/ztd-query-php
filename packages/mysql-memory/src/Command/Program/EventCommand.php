@@ -113,7 +113,7 @@ final class EventCommand implements Command
             $session->instance->registry->eventScheduler->activated($event);
         }
 
-        return new Completion(0, 0, $context->diagnostics->raised());
+        return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
     }
 
     /**

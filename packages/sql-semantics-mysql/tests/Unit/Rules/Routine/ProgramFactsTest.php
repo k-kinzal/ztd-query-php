@@ -172,9 +172,13 @@ final class ProgramFactsTest extends TestCase
 
     public function testRoutineRefusesAMissingReturnBeforePublishingAStatement(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('No RETURN found in FUNCTION f');
-        (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN END');
+
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN END');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('No RETURN found in FUNCTION f', $notices[0]->message());
+
     }
 
     /**
@@ -250,7 +254,7 @@ final class ProgramFactsTest extends TestCase
     /**
      * @return iterable<string, array{string, non-empty-list<string>}>
      */
-    public static function providerRoutineRefusesIntrinsicBodyContradictions(): iterable
+    public static function providerRoutineRetainsIntrinsicBodyConditions(): iterable
     {
         yield 'a function without RETURN' => ['CREATE FUNCTION f() RETURNS INT BEGIN END', ['No RETURN found in FUNCTION f']];
         yield 'a qualified function without RETURN' => ['CREATE FUNCTION db.g() RETURNS INT SET @a = 1', ['No RETURN found in FUNCTION g']];
@@ -263,11 +267,15 @@ final class ProgramFactsTest extends TestCase
     /**
      * @param non-empty-list<string> $messages
      */
-    #[DataProvider('providerRoutineRefusesIntrinsicBodyContradictions')]
-    public function testRoutineRefusesIntrinsicBodyContradictions(string $sql, array $messages): void
+    #[DataProvider('providerRoutineRetainsIntrinsicBodyConditions')]
+    public function testRoutineRetainsIntrinsicBodyConditions(string $sql, array $messages): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($messages[0]);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($messages[0], $notices[0]->message());
+
     }
 }

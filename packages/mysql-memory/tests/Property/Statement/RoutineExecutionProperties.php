@@ -40,6 +40,43 @@ final class RoutineExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Executes declarations with an unbound cursor and preserves only earlier reading notices.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesDefinitionConditionsKeepOnlyThePrecedingGeneratedNotices(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Routine\Program\Cursor\FetchCursorGenerator::definitions($release))->then(static function (array $parts) use ($release): void {
+            [$statement, $message, $conditions] = $parts;
+            self::assertInstanceOf(AnalyzedStatement::class, $statement);
+            $session = (new Instance(substr($release->value, 6), ['sql_mode' => ''], databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated declaration without SQL input';
+            try {
+                (new Execution($session))->statement($statement);
+                self::fail('The generated definition has an unbound cursor.');
+            } catch (SqlError $error) {
+                self::assertSame(1324, $error->getCode());
+                self::assertSame($message, $error->getMessage());
+            }
+            self::assertSame($conditions, array_column($session->diagnostics->conditions, 1));
+            self::assertSame('Generated declaration without SQL input', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * Stored SQL accepts the definition and raises the reached operand condition on invocation.
      *
      * @param Generator<array{CreateProcedure, AnalyzedStatement}> $sequences Dependent definitions and calls

@@ -241,7 +241,16 @@ final class Execution
         $dots = $session->dots;
         $failure = null;
         (new \MySqlMemory\Hint\Hints())->warnings($hints, true, $session);
-        foreach ($warnings as $warning) {
+        foreach ((new Parse\Entry\ProgramInput())->retained($operation, $warnings, $session) as $warning) {
+            if ($warning instanceof Parse\Entry\InputNote) {
+                $session->diagnostics->note($warning->code, $warning->message);
+                continue;
+            }
+            if ($warning instanceof SqlError) {
+                $session->diagnostics->error($warning->getCode(), $warning->getMessage());
+                $failure ??= $warning;
+                break;
+            }
             if (!$warning instanceof Deprecation || !in_array($warning->construct, Syntax::HEAD, true)) {
                 foreach ($dots as $construct) {
                     $session->diagnostics->warning($construct->code(), $construct->value);
@@ -249,12 +258,7 @@ final class Execution
                 $dots = [];
             }
             if ($warning instanceof ParseFailure) {
-                if (Stages::locked($warning->problem)) {
-                    (new Access\DefaultDatabase())->referenced($operation, $session);
-                }
-                (new \MySqlMemory\Command\Definition\StorageOptions())->beforePartition($warning, $operation, $session);
-                (new Access\TableCreation())->database($operation, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
-                $error = (new Problem\Precision())->legacy((new Parse\LocatedErrors())->error($warning->problem, $operation, $session) ?? (new CacheOptions())->placed($warning->problem, $operation, $session) ?? (new Errors())->error($warning->problem, $session, 'field list', $operation), $session->settings()->release());
+                $error = (new Parse\LocatedErrors())->parsed($warning, $operation, $session);
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
                 $failure ??= $error;
                 if ($warning->aborts) {

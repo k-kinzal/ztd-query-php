@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine\Declaration;
 
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
@@ -21,15 +20,6 @@ use SqlSemantics\Statement\Node;
  */
 final class BodyArrays
 {
-    /**
-     * Refuses a cast that has no interpretation within a stored program body.
-     */
-    public function check(Node $body): void
-    {
-        $problem = $this->problem($body);
-        Check::input($problem === null, $problem?->message() ?? 'The body contains no multi-valued index casts.');
-    }
-
     /**
      * Answers the intrinsic conflict without consulting execution state.
      */

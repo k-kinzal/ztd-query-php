@@ -26,8 +26,11 @@ final class LocalAssignmentsTest extends TestCase
         $parameters = new M\Routine\ParameterList([new M\Routine\Parameter(new Name('a'), new M\Type\Integral(M\Type\Kind\IntegralKind::Int))]);
         self::assertSame($set, (new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), $parameters, $set))->body);
         $set = new M\Utility\Set\SetVariables([new M\Utility\Set\NameAssignment(new Name('a'), new M\Literal\NumberLiteral('1'), M\Variable\VariableScope::Global)]);
-        $this->expectExceptionMessage('A local variable assignment cannot carry a system variable scope.');
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), $parameters, $set);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), $parameters, $set));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('A local variable assignment cannot carry a system variable scope.', $notices[0]->message());
+
     }
 
     public function testScopedDoesNotLetASiblingBlocksLocalEscape(): void

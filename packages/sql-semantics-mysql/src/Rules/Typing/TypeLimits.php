@@ -45,13 +45,15 @@ final class TypeLimits
 {
     /**
      * Records the first invalid bound at its position among type warnings.
+     *
+     * @param \SqlSemantics\Statement\Node|null $at The completed declaration, or the current derivation occurrence
      */
-    public function check(TypeName $type, string $name, Derivation $derivation): void
+    public function check(TypeName $type, string $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null): void
     {
         $problem = $this->problem($type, $name, $derivation->context->profile->grammar);
         if ($problem !== null) {
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, true));
+            $derivation->warn(new ParseFailure($problem, true), $at);
         }
     }
 

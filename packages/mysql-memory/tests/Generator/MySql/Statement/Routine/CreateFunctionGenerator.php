@@ -28,11 +28,12 @@ final class CreateFunctionGenerator implements ErisGenerator
      * @param ErisGenerator<bool>|null $ifNotExists Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $returns, ErisGenerator $implementation, ?ErisGenerator $collation = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $returns, ErisGenerator $implementation, ?ErisGenerator $collation = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(name: $parts[0], parameters: $parts[1], returns: $parts[2], implementation: $parts[3], collation: $parts[4], definer: $parts[5], ifNotExists: $parts[6], statementInformation: $parts[7], inputSource: $parts[8]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(name: $parts[0], parameters: $parts[1], returns: $parts[2], implementation: $parts[3], collation: $parts[4], definer: $parts[5], ifNotExists: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], definitionSource: $parts[9]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $parameters,
@@ -42,7 +43,8 @@ final class CreateFunctionGenerator implements ErisGenerator
             $definer ?? Generators::constant(null),
             $ifNotExists ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())
         ));
     }
     /**

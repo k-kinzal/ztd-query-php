@@ -37,9 +37,13 @@ final class FetchCursorTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredName')]
     public function testDeriveProgramReportsAnUndeclaredName(string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**

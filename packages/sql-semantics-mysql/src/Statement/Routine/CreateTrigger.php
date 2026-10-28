@@ -28,12 +28,6 @@ use SqlSemantics\Statement\Node;
  * context. The facts follow MYSQL-TRIGGER-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  *
- * @example Rejecting RETURN outside a function declaration
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
- * @example Rejecting a multi-valued index cast in a stored body
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
  * @visibility public
  * @example Reading a trigger definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET @changed = 1');
@@ -70,6 +64,7 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         public readonly bool $ifNotExists = false,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Definition\DefinitionSource $definitionSource = null,
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -77,7 +72,6 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Trigger, $name);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -95,6 +89,7 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     public function deriveStatement(Derivation $derivation): void
     {
         (new ProgramFacts())->trigger($this->table, $this->time, $this->event, $this->body, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
     }
 
     /**

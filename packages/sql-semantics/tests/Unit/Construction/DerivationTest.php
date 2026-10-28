@@ -36,6 +36,21 @@ use SqlSemantics\Statement\Shape\RowShape;
 #[Medium]
 final class DerivationTest extends TestCase
 {
+    public function testDiagnosticsExposeReportedConditionsWithoutFreezingOperandFacts(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $missing = new MissingColumn(new Name('first'));
+        $derivation->report($missing);
+
+        self::assertSame([$missing], $derivation->diagnostics());
+
+        $use = new ColumnUse(new Name('second'));
+        $fact = $derivation->scalar($use, $derivation->environment());
+
+        self::assertSame([$missing, $fact->resolution], $derivation->diagnostics());
+        self::assertSame($fact, $derivation->facts()->scalar($use));
+    }
+
     public function testBindReferencePreservesOccurrenceIdentity(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
@@ -288,30 +303,6 @@ final class DerivationTest extends TestCase
         $this->expectExceptionMessage('A nested statement sees only the declarations of the enclosing context and of the statement itself.');
 
         (new Derivation($context))->within($foreign, $semantics->analyze('SELECT 1'));
-    }
-
-    public function testAdmitAcceptsTheDeclarationsTheStatementProvided(): void
-    {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $context = $semantics->context([]);
-        $derivation = new Derivation($context);
-        $derivation->statement((new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('CREATE TABLE t (a INTEGER)')));
-        $own = new AnalysisContext($context->profile, $context->searchPath, $derivation->facts()->declarations, true, $context->relationNames, $context->columnNames);
-
-        $derivation->admit($own);
-
-        self::assertCount(1, $derivation->facts()->declarations);
-    }
-
-    public function testAdmitRefusesAContextThatDropsAnEnclosingDeclaration(): void
-    {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)')]);
-        $empty = new AnalysisContext($context->profile, $context->searchPath, [], true);
-
-        $this->expectExceptionMessage('A nested statement sees every declaration of the enclosing context.');
-
-        (new Derivation($context))->admit($empty);
     }
 
     public function testMemberKeepsDeclarationsButNotRows(): void

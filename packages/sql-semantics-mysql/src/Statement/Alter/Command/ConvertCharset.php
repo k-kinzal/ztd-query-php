@@ -61,7 +61,7 @@ final class ConvertCharset implements AlterCommand
      * @param \SqlSemantics\Statement\Node $owner The conversion or enclosing ALTER TABLE which owns this phase
      * @example Finding incompatible known names
      *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4 COLLATE latin1_bin');
-     *     $alter->facts->warnings[0]->message() // => "COLLATION 'latin1_bin' is not valid for CHARACTER SET 'utf8mb4'"
+     *     $alter->warnings()[0]->message() // => "COLLATION 'latin1_bin' is not valid for CHARACTER SET 'utf8mb4'"
      */
     public function deriveCollation(Derivation $derivation, \SqlSemantics\Statement\Node $owner): void
     {

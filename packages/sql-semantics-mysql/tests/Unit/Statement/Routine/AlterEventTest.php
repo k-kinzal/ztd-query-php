@@ -58,16 +58,19 @@ final class AlterEventTest extends TestCase
      */
     public static function providerDeriveStatementReportsAStatementAStoredProgramMayNotContain(): iterable
     {
-        yield 'ALTER EVENT with a body' => ['ALTER EVENT f DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
         yield 'LOCK TABLES in a block' => ['BEGIN DECLARE v INT; SET @x = v; LOCK TABLES t READ; END', 'LOCK is not allowed in stored procedures'];
     }
 
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
+        $statement = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     public function testDeriveStatementAcceptsANestedAlterationWithoutABody(): void
@@ -149,6 +152,22 @@ final class AlterEventTest extends TestCase
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration::class, $error->problem);
             self::assertSame('db', $error->problem->name->schema?->value);
         }
+    }
+
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $body, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DO ' . $body);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'ALTER EVENT with a body' => ['ALTER EVENT f DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
     }
 
 }

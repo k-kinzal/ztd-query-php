@@ -123,12 +123,16 @@ final class Warnings
 
     /**
      * Orders the located warnings within a statement while preserving all other positions.
-     * A directly constructed statement with no source location retains derivation order.
+     * A directly constructed statement uses an explicit semantic completion order,
+     * when supplied; otherwise its derivation order is retained.
+     *
+     * @param list<Node> $completed Semantic completion order, independent of SQL source
      */
-    public function order(Node $scope): void
+    public function order(Node $scope, array $completed = []): void
     {
         $origin = $this->sources->of($scope);
         if ($origin === null) {
+            $this->semantic($completed);
             return;
         }
         $indices = [];
@@ -143,6 +147,34 @@ final class Warnings
         usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);
         foreach ($indices as $position => $index) {
             $this->entries[$index] = $ordered[$position];
+        }
+    }
+
+    /**
+     * Orders only notices whose subjects belong to the given semantic completions.
+     * Warnings outside this scope retain their original positions.
+     *
+     * @param list<Node> $completed Ordered occurrences from the dialect's dependency rules
+     */
+    public function semantic(array $completed): void
+    {
+        $ranks = [];
+        foreach ($completed as $rank => $node) {
+            $ranks[spl_object_id($node)] = $rank;
+        }
+        $indices = [];
+        $ordered = [];
+        foreach ($this->entries as $index => $entry) {
+            $subject = $entry[3];
+            $rank = $subject === null ? null : ($ranks[spl_object_id($subject)] ?? null);
+            if ($rank !== null) {
+                $indices[] = $index;
+                $ordered[] = [$entry, $rank];
+            }
+        }
+        usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);
+        foreach ($indices as $position => $index) {
+            $this->entries[$index] = $ordered[$position][0];
         }
     }
 

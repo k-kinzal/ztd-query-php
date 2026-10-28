@@ -4,34 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Routine;
 
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure;
-use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
-use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
-use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 
 /**
- * Reports declaration-kind contradictions before a public statement is constructed.
+ * Retains input boundaries for complete stored-program declarations.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class DefinitionBody
 {
     /**
-     * Interprets the language/body relationship and retains only its refusal location.
-     *
-     * @param list<\SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic> $characteristics The written characteristics
+     * Retains numeric header and body boundaries independently of any body condition.
      */
-    public function language(Node $body, array $characteristics, \SqlParser\Parser\Node $tree): ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch
+    public function source(Node $body, \SqlParser\Parser\Node $name, \SqlParser\Parser\Node $tree, ?\SqlParser\Parser\Node $parameters = null, ?\SqlParser\Parser\Node $returns = null): \SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource
     {
-        if ((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->compatible($body, $characteristics)) {
-            return null;
-        }
         $tokens = $tree->tokens();
         $offset = null;
         if ($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody) {
@@ -39,36 +25,11 @@ final class DefinitionBody
         } elseif ($body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block) {
             $offset = $tokens[count($tokens) - 1]->offset;
         }
-        return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch($offset);
-    }
-
-    /**
-     * Preserves the typed header when a completed body contradicts its declaration kind.
-     *
-     * @param list<int> $typeEnds The completion offsets for preceding parameter and return declarations
-     * @throws RejectedInput When no declaration can contain the body
-     */
-    public function check(Node $body, ProgramKind $kind, QualifiedName $name, ?Account $definer, int $end, ?ParameterList $parameters = null, ?DeclaredName $returns = null, ?CollationName $collation = null, array $typeEnds = [], int $nameEnd = 0, ?\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch $language = null, ?\SqlSemantics\Statement\Source\SourceMap $sources = null): void
-    {
-        $type = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->declaration($body, $parameters, $returns);
-        if ($type !== null) {
-            throw new RejectedInput(new RefusedProgramBody($name, $kind, $type, $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, false);
-        }
-        $locals = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
-        $input = (new DefinitionInputs())->first($body, $locals, $end, $sources);
-        if ($input !== null) {
-            throw new RejectedInput(new RefusedProgramBody($name, $kind, $input[0], $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $input[1], true);
-        }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($body) ?? (new BodyStructure())->problem($body, $kind, $name, $parameters);
-        if ($language !== null && ($problem === null || ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && in_array($problem->rule, [\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::MissingReturn, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ResultSet, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::AutocommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::FunctionStatement], true)))) {
-            $problem = $language;
-        }
-        $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyBindings())->problem($body, $kind);
-        $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyArrays())->problem($body);
-        $problem ??= (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($body);
-        if ($problem !== null) {
-            throw new RejectedInput(new RefusedProgramBody($name, $kind, $problem, $definer, $parameters, $returns, $collation, $typeEnds, $nameEnd), $end, false);
-        }
+        return new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource(
+            (new \SqlSemantics\Construction\SourceRanges())->span($name)[1] ?? 0,
+            $parameters === null ? [] : $this->typeEnds($parameters, $returns),
+            $offset,
+        );
     }
 
     /**

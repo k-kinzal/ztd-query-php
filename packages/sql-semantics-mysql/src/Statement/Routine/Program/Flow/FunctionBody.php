@@ -11,7 +11,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * This includes RETURN itself and compound control structures containing
  * instructions or handlers. A function declaration additionally requires an
- * actual RETURN in that structure; it need not be reachable at execution time.
+ * actual RETURN in that structure and reports its absence as a definition
+ * condition; the instruction need not be reachable at execution time.
  * Cursor instructions and ordinary SQL statements cannot supply that return.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/return.html.
  *

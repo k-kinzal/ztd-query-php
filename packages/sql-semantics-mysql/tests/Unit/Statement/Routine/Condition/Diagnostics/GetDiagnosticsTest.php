@@ -116,8 +116,13 @@ final class GetDiagnosticsTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredTarget')]
     public function testDeriveProgramReportsAnUndeclaredTarget(string $sql, array $messages): void
     {
-        $this->expectExceptionMessage($messages[0]);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($messages[0], $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**

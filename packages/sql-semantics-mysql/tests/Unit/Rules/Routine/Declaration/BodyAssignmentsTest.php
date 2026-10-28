@@ -27,8 +27,11 @@ final class BodyAssignmentsTest extends TestCase
         self::assertFalse((new BodyAssignments())->forbidden($body, $parameters));
         self::assertTrue((new BodyAssignments())->forbidden($body, new M\Routine\ParameterList([])));
         self::assertSame($body, (new M\Routine\CreateFunction(new QualifiedName(new Name('f')), $parameters, new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $implementation))->body);
-        $this->expectExceptionMessage('Not allowed to set autocommit from a stored function or trigger');
-        new M\Routine\CreateFunction(new QualifiedName(new Name('f')), new M\Routine\ParameterList([]), new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $implementation);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateFunction(new QualifiedName(new Name('f')), new M\Routine\ParameterList([]), new M\Type\Integral(M\Type\Kind\IntegralKind::Int), $implementation));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Not allowed to set autocommit from a stored function or trigger', $notices[0]->message());
+
     }
 
     public function testWithinKeepsBlockShadowingLocalToTheBlock(): void

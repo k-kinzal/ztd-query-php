@@ -33,8 +33,13 @@ final class BlockTest extends TestCase
 
     public function testDeriveProgramRejectsDuplicateVariablesBeforePublication(): void
     {
-        $this->expectExceptionMessage('Duplicate variable: X');
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE X CHAR(1); SELECT x; END');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE X CHAR(1); SELECT x; END');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Duplicate variable: X', $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     public function testDeriveProgramHidesAParameterWithAVariableOfTheSameName(): void
@@ -122,18 +127,22 @@ final class BlockTest extends TestCase
 
 
 
-    #[DataProvider('providerDeriveProgramReportsTheBrokenRuleRejectsBeforePublication')]
-    public function testDeriveProgramReportsTheBrokenRuleRejectsBeforePublication(string $sql, string $message): void
+    #[DataProvider('providerDeriveProgramReportsTheBrokenRuleRetainsDefinitionCondition')]
+    public function testDeriveProgramReportsTheBrokenRuleRetainsDefinitionCondition(string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerDeriveProgramReportsTheBrokenRuleRejectsBeforePublication(): iterable
+    public static function providerDeriveProgramReportsTheBrokenRuleRetainsDefinitionCondition(): iterable
     {
         yield 'a duplicate condition' => ["CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE E CONDITION FOR SQLSTATE '42S02'; END", 'Duplicate condition: E'];
         yield 'a duplicate cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE c CURSOR FOR SELECT 2; END', 'Duplicate cursor: c'];

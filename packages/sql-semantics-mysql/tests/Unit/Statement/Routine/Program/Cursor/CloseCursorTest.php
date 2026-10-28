@@ -19,8 +19,13 @@ final class CloseCursorTest extends TestCase
 {
     public function testDeriveProgramReportsAnUndefinedCursor(): void
     {
-        $this->expectExceptionMessage('Undefined CURSOR: c');
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CLOSE c');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CLOSE c');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Undefined CURSOR: c', $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**
@@ -61,25 +66,34 @@ final class CloseCursorTest extends TestCase
     }
 
 
-    #[DataProvider('providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRejectsBeforePublication')]
-    public function testDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRejectsBeforePublication(string $sql, string $message): void
+    #[DataProvider('providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRetainsDefinitionCondition')]
+    public function testDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRetainsDefinitionCondition(string $sql, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRejectsBeforePublication(): iterable
+    public static function providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRetainsDefinitionCondition(): iterable
     {
         yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; CLOSE c; END', 'Undefined CURSOR: c'];
         yield 'a cursor declared after a handler that uses it' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING CLOSE c; DECLARE c CURSOR FOR SELECT 1; END', 'Undefined CURSOR: c'];
     }
     public function testRenderRejectsTheUnboundQuotedCursorBeforePublication(): void
     {
-        $this->expectExceptionMessage('Undefined CURSOR: c d');
-        (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('create procedure p() close `c d`');
+        $statement = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('create procedure p() close `c d`');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Undefined CURSOR: c d', $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 }

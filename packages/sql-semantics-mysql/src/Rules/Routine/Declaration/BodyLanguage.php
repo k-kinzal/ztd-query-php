@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine\Declaration;
 
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
@@ -21,16 +20,6 @@ use SqlSemantics\Statement\Node;
  */
 final class BodyLanguage
 {
-    /**
-     * Refuses a body whose representation contradicts its declared language.
-     *
-     * @param list<Characteristic> $characteristics The characteristics in written order
-     */
-    public function check(Node $body, array $characteristics): void
-    {
-        Check::input($this->compatible($body, $characteristics), 'The routine language and body representation agree.');
-    }
-
     /**
      * Answers whether the effective language describes the body representation.
      *

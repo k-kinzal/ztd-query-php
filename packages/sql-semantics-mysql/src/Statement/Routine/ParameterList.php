@@ -74,7 +74,7 @@ final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
                 $derivation->report($problem);
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $parameter);
             }
-            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation);
+            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation, $parameter->collation ?? $parameter->type);
             $slots[] = new OutputSlot($parameter->name, new Known((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->type($parameter->type, $parameter->collation, $derivation->context)), Nullability::Nullable);
         }
 

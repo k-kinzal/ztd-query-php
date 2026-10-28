@@ -19,7 +19,7 @@ final class FunctionImplementationGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody> $body Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody|\SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement|\SqlSemantics\Platform\MySql\Statement\Statement> $body Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic>>|null $characteristics Generated constructor operand
      */
     public function __construct(ErisGenerator $body, ?ErisGenerator $characteristics = null)

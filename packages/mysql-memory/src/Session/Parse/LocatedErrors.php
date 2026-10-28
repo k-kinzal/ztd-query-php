@@ -22,6 +22,19 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 final class LocatedErrors
 {
     /**
+     * Formats a parse condition after its preceding database and storage checks.
+     */
+    public function parsed(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $warning, MySqlStatement $operation, Session $session): SqlError
+    {
+        if (\MySqlMemory\Session\Problem\Stages::locked($warning->problem)) {
+            (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
+        }
+        (new \MySqlMemory\Command\Definition\StorageOptions())->beforePartition($warning, $operation, $session);
+        (new \MySqlMemory\Session\Access\TableCreation())->database($operation, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+        return (new \MySqlMemory\Session\Problem\Precision())->legacy($this->error($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\CacheOptions())->placed($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session, 'field list', $operation), $session->settings()->release());
+    }
+
+    /**
      * Answers the original SQL tail and line of a forbidden construct, or null for another diagnostic.
      */
     public function error(Diagnostic $problem, MySqlStatement $operation, Session $session): ?SqlError

@@ -24,11 +24,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 #[Small]
 final class BodyBindingsTest extends TestCase
 {
-    public function testCheckLeavesOpaqueCodeAndLiteralQuestionMarksUninterpreted(): void
+    public function testProblemLeavesOpaqueCodeAndLiteralQuestionMarksUninterpreted(): void
     {
         $rules = new BodyBindings();
-        $rules->check(new ExternalBody(new Text('return ?')), ProgramKind::Function);
-        $rules->check(new ReturnStatement(new StringLiteral(['?'])), ProgramKind::Function);
+        self::assertNull($rules->problem(new ExternalBody(new Text('return ?')), ProgramKind::Function));
+        self::assertNull($rules->problem(new ReturnStatement(new StringLiteral(['?'])), ProgramKind::Function));
         self::assertNull($rules->problem(new ReturnStatement(new StringLiteral(['?'])), ProgramKind::Function));
     }
 

@@ -52,8 +52,11 @@ final class ConditionBindingsTest extends TestCase
         $get = new M\Routine\Condition\Diagnostics\GetDiagnostics(new M\Routine\Condition\Diagnostics\StatementDiagnostics([$item]));
         $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [$get])]);
         self::assertSame(M\Routine\Problem\ProgramRule::UndeclaredVariable, (new ConditionBindings())->find($body)[0]->rule ?? null);
-        $this->expectExceptionMessage('Undeclared variable: x');
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Undeclared variable: x', $notices[0]->message());
+
     }
 
     public function testInstructionChecksTheCursorBeforeItsFetchTargets(): void
@@ -70,8 +73,11 @@ final class ConditionBindingsTest extends TestCase
         $open = new M\Routine\Program\Cursor\OpenCursor(new Name('c'));
         $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [$open])]);
         self::assertSame($open, (new ConditionBindings())->find($body)[1] ?? null);
-        $this->expectExceptionMessage('Undefined CURSOR: c');
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Undefined CURSOR: c', $notices[0]->message());
+
     }
 
     public function testHandlerResolvesNamesBeforeCheckingDuplicateConditionValues(): void
@@ -81,9 +87,12 @@ final class ConditionBindingsTest extends TestCase
         $handler = new M\Routine\Program\HandlerDeclaration(M\Routine\Program\HandlerAction::Continue, [$code, $named], new M\Routine\Program\Block());
         $handled = [];
         self::assertSame(M\Routine\Problem\ProgramRule::DuplicateHandler, (new ConditionBindings())->handler($handler, [(new \SqlSemantics\Platform\MySql\Rules\Typing\Ordering\GeneralWeights())->key('c') => $code], $handled)[0]->rule ?? null);
-        $body = new M\Routine\Program\Block([new M\Routine\Program\ConditionDeclaration(new Name('c'), $code), $handler]);
-        $this->expectExceptionMessage('Duplicate handler declared in the same block');
-        new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body);
+        $body = new M\Routine\Program\Block([new M\Routine\Program\ConditionDeclaration(new Name('c'), new M\Routine\Condition\ErrorCode(new M\Literal\Numeral('1051'))), $handler]);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Duplicate handler declared in the same block', $notices[0]->message());
+
     }
 
     public function testHandlerDoesNotMergeNumericCodesAndTheirSqlStateClasses(): void

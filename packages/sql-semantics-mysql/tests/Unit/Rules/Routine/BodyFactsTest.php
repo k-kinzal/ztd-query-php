@@ -143,22 +143,44 @@ final class BodyFactsTest extends TestCase
     /**
      * @return iterable<string, array{string, non-empty-list<string>}>
      */
-    public static function providerRefusesIntrinsicBodyContradictions(): iterable
+    public static function providerRetainsIntrinsicBodyConditions(): iterable
     {
         yield 'a result set of a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'a commit in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN COMMIT; RETURN 1; END', ['Explicit or implicit commit is not allowed in stored function or trigger.']];
         yield 'a result set of a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT 1', ['Not allowed to return a result set from a trigger']];
-        yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
     }
 
     /**
      * @param non-empty-list<string> $messages
      */
-    #[DataProvider('providerRefusesIntrinsicBodyContradictions')]
-    public function testRefusesIntrinsicBodyContradictions(string $sql, array $messages): void
+    #[DataProvider('providerRetainsIntrinsicBodyConditions')]
+    public function testRetainsIntrinsicBodyConditions(string $sql, array $messages): void
+    {
+
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($messages[0], $notices[0]->message());
+
+    }
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $sql, array $messages): void
     {
         $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
         $this->expectExceptionMessage($messages[0]);
         (new Semantics(Dialect::MySql))->analyze($sql);
     }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
+    }
+
 }

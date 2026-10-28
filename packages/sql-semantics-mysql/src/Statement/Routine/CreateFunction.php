@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
 use SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\FunctionBody;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
@@ -25,18 +25,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * The statement is structured as a request: it declares nothing to a
  * context. The facts follow MYSQL-ROUTINE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
- *
- * @example Rejecting a body with no RETURN instruction
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
- * @example Rejecting a body that contradicts its language
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('code')))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
- * @example Rejecting a client marker without a binding scope
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter()))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
- * @example Rejecting a multi-valued index cast in a stored body
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Boolean), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true)))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  *
  * @example Rejecting an intrinsically incomplete character return collation
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, '1', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary));
@@ -57,9 +45,9 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
     public readonly array $characteristics;
 
     /**
-     * @var ExternalBody|FunctionBody The external code or SQL instruction structure containing RETURN
+     * @var ExternalBody|ProgramStatement|Statement The external code or retained SQL instruction structure
      */
-    public readonly ExternalBody|FunctionBody $body;
+    public readonly ExternalBody|ProgramStatement|Statement $body;
 
     /**
      * @param QualifiedName $name The function name with its optional database
@@ -81,6 +69,7 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         public readonly bool $ifNotExists = false,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Definition\DefinitionSource $definitionSource = null,
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -94,7 +83,6 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         }
         $this->characteristics = $implementation->characteristics;
         $this->body = $implementation->body;
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Function, $name, $parameters);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -104,6 +92,7 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
     public function deriveStatement(Derivation $derivation): void
     {
         (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Function, $this->name, $derivation, $this->returns, $this->collation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
     }
 
     /**
@@ -112,7 +101,7 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      * Qualification permits the definition without removing that name relationship.
      *
      * @example Reading the name relationship of a function definition
-     *     $definition = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1')->statement;
+     *     $definition = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION d.`ORDER`() RETURNS INT RETURN 1');
      *     $definition->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847) // => true
      */
     public function nameCollision(\SqlSemantics\Contract\GrammarRelease $release): bool

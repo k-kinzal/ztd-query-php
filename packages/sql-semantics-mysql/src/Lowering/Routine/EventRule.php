@@ -97,7 +97,6 @@ final class EventRule
         $name = $this->lowering->names->qualified($form->node($first + 2));
         $schedule = $this->schedule($form->node($first + 5), $name, $definer);
         $body = (new StatementRule($this->lowering->inProgram($name)))->event($form->node($first + 10));
-        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node($first + 2))[1] ?? 0, sources: $this->lowering->origins->publish());
 
         return new CreateEvent(
             $name,
@@ -112,6 +111,7 @@ final class EventRule
             $this->comment($form->node($first + 8)),
             $definer,
             $this->lowering->options->present($form->node($first + 1)),
+            definitionSource: (new DefinitionBody())->source($body, $form->node($first + 2), $form->node($first + 10)),
         );
     }
 
@@ -144,9 +144,6 @@ final class EventRule
             'opt_ev_sql_stmt: DO_SYM ev_sql_stmt' => (new StatementRule($this->lowering->inProgram($name)))->event($body->node(1)),
             default => throw ImplementationGap::production($body),
         };
-        if ($instruction !== null) {
-            (new DefinitionBody())->check($instruction, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($form->node(3))[1] ?? 0, sources: $this->lowering->origins->publish());
-        }
         $status = $this->status($form->node(6));
         $comment = $this->comment($form->node(7));
         $refusal = $this->rejected($form->node);
@@ -167,6 +164,7 @@ final class EventRule
             $comment,
             $instruction,
             $definer,
+            definitionSource: $instruction === null ? null : (new DefinitionBody())->source($instruction, $form->node(3), $body->node(1)),
         );
     }
 

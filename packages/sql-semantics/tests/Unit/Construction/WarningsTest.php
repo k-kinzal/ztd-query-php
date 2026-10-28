@@ -18,6 +18,22 @@ use SqlSemantics\Statement\Source\SourceNotice;
 #[Small]
 final class WarningsTest extends TestCase
 {
+    public function testSemanticOrdersCompletedOperandsWithoutMovingOutsideWarnings(): void
+    {
+        $early = new IntegerLiteral('1');
+        $late = new IntegerLiteral('2');
+        $outside = self::createStub(Warning::class);
+        $first = self::createStub(Warning::class);
+        $second = self::createStub(Warning::class);
+        $warnings = new Warnings(new SourceMap());
+        $warnings->append($second, $late);
+        $warnings->append($outside, null);
+        $warnings->append($first, $early);
+        $warnings->order(new IntegerLiteral('0'), [$early, $late]);
+        self::assertSame([$first, $outside, $second], $warnings->all());
+        self::assertSame([[$first, $early], [$second, $late]], $warnings->subjects());
+    }
+
     public function testSubjectsRetainIdentityWithoutAnyInputLocations(): void
     {
         $subject = new IntegerLiteral('1');

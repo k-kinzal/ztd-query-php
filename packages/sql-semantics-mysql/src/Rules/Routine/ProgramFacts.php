@@ -69,7 +69,7 @@ final class ProgramFacts
         if ($returns !== null) {
             (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($returns, $derivation);
             (new Declaration\DeclaredCollation())->warn($collation, $derivation);
-            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($returns, '', $derivation);
+            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($returns, '', $derivation, $collation ?? $returns);
         }
         $problem = $returns === null ? null : $this->returnCollation($returns, $derivation->context->profile->grammar);
         if ($problem !== null) {

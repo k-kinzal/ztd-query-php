@@ -30,12 +30,6 @@ use SqlSemantics\Statement\Node;
  * context. The facts follow MYSQL-EVENT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-event.html.
  *
- * @example Rejecting RETURN outside a function declaration
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), body: new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
- * @example Rejecting a multi-valued index cast in a stored body
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), body: new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
  * @visibility public
  * @example Reading the changes of an event
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
@@ -72,6 +66,7 @@ final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
         public readonly ?Account $definer = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Definition\DefinitionSource $definitionSource = null,
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -84,9 +79,6 @@ final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         Check::input($schedule !== null || $completion !== null || $newName !== null || $status !== null || $comment !== null || $body !== null, 'ALTER EVENT changes at least one event property after its name.');
         $this->body = $body === null ? null : (new StatementSequence())->member($body);
-        if ($this->body !== null) {
-            (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Event, $name);
-        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -99,6 +91,7 @@ final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
         }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
     }
 
     /**

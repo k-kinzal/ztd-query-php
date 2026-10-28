@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Source\Span;
  * @visibility public
  * @example Reading the request
  *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa rollback X'0f', 'b', 3");
- *     [$xa->toString(), $xa->xid->format?->text === '3'] // => ["XA ROLLBACK x'0f', 'b', 3", true]
+ *     [$xa->toString(), $xa->xid->format?->text === '3'] // => ["XA ROLLBACK X'0f', 'b', 3", true]
  * @example Refusing a format identifier outside the selected release
  *     new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

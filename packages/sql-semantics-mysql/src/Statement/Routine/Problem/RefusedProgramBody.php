@@ -17,7 +17,8 @@ use SqlSemantics\Statement\Snapshot;
  * A declaration whose instruction arrangement contradicts its program kind.
  *
  * The header supplies database and definer precedence without retaining the
- * input SQL or a parser tree. No invalid declaration is published.
+ * input SQL or a parser tree. Complete declarations retain their body beside
+ * this diagnostic; incomplete inputs can report it without a declaration.
  *
  * @visibility public
  * @example Describing a body restriction

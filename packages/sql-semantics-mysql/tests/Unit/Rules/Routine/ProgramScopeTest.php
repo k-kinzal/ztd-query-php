@@ -45,10 +45,13 @@ final class ProgramScopeTest extends TestCase
     public function testVariableFindsAParameterInAnyLetterCase(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS X = NUMBER')->diagnostics());
-        $this->expectExceptionMessage('Undeclared variable: y');
-        $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER');
+        $statement = $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Undeclared variable: y', $notices[0]->message());
+
     }
 
     public function testConditionFindsTheInnermostDeclarationOfTheName(): void
@@ -66,8 +69,12 @@ final class ProgramScopeTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $hidden = $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c; END; END");
         self::assertSame([], $hidden->diagnostics());
-        $this->expectExceptionMessage('SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE');
-        $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
+        $statement = $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE', $notices[0]->message());
+
     }
 
     public function testLabeledAddsTheLabelOfABlockOrALoop(): void
@@ -113,13 +120,15 @@ final class ProgramScopeTest extends TestCase
         $condition = new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051')));
         $scope = (new ProgramScope(new Environment(new AnalysisContext((new Semantics(Dialect::MySql))->profile(), [new Name('db')])), ProgramKind::Procedure, conditions: [$condition], cursors: [new Name('cur')]))->labeled(new Name('b'), false)->labeled(new Name('l'), true);
         $handler = $scope->handler();
-
         self::assertSame([], $handler->blocks);
         self::assertSame([], $handler->loops);
         self::assertSame([$condition], $handler->conditions);
         self::assertEquals([new Name('cur')], $handler->cursors);
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('LEAVE with no matching label: l');
-        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('LEAVE with no matching label: l', $notices[0]->message());
+
     }
 }

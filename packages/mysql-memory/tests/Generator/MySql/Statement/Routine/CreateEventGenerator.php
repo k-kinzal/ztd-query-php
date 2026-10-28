@@ -29,11 +29,12 @@ final class CreateEventGenerator implements ErisGenerator
      * @param ErisGenerator<bool>|null $ifNotExists Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $schedule, ErisGenerator $body, ?ErisGenerator $completion = null, ?ErisGenerator $status = null, ?ErisGenerator $comment = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $schedule, ErisGenerator $body, ?ErisGenerator $completion = null, ?ErisGenerator $status = null, ?ErisGenerator $comment = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(name: $parts[0], schedule: $parts[1], body: $parts[2], completion: $parts[3], status: $parts[4], comment: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(name: $parts[0], schedule: $parts[1], body: $parts[2], completion: $parts[3], status: $parts[4], comment: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $schedule,
@@ -44,7 +45,8 @@ final class CreateEventGenerator implements ErisGenerator
             $definer ?? Generators::constant(null),
             $ifNotExists ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())
         ));
     }
     /**

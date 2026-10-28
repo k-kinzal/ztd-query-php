@@ -29,12 +29,6 @@ use SqlSemantics\Statement\Node;
  * context. The facts follow MYSQL-EVENT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
- * @example Rejecting RETURN outside a function declaration
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
- * @example Rejecting a multi-valued index cast in a stored body
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['2030-01-01'])), new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- *
  * @visibility public
  * @example Reading an event definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO DELETE FROM log");
@@ -71,6 +65,7 @@ final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         public readonly bool $ifNotExists = false,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Definition\DefinitionSource $definitionSource = null,
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -79,7 +74,6 @@ final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         $this->body = (new StatementSequence())->member($body);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure())->check($this->body, ProgramKind::Event, $name);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -92,6 +86,7 @@ final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
         }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
     }
 
     /**

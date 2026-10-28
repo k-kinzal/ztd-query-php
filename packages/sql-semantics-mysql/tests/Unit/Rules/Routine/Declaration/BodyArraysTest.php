@@ -25,11 +25,11 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Small]
 final class BodyArraysTest extends TestCase
 {
-    public function testCheckKeepsScalarCastsAndOpaqueCode(): void
+    public function testProblemKeepsScalarCastsAndOpaqueCode(): void
     {
         $rules = new BodyArrays();
-        $rules->check(new ReturnStatement(new Cast(new NumberLiteral('1'), new CastTarget(CastKind::Signed))));
-        $rules->check(new ExternalBody(new Text('CAST(1 AS SIGNED ARRAY)')));
+        self::assertNull($rules->problem(new ReturnStatement(new Cast(new NumberLiteral('1'), new CastTarget(CastKind::Signed)))));
+        self::assertNull($rules->problem(new ExternalBody(new Text('CAST(1 AS SIGNED ARRAY)'))));
         self::assertNull($rules->problem(new ReturnStatement(new StringLiteral(['CAST(1 AS SIGNED ARRAY)']))));
     }
 

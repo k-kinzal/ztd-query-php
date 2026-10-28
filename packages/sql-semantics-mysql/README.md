@@ -513,35 +513,43 @@ typed condition before later database or body conditions. MySQL 5.6 permits a
 wider operand domain for `DROP FUNCTION`; `DropProgram::legacyName()` identifies
 that form, and composition checks exclude incompatible newer language features.
 
-Routine declarations check the kinds of instructions they can contain, including
-unreachable branches and handlers. A stored function must contain a `RETURN`
-instruction; this does not require every runtime path to reach it. Procedures,
-triggers and events cannot contain `RETURN`. Function and trigger bodies reject
-result-producing statements, dynamic SQL, explicit transaction boundaries,
-privilege changes, RESET and FLUSH. Instructions prohibited in all stored
-programs are also refused before a declaration is published.
+Complete routine, trigger and event bodies remain part of their concrete
+statements when a definition-time condition prevents the server from accepting
+them. This includes unbound cursors, variables and conditions, declaration-order
+conflicts, missing or misplaced `RETURN`, incompatible languages, prohibited
+statements and unscoped client parameters. Unreachable branches and handlers are
+checked too. For example, analyzing `ALTER EVENT e DO FETCH c INTO x` returns an
+`AlterEvent` containing that `FetchCursor`, with an undefined-cursor diagnostic;
+rendering the statement still writes the complete request.
+
+The same rules apply when `Construction\Publication` binds directly constructed
+values. Constructors enforce operand shapes and occurrence ownership. Definition
+conditions are derived after the name, parameters and body are combined, so a
+function implementation can retain an SQL instruction without `RETURN` and
+report why its enclosing function cannot be defined.
 
 Ordinary read roots and scalar subqueries exclude exact repeated input names
-within one fixed database namespace. A query body can retain such a template
-inside an unused CTE; only references reached from its owner activate that
-definition. Routine declarations apply the same constraint to all instructions,
-including unreachable branches. Names whose equality depends on the default
+within one fixed database namespace. A stored query can retain those names;
+its declaration reports the first reached input condition. A query body can also
+retain such a template inside an unused CTE; only references reached from its
+owner activate that definition. Names whose equality depends on the default
 database or case-comparison settings remain resolution dependencies.
 
-Collision diagnostics identify the later relation occurrence, even when two
-occurrences share an immutable name object. Consumers can order nested input
-preparation using those identities. Input lowering records occurrence ranges
-separately to retain earlier declaration conditions and stop later notices.
+A `ParseFailure` notice carries `Statement\Routine\Problem\RefusedProgramBody`
+with the typed name, definer, parameter and return declarations, and the first
+body condition. It preserves error precedence over later instructions without
+removing their semantic values. Input occurrence ranges order parsed notices;
+direct construction uses semantic dependency order. Optional
+`Statement\Routine\Definition\DefinitionSource` boundaries format input
+diagnostics and never supply the body's meaning. No SQL text or parser node is
+retained. Database selection, SQL mode and other state remain the consumer's
+responsibility.
 
-Direct PHP construction raises `InvalidConstruction` for these contradictory
-combinations. SQL lowering raises `Construction\RejectedInput` with
-`Statement\Routine\Problem\RefusedProgramBody`. The diagnostic holds the typed
-name, definer, parameter and return declarations, and the body constraint. Its
-numeric completion positions allow input diagnostics to preserve ordering; it
-retains neither SQL text nor a parser node. Database selection, SQL mode and
-other state remain the consumer's responsibility. These body checks do not
-certify that a routine can execute or establish every implicit-commit DDL and
-lexical-scope constraint.
+This does not make every grammar input representable. Input operands without a
+semantic value, including the existing early nested-program declaration
+refusals, still raise `Construction\RejectedInput`. The retained-body checks do
+not certify that a routine can execute or establish every implicit-commit DDL
+and lexical-scope constraint.
 
 ## Limitations
 
@@ -570,11 +578,10 @@ See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sq
 
 Ordinary statement constructors reject declared sizes that exceed the fixed
 bounds of every supported release, such as `DATETIME(7)`, `BIT(65)` and
-`DECIMAL(66,31)`. The check includes routine parameters, return types, local
-variables and declarations in unused branches. Raw type operands remain
-available to describe rejected input; they do not become an ordinary statement.
-SQL input raises `RejectedInput` with an `InvalidTypeSize` diagnostic, retaining
-its declaration name and default-database dependency. Release-specific cases
+`DECIMAL(66,31)`. SQL input for those ordinary statements raises `RejectedInput`
+with an `InvalidTypeSize` diagnostic. Stored-program definitions instead retain
+their parameter, return and local declarations, including unused branches, and
+publish the same size condition with its reading boundary. Release-specific cases
 such as `BIT(0)`, accepted by MySQL 5.6, remain representable and are resolved
 against the selected release. These checks do not inspect a catalog or certify
 whether a statement will execute successfully.

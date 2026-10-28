@@ -29,10 +29,11 @@ use SqlSemantics\Resolution\Environment;
  * @example Keeping LINEAR exclusive to HASH methods
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($row, \SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Keeping deferred methods outside ordinary ALTER statements
+ * @example Retaining deferred methods in ALTER requests
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     $clause = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($row), null, null, []);
- *     new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy($clause)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $alter = new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy($clause)]);
+ *     $alter->hasExecutionCondition() // => true
  * @example Excluding intrinsic restrictions from retained operands as well
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]);
  *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($row) // throws \SqlSemantics\Diagnostic\InvalidConstruction

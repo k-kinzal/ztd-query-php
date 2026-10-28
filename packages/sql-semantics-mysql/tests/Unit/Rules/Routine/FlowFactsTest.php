@@ -97,7 +97,7 @@ final class FlowFactsTest extends TestCase
     {
         yield 'WHILE with an unknown name in 5.7' => ['mysql-5.7.44', 'CREATE PROCEDURE p(x INT) w: WHILE x > y DO ITERATE w; END WHILE w', ['Column y does not exist.']];
         yield 'REPEAT with its label in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL x < 0 END REPEAT r', []];
-        yield 'REPEAT with another end label' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT s', ['End-label s without match']];
+        yield 'REPEAT with another end label' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT s', ['End-label s without match', 'Column q does not exist.']];
         yield 'REPEAT with coherent labels and an unknown condition' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT r', ['Column q does not exist.']];
         yield 'LOOP with an unknown name' => ['mysql-9.1.0', 'CREATE PROCEDURE p() l: LOOP SELECT z; LEAVE l; END LOOP', ['Column z does not exist.']];
         yield 'a redefined loop label' => ['mysql-9.1.0', 'CREATE PROCEDURE p() a: BEGIN a: WHILE 1 DO LEAVE a; END WHILE; END', ['Redefining label a']];
@@ -193,7 +193,7 @@ final class FlowFactsTest extends TestCase
     /**
      * @return iterable<string, array{string, non-empty-list<string>}>
      */
-    public static function providerRefusesIntrinsicBodyContradictions(): iterable
+    public static function providerRetainsIntrinsicBodyConditions(): iterable
     {
         yield 'a procedure' => ['CREATE PROCEDURE p() BEGIN RETURN 1; END', ['RETURN is only allowed in a FUNCTION']];
         yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN NEW.a', ['RETURN is only allowed in a FUNCTION']];
@@ -203,11 +203,15 @@ final class FlowFactsTest extends TestCase
     /**
      * @param non-empty-list<string> $messages
      */
-    #[DataProvider('providerRefusesIntrinsicBodyContradictions')]
-    public function testRefusesIntrinsicBodyContradictions(string $sql, array $messages): void
+    #[DataProvider('providerRetainsIntrinsicBodyConditions')]
+    public function testRetainsIntrinsicBodyConditions(string $sql, array $messages): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($messages[0]);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($messages[0], $notices[0]->message());
+
     }
 }

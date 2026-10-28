@@ -79,7 +79,7 @@ final class BlockRule
         }
         $declarations = [];
         foreach ((new Sequence($this->lowering))->items($body->node(1), ['sp_decls:', 'sp_decls: sp_decls sp_decl ;']) as $item) {
-            $declarations[] = $this->declaration($item);
+            $declarations[] = $this->lowering->origins->record($this->declaration($item), $item);
         }
 
         return new Block($declarations, (new StatementRule($this->lowering))->statements($body->node(2)), $label, $end);

@@ -25,6 +25,21 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class EventCommandTest extends TestCase
 {
+    public function testExecuteKeepsLegacyConditionsWithoutCountingThemInTheCompletion(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['pbt']))->connect(database: 'pbt');
+        $session->query('DROP EVENT IF EXISTS e');
+        $reply = $session->query('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN END')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Note', '1305', 'Event e does not exist']], $warnings->rows);
+        $duplicate = $session->query('CREATE EVENT IF NOT EXISTS e ON SCHEDULE EVERY 1 DAY DO BEGIN END')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $duplicate);
+        self::assertSame(1, $duplicate->warnings);
+    }
+
     public function testScheduleStoresTheCanonicalUnitOfAnSqlTsiAlias(): void
     {
         $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');

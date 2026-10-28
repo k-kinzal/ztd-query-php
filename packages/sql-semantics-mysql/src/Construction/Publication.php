@@ -18,8 +18,8 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Constructing an executable statement from typed SQL operands
  *     $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
- *     $context = new \SqlSemantics\Contract\AnalysisContext($profile, [new \SqlSemantics\Statement\Identifier\Name('test')]);
- *     (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart())->toString() // => 'RESTART'
+ *     $analysis = new \SqlSemantics\Contract\AnalysisContext($profile, [new \SqlSemantics\Statement\Identifier\Name('test')]);
+ *     (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($analysis, new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart())->toString() // => 'RESTART'
  */
 final class Publication
 {

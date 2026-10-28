@@ -42,14 +42,20 @@ final class TransactionStatementsTest extends TestCase
     public function testImplicitRejectsAnUnreachableTablespaceInstructionInATrigger(): void
     {
         $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [new M\Server\Storage\AlterTablespace(new Name('x'), [new M\Server\Storage\Option\WaitOption(false)])])]);
-        $this->expectExceptionMessage('Explicit or implicit commit is not allowed in stored function or trigger.');
-        new M\Routine\CreateTrigger(new QualifiedName(new Name('tr')), M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Update, new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('t'))), $body);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateTrigger(new QualifiedName(new Name('tr')), M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Update, new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('t'))), $body));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Explicit or implicit commit is not allowed in stored function or trigger.', $notices[0]->message());
+
     }
     public function testImplicitRejectsAnInstanceActionEvenInsideAnUnreachableTriggerBranch(): void
     {
         $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [new M\Server\Instance\AlterInstance(new M\Server\Instance\ReloadTls())])]);
-        $this->expectExceptionMessage('Explicit or implicit commit is not allowed in stored function or trigger.');
-        new M\Routine\CreateTrigger(new QualifiedName(new Name('tr')), M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Insert, new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('t'))), $body);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateTrigger(new QualifiedName(new Name('tr')), M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Insert, new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('t'))), $body));
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame('Explicit or implicit commit is not allowed in stored function or trigger.', $notices[0]->message());
+
     }
 
 }

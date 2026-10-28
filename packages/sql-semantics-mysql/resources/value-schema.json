@@ -2728,6 +2728,7 @@
         "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "completion": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "definitionSource": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\DefinitionSource",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "newName": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
@@ -2842,6 +2843,7 @@
         "comment": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "completion": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Event\\Completion",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "definitionSource": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\DefinitionSource",
         "ifNotExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
@@ -2850,10 +2852,11 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\CreateFunction": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\FunctionBody",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "characteristics": "array",
         "collation": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "definitionSource": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\DefinitionSource",
         "ifNotExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
@@ -2874,6 +2877,7 @@
         "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "characteristics": "array",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "definitionSource": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\DefinitionSource",
         "ifNotExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
@@ -2883,6 +2887,7 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "definitionSource": "?SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\DefinitionSource",
         "event": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerEvent",
         "ifNotExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -2891,8 +2896,13 @@
         "table": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTable",
         "time": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Trigger\\TriggerTime"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\DefinitionSource": {
+        "bodyRefusalOffset": "?int",
+        "nameEnd": "int",
+        "typeEnds": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Definition\\FunctionImplementation": {
-        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Flow\\FunctionBody",
+        "body": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ExternalBody|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\ProgramStatement|SqlSemantics\\Platform\\MySql\\Statement\\Statement",
         "characteristics": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\DollarQuotedText": {

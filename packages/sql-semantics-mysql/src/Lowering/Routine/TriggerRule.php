@@ -89,7 +89,6 @@ final class TriggerRule
 
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $body = (new StatementRule($this->lowering->inProgram($name)))->statement($parts['sp_proc_stmt']);
-        (new DefinitionBody())->check($body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $name, $definer, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0, nameEnd: (new \SqlSemantics\Construction\SourceRanges())->span($parts['sp_name'])[1] ?? 0, sources: $this->lowering->origins->publish());
         $table = new TriggerTable($this->lowering->names->qualified($parts['table_ident']));
         return new CreateTrigger(
             $name,
@@ -100,6 +99,7 @@ final class TriggerRule
             isset($parts['trigger_follows_precedes_clause']) ? $this->order($parts['trigger_follows_precedes_clause']) : null,
             $definer,
             isset($parts['opt_if_not_exists']) && $this->lowering->options->present($parts['opt_if_not_exists']),
+            definitionSource: (new DefinitionBody())->source($body, $parts['sp_name'], $parts['sp_proc_stmt']),
         );
     }
 

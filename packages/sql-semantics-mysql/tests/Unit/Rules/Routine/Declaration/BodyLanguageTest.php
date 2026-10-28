@@ -18,11 +18,10 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class BodyLanguageTest extends TestCase
 {
-    public function testCheckAcceptsTheBodyOfTheLastLanguage(): void
+    public function testCompatibleAcceptsTheBodyOfTheLastLanguage(): void
     {
         $body = new ExternalBody(new Text('return 1'));
         $languages = [new RoutineLanguage(), new RoutineLanguage(new Name('JAVASCRIPT'))];
-        (new BodyLanguage())->check($body, $languages);
         self::assertTrue((new BodyLanguage())->compatible($body, $languages));
     }
 

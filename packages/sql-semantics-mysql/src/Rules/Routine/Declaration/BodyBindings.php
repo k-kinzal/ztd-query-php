@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine\Declaration;
 
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ParameterScopeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
@@ -21,15 +20,6 @@ use SqlSemantics\Statement\Node;
  */
 final class BodyBindings
 {
-    /**
-     * Requires every parameter occurrence to have a client binding scope.
-     */
-    public function check(Node $body, ProgramKind $kind): void
-    {
-        $problem = $this->problem($body, $kind);
-        Check::input($problem === null, $problem?->message() ?? 'The body has no unscoped client parameters.');
-    }
-
     /**
      * Answers a scope contradiction independently of catalog and invocation state.
      */

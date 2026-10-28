@@ -71,16 +71,18 @@ final class CreateEventTest extends TestCase
     {
         yield 'LOCK TABLES' => ['LOCK TABLES t READ', 'LOCK is not allowed in stored procedures'];
         yield 'RETURN' => ['RETURN 1', 'RETURN is only allowed in a FUNCTION'];
-        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE p() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
-        yield 'ALTER EVENT with a body' => ['ALTER EVENT f DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
     }
 
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage($message);
-        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
+        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
+        self::assertNotEmpty($notices);
+        self::assertSame($message, $notices[0]->message());
+        self::assertNotSame('', $statement->toString());
+
     }
 
     /**
@@ -163,4 +165,21 @@ final class CreateEventTest extends TestCase
 
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
     }
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $body, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO ' . $body);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE p() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
+        yield 'ALTER EVENT with a body' => ['ALTER EVENT f DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
+    }
+
 }

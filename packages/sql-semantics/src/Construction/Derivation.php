@@ -119,27 +119,11 @@ final class Derivation
      */
     public function within(AnalysisContext $context, Statement $node, ?Closure $derive = null): void
     {
-        $this->admit($context);
+        (new DeclarationScope())->check($this->context, $context, $this->declarations);
         [$outer, $base] = [$this->context, $this->base];
         [$this->context, $this->base] = [$context, null];
         $this->statement($node, $derive);
         [$this->context, $this->base] = [$outer, $base];
-    }
-
-    /**
-     * Refuses a nested context that differs from this one other than in search settings and own declarations.
-     *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context holds other declarations or another profile
-     */
-    public function admit(AnalysisContext $context): void
-    {
-        Check::input($context->profile->compatibleWith($this->context->profile) && $context->complete === $this->context->complete, 'A nested statement is derived under the same profile and completeness.');
-        foreach ($this->context->tables as $table) {
-            Check::input(in_array($table, $context->tables, true), 'A nested statement sees every declaration of the enclosing context.');
-        }
-        foreach ($context->tables as $table) {
-            Check::input(in_array($table, $this->context->tables, true) || in_array($table, $this->declarations, true), 'A nested statement sees only the declarations of the enclosing context and of the statement itself.');
-        }
     }
 
     /**
@@ -211,7 +195,7 @@ final class Derivation
     {
         [$output, $declarations, $context, $base] = [$this->output, $this->declarations, $this->context, $this->base];
         if ($environment !== null) {
-            $this->admit($environment->context);
+            (new DeclarationScope())->check($this->context, $environment->context, $this->declarations);
             [$this->context, $this->base] = [$environment->context, $environment];
         }
         $this->output = null;
@@ -402,6 +386,16 @@ final class Derivation
     }
 
     /**
+     * Returns the conditions already derived without publishing or freezing operand facts.
+     *
+     * @return list<Diagnostic>
+     */
+    public function diagnostics(): array
+    {
+        return $this->conditions->all();
+    }
+
+    /**
      * Records a condition the statement raises without failing.
      *
      * @param Node|null $at The occurrence whose input boundary orders this warning, or the occurrence currently being derived
@@ -414,10 +408,12 @@ final class Derivation
 
     /**
      * Orders the located warnings of this statement by input position after its dependencies are derived.
+     *
+     * @param list<Node> $completed Semantic completion order for a statement constructed without input locations
      */
-    public function orderWarnings(Node $scope): void
+    public function orderWarnings(Node $scope, array $completed = []): void
     {
-        $this->warnings->order($scope);
+        $this->warnings->order($scope, $completed);
     }
 
     /**

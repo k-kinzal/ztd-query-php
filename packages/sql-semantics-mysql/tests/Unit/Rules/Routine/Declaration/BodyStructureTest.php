@@ -24,10 +24,9 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class BodyStructureTest extends TestCase
 {
-    public function testCheckAcceptsTheReturnInAnUnreachableBranch(): void
+    public function testProblemAcceptsTheReturnInAnUnreachableBranch(): void
     {
         $body = new IfStatement([new ConditionalBranch(new NumberLiteral('0'), [new ReturnStatement(new NumberLiteral('1'))])]);
-        (new BodyStructure())->check($body, ProgramKind::Function, new QualifiedName(new Name('f')));
         self::assertNull((new BodyStructure())->problem($body, ProgramKind::Function, new QualifiedName(new Name('f'))));
     }
 
@@ -37,12 +36,10 @@ final class BodyStructureTest extends TestCase
         self::assertSame(ProgramRule::CommitInFunction, (new BodyStructure())->problem($body, ProgramKind::Function, new QualifiedName(new Name('f')))?->rule);
     }
 
-    public function testCheckRejectsAHandlerStatementInAnUnreachableBranch(): void
+    public function testProblemRejectsAHandlerStatementInAnUnreachableBranch(): void
     {
         $body = new IfStatement([new ConditionalBranch(new NumberLiteral('0'), [new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose(new Name('t'))])]);
-        $this->expectExceptionMessage('HANDLER is not allowed in stored procedures');
-
-        (new BodyStructure())->check($body, ProgramKind::Procedure, new QualifiedName(new Name('p')));
+        self::assertSame('HANDLER is not allowed in stored procedures', (new BodyStructure())->problem($body, ProgramKind::Procedure, new QualifiedName(new Name('p')))?->message());
     }
 
     public function testContainedDependsOnTheDeclarationKind(): void

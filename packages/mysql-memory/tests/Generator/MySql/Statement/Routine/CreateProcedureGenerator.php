@@ -27,11 +27,12 @@ final class CreateProcedureGenerator implements ErisGenerator
      * @param ErisGenerator<bool>|null $ifNotExists Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $body, ?ErisGenerator $characteristics = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $body, ?ErisGenerator $characteristics = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(name: $parts[0], parameters: $parts[1], body: $parts[2], characteristics: $parts[3], definer: $parts[4], ifNotExists: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(name: $parts[0], parameters: $parts[1], body: $parts[2], characteristics: $parts[3], definer: $parts[4], ifNotExists: $parts[5], statementInformation: $parts[6], inputSource: $parts[7], definitionSource: $parts[8]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $parameters,
@@ -40,7 +41,8 @@ final class CreateProcedureGenerator implements ErisGenerator
             $definer ?? Generators::constant(null),
             $ifNotExists ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())
         ));
     }
     /**
