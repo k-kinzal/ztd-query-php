@@ -32,6 +32,7 @@ final class Character implements DeclaredName
      * @param string|null $length The length exactly as written
      * @param bool $national Whether the type is written as a national character type; only CHAR and VARCHAR can be
      * @param CharsetAttribute|null $charset The character set attribute; a national type takes BINARY alone
+     * @param Keyword\CharacterAlias|null $alias The written synonym; null uses the canonical keyword form
      */
     public function __construct(
         public readonly CharacterKind $kind,
@@ -39,7 +40,9 @@ final class Character implements DeclaredName
         public readonly bool $national = false,
         public readonly ?CharsetAttribute $charset = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Keyword\CharacterAlias $alias = null,
     ) {
+        Check::input($alias === null || ($alias->kind() === $kind && $alias->national() === $national), 'A type synonym must match its canonical type role.');
         Check::input(!in_array($kind, [CharacterKind::VarChar, CharacterKind::CharVarying], true) || $length !== null, 'A VARCHAR declaration requires a length.');
         Check::input($length === null || in_array($kind, [CharacterKind::Char, CharacterKind::VarChar, CharacterKind::CharVarying, CharacterKind::Text], true), 'Only CHAR, VARCHAR and TEXT take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
@@ -60,7 +63,7 @@ final class Character implements DeclaredName
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->name()));
+        $out->keyword(...explode(' ', $this->alias->value ?? $this->name()));
         if ($this->length !== null) {
             $out->glue()->symbol('(')->spelled($this->length)->symbol(')');
         }

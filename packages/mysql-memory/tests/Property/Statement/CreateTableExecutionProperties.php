@@ -37,6 +37,42 @@ final class CreateTableExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Keyword synonyms retain the same installed domains and write coercions as their canonical type.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesTypeSynonymsPreserveDependentWrites(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator::synonymWrites($release))->then(static function (array $sample) use ($release): void {
+            [$create, $insert, $query] = $sample;
+            self::assertInstanceOf(CreateTable::class, $create);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $insert);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'generated type synonyms and dependent values';
+            $execution = new Execution($session);
+            self::assertInstanceOf(Completion::class, $execution->statement($create));
+            $stored = $session->instance->dictionary->schema('pbt')?->table('type_pair');
+            self::assertNotNull($stored);
+            self::assertEquals($stored->definition->columns[0]->domain, $stored->definition->columns[1]->domain);
+            $written = $execution->statement($insert);
+            self::assertInstanceOf(Completion::class, $written);
+            self::assertSame(1, $written->affectedRows);
+            $reply = $execution->statement($query);
+            self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $reply);
+            self::assertCount(1, $reply->rows);
+            self::assertCount(2, $reply->columns);
+            self::assertSame($reply->rows[0][0], $reply->rows[0][1]);
+            self::assertSame($reply->columns[0]->type, $reply->columns[1]->type);
+            self::assertSame($reply->columns[0]->length, $reply->columns[1]->length);
+            self::assertSame($reply->columns[0]->decimals, $reply->columns[1]->decimals);
+            self::assertSame($reply->columns[0]->flags, $reply->columns[1]->flags);
+            self::assertSame('generated type synonyms and dependent values', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
      * Optional notation preserves option values; MySQL 5.6 applies its default Antelope format fallback.
      */
     #[Test]

@@ -42,9 +42,11 @@ final class Floating implements DeclaredName
      * @param string|null $precision The precision or display length exactly as written
      * @param string|null $scale The number of decimals exactly as written; requires a precision
      * @param list<NumericModifier> $modifiers The attributes in the order written
+     * @param Keyword\FloatingAlias|null $alias The written synonym; null uses the canonical keyword form
      */
-    public function __construct(public readonly FloatingKind $kind, public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly FloatingKind $kind, public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?Keyword\FloatingAlias $alias = null)
     {
+        Check::input($alias === null || $alias->kind() === $kind, 'A type synonym must match its canonical type role.');
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($scale === null || ($precision !== null && preg_match('/\A[0-9]+\z/', $scale) === 1), 'A scale is an unsigned integer written after a precision.');
         Check::input($precision === null || $scale !== null || $kind === FloatingKind::Float, 'Only FLOAT permits a precision without a scale.');
@@ -64,7 +66,7 @@ final class Floating implements DeclaredName
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->value);
+        $out->keyword(...explode(' ', $this->alias->value ?? $this->kind->value));
         if ($this->precision !== null) {
             $out->glue()->symbol('(')->spelled($this->precision);
             if ($this->scale !== null) {

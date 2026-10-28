@@ -27,6 +27,30 @@ final class QueryExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Typed cast synonyms consume the same generated operand and preserve its result metadata.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordReleases')]
+    public function satisfiesCastSynonymsPreserveGeneratedValues(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Type\CastTargetGenerator::queries($release))->then(static function (array $sample) use ($release): void {
+            [$query, $expected] = $sample;
+            self::assertInstanceOf(QueryRoot::class, $query);
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $session->text = 'generated cast targets without SQL';
+            $reply = (new Execution($session))->statement($query);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertSame([[$expected, $expected]], $reply->rows);
+            self::assertSame($reply->columns[0]->type, $reply->columns[1]->type);
+            self::assertSame($reply->columns[0]->length, $reply->columns[1]->length);
+            self::assertSame($reply->columns[0]->decimals, $reply->columns[1]->decimals);
+            self::assertSame($reply->columns[0]->flags, $reply->columns[1]->flags);
+            self::assertSame('generated cast targets without SQL', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
      * Every clock synonym reads the same statement instant and exposes the same temporal domain.
      */
     #[Test]

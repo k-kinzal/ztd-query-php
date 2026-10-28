@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
+use SqlSemantics\Platform\MySql\Statement\Type\Keyword\CharacterAlias;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
@@ -122,7 +123,7 @@ final class StringTypeRule
                 $this->keyword($form->node(0));
             }
 
-            return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)));
+            return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($form->node->tokens()[0]->text)));
         }
         if (isset(self::BINARIES[$form->signature])) {
             [$kind, $length] = self::BINARIES[$form->signature];
@@ -159,7 +160,9 @@ final class StringTypeRule
             default => CharacterKind::VarChar,
         };
 
-        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)));
+        $words = ($long ? 'LONG ' : '') . implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $keyword->node->tokens()));
+
+        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($words)));
     }
 
     /**
@@ -175,7 +178,9 @@ final class StringTypeRule
         [$kind, $length, $binary] = self::NATIONALS[$form->signature];
         $this->keyword($form->node(0));
 
-        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), true, $this->parts->nationalAttribute($form->node($binary)));
+        $words = implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()));
+
+        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), true, $this->parts->nationalAttribute($form->node($binary)), alias: CharacterAlias::tryFrom(strtoupper($words)));
     }
 
     /**

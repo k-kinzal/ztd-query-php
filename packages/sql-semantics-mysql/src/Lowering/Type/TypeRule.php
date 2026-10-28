@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Keyword;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -29,8 +30,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
  * opt_PRECISION, spatial_type, and through its collaborators the string
  * types, the type parts and cast_type. The structure is the type as
  * requested: its keyword kind, exact length, precision and scale, numeric
- * attributes in written order and character set attribute. Spellings the
- * manual defines as synonyms are one kind (TypeNoise lists them); REAL,
+ * attributes in written order and character set attribute. Synonyms retain
+ * their written keyword separately from the canonical kind; REAL,
  * `CHAR VARYING` and the LONG forms stay distinct requests. Constructs:
  * Integral, Decimal, Floating, Elementary, Temporal, Spatial, Character,
  * Binary, Enumeration, CastTarget. Terminates: every child is a strict
@@ -171,7 +172,7 @@ final class TypeRule
         if ($form->signature === 'type: int_type opt_field_length field_options') {
             $kind = $this->lowering->productions->form($form->node(0));
 
-            return new Integral(self::INTEGERS[$kind->signature] ?? throw ImplementationGap::production($kind), $this->parts->length($form->node(1)), $this->parts->modifiers($form->node(2)));
+            return new Integral(self::INTEGERS[$kind->signature] ?? throw ImplementationGap::production($kind), $this->parts->length($form->node(1)), $this->parts->modifiers($form->node(2)), alias: Keyword\IntegralAlias::tryFrom(strtoupper($kind->token(0)->text)));
         }
         if ($form->signature === 'type: real_type opt_precision field_options') {
             return $this->fraction($this->real($form->node(0)), $form);
@@ -198,7 +199,13 @@ final class TypeRule
         [$precision, $scale] = $this->parts->numbers($form->node(1));
         $modifiers = $this->parts->modifiers($form->node(2));
 
-        return $kind === null ? new Decimal($precision, $scale, $modifiers) : new Floating($kind, $precision, $scale, $modifiers);
+        $keyword = $form->node->children[0];
+        $words = $keyword instanceof Node ? implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $keyword->tokens())) : $keyword->text;
+        $words = strtoupper($words);
+
+        return $kind === null
+            ? new Decimal($precision, $scale, $modifiers, word: Keyword\DecimalWord::from($words))
+            : new Floating($kind, $precision, $scale, $modifiers, alias: Keyword\FloatingAlias::tryFrom($words));
     }
 
     /**
@@ -242,7 +249,7 @@ final class TypeRule
         if (isset(self::ELEMENTARY[$form->signature])) {
             [$kind, $position] = self::ELEMENTARY[$form->signature];
 
-            return new Elementary($kind, $position === null ? null : $this->parts->length($form->node($position)));
+            return new Elementary($kind, $position === null ? null : $this->parts->length($form->node($position)), alias: Keyword\ElementaryAlias::tryFrom(strtoupper($form->token(0)->text)));
         }
         if (isset(self::TEMPORALS[$form->signature])) {
             [$kind, $position] = self::TEMPORALS[$form->signature];
@@ -257,6 +264,6 @@ final class TypeRule
         }
         $kind = $this->lowering->productions->form($form->node(0));
 
-        return new Spatial(self::SPATIALS[$kind->signature] ?? throw ImplementationGap::production($kind));
+        return new Spatial(self::SPATIALS[$kind->signature] ?? throw ImplementationGap::production($kind), alias: Keyword\SpatialAlias::tryFrom(strtoupper($kind->token(0)->text)));
     }
 }

@@ -24,17 +24,21 @@ final class FloatingGenerator implements ErisGenerator
      * @param ErisGenerator<string|null>|null $scale Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier>>|null $modifiers Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Keyword\FloatingAlias|null>|null $alias Generated type keyword
      */
-    public function __construct(ErisGenerator $kind, ?ErisGenerator $precision = null, ?ErisGenerator $scale = null, ?ErisGenerator $modifiers = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ?ErisGenerator $precision = null, ?ErisGenerator $scale = null, ?ErisGenerator $modifiers = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Floating {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\Floating(kind: $parts[0], precision: $parts[1], scale: $parts[2], modifiers: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $kind,
-            $precision ?? Generators::constant(null),
-            $scale ?? Generators::constant(null),
-            $modifiers ?? Generators::constant([]),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = \Tests\Generator\Operands::bind($kind, static function (\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind $selected) use ($precision, $scale, $modifiers, $inputSource, $alias): ErisGenerator {
+            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Floating {
+                return new \SqlSemantics\Platform\MySql\Statement\Type\Floating(kind: $parts[0], precision: $parts[1], scale: $parts[2], modifiers: $parts[3], inputSource: $parts[4], alias: $parts[5]);
+            }, \Tests\Generator\Operands::tuple(
+                Generators::constant($selected),
+                $precision ?? Generators::constant(null),
+                $scale ?? Generators::constant(null),
+                $modifiers ?? Generators::constant([]),
+                $inputSource ?? Generators::constant(null),
+                $alias ?? Keyword\FloatingAliasGenerator::forKind($selected)
+            ));
+        });
     }
 }

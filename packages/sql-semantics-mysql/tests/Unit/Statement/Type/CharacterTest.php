@@ -73,7 +73,7 @@ final class CharacterTest extends TestCase
         self::assertSame('LONG CHAR VARYING', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesNcharForEverySpellingOfTheNationalChar(): void
+    public function testRenderRetainsTheNationalCharKeyword(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -92,10 +92,10 @@ final class CharacterTest extends TestCase
         self::assertSame([CharacterKind::Char, null, true], [$nchar->kind, $nchar->length, $nchar->national]);
         self::assertSame(CharsetForm::Binary, $national->charset?->form);
         $national->render($out);
-        self::assertSame('NCHAR(3) BINARY', (new Lexical())->join($out->pieces()));
+        self::assertSame('NATIONAL CHAR(3) BINARY', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesNvarcharForEverySpellingOfTheNationalVarchar(): void
+    public function testRenderRetainsTheNationalVarcharKeyword(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
@@ -113,7 +113,7 @@ final class CharacterTest extends TestCase
         self::assertSame([CharacterKind::VarChar, '3', true], [$nvarchar->kind, $nvarchar->length, $nvarchar->national]);
         self::assertSame([CharacterKind::VarChar, '3', true], [$national->kind, $national->length, $national->national]);
         $varying->render($out);
-        self::assertSame('NVARCHAR(3)', (new Lexical())->join($out->pieces()));
+        self::assertSame('NCHAR VARYING(3)', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderKeepsCharVaryingAndTheLongFormsApartFromVarchar(): void
@@ -137,7 +137,7 @@ final class CharacterTest extends TestCase
         self::assertSame(CharacterKind::LongVarChar, $longVarchar->kind);
         self::assertSame(CharacterKind::LongCharVarying, $longVarying->kind);
         $longVarying->render($out);
-        self::assertSame('LONG CHAR VARYING', (new Lexical())->join($out->pieces()));
+        self::assertSame('LONG CHARACTER VARYING', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesATextWithLengthAndCharacterSet(): void

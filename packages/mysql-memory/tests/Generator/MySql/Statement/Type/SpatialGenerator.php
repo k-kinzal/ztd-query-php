@@ -21,14 +21,18 @@ final class SpatialGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind> $kind Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Keyword\SpatialAlias|null>|null $alias Generated type keyword
      */
-    public function __construct(ErisGenerator $kind, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Spatial {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\Spatial(kind: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
-            $kind,
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = \Tests\Generator\Operands::bind($kind, static function (\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind $selected) use ($inputSource, $alias): ErisGenerator {
+            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Spatial {
+                return new \SqlSemantics\Platform\MySql\Statement\Type\Spatial(kind: $parts[0], inputSource: $parts[1], alias: $parts[2]);
+            }, \Tests\Generator\Operands::tuple(
+                Generators::constant($selected),
+                $inputSource ?? Generators::constant(null),
+                $alias ?? Keyword\SpatialAliasGenerator::forKind($selected)
+            ));
+        });
     }
 }

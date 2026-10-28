@@ -103,6 +103,14 @@ retains the binary/national classification and known character-set attribute,
 but cannot be used as a column, parameter, variable or return declaration.
 A fully resolved expression carries `Statement\Type\Resolved\Domain`.
 
+Declared types and CAST targets keep keyword alternatives separately from their
+canonical type kind. For example, `INT8` retains `IntegralKind::BigInt` and
+`IntegralAlias::Int8`; `name()` answers `BIGINT`, while rendering writes `INT8`.
+The same distinction covers floating, fixed-point, character, Boolean and spatial
+types, including national character forms and `DOUBLE PRECISION`. Constructors
+require aliases to match the kind and any national or optional-word role. Consumers
+can resolve and execute the canonical type without recovering its meaning from text.
+
 Stored-routine `ParameterList` values require distinct case- and accent-insensitive
 parameter names, and `Parameter` excludes NUL. Empty names, names longer than 64
 characters and names ending in an ASCII space require MySQL 5.6 or 5.7. They

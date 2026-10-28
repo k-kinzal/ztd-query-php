@@ -4878,6 +4878,7 @@
         "length": "?string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\CastTarget": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\CastAlias",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind",
@@ -4886,6 +4887,7 @@
         "words": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Character": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\CharacterAlias",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\CharsetAttribute",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharacterKind",
@@ -4902,9 +4904,11 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "modifiers": "array",
         "precision": "?string",
-        "scale": "?string"
+        "scale": "?string",
+        "word": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\DecimalWord"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Elementary": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\ElementaryAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\ElementaryKind",
         "length": "?string"
@@ -4916,6 +4920,7 @@
         "members": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Floating": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\FloatingAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\FloatingKind",
         "modifiers": "array",
@@ -4923,10 +4928,39 @@
         "scale": "?string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Integral": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\IntegralAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\IntegralKind",
         "modifiers": "array",
         "width": "?string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\CastAlias": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\CharacterAlias": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\DecimalWord": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\ElementaryAlias": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\FloatingAlias": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\IntegralAlias": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\SpatialAlias": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\BinaryKind": {
         "name": "string",
@@ -5070,6 +5104,7 @@
         "userVariables": "?array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Spatial": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Type\\Keyword\\SpatialAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\SpatialKind"
     },

@@ -33,8 +33,9 @@ final class Decimal implements DeclaredName
      * @param string|null $precision The precision exactly as written
      * @param string|null $scale The scale exactly as written; requires a precision
      * @param list<NumericModifier> $modifiers The attributes in the order written
+     * @param Keyword\DecimalWord $word The fixed-point keyword retained for reconstruction
      */
-    public function __construct(public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly Keyword\DecimalWord $word = Keyword\DecimalWord::Decimal)
     {
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($scale === null || ($precision !== null && preg_match('/\A[0-9]+\z/', $scale) === 1), 'A scale is an unsigned integer written after a precision.');
@@ -54,7 +55,7 @@ final class Decimal implements DeclaredName
      */
     public function render(Output $out): void
     {
-        $out->keyword('DECIMAL');
+        $out->keyword($this->word->value);
         if ($this->precision !== null) {
             $out->glue()->symbol('(')->spelled($this->precision);
             if ($this->scale !== null) {
