@@ -67,6 +67,52 @@ final class PreparedCache
     }
 
     /**
+     * Executes through the same parameter and metadata invalidation boundary for every transport.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
+     * @throws \MySqlMemory\Error\SqlError When refresh or execution fails
+     */
+    public function execute(Session $session, string $label, array $parameters, ParameterBindings $bindings): \MySqlMemory\Result\Reply
+    {
+        $candidate = new ParameterBindings($bindings->types);
+        $modern = version_compare($session->instance->version, '8.0.22', '>=');
+        if ($modern && $candidate->changed($parameters)) {
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
+        }
+        $previous = $session->preparation->domains;
+        $session->preparation->domains = $modern ? $candidate->domains() : [];
+        try {
+            $this->refresh($session, $candidate, $parameters);
+            $bindings->types = $candidate->types;
+            $session->preparation->domains = $modern ? $bindings->domains() : [];
+            return $this->definition->execute($session, $label, $parameters);
+        } finally {
+            $session->preparation->domains = $previous;
+        }
+    }
+
+    /**
+     * Returns protocol replies, retaining partial results and terminal SQL errors.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
+     * @return list<\MySqlMemory\Result\Reply|\MySqlMemory\Error\SqlError>
+     */
+    public function run(Session $session, string $label, array $parameters, ParameterBindings $bindings): array
+    {
+        $gone = $session->gone();
+        if ($gone !== null) {
+            return [$gone];
+        }
+        try {
+            $reply = $this->execute($session, $label, $parameters, $bindings);
+            return $reply instanceof \MySqlMemory\Result\Batch ? $reply->replies : [$reply];
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            return (new \MySqlMemory\Session\Execution($session))->failed($error);
+        }
+    }
+
+    /**
      * Tests declaration identities, ignoring data writes and unrelated table changes.
      */
     public function changed(Session $session): bool

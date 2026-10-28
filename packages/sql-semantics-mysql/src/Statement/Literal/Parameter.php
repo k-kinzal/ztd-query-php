@@ -53,8 +53,9 @@ final class Parameter implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $bound = Settings::of($derivation->context)->parameters[$this->position] ?? null;
-        $binding = new ParameterBinding($this->position);
+        $settings = Settings::of($derivation->context);
+        $bound = $settings->parameters[$this->position] ?? null;
+        $binding = new ParameterBinding($this->position, $bound === null || in_array($this->position, $settings->unboundParameters, true));
 
         return $bound === null ? new ScalarFact(new Dependent([new UnboundParameter($this->marker)]), Nullability::Dependent, $binding) : new ScalarFact(new Known($bound), Nullability::Nullable, $binding);
     }

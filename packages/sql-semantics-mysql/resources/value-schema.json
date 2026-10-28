@@ -5579,7 +5579,8 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\ParameterBinding": {
-        "position": "int"
+        "position": "int",
+        "unbound": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\Problem\\UnknownSystemVariable": {
         "assigned": "bool",

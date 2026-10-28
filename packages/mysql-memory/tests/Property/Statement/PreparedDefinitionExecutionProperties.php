@@ -90,7 +90,7 @@ final class PreparedDefinitionExecutionProperties extends TestCase
             self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $bound);
             $cache = PreparedCache::capture($bound, $session, $input);
             $parameters = ParameterBindings::capture($bound);
-            $before = $cache->definition->execute($session, 'generated preparation', []);
+            $before = $cache->execute($session, 'generated preparation', [], $parameters);
             self::assertInstanceOf(ResultSet::class, $before);
             self::assertCount(1, $before->columns);
 
@@ -104,7 +104,7 @@ final class PreparedDefinitionExecutionProperties extends TestCase
                 self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\SyntaxRefusal::class, $active->statement);
                 $previous = $cache->definition;
                 try {
-                    $cache->refresh($session, $parameters, []);
+                    $cache->execute($session, 'generated preparation', [], $parameters);
                     self::fail('The generated interpretation carries a grammar refusal.');
                 } catch (\MySqlMemory\Error\SqlError $error) {
                     self::assertSame(1064, $error->getCode());
@@ -115,8 +115,7 @@ final class PreparedDefinitionExecutionProperties extends TestCase
                 self::assertSame('pbt', $session->variables->database);
                 $session->variables->set($mode, '');
             }
-            $cache->refresh($session, $parameters, []);
-            $after = $cache->definition->execute($session, 'generated preparation', []);
+            $after = $cache->execute($session, 'generated preparation', [], $parameters);
             self::assertInstanceOf(ResultSet::class, $after);
             self::assertCount(2, $after->columns);
             self::assertSame($alter->commands[0]->column->name->column->value, $after->columns[1]->name);

@@ -192,22 +192,9 @@ final class Statements
             $values[$index] = (new Binary())->text($data, Field::Blob, $collation);
         }
         $this->prepared[$id] = [$sql, $count, $types, [], $derived, $definition];
-        $candidate = new \MySqlMemory\Command\Prepared\ParameterBindings($derived->types);
-        if (version_compare($session->instance->version, '8.0.22', '>=') && $candidate->changed($values)) {
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
-        }
-        $previous = $session->preparation->domains;
-        $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $candidate->domains() : [];
         try {
-            $definition->refresh($session, $candidate, $values);
-            $derived->types = $candidate->types;
-            $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $derived->domains() : [];
-            $answers = $definition->definition->run($session, $sql, $values);
-        } catch (SqlError $error) {
-            $answers = (new \MySqlMemory\Session\Execution($session))->failed($error);
+            $answers = $definition->run($session, $sql, $values, $derived);
         } finally {
-            $session->preparation->domains = $previous;
             $session->preparation->replayedTriggerResource = false;
         }
         foreach ($answers as $index => $answer) {

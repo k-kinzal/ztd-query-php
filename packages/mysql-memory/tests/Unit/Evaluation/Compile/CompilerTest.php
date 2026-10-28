@@ -325,4 +325,19 @@ final class CompilerTest extends TestCase
 
         $session->query('SELECT SUM(SUM(a) OVER ()) FROM t');
     }
+    public function testTypedPreservesBoundParameterNullabilityThroughLegacyUnaryPlus(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("PREPARE p FROM 'SELECT +? AS value'; SET @a=1");
+        $bound = $session->query('EXECUTE p USING @a')[0];
+        self::assertInstanceOf(ResultSet::class, $bound);
+        self::assertSame([['1']], $bound->rows);
+        self::assertSame(1, $bound->columns[0]->flags & 1);
+        $session->query('SET @a=NULL');
+        $null = $session->query('EXECUTE p USING @a')[0];
+        self::assertInstanceOf(ResultSet::class, $null);
+        self::assertSame([[null]], $null->rows);
+        self::assertSame(0, $null->columns[0]->flags & 1);
+    }
+
 }

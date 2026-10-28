@@ -16,7 +16,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  *
  * MySQL 8.0.22 and later derive a type at preparation. NULL and string arguments do not
  * trigger repreparation; CAST operands retain their target type. Arithmetic and comparison
- * operands inherit the other operand's resolved type. Other contexts currently start as VARCHAR.
+ * operands inherit the other operand's resolved type. Unresolved arithmetic receives
+ * an enclosing numeric context, or DOUBLE when no context supplies a type; DIV defaults
+ * to BIGINT. NULL siblings supply VARCHAR and decimal siblings supply DECIMAL(65,30).
  * Repreparation replaces the derived domains; other executions retain those domains and convert
  * incoming values when they are evaluated. Execution resolves a fresh operation with these types.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/prepare.html.

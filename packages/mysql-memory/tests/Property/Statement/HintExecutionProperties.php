@@ -62,7 +62,7 @@ final class HintExecutionProperties extends TestCase
                 self::assertInstanceOf(QueryRoot::class, $statement);
                 $session = (new Instance(substr($release->value, 6)))->connect();
                 $session->text = 'Generated preparation without SQL';
-                $prepared = \MySqlMemory\Command\Prepared\PreparedStatement::capture($statement, $session);
+                $prepared = \MySqlMemory\Command\Prepared\PreparedCache::capture($statement, $session);
                 self::assertIsArray($parameters);
                 $bindings = [];
                 foreach ($parameters as $parameter) {
@@ -71,9 +71,15 @@ final class HintExecutionProperties extends TestCase
                     self::assertInstanceOf(\MySqlMemory\Typing\Domain::class, $parameter[1]);
                     $bindings[] = [$parameter[0], $parameter[1]];
                 }
-                $reply = $prepared->execute($session, 'Generated preparation without SQL', $bindings);
+                $reply = $prepared->execute($session, 'Generated preparation without SQL', $bindings, \MySqlMemory\Command\Prepared\ParameterBindings::capture($statement));
                 self::assertInstanceOf(ResultSet::class, $reply);
-                self::assertSame([[$expected]], $reply->rows);
+                if (is_float($expected)) {
+                    self::assertEqualsWithDelta($expected, (float) $reply->rows[0][0], abs($expected) * 1e-14);
+                    self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Double, $reply->columns[0]->type);
+                } else {
+                    self::assertSame([[$expected]], $reply->rows);
+                    self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::NewDecimal, $reply->columns[0]->type);
+                }
                 self::assertSame('quotient', $reply->columns[0]->name);
                 self::assertSame(4, $session->variables->read('div_precision_increment'));
                 self::assertSame('Generated preparation without SQL', $session->text);

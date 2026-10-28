@@ -138,22 +138,7 @@ final class PreparedCommand implements Command
         foreach ($statement->variables as $variable) {
             $parameters[] = $this->parameter($session, ...$session->variables->user($variable->name->value));
         }
-        $candidate = new ParameterBindings($types->types);
-        if (version_compare($session->instance->version, '8.0.22', '>=') && $candidate->changed($parameters)) {
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
-            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
-        }
-
-        $previous = $session->preparation->domains;
-        $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $candidate->domains() : [];
-        try {
-            $definition->refresh($session, $candidate, $parameters);
-            $types->types = $candidate->types;
-            $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $types->domains() : [];
-            return $definition->definition->execute($session, $text, $parameters);
-        } finally {
-            $session->preparation->domains = $previous;
-        }
+        return $definition->execute($session, $text, $parameters, $types);
     }
 
     /**

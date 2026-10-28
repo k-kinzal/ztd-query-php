@@ -291,11 +291,11 @@ final class Compiler
             Nullability::Nullable => true,
             Nullability::Dependent => $evaluable->domain()->nullable,
         };
+        if ($fact->resolution instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding && $this->settings->legacy()) {
+            $nullable = $evaluable->domain()->nullable;
+        }
         if ($fact->replacement !== null) {
             return $nullable === $evaluable->domain()->nullable ? $evaluable : new Retyped($evaluable, $evaluable->domain()->withNullable($nullable));
-        }
-        if ($node instanceof Parameter && $this->settings->legacy()) {
-            $nullable = $evaluable->domain()->nullable;
         }
         $type = $fact->type;
         $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable)->withNumericBytes($evaluable->domain()->numericBytes && $type->descriptor->kind === $evaluable->domain()->kind) : $evaluable->domain()->withNullable($nullable);

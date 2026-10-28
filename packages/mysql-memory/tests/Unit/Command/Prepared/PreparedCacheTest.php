@@ -114,4 +114,38 @@ final class PreparedCacheTest extends TestCase
         self::assertSame('b', $session->variables->database);
         self::assertFalse($cache->changed($session));
     }
+    public function testExecuteRetainsDerivedDomainsAndRestoresTheOuterBinding(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $statement = $session->analyze('SELECT ? / ? AS quotient', true);
+        $cache = PreparedCache::capture($statement, $session);
+        $types = ParameterBindings::capture($statement);
+        $outer = [7 => \MySqlMemory\Typing\Domain::integer()];
+        $session->preparation->domains = $outer;
+        $reply = $cache->execute($session, 'generated preparation', [[1, \MySqlMemory\Typing\Domain::integer()], [6, \MySqlMemory\Typing\Domain::integer()]], $types);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['0.16666666666666666']], $reply->rows);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Double, $reply->columns[0]->type);
+        self::assertSame($outer, $session->preparation->domains);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, $types->types[0][0]->kind);
+    }
+
+    public function testRunRecordsFailuresAndRestoresTheOuterBinding(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $statement = $session->analyze('SIGNAL SQLSTATE \'45000\'', true);
+        $cache = PreparedCache::capture($statement, $session);
+        $types = ParameterBindings::capture($statement);
+        $outer = [7 => \MySqlMemory\Typing\Domain::integer()];
+        $session->preparation->domains = $outer;
+        $answers = $cache->run($session, 'generated preparation', [], $types);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $answers[0]);
+        self::assertSame(1644, $answers[0]->getCode());
+        self::assertSame($outer, $session->preparation->domains);
+        $session->close();
+        $closed = $cache->run($session, 'generated preparation', [], $types);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $closed[0]);
+        self::assertSame(2006, $closed[0]->getCode());
+    }
+
 }

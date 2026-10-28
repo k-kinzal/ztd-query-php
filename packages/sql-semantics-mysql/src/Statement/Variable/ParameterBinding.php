@@ -25,8 +25,9 @@ final class ParameterBinding implements Resolution
 
     /**
      * @param int $position The non-negative input slot
+     * @param bool $unbound Whether this occurrence still awaits its first value binding
      */
-    public function __construct(public readonly int $position)
+    public function __construct(public readonly int $position, public readonly bool $unbound = false)
     {
         Check::input($position >= 0, 'A parameter binding names a non-negative input slot.');
     }

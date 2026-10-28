@@ -13,14 +13,12 @@ use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -59,8 +57,8 @@ final class BranchParameters
                 $branch = $branch->operand;
             }
             $fact = $branch->scalarInformation();
-            if ($branch instanceof Parameter && $fact->resolution instanceof ParameterBinding) {
-                $markers[] = $fact->resolution->position;
+            if (ParameterInference::pending($branch)) {
+                array_push($markers, ...array_keys(ParameterInference::propagate($branch, Domain::double())));
             } else {
                 $domain = (new Precision())->domain($fact->type);
                 if ($domain === null) {

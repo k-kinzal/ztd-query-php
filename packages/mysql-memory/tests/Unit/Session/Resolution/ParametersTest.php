@@ -31,7 +31,7 @@ final class ParametersTest extends TestCase
         $derivation = (new Parameters())->derivation($row, $context, [1 => $session->preparation->domains[1]->resolved()]);
         $derivation->scalar($row, $derivation->environment());
         $facts = $derivation->facts();
-        self::assertEquals(new ParameterBinding(0), $first->scalarInformation()->resolution);
+        self::assertEquals(new ParameterBinding(0, unbound: true), $first->scalarInformation()->resolution);
         self::assertEquals(new ParameterBinding(1), $second->scalarInformation()->resolution);
         self::assertInstanceOf(Known::class, $first->scalarInformation()->type);
         self::assertInstanceOf(Known::class, $second->scalarInformation()->type);

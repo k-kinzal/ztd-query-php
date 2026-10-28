@@ -37,6 +37,9 @@ final class ParameterBindingTest extends TestCase
         self::assertInstanceOf(ParameterBinding::class, $source);
         self::assertInstanceOf(ParameterBinding::class, $condition);
         self::assertSame([0, 1, 2], [$projection->position, $source->position, $condition->position]);
+        self::assertTrue($projection->unbound);
+        self::assertTrue($source->unbound);
+        self::assertTrue($condition->unbound);
     }
 
     public function testPositionRejectsANegativeInputSlot(): void
