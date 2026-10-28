@@ -254,16 +254,18 @@
 <span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>    }</span>
 <span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a></span>
 <span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerRepeatedParameters&#039;</span>)]</span>
-<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParametersRefuseTheFirstDuplicateBeforePublishingAList</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">string</span> <span class="tok-var">$message</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParametersRetainTheCompleteDefinitionWithItsFirstDuplicate</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">string</span> <span class="tok-var">$message</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>    {</span>
-<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">\SqlSemantics\Construction\RejectedInput</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-var">$message</span>);</span>
-<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a></span>
-<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>        (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-9.1.0&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>    }</span>
-<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a></span>
-<span class="src-line" id="L205" data-diff="same"><a class="ln" href="#L205">205</a>}</span>
-<span class="src-line" id="L206" data-diff="same"><a class="ln" href="#L206">206</a></span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>        <span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-9.1.0&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a></span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">CreateProcedure</span> || <span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">CreateFunction</span>);</span>
+<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotNull</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">parameters</span>-&gt;<span class="tok-id">repeated</span>());</span>
+<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$message</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">diagnostics</span>()[<span class="tok-num">0</span>]-&gt;<span class="tok-id">message</span>());</span>
+<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$sql</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>    }</span>
+<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a></span>
+<span class="src-line" id="L207" data-diff="same"><a class="ln" href="#L207">207</a>}</span>
+<span class="src-line" id="L208" data-diff="same"><a class="ln" href="#L208">208</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
