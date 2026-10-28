@@ -18,7 +18,6 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -113,7 +112,7 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When entry or relation conditions prevent preparation
      */
-    public function entry(LoadTable|RefusedLoadAssignments $statement, StatementSemantics $facts, Session $session): void
+    public function entry(LoadTable $statement, StatementSemantics $facts, Session $session): void
     {
         $legacy = $session->settings()->legacy();
         if ($legacy) {
@@ -166,7 +165,7 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When bulk input cannot be used
      */
-    public function options(LoadTable|RefusedLoadAssignments $statement, StatementSemantics $facts, Session $session): void
+    public function options(LoadTable $statement, StatementSemantics $facts, Session $session): void
     {
         if (version_compare($session->instance->version, '8.2.0', '<')) {
             return;
@@ -189,7 +188,7 @@ final class LoadDataCommand implements Command
      *
      * @return list<array{int, string}> Additional error conditions, in native order
      */
-    public function bulkConditions(LoadTable|RefusedLoadAssignments $statement, Session $session): array
+    public function bulkConditions(LoadTable $statement, Session $session): array
     {
         if (!in_array($session->instance->version, ['8.2.0', '8.3.0'], true)) {
             return [];
@@ -214,7 +213,7 @@ final class LoadDataCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When a separator that encloses or escapes is longer than one byte
      */
-    public function separators(LoadTable|RefusedLoadAssignments $statement): void
+    public function separators(LoadTable $statement): void
     {
         foreach ($this->separatorBytes($statement) as $kind => $bytes) {
             if (in_array($kind, ['field:ENCLOSED', 'field:ESCAPED'], true) && strlen($bytes) > 1) {
@@ -228,7 +227,7 @@ final class LoadDataCommand implements Command
      *
      * @return array<string, string> Effective field and line separator bytes
      */
-    public function separatorBytes(LoadTable|RefusedLoadAssignments $statement): array
+    public function separatorBytes(LoadTable $statement): array
     {
         $bytes = [];
         foreach ($statement->fields as $option) {

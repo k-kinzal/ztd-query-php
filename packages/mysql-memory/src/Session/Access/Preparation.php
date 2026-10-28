@@ -68,6 +68,9 @@ final class Preparation
      */
     public function conditional(\SqlSemantics\Statement\Statement $statement, Session $session): bool
     {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $statement->hasExecutionCondition()) {
+            (new \MySqlMemory\Command\Access\Load\Preparation())->check($statement, $session);
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill) {
             (new \MySqlMemory\Command\Admin\KillCommand())->prepare($statement, $session);
             return true;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rendering;
 
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments;
 use SqlSemantics\Rendering\Output;
 
 /**
@@ -18,7 +17,7 @@ final class LoadRendering
     /**
      * Writes every retained clause without substituting assignment operands.
      */
-    public function render(LoadTable|RefusedLoadAssignments $load, Output $out): void
+    public function render(LoadTable $load, Output $out): void
     {
         $out->keyword('LOAD', $load->format->value);
         if ($load->lock !== null) {

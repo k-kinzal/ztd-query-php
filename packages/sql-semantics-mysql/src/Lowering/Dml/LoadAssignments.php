@@ -70,22 +70,4 @@ final class LoadAssignments
         return $operand instanceof Scalar || $operand instanceof DefaultRequest ? new Assignment($column, $operand) : new DeferredColumnAssignment($column, $operand);
     }
 
-    /**
-     * Publishes ordinary assignments only after the enclosing LOAD options permit them.
-     *
-     * @param list<Assignment|DeferredColumnAssignment> $assignments The complete assignment roles
-     * @return list<Assignment>
-     * @throws \SqlSemantics\Construction\RejectedInput When an assignment is not scalar
-     */
-    public function ordinary(array $assignments, int $end): array
-    {
-        $ordinary = [];
-        foreach ($assignments as $assignment) {
-            if ($assignment instanceof DeferredColumnAssignment) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar($assignment->value), $end, false);
-            }
-            $ordinary[] = $assignment;
-        }
-        return $ordinary;
-    }
 }

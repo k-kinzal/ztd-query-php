@@ -72,6 +72,9 @@ final class Problems
      */
     public function check(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Command\Access\Load\Preparation())->check($operation, $session);
+        }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $operation->hasExecutionCondition()) {
             (new \MySqlMemory\Program\Expression\QueryUse())->statement($operation, $session);
         }
@@ -82,14 +85,14 @@ final class Problems
         $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
         if ($operation instanceof MySqlStatement) {
             $this->signals($operation, $session);
-        }
-        if ($operation instanceof MySqlStatement && ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
-            (new Problem\Reading())->into($statement, $session);
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+                (new Problem\Reading())->into($operation, $session);
 
-            return;
-        }
-        if ($operation instanceof MySqlStatement && (Stages::selfChecked($operation) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this, $prepared) || Stages::opensTableFirst($statement))) {
-            return;
+                return;
+            }
+            if (Stages::selfChecked($operation) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this, $prepared) || Stages::opensTableFirst($operation)) {
+                return;
+            }
         }
         $calls = $this->calls($operation);
         $diagnostics = $this->pending($operation, $session);

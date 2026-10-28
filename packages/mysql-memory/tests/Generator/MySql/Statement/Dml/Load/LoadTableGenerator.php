@@ -31,7 +31,7 @@ final class LoadTableGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption>>|null $lines Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $ignored Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable>|null>|null $columns Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment>>|null $assignments Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>>|null $assignments Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions|null>|null $bulk Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
@@ -59,6 +59,50 @@ final class LoadTableGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+    /**
+     * Composes missing-table and declared-table requests with the same operand constraint.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function constraints(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
+        return \Tests\Generator\Operands::bind($definitions, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release): ErisGenerator {
+            return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(Generators::choose(0, 100), Generators::bool()), static function (array $parts) use ($create, $release): ErisGenerator {
+                [$number, $fixed] = $parts;
+                $database = $create->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt');
+                $profile = new \SqlSemantics\Contract\LanguageProfile($release);
+                $missing = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], [], true);
+                $definition = \SqlSemantics\Facade\Semantics::fromStatement($missing, $create);
+                $declared = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], $definition->declarations(), true);
+                $column = $definition->declarations()[0]->columns[0]->name;
+                $assignments = $fixed ? Generators::constant([]) : Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator(
+                    Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)),
+                    Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([
+                        new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column),
+                        new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $number),
+                    ])),
+                ));
+                $loads = new self(
+                    Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Data),
+                    Generators::constant(null),
+                    new LoadInputGenerator(Generators::constant(false), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile), Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('generated-input'))),
+                    Generators::constant(null),
+                    Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget($create->name)),
+                    fields: $fixed ? Generators::vector(1, new FieldOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated), Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('')))) : Generators::constant([]),
+                    columns: $fixed ? Generators::constant([new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('input'))]) : Generators::constant(null),
+                    assignments: $assignments,
+                );
+                return Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable $load): array => [
+                    $definition,
+                    \SqlSemantics\Facade\Semantics::fromStatement($missing, $load),
+                    \SqlSemantics\Facade\Semantics::fromStatement($declared, $load),
+                    $fixed ? 1409 : 1241,
+                ], $loads);
+            });
+        });
+    }
+
     /**
      * Composes a declaration, its file input and all-column LOAD forms before execution.
      *

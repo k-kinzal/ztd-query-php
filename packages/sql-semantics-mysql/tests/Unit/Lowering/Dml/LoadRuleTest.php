@@ -31,15 +31,12 @@ final class LoadRuleTest extends TestCase
      * @param string $sql The retained input, including formerly accepted contradictions
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('providerRefusedOptions')]
-    public function testStatementRefusesOptionsWithoutPublishingAnInvalidLoad(string $release, string $sql): void
+    public function testStatementRetainsTheCompleteInputAndItsOptionCondition(string $release, string $sql): void
     {
-        try {
-            (new Semantics(Dialect::MySql, $release))->analyze($sql);
-            self::fail('The LOAD options must be refused before construction.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions::class, $failure->problem);
-            self::assertFalse($failure->aborts);
-        }
+        $load = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable::class, $load);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict::class, $load->diagnostics()[0]);
+        self::assertNotSame('', $load->toString());
     }
 
     public function testInputNormalizesTheCountKeywordWithoutRecordingAnOperand(): void

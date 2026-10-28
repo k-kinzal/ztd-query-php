@@ -571,7 +571,14 @@ retain their existing generation restrictions.
 
 ### File input destinations
 
-`LoadTable::columns` and `RefusedLoadAssignments::columns` distinguish an omitted
+`LoadTable` retains scalar/default assignments, non-scalar assignments and
+fixed-width input variables as complete requests. `hasExecutionCondition()`
+identifies the operand conditions that require ordered preparation. Option
+conflicts remain semantic diagnostics of the full statement. Consumers use its
+published bindings to check database, file-entry and assignment dependencies;
+analysis does not replace these requests with partial refusal records.
+
+`LoadTable::columns` distinguishes an omitted
 input destination list (`null`) from an explicit empty list (`[]`, rendered as
 `()`); both forms load every visible column in table order. A nonempty list
 retains its ordered column and user-variable destinations.

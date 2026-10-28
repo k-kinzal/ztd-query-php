@@ -132,6 +132,7 @@ final class SyntaxWarnings
 
     /**
      * Finds a rejected operand of a parsed input, retaining earlier program-scope refusals.
+     * Complete LOAD bodies are lowered and carry their stored-program restriction as a semantic diagnostic.
      */
     public function rejected(Node $tree, LanguageProfile $profile): ?\SqlSemantics\Construction\RejectedInput
     {
@@ -149,7 +150,7 @@ final class SyntaxWarnings
         while ($pending !== []) {
             $condition = array_pop($pending);
             $body = array_pop($scopes) === true || in_array($condition->name, ['sp_proc_stmt', 'stored_routine_body', 'ev_sql_stmt'], true);
-            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition, in_array($profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new TableDefinition\View\SyntaxViews())->rejected($condition, $lowering, $tokens) ?? (new RejectedOperand())->of($condition, isset($inactive[spl_object_id($condition)]) ? $unprepared : $lowering);
+            $failure = ($body ? (new Routine\Program\SyntaxDefinitions())->rejected($condition) ?? (new Routine\Program\SyntaxArrays())->rejected($condition, $lowering) : null) ?? (new TableDefinition\View\SyntaxViews())->rejected($condition, $lowering, $tokens) ?? (new RejectedOperand())->of($condition, isset($inactive[spl_object_id($condition)]) ? $unprepared : $lowering);
             if ($failure !== null) {
                 $failure = (new Account\Privilege\LegacyColumns())->scoped($tree, $failure, $lowering);
                 if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment) {

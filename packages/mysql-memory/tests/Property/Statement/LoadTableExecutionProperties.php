@@ -58,6 +58,41 @@ final class LoadTableExecutionProperties extends TestCase
     }
 
     /**
+     * The same generated request reaches its operand condition only after its table exists.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesDependentConstraintsUsePublishedOperands(GrammarRelease $release): void
+    {
+        $this->forAll(LoadTableGenerator::constraints($release))->then(static function (array $input) use ($release): void {
+            [$create, $missing, $declared, $code] = $input;
+            self::assertInstanceOf(CreateTable::class, $create);
+            self::assertInstanceOf(LoadTable::class, $missing);
+            self::assertInstanceOf(LoadTable::class, $declared);
+            $database = $create->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), [], [$database]))->connect(database: $database);
+            $session->text = 'generated LOAD constraints without input SQL';
+            $execution = new Execution($session);
+            try {
+                $execution->statement($missing);
+                self::fail('The generated LOAD target does not exist yet.');
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                self::assertSame(1146, $error->getCode());
+            }
+            self::assertInstanceOf(Completion::class, $execution->statement($create));
+            try {
+                $execution->statement($declared);
+                self::fail('The generated LOAD retains an operand constraint.');
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                self::assertSame($code, $error->getCode());
+            }
+            self::assertSame('generated LOAD constraints without input SQL', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+            self::assertSame([], $session->running->using);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

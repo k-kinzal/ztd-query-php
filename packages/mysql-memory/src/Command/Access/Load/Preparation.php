@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Session\Parse\Entry\Load;
+namespace MySqlMemory\Command\Access\Load;
 
 use LogicException;
 use MySqlMemory\Command\Access\LoadDataCommand;
@@ -10,44 +10,29 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Statement\Scalar;
 use WeakReference;
 
 /**
- * Prepares a complete LOAD refusal in its destination table's resolved scope.
+ * Prepares a complete LOAD request in its destination table's resolved scope.
  *
  * The input header keeps database, local-file and separator conditions ahead of
  * assignment binding. No SQL text or substitute scalar statement is needed.
  *
  * @visibility MySqlMemory
  */
-final class Assignments
+final class Preparation
 {
     /**
-     * Returns the first condition reached by the complete retained request.
-     */
-    public function error(RefusedLoadAssignments $load, Session $session): SqlError
-    {
-        try {
-            $this->raise($load, $session);
-        } catch (SqlError $error) {
-            return $error;
-        }
-    }
-
-    /**
-     * Derives all names before interpreting entry and assignment conditions.
+     * Prepares entry and assignment conditions using the published statement bindings.
      *
      * @throws SqlError When a retained entry or operand condition is reached
      */
-    public function raise(RefusedLoadAssignments $load, Session $session): never
+    public function check(LoadTable $load, Session $session): never
     {
-        $load = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($load);
         $charset = $load->charset?->name;
         if ($charset !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset->value) === null) {
             throw (new Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($charset->value), $session);
@@ -60,10 +45,7 @@ final class Assignments
         if ($database === '' && $load->table->name->schema === null) {
             throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
-        $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution());
-        $derivation = new Derivation($context);
-        (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadFacts())->derive($load, $derivation);
-        $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
+        $facts = $load->statementInformation();
         foreach ($facts->diagnostics as $diagnostic) {
             if (Stages::parsed($diagnostic)) {
                 throw (new Errors())->error($diagnostic, $session);
@@ -82,7 +64,7 @@ final class Assignments
      * @throws SqlError When a column or operand cannot prepare
      * @throws LogicException If a retained refusal loses its assignment condition
      */
-    public function prepare(RefusedLoadAssignments $load, \MySqlMemory\Plan\Planner $planner, Session $session): never
+    public function prepare(LoadTable $load, \MySqlMemory\Plan\Planner $planner, Session $session): never
     {
         $table = $session->instance->dictionary->table($load->table->name->schema->value ?? $session->variables->database, $load->table->name->name->value, $session->temporaries);
         \SqlSemantics\Diagnostic\Check::invariant($table !== null, 'The LOAD destination was opened before assignment preparation.');
@@ -109,6 +91,6 @@ final class Assignments
         if ((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($load->format, $load->fields, $load->columns ?? [])) {
             throw \MySqlMemory\Error\Family\StatementError::FixedRowsToVariable->error();
         }
-        throw new LogicException('A retained LOAD has an intrinsic assignment condition.');
+        throw new LogicException('A conditional LOAD has an intrinsic assignment condition.');
     }
 }

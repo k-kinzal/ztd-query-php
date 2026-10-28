@@ -90,7 +90,6 @@ final class LoadRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When the word before the number of files is not COUNT
-     * @throws \SqlSemantics\Construction\RejectedInput When LOAD features have no common language interpretation
      */
     public function statement(Form $form): LoadTable
     {
@@ -122,19 +121,7 @@ final class LoadRule
             'columns' => $this->columns($parts['opt_field_or_var_spec']),
             'bulk' => $this->bulk($parts),
         ];
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], ($operands['columns'] ?? []) !== [], $parts['opt_load_data_set_spec']->children !== [], $operands['bulk'], $operands['lines']);
-        $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
-        $retained = new LoadAssignments($this->lowering);
-        $assignments = $retained->read($parts['opt_load_data_set_spec']);
-        $active = !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true);
-        $nonScalar = array_filter($assignments, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) !== [];
-        if ($problem !== null && (($active && $nonScalar) || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->modern($operands['input'], $operands['bulk'], $operands['compression']))) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadOptions($operands['table']->name, $operands['format'], $problem, $operands['charset'], $assignments), $end, false);
-        }
-        if ($nonScalar || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($operands['format'], $operands['fields'], $operands['columns'] ?? [])) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments(...$operands, assignments: $assignments), $end, false);
-        }
-        return new LoadTable(...$operands, assignments: $retained->ordinary($assignments, $end));
+        return new LoadTable(...$operands, assignments: (new LoadAssignments($this->lowering))->read($parts['opt_load_data_set_spec']));
     }
 
     /**

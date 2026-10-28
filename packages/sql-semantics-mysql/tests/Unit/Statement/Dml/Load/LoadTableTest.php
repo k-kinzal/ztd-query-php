@@ -58,11 +58,11 @@ final class LoadTableTest extends TestCase
         self::assertSame($sql, $load->toString());
     }
 
-    public function testRejectsInputVariablesWithoutAFieldWidth(): void
+    public function testHasExecutionConditionRetainsFixedWidthInputVariables(): void
     {
-        $this->expectExceptionMessage('Fixed-row LOAD DATA requires column destinations with defined widths.');
-
-        new LoadTable(LoadFormat::Data, null, new LoadInput(true, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), fields: [new \SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, new Text(''))], columns: [new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v'))]);
+        $load = new LoadTable(LoadFormat::Data, null, new LoadInput(true, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), fields: [new \SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, new Text(''))], columns: [new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v'))]);
+        self::assertTrue($load->hasExecutionCondition());
+        self::assertFalse((new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t')))))->hasExecutionCondition());
     }
 
     public function testRenderKeepsARadixLiteralAsARowTag(): void
@@ -126,5 +126,33 @@ final class LoadTableTest extends TestCase
         $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
 
         new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::S3, new Text('file')), null, new WriteTarget(new QualifiedName(new Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null));
+    }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRetainedInputs(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (["LOAD DATA INFILE 'f' INTO TABLE t () SET a=ROW(1,2)", "LOAD DATA LOCAL INFILE 'f' INTO TABLE t COLUMNS TERMINATED BY '' (@v)"] as $sql) {
+                yield "$release->value/$sql" => [$release->value, $sql];
+                yield "$release->value/program/$sql" => [$release->value, 'CREATE PROCEDURE wrapper() ' . $sql];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRetainedInputs')]
+    public function testRenderPreservesCompleteConditionBearingInputs(string $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($information->profile->grammar, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new \SqlSemantics\Rendering\Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
 }

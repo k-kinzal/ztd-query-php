@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
@@ -32,8 +33,9 @@ use SqlSemantics\Statement\Node;
  * @example Reading a LOAD DATA
  *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA INFILE 'f' REPLACE INTO TABLE t FIELDS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2");
  *     [$load->duplicates, count($load->columns), $load->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Replace, 2, "LOAD DATA INFILE 'f' REPLACE INTO TABLE t COLUMNS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2"]
- * @example Refusing a column list combined with S3 bulk loading
- *     new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Data, null, new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(false, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::S3, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('f')), null, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), columns: [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))], bulk: new \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions(bulk: true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an incompatible bulk option combination for execution
+ *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA S3 'f' INTO TABLE t (a) ALGORITHM=BULK");
+ *     $load->diagnostics()[0]->message() // => 'Incorrect usage of LOAD DATA with BULK Algorithm and column list specification'
  * @example Refusing a legacy dotted column combined with an S3 source
  *     $column = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
  *     new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Xml, null, new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::S3, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('1')), null, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), columns: [$column]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -58,7 +60,7 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
     public readonly ?array $columns;
 
     /**
-     * @var list<Assignment> The SET assignments in written order
+     * @var list<Assignment|DeferredColumnAssignment> The SET assignments in written order
      */
     public readonly array $assignments;
 
@@ -75,7 +77,7 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      * @param list<LineOption> $lines The LINES options
      * @param Numeral|null $ignored The number of lines or rows skipped at the start
      * @param list<ColumnUse|UserVariable>|null $columns Input destinations; null omits the list and [] retains an explicit empty list
-     * @param list<Assignment> $assignments The SET assignments
+     * @param list<Assignment|DeferredColumnAssignment> $assignments The SET assignments
      * @param BulkOptions|null $bulk The options of a bulk load
      * @throws InvalidConstruction When the table has a correlation name or a member of a list is of the wrong class
      */
@@ -111,10 +113,21 @@ final class LoadTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
             $list[] = $column;
         }
         $this->columns = $columns === null ? null : $list;
-        $this->assignments = Check::listOf($assignments, Assignment::class, 'The SET clause of LOAD holds assignments.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($format, $this->fields, $this->columns ?? []), 'Fixed-row LOAD DATA requires column destinations with defined widths.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\LoadDomain())->compatible($input, $bulk, $compression, (new LoadFacts())->algorithm($this)), 'LOAD source features and algorithm options must share a supported language interpretation.');
+        $items = Check::listOf($assignments, Node::class, 'The SET clause of LOAD holds assignments.');
+        foreach ($items as $item) {
+            Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'LOAD assignments retain scalar, default and non-scalar roles.');
+        }
+        $this->assignments = $items;
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Answers whether assignment or fixed-width input preparation must reject this request.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return array_filter($this->assignments, static fn ($assignment): bool => $assignment instanceof DeferredColumnAssignment) !== []
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->fixedVariables($this->format, $this->fields, $this->columns ?? []);
     }
 
     /**

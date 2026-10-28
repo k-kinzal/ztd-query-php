@@ -69,6 +69,7 @@ final class ClientRows
         foreach ($records as $index => $record) {
             [$positions, $values] = $this->values($record, $targets, $rows, $domain, $index + 1, $fixed);
             foreach ($statement->assignments as $assignment) {
+                \SqlSemantics\Diagnostic\Check::invariant($assignment instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Assignment, 'LOAD operand preparation completes before reading client rows.');
                 $positions[] = (new Assignments($planner, $table))->position($assignment->column);
                 $values[] = $planner->compiler->compile($assignment->value, $scope);
             }

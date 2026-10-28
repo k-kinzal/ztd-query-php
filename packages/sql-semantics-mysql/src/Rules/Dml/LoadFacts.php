@@ -35,7 +35,7 @@ final class LoadFacts
     /**
      * Derives the table, the columns and the assignments.
      */
-    public function derive(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|LoadTable $load, Derivation $derivation): void
+    public function derive(LoadTable $load, Derivation $derivation): void
     {
         $conflict = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true) ? null : $this->algorithm($load);
         if ($conflict !== null) {
@@ -67,7 +67,7 @@ final class LoadFacts
      * runtime entry separately. MySQL 5.6 resolves all these reads in the file
      * charset. This derivation does not assign a session value.
      */
-    public function variables(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|LoadTable $load, Derivation $derivation): void
+    public function variables(LoadTable $load, Derivation $derivation): void
     {
         $settings = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context);
         $charset = $load->charset?->name === null ? null : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($load->charset->name->value);
@@ -91,7 +91,7 @@ final class LoadFacts
     /**
      * Resolves option compatibility independently of engine and file availability.
      */
-    public function algorithm(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedLoadAssignments|LoadTable $load): ?LoadConflict
+    public function algorithm(LoadTable $load): ?LoadConflict
     {
         return (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, ($load->columns ?? []) !== [], $load->assignments !== [], $load->bulk, $load->lines);
     }

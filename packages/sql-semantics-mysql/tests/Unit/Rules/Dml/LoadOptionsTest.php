@@ -53,10 +53,9 @@ final class LoadOptionsTest extends TestCase
         self::assertNull($rules->conflict(LoadFormat::Data, $input, null, null, false, false, new BulkOptions(bulk: true), [$prefix, $empty]));
     }
 
-    public function testConflictRejectsModernBulkPrefixesBeforeOperationConstruction(): void
+    public function testConflictKeepsModernBulkPrefixesOnTheCompleteRequest(): void
     {
-        $this->expectExceptionMessage('LOAD source features and algorithm options must share a supported language interpretation.');
-        new M\Dml\Load\LoadTable(
+        $load = new M\Dml\Load\LoadTable(
             LoadFormat::Data,
             null,
             new LoadInput(false, LoadSource::S3, new Text('f')),
@@ -65,6 +64,7 @@ final class LoadOptionsTest extends TestCase
             lines: [new M\Dml\Load\LineOption(M\Dml\Load\LineOptionKind::Starting, new Text('x'))],
             bulk: new BulkOptions(bulk: true),
         );
+        self::assertSame(LoadRule::LinesStartingBulk, (new LoadOptions())->conflict($load->format, $load->input, $load->duplicates, $load->compression, false, false, $load->bulk, $load->lines)?->rule);
     }
 
     public function testFixedVariablesRequiresDataAnEmptyTerminatorAndNoEnclosure(): void

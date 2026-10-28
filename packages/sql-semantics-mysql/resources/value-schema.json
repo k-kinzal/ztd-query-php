@@ -1426,30 +1426,6 @@
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadAssignments": {
-        "assignments": "array",
-        "bulk": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions",
-        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
-        "columns": "?array",
-        "compression": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "duplicates": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
-        "fields": "array",
-        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat",
-        "ignored": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
-        "input": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadInput",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "lines": "array",
-        "lock": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadLock",
-        "rowTag": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\WriteTarget"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadOptions": {
-        "assignments": "array",
-        "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
-        "format": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\LoadFormat",
-        "problem": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadConflict",
-        "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RepeatedDeleteTarget": {
         "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "targets": "array"

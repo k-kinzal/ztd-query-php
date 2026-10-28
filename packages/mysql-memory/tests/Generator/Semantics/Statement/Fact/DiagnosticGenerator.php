@@ -41,7 +41,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\DuplicateColumnGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\ValueCountMismatchGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\WriteMisuseGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\RefusedLoadAssignmentsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\Insert\RefusedInsertSetGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\LoadConflictGenerator::executionForms();
         yield from \Tests\Generator\Semantics\Statement\Reference\Column\AmbiguousColumnGenerator::executionForms();
@@ -100,7 +99,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\RefusedDeleteTargetsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\RepeatedDeleteTargetGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\Delete\RefusedDeleteGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\RefusedLoadOptionsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\ZeroFileCountGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Routine\Event\Problem\RefusedOperandGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Server\Problem\RefusedXaIdentifierGenerator::executionForms();
