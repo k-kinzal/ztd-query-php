@@ -17,7 +17,7 @@ final class AlterDatabaseTest extends TestCase
 {
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('ALTER DATABASE d COLLATE utf8mb4_bin', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('alter schema d collate utf8mb4_bin')->toString());
+        self::assertSame('ALTER SCHEMA d COLLATE utf8mb4_bin', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('alter schema d collate utf8mb4_bin')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

@@ -372,6 +372,8 @@ or FROM/FOR operands of SUBSTRING. Deferred routine calls carry the same choices
 account-position `SessionUser` accepts the USER synonyms. `ShowKeys::$listing`
 and `ShowDatabases::$listing` retain INDEX/INDEXES/KEYS and DATABASES/SCHEMAS.
 These choices survive publication and rendering without keeping SQL fragments.
+`Statement\Server\Database\DatabaseWord` similarly retains DATABASE or SCHEMA
+on CREATE, ALTER, DROP, legacy directory-name upgrades and SHOW CREATE requests.
 
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With

@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Altering the current database
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter schema character set latin1 read only default');
- *     [$alter->toString(), $alter->name] // => ['ALTER DATABASE CHARACTER SET latin1 READ ONLY DEFAULT', null]
+ *     [$alter->toString(), $alter->name] // => ['ALTER SCHEMA CHARACTER SET latin1 READ ONLY DEFAULT', null]
  */
 final class AlterDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -40,7 +40,7 @@ final class AlterDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      * @param list<DatabaseOption> $options The options in written order; at least one
      * @throws InvalidConstruction When there is no option
      */
-    public function __construct(public readonly ?Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseWord $databaseWord = DatabaseWord::Database)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -62,7 +62,7 @@ final class AlterDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'DATABASE');
+        $out->keyword('ALTER', $this->databaseWord->value);
         if ($this->name !== null) {
             $out->name($this->name, NameUse::Qualifier);
         }

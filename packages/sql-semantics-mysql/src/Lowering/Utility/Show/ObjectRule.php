@@ -98,7 +98,7 @@ final class ObjectRule
         $clauses = new ClauseRule($this->lowering);
         switch ($form->signature) {
             case 'show_create_database_stmt: SHOW CREATE DATABASE opt_if_not_exists ident':
-                return new ShowCreateDatabase($names->identifier($form->node(4)), $this->lowering->options->present($form->node(3)));
+                return new ShowCreateDatabase($names->identifier($form->node(4)), $this->lowering->options->present($form->node(3)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(2)->text)));
             case 'show_create_table_stmt: SHOW CREATE TABLE_SYM table_ident':
                 return new ShowCreateTable($this->table($form, 3));
             case 'show_create_view_stmt: SHOW CREATE VIEW_SYM table_ident':

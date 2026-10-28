@@ -22,17 +22,19 @@ final class ShowCreateDatabaseGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
      * @param ErisGenerator<bool>|null $ifNotExists Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord>|null $databaseWord Generated database keyword
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase(name: $parts[0], ifNotExists: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase(name: $parts[0], ifNotExists: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], databaseWord: $parts[4]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $ifNotExists ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $databaseWord ?? new \Tests\Generator\MySql\Statement\Server\Database\DatabaseWordGenerator()
         ));
     }
     /**

@@ -72,13 +72,15 @@ final class DatabaseRule
                 $options->present($form->node(2)),
                 $names->identifier($form->node(3)),
                 $this->options($form->node(4)),
+                databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)),
             ),
             'alter: ALTER DATABASE ident_or_empty create_database_options', 'alter_database_stmt: ALTER DATABASE ident_or_empty alter_database_options' => new AlterDatabase(
                 $names->optional($form->node(2)),
                 $this->options($form->node(3)),
+                databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)),
             ),
             'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => $this->upgrade($form),
-            'drop: DROP DATABASE if_exists ident', 'drop_database_stmt: DROP DATABASE if_exists ident' => new DropDatabase($options->present($form->node(2)), $names->identifier($form->node(3))),
+            'drop: DROP DATABASE if_exists ident', 'drop_database_stmt: DROP DATABASE if_exists ident' => new DropDatabase($options->present($form->node(2)), $names->identifier($form->node(3)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text))),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -98,7 +100,7 @@ final class DatabaseRule
 
         $legacy = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name($suffix)), $form->node(2));
 
-        return new UpgradeDatabaseName($this->lowering->leaves->record($legacy));
+        return new UpgradeDatabaseName($this->lowering->leaves->record($legacy), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)));
     }
 
     /**

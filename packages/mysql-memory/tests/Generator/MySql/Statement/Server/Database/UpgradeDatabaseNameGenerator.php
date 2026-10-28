@@ -21,16 +21,18 @@ final class UpgradeDatabaseNameGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord>|null $databaseWord Generated database keyword
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(name: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(name: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], databaseWord: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $databaseWord ?? new DatabaseWordGenerator()
         ));
     }
     /**

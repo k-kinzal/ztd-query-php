@@ -129,7 +129,7 @@ final class LegacyObjectRule
             'openTables' => $clauses->inspection(new ShowOpenTables($clauses->database($form->node(2), true)), $form->node(3)),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),
-            'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2))),
+            'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text))),
             'createTable' => new ShowCreateTable(new InspectedTable($names->qualified($form->node(2)))),
             'createView' => new ShowCreateView(new InspectedTable($names->qualified($form->node(2)))),
             'createProcedure' => new ShowCreateProcedure($names->qualified($form->node(2))),

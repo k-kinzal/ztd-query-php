@@ -22,17 +22,19 @@ final class AlterDatabaseGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $name Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption>> $options Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord>|null $databaseWord Generated database keyword
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $options, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $options, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], databaseWord: $parts[4]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $options,
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $databaseWord ?? new DatabaseWordGenerator()
         ));
     }
     /**

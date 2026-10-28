@@ -18,14 +18,14 @@ use SqlSemantics\Statement\Identifier\Name;
  * Mirrors SQLCOM_CREATE_DB with HA_CREATE_INFO. Rule:
  * MYSQL-CREATE-DATABASE-001. The options are kept in written order. A
  * database holds no columns, so the statement declares no relation.
- * SCHEMA is a synonym of DATABASE, which the lexer folds.
+ * SCHEMA is a synonym of DATABASE; databaseWord retains the selected keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Creating a database with options
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
- *     [$create->toString(), count($create->options)] // => ['CREATE DATABASE IF NOT EXISTS shop DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin', 2]
+ *     [$create->toString(), count($create->options)] // => ['CREATE SCHEMA IF NOT EXISTS shop DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin', 2]
  */
 final class CreateDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -42,7 +42,7 @@ final class CreateDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      * @param list<DatabaseOption> $options The options in written order
      * @throws InvalidConstruction When an option is READ ONLY, which only ALTER DATABASE takes
      */
-    public function __construct(public readonly bool $ifNotExists, public readonly Name $name, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly bool $ifNotExists, public readonly Name $name, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseWord $databaseWord = DatabaseWord::Database)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -67,7 +67,7 @@ final class CreateDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE', 'DATABASE');
+        $out->keyword('CREATE', $this->databaseWord->value);
         if ($this->ifNotExists) {
             $out->keyword('IF', 'NOT', 'EXISTS');
         }

@@ -3680,12 +3680,14 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\AlterDatabase": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "databaseWord": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name",
         "options": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\CreateDatabase": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "databaseWord": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord",
         "ifNotExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
@@ -3716,8 +3718,13 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DropDatabase": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "databaseWord": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord",
         "ifExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"
@@ -3744,6 +3751,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Problem\\ReadOnlyConflict": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\UpgradeDatabaseName": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "databaseWord": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\LegacyDatabaseName"
     },
@@ -5332,6 +5340,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowCreateDatabase": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "databaseWord": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord",
         "ifNotExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name"

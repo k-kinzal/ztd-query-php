@@ -31,6 +31,42 @@ final class StatementExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Database keyword alternatives preserve dependent creation, inspection, change and removal.
+     */
+    #[Test]
+    #[DataProvider('providerMaintenanceReleases')]
+    public function satisfiesDatabaseRequestsRetainTheirGeneratedNamespace(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator::lifecycle($release))->then(static function (array $sample) use ($release): void {
+            [$create, $show, $alter, $drop] = $sample;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase::class, $create);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase::class, $show);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $alter);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase::class, $drop);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation::class, $alter->options[0]);
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $session->text = 'Generated database requests without SQL';
+            $execution = new Execution($session);
+            self::assertInstanceOf(Completion::class, $execution->statement($create));
+            self::assertNotNull($session->instance->dictionary->schema($create->name->value));
+            $before = $execution->statement($show);
+            self::assertInstanceOf(ResultSet::class, $before);
+            self::assertSame($create->name->value, $before->rows[0][0]);
+            self::assertInstanceOf(Completion::class, $execution->statement($alter));
+            self::assertNotNull($alter->options[0]->collation->name);
+            $collation = $alter->options[0]->collation->name->value;
+            $schema = $session->instance->dictionary->schema($create->name->value);
+            self::assertSame($collation, $schema->collation);
+            $after = $execution->statement($show);
+            self::assertInstanceOf(ResultSet::class, $after);
+            self::assertStringContainsString('COLLATE ' . $collation, $after->rows[0][1] ?? '');
+            self::assertInstanceOf(Completion::class, $execution->statement($drop));
+            self::assertNull($session->instance->dictionary->schema($create->name->value));
+            self::assertSame('Generated database requests without SQL', $session->text);
+        });
+    }
+
+    /**
      * Index-listing alternatives read the index of their generated declaration.
      */
     #[Test]

@@ -28,7 +28,7 @@ final class UpgradeDatabaseName extends \SqlSemantics\Platform\MySql\Statement\S
     /**
      * @param LegacyDatabaseName $name The legacy database directory identity
      */
-    public function __construct(public readonly LegacyDatabaseName $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly LegacyDatabaseName $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseWord $databaseWord = DatabaseWord::Database)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -50,6 +50,6 @@ final class UpgradeDatabaseName extends \SqlSemantics\Platform\MySql\Statement\S
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'DATABASE')->node($this->name)->keyword('UPGRADE', 'DATA', 'DIRECTORY', 'NAME');
+        $out->keyword('ALTER', $this->databaseWord->value)->node($this->name)->keyword('UPGRADE', 'DATA', 'DIRECTORY', 'NAME');
     }
 }

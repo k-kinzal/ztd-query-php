@@ -23,7 +23,7 @@ final class ObjectRuleTest extends TestCase
 
     public function testDefinitionLowersShowCreate(): void
     {
-        self::assertSame('SHOW CREATE DATABASE IF NOT EXISTS db', (new Semantics(Dialect::MySql))->analyze('show create schema if not exists db')->toString());
+        self::assertSame('SHOW CREATE SCHEMA IF NOT EXISTS db', (new Semantics(Dialect::MySql))->analyze('show create schema if not exists db')->toString());
         self::assertSame('SHOW FUNCTION STATUS', (new Semantics(Dialect::MySql))->analyze('show function status')->toString());
     }
 

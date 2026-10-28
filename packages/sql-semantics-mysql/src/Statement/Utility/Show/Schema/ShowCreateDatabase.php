@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -24,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE SCHEMA IF NOT EXISTS shop');
- *     [$show->field(1)->name?->value, $show->toString()] // => ['Create Database', 'SHOW CREATE DATABASE IF NOT EXISTS shop']
+ *     [$show->field(1)->name?->value, $show->toString()] // => ['Create Database', 'SHOW CREATE SCHEMA IF NOT EXISTS shop']
  */
 final class ShowCreateDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -34,7 +35,7 @@ final class ShowCreateDatabase extends \SqlSemantics\Platform\MySql\Statement\Sq
      * @param Name $name The database
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      */
-    public function __construct(public readonly Name $name, public readonly bool $ifNotExists = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly bool $ifNotExists = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseWord $databaseWord = DatabaseWord::Database)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -55,7 +56,7 @@ final class ShowCreateDatabase extends \SqlSemantics\Platform\MySql\Statement\Sq
      */
     public function render(Output $out): void
     {
-        $out->keyword('SHOW', 'CREATE', 'DATABASE');
+        $out->keyword('SHOW', 'CREATE', $this->databaseWord->value);
         if ($this->ifNotExists) {
             $out->keyword('IF', 'NOT', 'EXISTS');
         }
