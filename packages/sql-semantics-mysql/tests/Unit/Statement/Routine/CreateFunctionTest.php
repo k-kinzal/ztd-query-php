@@ -25,6 +25,16 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateFunctionTest extends TestCase
 {
+    public function testRenderRetainsTheBinaryReturnSeedAndItsDefinitionCondition(): void
+    {
+        $sql = 'CREATE DEFINER = CURRENT_USER FUNCTION _sqlfaker_identifier() RETURNS CHAR(0) BINARY LANGUAGE javascript AS $$text$$';
+        $statement = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze($sql);
+        self::assertInstanceOf(CreateFunction::class, $statement);
+        self::assertSame($sql, $statement->toString());
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", $statement->diagnostics()[0]->message());
+        self::assertInstanceOf(ExternalBody::class, $statement->body);
+    }
+
     public function testNameCollisionIncludesKeywordsAndNativeFunctions(): void
     {
         $semantics = new Semantics(Dialect::MySql);

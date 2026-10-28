@@ -48,6 +48,55 @@ final class CreateFunctionGenerator implements ErisGenerator
         ));
     }
     /**
+     * Composes a complete binary return declaration with earlier notices and later body conditions.
+     *
+     * @return ErisGenerator<array{list<mixed>, \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, list<int>}>
+     */
+    public static function binaryReturns(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::bool(), Generators::choose(0, 255), Generators::choose(0, 3), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
+            [$name, $variable, $length, $kind, $width] = $parts;
+            $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character($variable ? \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar : \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, (string) $length, charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary));
+            $body = match ($kind) {
+                0 => new Program\Flow\ReturnStatementGenerator(new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::constant((string) $length))])),
+                1 => Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block()),
+                2 => Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: [new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::CalcFoundRows], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]))])),
+                default => Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor($name, [new \SqlSemantics\Statement\Identifier\Name('target')])])),
+            };
+            $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name('argument'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int, $width ? '5' : null))]);
+            $definitions = new self(Generators::constant(new \SqlSemantics\Statement\Identifier\QualifiedName($name)), Generators::constant($parameters), Generators::constant($type), new Definition\FunctionImplementationGenerator($body), definitionSource: Generators::constant(null));
+            $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            $warnings = [...array_fill(0, !$legacy && $width ? 1 : 0, 1681), ...($legacy ? [] : [1287]), 1235];
+            return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction $definition) use ($release, $parts, $warnings): array {
+                $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+                $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition);
+                \SqlSemantics\Diagnostic\Check::invariant($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, 'A generated function keeps its declaration role.');
+                return [$parts, $statement, $warnings];
+            }, $definitions);
+        });
+    }
+
+    /**
+     * Generates binary TEXT returns, whose field domain permits a stored definition.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction>
+     */
+    public static function binaryTextReturns(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $types = Generators::elements([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::TinyText, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Text, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::MediumText, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::LongText, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Long, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::LongVarChar, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::LongCharVarying]);
+        return Generators::map(static function (array $parts) use ($release): \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction {
+            [$name, $kind, $value] = $parts;
+            $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character($kind, charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary));
+            $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['value_' . $value]));
+            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName($name), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, [new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism(true)]));
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+            $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition);
+            \SqlSemantics\Diagnostic\Check::invariant($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, 'A generated function keeps its declaration role.');
+            return $statement;
+        }, \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $types, Generators::choose(0, 1000)));
+    }
+
+    /**
      * Composes the statement's SQL forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction>>

@@ -576,6 +576,13 @@ conditions are derived after the name, parameters and body are combined, so a
 function implementation can retain an SQL instruction without `RETURN` and
 report why its enclosing function cannot be defined.
 
+`CHAR` and `VARCHAR` return types with an unsupported `BINARY` attribute remain in the
+complete function definition. Their condition belongs to the return type, so
+execution preserves earlier parameter/type notices and stops before body notices
+or body errors. Rendering still includes the return declaration and the full body.
+The `TEXT` family permits `BINARY` alone and uses the database's default collation
+for that return declaration, as `ENUM` and `SET` do.
+
 `QueryRoot` retains complete reads with fixed output or input conditions, such as
 tableless stars, incompatible row widths, non-scalar operands, invalid output
 ordinals and repeated input names. `hasExecutionCondition()` identifies these

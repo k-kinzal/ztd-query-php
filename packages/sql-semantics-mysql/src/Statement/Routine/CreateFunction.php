@@ -26,9 +26,10 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * context. The facts follow MYSQL-ROUTINE-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @example Rejecting an intrinsically incomplete character return collation
+ * @example Retaining a character return whose collation prevents definition
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, '1', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary));
- *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $function = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))));
+ *     $function->returns === $type // => true
  *
  * @visibility public
  * @example Reading a function definition
@@ -77,7 +78,6 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($returns, $collation);
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ReturnCollation())->intrinsic($returns), 'A character function return requires a resolved collation rather than BINARY alone.');
         foreach ($parameters->parameters as $parameter) {
             Check::input($parameter->mode === null, 'A function parameter has no direction.');
         }

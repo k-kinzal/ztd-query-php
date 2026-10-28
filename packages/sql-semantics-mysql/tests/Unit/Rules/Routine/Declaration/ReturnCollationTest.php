@@ -29,6 +29,7 @@ final class ReturnCollationTest extends TestCase
         self::assertTrue($rule->intrinsic(new Character(CharacterKind::Char, '1', charset: $attribute)));
         self::assertFalse($rule->intrinsic(new Character(CharacterKind::Char, '1', true, $attribute)));
         self::assertFalse($rule->intrinsic(new Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a')], $attribute)));
+        self::assertFalse($rule->intrinsic(new Character(CharacterKind::TinyText, charset: $attribute)));
     }
 
     /**
@@ -49,6 +50,8 @@ final class ReturnCollationTest extends TestCase
         $ascii = new Character(CharacterKind::Char, '1', charset: new CharsetAttribute(CharsetForm::Ascii, mark: BinaryMark::Trailing));
         self::assertSame($refused, $rule->problem($type, $release) !== null);
         self::assertNull($rule->problem($ascii, $release));
+        self::assertNull($rule->problem(new Character(CharacterKind::Text, charset: new CharsetAttribute(CharsetForm::Binary)), $release));
+        self::assertNull($rule->problem(new Character(CharacterKind::LongVarChar, charset: new CharsetAttribute(CharsetForm::Named, new Name('latin1'), BinaryMark::Leading)), $release));
     }
 
     #[DataProvider('providerReleases')]
@@ -56,6 +59,7 @@ final class ReturnCollationTest extends TestCase
     {
         $rule = new ReturnCollation();
         $default = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci');
+        self::assertSame($default, $rule->resolve(new Character(CharacterKind::Text, charset: new CharsetAttribute(CharsetForm::Binary)), null, $default, $release));
         $bare = new Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a')], new CharsetAttribute(CharsetForm::Binary));
         $named = new Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, $bare->members, new CharsetAttribute(CharsetForm::Named, new Name('latin1'), BinaryMark::Trailing));
 

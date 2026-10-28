@@ -74,7 +74,7 @@ final class ProgramFacts
         $problem = $returns === null ? null : $this->returnCollation($returns, $derivation->context->profile->grammar);
         if ($problem !== null) {
             $derivation->report($problem);
-            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true));
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $returns);
         }
         if ($body instanceof ExternalBody) {
             return;

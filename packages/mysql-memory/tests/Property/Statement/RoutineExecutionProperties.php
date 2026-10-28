@@ -40,6 +40,51 @@ final class RoutineExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Defines generated TEXT returns without applying the CHAR/VARCHAR restriction.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesBinaryTextReturnsInstallTheGeneratedDefinition(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Routine\CreateFunctionGenerator::binaryTextReturns($release))->then(static function (\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated text-return declaration without SQL input';
+            self::assertInstanceOf(Completion::class, (new Execution($session))->statement($statement));
+            $stored = $session->instance->dictionary->schema('pbt')?->functions[$statement->name->name->value] ?? null;
+            self::assertNotNull($stored);
+            self::assertSame($statement, $stored->statement);
+            self::assertSame($stored->charsets[2], $stored->returned()->collation->name);
+            self::assertSame('Generated text-return declaration without SQL input', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
+     * Keeps return-type conditions ahead of body errors and body notices.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesBinaryReturnConditionsPrecedeTheGeneratedBody(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Routine\CreateFunctionGenerator::binaryReturns($release))->then(static function (array $parts) use ($release): void {
+            [, $statement, $conditions] = $parts;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction::class, $statement);
+            $session = (new Instance(substr($release->value, 6), ['sql_mode' => ''], databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated function declaration without SQL input';
+            try {
+                (new Execution($session))->statement($statement);
+                self::fail('The generated binary return declaration must prevent definition.');
+            } catch (SqlError $error) {
+                self::assertSame(1235, $error->getCode());
+                self::assertSame("This version of MySQL doesn't yet support 'return value collation'", $error->getMessage());
+            }
+            self::assertSame($conditions, array_column($session->diagnostics->conditions, 1));
+            self::assertSame('Generated function declaration without SQL input', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
      * Executes declarations with an unbound cursor and preserves only earlier reading notices.
      */
     #[Test]

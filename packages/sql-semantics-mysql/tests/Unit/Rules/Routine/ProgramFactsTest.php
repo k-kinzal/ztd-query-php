@@ -59,6 +59,16 @@ final class ProgramFactsTest extends TestCase
         self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.7.44'))->analyze($sql)->diagnostics()[0]->message());
     }
 
+    public function testRoutineOrdersTheReturnCollationBeforeBodyNotices(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a INT(5)) RETURNS CHAR(2) BINARY BEGIN SELECT SQL_CALC_FOUND_ROWS 1; END');
+        self::assertInstanceOf(CreateFunction::class, $statement);
+        $notice = $statement->notices()[2];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice->warning);
+        self::assertSame($statement->returns, $notice->subject);
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", $notice->warning->message());
+    }
+
     public function testReturnCollationDistinguishesNationalAndNamedAttributes(): void
     {
         $facts = new ProgramFacts();
