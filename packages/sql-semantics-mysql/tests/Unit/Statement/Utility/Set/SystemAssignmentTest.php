@@ -53,7 +53,7 @@ final class SystemAssignmentTest extends TestCase
 
     public function testRenderWritesTheKeywordValue(): void
     {
-        self::assertSame('SET @@SESSION.x = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.x = on')->toString());
+        self::assertSame('SET @@LOCAL.x = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.x = on')->toString());
         self::assertSame('SET @@x = SYSTEM', (new Semantics(Dialect::MySql))->analyze('set @@x = system')->toString());
     }
 

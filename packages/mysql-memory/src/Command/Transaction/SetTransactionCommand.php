@@ -100,7 +100,7 @@ final class SetTransactionCommand implements Command
             if ($definition === null) {
                 continue;
             }
-            if ($scope === VariableScope::Session) {
+            if ($scope->session()) {
                 $session->variables->set($definition, $value);
             } else {
                 $session->variables->globals->set($definition, $value);

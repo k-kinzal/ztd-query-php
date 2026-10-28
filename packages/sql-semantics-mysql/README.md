@@ -196,6 +196,10 @@ $named->analyze('SELECT :id, ?')->field(0)->type->missing[0]->describe(); // => 
 - Names are rendered bare when they are no keyword, function name or introducer of the release, and in backticks otherwise. Backticks are identifiers under every mode.
 - User variables (`@total`) and system variables are session state; their facts depend on it.
 
+Explicit `LOCAL` scope is retained in system-variable reads, assignments,
+`SET TRANSACTION`, `SHOW STATUS` and `SHOW VARIABLES`. It has the same session
+meaning as `SESSION`; `VariableScope::session()` recognizes both spellings.
+
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;

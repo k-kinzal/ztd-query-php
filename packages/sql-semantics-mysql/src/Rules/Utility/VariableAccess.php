@@ -37,13 +37,13 @@ final class VariableAccess
         if ($definition === null) {
             return null;
         }
-        $global = $scope !== null && $scope !== VariableScope::Session;
+        $global = $scope !== null && !$scope->session();
         if ($global && !$definition->reach->global()) {
             $derivation->report(new VariableMisuse(VariableRule::GlobalOfSessionVariable, $name));
 
             return null;
         }
-        if ($scope === VariableScope::Session && !$definition->reach->session()) {
+        if ($scope?->session() === true && !$definition->reach->session()) {
             $derivation->report(new VariableMisuse(VariableRule::SessionOfGlobalVariable, $name));
 
             return null;
@@ -63,7 +63,7 @@ final class VariableAccess
         if ($definition === null) {
             return;
         }
-        $global = $scope !== null && $scope !== VariableScope::Session;
+        $global = $scope !== null && !$scope->session();
         $rule = match (true) {
             $definition->writability === Writability::ReadOnly => VariableRule::ReadOnly,
             $global && !$definition->reach->global() => VariableRule::SetGlobalOfSessionVariable,

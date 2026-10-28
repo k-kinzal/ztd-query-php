@@ -29,6 +29,28 @@ final class SetVariablesExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Generated LOCAL assignments change session reads while leaving the global value intact.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesLocalAssignmentsShareSessionValuesWithoutChangingGlobals(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Utility\Set\SystemAssignmentGenerator::localAssignments($release))->then(static function (array $parts) use ($release): void {
+            [$write, $read, $value] = $parts;
+            self::assertInstanceOf(AnalyzedStatement::class, $write);
+            self::assertInstanceOf(AnalyzedStatement::class, $read);
+            $session = (new Instance(substr($release->value, 6), ['auto_increment_increment' => 13], databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated local assignments without SQL';
+            $execution = new Execution($session);
+            self::assertInstanceOf(Completion::class, $execution->statement($write));
+            $reply = $execution->statement($read);
+            self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $reply);
+            self::assertSame([[$value, $value, '13']], $reply->rows);
+            self::assertSame('Generated local assignments without SQL', $session->text);
+        });
+    }
+
+    /**
      * Each generated spelling assigns the client and results and restores the database encoding.
      */
     #[Test]

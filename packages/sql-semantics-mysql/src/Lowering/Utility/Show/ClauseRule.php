@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * opt_full, opt_show_cmd_type, opt_extended, opt_var_type, engine_or_all,
  * binlog_in, opt_binlog_in, binlog_from, opt_profile_defs, profile_defs,
  * profile_def, opt_profile_args, opt_for_query. FROM and IN are the same
- * keyword and LOCAL is the scope SESSION (UtilityNoise). Constructs:
+ * keyword and LOCAL retains its spelling and denotes SESSION (UtilityNoise). Constructs:
  * ShowLike, ShowWhere, ShowListing, ProfileSection, VariableScope and the
  * leaf values. Terminates: the profile list spine is flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show.html. Status: Implemented.
@@ -64,7 +64,7 @@ final class ClauseRule
      * The scope keywords of SHOW STATUS and SHOW VARIABLES.
      */
     private const SCOPES = [
-        'opt_var_type:' => null, 'opt_var_type: GLOBAL_SYM' => VariableScope::Global, 'opt_var_type: LOCAL_SYM' => VariableScope::Session,
+        'opt_var_type:' => null, 'opt_var_type: GLOBAL_SYM' => VariableScope::Global, 'opt_var_type: LOCAL_SYM' => VariableScope::Local,
         'opt_var_type: SESSION_SYM' => VariableScope::Session,
     ];
 

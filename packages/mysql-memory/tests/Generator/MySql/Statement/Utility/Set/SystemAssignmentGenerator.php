@@ -33,4 +33,32 @@ final class SystemAssignmentGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+
+    /**
+     * Composes both LOCAL assignment forms with reads of the local, session and global values.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, string}>
+     */
+    public static function localAssignments(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $values = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $number): string => (string) $number, Generators::choose(1, 10)));
+        return \Tests\Generator\Operands::bind($values, static function (\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral $value) use ($release): ErisGenerator {
+            return Generators::map(static function (bool $system) use ($value, $release): array {
+                $local = \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local;
+                $name = new \SqlSemantics\Statement\Identifier\Name('auto_increment_increment');
+                $assignment = $system
+                    ? new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget($name, $local), $value)
+                    : new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment($name, $value, $local);
+                $write = new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([$assignment]);
+                $items = [];
+                foreach ([$local, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global] as $scope) {
+                    $items[] = new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('auto_increment_increment'), $scope));
+                }
+                $read = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $items));
+                $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+                $publication = new \SqlSemantics\Platform\MySql\Construction\Publication();
+                return [$publication->publish($context, $write), $publication->publish($context, $read), $value->text];
+            }, Generators::bool());
+        });
+    }
 }

@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Source\Span;
  * start_option_value_list, and a MySQL 5.6 list whose only item is a
  * password, are the account statement SET PASSWORD and go to the account
  * family. The items are lowered by MYSQL-SET-ITEM-LOWERING-001. LOCAL is the
- * scope SESSION (UtilityNoise). Terminates: the list spine is flattened
+ * session scope while retaining its LOCAL spelling. Terminates: the list spine is flattened
  * iteratively and every item is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set-transaction.html. Status: Implemented.
@@ -45,7 +45,7 @@ final class SetRule
      * The scope keywords before a variable name or TRANSACTION.
      */
     private const SCOPES = [
-        'option_type: GLOBAL_SYM' => VariableScope::Global, 'option_type: LOCAL_SYM' => VariableScope::Session,
+        'option_type: GLOBAL_SYM' => VariableScope::Global, 'option_type: LOCAL_SYM' => VariableScope::Local,
         'option_type: SESSION_SYM' => VariableScope::Session, 'option_type: PERSIST_SYM' => VariableScope::Persist,
         'option_type: PERSIST_ONLY_SYM' => VariableScope::PersistOnly,
     ];

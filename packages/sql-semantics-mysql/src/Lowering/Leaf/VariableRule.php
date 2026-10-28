@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * in_expression_user_variable_assignment, lvalue_variable,
  * opt_set_var_ident_type (8.0 and later). `@name` is a user variable,
  * `@name := expr` an assignment, `@@[scope.][instance.]name` a system
- * variable. LOCAL is the scope SESSION; `DEFAULT.name` names the instance
+ * variable. LOCAL retains its spelling and denotes SESSION; `DEFAULT.name` names the instance
  * `default`. Constructs: UserVariable, VariableAssignment, SystemVariable,
  * VariableScope. Terminates: every child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html,
@@ -39,11 +39,11 @@ final class VariableRule
      * The scope productions, by the scope they select.
      */
     private const SCOPES = [
-        'opt_var_ident_type: GLOBAL_SYM .' => VariableScope::Global, 'opt_var_ident_type: LOCAL_SYM .' => VariableScope::Session,
+        'opt_var_ident_type: GLOBAL_SYM .' => VariableScope::Global, 'opt_var_ident_type: LOCAL_SYM .' => VariableScope::Local,
         'opt_var_ident_type: SESSION_SYM .' => VariableScope::Session, 'opt_rvalue_system_variable_type: GLOBAL_SYM .' => VariableScope::Global,
-        'opt_rvalue_system_variable_type: LOCAL_SYM .' => VariableScope::Session, 'opt_rvalue_system_variable_type: SESSION_SYM .' => VariableScope::Session,
+        'opt_rvalue_system_variable_type: LOCAL_SYM .' => VariableScope::Local, 'opt_rvalue_system_variable_type: SESSION_SYM .' => VariableScope::Session,
         'opt_set_var_ident_type: PERSIST_SYM .' => VariableScope::Persist, 'opt_set_var_ident_type: PERSIST_ONLY_SYM .' => VariableScope::PersistOnly,
-        'opt_set_var_ident_type: GLOBAL_SYM .' => VariableScope::Global, 'opt_set_var_ident_type: LOCAL_SYM .' => VariableScope::Session,
+        'opt_set_var_ident_type: GLOBAL_SYM .' => VariableScope::Global, 'opt_set_var_ident_type: LOCAL_SYM .' => VariableScope::Local,
         'opt_set_var_ident_type: SESSION_SYM .' => VariableScope::Session,
     ];
 

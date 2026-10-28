@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Relation;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW LOCAL VARIABLES LIKE 'a%'");
- *     [$show->scope, $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, "SHOW SESSION VARIABLES LIKE 'a%'"]
+ *     [$show->scope, $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local, "SHOW LOCAL VARIABLES LIKE 'a%'"]
  */
 final class ShowVariables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
@@ -38,7 +38,7 @@ final class ShowVariables extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param ?VariableScope $scope GLOBAL, SESSION, or no scope keyword
+     * @param ?VariableScope $scope GLOBAL, SESSION, LOCAL, or no scope keyword
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
      */
     public function __construct(public readonly ?VariableScope $scope = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
@@ -49,7 +49,7 @@ final class ShowVariables extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
-        Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session], true), 'SHOW VARIABLES accepts GLOBAL or SESSION scope.');
+        Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session, VariableScope::Local], true), 'SHOW VARIABLES accepts GLOBAL or SESSION scope.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -94,9 +94,9 @@ final class VariableRuleTest extends TestCase
         $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(SystemVariable::class, $item1->expression);
-        self::assertSame(VariableScope::Session, $item1->expression->scope);
+        self::assertSame(VariableScope::Local, $item1->expression->scope);
         self::assertSame('x', $item1->expression->name->value);
-        self::assertSame('SELECT @@SESSION.sql_mode AS a, @@SESSION.innodb.x AS b', $operation->toString());
+        self::assertSame('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b', $operation->toString());
     }
 
     public function testSystemLowersTheSettableVariableForms(): void
@@ -129,6 +129,6 @@ final class VariableRuleTest extends TestCase
         self::assertSame(VariableScope::Persist, $rule->scope(new Node('opt_set_var_ident_type', 1, [new Token(0, 'PERSIST_SYM', 'PERSIST', 0), $dot])));
         self::assertSame(VariableScope::PersistOnly, $rule->scope(new Node('opt_set_var_ident_type', 2, [new Token(0, 'PERSIST_ONLY_SYM', 'PERSIST_ONLY', 0), $dot])));
         self::assertSame(VariableScope::Global, $rule->scope(new Node('opt_rvalue_system_variable_type', 1, [new Token(0, 'GLOBAL_SYM', 'GLOBAL', 0), $dot])));
-        self::assertSame(VariableScope::Session, $rule->scope(new Node('opt_rvalue_system_variable_type', 2, [new Token(0, 'LOCAL_SYM', 'LOCAL', 0), $dot])));
+        self::assertSame(VariableScope::Local, $rule->scope(new Node('opt_rvalue_system_variable_type', 2, [new Token(0, 'LOCAL_SYM', 'LOCAL', 0), $dot])));
     }
 }

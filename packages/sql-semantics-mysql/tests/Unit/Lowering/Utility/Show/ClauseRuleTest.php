@@ -73,7 +73,7 @@ final class ClauseRuleTest extends TestCase
 
     public function testScopeLowersTheKeywords(): void
     {
-        self::assertSame('SHOW SESSION STATUS', (new Semantics(Dialect::MySql))->analyze('show local status')->toString());
+        self::assertSame('SHOW LOCAL STATUS', (new Semantics(Dialect::MySql))->analyze('show local status')->toString());
     }
 
     public function testEngineLowersAll(): void

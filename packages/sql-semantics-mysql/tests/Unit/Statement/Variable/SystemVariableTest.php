@@ -90,7 +90,7 @@ final class SystemVariableTest extends TestCase
         self::assertSame('SELECT @@autocommit', $semantics->analyze('SELECT @@autocommit')->toString());
     }
 
-    public function testRenderSpellsLocalAsSession(): void
+    public function testRenderRetainsTheLocalScopeSpelling(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.x AS v');
 
@@ -99,8 +99,8 @@ final class SystemVariableTest extends TestCase
         $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
-        self::assertSame(VariableScope::Session, $item0->expression->scope);
-        self::assertSame('SELECT @@SESSION.x AS v', $operation->toString());
+        self::assertSame(VariableScope::Local, $item0->expression->scope);
+        self::assertSame('SELECT @@LOCAL.x AS v', $operation->toString());
     }
 
     public function testRenderQuotesANameThatIsAReservedWord(): void

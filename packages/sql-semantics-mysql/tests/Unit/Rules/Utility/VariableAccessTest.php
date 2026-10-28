@@ -20,6 +20,17 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 #[Small]
 final class VariableAccessTest extends TestCase
 {
+    public function testReadAndAssignLocalUseSessionVisibility(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $access = new VariableAccess();
+        self::assertNotNull($access->read('timestamp', VariableScope::Local, $derivation));
+        self::assertNull($access->read('version', VariableScope::Local, $derivation));
+        $access->assign('max_connections', VariableScope::Local, $derivation);
+        $access->assign('autocommit', VariableScope::Local, $derivation);
+        self::assertEquals([new VariableMisuse(VariableRule::SessionOfGlobalVariable, 'version'), new VariableMisuse(VariableRule::SetSessionOfGlobalVariable, 'max_connections')], $derivation->facts()->diagnostics);
+    }
+
     public function testReadRefusesAScopeTheVariableLacks(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));

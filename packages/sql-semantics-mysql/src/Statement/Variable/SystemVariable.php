@@ -58,7 +58,7 @@ final class SystemVariable implements Scalar
 
     /**
      * @param Name $name The variable name
-     * @param VariableScope|null $scope The read scope: GLOBAL, SESSION or the implicit scope
+     * @param VariableScope|null $scope The read scope: GLOBAL, SESSION, LOCAL or the implicit scope
      * @param Name|null $instance The instance or component name of a structured variable
      */
     public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
@@ -66,7 +66,7 @@ final class SystemVariable implements Scalar
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
-        Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session], true), 'A system-variable read has an implicit, GLOBAL or SESSION scope.');
+        Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session, VariableScope::Local], true), 'A system-variable read has an implicit, GLOBAL or SESSION scope.');
     }
 
     /**

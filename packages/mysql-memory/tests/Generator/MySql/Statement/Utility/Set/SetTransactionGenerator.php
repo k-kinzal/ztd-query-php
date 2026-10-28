@@ -43,7 +43,7 @@ final class SetTransactionGenerator implements ErisGenerator
         foreach ($modes as $mode) {
             $pairs[] = [$mode];
         }
-        $allowed = [null, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session];
+        $allowed = [null, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local];
         if (!in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             $allowed[] = \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist;
             $allowed[] = \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::PersistOnly;

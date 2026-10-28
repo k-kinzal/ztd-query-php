@@ -309,7 +309,7 @@ final class Names
         }
         $scope = match ($variable->scope) {
             Written::Global => VariableScope::Global,
-            Written::Session => VariableScope::Session,
+            Written::Session, Written::Local => VariableScope::Session,
             null => VariableScope::Both,
             Written::Persist, Written::PersistOnly => VariableScope::Global,
         };

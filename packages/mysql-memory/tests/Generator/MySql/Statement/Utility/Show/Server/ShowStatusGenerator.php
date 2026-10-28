@@ -45,7 +45,7 @@ final class ShowStatusGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'ShowStatus/114' => new ShowStatusGenerator(
-            scope: Generators::constant(null),
+            scope: Generators::elements([null, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local]),
             filter: Generators::constant(null)
         );
     }

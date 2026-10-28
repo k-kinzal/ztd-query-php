@@ -57,13 +57,23 @@ final class SetTransactionCommandTest extends TestCase
         (new SetTransactionCommand())->next($session, 'transaction_read_only', 'ON');
     }
 
-    public function testStoreSetsBothNamesMySql57Has(): void
+    /**
+     * @return iterable<string, array{VariableScope}>
+     */
+    public static function providerSessionScopes(): iterable
+    {
+        yield 'session' => [VariableScope::Session];
+        yield 'local' => [VariableScope::Local];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSessionScopes')]
+    public function testStoreSetsBothNamesMySql57Has(VariableScope $scope): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        (new SetTransactionCommand())->store($session, VariableScope::Session, 'transaction_isolation', 'READ-UNCOMMITTED');
-        $result = $session->query('SELECT @@tx_isolation, @@transaction_isolation')[0];
+        (new SetTransactionCommand())->store($session, $scope, 'transaction_isolation', 'READ-UNCOMMITTED');
+        $result = $session->query('SELECT @@tx_isolation, @@transaction_isolation, @@GLOBAL.transaction_isolation')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['READ-UNCOMMITTED', 'READ-UNCOMMITTED']], $result->rows);
+        self::assertSame([['READ-UNCOMMITTED', 'READ-UNCOMMITTED', 'REPEATABLE-READ']], $result->rows);
     }
 }

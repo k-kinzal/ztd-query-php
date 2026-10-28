@@ -45,7 +45,7 @@ final class ShowVariablesGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'ShowVariables/118' => new ShowVariablesGenerator(
-            scope: Generators::constant(null),
+            scope: Generators::elements([null, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local]),
             filter: Generators::constant(null)
         );
     }
