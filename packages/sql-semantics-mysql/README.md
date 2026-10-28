@@ -656,6 +656,14 @@ Additional authentication factors use `Statement\Account\User\Factor`, whose cas
 
 A standalone `PARTITION` entry in the MySQL 5.6 and 5.7 grammars is rejected during input lowering. It is not a public `Statement` type. Partition clauses remain available inside table definitions and alterations; removing the client entry does not remove table partitioning. The input refusal carries a typed reason and keyword offset, without retaining SQL or parser nodes.
 
+Table, column, index, partition, database and tablespace options retain their optional
+`=` signs. Character set and collation options retain `DEFAULT` and the selected
+`CHARSET`, `CHAR SET` or `CHARACTER SET` keyword. The owning CREATE TABLE,
+tablespace and resource-group statements retain the comma choices between adjacent
+operands; supplied comma lists must contain exactly one boolean per boundary.
+Resource-group CPU ranges hold `Numeral` operands, including leading zeros.
+Consumers obtain numeric indices from those operands without parsing rendered SQL.
+
 Database encryption uses `Statement\Server\Database\Encryption::Enabled` or `Disabled`. `DatabaseEncryption` accepts this setting and an optional decoded `Text` spelling that must denote the same value. SQL lowering validates case-insensitive Y/N operands before their first NUL and refuses other values before publishing a statement. An entire `N` operand disables encryption; a NUL suffix enables it, including after `N`, matching the server's separate validation and setting conversion. Hexadecimal and bit spellings are excluded. Database existence and storage-engine capabilities remain execution-state concerns.
 
 Legacy INSERT statements retain their optimizer hints in the semantic head. Qualified wildcards in an INSERT column list require a legacy grammar and cannot compose with modern-only hints.

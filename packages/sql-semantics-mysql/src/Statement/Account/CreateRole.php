@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Source\Span;
  *
  * @visibility public
  * @example Creating roles
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create role if not exists reader, 'writer'@'%'")->toString() // => 'CREATE ROLE IF NOT EXISTS reader, writer@`%`'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create role if not exists reader, 'writer'@'%'")->toString() // => 'CREATE ROLE IF NOT EXISTS reader, \'writer\'@\'%\''
  */
 final class CreateRole extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, AnalyzedStatement
 {

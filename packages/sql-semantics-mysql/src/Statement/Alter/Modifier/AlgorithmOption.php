@@ -35,8 +35,9 @@ final class AlgorithmOption implements AlterOption, AlterModifier
 
     /**
      * @param Name|null $algorithm The algorithm name, or null for the keyword DEFAULT
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly ?Name $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Name $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = true)
     {
         \SqlSemantics\Diagnostic\Check::input((new Choices())->known($algorithm, false), 'The algorithm is a known table-change option.');
     }
@@ -62,7 +63,10 @@ final class AlgorithmOption implements AlterOption, AlterModifier
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALGORITHM')->symbol('=');
+        $out->keyword('ALGORITHM');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
         if ($this->algorithm === null) {
             $out->keyword('DEFAULT');
         } else {

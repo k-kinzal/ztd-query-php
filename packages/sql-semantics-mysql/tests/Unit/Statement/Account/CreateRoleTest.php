@@ -17,7 +17,7 @@ final class CreateRoleTest extends TestCase
 {
     public function testRenderPreservesAConditionalAnonymousAccount(): void
     {
-        self::assertSame('CREATE ROLE IF NOT EXISTS ``', (new Semantics(Dialect::MySql))->analyze("CREATE ROLE IF NOT EXISTS ''")->toString());
+        self::assertSame('CREATE ROLE IF NOT EXISTS \'\'', (new Semantics(Dialect::MySql))->analyze("CREATE ROLE IF NOT EXISTS ''")->toString());
     }
 
     public function testRenderRetainsAnAnonymousRoleCondition(): void
@@ -44,7 +44,7 @@ final class CreateRoleTest extends TestCase
 
     public function testRenderKeepsConditionalDuplicates(): void
     {
-        self::assertSame('CREATE ROLE IF NOT EXISTS r, r@`%`', (new Semantics(Dialect::MySql))->analyze("CREATE ROLE IF NOT EXISTS r, r@'%' ")->toString());
+        self::assertSame('CREATE ROLE IF NOT EXISTS r, r@\'%\'', (new Semantics(Dialect::MySql))->analyze("CREATE ROLE IF NOT EXISTS r, r@'%' ")->toString());
     }
 
     public function testRenderWritesTheRoles(): void
@@ -62,7 +62,7 @@ final class CreateRoleTest extends TestCase
 
     public function testRenderPreservesTheCompleteDefinition(): void
     {
-        self::assertSame('CREATE PROCEDURE p() CREATE ROLE r, ``@h', (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE ROLE r, ''@h")->toString());
+        self::assertSame('CREATE PROCEDURE p() CREATE ROLE r, \'\'@h', (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() CREATE ROLE r, ''@h")->toString());
     }
 
     public function testProblemKeepsItsOriginalRequest(): void

@@ -49,7 +49,7 @@ final class CreateResourceGroupTest extends TestCase
 
     public function testRenderWritesEveryOption(): void
     {
-        self::assertSame('CREATE RESOURCE GROUP g TYPE = SYSTEM VCPU = 1 THREAD_PRIORITY = 0 ENABLE', (new Semantics(Dialect::MySql))->analyze('create resource group g type system vcpu = 1 thread_priority 0 enable')->toString());
+        self::assertSame('CREATE RESOURCE GROUP g TYPE SYSTEM VCPU = 1 THREAD_PRIORITY 0 ENABLE', (new Semantics(Dialect::MySql))->analyze('create resource group g type system vcpu = 1 thread_priority 0 enable')->toString());
     }
     public function testDeriveStatementDoesNotDecidePlatformPrioritySupport(): void
     {

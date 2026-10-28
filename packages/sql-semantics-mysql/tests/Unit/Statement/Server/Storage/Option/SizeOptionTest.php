@@ -20,7 +20,7 @@ final class SizeOptionTest extends TestCase
 {
     public function testRenderWritesKeywordAndSize(): void
     {
-        self::assertSame('ALTER TABLESPACE ts AUTOEXTEND_SIZE 4M MAX_SIZE 1024', (new Semantics(Dialect::MySql))->analyze('alter tablespace ts autoextend_size = 4M max_size 1024')->toString());
+        self::assertSame('ALTER TABLESPACE ts AUTOEXTEND_SIZE = 4M MAX_SIZE 1024', (new Semantics(Dialect::MySql))->analyze('alter tablespace ts autoextend_size = 4M max_size 1024')->toString());
     }
 
     public function testKeywordAnswersTheKind(): void

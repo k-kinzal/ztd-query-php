@@ -28,6 +28,6 @@ final class AlgorithmOptionTest extends TestCase
 
     public function testRenderWritesTheAlgorithmOrDefault(): void
     {
-        self::assertSame('ALTER TABLE t ALGORITHM = DEFAULT, ALGORITHM = INPLACE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE')->toString());
+        self::assertSame('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE')->toString());
     }
 }

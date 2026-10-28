@@ -27,6 +27,6 @@ final class CollationOptionTest extends TestCase
 
         self::assertInstanceOf(CollationOption::class, $option);
         self::assertSame('utf8mb4_bin', $option->collation->name?->value);
-        self::assertSame('CREATE TABLE t (a INT) COLLATE utf8mb4_bin', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) DEFAULT COLLATE utf8mb4_bin', $create->toString());
     }
 }

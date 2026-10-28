@@ -20,8 +20,8 @@ use SqlSemantics\Statement\Identifier\Name;
  * collation_name_or_default, opt_collate, opt_collate_explicit,
  * default_collation. A name is an identifier or a string; the keyword
  * BINARY at such a position is the bare name `binary`; the keyword DEFAULT is the
- * absence of a name. The optional DEFAULT before CHARACTER SET or COLLATE
- * and the optional equals sign of a table or database option are not kept.
+ * absence of a name. Table and database option owners retain DEFAULT, the
+ * introducing keyword and optional equals sign separately from this name.
  * Constructs: Name, CharsetName, CollationName. Terminates: unit
  * productions over strict subtrees.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-syntax.html.

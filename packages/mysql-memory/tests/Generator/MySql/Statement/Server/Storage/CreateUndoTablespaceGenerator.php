@@ -24,18 +24,22 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption>>|null $options Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<list<bool>>|null $optionsCommas Generated list boundaries
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $datafile, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $datafile, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace(name: $parts[0], datafile: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $name,
             $datafile,
             $options ?? Generators::constant([]),
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static function (array $parts) use ($optionsCommas): ErisGenerator {
+            return Generators::map(
+                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace(name: $parts[0], datafile: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], optionsCommas: $commas),
+                $optionsCommas ?? Generators::vector(max(0, count($parts[2]) - 1), Generators::bool())
+            );
+        });
     }
     /**
      * Composes the statement's SQL forms from typed operand generators.

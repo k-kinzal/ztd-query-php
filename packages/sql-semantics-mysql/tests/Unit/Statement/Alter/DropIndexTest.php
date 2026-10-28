@@ -32,6 +32,6 @@ final class DropIndexTest extends TestCase
 
     public function testRenderWritesTheOptionsInOrder(): void
     {
-        self::assertSame('DROP INDEX `PRIMARY` ON db.t LOCK = shared ALGORITHM = DEFAULT', (new Semantics(Dialect::MySql))->analyze('drop index `PRIMARY` on db.t lock shared algorithm default')->toString());
+        self::assertSame('DROP INDEX `PRIMARY` ON db.t LOCK shared ALGORITHM DEFAULT', (new Semantics(Dialect::MySql))->analyze('drop index `PRIMARY` on db.t lock shared algorithm default')->toString());
     }
 }

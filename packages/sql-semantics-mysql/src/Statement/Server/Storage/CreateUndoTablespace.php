@@ -32,6 +32,11 @@ final class CreateUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
+
+    /**
      * @var list<StorageOption> The options in written order
      */
     public readonly array $options;
@@ -40,14 +45,16 @@ final class CreateUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\
      * @param Name $name The tablespace name
      * @param Text $datafile The data file
      * @param list<StorageOption> $options The options in written order
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
-    public function __construct(public readonly Name $name, public readonly Text $datafile, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly Text $datafile, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         \SqlSemantics\Diagnostic\Check::input($datafile->radix === null, 'A tablespace file name is a quoted string.');
         $this->options = (new StorageOptions())->checked($options, StorageOptions::UNDO_TABLESPACE);
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -65,6 +72,6 @@ final class CreateUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\
     public function render(Output $out): void
     {
         $out->keyword('CREATE', 'UNDO', 'TABLESPACE')->name($this->name, NameUse::Identifier)->keyword('ADD', 'DATAFILE')->node($this->datafile);
-        (new StorageOptions())->render($out, $this->options);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
     }
 }

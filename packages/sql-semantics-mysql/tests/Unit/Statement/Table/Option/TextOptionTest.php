@@ -27,6 +27,6 @@ final class TextOptionTest extends TestCase
 
         self::assertInstanceOf(TextOption::class, $option);
         self::assertSame('/d', $option->value->value);
-        self::assertSame('CREATE TABLE t (a INT) DATA DIRECTORY \'/d\'', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) DATA DIRECTORY = \'/d\'', $create->toString());
     }
 }

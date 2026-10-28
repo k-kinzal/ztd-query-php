@@ -24,8 +24,10 @@ final class EngineOption implements StorageOption
 
     /**
      * @param Name $engine The engine name
+     * @param bool $equals Whether the optional equals sign is written
+     * @param bool $storageKeyword Whether the optional STORAGE keyword is written
      */
-    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $storageKeyword = false)
     {
     }
 
@@ -42,6 +44,13 @@ final class EngineOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('ENGINE')->name($this->engine, NameUse::Identifier);
+        if ($this->storageKeyword) {
+            $out->keyword('STORAGE');
+        }
+        $out->keyword('ENGINE');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->name($this->engine, NameUse::Identifier);
     }
 }

@@ -21,14 +21,16 @@ final class AlgorithmOptionGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $algorithm Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $algorithm, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $algorithm, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(algorithm: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(algorithm: $parts[0], inputSource: $parts[1], equals: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $algorithm,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

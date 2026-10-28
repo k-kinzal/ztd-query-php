@@ -31,6 +31,11 @@ final class AlterLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\Sql
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
+
+    /**
      * @var list<StorageOption> The options in written order
      */
     public readonly array $options;
@@ -39,13 +44,15 @@ final class AlterLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\Sql
      * @param Name $name The log file group name
      * @param LogFile $file The log file
      * @param list<StorageOption> $options The options in written order
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
-    public function __construct(public readonly Name $name, public readonly LogFile $file, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly LogFile $file, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::ALTER_LOGFILE_GROUP);
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -63,6 +70,6 @@ final class AlterLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\Sql
     public function render(Output $out): void
     {
         $out->keyword('ALTER', 'LOGFILE', 'GROUP')->name($this->name, NameUse::Identifier)->keyword('ADD')->node($this->file);
-        (new StorageOptions())->render($out, $this->options);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
     }
 }

@@ -29,6 +29,6 @@ final class KeyBlockSizeTest extends TestCase
 
         self::assertInstanceOf(KeyBlockSize::class, $option);
         self::assertSame('8', $option->size->text);
-        self::assertSame('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE 8)', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE = 8)', $create->toString());
     }
 }

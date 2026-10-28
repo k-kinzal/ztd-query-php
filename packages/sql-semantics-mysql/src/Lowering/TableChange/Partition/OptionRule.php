@@ -105,17 +105,15 @@ final class OptionRule
     {
         $form = $this->lowering->form($option);
         [$kind, $storage, $equal, $value] = self::OPTIONS[$form->signature] ?? throw ImplementationGap::production($form);
-        if ($storage !== null) {
-            $this->lowering->options->present($form->node($storage));
-        }
-        $this->lowering->options->present($form->node($equal));
+        $storageKeyword = $storage !== null && $this->lowering->options->present($form->node($storage));
+        $equals = $this->lowering->options->present($form->node($equal));
         if ($kind->named()) {
-            return new PartitionOption($kind, $this->lowering->names->identifier($form->node($value)));
+            return new PartitionOption($kind, $this->lowering->names->identifier($form->node($value)), equals: $equals, storageKeyword: $storageKeyword);
         }
         if ($kind->numbered()) {
-            return new PartitionOption($kind, number: $this->lowering->numbers->numeral($form->node($value)));
+            return new PartitionOption($kind, number: $this->lowering->numbers->numeral($form->node($value)), equals: $equals);
         }
 
-        return new PartitionOption($kind, text: $this->lowering->literals->text($form->node($value)));
+        return new PartitionOption($kind, text: $this->lowering->literals->text($form->node($value)), equals: $equals);
     }
 }

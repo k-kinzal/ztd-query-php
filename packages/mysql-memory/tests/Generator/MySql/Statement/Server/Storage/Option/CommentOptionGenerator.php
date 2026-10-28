@@ -21,14 +21,16 @@ final class CommentOptionGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $comment Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $comment, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $comment, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\CommentOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\CommentOption(comment: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\CommentOption(comment: $parts[0], inputSource: $parts[1], equals: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $comment,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

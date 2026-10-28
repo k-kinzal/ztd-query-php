@@ -21,14 +21,16 @@ final class LockOptionGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $lock Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $lock, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $lock, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(lock: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(lock: $parts[0], inputSource: $parts[1], equals: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $lock,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

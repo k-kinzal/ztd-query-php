@@ -20,7 +20,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Making a database read-only
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER DATABASE d READ ONLY = 1');
- *     [$alter->toString(), $alter->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY 1', true]
+ *     [$alter->toString(), $alter->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY = 1', true]
  */
 final class DatabaseReadOnly implements DatabaseOption
 {
@@ -28,8 +28,9 @@ final class DatabaseReadOnly implements DatabaseOption
 
     /**
      * @param Numeral|null $value A number converted to 0 or 1; null for DEFAULT
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly ?Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         Check::input($value === null || (new Magnitudes())->atMost($value, '1'), 'A database READ ONLY option converts to 0 or 1, or uses DEFAULT.');
     }
@@ -48,6 +49,9 @@ final class DatabaseReadOnly implements DatabaseOption
     public function render(Output $out): void
     {
         $out->keyword('READ', 'ONLY');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
         if ($this->value === null) {
             $out->keyword('DEFAULT');
         } else {

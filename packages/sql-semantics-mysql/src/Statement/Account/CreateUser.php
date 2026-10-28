@@ -29,7 +29,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Creating an account with a password and a lock
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create user if not exists app@'%' identified by 'pw' account lock")->toString() // => "CREATE USER IF NOT EXISTS app@`%` IDENTIFIED BY 'pw' ACCOUNT LOCK"
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create user if not exists app@'%' identified by 'pw' account lock")->toString() // => "CREATE USER IF NOT EXISTS app@'%' IDENTIFIED BY 'pw' ACCOUNT LOCK"
  */
 final class CreateUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

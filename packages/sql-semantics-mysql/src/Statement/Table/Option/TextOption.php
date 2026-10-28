@@ -12,7 +12,7 @@ use SqlSemantics\Rendering\Output;
 /**
  * A table option whose value is a string, such as COMMENT, CONNECTION or DATA DIRECTORY.
  *
- * The equals sign between the option and its value is optional and is not kept.
+ * The optional equals sign is retained independently of the option value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
  * @visibility public
@@ -27,8 +27,9 @@ final class TextOption implements TableOption
     /**
      * @param TextOptionKind $kind The option
      * @param Text $value The string
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly TextOptionKind $kind, public readonly Text $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly TextOptionKind $kind, public readonly Text $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         if (in_array($kind, [TextOptionKind::EngineAttribute, TextOptionKind::SecondaryEngineAttribute], true)) {
             \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($value);
@@ -40,6 +41,10 @@ final class TextOption implements TableOption
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->kind->value))->node($this->value);
+        $out->keyword(...explode(' ', $this->kind->value));
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->value);
     }
 }

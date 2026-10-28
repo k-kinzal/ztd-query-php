@@ -11,7 +11,7 @@ use SqlSemantics\Rendering\Output;
 /**
  * The default collation of the table: [DEFAULT] COLLATE.
  *
- * The equals sign between the option and its value is optional and is not kept.
+ * The optional equals sign is retained independently of the option value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
  * @visibility public
@@ -25,8 +25,10 @@ final class CollationOption implements TableOption
 
     /**
      * @param CollationName $collation The collation, or DEFAULT
+     * @param bool $equals Whether the optional equals sign is written
+     * @param bool $defaultKeyword Whether the optional DEFAULT keyword is written
      */
-    public function __construct(public readonly CollationName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly CollationName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $defaultKeyword = false)
     {
     }
 
@@ -35,6 +37,13 @@ final class CollationOption implements TableOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('COLLATE')->node($this->collation);
+        if ($this->defaultKeyword) {
+            $out->keyword('DEFAULT');
+        }
+        $out->keyword('COLLATE');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->collation);
     }
 }

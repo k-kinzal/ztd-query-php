@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Source\Span;
  *
  * @visibility public
  * @example Granting roles with the admin option
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, r2@`%` TO u WITH ADMIN OPTION'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, \'r2\'@\'%\' TO u WITH ADMIN OPTION'
  */
 final class GrantRoles extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, AnalyzedStatement
 {

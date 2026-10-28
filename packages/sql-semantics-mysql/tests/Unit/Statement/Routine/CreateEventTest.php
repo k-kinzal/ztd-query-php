@@ -120,7 +120,7 @@ final class CreateEventTest extends TestCase
         yield 'MySQL 5.6 definer and DISABLE ON SLAVE' => [
             'mysql-5.6.51',
             "create definer = 'u'@'h' event if not exists shop.e on schedule every 1 hour disable on slave do select 1",
-            'CREATE DEFINER = u@h EVENT IF NOT EXISTS shop.e ON SCHEDULE EVERY 1 HOUR DISABLE ON SLAVE DO SELECT 1',
+            'CREATE DEFINER = \'u\'@\'h\' EVENT IF NOT EXISTS shop.e ON SCHEDULE EVERY 1 HOUR DISABLE ON SLAVE DO SELECT 1',
         ];
         yield 'MySQL 5.7 every clause' => [
             'mysql-5.7.44',

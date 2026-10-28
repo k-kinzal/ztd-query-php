@@ -23,17 +23,21 @@ final class SetResourceGroupGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral>>|null $threads Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<list<bool>>|null $threadsCommas Generated list boundaries
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $threads = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $threads = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $threadsCommas = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup(name: $parts[0], threads: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $name,
             $threads ?? Generators::constant([]),
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static function (array $parts) use ($threadsCommas): ErisGenerator {
+            return Generators::map(
+                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup(name: $parts[0], threads: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], threadsCommas: $commas),
+                $threadsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
+            );
+        });
     }
     /**
      * Composes the statement's SQL forms from typed operand generators.

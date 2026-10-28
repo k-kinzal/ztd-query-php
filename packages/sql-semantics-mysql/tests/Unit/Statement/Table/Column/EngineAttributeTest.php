@@ -34,6 +34,6 @@ final class EngineAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE \'{}\')', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')')->toString());
+        self::assertSame('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')')->toString());
     }
 }

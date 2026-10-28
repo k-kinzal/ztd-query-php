@@ -29,6 +29,6 @@ final class IndexEngineAttributeTest extends TestCase
 
         self::assertInstanceOf(IndexEngineAttribute::class, $option);
         self::assertFalse($option->secondary);
-        self::assertSame('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE \'{}\')', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE = \'{}\')', $create->toString());
     }
 }

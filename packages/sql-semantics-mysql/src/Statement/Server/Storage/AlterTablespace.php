@@ -24,11 +24,16 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Encrypting a tablespace
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter tablespace ts encryption = 'Y'");
- *     [$statement->toString(), count($statement->options)] // => ["ALTER TABLESPACE ts ENCRYPTION 'Y'", 1]
+ *     [$statement->toString(), count($statement->options)] // => ["ALTER TABLESPACE ts ENCRYPTION = 'Y'", 1]
  */
 final class AlterTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
     use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -38,13 +43,15 @@ final class AlterTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     /**
      * @param Name $name The tablespace name
      * @param list<StorageOption> $options The options in written order
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
-    public function __construct(public readonly Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::ALTER_TABLESPACE, 1);
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -62,6 +69,6 @@ final class AlterTablespace extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     public function render(Output $out): void
     {
         $out->keyword('ALTER', 'TABLESPACE')->name($this->name, NameUse::Identifier);
-        (new StorageOptions())->render($out, $this->options);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
     }
 }

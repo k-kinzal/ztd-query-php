@@ -28,7 +28,7 @@ final class InstanceRuleTest extends TestCase
 
     public function testLocalLowersTheDirectory(): void
     {
-        self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", (new Semantics(Dialect::MySql))->analyze("clone local data directory = '/d'")->toString());
+        self::assertSame("CLONE LOCAL DATA DIRECTORY = '/d'", (new Semantics(Dialect::MySql))->analyze("clone local data directory = '/d'")->toString());
     }
 
     public function testRemoteRejectsASpaceAroundTheColon(): void

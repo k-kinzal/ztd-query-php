@@ -27,6 +27,6 @@ final class NumberOptionTest extends TestCase
 
         self::assertInstanceOf(NumberOption::class, $option);
         self::assertNull($option->value);
-        self::assertSame('CREATE TABLE t (a INT) STATS_PERSISTENT DEFAULT MAX_ROWS 10', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) STATS_PERSISTENT = DEFAULT MAX_ROWS 10', $create->toString());
     }
 }

@@ -64,6 +64,11 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
+
+    /**
      * @var list<TableElement> The column, index and constraint definitions in order; empty when no parenthesized list is written
      */
     public readonly array $elements;
@@ -82,6 +87,7 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      * @param int $temporaryWords How many times TEMPORARY is written; MySQL 8.0 and later accept it once
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      * @param bool $enclosed Whether the partitioning is written inside the parenthesis that opens the query (MySQL 5.x)
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -95,6 +101,7 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         ?RelationFact $relationInformation = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?array $optionsCommas = null,
     ) {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -107,6 +114,7 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         $this->elements = Check::listOf($elements, TableElement::class, 'Table elements are an ordered list of table elements.');
         $this->options = Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         Check::input(
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
@@ -202,9 +210,7 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         if ($this->elements !== []) {
             $out->symbol('(')->list($this->elements)->symbol(')');
         }
-        foreach ($this->options as $option) {
-            $out->node($option);
-        }
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
         $out->node($this->partitioning)->node($this->query);
     }
 }

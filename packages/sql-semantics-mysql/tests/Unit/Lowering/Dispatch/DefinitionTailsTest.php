@@ -30,7 +30,7 @@ final class DefinitionTailsTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("CREATE DEFINER = 'admin'@'localhost' TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = 1");
 
         self::assertInstanceOf(CreateTrigger::class, $operation);
-        self::assertSame('CREATE DEFINER = admin@localhost TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = 1', $operation->toString());
+        self::assertSame('CREATE DEFINER = \'admin\'@\'localhost\' TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = 1', $operation->toString());
     }
 
     public function testTailHandsAViewToTheTableDefinitionFamily(): void

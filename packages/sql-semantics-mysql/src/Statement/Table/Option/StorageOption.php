@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 /**
  * The STORAGE option of an NDB table: DISK or MEMORY.
  *
- * The equals sign between the option and its value is optional and is not kept.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
  * @visibility public

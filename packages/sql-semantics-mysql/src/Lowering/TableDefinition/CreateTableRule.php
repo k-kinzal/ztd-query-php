@@ -66,7 +66,7 @@ final class CreateTableRule
 
         return match ($tail->signature) {
             'create2: ( create2a' => $this->enclosed($name, $this->lowering->productions->form($tail->node(1)), $temporary, $exists),
-            'create2: opt_create_table_options opt_create_partitioning create3' => $this->create($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists),
+            'create2: opt_create_table_options opt_create_partitioning create3' => $this->create($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists, optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($tail->node(0), ['create_table_option'])),
             'create2: LIKE table_ident' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(1)), $temporary, $exists),
             'create2: ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(2)), $temporary, $exists, enclosed: true),
             default => throw ImplementationGap::production($tail),
@@ -93,6 +93,7 @@ final class CreateTableRule
                 $this->legacyQuery($form->node(4)),
                 $temporary,
                 $exists,
+                optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(2), ['create_table_option']),
             ),
             'create2a: opt_create_partitioning create_select ) union_opt' => $this->partitioned($name, $changes->partitioning($form->node(0)), new TableQuery($this->lowering->queries->legacyParenthesizedQuery($form->node(1), $form->node(3))), $temporary, $exists),
             default => throw ImplementationGap::production($form),
@@ -199,7 +200,7 @@ final class CreateTableRule
                 default => throw ImplementationGap::production($part),
             };
 
-            return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists);
+            return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists, optionsCommas: $options === [] ? [] : (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(0), ['create_table_option']));
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts, $failure->sources);
         }
@@ -240,11 +241,12 @@ final class CreateTableRule
     /**
      * Publishes the complete request, including incompatible MERGE/query roles.
      *
+     * @param list<bool>|null $optionsCommas Retained boundaries between options
      * @param list<TableElement> $elements Complete column and key definitions
      * @param list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption> $options Complete table options
      */
-    public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false): CreateTable
+    public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false, ?array $optionsCommas = null): CreateTable
     {
-        return new CreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed);
+        return new CreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed, optionsCommas: $optionsCommas);
     }
 }

@@ -27,6 +27,6 @@ final class RowFormatOptionTest extends TestCase
 
         self::assertInstanceOf(RowFormatOption::class, $option);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compressed, $option->format);
-        self::assertSame('CREATE TABLE t (a INT) ROW_FORMAT COMPRESSED', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) ROW_FORMAT = COMPRESSED', $create->toString());
     }
 }

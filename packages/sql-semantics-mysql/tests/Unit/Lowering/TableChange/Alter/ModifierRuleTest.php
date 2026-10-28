@@ -43,17 +43,17 @@ final class ModifierRuleTest extends TestCase
 
     public function testOptionLowersTheValue(): void
     {
-        self::assertSame('ALTER TABLE t ALGORITHM = INSTANT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM INSTANT')->toString());
+        self::assertSame('ALTER TABLE t ALGORITHM INSTANT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM INSTANT')->toString());
     }
 
     public function testValueLowersDefault(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = DEFAULT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK DEFAULT')->toString());
+        self::assertSame('ALTER TABLE t LOCK DEFAULT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK DEFAULT')->toString());
     }
 
     public function testPairLowersTheOptionsInOrder(): void
     {
-        self::assertSame('DROP INDEX i ON t LOCK = SHARED ALGORITHM = COPY', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t LOCK SHARED ALGORITHM COPY')->toString());
+        self::assertSame('DROP INDEX i ON t LOCK SHARED ALGORITHM COPY', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t LOCK SHARED ALGORITHM COPY')->toString());
     }
 
     public function testModifiersLowersTheList(): void

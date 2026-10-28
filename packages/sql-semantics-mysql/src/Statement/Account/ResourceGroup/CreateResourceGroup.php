@@ -20,11 +20,16 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Creating a group bound to two CPUs
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('create resource group batch type user vcpu 2-3 thread_priority 10 disable')->toString() // => 'CREATE RESOURCE GROUP batch TYPE = USER VCPU = 2 - 3 THREAD_PRIORITY = 10 DISABLE'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('create resource group batch type user vcpu 2-3 thread_priority 10 disable')->toString() // => 'CREATE RESOURCE GROUP batch TYPE USER VCPU 2 - 3 THREAD_PRIORITY 10 DISABLE'
  */
 final class CreateResourceGroup extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
     use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<bool> The retained comma at each boundary between cpus
+     */
+    public readonly array $cpusCommas;
 
     /**
      * @var list<CpuRange> The CPUs of VCPU; none when the option is absent
@@ -37,13 +42,18 @@ final class CreateResourceGroup extends \SqlSemantics\Platform\MySql\Statement\S
      * @param list<CpuRange> $cpus The CPUs of VCPU; none when the option is absent
      * @param ThreadPriority|null $priority The THREAD_PRIORITY, when written
      * @param bool|null $enabled ENABLE (true) or DISABLE (false), when written
+     * @param list<bool>|null $cpusCommas Optional commas between adjacent cpus
+     * @param bool $typeEquals Whether TYPE uses an equals sign
+     * @param bool $cpusEquals Whether VCPU uses an equals sign
+     * @param bool $priorityEquals Whether THREAD_PRIORITY uses an equals sign
      */
-    public function __construct(public readonly ResourceGroupName $name, public readonly ResourceGroupKind $kind, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ResourceGroupName $name, public readonly ResourceGroupKind $kind, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $cpusCommas = null, public readonly bool $typeEquals = true, public readonly bool $cpusEquals = true, public readonly bool $priorityEquals = true)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->cpus = Check::listOf($cpus, CpuRange::class, 'VCPU lists CPU numbers and ranges.');
+        $this->cpusCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($cpusCommas, count($this->cpus), true);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -60,12 +70,25 @@ final class CreateResourceGroup extends \SqlSemantics\Platform\MySql\Statement\S
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE', 'RESOURCE', 'GROUP')->node($this->name)->keyword('TYPE')->symbol('=')->keyword($this->kind->value);
+        $out->keyword('CREATE', 'RESOURCE', 'GROUP')->node($this->name)->keyword('TYPE');
+        if ($this->typeEquals) {
+            $out->symbol('=');
+        }
+        $out->keyword($this->kind->value);
         if ($this->cpus !== []) {
-            $out->keyword('VCPU')->symbol('=')->list($this->cpus);
+            $out->keyword('VCPU');
+            if ($this->cpusEquals) {
+                $out->symbol('=');
+            }
+
+            (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->cpus, $this->cpusCommas);
         }
         if ($this->priority !== null) {
-            $out->keyword('THREAD_PRIORITY')->symbol('=')->node($this->priority);
+            $out->keyword('THREAD_PRIORITY');
+            if ($this->priorityEquals) {
+                $out->symbol('=');
+            }
+            $out->node($this->priority);
         }
         if ($this->enabled !== null) {
             $out->keyword($this->enabled ? 'ENABLE' : 'DISABLE');

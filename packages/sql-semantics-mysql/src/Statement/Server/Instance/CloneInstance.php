@@ -28,7 +28,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Cloning a remote server into a directory
  *     $clone = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("clone instance from 'u'@'h':3306 identified by 'p' data directory '/d' require no ssl");
- *     [$clone->toString(), $clone->port->text, $clone->requireSsl] // => ["CLONE INSTANCE FROM u@h:3306 IDENTIFIED BY 'p' DATA DIRECTORY '/d' REQUIRE NO SSL", '3306', false]
+ *     [$clone->toString(), $clone->port->text, $clone->requireSsl] // => ["CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p' DATA DIRECTORY '/d' REQUIRE NO SSL", '3306', false]
  */
 final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -40,6 +40,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      * @param Text $password The account's password
      * @param Text|null $directory The directory the data is cloned into, when written
      * @param bool|null $requireSsl Whether REQUIRE SSL (true) or REQUIRE NO SSL (false) is written; null when absent
+     * @param bool $equals Whether the optional equals sign is written
      */
     public function __construct(
         public readonly Account $donor,
@@ -49,6 +50,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         public readonly ?bool $requireSsl = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $equals = false,
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -73,7 +75,11 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         $out->keyword('CLONE', 'INSTANCE', 'FROM')->node($this->donor)->glue()->symbol(':')->glue()->node($this->port);
         $out->keyword('IDENTIFIED', 'BY')->node($this->password);
         if ($this->directory !== null) {
-            $out->keyword('DATA', 'DIRECTORY')->node($this->directory);
+            $out->keyword('DATA', 'DIRECTORY');
+            if ($this->equals) {
+                $out->symbol('=');
+            }
+            $out->node($this->directory);
         }
         if ($this->requireSsl !== null) {
             $out->keyword(...($this->requireSsl ? ['REQUIRE', 'SSL'] : ['REQUIRE', 'NO', 'SSL']));

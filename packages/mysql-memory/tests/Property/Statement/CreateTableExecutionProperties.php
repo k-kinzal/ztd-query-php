@@ -37,6 +37,34 @@ final class CreateTableExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Optional notation preserves option values; MySQL 5.6 applies its default Antelope format fallback.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesGeneratedOptionsInstallTheirDeclaredValues(GrammarRelease $release): void
+    {
+        $this->forAll(CreateTableGenerator::optionDefinitions($release))->then(static function (array $sample) use ($release): void {
+            [, $operation] = $sample;
+            self::assertInstanceOf(CreateTable::class, $operation);
+            $database = $operation->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), databases: [$database]))->connect(database: $database);
+            $session->text = 'direct generated table options';
+            $reply = (new Execution($session))->statement($operation);
+            self::assertInstanceOf(Completion::class, $reply);
+            $definition = $session->instance->dictionary->schema($database)?->table($operation->name->name->value)?->definition;
+            self::assertNotNull($definition);
+            self::assertSame('InnoDB', $definition->engine);
+            self::assertSame('latin1_swedish_ci', $definition->collation);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption::class, $operation->options[2]);
+            self::assertSame($operation->options[2]->value->value, (new \MySqlMemory\Command\Show\ShowCreateTableCommand())->comment($definition));
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption::class, $operation->options[3]);
+            self::assertSame($release === GrammarRelease::MySql5651 ? \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact : $operation->options[3]->format, $definition->rowFormat);
+            self::assertSame('direct generated table options', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
      * An incompatible effective default remains a semantic request and raises its SQL condition.
      */
     #[Test]

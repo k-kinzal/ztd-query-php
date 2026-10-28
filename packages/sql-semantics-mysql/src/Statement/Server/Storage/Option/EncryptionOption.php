@@ -24,8 +24,9 @@ final class EncryptionOption implements StorageOption
 
     /**
      * @param Text $encryption The value, 'Y' or 'N' for the server
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly Text $encryption, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Text $encryption, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         Check::input($encryption->radix === null, 'A tablespace encryption value is quoted text.');
     }
@@ -43,6 +44,10 @@ final class EncryptionOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('ENCRYPTION')->node($this->encryption);
+        $out->keyword('ENCRYPTION');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->encryption);
     }
 }

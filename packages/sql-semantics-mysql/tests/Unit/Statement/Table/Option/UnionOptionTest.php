@@ -27,6 +27,6 @@ final class UnionOptionTest extends TestCase
 
         self::assertInstanceOf(UnionOption::class, $option);
         self::assertCount(2, $option->tables);
-        self::assertSame('CREATE TABLE t (a INT) UNION (x, db.y)', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) UNION = (x, db.y)', $create->toString());
     }
 }

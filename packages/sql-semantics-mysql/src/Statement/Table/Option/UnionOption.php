@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 /**
  * The UNION option of a MERGE table: the tables it merges, possibly none.
  *
- * The equals sign between the option and its value is optional and is not kept.
+ * The optional equals sign is retained independently of the option value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
  * @visibility public
@@ -32,8 +32,9 @@ final class UnionOption implements TableOption
 
     /**
      * @param list<QualifiedName> $tables The merged tables in order
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(array $tables, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(array $tables, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         $this->tables = Check::listOf($tables, QualifiedName::class, 'The merged tables are an ordered list of table names.');
         foreach ($this->tables as $table) {
@@ -47,7 +48,11 @@ final class UnionOption implements TableOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('UNION')->symbol('(');
+        $out->keyword('UNION');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->symbol('(');
         foreach ($this->tables as $position => $table) {
             if ($position > 0) {
                 $out->symbol(',');

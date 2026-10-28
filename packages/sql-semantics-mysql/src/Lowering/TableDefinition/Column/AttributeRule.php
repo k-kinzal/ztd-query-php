@@ -120,8 +120,8 @@ final class AttributeRule
             'column_attribute: SRID_SYM real_ulonglong_num' => $this->srid($form->node(1)),
             'column_attribute: opt_constraint_name check_constraint' => new CheckConstraint((new KeyRule($this->lowering))->check($form->node(1)), (new KeyRule($this->lowering))->constraint($form->node(0))),
             'column_attribute: constraint_enforcement' => new EnforcementAttribute((new KeyRule($this->lowering))->enforced($form->node(0))),
-            'column_attribute: ENGINE_ATTRIBUTE_SYM opt_equal json_attribute' => new EngineAttribute($literals->text($form->node(2))),
-            'column_attribute: SECONDARY_ENGINE_ATTRIBUTE_SYM opt_equal json_attribute' => new EngineAttribute($literals->text($form->node(2)), true),
+            'column_attribute: ENGINE_ATTRIBUTE_SYM opt_equal json_attribute' => new EngineAttribute($literals->text($form->node(2)), equals: $this->lowering->options->present($form->node(1))),
+            'column_attribute: SECONDARY_ENGINE_ATTRIBUTE_SYM opt_equal json_attribute' => new EngineAttribute($literals->text($form->node(2)), true, equals: $this->lowering->options->present($form->node(1))),
             'column_attribute: visibility' => new KeywordAttribute((new KeyOptionRule($this->lowering))->visible($form->node(0)) ? ColumnKeyword::Visible : ColumnKeyword::Invisible),
             default => throw ImplementationGap::production($form),
         };

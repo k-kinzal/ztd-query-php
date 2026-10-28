@@ -70,7 +70,13 @@ final class UserRule
             throw new \SqlSemantics\Construction\RejectedInput($problem, $source === null ? 0 : ((new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0));
         }
 
-        return new AccountName($user, $host);
+        $form = $source === null ? null : $this->lowering->form($source);
+        return new AccountName(
+            $user,
+            $host,
+            userString: $form !== null && in_array($this->lowering->names->identifierForm($form->node(0))->node->name, ['TEXT_STRING_sys', 'TEXT_STRING_validated'], true),
+            hostString: $form !== null && $host !== null && in_array($this->lowering->names->identifierForm($form->node(2))->node->name, ['TEXT_STRING_sys', 'TEXT_STRING_validated'], true),
+        );
     }
 
     /**

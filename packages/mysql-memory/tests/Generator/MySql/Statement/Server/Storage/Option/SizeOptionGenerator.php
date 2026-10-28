@@ -22,15 +22,17 @@ final class SizeOptionGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind> $kind Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\ByteSize> $size Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $size, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ErisGenerator $size, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption(kind: $parts[0], size: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption(kind: $parts[0], size: $parts[1], inputSource: $parts[2], equals: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $kind,
             $size,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

@@ -60,7 +60,7 @@ final class DefinitionRuleTest extends TestCase
         self::assertInstanceOf(Select::class, $statement->body->query);
         self::assertNotNull($statement->definer);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame("CREATE DEFINER = root@`%` PROCEDURE db.p(IN a INT, OUT b INT, INOUT c INT) COMMENT 'x' SELECT a", $create->toString());
+        self::assertSame("CREATE DEFINER = 'root'@'%' PROCEDURE db.p(IN a INT, OUT b INT, INOUT c INT) COMMENT 'x' SELECT a", $create->toString());
     }
 
     /**

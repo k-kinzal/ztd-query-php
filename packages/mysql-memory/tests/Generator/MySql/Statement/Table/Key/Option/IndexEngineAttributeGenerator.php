@@ -22,15 +22,17 @@ final class IndexEngineAttributeGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $attribute Generated constructor operand
      * @param ErisGenerator<bool>|null $secondary Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $attribute, ?ErisGenerator $secondary = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $attribute, ?ErisGenerator $secondary = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute(attribute: $parts[0], secondary: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute(attribute: $parts[0], secondary: $parts[1], inputSource: $parts[2], equals: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $attribute,
             $secondary ?? Generators::constant(false),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

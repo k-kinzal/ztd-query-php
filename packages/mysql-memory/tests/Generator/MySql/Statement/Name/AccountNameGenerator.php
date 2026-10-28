@@ -56,11 +56,13 @@ final class AccountNameGenerator implements ErisGenerator
      *
      * @param ErisGenerator<Name> $user The generated semantic operand
      * @param ErisGenerator<Name|null> $host The generated semantic operand
+     * @param ErisGenerator<bool>|null $userString Generated string notation for an unquoted decoded name
+     * @param ErisGenerator<bool>|null $hostString Generated string notation for an existing host
      * @return ErisGenerator<AccountName>
      */
-    public static function fromOperands(ErisGenerator $user, ErisGenerator $host): ErisGenerator
+    public static function fromOperands(ErisGenerator $user, ErisGenerator $host, ?ErisGenerator $userString = null, ?ErisGenerator $hostString = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): AccountName => new AccountName(user: $parts[0], host: $parts[1]), \Tests\Generator\Operands::tuple($user, $host));
+        return Generators::map(static fn (array $parts): AccountName => new AccountName(user: $parts[0], host: $parts[1], userString: $parts[0]->quote === null && $parts[2], hostString: $parts[1] !== null && $parts[1]->quote === null && $parts[3]), \Tests\Generator\Operands::tuple($user, $host, $userString ?? Generators::bool(), $hostString ?? Generators::bool()));
     }
 
 }

@@ -26,11 +26,12 @@ final class CloneInstanceGenerator implements ErisGenerator
      * @param ErisGenerator<bool|null>|null $requireSsl Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $donor, ErisGenerator $port, ErisGenerator $password, ?ErisGenerator $directory = null, ?ErisGenerator $requireSsl = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $donor, ErisGenerator $port, ErisGenerator $password, ?ErisGenerator $directory = null, ?ErisGenerator $requireSsl = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance(donor: $parts[0], port: $parts[1], password: $parts[2], directory: $parts[3], requireSsl: $parts[4], statementInformation: $parts[5], inputSource: $parts[6]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance(donor: $parts[0], port: $parts[1], password: $parts[2], directory: $parts[3], requireSsl: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], equals: $parts[7]);
         }, \Tests\Generator\Operands::tuple(
             $donor,
             $port,
@@ -38,7 +39,8 @@ final class CloneInstanceGenerator implements ErisGenerator
             $directory ?? Generators::constant(null),
             $requireSsl ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
     /**

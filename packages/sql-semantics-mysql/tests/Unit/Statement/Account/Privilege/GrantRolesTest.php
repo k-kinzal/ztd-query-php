@@ -45,7 +45,7 @@ final class GrantRolesTest extends TestCase
 
     public function testRenderPreservesTheCompleteDefinition(): void
     {
-        self::assertSame('CREATE PROCEDURE p() GRANT r, `` TO u@h', (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() GRANT r, '' TO u@h")->toString());
+        self::assertSame('CREATE PROCEDURE p() GRANT r, \'\' TO u@h', (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() GRANT r, '' TO u@h")->toString());
     }
 
     public function testProblemKeepsItsOriginalRequest(): void

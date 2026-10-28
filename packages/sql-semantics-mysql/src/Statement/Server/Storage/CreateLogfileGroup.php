@@ -24,11 +24,16 @@ use SqlSemantics\Statement\Identifier\Name;
  * @visibility public
  * @example Creating a log file group
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create logfile group lg add undofile 'u.log' undo_buffer_size = 8M engine = ndb");
- *     [$statement->toString(), $statement->file->file->value] // => ["CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' UNDO_BUFFER_SIZE 8M ENGINE ndb", 'u.log']
+ *     [$statement->toString(), $statement->file->file->value] // => ["CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' UNDO_BUFFER_SIZE = 8M ENGINE = ndb", 'u.log']
  */
 final class CreateLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
     use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
 
     /**
      * @var list<StorageOption> The options in written order
@@ -39,13 +44,15 @@ final class CreateLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\Sq
      * @param Name $name The log file group name
      * @param LogFile $file The log file
      * @param list<StorageOption> $options The options in written order
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
-    public function __construct(public readonly Name $name, public readonly LogFile $file, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly LogFile $file, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::LOGFILE_GROUP);
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -63,6 +70,6 @@ final class CreateLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\Sq
     public function render(Output $out): void
     {
         $out->keyword('CREATE', 'LOGFILE', 'GROUP')->name($this->name, NameUse::Identifier)->keyword('ADD')->node($this->file);
-        (new StorageOptions())->render($out, $this->options);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
     }
 }

@@ -26,20 +26,28 @@ final class AlterResourceGroupGenerator implements ErisGenerator
      * @param ErisGenerator<bool>|null $force Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<list<bool>>|null $cpusCommas Generated list boundaries
+     * @param ErisGenerator<bool>|null $cpusEquals Generated clause notation
+     * @param ErisGenerator<bool>|null $priorityEquals Generated clause notation
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $cpus = null, ?ErisGenerator $priority = null, ?ErisGenerator $enabled = null, ?ErisGenerator $force = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $cpus = null, ?ErisGenerator $priority = null, ?ErisGenerator $enabled = null, ?ErisGenerator $force = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $cpusCommas = null, ?ErisGenerator $cpusEquals = null, ?ErisGenerator $priorityEquals = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup(name: $parts[0], cpus: $parts[1], priority: $parts[2], enabled: $parts[3], force: $parts[4], statementInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $name,
             $cpus ?? Generators::constant([]),
             $priority ?? Generators::constant(null),
             $enabled ?? Generators::constant(null),
             $force ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+            $inputSource ?? Generators::constant(null),
+            $cpusEquals ?? Generators::bool(),
+            $priorityEquals ?? Generators::bool()
+        ), static function (array $parts) use ($cpusCommas): ErisGenerator {
+            return Generators::map(
+                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup(name: $parts[0], cpus: $parts[1], priority: $parts[2], enabled: $parts[3], force: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], cpusEquals: $parts[7], priorityEquals: $parts[8], cpusCommas: $commas),
+                $cpusCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
+            );
+        });
     }
     /**
      * Composes the statement's SQL forms from typed operand generators.
@@ -69,7 +77,7 @@ final class AlterResourceGroupGenerator implements ErisGenerator
             ),
             cpus: \Tests\Generator\Operands::tuple(
                 new CpuRangeGenerator(
-                    first: Generators::constant(1),
+                    first: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => '00' . $value, Generators::choose(0, 4))),
                     last: Generators::constant(null)
                 )
             ),

@@ -21,7 +21,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Cloning into a directory
  *     $clone = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("clone local data directory = '/srv/copy'");
- *     [$clone->toString(), $clone->directory->value] // => ["CLONE LOCAL DATA DIRECTORY '/srv/copy'", '/srv/copy']
+ *     [$clone->toString(), $clone->directory->value] // => ["CLONE LOCAL DATA DIRECTORY = '/srv/copy'", '/srv/copy']
  */
 final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -29,8 +29,9 @@ final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
 
     /**
      * @param Text $directory The directory the data is cloned into
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -51,6 +52,10 @@ final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function render(Output $out): void
     {
-        $out->keyword('CLONE', 'LOCAL', 'DATA', 'DIRECTORY')->node($this->directory);
+        $out->keyword('CLONE', 'LOCAL', 'DATA', 'DIRECTORY');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->directory);
     }
 }

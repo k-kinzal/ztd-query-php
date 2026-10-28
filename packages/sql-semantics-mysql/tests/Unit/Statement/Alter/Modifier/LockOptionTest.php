@@ -27,6 +27,6 @@ final class LockOptionTest extends TestCase
 
     public function testRenderWritesTheLockOrDefault(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = DEFAULT, LOCK = EXCLUSIVE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE')->toString());
+        self::assertSame('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE')->toString());
     }
 }

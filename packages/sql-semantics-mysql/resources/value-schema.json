@@ -340,25 +340,32 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\AlterResourceGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "cpus": "array",
+        "cpusCommas": "array",
+        "cpusEquals": "bool",
         "enabled": "?bool",
         "force": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
-        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
+        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority",
+        "priorityEquals": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CpuRange": {
-        "first": "int",
+        "first": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "last": "?int"
+        "last": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CreateResourceGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "cpus": "array",
+        "cpusCommas": "array",
+        "cpusEquals": "bool",
         "enabled": "?bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
-        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority"
+        "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority",
+        "priorityEquals": "bool",
+        "typeEquals": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\DropResourceGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -379,7 +386,8 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
-        "threads": "array"
+        "threads": "array",
+        "threadsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -592,9 +600,11 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption": {
         "algorithm": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "lock": "?SqlSemantics\\Statement\\Identifier\\Name"
     },
@@ -1950,8 +1960,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName": {
         "host": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "hostString": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "user": "SqlSemantics\\Statement\\Identifier\\Name"
+        "user": "SqlSemantics\\Statement\\Identifier\\Name",
+        "userString": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark": {
         "name": "string"
@@ -2124,10 +2136,12 @@
         "values": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionBound"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOptionKind",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name",
         "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "storageKeyword": "bool",
         "text": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOptionKind": {
@@ -3660,18 +3674,26 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseCharset": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "defaultKeyword": "bool",
+        "equals": "bool",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseCollation": {
         "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "defaultKeyword": "bool",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseEncryption": {
+        "defaultKeyword": "bool",
         "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Encryption",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "spelling": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseReadOnly": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
@@ -3769,6 +3791,7 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "directory": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "donor": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "password": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "port": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
@@ -3777,6 +3800,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneLocal": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "directory": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\Kill": {
@@ -4046,13 +4070,15 @@
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\LogFile",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterTablespaceAccess": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -4066,21 +4092,24 @@
         "datafile": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\AlterUndoTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "active": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\CreateLogfileGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\LogFile",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\CreateTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -4088,32 +4117,37 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "logfileGroup": "?SqlSemantics\\Statement\\Identifier\\Name",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\CreateUndoTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "datafile": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropLogfileGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropUndoTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
-        "options": "array"
+        "options": "array",
+        "optionsCommas": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\LogFile": {
         "file": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
@@ -4122,6 +4156,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\CommentOption": {
         "comment": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\DatafileAction": {
@@ -4130,25 +4165,31 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EncryptionOption": {
         "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EngineAttributeOption": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EngineOption": {
         "engine": "SqlSemantics\\Statement\\Identifier\\Name",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "equals": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "storageKeyword": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\LogFileKind": {
         "name": "string",
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\NodegroupOption": {
+        "equals": "bool",
         "group": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOptionKind",
         "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize"
@@ -4377,6 +4418,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EngineAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "secondary": "bool"
     },
@@ -4466,6 +4508,7 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "options": "array",
+        "optionsCommas": "array",
         "partitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Partitioning",
         "query": "?SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableQuery",
         "temporaryWords": "int"
@@ -4548,6 +4591,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexEngineAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "secondary": "bool"
     },
@@ -4564,6 +4608,7 @@
         "visible": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\KeyBlockSize": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
@@ -4593,22 +4638,30 @@
         "option": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceOption"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\AutoextendSizeOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\CharsetOption": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "defaultKeyword": "bool",
+        "equals": "bool",
+        "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\CollationOption": {
         "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
+        "defaultKeyword": "bool",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\EngineOption": {
         "engine": "SqlSemantics\\Statement\\Identifier\\Name",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\InsertMethodOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "method": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\InsertMethod"
     },
@@ -4629,16 +4682,19 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\NumberOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\NumberOptionKind",
         "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\RowFormatOption": {
+        "equals": "bool",
         "format": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\RowFormat",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\SecondaryEngineOption": {
         "engine": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\StartTransaction": {
@@ -4649,15 +4705,18 @@
         "medium": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\TablespaceOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "tablespace": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\TextOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\TextOptionKind",
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\UnionOption": {
+        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "tables": "array"
     },

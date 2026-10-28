@@ -11,7 +11,7 @@ use SqlSemantics\Rendering\Output;
 /**
  * The AUTOEXTEND_SIZE option (MySQL 8.0.23 and later): how much InnoDB extends the tablespace file of the table at a time.
  *
- * The equals sign between the option and its value is optional and is not kept.
+ * The optional equals sign is retained independently of the option value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
  * @visibility public
@@ -25,8 +25,9 @@ final class AutoextendSizeOption implements TableOption
 
     /**
      * @param ByteSize $size The size
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly ByteSize $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ByteSize $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
     }
 
@@ -35,6 +36,10 @@ final class AutoextendSizeOption implements TableOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('AUTOEXTEND_SIZE')->node($this->size);
+        $out->keyword('AUTOEXTEND_SIZE');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->size);
     }
 }

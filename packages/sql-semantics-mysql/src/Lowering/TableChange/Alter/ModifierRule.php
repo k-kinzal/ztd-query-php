@@ -86,7 +86,7 @@ final class ModifierRule
     {
         $form = $this->lowering->form($option);
         [$lock, $value] = self::OPTIONS[$form->signature] ?? throw ImplementationGap::production($form);
-        $this->lowering->options->present($form->node(1));
+        $equals = $this->lowering->options->present($form->node(1));
         $name = $value === null ? null : $this->value($form->node($value));
 
         $refusal = (new Choices())->refusal($name, $lock, $this->lowering->profile->grammar);
@@ -94,7 +94,7 @@ final class ModifierRule
             throw new RejectedInput($refusal, (new SourceRanges())->span($option)[1] ?? 0);
         }
 
-        return $lock ? new LockOption($name) : new AlgorithmOption($name);
+        return $lock ? new LockOption($name, equals: $equals) : new AlgorithmOption($name, equals: $equals);
     }
 
     /**

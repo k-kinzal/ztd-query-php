@@ -197,7 +197,7 @@ final class TableChangeTest extends TestCase
 
         (new TableChange($layout, 't', 'd', GrammarRelease::MySql847))->options($command->options);
 
-        self::assertStringEndsWith("CHARSET latin1 COMMENT 'x'", ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
+        self::assertStringEndsWith("CHARACTER SET latin1 COMMENT = 'x'", ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $layout->statement(), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testKindAnswersTheKindOfAnOption(): void

@@ -27,6 +27,6 @@ final class SecondaryEngineOptionTest extends TestCase
 
         self::assertInstanceOf(SecondaryEngineOption::class, $option);
         self::assertNull($option->engine);
-        self::assertSame('CREATE TABLE t (a INT) SECONDARY_ENGINE NULL', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) SECONDARY_ENGINE = NULL', $create->toString());
     }
 }

@@ -68,8 +68,8 @@ final class AlterTableTest extends TestCase
 
     public function testRenderWritesTheActionsInOrder(): void
     {
-        self::assertSame('ALTER IGNORE TABLE db.t ADD a INT, LOCK = DEFAULT PARTITION BY KEY (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter ignore table db.t add a int, lock default partition by key (a)')->toString());
-        self::assertSame('ALTER TABLE t ALGORITHM = COPY, COALESCE PARTITION 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM COPY, COALESCE PARTITION 2')->toString());
+        self::assertSame('ALTER IGNORE TABLE db.t ADD a INT, LOCK DEFAULT PARTITION BY KEY (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter ignore table db.t add a int, lock default partition by key (a)')->toString());
+        self::assertSame('ALTER TABLE t ALGORITHM COPY, COALESCE PARTITION 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM COPY, COALESCE PARTITION 2')->toString());
     }
 
     public function testDeriveStatementRefusesAView(): void

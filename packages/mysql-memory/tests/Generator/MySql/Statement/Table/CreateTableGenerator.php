@@ -75,11 +75,35 @@ final class CreateTableGenerator implements ErisGenerator
      * @param ErisGenerator<int> $temporaryWords The generated semantic operand
      * @param ErisGenerator<bool> $ifNotExists The generated semantic operand
      * @param ErisGenerator<bool> $enclosed The generated semantic operand
+     * @param ErisGenerator<list<bool>>|null $optionsCommas Generated boundaries between table options
      * @return ErisGenerator<CreateTable>
      */
-    public static function fromOperands(ErisGenerator $name, ErisGenerator $elements, ErisGenerator $options, ErisGenerator $partitioning, ErisGenerator $query, ErisGenerator $temporaryWords, ErisGenerator $ifNotExists, ErisGenerator $enclosed): ErisGenerator
+    public static function fromOperands(ErisGenerator $name, ErisGenerator $elements, ErisGenerator $options, ErisGenerator $partitioning, ErisGenerator $query, ErisGenerator $temporaryWords, ErisGenerator $ifNotExists, ErisGenerator $enclosed, ?ErisGenerator $optionsCommas = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: $parts[5], ifNotExists: $parts[6], enclosed: $parts[7]), \Tests\Generator\Operands::tuple($name, $elements, $options, $partitioning, $query, $temporaryWords, $ifNotExists, $enclosed));
+        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($name, $elements, $options, $partitioning, $query, $temporaryWords, $ifNotExists, $enclosed), static function (array $parts) use ($optionsCommas): ErisGenerator {
+            return Generators::map(static fn (array $commas): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: $parts[5], ifNotExists: $parts[6], enclosed: $parts[7], optionsCommas: $commas), $optionsCommas ?? Generators::vector(max(0, count($parts[2]) - 1), Generators::bool()));
+        });
+    }
+
+    /**
+     * Generates valid table options together with their independent optional notation.
+     *
+     * @return ErisGenerator<array{array{CreateTable, list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption>, \SqlSemantics\Contract\AnalysisContext, list<bool>}, CreateTable}>
+     */
+    public static function optionDefinitions(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $definitions = new self(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
+        $options = \Tests\Generator\Operands::tuple(
+            new Option\EngineOptionGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('InnoDB'), Generators::constant(null))),
+            new Option\CharsetOptionGenerator(new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('latin1'), Generators::constant(null)))),
+            new Option\TextOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::Comment), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'comment ' . $value, Generators::choose(0, 1000)))),
+            new Option\RowFormatOptionGenerator(Generators::elements([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact])),
+        );
+        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), Generators::vector(3, Generators::bool())), static function (array $parts): ErisGenerator {
+            $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($parts[2], new CreateTable($parts[0]->name, $parts[0]->elements, $parts[1], optionsCommas: $parts[3]));
+            \SqlSemantics\Diagnostic\Check::invariant($statement instanceof CreateTable, 'Generated options remain a complete table declaration.');
+            return Generators::constant([$parts, $statement]);
+        });
     }
 
     /**

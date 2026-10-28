@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
  * @visibility public
  * @example Reading the column named after the account
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW GRANTS FOR 'u'@'localhost' USING r");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR u@localhost USING r']
+ *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR \'u\'@\'localhost\' USING r']
  */
 final class ShowGrants extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

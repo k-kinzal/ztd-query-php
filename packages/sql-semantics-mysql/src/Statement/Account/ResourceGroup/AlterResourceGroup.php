@@ -26,6 +26,11 @@ final class AlterResourceGroup extends \SqlSemantics\Platform\MySql\Statement\Sq
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * @var list<bool> The retained comma at each boundary between cpus
+     */
+    public readonly array $cpusCommas;
+
+    /**
      * @var list<CpuRange> The CPUs of VCPU; none when the option is absent
      */
     public readonly array $cpus;
@@ -36,13 +41,17 @@ final class AlterResourceGroup extends \SqlSemantics\Platform\MySql\Statement\Sq
      * @param ThreadPriority|null $priority The THREAD_PRIORITY, when written
      * @param bool|null $enabled ENABLE (true) or DISABLE (false), when written
      * @param bool $force Whether FORCE is written
+     * @param list<bool>|null $cpusCommas Optional commas between adjacent cpus
+     * @param bool $cpusEquals Whether VCPU uses an equals sign
+     * @param bool $priorityEquals Whether THREAD_PRIORITY uses an equals sign
      */
-    public function __construct(public readonly ResourceGroupName $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ResourceGroupName $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $cpusCommas = null, public readonly bool $cpusEquals = true, public readonly bool $priorityEquals = true)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->cpus = Check::listOf($cpus, CpuRange::class, 'VCPU lists CPU numbers and ranges.');
+        $this->cpusCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($cpusCommas, count($this->cpus), true);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -61,10 +70,19 @@ final class AlterResourceGroup extends \SqlSemantics\Platform\MySql\Statement\Sq
     {
         $out->keyword('ALTER', 'RESOURCE', 'GROUP')->node($this->name);
         if ($this->cpus !== []) {
-            $out->keyword('VCPU')->symbol('=')->list($this->cpus);
+            $out->keyword('VCPU');
+            if ($this->cpusEquals) {
+                $out->symbol('=');
+            }
+
+            (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->cpus, $this->cpusCommas);
         }
         if ($this->priority !== null) {
-            $out->keyword('THREAD_PRIORITY')->symbol('=')->node($this->priority);
+            $out->keyword('THREAD_PRIORITY');
+            if ($this->priorityEquals) {
+                $out->symbol('=');
+            }
+            $out->node($this->priority);
         }
         if ($this->enabled !== null) {
             $out->keyword($this->enabled ? 'ENABLE' : 'DISABLE');

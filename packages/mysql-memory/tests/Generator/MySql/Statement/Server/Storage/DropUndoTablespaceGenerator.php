@@ -23,17 +23,21 @@ final class DropUndoTablespaceGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption>>|null $options Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<list<bool>>|null $optionsCommas Generated list boundaries
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $name,
             $options ?? Generators::constant([]),
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static function (array $parts) use ($optionsCommas): ErisGenerator {
+            return Generators::map(
+                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $commas),
+                $optionsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
+            );
+        });
     }
     /**
      * Composes the statement's SQL forms from typed operand generators.

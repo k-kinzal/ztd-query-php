@@ -82,7 +82,7 @@ final class CreateTableTest extends TestCase
 
     public function testRenderWritesTheDefinition(): void
     {
-        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE InnoDB COMMENT \'x\' REPLACE AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
+        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
     }
     public function testInputCompletionOrdersTypeNoticesBeforeTheRefusal(): void
     {
@@ -129,6 +129,6 @@ final class CreateTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TEMPORARY TABLE IF NOT EXISTS t(a INT) ENGINE=InnoDB UNION=(s) AS SELECT ROW(1,2)');
         self::assertInstanceOf(M\Statement::class, $operation);
-        self::assertSame('CREATE PROCEDURE p() CREATE TEMPORARY TABLE IF NOT EXISTS t (a INT) ENGINE InnoDB UNION (s) AS SELECT ROW(1, 2)', $operation->toString());
+        self::assertSame('CREATE PROCEDURE p() CREATE TEMPORARY TABLE IF NOT EXISTS t (a INT) ENGINE = InnoDB UNION = (s) AS SELECT ROW(1, 2)', $operation->toString());
     }
 }

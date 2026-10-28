@@ -26,8 +26,9 @@ final class SizeOption implements StorageOption
     /**
      * @param SizeOptionKind $kind The option
      * @param ByteSize $size The size
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly SizeOptionKind $kind, public readonly ByteSize $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly SizeOptionKind $kind, public readonly ByteSize $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
     }
 
@@ -44,6 +45,10 @@ final class SizeOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->value)->node($this->size);
+        $out->keyword($this->kind->value);
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->size);
     }
 }

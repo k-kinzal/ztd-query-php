@@ -23,8 +23,9 @@ final class KeyBlockSize implements IndexOption
 
     /**
      * @param Numeral $size The block size
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly Numeral $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Numeral $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
     }
 
@@ -33,6 +34,10 @@ final class KeyBlockSize implements IndexOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('KEY_BLOCK_SIZE')->node($this->size);
+        $out->keyword('KEY_BLOCK_SIZE');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->size);
     }
 }

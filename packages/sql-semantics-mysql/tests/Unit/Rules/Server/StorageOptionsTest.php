@@ -69,6 +69,6 @@ final class StorageOptionsTest extends TestCase
 
     public function testRenderWritesTheOptionsInOrder(): void
     {
-        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' ENGINE ndb WAIT", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("create tablespace ts add datafile 'f' engine = ndb, wait")->toString());
+        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' ENGINE = ndb, WAIT", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("create tablespace ts add datafile 'f' engine = ndb, wait")->toString());
     }
 }

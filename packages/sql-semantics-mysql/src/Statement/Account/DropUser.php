@@ -19,7 +19,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Dropping accounts
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop user if exists a, 'b'@'h'")->toString() // => 'DROP USER IF EXISTS a, b@h'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("drop user if exists a, 'b'@'h'")->toString() // => 'DROP USER IF EXISTS a, \'b\'@\'h\''
  */
 final class DropUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

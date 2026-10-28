@@ -17,32 +17,20 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Holding a range
- *     $range = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange(0, 3);
- *     [$range->first, $range->last] // => [0, 3]
+ *     $range = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3'));
+ *     [$range->first->text, $range->last?->text] // => ['0', '3']
  */
 final class CpuRange implements Node
 {
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var int<0, 2147483647> The CPU number, or the first of the range
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $first The first CPU index, including leading zeros
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $last The last CPU index when a range is written
      */
-    public readonly int $first;
-
-    /**
-     * @var int<0, 2147483647>|null The last CPU, when a range is requested
-     */
-    public readonly ?int $last;
-
-    /**
-     * @param int $first The CPU index, within the unsigned NUM token domain
-     * @param int|null $last The last CPU index, within the same domain
-     */
-    public function __construct(int $first, ?int $last = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $first, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $last = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        Check::input($first >= 0 && $first <= 2147483647 && ($last === null || ($last >= 0 && $last <= 2147483647)), 'A CPU index is an integer from 0 through 2147483647.');
-        $this->first = $first;
-        $this->last = $last;
+        Check::input($first->isIntegerToken() && ($last === null || $last->isIntegerToken()), 'A CPU index is an integer from 0 through 2147483647.');
     }
 
     /**
@@ -50,9 +38,9 @@ final class CpuRange implements Node
      */
     public function render(Output $out): void
     {
-        $out->spelled((string) $this->first);
+        $out->node($this->first);
         if ($this->last !== null) {
-            $out->symbol('-')->spelled((string) $this->last);
+            $out->symbol('-')->node($this->last);
         }
     }
 }

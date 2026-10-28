@@ -27,7 +27,7 @@ final class RenameUserTest extends TestCase
 
     public function testRenderWritesThePairs(): void
     {
-        self::assertSame('RENAME USER a@h TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("rename user 'a'@'h' to b, c to d")->toString());
+        self::assertSame('RENAME USER \'a\'@\'h\' TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("rename user 'a'@'h' to b, c to d")->toString());
     }
 
     public function testToStringReconstructsAContradictoryRequest(): void

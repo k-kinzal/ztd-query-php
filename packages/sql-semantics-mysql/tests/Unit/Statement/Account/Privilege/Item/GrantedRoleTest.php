@@ -17,6 +17,6 @@ final class GrantedRoleTest extends TestCase
 {
     public function testRenderWritesTheRole(): void
     {
-        self::assertSame('REVOKE r@h FROM u', (new Semantics(Dialect::MySql))->analyze("revoke 'r'@'h' from u")->toString());
+        self::assertSame('REVOKE \'r\'@\'h\' FROM u', (new Semantics(Dialect::MySql))->analyze("revoke 'r'@'h' from u")->toString());
     }
 }

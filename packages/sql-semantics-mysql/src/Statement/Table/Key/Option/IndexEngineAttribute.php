@@ -24,8 +24,9 @@ final class IndexEngineAttribute implements IndexOption
     /**
      * @param Text $attribute The attribute document
      * @param bool $secondary Whether it is the SECONDARY_ENGINE_ATTRIBUTE
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly Text $attribute, public readonly bool $secondary = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Text $attribute, public readonly bool $secondary = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }
@@ -35,6 +36,10 @@ final class IndexEngineAttribute implements IndexOption
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->secondary ? 'SECONDARY_ENGINE_ATTRIBUTE' : 'ENGINE_ATTRIBUTE')->node($this->attribute);
+        $out->keyword($this->secondary ? 'SECONDARY_ENGINE_ATTRIBUTE' : 'ENGINE_ATTRIBUTE');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->attribute);
     }
 }

@@ -31,7 +31,7 @@ final class CloneInstanceTest extends TestCase
 
     public function testRenderGluesTheAccountColonAndPort(): void
     {
-        self::assertSame("CLONE INSTANCE FROM u@h:3306 IDENTIFIED BY 'p' REQUIRE SSL", (new Semantics(Dialect::MySql))->analyze("clone instance from 'u'@'h':3306 identified by 'p' require ssl")->toString());
+        self::assertSame("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p' REQUIRE SSL", (new Semantics(Dialect::MySql))->analyze("clone instance from 'u'@'h':3306 identified by 'p' require ssl")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

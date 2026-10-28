@@ -44,7 +44,7 @@ final class ViewDefinitionTest extends TestCase
 
     public function testRenderHeadWritesAlgorithmDefinerAndSecurity(): void
     {
-        self::assertSame('CREATE ALGORITHM = TEMPTABLE DEFINER = u@`%` SQL SECURITY DEFINER VIEW v AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE ALGORITHM = TEMPTABLE DEFINER = \'u\'@\'%\' SQL SECURITY DEFINER VIEW v AS SELECT 1 AS a')->toString());
+        self::assertSame('CREATE ALGORITHM = TEMPTABLE DEFINER = \'u\'@\'%\' SQL SECURITY DEFINER VIEW v AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE ALGORITHM = TEMPTABLE DEFINER = \'u\'@\'%\' SQL SECURITY DEFINER VIEW v AS SELECT 1 AS a')->toString());
     }
 
     public function testRenderWritesNameColumnsQueryAndCheckOption(): void

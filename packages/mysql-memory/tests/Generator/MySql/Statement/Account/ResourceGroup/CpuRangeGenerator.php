@@ -19,8 +19,8 @@ final class CpuRangeGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<int> $first Generated constructor operand
-     * @param ErisGenerator<int|null>|null $last Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $first Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $last Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
     public function __construct(ErisGenerator $first, ?ErisGenerator $last = null, ?ErisGenerator $inputSource = null)

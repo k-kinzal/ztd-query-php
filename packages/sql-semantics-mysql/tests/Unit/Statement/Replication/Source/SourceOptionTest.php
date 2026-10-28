@@ -24,7 +24,7 @@ final class SourceOptionTest extends TestCase
         $sql = "change replication source to privilege_checks_user = 'a'@'b', require_table_primary_key_check = generate, assign_gtids_to_anonymous_transactions = local, source_tls_ciphersuites = null, source_heartbeat_period = 1.5";
 
         self::assertSame(
-            'CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = a@b, REQUIRE_TABLE_PRIMARY_KEY_CHECK = GENERATE, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL, SOURCE_TLS_CIPHERSUITES = NULL, SOURCE_HEARTBEAT_PERIOD = 1.5',
+            'CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = \'a\'@\'b\', REQUIRE_TABLE_PRIMARY_KEY_CHECK = GENERATE, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL, SOURCE_TLS_CIPHERSUITES = NULL, SOURCE_HEARTBEAT_PERIOD = 1.5',
             (new Semantics(Dialect::MySql))->analyze($sql)->toString(),
         );
     }

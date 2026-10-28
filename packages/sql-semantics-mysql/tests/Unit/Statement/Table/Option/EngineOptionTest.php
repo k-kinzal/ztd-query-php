@@ -27,6 +27,6 @@ final class EngineOptionTest extends TestCase
 
         self::assertInstanceOf(EngineOption::class, $option);
         self::assertSame('InnoDB', $option->engine->value);
-        self::assertSame('CREATE TABLE t (a INT) ENGINE InnoDB', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) ENGINE = InnoDB', $create->toString());
     }
 }

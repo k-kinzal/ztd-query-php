@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * @visibility public
  * @example Removing an index while allowing reads
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP INDEX i ON t LOCK SHARED');
- *     [$drop->index->value, $drop->toString()] // => ['i', 'DROP INDEX i ON t LOCK = SHARED']
+ *     [$drop->index->value, $drop->toString()] // => ['i', 'DROP INDEX i ON t LOCK SHARED']
  */
 final class DropIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {

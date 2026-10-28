@@ -34,8 +34,9 @@ final class LockOption implements AlterOption, AlterModifier
 
     /**
      * @param Name|null $lock The lock level, or null for the keyword DEFAULT
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly ?Name $lock, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Name $lock, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = true)
     {
         \SqlSemantics\Diagnostic\Check::input((new Choices())->known($lock, true), 'The lock is a known table-change option.');
     }
@@ -61,7 +62,10 @@ final class LockOption implements AlterOption, AlterModifier
      */
     public function render(Output $out): void
     {
-        $out->keyword('LOCK')->symbol('=');
+        $out->keyword('LOCK');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
         if ($this->lock === null) {
             $out->keyword('DEFAULT');
         } else {

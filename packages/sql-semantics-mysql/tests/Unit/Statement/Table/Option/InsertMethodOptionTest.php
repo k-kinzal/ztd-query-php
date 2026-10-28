@@ -27,6 +27,6 @@ final class InsertMethodOptionTest extends TestCase
 
         self::assertInstanceOf(InsertMethodOption::class, $option);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\InsertMethod::First, $option->method);
-        self::assertSame('CREATE TABLE t (a INT) INSERT_METHOD FIRST', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) INSERT_METHOD = FIRST', $create->toString());
     }
 }

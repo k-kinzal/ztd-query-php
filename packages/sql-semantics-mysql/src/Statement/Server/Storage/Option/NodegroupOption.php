@@ -25,8 +25,9 @@ final class NodegroupOption implements StorageOption
 
     /**
      * @param Numeral $group The node group identifier
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly Numeral $group, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Numeral $group, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
         \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($group), 'A node-group number is an integer token.');
     }
@@ -44,6 +45,10 @@ final class NodegroupOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('NODEGROUP')->node($this->group);
+        $out->keyword('NODEGROUP');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->group);
     }
 }

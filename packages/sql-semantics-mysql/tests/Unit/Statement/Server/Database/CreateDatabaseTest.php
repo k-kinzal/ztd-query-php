@@ -17,7 +17,7 @@ final class CreateDatabaseTest extends TestCase
 {
     public function testRenderWritesIfNotExistsAndOptions(): void
     {
-        self::assertSame('CREATE DATABASE IF NOT EXISTS d CHARACTER SET utf8mb4', (new Semantics(Dialect::MySql))->analyze('create database if not exists d charset utf8mb4')->toString());
+        self::assertSame('CREATE DATABASE IF NOT EXISTS d CHARSET utf8mb4', (new Semantics(Dialect::MySql))->analyze('create database if not exists d charset utf8mb4')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

@@ -27,6 +27,6 @@ final class CharsetOptionTest extends TestCase
 
         self::assertInstanceOf(CharsetOption::class, $option);
         self::assertSame('utf8mb4', $option->charset->name?->value);
-        self::assertSame('CREATE TABLE t (a INT) CHARSET utf8mb4', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) DEFAULT CHARACTER SET = utf8mb4', $create->toString());
     }
 }

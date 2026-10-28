@@ -21,14 +21,16 @@ final class SecondaryEngineOptionGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $engine Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $engine, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $engine, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption(engine: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption(engine: $parts[0], inputSource: $parts[1], equals: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $engine,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

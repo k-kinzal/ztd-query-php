@@ -11,10 +11,8 @@ use SqlSemantics\Rendering\Output;
 /**
  * `[DEFAULT] ENCRYPTION [=] {'Y' | 'N'}`: the default encryption of the database's tables (MySQL 8.0.16 and later).
  *
- * DEFAULT before the option is optional and always written, because
- * ENCRYPTION right after ALTER DATABASE would be read as the database name;
- * the equals sign is optional and not written. The value is a two-case
- * setting. A noncanonical decoded operand may be retained for rendering;
+ * DEFAULT before the option and the optional equals sign are retained.
+ * The value is a two-case setting. A noncanonical decoded operand may be retained for rendering;
  * construction checks that it denotes exactly the same setting. It is a
  * literal value, without input SQL or parser nodes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
@@ -36,8 +34,10 @@ final class DatabaseEncryption implements DatabaseOption
     /**
      * @param Encryption $encryption Whether new tables use encryption by default
      * @param Text|null $spelling A quoted operand denoting the same setting
+     * @param bool $equals Whether the optional equals sign is written
+     * @param bool $defaultKeyword Whether the optional DEFAULT keyword is written
      */
-    public function __construct(public readonly Encryption $encryption, ?Text $spelling = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Encryption $encryption, ?Text $spelling = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $defaultKeyword = true)
     {
         Check::input($spelling === null || ($spelling->radix === null && Encryption::fromOperand($spelling->value) === $encryption), 'An encryption spelling denotes the same Y/N setting.');
         $this->spelling = $spelling?->value === $encryption->value ? null : $spelling;
@@ -48,6 +48,13 @@ final class DatabaseEncryption implements DatabaseOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('DEFAULT', 'ENCRYPTION')->spelled($out->quote($this->spelling->value ?? $this->encryption->value));
+        if ($this->defaultKeyword) {
+            $out->keyword('DEFAULT');
+        }
+        $out->keyword('ENCRYPTION');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->spelled($out->quote($this->spelling->value ?? $this->encryption->value));
     }
 }

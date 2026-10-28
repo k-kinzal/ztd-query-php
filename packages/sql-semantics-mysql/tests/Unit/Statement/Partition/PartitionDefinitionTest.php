@@ -22,6 +22,6 @@ final class PartitionDefinitionTest extends TestCase
 
     public function testRenderWritesEveryPart(): void
     {
-        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT = 'c' (SUBPARTITION s))", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))")->toString());
+        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))")->toString());
     }
 }

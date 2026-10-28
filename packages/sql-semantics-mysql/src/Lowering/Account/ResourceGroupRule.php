@@ -32,8 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Statement;
  * opt_resource_group_vcpu_list, vcpu_range_spec_list, vcpu_num_or_range,
  * opt_resource_group_priority, signed_num,
  * opt_resource_group_enable_disable, opt_force, thread_id_list,
- * thread_id_list_options. Numbers keep their exact text; the optional `=`
- * and commas carry no meaning. Constructs: CreateResourceGroup,
+ * thread_id_list_options. Numbers, optional equals signs and comma choices are retained. Constructs: CreateResourceGroup,
  * AlterResourceGroup, DropResourceGroup, SetResourceGroup, CpuRange,
  * ThreadPriority. Terminates: the lists are flattened iteratively; every
  * other child is a strict subtree.
@@ -65,10 +64,13 @@ final class ResourceGroupRule
                 $this->priority($form->node(5)),
                 $this->enabled($form->node(6)),
                 $this->force($form->node(7)),
+                cpusCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(4), ['vcpu_num_or_range']),
+                cpusEquals: $form->node(4)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(4))->node(1)),
+                priorityEquals: $form->node(5)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(5))->node(1)),
             ),
             'drop_resource_group_stmt: DROP RESOURCE_SYM GROUP_SYM ident opt_force' => new DropResourceGroup($this->name($form), $this->force($form->node(4))),
             'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident' => new SetResourceGroup($this->name($form)),
-            'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident FOR_SYM thread_id_list_options' => new SetResourceGroup($this->name($form), $this->threads($form->node(5))),
+            'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident FOR_SYM thread_id_list_options' => new SetResourceGroup($this->name($form), $this->threads($form->node(5)), threadsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(5), ['real_ulong_num'])),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -81,7 +83,7 @@ final class ResourceGroupRule
     public function create(Form $form): CreateResourceGroup
     {
         $name = $this->name($form);
-        $this->lowering->options->present($form->node(5));
+        $typeEquals = $this->lowering->options->present($form->node(5));
         $type = $this->lowering->form($form->node(6));
         $kind = match ($type->signature) {
             'resource_group_types: USER' => ResourceGroupKind::User,
@@ -89,7 +91,17 @@ final class ResourceGroupRule
             default => throw ImplementationGap::production($type),
         };
 
-        return new CreateResourceGroup($name, $kind, $this->cpus($form->node(7)), $this->priority($form->node(8)), $this->enabled($form->node(9)));
+        return new CreateResourceGroup(
+            $name,
+            $kind,
+            $this->cpus($form->node(7)),
+            $this->priority($form->node(8)),
+            $this->enabled($form->node(9)),
+            cpusCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(7), ['vcpu_num_or_range']),
+            typeEquals: $typeEquals,
+            cpusEquals: $form->node(7)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(7))->node(1)),
+            priorityEquals: $form->node(8)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(8))->node(1)),
+        );
     }
 
     /**
@@ -149,8 +161,8 @@ final class ResourceGroupRule
         $form = $this->lowering->form($range);
 
         return match ($form->signature) {
-            'vcpu_num_or_range: NUM' => new CpuRange((int) $form->token(0)->text),
-            'vcpu_num_or_range: NUM - NUM' => new CpuRange((int) $form->token(0)->text, (int) $form->token(2)->text),
+            'vcpu_num_or_range: NUM' => new CpuRange($this->number($form, 0)),
+            'vcpu_num_or_range: NUM - NUM' => new CpuRange($this->number($form, 0), $this->number($form, 2)),
             default => throw ImplementationGap::production($form),
         };
     }

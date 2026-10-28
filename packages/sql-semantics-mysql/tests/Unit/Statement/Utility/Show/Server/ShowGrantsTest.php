@@ -29,7 +29,7 @@ final class ShowGrantsTest extends TestCase
         $show = (new Semantics(Dialect::MySql))->analyze("SHOW GRANTS FOR ' u '@' host '");
 
         self::assertSame('Grants for u@host', $show->field(0)->name?->value);
-        self::assertSame('SHOW GRANTS FOR ` u `@` host `', $show->toString());
+        self::assertSame('SHOW GRANTS FOR \' u \'@\' host \'', $show->toString());
     }
 
     public function testRenderWritesTheStatement(): void

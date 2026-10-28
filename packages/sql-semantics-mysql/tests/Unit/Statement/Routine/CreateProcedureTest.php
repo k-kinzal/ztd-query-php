@@ -159,7 +159,7 @@ final class CreateProcedureTest extends TestCase
         yield 'MySQL 8.0 IF NOT EXISTS' => [
             'mysql-8.0.44',
             "create definer = 'admin'@'%' procedure if not exists shop.p(out total decimal(10,2)) modifies sql data set total = 1",
-            'CREATE DEFINER = `admin`@`%` PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1',
+            'CREATE DEFINER = \'admin\'@\'%\' PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1',
         ];
         yield 'MySQL 9.1 external body' => [
             'mysql-9.1.0',

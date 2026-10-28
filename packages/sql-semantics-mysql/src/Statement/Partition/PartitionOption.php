@@ -34,6 +34,8 @@ final class PartitionOption implements Node
      * @param Name|null $name The tablespace or engine name
      * @param Numeral|null $number The node group or row count
      * @param Text|null $text The directory or comment
+     * @param bool $storageKeyword Whether STORAGE precedes ENGINE
+     * @param bool $equals Whether the optional equals sign is written
      */
     public function __construct(
         public readonly PartitionOptionKind $kind,
@@ -41,7 +43,10 @@ final class PartitionOption implements Node
         public readonly ?Numeral $number = null,
         public readonly ?Text $text = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $equals = true,
+        public readonly bool $storageKeyword = false,
     ) {
+        Check::input(!$storageKeyword || $kind === PartitionOptionKind::Engine, 'Only ENGINE can be introduced by STORAGE.');
         Check::input(
             ($name !== null) === $kind->named() && ($number !== null) === $kind->numbered() && ($text !== null) === (!$kind->named() && !$kind->numbered()),
             'A partition option holds exactly the value its kind takes.',
@@ -53,7 +58,13 @@ final class PartitionOption implements Node
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->kind->value))->symbol('=');
+        if ($this->storageKeyword) {
+            $out->keyword('STORAGE');
+        }
+        $out->keyword(...explode(' ', $this->kind->value));
+        if ($this->equals) {
+            $out->symbol('=');
+        }
         if ($this->name !== null) {
             $out->name($this->name, NameUse::Label);
         }

@@ -58,6 +58,20 @@ final class AccountNameTest extends TestCase
         self::assertSame('bob@localhost', (new Lexical())->join($pieces));
     }
 
+    public function testRenderRetainsStringAccountOperands(): void
+    {
+        $out = new Output(new Codec(GrammarRelease::MySql847));
+        (new AccountName(new Name('bob'), new Name('localhost'), userString: true, hostString: true))->render($out);
+
+        self::assertSame("'bob'@'localhost'", (new Lexical())->join($out->pieces()));
+    }
+
+    public function testAccountNameRejectsAStringHostWithoutAnOperand(): void
+    {
+        $this->expectExceptionMessage('A string host operand is present and has no identifier delimiter.');
+        new AccountName(new Name('bob'), hostString: true);
+    }
+
     public function testRenderQuotesAPartThatNeedsQuoting(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));

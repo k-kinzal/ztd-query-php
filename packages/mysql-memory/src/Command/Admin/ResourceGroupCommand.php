@@ -197,8 +197,8 @@ final class ResourceGroupCommand implements Command
         }
         $bounds = [];
         foreach ($ranges as $range) {
-            $first = $range->first;
-            $last = $range->last ?? $first;
+            $first = (int) $range->first->text;
+            $last = $range->last === null ? $first : (int) $range->last->text;
             foreach ([$first, $last] as $cpu) {
                 if ($cpu > $processors - 1) {
                     throw AdministrationError::InvalidCpuId->error((string) $cpu);

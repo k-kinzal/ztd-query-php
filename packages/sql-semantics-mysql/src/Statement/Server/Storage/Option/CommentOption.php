@@ -23,8 +23,9 @@ final class CommentOption implements StorageOption
 
     /**
      * @param Text $comment The comment
+     * @param bool $equals Whether the optional equals sign is written
      */
-    public function __construct(public readonly Text $comment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Text $comment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
     {
     }
 
@@ -41,6 +42,10 @@ final class CommentOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('COMMENT')->node($this->comment);
+        $out->keyword('COMMENT');
+        if ($this->equals) {
+            $out->symbol('=');
+        }
+        $out->node($this->comment);
     }
 }

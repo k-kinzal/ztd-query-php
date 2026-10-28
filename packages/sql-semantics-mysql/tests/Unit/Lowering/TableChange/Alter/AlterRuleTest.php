@@ -22,7 +22,7 @@ final class AlterRuleTest extends TestCase
 
     public function testCommandsFlattensModifiersItemsAndPartitioning(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()')->toString());
+        self::assertSame('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()')->toString());
     }
 
     public function testOthersLowersRemovePartitioning(): void
@@ -32,7 +32,7 @@ final class AlterRuleTest extends TestCase
 
     public function testItemsKeepsRunsOfTableOptionsApart(): void
     {
-        self::assertSame('ALTER TABLE t ENGINE InnoDB, ROW_FORMAT DYNAMIC', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
+        self::assertSame('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
     }
     public function testDefinitionPublishesAnOrdinaryRootWithItsInvocationCondition(): void
     {

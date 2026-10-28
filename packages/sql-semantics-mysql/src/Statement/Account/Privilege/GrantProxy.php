@@ -23,7 +23,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Granting a proxy
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant proxy on 'root' to app with grant option")->toString() // => 'GRANT PROXY ON root TO app WITH GRANT OPTION'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant proxy on 'root' to app with grant option")->toString() // => 'GRANT PROXY ON \'root\' TO app WITH GRANT OPTION'
  */
 final class GrantProxy extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {

@@ -27,6 +27,6 @@ final class TablespaceOptionTest extends TestCase
 
         self::assertInstanceOf(TablespaceOption::class, $option);
         self::assertSame('ts', $option->tablespace->value);
-        self::assertSame('CREATE TABLE t (a INT) TABLESPACE ts', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) TABLESPACE = ts', $create->toString());
     }
 }

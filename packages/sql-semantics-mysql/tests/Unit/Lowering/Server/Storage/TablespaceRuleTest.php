@@ -57,6 +57,6 @@ final class TablespaceRuleTest extends TestCase
 
     public function testOptionsLowersTheList(): void
     {
-        self::assertSame("ALTER TABLESPACE ts CHANGE DATAFILE 'f' INITIAL_SIZE 1 MAX_SIZE 2", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("alter tablespace ts change datafile 'f' initial_size 1, max_size 2")->toString());
+        self::assertSame("ALTER TABLESPACE ts CHANGE DATAFILE 'f' INITIAL_SIZE 1, MAX_SIZE 2", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("alter tablespace ts change datafile 'f' initial_size 1, max_size 2")->toString());
     }
 }

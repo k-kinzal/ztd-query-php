@@ -31,6 +31,11 @@ final class AlterUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\S
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
+
+    /**
      * @var list<StorageOption> The options in written order
      */
     public readonly array $options;
@@ -39,13 +44,15 @@ final class AlterUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\S
      * @param Name $name The tablespace name
      * @param bool $active Whether ACTIVE (true) or INACTIVE (false) is written
      * @param list<StorageOption> $options The options in written order
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
-    public function __construct(public readonly Name $name, public readonly bool $active, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly bool $active, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::UNDO_TABLESPACE);
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -63,6 +70,6 @@ final class AlterUndoTablespace extends \SqlSemantics\Platform\MySql\Statement\S
     public function render(Output $out): void
     {
         $out->keyword('ALTER', 'UNDO', 'TABLESPACE')->name($this->name, NameUse::Identifier)->keyword('SET', $this->active ? 'ACTIVE' : 'INACTIVE');
-        (new StorageOptions())->render($out, $this->options);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
     }
 }

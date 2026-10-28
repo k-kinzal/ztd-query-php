@@ -28,7 +28,7 @@ final class SourceValueRuleTest extends TestCase
 
     public function testPrivilegeChecksLowersAnAccount(): void
     {
-        self::assertSame('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = u', (new Semantics(Dialect::MySql))->analyze("change replication source to privilege_checks_user = 'u'")->toString());
+        self::assertSame('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = \'u\'', (new Semantics(Dialect::MySql))->analyze("change replication source to privilege_checks_user = 'u'")->toString());
     }
 
     public function testPrimaryKeyCheckLowersTheSetting(): void

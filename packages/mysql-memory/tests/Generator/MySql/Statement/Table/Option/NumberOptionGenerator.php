@@ -22,15 +22,17 @@ final class NumberOptionGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\NumberOptionKind> $kind Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null> $value Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $equals Generated constructor operand
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $value, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $kind, ErisGenerator $value, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption(kind: $parts[0], value: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption(kind: $parts[0], value: $parts[1], inputSource: $parts[2], equals: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $kind,
             $value,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $equals ?? Generators::bool()
         ));
     }
 }

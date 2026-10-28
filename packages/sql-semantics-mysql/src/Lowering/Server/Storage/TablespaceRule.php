@@ -94,7 +94,7 @@ final class TablespaceRule
         if (isset(self::DATAFILES[$form->signature])) {
             [$action, $name, $file, $options] = self::DATAFILES[$form->signature];
 
-            return new AlterTablespaceDatafile($this->name($form->node($name)), $action, $this->datafile($form->node($file)), $this->options($form->node($options)));
+            return new AlterTablespaceDatafile($this->name($form->node($name)), $action, $this->datafile($form->node($file)), $this->options($form->node($options)), optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node($options), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']));
         }
 
         return match ($form->signature) {
@@ -103,17 +103,20 @@ final class TablespaceRule
                 $this->datafile($form->node(2)),
                 $this->group($form->node(3)),
                 $this->options($form->node(4)),
+                optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(4), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']),
             ),
             'create: CREATE TABLESPACE_SYM ident opt_ts_datafile_name opt_logfile_group_name opt_tablespace_options' => new CreateTablespace(
                 $this->name($form->node(2)),
                 $this->optionalDatafile($form->node(3)),
                 $this->group($form->node(4)),
                 $this->options($form->node(5)),
+                optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(5), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']),
             ),
             'create: CREATE UNDO_SYM TABLESPACE_SYM ident ADD ts_datafile opt_undo_tablespace_options' => new CreateUndoTablespace(
                 $this->name($form->node(3)),
                 $this->datafile($form->node(5)),
                 $this->options($form->node(6)),
+                optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(6), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']),
             ),
             default => $this->change($form),
         };
@@ -129,18 +132,20 @@ final class TablespaceRule
         return match ($form->signature) {
             'change_tablespace_access: tablespace_name ts_access_mode' => new AlterTablespaceAccess($this->name($form->node(0)), $this->access($form->node(1))),
             'alter_tablespace_stmt: ALTER TABLESPACE_SYM ident RENAME TO_SYM ident' => new RenameTablespace($this->name($form->node(2)), $this->name($form->node(5))),
-            'alter_tablespace_stmt: ALTER TABLESPACE_SYM ident alter_tablespace_option_list' => new AlterTablespace($this->name($form->node(2)), $this->options($form->node(3))),
+            'alter_tablespace_stmt: ALTER TABLESPACE_SYM ident alter_tablespace_option_list' => new AlterTablespace($this->name($form->node(2)), $this->options($form->node(3)), optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(3), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option'])),
             'alter_undo_tablespace_stmt: ALTER UNDO_SYM TABLESPACE_SYM ident SET_SYM undo_tablespace_state opt_undo_tablespace_options' => new AlterUndoTablespace(
                 $this->name($form->node(3)),
                 $this->active($form->node(5)),
                 $this->options($form->node(6)),
+                optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(6), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']),
             ),
             'drop: DROP TABLESPACE tablespace_name drop_ts_options_list', 'drop: DROP TABLESPACE_SYM tablespace_name drop_ts_options_list' => new DropTablespace(
                 $this->name($form->node(2)),
                 $this->options($form->node(3)),
+                optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(3), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']),
             ),
-            'drop_tablespace_stmt: DROP TABLESPACE_SYM ident opt_drop_ts_options' => new DropTablespace($this->name($form->node(2)), $this->options($form->node(3))),
-            'drop_undo_tablespace_stmt: DROP UNDO_SYM TABLESPACE_SYM ident opt_undo_tablespace_options' => new DropUndoTablespace($this->name($form->node(3)), $this->options($form->node(4))),
+            'drop_tablespace_stmt: DROP TABLESPACE_SYM ident opt_drop_ts_options' => new DropTablespace($this->name($form->node(2)), $this->options($form->node(3)), optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(3), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option'])),
+            'drop_undo_tablespace_stmt: DROP UNDO_SYM TABLESPACE_SYM ident opt_undo_tablespace_options' => new DropUndoTablespace($this->name($form->node(3)), $this->options($form->node(4)), optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(4), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option'])),
             default => throw ImplementationGap::production($form),
         };
     }
