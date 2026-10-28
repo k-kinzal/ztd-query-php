@@ -37,6 +37,13 @@ final class ExplainInput
      */
     public function targets(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets $problem, \MySqlMemory\Session\Session $session): SqlError
     {
+        $option = (new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->options($session->settings()->release(), $problem->format, $problem->analyze, $problem->into);
+        if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat) {
+            return StatementError::UnknownExplainFormat->error($option->name->value);
+        }
+        if ($option !== null) {
+            return $this->error($option);
+        }
         if ($problem->database !== null && $session->instance->dictionary->schema($problem->database->value) === null) {
             return \MySqlMemory\Error\Family\QueryError::BadDatabase->error($problem->database->value);
         }

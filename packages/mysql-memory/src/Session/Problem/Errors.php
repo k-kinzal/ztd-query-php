@@ -339,6 +339,9 @@ final class Errors
     public function server(Diagnostic $diagnostic, Session $session, ?Node $statement): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain,
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget => (new \MySqlMemory\Session\Parse\Entry\ExplainInput())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat => StatementError::UnknownExplainFormat->error($diagnostic->name->value),
             $diagnostic instanceof BucketCountOutOfRange => DataError::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
             $diagnostic instanceof UnknownSystemVariable => $this->unknownVariable($diagnostic, $session->settings()->legacy()),

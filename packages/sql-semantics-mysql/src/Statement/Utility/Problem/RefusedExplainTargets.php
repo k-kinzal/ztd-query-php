@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
@@ -39,8 +38,6 @@ final class RefusedExplainTargets implements Diagnostic
      */
     public function __construct(public readonly RefusedDeleteTargets $targets, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?ExplainModifier $modifier = null, public readonly bool $emptyInto = false)
     {
-        Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
-        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
         Check::input(!$emptyInto || ($into === null && !$analyze && $modifier === null), 'An empty EXPLAIN destination has no assignment, ANALYZE or legacy modifier.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
     }

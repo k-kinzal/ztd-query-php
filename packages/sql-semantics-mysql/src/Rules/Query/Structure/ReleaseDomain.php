@@ -9,6 +9,7 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 
 /**
  * Intersects release-specific interpretations retained in one semantic graph.
@@ -57,7 +58,7 @@ final class ReleaseDomain
             $value instanceof LanguageProfile => $this->bit($value->grammar),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && (($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->left->limit !== null) || ($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $value->left->selection->limit !== null)) => 1,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion && ($value->right instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || $value->right->limit !== null) => 1,
-            $value instanceof Explain, $value instanceof DeferredExplain => $this->explanation($value),
+            $value instanceof Explain, $value instanceof DeferredExplain, $value instanceof ExplainConnection => $this->explanation($value),
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector => 384,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->qualify !== null => 480,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample => 448,
@@ -100,13 +101,13 @@ final class ReleaseDomain
     /**
      * Keeps ignored destinations and late target validation in the releases that give them that meaning.
      */
-    public function explanation(Explain|DeferredExplain $value): int
+    public function explanation(Explain|DeferredExplain|ExplainConnection $value): int
     {
         $domain = $value->modifier === null ? self::ALL : 3;
-        if ($value->analyze || strcasecmp($value->format->value ?? '', 'TREE') === 0) {
+        if ($value->analyze) {
             $domain &= 508;
         }
-        if ($value->database !== null) {
+        if (!$value instanceof ExplainConnection && $value->database !== null) {
             $domain &= 496;
         }
         if ($value->emptyInto) {
@@ -114,6 +115,9 @@ final class ReleaseDomain
         }
         if ($value->into !== null) {
             $domain &= $value instanceof DeferredExplain && !(new ExplainFacts())->target($value->into) ? ($value->into->name->value === '' ? 8 : 56) : 504;
+        }
+        if ($value instanceof ExplainConnection && $value->into?->name->value === '') {
+            $domain &= 456;
         }
         return $domain;
     }

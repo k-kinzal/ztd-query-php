@@ -487,6 +487,23 @@ variables; process dependencies and row-width failures are checked at execution.
 Stored `DeferredKill` instructions apply these conditions when control reaches
 the instruction.
 
+### Explanation options
+
+`ExplainVerb` retains the `EXPLAIN`, `DESCRIBE` or `DESC` command on statement,
+connection and table explanations, including deferred stored instructions.
+The renderer reproduces that choice without consulting SQL text.
+
+`Explain` and `ExplainConnection` retain explicit format names and incompatible
+`INTO` options. `ExplainConnection` also retains `ANALYZE`, its output variable,
+and the ignored empty destination spelling of MySQL 8.2–8.3. Execution checks
+these options before looking up the connection or preparing dependencies; an
+option refusal does not remove the connection identifier or explained statement.
+Unknown formats and incompatible options appear as typed diagnostics and ordered
+`ParseFailure` notices. MySQL 8.1's `INTO` refusal follows notices from its explained
+operand. These values can be constructed and executed without recovering options
+from SQL. Deferred explained operands and invalid ordinary output targets retain
+their existing refusal paths.
+
 ### File input destinations
 
 `LoadTable::columns` and `RefusedLoadAssignments::columns` distinguish an omitted

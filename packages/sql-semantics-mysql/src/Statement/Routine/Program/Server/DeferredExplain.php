@@ -43,10 +43,8 @@ final class DeferredExplain implements ProgramStatement
      * @param \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier|null $modifier The optional legacy report modifier
      * @param bool $emptyInto Whether the ignored empty INTO spelling of 8.2–8.3 is present
      */
-    public function __construct(public readonly Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier $modifier = null, public readonly bool $emptyInto = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Explainable|DeferredSelection|DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete $statement, public readonly ?Name $format = null, public readonly ?UserVariable $into = null, public readonly ?Name $database = null, public readonly bool $analyze = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier $modifier = null, public readonly bool $emptyInto = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb $verb = \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb::Explain)
     {
-        Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
-        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
         Check::input(!$emptyInto || ($into === null && !$analyze && $modifier === null), 'An empty EXPLAIN destination has no assignment, ANALYZE or legacy modifier.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
         Check::input(!$statement instanceof Explainable || !(new ExplainFacts())->target($into) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0), 'A deferred explanation retains an invocation-time operand constraint.');
@@ -59,7 +57,12 @@ final class DeferredExplain implements ProgramStatement
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
-        if ($this->into !== null) {
+        $refused = (new ExplainFacts())->options($derivation->context->profile->grammar, $this->format, $this->analyze, $this->into);
+        $late = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql810 && $refused instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto;
+        if ($refused !== null && !$late) {
+            (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        }
+        if ($this->into !== null && $refused === null) {
             $derivation->scalar($this->into, $scope->environment);
         }
         if ($this->database !== null) {
@@ -74,6 +77,9 @@ final class DeferredExplain implements ProgramStatement
         } else {
             $derivation->inspected($this->statement, $scope->environment);
         }
+        if ($late) {
+            (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        }
     }
 
     /**
@@ -81,7 +87,7 @@ final class DeferredExplain implements ProgramStatement
      */
     public function render(Output $out): void
     {
-        $out->keyword('EXPLAIN');
+        $out->keyword($this->verb->value);
         if ($this->analyze) {
             $out->keyword('ANALYZE');
         }

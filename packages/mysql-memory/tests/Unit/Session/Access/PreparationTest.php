@@ -39,6 +39,7 @@ final class PreparationTest extends TestCase
         yield 'prepare' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare($name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid dynamic SQL'))];
         yield 'execute' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute($name)];
         yield 'deallocate' => [new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate($name)];
+        yield 'connection explanation' => [new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'))];
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerPreparedCommands')]

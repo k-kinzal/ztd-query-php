@@ -58,6 +58,9 @@ final class Reading
             throw (new \MySqlMemory\Command\InternalCommand())->error($operation);
         }
         (new \MySqlMemory\Command\Explain\ExplainCommand())->format($statement);
+        if ($session->settings()->release() !== GrammarRelease::MySql810) {
+            (new \MySqlMemory\Command\Explain\Options())->check($statement, $session);
+        }
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
             $this->targets($statement, $session);
         }

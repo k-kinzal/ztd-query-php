@@ -124,7 +124,7 @@ final class ModernForms
      */
     public function explain(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain|\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain $value): bool
     {
-        return strtoupper($value->format->value ?? '') === 'TREE' || (!$value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection && ($value->analyze || $value->into !== null || $value->database !== null || $value->emptyInto));
+        return $value->analyze || $value->into !== null || $value->emptyInto || (!$value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection && $value->database !== null);
     }
     /**
      * Identifies clauses that require modern grammar in every query position.

@@ -52,7 +52,7 @@ final class ExplainCommandTest extends TestCase
         $session->query('EXPLAIN ANALYZE FORMAT=json SELECT 1');
     }
 
-    public function testInputRefusesIntoWithoutTheJsonFormatBeforePublishingAStatement(): void
+    public function testCheckRefusesIntoWithoutTheJsonFormat(): void
     {
         $session = (new Instance())->connect();
 
@@ -60,7 +60,7 @@ final class ExplainCommandTest extends TestCase
         $this->expectExceptionCode(6006);
         $this->expectExceptionMessage('EXPLAIN INTO does not support implicit FORMAT.');
 
-        $session->analyze('EXPLAIN INTO @v SELECT 1');
+        $session->query('EXPLAIN INTO @v SELECT 1');
     }
 
     public function testCheckRefusesAnUnknownSchemaBeforeAMissingTable(): void
@@ -74,14 +74,14 @@ final class ExplainCommandTest extends TestCase
         $session->query('EXPLAIN FOR SCHEMA nodb SELECT * FROM nosuch');
     }
 
-    public function testInputRefusesAnalyzeForAConnection(): void
+    public function testCheckRefusesAnalyzeForAConnection(): void
     {
         $session = (new Instance())->connect();
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
         $this->expectExceptionMessage("This version of MySQL doesn't yet support 'EXPLAIN ANALYZE FOR CONNECTION'");
 
-        $session->analyze('EXPLAIN ANALYZE FORMAT=TRADITIONAL FOR CONNECTION 0');
+        $session->query('EXPLAIN ANALYZE FORMAT=TRADITIONAL FOR CONNECTION 0');
     }
 
     public function testExecuteExplainsAStatementWithoutTables(): void

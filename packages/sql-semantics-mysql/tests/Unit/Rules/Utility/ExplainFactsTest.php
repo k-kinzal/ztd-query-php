@@ -26,11 +26,11 @@ final class ExplainFactsTest extends TestCase
         self::assertFalse($facts->known(new \SqlSemantics\Statement\Identifier\Name('XML')));
     }
 
-    public function testRefusalRejectsUnavailableInputBeforePublishingAStatement(): void
+    public function testRefusalRetainsUnavailableFormatsAsDiagnostics(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Unknown EXPLAIN format name');
-        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat::class, $statement->diagnostics()[0]);
+        self::assertSame('EXPLAIN FORMAT = TREE SELECT 1', $statement->toString());
     }
 
     public function testRefusalAnswersTheBrokenRule(): void
@@ -59,11 +59,11 @@ final class ExplainFactsTest extends TestCase
         self::assertFalse((new Semantics(Dialect::MySql))->analyze('EXPLAIN SELECT 1')->shape()?->complete());
         self::assertNull((new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @v SELECT 1')->shape());
     }
-    public function testDeriveRefusesContradictoryIntoOptionsBeforePublication(): void
+    public function testDeriveRetainsContradictoryIntoOptions(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('EXPLAIN INTO requires FORMAT=JSON');
-        (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1');
+        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $statement->diagnostics()[0]);
+        self::assertNull($statement->shape());
     }
 
     public function testDeriveRetainsTheModifierNoticeBeforeItsExplainedOperand(): void
@@ -84,4 +84,15 @@ final class ExplainFactsTest extends TestCase
         self::assertFalse($rules->target($long));
         self::assertTrue($rules->target(null));
     }
+    public function testOptionsKeepsTheVersionedRefusalOrder(): void
+    {
+        $facts = new ExplainFacts();
+        $target = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v'));
+        self::assertNull($facts->options(GrammarRelease::MySql847, null, false, null, true));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain::class, $facts->options(GrammarRelease::MySql847, new \SqlSemantics\Statement\Identifier\Name('JSON'), true, $target, true));
+        $legacy = $facts->options(GrammarRelease::MySql810, new \SqlSemantics\Statement\Identifier\Name('JSON'), true, $target);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $legacy);
+        self::assertTrue($legacy->analyze);
+    }
+
 }

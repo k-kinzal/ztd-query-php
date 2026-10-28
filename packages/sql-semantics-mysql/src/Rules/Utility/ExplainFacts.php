@@ -56,7 +56,7 @@ final class ExplainFacts
     /**
      * Records the rows of an EXPLAIN, or reports why the server refuses it.
      */
-    public function derive(Derivation $derivation, ?Name $format, bool $analyze, ?ExplainModifier $modifier, ?UserVariable $into): void
+    public function derive(Derivation $derivation, ?Name $format, bool $analyze, ?ExplainModifier $modifier, ?UserVariable $into, bool $connection = false): void
     {
         $notice = $modifier?->deprecation($derivation->context->profile->grammar);
         if ($notice !== null) {
@@ -65,6 +65,12 @@ final class ExplainFacts
         $named = $format === null ? null : strtoupper($format->value);
         if ($into !== null) {
             $derivation->scalar($into, $derivation->environment());
+        }
+        $options = $this->options($derivation->context->profile->grammar, $format, $analyze, $into, $connection);
+        if ($options !== null) {
+            $derivation->report($options);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($options, true), after: $derivation->context->profile->grammar === GrammarRelease::MySql810 && $options instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto);
+            return;
         }
         $refused = $this->refusal($derivation->context->profile->grammar, $named, $analyze, $into !== null);
         if ($refused !== null) {
@@ -75,6 +81,27 @@ final class ExplainFacts
         if ($into === null) {
             $this->rows($derivation, $named, $analyze, $modifier);
         }
+    }
+
+    /**
+     * Selects an option refusal without discarding the request's remaining operands.
+     * Format and destination checks precede connection-specific restrictions.
+     */
+    public function options(GrammarRelease $release, ?Name $format, bool $analyze, ?UserVariable $into, bool $connection = false): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat|\SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget|\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto|\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain|null
+    {
+        if ($format !== null && $this->refusal($release, strtoupper($format->value), false, false) !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat($format);
+        }
+        if ($into !== null) {
+            if (!in_array($release, [GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830], true) && !$this->target($into)) {
+                return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget($into);
+            }
+            $legacyAnalyze = $release === GrammarRelease::MySql810 && $analyze;
+            if ($legacyAnalyze || strcasecmp($format->value ?? '', 'JSON') !== 0) {
+                return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto($format, $legacyAnalyze);
+            }
+        }
+        return $connection && ($analyze || $into !== null) ? new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain($analyze) : null;
     }
 
     /**

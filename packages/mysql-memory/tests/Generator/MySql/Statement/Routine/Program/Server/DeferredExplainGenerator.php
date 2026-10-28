@@ -27,11 +27,12 @@ final class DeferredExplainGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier|null>|null $modifier Generated constructor operand
      * @param ErisGenerator<bool>|null $emptyInto Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb>|null $verb Generated command choice
      */
-    public function __construct(ErisGenerator $statement, ?ErisGenerator $format = null, ?ErisGenerator $into = null, ?ErisGenerator $database = null, ?ErisGenerator $analyze = null, ?ErisGenerator $modifier = null, ?ErisGenerator $emptyInto = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $statement, ?ErisGenerator $format = null, ?ErisGenerator $into = null, ?ErisGenerator $database = null, ?ErisGenerator $analyze = null, ?ErisGenerator $modifier = null, ?ErisGenerator $emptyInto = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain(statement: $parts[0], format: $parts[1], into: $parts[2], database: $parts[3], analyze: $parts[4], modifier: $parts[5], emptyInto: $parts[6], inputSource: $parts[7]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain(statement: $parts[0], format: $parts[1], into: $parts[2], database: $parts[3], analyze: $parts[4], modifier: $parts[5], emptyInto: $parts[6], inputSource: $parts[7], verb: $parts[8]);
         }, \Tests\Generator\Operands::tuple(
             $statement,
             $format ?? Generators::constant(null),
@@ -40,7 +41,8 @@ final class DeferredExplainGenerator implements ErisGenerator
             $analyze ?? Generators::constant(false),
             $modifier ?? Generators::constant(null),
             $emptyInto ?? Generators::constant(false),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $verb ?? new \Tests\Generator\MySql\Statement\Utility\Explain\ExplainVerbGenerator()
         ));
     }
 }

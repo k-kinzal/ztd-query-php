@@ -27,6 +27,6 @@ final class DescribeTableTest extends TestCase
 
     public function testRenderWritesTheColumn(): void
     {
-        self::assertSame('DESCRIBE db.t `a%`', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('explain db.t `a%`')->toString());
+        self::assertSame('EXPLAIN db.t `a%`', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('explain db.t `a%`')->toString());
     }
 }

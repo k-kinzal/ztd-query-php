@@ -31,9 +31,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain.html. Status: Implemented.
  *
  * @visibility public
- * @example Refusing a format outside the public format domain
+ * @example Retaining an unknown format for execution validation
  *     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
- *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('XML')))->format?->value // => 'XML'
  * @example Refusing a legacy modifier around a modern DELETE alias
  *     $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), alias: new \SqlSemantics\Statement\Identifier\Name('x'));
  *     $delete = new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $target);
@@ -65,6 +65,7 @@ final class Explain extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
         public readonly bool $emptyInto = false,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ExplainVerb $verb = ExplainVerb::Explain,
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -73,8 +74,6 @@ final class Explain extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
         Check::input((new ExplainFacts())->target($into), 'An EXPLAIN INTO target has between 1 and 64 characters.');
         Check::input($database === null || mb_strlen($database->value, 'UTF-8') <= 64, 'An EXPLAIN database name has at most 64 characters.');
         Check::input(!$analyze || strcasecmp($format->value ?? '', 'TRADITIONAL') !== 0, 'EXPLAIN ANALYZE cannot use the TRADITIONAL format.');
-        Check::input((new ExplainFacts())->known($format), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
-        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO has an explicit JSON format.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -85,8 +84,14 @@ final class Explain extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
     public function deriveStatement(Derivation $derivation): void
     {
         $context = $derivation->context;
+        $late = $context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql810 && $this->into !== null && (new ExplainFacts())->known($this->format);
+        if (!$late) {
+            (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        }
         $derivation->inspected($this->statement, $this->database === null ? null : new Environment(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session, $context->foldedSchemas)));
-        (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        if ($late) {
+            (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        }
     }
 
     /**
@@ -94,7 +99,7 @@ final class Explain extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
      */
     public function render(Output $out): void
     {
-        $out->keyword('EXPLAIN');
+        $out->keyword($this->verb->value);
         if ($this->analyze) {
             $out->keyword('ANALYZE');
         }

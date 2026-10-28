@@ -57,4 +57,14 @@ final class DeferredExplainTest extends TestCase
         new DeferredExplain($query, new \SqlSemantics\Statement\Identifier\Name('TRADITIONAL'), database: new \SqlSemantics\Statement\Identifier\Name(str_repeat('a', 65)), analyze: true);
     }
 
+    public function testDeriveProgramRetainsUnknownOptionsBeforeDeferredOperands(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() EXPLAIN FORMAT=XML SELECT ROW(1,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
+        self::assertInstanceOf(DeferredExplain::class, $statement->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat::class, $statement->warnings()[0]->problem);
+        self::assertSame('CREATE PROCEDURE p() EXPLAIN FORMAT = XML SELECT ROW(1, 2)', $statement->toString());
+    }
+
 }

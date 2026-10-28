@@ -23,7 +23,7 @@ final class ExplainRuleTest extends TestCase
 
     public function testVerbAcceptsDescAndDescribe(): void
     {
-        self::assertSame('EXPLAIN SELECT 1', (new Semantics(Dialect::MySql))->analyze('desc select 1')->toString());
+        self::assertSame('DESC SELECT 1', (new Semantics(Dialect::MySql))->analyze('desc select 1')->toString());
     }
 
     public function testColumnLowersTheColumnPattern(): void
@@ -42,20 +42,21 @@ final class ExplainRuleTest extends TestCase
         self::assertSame('EXPLAIN ANALYZE FORMAT = json INTO @v FOR DATABASE db SELECT 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('explain analyze format=json into @v for database db select 1')->toString());
     }
 
-    public function testModernRefusesConnectionAnalysisBeforePublishingAStatement(): void
+    public function testModernRetainsConnectionAnalysisForExecution(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('EXPLAIN ANALYZE FOR CONNECTION is not supported.');
-
-        (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 1');
+        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection::class, $statement);
+        self::assertTrue($statement->analyze);
+        self::assertSame('EXPLAIN ANALYZE FOR CONNECTION 1', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain::class, $statement->diagnostics()[0]);
     }
 
-    public function testModernRefusesConnectionIntoBeforePublishingAStatement(): void
+    public function testModernRetainsConnectionIntoForExecution(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('EXPLAIN FOR CONNECTION does not support the INTO clause.');
-
-        (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @a FOR CONNECTION 1');
+        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @a FOR CONNECTION 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection::class, $statement);
+        self::assertSame('a', $statement->into?->name->value);
+        self::assertSame('EXPLAIN FORMAT = JSON INTO @a FOR CONNECTION 1', $statement->toString());
     }
 
     public function testExplainedLowersThroughTheOwningFamily(): void

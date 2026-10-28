@@ -23,16 +23,18 @@ final class DescribeTableGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $column Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb>|null $verb Generated command choice
      */
-    public function __construct(ErisGenerator $table, ?ErisGenerator $column = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $table, ?ErisGenerator $column = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable(table: $parts[0], column: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable(table: $parts[0], column: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], verb: $parts[4]);
         }, \Tests\Generator\Operands::tuple(
             $table,
             $column ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $verb ?? new ExplainVerbGenerator()
         ));
     }
     /**

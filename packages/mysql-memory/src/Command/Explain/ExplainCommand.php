@@ -90,7 +90,7 @@ final class ExplainCommand implements Command
     /**
      * Raises the error of the format and options of an EXPLAIN, before the server prepares the statement it explains.
      *
-     * Connection explanations carry only options admitted by their semantic structure.
+     * Connection explanations retain refused options for the same versioned checks.
      *
      * @throws \MySqlMemory\Error\SqlError When the server refuses the format or the options
      */
@@ -99,15 +99,9 @@ final class ExplainCommand implements Command
         if (!$statement instanceof Explain && !$statement instanceof DeferredExplain && !$statement instanceof ExplainConnection) {
             return;
         }
-        $format = $statement->format === null ? null : strtoupper($statement->format->value);
-        if ($statement->format !== null && !in_array($format, self::FORMATS, true)) {
-            throw StatementError::UnknownExplainFormat->error($statement->format->value);
-        }
+        (new Options())->check($statement, $session);
         if ($statement instanceof ExplainConnection) {
             return;
-        }
-        if ($statement->into !== null && $format !== 'JSON') {
-            throw $format === null ? StatementError::ExplainIntoImplicitFormat->error() : StatementError::ExplainIntoFormat->error($format);
         }
         if ($statement->database !== null && $session->instance->dictionary->schema($statement->database->value) === null) {
             throw QueryError::BadDatabase->error($statement->database->value);

@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
@@ -86,22 +87,14 @@ final class ExplainRule
                 return new UseDatabase($this->lowering->names->identifier($form->node(1)));
             case 'describe: describe_command table_ident opt_describe_column':
             case 'describe_stmt: describe_command table_ident opt_describe_column':
-                $this->verb($form->node(0));
-
-                return new DescribeTable(new InspectedTable($this->lowering->names->qualified($form->node(1))), $this->column($form->node(2)));
+                return new DescribeTable(new InspectedTable($this->lowering->names->qualified($form->node(1))), $this->column($form->node(2)), verb: $this->verb($form->node(0)));
             case 'describe: describe_command opt_extended_describe explanable_command':
             case 'describe: describe_command opt_extended_describe explainable_command':
-                $this->verb($form->node(0));
-
-                return $this->legacy($this->lowering->form($form->node(1)), $this->lowering->form($form->node(2)));
+                return $this->legacy($this->lowering->form($form->node(1)), $this->lowering->form($form->node(2)), $this->verb($form->node(0)));
             case 'explain_stmt: describe_command opt_explain_options explainable_stmt':
-                $this->verb($form->node(0));
-
-                return $this->modern($form->node(1), null, $this->lowering->form($form->node(2)));
+                return $this->modern($form->node(1), null, $this->lowering->form($form->node(2)), $this->verb($form->node(0)));
             case 'explain_stmt: describe_command opt_explain_options INTO @ ident_or_text explainable_stmt':
-                $this->verb($form->node(0));
-
-                return $this->modern($form->node(1), $form->node(4), $this->lowering->form($form->node(5)));
+                return $this->modern($form->node(1), $form->node(4), $this->lowering->form($form->node(5)), $this->verb($form->node(0)));
             default:
                 throw ImplementationGap::production($form);
         }
@@ -112,12 +105,13 @@ final class ExplainRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function verb(Node $verb): void
+    public function verb(Node $verb): ExplainVerb
     {
         $form = $this->lowering->form($verb);
         if ($form->signature !== 'describe_command: DESC' && $form->signature !== 'describe_command: DESCRIBE') {
             throw ImplementationGap::production($form);
         }
+        return ExplainVerb::from(strtoupper($verb->tokens()[0]->text));
     }
 
     /**
@@ -143,7 +137,7 @@ final class ExplainRule
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When the explained operand needs invocation-time preparation
      */
-    public function legacy(Form $options, Form $command): Statement
+    public function legacy(Form $options, Form $command, ExplainVerb $verb = ExplainVerb::Explain): Statement
     {
         $format = null;
         $modifier = null;
@@ -153,35 +147,32 @@ final class ExplainRule
             $modifier = self::MODIFIERS[$options->signature] ?? throw ImplementationGap::production($options);
         }
         if ($command->signature === 'explainable_command: FOR_SYM CONNECTION_SYM real_ulong_num') {
-            return new ExplainConnection($this->lowering->numbers->integral($command->node(2)), $format, $modifier);
+            return new ExplainConnection($this->lowering->numbers->integral($command->node(2)), $format, $modifier, verb: $verb);
         }
         $statement = $this->deferred($command);
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($statement, $format, modifier: $modifier), (new \SqlSemantics\Construction\SourceRanges())->span($command->node)[1] ?? 0, false);
         }
         if (!$statement instanceof Explainable) {
-            $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, modifier: $modifier);
+            $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, modifier: $modifier, verb: $verb);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain($instruction), (new \SqlSemantics\Construction\SourceRanges())->span($command->node)[1] ?? 0);
         }
-        return new Explain($statement, $format, false, $modifier);
+        return new Explain($statement, $format, false, $modifier, verb: $verb);
     }
 
     /**
      * Lowers EXPLAIN of MySQL 8.0 and later from its options, the variable of an INTO written before the statement, and its `explainable_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When connection options have no statement form
+     * @throws \SqlSemantics\Construction\RejectedInput When an explained operand needs deferred preparation
      */
-    public function modern(Node $options, ?Node $into, Form $explainable): Statement
+    public function modern(Node $options, ?Node $into, Form $explainable, ExplainVerb $verb = ExplainVerb::Explain): Statement
     {
         [$format, $analyze, $target] = (new OptionRule($this->lowering))->options($options);
         $variable = $into === null ? $target : $this->lowering->variables->user($into);
         if ($explainable->signature === 'explainable_stmt: FOR_SYM CONNECTION_SYM real_ulong_num') {
             $connection = $this->lowering->numbers->integral($explainable->node(2));
-            if ($analyze || $variable !== null) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain($analyze), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0);
-            }
-            return new ExplainConnection($connection, $format);
+            return new ExplainConnection($connection, $format, analyze: $analyze, into: $variable, emptyInto: (new OptionRule($this->lowering))->emptyInto($options), verb: $verb);
         }
         $database = (self::EXPLAINED[$explainable->signature] ?? 0) === 1 ? (new OptionRule($this->lowering))->database($explainable->node(0)) : null;
 
@@ -192,10 +183,10 @@ final class ExplainRule
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainTargets($statement, $format, $variable, $database, $analyze, emptyInto: $empty), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0, false);
         }
         if (!$statement instanceof Explainable || !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0)) {
-            $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, $variable, $database, $analyze, emptyInto: $empty);
+            $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($statement, $format, $variable, $database, $analyze, emptyInto: $empty, verb: $verb);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain($instruction), (new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0);
         }
-        return new Explain($statement, $format, $analyze, null, $variable, $database, $empty);
+        return new Explain($statement, $format, $analyze, null, $variable, $database, $empty, verb: $verb);
     }
 
     /**

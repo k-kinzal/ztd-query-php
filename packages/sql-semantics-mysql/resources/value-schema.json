@@ -3539,7 +3539,8 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredSelection|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Selection\\DeferredQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDelete|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredMultipleDelete",
+        "verb": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainVerb"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Server\\DeferredGroupStart": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -4969,7 +4970,8 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "column": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text|null",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
+        "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable",
+        "verb": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainVerb"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\Explain": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -4980,17 +4982,26 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
         "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
-        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable"
+        "statement": "SqlSemantics\\Platform\\MySql\\Statement\\Explainable",
+        "verb": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainVerb"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainConnection": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "analyze": "bool",
         "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "connectionId": "int",
+        "emptyInto": "bool",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier"
+        "into": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
+        "modifier": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier",
+        "verb": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainVerb"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainModifier": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\ExplainVerb": {
         "name": "string",
         "value": "string"
     },
