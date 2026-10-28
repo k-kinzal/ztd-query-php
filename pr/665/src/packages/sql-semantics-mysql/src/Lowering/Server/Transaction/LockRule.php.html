@@ -61,7 +61,8 @@
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * Lowers LOCK TABLES, UNLOCK TABLES and the backup lock statements.</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> * Rule: MYSQL-LOCK-001. Scope: lock, unlock, table_lock_list, table_lock,</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> * lock_option. TABLE and TABLES are synonyms (LeafNoise); the alias goes</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> * lock_option. TABLE and TABLES are synonyms (LeafNoise); the alias goes</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * lock_option. TABLE and TABLES retain their synonymous keyword forms; the alias goes</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> * through the query family&#039;s alias rule. Constructs: LockTables, TableLock,</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> * UnlockTables, LockInstance, UnlockInstance. Terminates: the lock list is</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * flattened iteratively.</span></span>
@@ -111,7 +112,8 @@
 <span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">tables</span>(<span class="tok-id">Form</span> <span class="tok-var">$form</span>): <span class="tok-id">LockTables</span></span>
 <span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>    {</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">skip</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">1</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">74</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">skip</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">1</span>));</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-var">$word</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">tableWord</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">1</span>));</span>
 <span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>        <span class="tok-var">$list</span> = <span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">2</span>);</span>
 <span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">names</span>-&gt;<span class="tok-id">claimed</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">form</span>(<span class="tok-var">$list</span>), [<span class="tok-str">&#039;table_lock_list: table_lock&#039;</span>, <span class="tok-str">&#039;table_lock_list: table_lock_list , table_lock&#039;</span>]);</span>
 <span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>        <span class="tok-var">$locks</span> = [];</span>
@@ -119,7 +121,8 @@
 <span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>            <span class="tok-var">$locks</span>[] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lock</span>(<span class="tok-var">$item</span>);</span>
 <span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>        }</span>
 <span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a></span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">LockTables</span>(<span class="tok-var">$locks</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">82</span>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">LockTables</span>(<span class="tok-var">$locks</span>);</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">LockTables</span>(<span class="tok-var">$locks</span>, <span class="tok-id">tableWord</span>: <span class="tok-var">$word</span>);</span>
 <span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>    }</span>
 <span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a></span>
 <span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>    <span class="tok-com">/**</span></span>
@@ -150,9 +153,11 @@
 <span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">unlock</span>(<span class="tok-id">Node</span> <span class="tok-var">$tables</span>): <span class="tok-id">UnlockTables</span></span>
 <span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a>    {</span>
-<span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">skip</span>(<span class="tok-var">$tables</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">113</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">skip</span>(<span class="tok-var">$tables</span>);</span>
+<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a>        <span class="tok-var">$word</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">options</span>-&gt;<span class="tok-id">tableWord</span>(<span class="tok-var">$tables</span>);</span>
 <span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a></span>
-<span class="src-line" id="L115" data-diff="same"><a class="ln" href="#L115">115</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">UnlockTables</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">115</span>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">UnlockTables</span>();</span>
+<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">UnlockTables</span>(<span class="tok-id">tableWord</span>: <span class="tok-var">$word</span>);</span>
 <span class="src-line" id="L116" data-diff="same"><a class="ln" href="#L116">116</a>    }</span>
 <span class="src-line" id="L117" data-diff="same"><a class="ln" href="#L117">117</a>}</span>
 <span class="src-line" id="L118" data-diff="same"><a class="ln" href="#L118">118</a></span>
