@@ -28,12 +28,9 @@ final class SyntaxStorageOptions
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
         if ($node->name === 'size_number') {
-            try {
-                $lowering->numbers->size($node);
-            } catch (RejectedInput $failure) {
-                return new ParseFailure($failure->problem, true);
-            }
-            return null;
+            $size = $lowering->numbers->size($node);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageSizes())->problem($size->number, $size->word);
+            return $problem === null ? null : new ParseFailure($problem, true);
         }
         if ((!in_array($lowering->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && $node->name !== 'undo_tablespace_option_list')
             || !in_array($node->name, ['undo_tablespace_option_list', 'tablespace_options', 'alter_tablespace_options', 'logfile_group_options', 'alter_logfile_group_options', 'change_ts_options', 'drop_ts_options'], true)) {

@@ -46,11 +46,9 @@ final class DropSpatialReferenceTest extends TestCase
     }
 
     #[DataProvider('providerNonIntegerTokens')]
-    public function testIdentifierRequiresAnIntegerToken(\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number): void
+    public function testIdentifierRetainsARefusedIntegerOperand(\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number): void
     {
-        $this->expectExceptionMessage('A spatial reference identifier is an integer token.');
-
-        new DropSpatialReference(false, $number);
+        self::assertSame($number, (new DropSpatialReference(false, $number))->srid);
     }
 
     public function testRequestRetainsTheUnmodifiableIdentifier(): void

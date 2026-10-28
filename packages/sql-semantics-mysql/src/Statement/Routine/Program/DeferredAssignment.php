@@ -49,17 +49,18 @@ final class DeferredAssignment implements Node
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
+        $legacy = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
         if ($this->target instanceof SystemTarget) {
             $derivation->scalar($this->target, $scope->environment);
             if ($this->target->instance === null) {
-                (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($this->target->name->value, $derivation, true);
+                (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($this->target->name->value, $derivation, true, $legacy ? $this->target : $this->value);
             } else {
                 $this->target->structured($derivation);
             }
         } elseif ($this->target instanceof UserVariable) {
             $derivation->scalar($this->target, $scope->environment);
-        } elseif ($this->scope !== null || ($this->qualifier === null && $scope->complete && !$scope->variable($this->target))) {
-            (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($this->target->value, $derivation, true);
+        } elseif ($this->qualifier === null && $scope->complete && !$scope->variable($this->target)) {
+            (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($this->target->value, $derivation, true, $legacy ? $this : $this->value, !$legacy);
         }
         $derivation->scalar($this->value, $scope->environment);
     }

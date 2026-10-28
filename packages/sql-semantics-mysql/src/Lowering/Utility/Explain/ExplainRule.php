@@ -146,7 +146,7 @@ final class ExplainRule
             $modifier = self::MODIFIERS[$options->signature] ?? throw ImplementationGap::production($options);
         }
         if ($command->signature === 'explainable_command: FOR_SYM CONNECTION_SYM real_ulong_num') {
-            return new ExplainConnection($this->lowering->numbers->integral($command->node(2)), $format, $modifier, verb: $verb);
+            return new ExplainConnection($this->lowering->numbers->numeral($command->node(2)), $format, $modifier, verb: $verb);
         }
         $statement = $this->deferred($command);
         if (!$statement instanceof Explainable) {
@@ -167,7 +167,7 @@ final class ExplainRule
         [$format, $analyze, $target] = (new OptionRule($this->lowering))->options($options);
         $variable = $into === null ? $target : $this->lowering->variables->user($into);
         if ($explainable->signature === 'explainable_stmt: FOR_SYM CONNECTION_SYM real_ulong_num') {
-            $connection = $this->lowering->numbers->integral($explainable->node(2));
+            $connection = $this->lowering->numbers->numeral($explainable->node(2));
             return new ExplainConnection($connection, $format, analyze: $analyze, into: $variable, emptyInto: (new OptionRule($this->lowering))->emptyInto($options), verb: $verb);
         }
         $database = (self::EXPLAINED[$explainable->signature] ?? 0) === 1 ? (new OptionRule($this->lowering))->database($explainable->node(0)) : null;

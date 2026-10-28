@@ -21,8 +21,7 @@ final class SubpartitioningTest extends TestCase
         $count = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('b', true);
         $method = new KeyMethod(false, null, [new \SqlSemantics\Statement\Identifier\Name('a')]);
         self::assertSame($count, (new Subpartitioning($method, $count))->count);
-        $this->expectExceptionMessage('A subpartition count is an integer token.');
-        new Subpartitioning($method, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1e2'));
+        self::assertSame('1e2', (new Subpartitioning($method, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1e2')))->count?->text);
     }
 
 

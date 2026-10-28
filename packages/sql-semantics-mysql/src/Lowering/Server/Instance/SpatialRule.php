@@ -62,17 +62,17 @@ final class SpatialRule
                 $form,
                 true,
                 false,
-                $numbers->integral($form->node(6)),
+                $numbers->numeral($form->node(6)),
                 $this->attributes($form->node(7)),
             ),
             'create_srs_stmt: CREATE SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM opt_if_not_exists real_ulonglong_num srs_attributes' => $this->create(
                 $form,
                 false,
                 $options->present($form->node(4)),
-                $numbers->integral($form->node(5)),
+                $numbers->numeral($form->node(5)),
                 $this->attributes($form->node(6)),
             ),
-            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => $this->drop($form, $options->present($form->node(4)), $numbers->integral($form->node(5))),
+            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => $this->drop($form, $options->present($form->node(4)), $numbers->numeral($form->node(5))),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -116,7 +116,7 @@ final class SpatialRule
         foreach (array_reverse($forms) as $attributeForm) {
             $kind = self::ATTRIBUTES[$attributeForm->signature] ?? throw ImplementationGap::production($attributeForm);
             $value = $this->lowering->literals->text($attributeForm->node(2));
-            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->integral($attributeForm->node(5)) : null;
+            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->numeral($attributeForm->node(5)) : null;
             if (isset($seen[$kind->value])) {
                 throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute, $kind), (new \SqlSemantics\Construction\SourceRanges())->span($attributeForm->node)[1] ?? 0);
             }

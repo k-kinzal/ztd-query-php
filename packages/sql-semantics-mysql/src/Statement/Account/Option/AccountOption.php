@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
 
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
@@ -13,7 +12,8 @@ use SqlSemantics\Statement\Node;
 /**
  * One password management or account locking option of CREATE USER or ALTER USER, with its number when it takes one.
  *
- * The number is an integer token within the option's range, kept as written.
+ * Every written number is retained; integer-token and option-range conditions
+ * belong to the containing request.
  * Several options may be written; for one
  * field the last option written wins in the server, so the list keeps every
  * option in source order.
@@ -23,12 +23,12 @@ use SqlSemantics\Statement\Node;
  * @example Reading a password history option
  *     $option = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE USER u PASSWORD HISTORY 5')->options[0];
  *     [$option->kind, $option->number?->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, '5']
- * @example Refusing an intrinsically invalid locking interval
- *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::LockTime, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('00032768')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a fractional password history
- *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a decimal token above the unsigned integer domain
- *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('18446744073709551616')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an invalid locking interval
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::LockTime, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('00032768')))->number?->text // => '00032768'
+ * @example Retaining a fractional password history
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0')))->number?->text // => '1.0'
+ * @example Retaining a number beyond the unsigned integer domain
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('18446744073709551616')))->number?->text // => '18446744073709551616'
  */
 final class AccountOption implements Node
 {
@@ -41,8 +41,6 @@ final class AccountOption implements Node
     public function __construct(public readonly AccountOptionKind $kind, public readonly ?Numeral $number = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($number !== null) === $kind->numbered(), 'A number is written exactly for an option that takes one.');
-        $problem = $number === null ? null : (new NumberChecks())->option($kind, $number);
-        Check::input($problem === null, $problem?->message() ?? 'An account option has an integer in its permitted range.');
     }
 
     /**

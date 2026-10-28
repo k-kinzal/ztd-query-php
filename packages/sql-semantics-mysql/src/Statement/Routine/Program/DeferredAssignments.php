@@ -57,7 +57,9 @@ final class DeferredAssignments implements ProgramStatement
             if ($item instanceof DeferredAssignment) {
                 $item->deriveProgram($derivation, $scope);
             } else {
-                $derivation->program(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([$item]), $scope->environment);
+                $ordinary = new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([$item]);
+                (new \SqlSemantics\Platform\MySql\Rules\Routine\BodyFacts())->targets($ordinary, $derivation, $scope);
+                $derivation->inspected($ordinary, $scope->environment);
             }
         }
     }

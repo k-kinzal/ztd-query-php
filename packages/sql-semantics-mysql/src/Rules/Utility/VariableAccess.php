@@ -79,15 +79,15 @@ final class VariableAccess
     /**
      * Answers the variable of the release with a name, or null after reporting that there is none.
      */
-    public function find(string $name, Derivation $derivation, bool $assigned = false): ?Definition
+    public function find(string $name, Derivation $derivation, bool $assigned = false, ?\SqlSemantics\Statement\Node $at = null, bool $after = true): ?Definition
     {
         $definition = SystemVariables::of($derivation->context->profile->grammar)->find($name);
         if ($definition === null) {
             $problem = new UnknownSystemVariable($name, $assigned);
             $derivation->report($problem);
-            if (!$assigned && $derivation->inProgram()) {
-                $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
+            if ($derivation->inProgram()) {
+                $legacy = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || (!$assigned && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $at, $after);
             }
             if ($assigned && !$derivation->inProgram() && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem));

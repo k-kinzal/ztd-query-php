@@ -183,4 +183,50 @@ final class BodyFactsTest extends TestCase
         yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
     }
 
+
+    public function testStatementOwnsTheAssignmentConditionBeforeALaterInstruction(): void
+    {
+        $definition = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN SET missing=1; DO WEIGHT_STRING('value' AS CHAR(1.5)); END");
+        self::assertInstanceOf(CreateProcedure::class, $definition);
+        self::assertInstanceOf(Block::class, $definition->body);
+        $notice = $definition->warnings()[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class, $notice->problem);
+        self::assertSame($definition->body->statements[0], $definition->statementInformation()->warningInstruction($notice));
+        self::assertSame("CREATE PROCEDURE p() BEGIN SET missing = 1; DO WEIGHT_STRING('value' AS CHAR(1.5)); END", $definition->toString());
+    }
+
+    /**
+     * @param class-string<Diagnostic> $problem The first grammar or contextualization condition
+     */
+    #[DataProvider('providerStatementOrdersAssignedOperands')]
+    public function testStatementOrdersAssignedOperands(string $release, string $target, string $problem): void
+    {
+        $definition = (new Semantics(Dialect::MySql, $release))->analyze("CREATE PROCEDURE p() SET $target=WEIGHT_STRING('value' AS CHAR(1.5))");
+        $notice = $definition->warnings()[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertInstanceOf($problem, $notice->problem);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, class-string<Diagnostic>}>
+     */
+    public static function providerStatementOrdersAssignedOperands(): iterable
+    {
+        foreach (['missing', '@@missing'] as $target) {
+            yield '5.6 ' . $target => ['mysql-5.6.51', $target, \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class];
+            yield '5.7 ' . $target => ['mysql-5.7.44', $target, \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class];
+            yield '8.4 ' . $target => ['mysql-8.4.7', $target, \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class];
+        }
+    }
+
+    public function testTargetsPreservesTheInstructionOfMixedAssignmentItems(): void
+    {
+        $definition = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() SET missing=1, @v=WEIGHT_STRING(ROW(1,2) AS CHAR(1.5))');
+        self::assertInstanceOf(CreateProcedure::class, $definition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignments::class, $definition->body);
+        self::assertSame($definition->body, $definition->statementInformation()->warningInstruction($definition->warnings()[0]));
+        self::assertSame($definition->body, $definition->statementInformation()->warningInstruction($definition->warnings()[1]));
+    }
+
 }

@@ -347,6 +347,10 @@ final class TableDeclaration
         if (!$partitioning instanceof PartitionClause) {
             return [];
         }
+        $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
+        if (($partitioning->partitions !== null && !$magnitudes->integral($partitioning->partitions)) || ($partitioning->subpartitioning?->count !== null && !$magnitudes->integral($partitioning->subpartitioning->count))) {
+            return null;
+        }
         $count = $partitioning->definitions === [] ? ($partitioning->partitions === null ? 1 : max(1, (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($partitioning->partitions))) : count($partitioning->definitions);
         $subpartitions = $partitioning->subpartitioning?->count === null ? 0 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($partitioning->subpartitioning->count);
         if ($count * max(1, $subpartitions) > 8192) {

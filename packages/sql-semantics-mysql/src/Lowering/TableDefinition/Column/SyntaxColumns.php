@@ -52,6 +52,9 @@ final class SyntaxColumns
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
+        if ($node->name === 'column_attribute') {
+            return $this->columnAttribute($node, $lowering);
+        }
         $legacy = in_array($lowering->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         if (in_array($node->name, ['create_table_stmt', 'alter_table_stmt'], true) && (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->within($node, $lowering) !== null) {
             return null;
@@ -77,6 +80,20 @@ final class SyntaxColumns
             // Other refusals retain their own declaration and notice boundaries.
         }
         return null;
+    }
+
+    /**
+     * Checks an SRID operand at attribute completion, before the full column is available.
+     */
+    public function columnAttribute(Node $node, Lowering $lowering): ?ParseFailure
+    {
+        $form = $lowering->form($node);
+        if ($form->signature !== 'column_attribute: SRID_SYM real_ulonglong_num') {
+            return null;
+        }
+        $attribute = (new AttributeRule($lowering))->srid($form->node(1));
+        $problem = $attribute->problem();
+        return $problem === null ? null : new ParseFailure($problem, true);
     }
 
     /**

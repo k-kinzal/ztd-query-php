@@ -88,7 +88,7 @@ final class ModernForms
     public function partition(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause|\SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning $value): bool
     {
         $count = $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause ? $value->partitions : $value->count;
-        return $count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0;
+        return $count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0;
     }
 
     /**

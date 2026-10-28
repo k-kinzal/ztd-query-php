@@ -128,16 +128,12 @@ final class AttributeRule
     }
 
     /**
-     * Checks the SRID token before constructing a column restriction.
+     * Retains the complete column SRID operand for derivation.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the integer exceeds the column identifier domain
      */
     public function srid(Node $number): SridAttribute
     {
-        $value = $this->lowering->numbers->integral($number);
-        if (!(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '4294967295')) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange($value), (new \SqlSemantics\Construction\SourceRanges())->span($number)[1] ?? 0);
-        }
+        $value = $this->lowering->numbers->numeral($number);
         return new SridAttribute($value);
     }
 

@@ -20,7 +20,7 @@ use SqlSemantics\Rendering\Output;
  * mandatory attribute or using an unmodifiable identifier. Its immutable problem
  * records the first declaration constraint; execution must reject it before any
  * catalog change. Syntax invariants still require distinct attribute roles,
- * integral identifier tokens and mutually exclusive modifiers. A request is not
+ * and mutually exclusive modifiers. Numeric refusals retain their operands. A request is not
  * a successfully declared spatial reference system.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  * Status: Implemented.
@@ -60,7 +60,6 @@ final class CreateSpatialReference extends \SqlSemantics\Platform\MySql\Statemen
             $this->initializeStatementInformation($statementInformation);
         }
         Check::input(!$orReplace || !$ifNotExists, 'OR REPLACE and IF NOT EXISTS exclude each other.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
         $this->attributes = Check::listOf($attributes, SpatialAttribute::class, 'CREATE SPATIAL REFERENCE SYSTEM takes a list of attributes.');
         Check::input(count(array_unique(array_map(static fn (SpatialAttribute $attribute): string => $attribute->kind->value, $this->attributes))) === count($this->attributes), 'A spatial reference definition cannot repeat an attribute.');
         $this->problem = (new SpatialChecks())->declaration($srid, $this->attributes);

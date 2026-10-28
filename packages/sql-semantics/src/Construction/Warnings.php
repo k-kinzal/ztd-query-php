@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Source\Span;
 final class Warnings
 {
     /**
-     * @var list<array{Warning, int|null, Node|null, Node|null}> Warnings, input boundaries, enclosing stored instructions and semantic subjects
+     * @var list<array{Warning, int|null, Node|null, Node|null, bool}> Warnings, input boundaries, enclosing instructions, subjects and completion positions
      */
     private array $entries = [];
 
@@ -49,7 +49,7 @@ final class Warnings
             }
         }
         $origin = $at === null ? null : $this->sources->of($at);
-        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction, $at];
+        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction, $at, $after];
     }
 
     /**
@@ -152,6 +152,7 @@ final class Warnings
 
     /**
      * Orders only notices whose subjects belong to the given semantic completions.
+     * A prefix notice precedes the completed operands owned by its subject.
      * Warnings outside this scope retain their original positions.
      *
      * @param list<Node> $completed Ordered occurrences from the dialect's dependency rules
@@ -159,17 +160,31 @@ final class Warnings
     public function semantic(array $completed): void
     {
         $ranks = [];
+        $beginnings = [];
         foreach ($completed as $rank => $node) {
-            $ranks[spl_object_id($node)] = $rank;
+            $id = spl_object_id($node);
+            $ranks[$id] = $rank;
+            $beginning = $rank;
+            foreach (get_object_vars($node) as $value) {
+                foreach (is_array($value) ? $value : [$value] as $child) {
+                    if ($child instanceof Node) {
+                        $beginning = min($beginning, $beginnings[spl_object_id($child)] ?? $rank);
+                    }
+                }
+            }
+            $beginnings[$id] = $beginning;
         }
         $indices = [];
         $ordered = [];
         foreach ($this->entries as $index => $entry) {
             $subject = $entry[3];
-            $rank = $subject === null ? null : ($ranks[spl_object_id($subject)] ?? null);
+            if ($subject === null) {
+                continue;
+            }
+            $rank = $ranks[spl_object_id($subject)] ?? null;
             if ($rank !== null) {
                 $indices[] = $index;
-                $ordered[] = [$entry, $rank];
+                $ordered[] = [$entry, $entry[4] ? [$rank, 1, 0] : [$beginnings[spl_object_id($subject)], 0, -$rank]];
             }
         }
         usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);

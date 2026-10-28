@@ -60,7 +60,7 @@ final class DeferredWeightString implements DeferredOperand
         $this->levels = Check::listOf($levels, WeightLevel::class, 'A LEVEL clause is a list of levels.');
         Check::input(($cast === null) === ($length === null), 'A cast of WEIGHT_STRING has a length, and only a cast has one.');
         $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
-        Check::input($length === null || ($magnitudes->integral($length) && !$magnitudes->atMost($length, '0')), 'A WEIGHT_STRING cast length is a positive integer token.');
+        Check::input($length === null || !$magnitudes->integral($length) || !$magnitudes->atMost($length, '0'), 'An integral WEIGHT_STRING cast length is positive.');
         Check::input($levels === [] || $range === null, 'A LEVEL clause is a list or a range.');
         Check::input($cast !== WeightCast::Binary || ($levels === [] && $range === null), 'WEIGHT_STRING takes no LEVEL clause after a binary cast.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -72,6 +72,9 @@ final class DeferredWeightString implements DeferredOperand
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $derivation->scalar($this->subject, $environment);
+        if ($this->length !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->length);
+        }
         return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($this->problem()), \SqlSemantics\Statement\Type\Nullability::Dependent);
     }
 

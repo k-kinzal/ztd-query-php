@@ -269,7 +269,6 @@ final class ClauseRule
     /**
      * Lowers one password or locking option.
      *
-     * @throws RejectedInput When the option's number is outside its domain
      * @throws ImplementationGap When the production has no rule
      */
     public function option(Node $option): AccountOption
@@ -284,12 +283,7 @@ final class ClauseRule
         }
         [$kind, $position] = self::NUMBERED[$form->signature] ?? throw ImplementationGap::production($form);
 
-        $number = $this->lowering->numbers->integral($form->node($position));
-        $problem = (new NumberChecks())->option($kind, $number);
-        if ($problem !== null) {
-            throw new RejectedInput($problem, (new SourceRanges())->span($option)[1] ?? 0);
-        }
-
+        $number = $this->lowering->numbers->numeral($form->node($position));
         return new AccountOption($kind, $number);
     }
 
@@ -300,8 +294,11 @@ final class ClauseRule
     {
         try {
             if ($node->name === 'opt_account_lock_password_expire_option') {
-                $this->option($node);
-            } elseif ($node->name === 'require_list') {
+                $option = $this->option($node);
+                $problem = $option->number === null ? null : (new NumberChecks())->option($option->kind, $option->number);
+                return $problem === null ? null : new ParseFailure($problem, true);
+            }
+            if ($node->name === 'require_list') {
                 $this->conditions($node);
             }
         } catch (RejectedInput $failure) {

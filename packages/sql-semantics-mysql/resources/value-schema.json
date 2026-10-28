@@ -5122,7 +5122,7 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "analyze": "bool",
         "connection": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
-        "connectionId": "int",
+        "connectionId": "?int",
         "emptyInto": "bool",
         "format": "?SqlSemantics\\Statement\\Identifier\\Name",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",

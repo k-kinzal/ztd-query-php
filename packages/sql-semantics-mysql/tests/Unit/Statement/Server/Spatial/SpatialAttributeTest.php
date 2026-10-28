@@ -37,11 +37,9 @@ final class SpatialAttributeTest extends TestCase
     }
 
     #[DataProvider('providerNonIntegerTokens')]
-    public function testIdentifierRequiresAnIntegerToken(\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number): void
+    public function testIdentifierRetainsARefusedIntegerOperand(\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number): void
     {
-        $this->expectExceptionMessage('A spatial reference identifier is an integer token.');
-
-        new SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('organization'), $number);
+        self::assertSame($number, (new SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('organization'), $number))->identifier);
     }
 
 }

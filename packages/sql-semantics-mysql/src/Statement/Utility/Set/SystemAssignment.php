@@ -57,7 +57,8 @@ final class SystemAssignment implements SetItem
         $derivation->scalar($this->variable, $derivation->environment());
         if ($this->variable->instance === null) {
             if ($derivation->inProgram()) {
-                (new VariableAccess())->find($this->variable->name->value, $derivation, true);
+                $boundary = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $this->variable : ($this->value instanceof \SqlSemantics\Statement\Node ? $this->value : $this);
+                (new VariableAccess())->find($this->variable->name->value, $derivation, true, $boundary);
             } else {
                 (new VariableAccess())->assign($this->variable->name->value, $this->variable->scope, $derivation);
             }

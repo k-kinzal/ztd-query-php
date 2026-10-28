@@ -62,7 +62,8 @@ final class StorageOptionRuleTest extends TestCase
     }
     public function testOptionsRetainsTheUnrepresentableSizeBoundary(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze("ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1X");
+        $statement = (new Semantics(Dialect::MySql))->analyze("ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1X");
+        self::assertSame("ALTER TABLESPACE ts ADD DATAFILE 'f' INITIAL_SIZE 1X", $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem::class, $statement->diagnostics()[0]);
     }
 }

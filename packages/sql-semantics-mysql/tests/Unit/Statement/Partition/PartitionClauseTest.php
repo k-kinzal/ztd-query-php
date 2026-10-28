@@ -16,10 +16,11 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 #[Medium]
 final class PartitionClauseTest extends TestCase
 {
-    public function testExplicitCountRejectsFractionalTokensBeforeConstructingAClause(): void
+    public function testExplicitCountRetainsFractionalTokensForDerivation(): void
     {
-        $this->expectExceptionMessage('A partition count is an integer token.');
-        new PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0'), null, []);
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) PARTITION BY KEY (a) PARTITIONS 1.0');
+        self::assertSame('CREATE TABLE t (a INT) PARTITION BY KEY (a) PARTITIONS 1.0', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $statement->diagnostics()[0]);
     }
 
     public function testExplicitCountRejectsLiteralZero(): void

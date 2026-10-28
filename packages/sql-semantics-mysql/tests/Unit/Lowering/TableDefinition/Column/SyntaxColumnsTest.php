@@ -91,4 +91,19 @@ final class SyntaxColumnsTest extends TestCase
         self::assertSame('d', $notices[0][1]->problem->scope?->schema?->value);
         self::assertSame('p', $notices[0][1]->problem->scope->name->value);
     }
+    public function testColumnAttributeChecksOnlyTheCompletedSridDomain(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $attributes = $platform->parser($profile)->parse('CREATE TABLE t(a POINT SRID 4294967296, b POINT SRID 0, c INT NOT NULL)')->find('column_attribute');
+        $rule = new SyntaxColumns();
+        $failure = $rule->columnAttribute($attributes[0], $lowering);
+        self::assertNotNull($failure);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange::class, $failure->problem);
+        self::assertTrue($failure->aborts);
+        self::assertNull($rule->columnAttribute($attributes[1], $lowering));
+        self::assertNull($rule->columnAttribute($attributes[2], $lowering));
+    }
+
 }

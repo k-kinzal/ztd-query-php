@@ -36,10 +36,11 @@ final class SridAttributeTest extends TestCase
     {
         self::assertSame('CREATE TABLE t (g POINT SRID 4326)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)')->toString());
     }
-    public function testRejectsAnIntrinsicRangeViolation(): void
+    public function testDeriveAttributeRetainsAnIntrinsicRangeViolation(): void
     {
-        $this->expectExceptionMessage('A column SRID is an unsigned 32-bit integer token.');
-        new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967296'));
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4294967296)');
+        self::assertSame('CREATE TABLE t (g POINT SRID 4294967296)', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange::class, $statement->diagnostics()[0]);
     }
 
     public function testAcceptsBothBoundsWithoutRequiringACatalog(): void
@@ -47,4 +48,11 @@ final class SridAttributeTest extends TestCase
         self::assertSame('0', (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')))->srid->text);
         self::assertSame('FFFFFFFF', (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('FFFFFFFF', true)))->srid->text);
     }
+    public function testProblemDistinguishesTokenAndColumnRanges(): void
+    {
+        self::assertNull((new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')))->problem());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1e2')))->problem());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange::class, (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967296')))->problem());
+    }
+
 }

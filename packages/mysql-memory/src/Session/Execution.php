@@ -239,7 +239,7 @@ final class Execution
     public function parsing(MySqlStatement $operation, array $warnings): void
     {
         $session = $this->session;
-        $warnings = Stages::grammar((new Parse\SpatialWarnings())->accepted($operation, $warnings), $session->settings()->legacy(), $operation->statementInformation());
+        $warnings = Stages::grammar((new Parse\SpatialWarnings())->accepted($operation, $warnings), $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651, $operation->statementInformation());
         $hints = array_filter($warnings, static fn ($warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError);
         $warnings = array_diff_key($warnings, $hints);
         $dots = $session->dots;

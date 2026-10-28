@@ -40,7 +40,6 @@ final class SpatialAttribute implements Node
         Check::input($value->radix === null, 'A spatial reference attribute is quoted text.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value), 'A spatial reference attribute cannot contain a line feed before NUL.');
         Check::input(($identifier !== null) === ($kind === SpatialAttributeKind::Organization), 'IDENTIFIED BY belongs to ORGANIZATION.');
-        Check::input($identifier === null || (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($identifier), 'A spatial reference identifier is an integer token.');
     }
 
     /**

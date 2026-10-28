@@ -14,8 +14,8 @@ use stdClass;
  * Derives the attribute diagnostic of CREATE USER and ALTER USER.
  *
  * Rule: MYSQL-ACCOUNT-CHECKS-001. A REQUIRE clause that names a property
- * twice and numeric options outside their domain are refused before ordinary
- * construction. The typed values enforce these intrinsic constraints.
+ * twice is refused before construction. Numeric options retain their values;
+ * their integer-token and range conditions are derived here.
  * An ATTRIBUTE string that is not a JSON object is InvalidUserAttribute;
  * the JSON text is read with the JSON grammar of RFC 8259, which the server
  * also implements. The clause holds no expressions and contributes no type
@@ -33,6 +33,25 @@ final class AccountChecks
     {
         if ($comment?->kind === CommentKind::Attribute && !json_decode($comment->text->value, false, 512, JSON_BIGINT_AS_STRING) instanceof stdClass) {
             $derivation->report(new InvalidUserAttribute($comment->text->value));
+        }
+    }
+
+    /**
+     * Publishes numeric option conditions without losing later options or accounts.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption> $options The written options
+     */
+    public function options(Derivation $derivation, array $options): void
+    {
+        foreach ($options as $option) {
+            if ($option->number === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $option->number)) {
+                continue;
+            }
+            $problem = (new NumberChecks())->option($option->kind, $option->number);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
+            }
         }
     }
 

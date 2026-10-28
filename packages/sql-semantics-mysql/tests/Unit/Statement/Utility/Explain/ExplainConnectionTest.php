@@ -31,12 +31,14 @@ final class ExplainConnectionTest extends TestCase
         self::assertSame('EXPLAIN FORMAT = json FOR CONNECTION 7', (new Semantics(Dialect::MySql))->analyze('explain format = json for connection 7')->toString());
     }
 
-    public function testDeriveStatementRejectsAnOversizedDecimalConnection(): void
+    public function testDeriveStatementRetainsAnOversizedDecimalConnection(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Only integers are allowed');
-
-        (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
+        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
+        self::assertInstanceOf(ExplainConnection::class, $statement);
+        self::assertNull($statement->connectionId);
+        self::assertSame('18446744073709551616', $statement->connection->text);
+        self::assertSame('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $statement->diagnostics()[0]);
     }
 
     public function testRefusesAModifierWithOptions(): void

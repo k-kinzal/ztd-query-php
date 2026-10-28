@@ -150,4 +150,74 @@ final class StatementGenerator implements ErisGenerator
         return [new M\Replication\Source\ChangeReplicationSource($terminology, [$parts[0], new M\Replication\Source\SourceOption($terminology, M\Replication\Source\SourceOptionKind::Port, new M\Literal\Numeral('3307'))], $channel), $parts[1]];
     }
 
+    /**
+     * Composes integer-position requests without rendering or reparsing their values.
+     *
+     * @param 'explain'|'size'|'nodegroup'|'account'|'partition'|'subpartition'|'algorithm'|'weight'|'srid'|'spatial-create'|'spatial-drop'|'organization' $family The numeric operand role
+     * @return ErisGenerator<\SqlSemantics\Statement\AnalyzedStatement>
+     */
+    public static function numericRequests(GrammarRelease $release, string $family): ErisGenerator
+    {
+        $requests = Generators::map(static function (M\Literal\Numeral $number) use ($family): M\Statement {
+            $name = new Name('numeric_request');
+            $table = new \SqlSemantics\Statement\Identifier\QualifiedName($name);
+            $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
+            return match ($family) {
+                'explain' => new M\Utility\Explain\ExplainConnection($number),
+                'size' => new M\Server\Storage\CreateTablespace($name, options: [new M\Server\Storage\Option\SizeOption(M\Server\Storage\Option\SizeOptionKind::Initial, new M\Literal\ByteSize($number))]),
+                'nodegroup' => new M\Server\Storage\CreateTablespace($name, options: [new M\Server\Storage\Option\NodegroupOption($number)]),
+                'account' => new M\Account\CreateUser(false, [new M\Account\User\UserSpecification(new M\Name\AccountName($name))], options: [new M\Account\Option\AccountOption(M\Account\Option\AccountOptionKind::ExpireInterval, $number)]),
+                'partition' => new M\Table\CreateTable($table, [$column], partitioning: new M\Partition\PartitionClause(new M\Partition\Method\KeyMethod(false, null, [new Name('a')]), $number, null, [])),
+                'subpartition' => new M\Table\CreateTable($table, [$column], partitioning: new M\Partition\PartitionClause(new M\Partition\Method\ExpressionMethod(M\Partition\Method\PartitionKind::Range, new M\Literal\NumberLiteral('1')), null, new M\Partition\Subpartitioning(new M\Partition\Method\KeyMethod(false, null, [new Name('a')]), $number), [])),
+                'algorithm' => new M\Table\CreateTable($table, [$column], partitioning: new M\Partition\PartitionClause(new M\Partition\Method\KeyMethod(false, $number, [new Name('a')]), null, null, [])),
+                'weight' => new M\Dml\Evaluation([new M\Query\SelectExpression(new M\Call\Weight\WeightString(new M\Literal\StringLiteral(['text']), M\Call\Weight\WeightCast::Char, $number))]),
+                'srid' => new M\Table\CreateTable($table, [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Spatial(M\Type\Kind\SpatialKind::Point), [new M\Table\Column\SridAttribute($number)]))]),
+                'spatial-create' => new M\Server\Spatial\CreateSpatialReference(false, false, $number, []),
+                'spatial-drop' => new M\Server\Spatial\DropSpatialReference(false, $number),
+                'organization' => new M\Server\Spatial\CreateSpatialReference(false, false, new M\Literal\Numeral('7'), [new M\Server\Spatial\SpatialAttribute(M\Server\Spatial\SpatialAttributeKind::Organization, new M\Literal\Text('example'), $number)]),
+            };
+        }, Literal\NumeralGenerator::refusedIntegers());
+        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $requests);
+    }
+
+
+    /**
+     * Composes stored numeric requests and preceding assignments with lexical shadowing.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function numericDefinitions(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::map(static function (array $parts) use ($release): array {
+            [$number, $deferred, $target, $shadowed, $earlier, $suffix, $same, $following] = $parts;
+            $name = new Name('numeric_missing_' . $suffix);
+            $subject = $deferred ? new M\Expression\Row([new M\Literal\NullLiteral(), new M\Literal\NullLiteral()]) : new M\Literal\StringLiteral(['value']);
+            $expression = $subject instanceof \SqlSemantics\Statement\Scalar
+                ? new M\Call\Weight\WeightString($subject, M\Call\Weight\WeightCast::Char, $number)
+                : new M\Routine\Program\Expression\Call\DeferredWeightString($subject, M\Call\Weight\WeightCast::Char, $number);
+            $numeric = new M\Dml\Evaluation([$expression instanceof \SqlSemantics\Statement\Scalar ? new M\Query\SelectExpression($expression) : new M\Routine\Program\DeferredProjection($expression)]);
+            $value = $same && !$following ? $expression : ($target === 'deferred' ? new M\Expression\Row([new M\Literal\NullLiteral(), new M\Literal\NullLiteral()]) : new M\Literal\NumberLiteral('1'));
+            $assignment = $value instanceof \SqlSemantics\Statement\Scalar
+                ? new M\Utility\Set\SetVariables([$target === 'explicit' ? new M\Utility\Set\SystemAssignment(new M\Variable\SystemTarget($name), $value) : new M\Utility\Set\NameAssignment($name, $value)])
+                : new M\Routine\Program\DeferredAssignments([new M\Routine\Program\DeferredAssignment($target === 'explicit' ? new M\Variable\SystemTarget($name) : $name, $value)]);
+            if ($following) {
+                $tail = $expression instanceof \SqlSemantics\Statement\Scalar
+                    ? new M\Utility\Set\UserAssignment(new M\Variable\UserVariable(new Name('numeric_value')), $expression)
+                    : new M\Routine\Program\DeferredAssignment(new M\Variable\UserVariable(new Name('numeric_value')), $expression);
+                $assignment = $assignment instanceof M\Routine\Program\DeferredAssignments || $tail instanceof M\Routine\Program\DeferredAssignment
+                    ? new M\Routine\Program\DeferredAssignments([...$assignment->items, $tail])
+                    : new M\Utility\Set\SetVariables([...$assignment->items, $tail]);
+            }
+            $statements = $same || $following ? [$assignment] : ($earlier ? [$assignment, $numeric] : [$numeric, $assignment]);
+            $body = new M\Routine\Program\Block(
+                $shadowed ? [new M\Routine\Program\VariableDeclaration([$name], new M\Type\Integral(M\Type\Kind\IntegralKind::Int))] : [],
+                [new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), $statements)])]
+            );
+            $definition = new M\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('numeric_' . $suffix)), new M\Routine\ParameterList([]), $body);
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
+            $lookupFirst = $same || $following ? $release === GrammarRelease::MySql5651 : $earlier;
+            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition), $lookupFirst && (!$shadowed || $target === 'explicit') ? 1193 : 1064];
+        }, Operands::tuple(Literal\NumeralGenerator::refusedIntegers(), Generators::bool(), Generators::elements('named', 'explicit', 'deferred'), Generators::bool(), Generators::bool(), Generators::choose(1, 99), Generators::bool(), Generators::bool()));
+    }
+
 }

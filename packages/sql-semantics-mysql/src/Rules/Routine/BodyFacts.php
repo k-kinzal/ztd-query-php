@@ -66,24 +66,34 @@ final class BodyFacts
             (new TriggerAssignments())->check($statement, $scope->time, $scope->event, $derivation, $scope);
         }
         if ($statement instanceof SetVariables) {
-            foreach ($statement->items as $item) {
-                if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment) {
-                    continue;
-                }
-                if ($item->qualifier === null) {
-                    if ($scope->complete && !$scope->variable($item->name)) {
-                        (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($item->name->value, $derivation, true);
-                    }
-                    continue;
-                }
-                $row = $scope->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger && $item->scope === null && in_array(strtoupper($item->qualifier->value), ['NEW', 'OLD'], true);
-                if (!$row) {
-                    (new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget($item->name, null, $item->qualifier))->structured($derivation);
-                }
-            }
+            $derivation->stored($statement, fn () => $this->targets($statement, $derivation, $scope));
         }
         if ($statement instanceof Statement) {
             $derivation->program($statement, $scope->environment);
         }
     }
+    /**
+     * Resolves named targets in their lexical scope without replacing the owning instruction.
+     */
+    public function targets(SetVariables $statement, Derivation $derivation, ProgramScope $scope): void
+    {
+        foreach ($statement->items as $item) {
+            if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment) {
+                continue;
+            }
+            if ($item->qualifier === null) {
+                if ($scope->complete && !$scope->variable($item->name)) {
+                    $prefix = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+                    $boundary = !$prefix && $item->value instanceof Node ? $item->value : $item;
+                    (new \SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess())->find($item->name->value, $derivation, true, $boundary, !$prefix);
+                }
+                continue;
+            }
+            $row = $scope->kind === \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger && $item->scope === null && in_array(strtoupper($item->qualifier->value), ['NEW', 'OLD'], true);
+            if (!$row) {
+                (new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget($item->name, null, $item->qualifier))->structured($derivation);
+            }
+        }
+    }
+
 }

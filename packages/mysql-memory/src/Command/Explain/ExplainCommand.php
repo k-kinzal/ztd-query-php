@@ -197,6 +197,7 @@ final class ExplainCommand implements Command
     public function connection(ExplainConnection $statement, Session $session, Context $context): Reply
     {
         $id = $statement->connectionId;
+        assert($id !== null);
         if ($id === $session->id) {
             throw StatementError::ExplainNotSupported->error();
         }

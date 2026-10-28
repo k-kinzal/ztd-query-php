@@ -213,7 +213,7 @@ final class StorageOptionRule
         $kind = self::OTHERS[$form->signature] ?? throw ImplementationGap::production($form);
 
         return match ($kind) {
-            'nodegroup' => new NodegroupOption($this->lowering->numbers->integral($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
+            'nodegroup' => new NodegroupOption($this->lowering->numbers->numeral($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
             'comment' => new CommentOption($this->lowering->literals->text($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
             'engine' => $this->engine($form),
             'wait' => new WaitOption(true),

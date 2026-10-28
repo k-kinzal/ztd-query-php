@@ -25,8 +25,8 @@ use SqlSemantics\Statement\Identifier\Name;
  * @example Holding a linear key partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(true, null, [new \SqlSemantics\Statement\Identifier\Name('id')]);
  *     [$method->linear, $method->columns[0]->value] // => [true, 'id']
- * @example Refusing an algorithm without a hash interpretation
- *     new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('', true), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an algorithm without a hash interpretation
+ *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('', true), []))->algorithm?->text // => ''
  */
 final class KeyMethod implements PartitionMethod
 {
@@ -44,7 +44,6 @@ final class KeyMethod implements PartitionMethod
      */
     public function __construct(public readonly bool $linear, public readonly ?Numeral $algorithm, array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        Check::input($algorithm === null || (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->accepts($algorithm), 'A KEY partition algorithm is one or two.');
         $this->columns = Check::listOf($columns, Name::class, 'Key partitioning columns are a list of names.');
     }
 
@@ -53,6 +52,11 @@ final class KeyMethod implements PartitionMethod
      */
     public function deriveMethod(Derivation $derivation, Environment $scope): void
     {
+        $problem = $this->algorithm === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->problem($this->algorithm);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->algorithm);
+        }
         (new ColumnNames())->check($this->columns, $derivation, $scope);
     }
 

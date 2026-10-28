@@ -24,4 +24,15 @@ final class AccountChecksTest extends TestCase
         self::assertSame([], $semantics->analyze("ALTER USER u ATTRIBUTE '{\"a\": 1}'")->diagnostics());
     }
 
+    public function testOptionsRetainsLaterOperandsAfterAnInvalidRange(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE USER u PASSWORD_LOCK_TIME 32768 PASSWORD HISTORY 2');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\CreateUser::class, $statement);
+        self::assertCount(2, $statement->options);
+        self::assertSame('2', $statement->options[1]->number?->text);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange::class, $statement->diagnostics()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertTrue($statement->warnings()[0]->aborts);
+    }
+
 }

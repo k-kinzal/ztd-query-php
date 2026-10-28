@@ -6,13 +6,10 @@ namespace SqlSemantics\Platform\MySql\Lowering\Leaf;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
-use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
@@ -95,22 +92,6 @@ final class NumberRule
     }
 
     /**
-     * Lowers a required integer token, refusing dec_num_error before constructing its owner.
-     *
-     * @throws RejectedInput When the operand is fractional or exceeds the integer token domain
-     * @throws ImplementationGap When the production has no rule
-     */
-    public function integral(Node $number): Numeral
-    {
-        $value = $this->numeral($number);
-        if (!(new Magnitudes())->integral($value)) {
-            throw new RejectedInput(new FractionalNumber($value), (new SourceRanges())->span($number)[1] ?? 0);
-        }
-
-        return $value;
-    }
-
-    /**
      * Lowers a bare NUM token that a production of another family holds, such as the count of `IGNORE 2 LINES`.
      *
      * Productions such as `opt_ignore_lines`, `func_datetime_precision` or
@@ -127,7 +108,6 @@ final class NumberRule
     /**
      * Lowers a size in bytes, written alone or as the AUTOEXTEND_SIZE option.
      *
-     * @throws RejectedInput When the size is outside its intrinsic domain
      * @throws ImplementationGap When the production has no rule
      */
     public function size(Node $size): ByteSize
@@ -142,11 +122,6 @@ final class NumberRule
             'size_number: IDENT_sys' => [null, $this->lowering->names->identifier($form->node(0))],
             default => throw ImplementationGap::production($form),
         };
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageSizes())->problem($number, $word);
-        if ($problem !== null) {
-            throw new RejectedInput($problem, (new SourceRanges())->span($size)[1] ?? 0);
-        }
-
         return $this->lowering->leaves->record(new ByteSize($number, $word));
     }
 

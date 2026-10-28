@@ -53,8 +53,7 @@ final class PartitionClause implements Partitioning
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'Partition definitions are a list of partition definitions.');
-        Check::input($partitions === null || (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($partitions), 'A partition count is an integer token.');
-        Check::input($partitions === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($partitions, '0'), 'The explicit partition count is positive.');
+        Check::input($partitions === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($partitions) || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($partitions, '0'), 'The explicit partition count is positive.');
         (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions, $method, $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count));
     }
 
@@ -63,6 +62,9 @@ final class PartitionClause implements Partitioning
      */
     public function derivePartitioning(Derivation $derivation, Environment $scope): void
     {
+        if ($this->partitions !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->partitions);
+        }
         $this->method->deriveMethod($derivation, $scope);
         $this->subpartitioning?->deriveSubpartitioning($derivation, $scope);
         foreach ($this->definitions as $definition) {

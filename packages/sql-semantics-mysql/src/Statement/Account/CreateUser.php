@@ -94,6 +94,7 @@ final class CreateUser extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
     public function deriveStatement(Derivation $derivation): void
     {
         $checks = new AccountChecks();
+        $checks->options($derivation, $this->options);
         $checks->comment($derivation, $this->comment);
     }
 

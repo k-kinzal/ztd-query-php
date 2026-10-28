@@ -840,3 +840,12 @@ deferred key-part type can retain the rejected functional spelling inside a
 stored or conditional definition: `CREATE TABLE IF NOT EXISTS` can leave that
 definition unused. Its operand remains available for dependency resolution
 when the definition is reached.
+
+Integer-position operands keep the complete written number, including decimal,
+exponent and overflowing forms that MySQL rejects. EXPLAIN connection identifiers,
+storage sizes and node groups, account options, partition counts and algorithms,
+column and spatial-reference identifiers, and WEIGHT_STRING cast lengths publish
+conditions beside those operands. A refused EXPLAIN number has no resolved
+connection identity. A refused WEIGHT_STRING length has no usable result type or
+cast capacity. Consumers can inspect and render the complete request before
+reporting its SQL condition.

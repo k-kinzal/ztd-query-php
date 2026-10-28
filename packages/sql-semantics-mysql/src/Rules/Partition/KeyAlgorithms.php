@@ -21,4 +21,15 @@ final class KeyAlgorithms
     {
         return in_array(ltrim($number->text, '0'), ['1', '2'], true);
     }
+    /**
+     * Retains an invalid numeric algorithm at its semantic input boundary.
+     */
+    public function problem(Numeral $number): \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber|\SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm|null
+    {
+        if (!(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($number)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber($number);
+        }
+        return $this->accepts($number) ? null : new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm($number, $number->source()->offset ?? 0);
+    }
+
 }

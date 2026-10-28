@@ -35,4 +35,12 @@ final class KeyAlgorithmsTest extends TestCase
     {
         self::assertSame($expected, (new KeyAlgorithms())->accepts(new Numeral($text, $hexadecimal)));
     }
+    public function testProblemRetainsTheOperandAndDistinguishesItsIntegerDomain(): void
+    {
+        $rules = new KeyAlgorithms();
+        self::assertNull($rules->problem(new Numeral('2')));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm::class, $rules->problem(new Numeral('3')));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $rules->problem(new Numeral('1e2')));
+    }
+
 }

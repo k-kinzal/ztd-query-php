@@ -124,7 +124,6 @@ final class WeightRule
      * Lowers the length of the cast: a node of ws_nweights or ws_num_codepoints.
      *
      * @throws ImplementationGap When the production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When the operand is not an integer token
      * @throws \SqlSemantics\Diagnostic\AnalysisException When the cast length is zero
      */
     public function length(Node $length): Numeral
@@ -134,8 +133,8 @@ final class WeightRule
             throw ImplementationGap::production($form);
         }
 
-        $value = $this->lowering->numbers->integral($form->node(1));
-        if ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '0')) {
+        $value = $this->lowering->numbers->numeral($form->node(1));
+        if ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($value) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '0')) {
             throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: WEIGHT_STRING requires a positive cast length.', 0, new \SqlParser\Parser\SyntaxException($form->node(1)->tokens()[0], [], ''));
         }
 

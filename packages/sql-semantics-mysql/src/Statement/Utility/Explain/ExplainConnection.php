@@ -24,18 +24,18 @@ use SqlSemantics\Statement\Identifier\Name;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain-for-connection.html.
  * Status: Implemented.
  *
- * Connection identifiers are integer tokens: decimal digits within the unsigned 64-bit
- * range or a hexadecimal literal. Fractional and exponent forms have no connection operand.
+ * Connection operands retain decimal, exponent and hexadecimal forms. Only integer
+ * tokens within the unsigned 64-bit domain resolve to a connection identity.
  * ANALYZE and INTO remain part of the request even when the server refuses them.
  *
  * @visibility public
  * @example Retaining incompatible connection options
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN INTO @v FOR CONNECTION 1');
  *     [$explain->into?->name->value, $explain->toString()] // => ['v', 'EXPLAIN INTO @v FOR CONNECTION 1']
- * @example Refusing a fractional connection identifier
- *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a decimal connection identifier beyond the token range
- *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('18446744073709551616')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining a fractional connection operand
+ *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')))->connection->text // => '1.5'
+ * @example Retaining a connection operand beyond the token range
+ *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('18446744073709551616')))->connection->text // => '18446744073709551616'
  * @example Reading the connection
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = JSON FOR CONNECTION 42');
  *     [$explain->connection->text, $explain->field(0)->name?->value, $explain->toString()] // => ['42', 'EXPLAIN', 'EXPLAIN FORMAT = JSON FOR CONNECTION 42']
@@ -45,9 +45,9 @@ final class ExplainConnection extends \SqlSemantics\Platform\MySql\Statement\Sql
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * The resolved unsigned 32-bit thread identity, independent of its numeric spelling.
+     * The resolved unsigned 32-bit identity, or null for a refused integer operand.
      */
-    public readonly int $connectionId;
+    public readonly ?int $connectionId;
 
     /**
      * @param Numeral $connection The connection identifier
@@ -71,7 +71,8 @@ final class ExplainConnection extends \SqlSemantics\Platform\MySql\Statement\Sql
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
-        $this->connectionId = (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->connection($connection);
+        $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
+        $this->connectionId = $magnitudes->integral($connection) ? $magnitudes->connection($connection) : null;
         Check::input(!$emptyInto || $into === null, 'An ignored empty destination has no assignment.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -82,6 +83,7 @@ final class ExplainConnection extends \SqlSemantics\Platform\MySql\Statement\Sql
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->connection);
         (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into, true);
     }
 

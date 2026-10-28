@@ -93,24 +93,24 @@ final class NumberRuleTest extends TestCase
         self::assertSame('1', $rule->ternary(new Node('ternary_option', 0, [new Node('ulong_num', 0, [new Token(0, 'NUM', '1', 0)])]))?->text);
         self::assertNull($rule->ternary(new Node('ternary_option', 1, [new Token(0, 'DEFAULT_SYM', 'DEFAULT', 0)])));
     }
-    public function testIntegralKeepsDecimalAndHexadecimalIntegerTokens(): void
+    public function testNumeralKeepsDecimalAndHexadecimalIntegerTokens(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $rule = new NumberRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
 
-        self::assertSame('18446744073709551615', $rule->integral(new Node('real_ulong_num', 3, [new Token(0, 'ULONGLONG_NUM', '18446744073709551615', 0)]))->text);
-        self::assertSame('FF', $rule->integral(new Node('real_ulong_num', 1, [new Token(0, 'HEX_NUM', '0xFF', 0)]))->text);
+        self::assertSame('18446744073709551615', $rule->numeral(new Node('real_ulong_num', 3, [new Token(0, 'ULONGLONG_NUM', '18446744073709551615', 0)]))->text);
+        self::assertSame('FF', $rule->numeral(new Node('real_ulong_num', 1, [new Token(0, 'HEX_NUM', '0xFF', 0)]))->text);
     }
 
-    public function testIntegralRejectsACompletedFractionalOperand(): void
+    public function testNumeralRetainsACompletedFractionalOperand(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $rule = new NumberRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-
-        $rule->integral(new Node('real_ulong_num', 4, [new Node('dec_num_error', 0, [new Node('dec_num', 0, [new Token(0, 'DECIMAL_NUM', '1.5', 20)])])]));
+        $number = $rule->numeral(new Node('real_ulong_num', 4, [new Node('dec_num_error', 0, [new Node('dec_num', 0, [new Token(0, 'DECIMAL_NUM', '1.5', 20)])])]));
+        self::assertSame('1.5', $number->text);
+        self::assertSame(20, $number->source()?->offset);
     }
 
     public function testCompletedPreservesFloatingErrorsBeforeLaterMalformedInput(): void

@@ -34,4 +34,18 @@ final class NumeralGenerator implements ErisGenerator
             return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation $selected): \SqlSemantics\Platform\MySql\Statement\Literal\Numeral => new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(text: $parts[0], hexadecimal: $parts[1], inputSource: $parts[2], notation: $selected), $notation ?? ($parts[1] ? RadixNotationGenerator::forDigits(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, $parts[0]) : Generators::constant(null)));
         });
     }
+    /**
+     * Generates fractional, exponent and overflowing integer-position operands.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral>
+     */
+    public static function refusedIntegers(): ErisGenerator
+    {
+        return new self(Generators::map(static fn (array $parts): string => match ($parts[0]) {
+            0 => (string) $parts[1] . '.5',
+            1 => (string) $parts[1] . 'e0',
+            default => '18446744073709551616' . (string) $parts[1],
+        }, \Tests\Generator\Operands::tuple(Generators::elements(0, 1, 2), Generators::choose(1, 99))));
+    }
+
 }

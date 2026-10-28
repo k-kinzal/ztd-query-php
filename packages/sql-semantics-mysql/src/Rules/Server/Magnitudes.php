@@ -117,7 +117,9 @@ final class Magnitudes
         if ($this->integral($number)) {
             return true;
         }
-        $derivation->report(new FractionalNumber($number));
+        $problem = new FractionalNumber($number);
+        $derivation->report($problem);
+        $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $number);
 
         return false;
     }

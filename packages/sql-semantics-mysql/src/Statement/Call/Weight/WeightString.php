@@ -38,8 +38,8 @@ use SqlSemantics\Statement\Scalar;
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Binary, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'), [new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a zero cast length before execution
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Binary, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('00000')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a fractional cast length before execution
- *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Char, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining a fractional cast length for its condition
+ *     (new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Char, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0')))->length?->text // => '1.0'
  */
 final class WeightString implements Scalar
 {
@@ -73,7 +73,7 @@ final class WeightString implements Scalar
         $this->levels = Check::listOf($levels, WeightLevel::class, 'A LEVEL clause is a list of levels.');
         Check::input(($cast === null) === ($length === null), 'A cast of WEIGHT_STRING has a length, and only a cast has one.');
         $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
-        Check::input($length === null || ($magnitudes->integral($length) && !$magnitudes->atMost($length, '0')), 'A WEIGHT_STRING cast length is a positive integer token.');
+        Check::input($length === null || !$magnitudes->integral($length) || !$magnitudes->atMost($length, '0'), 'An integral WEIGHT_STRING cast length is positive.');
         Check::input($levels === [] || $range === null, 'A LEVEL clause is a list or a range.');
         Check::input($cast !== WeightCast::Binary || ($levels === [] && $range === null), 'WEIGHT_STRING takes no LEVEL clause after a binary cast.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -85,6 +85,9 @@ final class WeightString implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Arguments())->one($this->subject, $derivation, $environment);
+        if ($this->length !== null && !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->length)) {
+            return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber($this->length)), \SqlSemantics\Statement\Type\Nullability::Dependent);
+        }
         return (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->fact($fact, $derivation, $this->cast, $this->castLength());
     }
 
@@ -94,7 +97,7 @@ final class WeightString implements Scalar
      */
     public function castLength(): ?int
     {
-        return $this->length === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->unsigned32($this->length);
+        return $this->length === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($this->length) ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->unsigned32($this->length);
     }
 
     /**

@@ -21,12 +21,12 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Holding a size written with a multiplier
  *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('16M')))->word?->value // => '16M'
- * @example Refusing an unknown multiplier
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('3T')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing an overflowing coefficient
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('2147483648K')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a fractional byte count
- *     new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining an unknown multiplier
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('3T')))->word?->value // => '3T'
+ * @example Retaining an overflowing coefficient
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('2147483648K')))->word?->value // => '2147483648K'
+ * @example Retaining a fractional byte count
+ *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')))->number?->text // => '1.5'
  */
 final class ByteSize implements Node
 {
@@ -39,7 +39,6 @@ final class ByteSize implements Node
     public function __construct(public readonly ?Numeral $number, public readonly ?Name $word = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($number === null) !== ($word === null), 'A size is either a number or a word.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\StorageSizes())->problem($number, $word) === null, 'A storage size is an integer token or a bounded K, M or G coefficient.');
     }
 
     /**

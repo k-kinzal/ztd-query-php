@@ -56,11 +56,12 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 final class Stages
 {
     /**
-     * Retains modern contextualization conditions after grammar interpretation of their instruction.
-     * Legacy conditions retain their existing order while grammar actions are completed.
+     * Retains contextualization conditions after grammar interpretation of their instruction.
+     * MySQL 5.6 conditions retain their existing order while grammar actions are completed.
      * A later stored instruction cannot prevent an earlier instruction from contextualizing.
      *
      * @param array<int, Warning> $warnings The semantic notices in written order
+     * @param bool $legacy Whether checks run immediately while reading, as in MySQL 5.6
      * @return array<int, Warning> The conditions from stages that the input reaches
      */
     public static function grammar(array $warnings, bool $legacy, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts = null): array

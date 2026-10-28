@@ -100,6 +100,7 @@ final class AlterUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
     public function deriveStatement(Derivation $derivation): void
     {
         $checks = new AccountChecks();
+        $checks->options($derivation, $this->options);
         $checks->comment($derivation, $this->comment);
     }
 

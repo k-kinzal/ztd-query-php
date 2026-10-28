@@ -142,4 +142,25 @@ final class WarningsTest extends TestCase
         self::assertEquals(new \SqlSemantics\Statement\Source\Span(16, 0), $notice->inputSource);
     }
 
+    public function testSemanticPlacesPrefixNoticesBeforeOwnedOperandsWithoutCrossingSiblings(): void
+    {
+        $first = new IntegerLiteral('1');
+        $operand = new IntegerLiteral('2');
+        $last = new IntegerLiteral('3');
+        $subject = new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Minus, $operand);
+        $firstNotice = self::createStub(Warning::class);
+        $operandNotice = self::createStub(Warning::class);
+        $prefix = self::createStub(Warning::class);
+        $suffix = self::createStub(Warning::class);
+        $lastNotice = self::createStub(Warning::class);
+        $warnings = new Warnings(new SourceMap());
+        $warnings->append($suffix, $subject);
+        $warnings->append($lastNotice, $last);
+        $warnings->append($operandNotice, $operand);
+        $warnings->append($prefix, $subject, false);
+        $warnings->append($firstNotice, $first);
+        $warnings->semantic([$first, $operand, $subject, $last]);
+        self::assertSame([$firstNotice, $prefix, $operandNotice, $suffix, $lastNotice], $warnings->all());
+    }
+
 }

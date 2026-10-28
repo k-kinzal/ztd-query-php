@@ -159,7 +159,7 @@ final class PartitionRule
 
         $method = $this->method($this->lowering->form($form->node($positions[0])));
         $count = $this->count($form->node($positions[1]));
-        if ($count !== null && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
+        if ($count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count) && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
             throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions, (new \SqlSemantics\Construction\SourceRanges())->span($form->node($positions[1]))[1] ?? 0);
         }
         $subpartitioning = $this->subpartitioning($form->node($positions[2]));
@@ -218,7 +218,7 @@ final class PartitionRule
 
         $countNode = $form->node(count($form->node->children) - 1);
         $count = $this->count($countNode);
-        if ($count !== null && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
+        if ($count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count) && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
             throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions, (new \SqlSemantics\Construction\SourceRanges())->span($countNode)[1] ?? 0);
         }
         return new Subpartitioning($this->method($form), $count);
@@ -244,7 +244,6 @@ final class PartitionRule
      * Lowers the ALGORITHM of a key method: a node of `opt_key_algo`; an absent option is null.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When the algorithm has no hash interpretation
      */
     public function algorithm(Node $algorithm): ?Numeral
     {
@@ -258,17 +257,12 @@ final class PartitionRule
     }
 
     /**
-     * Retains an algorithm only after its integer token and hash interpretation agree.
+     * Retains every numeric algorithm for its integer and hash conditions.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When the algorithm is outside its domain
      */
     public function keyAlgorithm(Node $node): Numeral
     {
-        $number = $this->lowering->numbers->integral($node);
-        if (!(new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->accepts($number)) {
-            [$start, $end] = (new \SqlSemantics\Construction\SourceRanges())->span($node) ?? [0, 0];
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm($number, $start), $end);
-        }
+        $number = $this->lowering->numbers->numeral($node);
         return $number;
     }
 
@@ -280,12 +274,9 @@ final class PartitionRule
         if ($node->name !== 'opt_key_algo') {
             return null;
         }
-        try {
-            $this->algorithm($node);
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
-        }
-        return null;
+        $number = $this->algorithm($node);
+        $problem = $number === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->problem($number);
+        return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
     }
 
     /**
@@ -299,7 +290,7 @@ final class PartitionRule
 
         return match ($form->signature) {
             'opt_num_parts:', 'opt_num_subparts:' => null,
-            'opt_num_parts: PARTITIONS_SYM real_ulong_num', 'opt_num_subparts: SUBPARTITIONS_SYM real_ulong_num' => $this->lowering->numbers->integral($form->node(1)),
+            'opt_num_parts: PARTITIONS_SYM real_ulong_num', 'opt_num_subparts: SUBPARTITIONS_SYM real_ulong_num' => $this->lowering->numbers->numeral($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }

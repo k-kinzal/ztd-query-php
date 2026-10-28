@@ -46,11 +46,9 @@ final class CreateSpatialReferenceTest extends TestCase
     }
 
     #[DataProvider('providerNonIntegerTokens')]
-    public function testIdentifierRequiresAnIntegerToken(\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number): void
+    public function testIdentifierRetainsARefusedIntegerOperand(\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $number): void
     {
-        $this->expectExceptionMessage('A spatial reference identifier is an integer token.');
-
-        new CreateSpatialReference(false, false, $number, []);
+        self::assertSame($number, (new CreateSpatialReference(false, false, $number, []))->srid);
     }
 
     /**

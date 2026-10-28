@@ -184,20 +184,10 @@ final class StorageOptions
      */
     public function size(Derivation $derivation, string $keyword, ByteSize $size): void
     {
-        if ($size->number !== null) {
-            (new Magnitudes())->integer($derivation, $size->number);
-
-            return;
-        }
-        $word = $size->word === null ? '' : $size->word->value;
-        if (preg_match('/\A([0-9]*)[KMGkmg]\z/', $word, $match) !== 1) {
-            $derivation->report(new StorageProblem(StorageRule::WrongSize, $keyword));
-
-            return;
-        }
-        $digits = ltrim($match[1], '0');
-        if (strlen($digits) > 10 || (strlen($digits) === 10 && strcmp($digits, '2147483648') >= 0)) {
-            $derivation->report(new StorageProblem(StorageRule::SizeOverflow, $keyword));
+        $problem = (new StorageSizes())->problem($size->number, $size->word);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $size);
         }
     }
 

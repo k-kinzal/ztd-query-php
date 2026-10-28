@@ -29,16 +29,31 @@ final class SridAttribute implements ColumnAttribute
      */
     public function __construct(public readonly Numeral $srid, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        $magnitudes = new Magnitudes();
-        \SqlSemantics\Diagnostic\Check::input($magnitudes->integral($srid) && $magnitudes->atMost($srid, '4294967295'), 'A column SRID is an unsigned 32-bit integer token.');
     }
 
     /**
-     * Has no expression dependencies; construction already bounds the identifier.
+     * Reports an invalid integer token or a value beyond the column SRID range.
      * Availability of the referenced system belongs to the database catalog.
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
+        $problem = $this->problem();
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this);
+        }
+    }
+
+    /**
+     * Returns the integer-token or column-range condition of the retained operand.
+     */
+    public function problem(): \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange|null
+    {
+        $magnitudes = new Magnitudes();
+        if (!$magnitudes->integral($this->srid)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber($this->srid);
+        }
+        return $magnitudes->atMost($this->srid, '4294967295') ? null : new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange($this->srid);
     }
 
     /**

@@ -43,7 +43,6 @@ final class DropSpatialReference extends \SqlSemantics\Platform\MySql\Statement\
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
-        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($srid), 'A spatial reference identifier is an integer token.');
         $this->problem = (new SpatialChecks())->identifier($srid);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

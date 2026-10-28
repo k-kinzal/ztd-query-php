@@ -11,7 +11,6 @@ use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\ReductionParser;
-use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Lowering\Leaves;
@@ -51,8 +50,6 @@ final class WeightInput
                     $rule->length($node);
                 } catch (AnalysisException $failure) {
                     $found = (new Syntax(Charset::named((string) $session->variables->read('character_set_client'))))->error($failure, $statement, $session->settings()->release(), $session->following);
-                } catch (RejectedInput) {
-                    // Fractional-number refusals have their own ordered semantic notice.
                 }
             });
         } catch (SourceException) {
