@@ -34,10 +34,21 @@ final class MaintainedTablesTest extends TestCase
         self::assertCount(1, array_filter($derivation->facts()->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof NonUniqueTable));
     }
 
-    public function testCheckedRefusesRepeatedIdentitiesBeforeDerivation(): void
+    public function testCheckedRetainsRepeatedIdentitiesAndLaterTargets(): void
     {
-        $this->expectExceptionMessage('A maintenance statement cannot repeat an identical table name.');
-        (new MaintainedTables())->checked([new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('t')))]);
+        $tables = [new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('later')))];
+
+        self::assertSame($tables, (new MaintainedTables())->checked($tables));
+    }
+
+    public function testDeriveKeepsTheLaterOccurrenceOnTheDuplicateDiagnostic(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE t, t, later');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable::class, $statement);
+        $duplicates = array_values(array_filter($statement->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof NonUniqueTable));
+
+        self::assertCount(1, $duplicates);
+        self::assertSame($statement->tables[1], $duplicates[0]->relation);
     }
 
     public function testDeriveAcceptsOneNameInTwoDatabases(): void

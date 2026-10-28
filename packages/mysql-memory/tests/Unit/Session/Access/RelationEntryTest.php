@@ -24,11 +24,24 @@ final class RelationEntryTest extends TestCase
         (new RelationEntry())->declared($variable, (new Instance())->connect());
     }
 
+    public function testMaintenanceChecksTheDatabaseBeforeDuplicateTargets(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $operation = $session->semantics()->analyze('CHECK TABLE t, t, later', []);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        (new RelationEntry())->maintenance($operation, $operation->statementInformation(), '', $session);
+    }
+
     /**
      * @return iterable<string, array{string, int}>
      */
     public static function providerInputs(): iterable
     {
+        yield 'maintenance database before duplicate' => ['ANALYZE TABLE t, t, later', 1046];
+        yield 'maintenance duplicate before later database' => ['ANALYZE TABLE pbt.t, pbt.t, later', 1066];
+        yield 'qualified maintenance duplicate' => ['CHECKSUM TABLE pbt.t, pbt.t, pbt.later', 1066];
         yield 'projection before input' => ['SELECT @@missing FROM t QUALIFY 1', 1193];
         yield 'input before predicate' => ['SELECT 1 FROM t QUALIFY @@missing', 1046];
         yield 'input before alias collision' => ['WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE d.t AS a,t AS a SET a.x=1', 1046];

@@ -51,7 +51,7 @@ final class TableNames
             $key = [($name->schema ?? $context->searchPath[0])->value, ($alias ?? $name->name)->value];
             foreach ($seen as [$schema, $earlier]) {
                 if ($context->relationNames->equal($schema, $key[0]) && $context->relationNames->equal($earlier, $key[1])) {
-                    $derivation->report(new NonUniqueTable($alias ?? $name->name));
+                    $derivation->report(new NonUniqueTable($alias ?? $name->name, $node));
                     break;
                 }
             }

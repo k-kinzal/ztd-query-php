@@ -47,6 +47,7 @@ final class RelationEntry
     public function check(Node $statement, StatementSemantics $facts, Session $session, bool $counts = false): void
     {
         $database = $statement instanceof M\Utility\Explain\Explain ? $statement->database->value ?? $session->variables->database : $session->variables->database;
+        $this->maintenance($statement, $facts, $database, $session);
         if ($session->settings()->legacy() || ($statement instanceof \SqlSemantics\Statement\Statement && \MySqlMemory\Command\Dispatcher::program($statement))) {
             return;
         }
@@ -67,6 +68,24 @@ final class RelationEntry
             }
             if ($database === '' && $this->implicit($node, $facts)) {
                 throw QueryError::NoDatabase->error();
+            }
+        }
+    }
+
+    /**
+     * Registers maintenance targets in order before checking their physical tables.
+     */
+    public function maintenance(Node $statement, StatementSemantics $facts, string $database, Session $session): void
+    {
+        if ($statement instanceof M\Server\Maintenance\AnalyzeTable || $statement instanceof M\Server\Maintenance\CheckTable || $statement instanceof M\Server\Maintenance\ChecksumTable || $statement instanceof M\Server\Maintenance\OptimizeTable || $statement instanceof M\Server\Maintenance\RepairTable) {
+            $aliases = $this->aliases($facts);
+            foreach ($statement->tables as $table) {
+                if ($database === '' && $table->name->schema === null) {
+                    throw QueryError::NoDatabase->error();
+                }
+                if (isset($aliases[spl_object_id($table)])) {
+                    throw (new Errors())->error($aliases[spl_object_id($table)], $session);
+                }
             }
         }
     }

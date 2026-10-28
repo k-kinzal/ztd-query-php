@@ -26,9 +26,9 @@ final class NonUniqueTable implements Diagnostic
 
     /**
      * @param Name $alias The alias, or the table name when no alias is written, at its later occurrence
-     * @param \SqlSemantics\Statement\Relation|null $relation The later input identity, when the collision belongs to a bound relation namespace
+     * @param \SqlSemantics\Statement\TableUse|null $relation The later table occurrence in a query, maintenance request or other table namespace
      */
-    public function __construct(public readonly Name $alias, public readonly ?\SqlSemantics\Statement\Relation $relation = null)
+    public function __construct(public readonly Name $alias, public readonly ?\SqlSemantics\Statement\TableUse $relation = null)
     {
     }
 

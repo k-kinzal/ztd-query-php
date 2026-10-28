@@ -751,6 +751,12 @@ until invocation. MySQL 5.6 and 5.7 instead reject column privileges outside an
 individual table while reading the definition. The model keeps all operands in
 both cases, including recipients following the invalid target.
 
+Table maintenance requests retain every table occurrence, including repeated
+identities and targets after a duplicate. Analysis publishes `NonUniqueTable`
+from the session's name comparison while preserving the complete request for
+rendering and inspection. The same lists remain in stored bodies; `CHECK TABLE`
+retains its prohibition in stored programs ahead of duplicate-target conditions.
+
 Additional authentication factors use `Statement\Account\User\Factor`, whose cases are `Second` and `Third`. Registration and factor-change constructors accept this enum; factor changes also reject duplicates and adding the third factor before the second. Invalid SQL operands produce a typed input refusal during lowering instead of a statement that is intrinsically invalid. Account existence and installed authentication plugins remain execution-state concerns.
 
 `Statement\Name\AccountName` excludes names outside every supported release's domain: more than 32 trimmed user characters, more than 255 trimmed host bytes, or an at sign in the host. It preserves decoded operands, including embedded NUL bytes; `username()` and `hostname()` provide their whitespace-normalized interpretation. MySQL 5.6 has limits of 16 user characters and 60 host bytes; 5.7 has limits of 32 and 60. Input lowering applies the selected release's limits before publishing accounts and definers, and reports `AccountNameFailure` through `RejectedInput`. MySQL 5.6 checks the original operands before trimming when the host is explicit. Structure composition rejects a longer name combined with features that require an incompatible older release. Account existence remains an execution-state concern.

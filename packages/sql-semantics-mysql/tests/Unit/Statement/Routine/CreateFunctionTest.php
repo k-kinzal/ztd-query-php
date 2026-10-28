@@ -127,7 +127,7 @@ final class CreateFunctionTest extends TestCase
         yield 'set operation' => ['SELECT 1 UNION SELECT 2', 'Not allowed to return a result set from a function'];
         yield 'SHOW' => ['SHOW TABLES', 'Not allowed to return a result set from a function'];
         yield 'EXPLAIN' => ['EXPLAIN SELECT 1', 'Not allowed to return a result set from a function'];
-        yield 'CHECK TABLE' => ['CHECK TABLE t', 'Not allowed to return a result set from a function'];
+        yield 'CHECK TABLE' => ['CHECK TABLE t', 'CHECK is not allowed in stored procedures'];
         yield 'COMMIT' => ['COMMIT', 'Explicit or implicit commit is not allowed in stored function or trigger.'];
         yield 'ROLLBACK' => ['ROLLBACK', 'Explicit or implicit commit is not allowed in stored function or trigger.'];
         yield 'START TRANSACTION' => ['START TRANSACTION', 'Explicit or implicit commit is not allowed in stored function or trigger.'];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Server\Maintenance;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -23,6 +24,25 @@ final class MaintenanceRuleTest extends TestCase
     public function testTablesLowersQualifiedNames(): void
     {
         self::assertSame('OPTIMIZE TABLE a.b, c', (new Semantics(Dialect::MySql))->analyze('optimize table a.b, c')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerRepeatedTargets(): iterable
+    {
+        foreach (['ANALYZE', 'CHECK', 'CHECKSUM', 'OPTIMIZE', 'REPAIR'] as $command) {
+            yield $command => [$command . ' TABLE t, t, later'];
+        }
+    }
+
+    #[DataProvider('providerRepeatedTargets')]
+    public function testTablesRetainsEveryTargetAndDerivesTheDuplicate(string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+
+        self::assertSame($sql, $statement->toString());
+        self::assertCount(1, array_filter($statement->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable));
     }
 
     public function testCheckOptionsKeepsTheWrittenOrder(): void

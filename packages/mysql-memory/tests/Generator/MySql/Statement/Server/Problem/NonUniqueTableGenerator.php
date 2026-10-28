@@ -20,7 +20,7 @@ final class NonUniqueTableGenerator implements ErisGenerator
 
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $alias Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Relation|null>|null $relation Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Statement\TableUse|null>|null $relation Generated constructor operand
      */
     public function __construct(ErisGenerator $alias, ?ErisGenerator $relation = null)
     {

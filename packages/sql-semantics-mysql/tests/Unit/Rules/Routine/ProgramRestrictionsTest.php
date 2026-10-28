@@ -38,6 +38,9 @@ final class ProgramRestrictionsTest extends TestCase
      */
     public static function providerCheckReportsAStatementNoStoredProgramMayContain(): iterable
     {
+        yield 'CHECK TABLE in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CHECK TABLE t', ['CHECK is not allowed in stored procedures']];
+        yield 'CHECK TABLE in a procedure' => ['CREATE PROCEDURE p() CHECK TABLE t', ['CHECK is not allowed in stored procedures']];
+        yield 'CHECK TABLE with repeated targets' => ['CREATE PROCEDURE p() CHECK TABLE t, t', ['CHECK is not allowed in stored procedures']];
         yield 'LOCK TABLES in a procedure' => ['CREATE PROCEDURE p() LOCK TABLES t READ', ['LOCK is not allowed in stored procedures']];
         yield 'LOCK TABLES in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN LOCK TABLES t READ; RETURN 1; END', ['LOCK is not allowed in stored procedures']];
         yield 'LOCK TABLES in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW LOCK TABLES t READ', ['LOCK is not allowed in stored procedures']];
@@ -112,7 +115,7 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'EXPLAIN in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'DESCRIBE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN DESCRIBE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'HELP in a trigger' => ["CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW HELP 'x'", ['Not allowed to return a result set from a trigger']];
-        yield 'CHECK TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CHECK TABLE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'CHECK TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CHECK TABLE t; RETURN 1; END', ['CHECK is not allowed in stored procedures']];
         yield 'ANALYZE TABLE in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW ANALYZE TABLE t', ['Not allowed to return a result set from a trigger']];
         yield 'OPTIMIZE TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN OPTIMIZE TABLE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'REPAIR TABLE in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW REPAIR TABLE t', ['Not allowed to return a result set from a trigger']];
@@ -151,7 +154,6 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'SHOW in a procedure' => ['CREATE PROCEDURE p() SHOW TABLES'];
         yield 'EXPLAIN in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO EXPLAIN SELECT 1'];
         yield 'DESCRIBE in a procedure' => ['CREATE PROCEDURE p() DESCRIBE t'];
-        yield 'CHECK TABLE in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CHECK TABLE t'];
         yield 'COMMIT in a procedure' => ['CREATE PROCEDURE p() COMMIT'];
         yield 'START TRANSACTION in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO START TRANSACTION'];
         yield 'PREPARE in a procedure' => ["CREATE PROCEDURE p() PREPARE s FROM 'SELECT 1'"];

@@ -3989,7 +3989,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\NonUniqueTable": {
         "alias": "SqlSemantics\\Statement\\Identifier\\Name",
-        "relation": "?SqlSemantics\\Statement\\Relation"
+        "relation": "?SqlSemantics\\Statement\\TableUse"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Problem\\RefusedKillOperand": {
         "process": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"

@@ -54,13 +54,13 @@ use SqlSemantics\Statement\Query;
  * Reports the statements a stored program may not contain.
  *
  * Rule: MYSQL-PROGRAM-RESTRICTIONS-001. No stored program contains LOCK
- * TABLES, UNLOCK TABLES, ALTER VIEW, LOAD DATA, LOAD XML or USE
+ * TABLES, UNLOCK TABLES, CHECK TABLE, ALTER VIEW, LOAD DATA, LOAD XML or USE
  * (ER_SP_BADSTATEMENT), a CREATE PROCEDURE, CREATE FUNCTION of a stored
  * function or CREATE TRIGGER (ER_SP_NO_RECURSIVE_CREATE), an ALTER or DROP
  * of a procedure or function (ER_SP_NO_DROP_SP), or a CREATE EVENT or an
  * ALTER EVENT with a body (ER_EVENT_RECURSION_FORBIDDEN). A stored function
  * or trigger in addition returns no result set: no query without INTO, no
- * ordinary SHOW, EXPLAIN, DESCRIBE, HELP and no CHECK, ANALYZE, OPTIMIZE, REPAIR or
+ * ordinary SHOW, EXPLAIN, DESCRIBE, HELP and no ANALYZE, OPTIMIZE, REPAIR or
  * CHECKSUM TABLE (ER_SP_NO_RETSET); performs no explicit commit or rollback
  * (ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG); and uses no PREPARE, EXECUTE or
  * DEALLOCATE PREPARE, no FLUSH and no RESET, RESET PERSIST included, which
@@ -104,6 +104,7 @@ final class ProgramRestrictions
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek => new ProgramProblem(ProgramRule::BadStatement, 'HANDLER'),
+            $statement instanceof CheckTable => new ProgramProblem(ProgramRule::BadStatement, 'CHECK'),
             $statement instanceof LockTables => new ProgramProblem(ProgramRule::BadStatement, 'LOCK'),
             $statement instanceof UnlockTables => new ProgramProblem(ProgramRule::BadStatement, 'UNLOCK'),
             $statement instanceof AlterView => new ProgramProblem(ProgramRule::BadStatement, 'ALTER VIEW'),
