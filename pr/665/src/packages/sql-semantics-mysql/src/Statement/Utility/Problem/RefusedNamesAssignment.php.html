@@ -49,14 +49,14 @@
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * A NAMES assignment has no SET-item meaning; only its diagnostic positions escape lowering.</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * The definition condition of NAMES = expression, beside the complete SET item.</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * The offset points to the assignment operator and end follows the expression.</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * A visible local variable named names changes the diagnostic, but does not</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * make the unquoted assignment valid. Quoted variable assignments use NameAssignment.</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @example Retaining an input refusal without an expression or parser tree</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * @example Retaining the diagnostic positions independently of the assigned expression</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $problem = new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment(10, 13);</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     [$problem-&gt;offset, $problem-&gt;end, $problem-&gt;shadowed] // =&gt; [10, 13, false]</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>

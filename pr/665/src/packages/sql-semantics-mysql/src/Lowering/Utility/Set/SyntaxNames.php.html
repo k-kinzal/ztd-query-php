@@ -59,11 +59,11 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * Rejects NAMES = expression before publishing a SET item.</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * Retains NAMES assignment conditions when a later input error prevents publication.</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * MySQL 5.6 stops at that item; later releases finish the assignment</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * list first. Earlier variable lookups and lexical program scopes use the</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * ordinary semantic rules. No refused expression enters the retained graph.</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * ordinary semantic rules. Complete statements retain their expressions as NamesAssignment values.</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @visibility SqlSemantics\Platform\MySql</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> */</span></span>
