@@ -21,14 +21,16 @@ final class UnlockTablesGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
      */
-    public function __construct(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables(statementInformation: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables(statementInformation: $parts[0], inputSource: $parts[1], tableWord: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
         ));
     }
     /**

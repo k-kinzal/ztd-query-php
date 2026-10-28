@@ -40,7 +40,7 @@ final class HistogramTablesGenerator implements ErisGenerator
         return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables $problem): array {
             $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
             $tables = array_map(static fn (int $index): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable => new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('target_' . $index))), range(1, $problem->count));
-            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable(false, $tables, new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram([new \SqlSemantics\Statement\Identifier\Name('column')])))];
+            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable(null, $tables, new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram([new \SqlSemantics\Statement\Identifier\Name('column')])))];
         }, new self(Generators::choose(2, 4)));
     }
 

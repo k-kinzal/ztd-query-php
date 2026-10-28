@@ -227,7 +227,11 @@ final class AlterTableCommand implements Command
         if ($change->ordered && $definition->primaryKey() !== null) {
             $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');
         }
-        $records = $change->reorganization === null ? ($copies ? count($data->rows) : 0) : (new Partition\Reorganization())->affected($table, $change->reorganization, $context);
+        $records = match (true) {
+            $change->reorganization !== null => (new Partition\Reorganization())->affected($table, $change->reorganization, $context),
+            $change->rebuiltPartitions !== null => (new Partition\PartitionChange($change))->affected($table, $context),
+            default => $copies ? count($data->rows) : 0,
+        };
         $updated = $copies || count($origins) !== count($table->definition->columns) || in_array(null, $origins, true) || $change->storageLayout ? null : $table->updated;
         if ($records > 0 && $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
             $updated = (int) floor($context->variables->clock());

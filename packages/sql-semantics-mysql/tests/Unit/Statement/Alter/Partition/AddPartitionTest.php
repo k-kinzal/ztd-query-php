@@ -22,13 +22,13 @@ final class AddPartitionTest extends TestCase
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION NO_WRITE_TO_BINLOG PARTITIONS 2', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t ADD PARTITION LOCAL PARTITIONS 2')->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION LOCAL PARTITIONS 2', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t ADD PARTITION LOCAL PARTITIONS 2')->toString());
     }
     public function testDefinitionsRequireOneSubpartitionCount(): void
     {
         $definitions = [new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p0'), null, [], []), new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p1'), null, [], [new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s'), [])])];
         $this->expectExceptionMessage('Wrong number of subpartitions defined, mismatch with previous setting');
-        new AddPartition(false, $definitions);
+        new AddPartition(null, $definitions);
     }
 
 }

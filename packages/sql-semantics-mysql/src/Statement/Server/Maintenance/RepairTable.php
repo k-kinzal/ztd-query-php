@@ -18,8 +18,8 @@ use SqlSemantics\Rendering\Output;
  *
  * Mirrors PT_repair_table_stmt (Sql_cmd_repair_table). Rule: MYSQL-REPAIR-TABLE-001. Each table resolves by
  * MYSQL-SERVER-TABLES-001 and its resolution is the relation fact of its
- * MaintainedTable; a table named twice is NonUniqueTable. The options are kept in written order; the server merges them into flags. LOCAL is a synonym of NO_WRITE_TO_BINLOG, which is written. TABLE and
- * TABLES are synonyms; TABLE is written. The server returns one row per
+ * MaintainedTable; a table named twice is NonUniqueTable. The options are kept in written order; the server merges them into flags. LOCAL and NO_WRITE_TO_BINLOG suppress binary logging; their keyword forms are retained. TABLE and
+ * TABLES are synonyms; the written keyword is retained. The server returns one row per
  * table and message; its columns are MYSQL-ADMIN-ROWS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/repair-table.html.
  * Status: Implemented.
@@ -44,12 +44,12 @@ final class RepairTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
     public readonly array $options;
 
     /**
-     * @param bool $noWriteToBinlog Whether NO_WRITE_TO_BINLOG or its synonym LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param list<MaintainedTable> $tables The tables in written order; at least one
      * @param list<RepairOption> $options The options in written order
      * @throws InvalidConstruction When the table list is empty or an option list holds a foreign value
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $tables, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -73,7 +73,7 @@ final class RepairTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function render(Output $out): void
     {
-        (new MaintainedTables())->render($out, ['REPAIR', 'TABLE'], $this->noWriteToBinlog, $this->tables);
+        (new MaintainedTables())->render($out, ['REPAIR', $this->tableWord->value], $this->binlog, $this->tables);
         foreach ($this->options as $option) {
             $out->keyword($option->value);
         }

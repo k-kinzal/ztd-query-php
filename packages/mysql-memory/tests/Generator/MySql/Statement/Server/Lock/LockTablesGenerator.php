@@ -22,15 +22,17 @@ final class LockTablesGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock>> $locks Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
      */
-    public function __construct(ErisGenerator $locks, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $locks, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables(locks: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables(locks: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], tableWord: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $locks,
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
         ));
     }
     /**

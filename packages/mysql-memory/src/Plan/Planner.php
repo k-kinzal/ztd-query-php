@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use LogicException;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
@@ -23,7 +24,6 @@ use MySqlMemory\Plan\Path\Transform\Project;
 use MySqlMemory\Plan\Path\Transform\Sort;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Typing\Domain;
-use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -117,6 +117,7 @@ final class Planner
      * Plans a query inside the scope of the block that reads it, or at the top for none.
      *
      * @throws \MySqlMemory\Error\SqlError When the query cannot be planned
+     * @throws LogicException When no planner implements the query
      */
     public function query(Query $query, ?Scope $outer): QueryPlan
     {
@@ -130,7 +131,7 @@ final class Planner
             $query instanceof SetOperation => $this->set($query, $outer),
             $query instanceof ValuesQuery => $this->values($query, $outer),
             $query instanceof ExplicitTable => (new Projection\TableFields())->apply($query, $this->blocks->table($query, $outer), $this->compiler, $outer),
-            default => throw StatementError::NotSupportedYet->error('query ' . (new ReflectionClass($query))->getShortName()),
+            default => throw new LogicException('No query planner for ' . $query::class),
         };
     }
 

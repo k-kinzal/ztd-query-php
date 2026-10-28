@@ -18,7 +18,7 @@ final class OptimizeTableTest extends TestCase
 {
     public function testRenderWritesNoWriteToBinlog(): void
     {
-        self::assertSame('OPTIMIZE NO_WRITE_TO_BINLOG TABLE t', (new Semantics(Dialect::MySql))->analyze('optimize no_write_to_binlog tables t')->toString());
+        self::assertSame('OPTIMIZE NO_WRITE_TO_BINLOG TABLES t', (new Semantics(Dialect::MySql))->analyze('optimize no_write_to_binlog tables t')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void

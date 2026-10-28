@@ -20,14 +20,14 @@ use SqlSemantics\Rendering\Output;
  * MYSQL-SERVER-TABLES-001 and its resolution is the relation fact of its
  * MaintainedTable; a table named twice is NonUniqueTable. FOR EXPORT
  * without a table list is a syntax error of the server and cannot be
- * constructed. TABLE and TABLES are synonyms; TABLE is written.
+ * constructed. TABLE and TABLES are synonyms; the written keyword is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Flushing tables for export
  *     $flush = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('flush tables t, u for export');
- *     [$flush->toString(), $flush->lock] // => ['FLUSH TABLE t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
+ *     [$flush->toString(), $flush->lock] // => ['FLUSH TABLES t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
  */
 final class FlushTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -39,12 +39,12 @@ final class FlushTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
     public readonly array $tables;
 
     /**
-     * @param bool $noWriteToBinlog Whether NO_WRITE_TO_BINLOG or its synonym LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param list<MaintainedTable> $tables The tables in written order; empty for every open table
      * @param FlushLock|null $lock WITH READ LOCK or FOR EXPORT, when written
      * @throws InvalidConstruction When FOR EXPORT has no table list
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables = [], public readonly ?FlushLock $lock = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $tables = [], public readonly ?FlushLock $lock = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -67,7 +67,7 @@ final class FlushTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function render(Output $out): void
     {
-        (new MaintainedTables())->render($out, ['FLUSH', 'TABLE'], $this->noWriteToBinlog, $this->tables);
+        (new MaintainedTables())->render($out, ['FLUSH', $this->tableWord->value], $this->binlog, $this->tables);
         if ($this->lock !== null) {
             $out->keyword(...explode(' ', $this->lock->value));
         }

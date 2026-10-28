@@ -264,7 +264,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -301,7 +301,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -331,7 +331,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -367,7 +367,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -401,7 +401,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -442,7 +442,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -478,7 +478,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\AddPartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     definitions: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -657,10 +657,10 @@ final class AlterTableGenerator implements ErisGenerator
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\MaintainPartitionsGenerator(
                     kind: Partition\MaintenanceKindGenerator::selecting([MySql\Alter\Partition\MaintenanceKind::Rebuild]),
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     partitions: new \Tests\Generator\MySql\Statement\Partition\AllPartitionsGenerator(),
                     options: Generators::constant([]),
-                    ignoredLocal: Generators::constant(false)
+                    ignoredBinlog: Generators::constant(null)
                 )
             ),
             ignore: Generators::constant(false)
@@ -676,7 +676,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\CoalescePartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     count: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
                         text: Generators::constant('1'),
                         hexadecimal: Generators::constant(false)
@@ -696,7 +696,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             commands: \Tests\Generator\Operands::tuple(
                 new Partition\ReorganizePartitionGenerator(
-                    local: Generators::constant(false),
+                    binlog: Generators::constant(null),
                     partitions: Generators::constant(null),
                     definitions: Generators::constant([])
                 )

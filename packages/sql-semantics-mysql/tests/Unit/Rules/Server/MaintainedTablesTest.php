@@ -47,6 +47,6 @@ final class MaintainedTablesTest extends TestCase
 
     public function testRenderWritesKeywordsOptionAndTables(): void
     {
-        self::assertSame('OPTIMIZE NO_WRITE_TO_BINLOG TABLE a.t, t', (new Semantics(Dialect::MySql))->analyze('optimize local table a.t, t')->toString());
+        self::assertSame('OPTIMIZE LOCAL TABLE a.t, t', (new Semantics(Dialect::MySql))->analyze('optimize local table a.t, t')->toString());
     }
 }

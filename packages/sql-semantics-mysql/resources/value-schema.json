@@ -595,6 +595,7 @@
         "behavior": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\DropBehavior",
         "ifExists": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array",
         "temporary": "bool"
     },
@@ -613,15 +614,15 @@
         "validate": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\AddPartition": {
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "count": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "definitions": "array",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "local": "bool"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\CoalescePartition": {
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "count": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "local": "bool"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\DropPartition": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -635,10 +636,10 @@
         "validation": "?SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\ValidationOption"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\MaintainPartitions": {
-        "ignoredLocal": "bool",
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
+        "ignoredBinlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\MaintenanceKind",
-        "local": "bool",
         "options": "array",
         "partitions": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionSelection"
     },
@@ -654,9 +655,9 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\ReorganizePartition": {
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "definitions": "array",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "local": "bool",
         "partitions": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\NamedPartitions"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Partition\\SecondaryLoad": {
@@ -692,7 +693,8 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\RenameTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "renamings": "array"
+        "renamings": "array",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\TableRenaming": {
         "from": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
@@ -3655,6 +3657,10 @@
         "name": "string",
         "value": "string"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\CheckOption": {
         "name": "string",
         "value": "string"
@@ -3730,9 +3736,9 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\Flush": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "items": "array",
-        "noWriteToBinlog": "bool"
+        "items": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushItem": {
         "channel": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
@@ -3749,9 +3755,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushTables": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "lock": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\FlushLock",
-        "noWriteToBinlog": "bool",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\ForeignServer\\AlterServer": {
@@ -3878,7 +3885,8 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\LockTables": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "locks": "array"
+        "locks": "array",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\TableLock": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
@@ -3894,19 +3902,22 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Lock\\UnlockTables": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\AnalyzeTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "histogram": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\Histogram",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "noWriteToBinlog": "bool",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\CheckTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "options": "array",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\ChecksumMode": {
@@ -3917,6 +3928,7 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "mode": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\ChecksumMode",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\DropHistogram": {
@@ -3939,15 +3951,17 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\OptimizeTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "noWriteToBinlog": "bool",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\RepairTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
+        "binlog": "?SqlSemantics\\Platform\\MySql\\Statement\\Server\\BinlogOption",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "noWriteToBinlog": "bool",
         "options": "array",
+        "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\UpdateHistogram": {
@@ -4821,6 +4835,10 @@
         "duplicate": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "query": "SqlSemantics\\Statement\\Query"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\TableWord": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Binary": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",

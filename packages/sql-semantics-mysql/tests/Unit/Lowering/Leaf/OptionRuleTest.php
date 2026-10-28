@@ -20,6 +20,25 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
 #[Medium]
 final class OptionRuleTest extends TestCase
 {
+    public function testBinlogRetainsBothKeywordsAndOmission(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertNull($rule->binlog(new Node('opt_no_write_to_binlog', 0, [])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::Local, $rule->binlog(new Node('opt_no_write_to_binlog', 2, [new Token(0, 'LOCAL_SYM', 'LOCAL', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::NoWriteToBinlog, $rule->binlog(new Node('opt_no_write_to_binlog', 1, [new Token(0, 'NO_WRITE_TO_BINLOG', 'NO_WRITE_TO_BINLOG', 0)])));
+    }
+
+    public function testTableWordRetainsBothTableListKeywords(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table, $rule->tableWord(new Node('table_or_tables', 0, [new Token(0, 'TABLE_SYM', 'TABLE', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\TableWord::Tables, $rule->tableWord(new Node('table_or_tables', 1, [new Token(0, 'TABLES', 'TABLES', 0)])));
+    }
+
     public function testPresentTellsWhetherAnOptionalKeywordIsWritten(): void
     {
         $platform = new Platform();

@@ -19,22 +19,24 @@ final class FlushTablesGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<bool> $noWriteToBinlog Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable>>|null $tables Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock|null>|null $lock Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
      */
-    public function __construct(ErisGenerator $noWriteToBinlog, ?ErisGenerator $tables = null, ?ErisGenerator $lock = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $binlog, ?ErisGenerator $tables = null, ?ErisGenerator $lock = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables(noWriteToBinlog: $parts[0], tables: $parts[1], lock: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables(binlog: $parts[0], tables: $parts[1], lock: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], tableWord: $parts[5]);
         }, \Tests\Generator\Operands::tuple(
-            $noWriteToBinlog,
+            $binlog,
             $tables ?? Generators::constant([]),
             $lock ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
         ));
     }
     /**
@@ -45,12 +47,12 @@ final class FlushTablesGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'FlushTables/370' => new FlushTablesGenerator(
-            noWriteToBinlog: Generators::constant(false),
+            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
             tables: Generators::constant([]),
             lock: Generators::constant(null)
         );
         yield 'FlushTables/371' => new FlushTablesGenerator(
-            noWriteToBinlog: Generators::constant(false),
+            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
             tables: Generators::constant([]),
             lock: FlushLockGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::WithReadLock])
         );

@@ -24,7 +24,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Flushing logs and privileges
  *     $flush = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('flush local binary logs, privileges');
- *     [$flush->toString(), $flush->items[1]->option] // => ['FLUSH NO_WRITE_TO_BINLOG BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
+ *     [$flush->toString(), $flush->items[1]->option] // => ['FLUSH LOCAL BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
  */
 final class Flush extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -36,11 +36,11 @@ final class Flush extends \SqlSemantics\Platform\MySql\Statement\SqlStatement im
     public readonly array $items;
 
     /**
-     * @param bool $noWriteToBinlog Whether NO_WRITE_TO_BINLOG or its synonym LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param list<FlushItem> $items The items in written order; at least one
      * @throws InvalidConstruction When the list is empty
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $items, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $items, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -68,8 +68,8 @@ final class Flush extends \SqlSemantics\Platform\MySql\Statement\SqlStatement im
     public function render(Output $out): void
     {
         $out->keyword('FLUSH');
-        if ($this->noWriteToBinlog) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->binlog !== null) {
+            $out->keyword($this->binlog->value);
         }
         $out->list($this->items);
     }

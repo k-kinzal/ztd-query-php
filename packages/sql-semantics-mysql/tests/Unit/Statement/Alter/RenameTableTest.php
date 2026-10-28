@@ -30,6 +30,6 @@ final class RenameTableTest extends TestCase
 
     public function testRenderWritesTheRenames(): void
     {
-        self::assertSame('RENAME TABLE a TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('rename tables a to b, c to d')->toString());
+        self::assertSame('RENAME TABLES a TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('rename tables a to b, c to d')->toString());
     }
 }

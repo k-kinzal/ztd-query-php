@@ -22,6 +22,6 @@ final class CoalescePartitionTest extends TestCase
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t COALESCE PARTITION NO_WRITE_TO_BINLOG 3', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION LOCAL 3')->toString());
+        self::assertSame('ALTER TABLE t COALESCE PARTITION LOCAL 3', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION LOCAL 3')->toString());
     }
 }

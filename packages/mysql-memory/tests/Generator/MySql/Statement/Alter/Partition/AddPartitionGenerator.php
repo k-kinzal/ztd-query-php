@@ -19,17 +19,17 @@ final class AddPartitionGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<bool> $local Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition>> $definitions Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $count Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
-    public function __construct(ErisGenerator $local, ErisGenerator $definitions, ?ErisGenerator $count = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $binlog, ErisGenerator $definitions, ?ErisGenerator $count = null, ?ErisGenerator $inputSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition(local: $parts[0], definitions: $parts[1], count: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition(binlog: $parts[0], definitions: $parts[1], count: $parts[2], inputSource: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
-            $local,
+            $binlog,
             $definitions,
             $count ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

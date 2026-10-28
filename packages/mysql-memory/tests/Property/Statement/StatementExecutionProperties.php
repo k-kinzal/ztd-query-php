@@ -31,6 +31,49 @@ final class StatementExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Keyword choices retain the dependent table and the native maintenance result.
+     */
+    #[Test]
+    #[DataProvider('providerMaintenanceReleases')]
+    public function satisfiesMaintenanceExecutesAgainstItsGeneratedDeclaration(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Server\Maintenance\AnalyzeTableGenerator::withTable($release))->then(static function (array $sample) use ($release): void {
+            [$definition, $request] = $sample;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $definition);
+            self::assertInstanceOf(\SqlSemantics\Statement\AnalyzedStatement::class, $request);
+            $database = $definition->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), databases: [$database]))->connect(database: $database);
+            $session->text = 'Generated maintenance without SQL input';
+            $execution = new Execution($session);
+            self::assertInstanceOf(Completion::class, $execution->statement($definition));
+            $reply = $execution->statement($request);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            $label = $database . '.' . $definition->name->name->value;
+            $expected = match (true) {
+                $request instanceof \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable => [[$label, 'analyze', 'status', 'OK']],
+                $request instanceof \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable => [[$label, 'optimize', 'note', 'Table does not support optimize, doing recreate + analyze instead'], [$label, 'optimize', 'status', 'OK']],
+                $request instanceof \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable => [[$label, 'repair', 'note', "The storage engine for the table doesn't support repair"]],
+                default => self::fail('A generated maintenance request retains its concrete operation.'),
+            };
+            self::assertSame($expected, $reply->rows);
+            self::assertNotNull($session->instance->dictionary->schema($database)?->table($definition->name->name->value));
+            self::assertSame('Generated maintenance without SQL input', $session->text);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerMaintenanceReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * Every generated structure reaches the executor with its local semantic information.
      *
      * @param Generator<Statement> $statements The composed SQL forms

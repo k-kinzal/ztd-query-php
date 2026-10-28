@@ -23,16 +23,18 @@ final class ChecksumTableGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode|null>|null $mode Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
      */
-    public function __construct(ErisGenerator $tables, ?ErisGenerator $mode = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $tables, ?ErisGenerator $mode = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable(tables: $parts[0], mode: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable(tables: $parts[0], mode: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], tableWord: $parts[4]);
         }, \Tests\Generator\Operands::tuple(
             $tables,
             $mode ?? Generators::constant(null),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
         ));
     }
     /**

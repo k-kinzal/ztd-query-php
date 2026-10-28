@@ -17,7 +17,7 @@ final class UnlockTablesTest extends TestCase
 {
     public function testRenderWritesTables(): void
     {
-        self::assertSame('UNLOCK TABLES', (new Semantics(Dialect::MySql))->analyze('unlock table')->toString());
+        self::assertSame('UNLOCK TABLE', (new Semantics(Dialect::MySql))->analyze('unlock table')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void

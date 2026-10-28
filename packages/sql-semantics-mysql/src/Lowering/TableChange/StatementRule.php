@@ -105,7 +105,7 @@ final class StatementRule
      */
     public function dropTable(Form $form): DropTable
     {
-        $this->lowering->options->skip($form->node(2));
+        $word = $this->lowering->options->tableWord($form->node(2));
         $names = $this->lowering->names->qualifiedList($form->node(4));
         $problem = (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated($names);
         if ($problem !== null) {
@@ -121,6 +121,7 @@ final class StatementRule
             $this->lowering->options->present($form->node(3)),
             $tables,
             $this->lowering->options->dropBehavior($form->node(5)),
+            tableWord: $word,
         );
     }
 
@@ -131,7 +132,7 @@ final class StatementRule
      */
     public function rename(Form $form): RenameTable
     {
-        $this->lowering->options->skip($form->node(1));
+        $word = $this->lowering->options->tableWord($form->node(1));
         $list = $this->lowering->form($form->node(2));
         if ($list->signature !== 'table_to_table_list: table_to_table' && $list->signature !== 'table_to_table_list: table_to_table_list , table_to_table') {
             throw ImplementationGap::production($list);
@@ -145,7 +146,7 @@ final class StatementRule
             $renamings[] = new TableRenaming($this->lowering->names->qualified($pair->node(0)), $this->lowering->names->qualified($pair->node(2)));
         }
 
-        return new RenameTable($renamings);
+        return new RenameTable($renamings, tableWord: $word);
     }
 
     /**

@@ -18,14 +18,14 @@ use SqlSemantics\Rendering\Output;
  * resolves by MYSQL-SERVER-TABLES-001 and its resolution is the relation
  * fact of its TableLock; an alias or name used twice is NonUniqueTable. The
  * statement releases the locks the session held before. TABLE and TABLES
- * are synonyms; TABLES is written.
+ * are synonyms; the written keyword is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Locking two tables
  *     $lock = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('lock table t read local, u as v write');
- *     [$lock->toString(), $lock->locks[1]->alias?->value] // => ['LOCK TABLES t READ LOCAL, u AS v WRITE', 'v']
+ *     [$lock->toString(), $lock->locks[1]->alias?->value] // => ['LOCK TABLE t READ LOCAL, u AS v WRITE', 'v']
  */
 final class LockTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -40,7 +40,7 @@ final class LockTables extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      * @param list<TableLock> $locks The locked tables in written order; at least one
      * @throws InvalidConstruction When the list is empty
      */
-    public function __construct(array $locks, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(array $locks, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Tables)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -69,6 +69,6 @@ final class LockTables extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function render(Output $out): void
     {
-        $out->keyword('LOCK', 'TABLES')->list($this->locks);
+        $out->keyword('LOCK', $this->tableWord->value)->list($this->locks);
     }
 }

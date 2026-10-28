@@ -20,7 +20,7 @@ final class LockTablesTest extends TestCase
 {
     public function testRenderWritesTheLocks(): void
     {
-        self::assertSame('LOCK TABLES t READ, u WRITE', (new Semantics(Dialect::MySql))->analyze('lock table t read, u write')->toString());
+        self::assertSame('LOCK TABLE t READ, u WRITE', (new Semantics(Dialect::MySql))->analyze('lock table t read, u write')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void

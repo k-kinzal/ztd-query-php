@@ -152,8 +152,8 @@ final class StandaloneRule
         return match ($kind) {
             'addRule' => $this->addRule($operand),
             'reorganizeRule' => $this->reorganizeRule($operand),
-            'add' => new AddPartition($this->local($operand), []),
-            'reorganize' => new ReorganizePartition($this->local($operand)),
+            'add' => new AddPartition($this->binlog($operand), []),
+            'reorganize' => new ReorganizePartition($this->binlog($operand)),
             'drop' => new DropPartition($this->names($operand)),
             'load', 'unload' => new SecondaryLoad($kind === 'load', $this->lowering->queries->partitions($operand)),
         };
@@ -170,10 +170,10 @@ final class StandaloneRule
         $definitions = new DefinitionRule($this->lowering);
 
         return match ($kind) {
-            'addDefinitions' => new AddPartition($this->local($form->node($first)), $definitions->definitions($form->node($second))),
-            'addCount' => new AddPartition($this->local($form->node($first)), [], $this->lowering->numbers->numeral($form->node($second))),
-            'coalesce' => new CoalescePartition($this->local($form->node($first)), $this->lowering->numbers->numeral($form->node($second))),
-            'reorganizeInto' => new ReorganizePartition($this->local($form->node($first)), $this->names($form->node($second)), $definitions->definitions($form->node($second + 3))),
+            'addDefinitions' => new AddPartition($this->binlog($form->node($first)), $definitions->definitions($form->node($second))),
+            'addCount' => new AddPartition($this->binlog($form->node($first)), [], $this->lowering->numbers->numeral($form->node($second))),
+            'coalesce' => new CoalescePartition($this->binlog($form->node($first)), $this->lowering->numbers->numeral($form->node($second))),
+            'reorganizeInto' => new ReorganizePartition($this->binlog($form->node($first)), $this->names($form->node($second)), $definitions->definitions($form->node($second + 3))),
             'exchange' => $this->exchange($form, $first, $second),
         };
     }
@@ -194,10 +194,10 @@ final class StandaloneRule
 
         return new MaintainPartitions(
             $kind,
-            $local !== null && $this->local($form->node($local)),
+            $local === null ? null : $this->binlog($form->node($local)),
             $this->selection($form->node($partitions)),
             $lowered,
-            $ignored !== null && $this->local($form->node($ignored)),
+            $ignored === null ? null : $this->binlog($form->node($ignored)),
         );
     }
 
@@ -206,9 +206,9 @@ final class StandaloneRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function local(Node $option): bool
+    public function binlog(Node $option): ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption
     {
-        return $this->lowering->options->present($option);
+        return $this->lowering->options->binlog($option);
     }
 
     /**
@@ -222,7 +222,7 @@ final class StandaloneRule
         if ($form->signature !== 'add_partition_rule: ADD PARTITION_SYM opt_no_write_to_binlog add_part_extra') {
             throw ImplementationGap::production($form);
         }
-        $local = $this->local($form->node(2));
+        $local = $this->binlog($form->node(2));
         $extra = $this->lowering->form($form->node(3));
 
         return match ($extra->signature) {
@@ -244,7 +244,7 @@ final class StandaloneRule
         if ($form->signature !== 'reorg_partition_rule: REORGANIZE_SYM PARTITION_SYM opt_no_write_to_binlog reorg_parts_rule') {
             throw ImplementationGap::production($form);
         }
-        $local = $this->local($form->node(2));
+        $local = $this->binlog($form->node(2));
         $parts = $this->lowering->form($form->node(3));
 
         return match ($parts->signature) {

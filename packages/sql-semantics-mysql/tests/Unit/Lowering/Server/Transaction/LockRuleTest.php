@@ -27,11 +27,11 @@ final class LockRuleTest extends TestCase
 
     public function testLockLowersTheAlias(): void
     {
-        self::assertSame('LOCK TABLES t AS `x y` READ LOCAL', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('lock table t as `x y` read local')->toString());
+        self::assertSame('LOCK TABLE t AS `x y` READ LOCAL', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('lock table t as `x y` read local')->toString());
     }
 
     public function testUnlockLowersTableAndTables(): void
     {
-        self::assertSame('UNLOCK TABLES', (new Semantics(Dialect::MySql))->analyze('unlock table')->toString());
+        self::assertSame('UNLOCK TABLE', (new Semantics(Dialect::MySql))->analyze('unlock table')->toString());
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Program;
 
 use Closure;
+use LogicException;
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
@@ -98,6 +99,7 @@ final class Interpreter
      * Runs one statement and answers where control goes instead of the next statement, if anywhere.
      *
      * @throws SqlError When the statement raises an error no handler handles
+     * @throws LogicException When no interpreter implements the instruction
      */
     public function statement(Node $statement): ?Jump
     {
@@ -119,7 +121,7 @@ final class Interpreter
             $statement instanceof Signal, $statement instanceof Resignal => $this->signalled($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain => $this->explanation($statement),
             $statement instanceof Statement => $this->sql($statement),
-            default => throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('the stored program statement ' . $statement::class),
+            default => throw new LogicException('No stored instruction executor for ' . $statement::class),
         };
     }
 

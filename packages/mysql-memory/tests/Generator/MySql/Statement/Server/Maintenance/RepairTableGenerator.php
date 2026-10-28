@@ -19,22 +19,24 @@ final class RepairTableGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<bool> $noWriteToBinlog Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable>> $tables Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\RepairOption>>|null $options Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
      */
-    public function __construct(ErisGenerator $noWriteToBinlog, ErisGenerator $tables, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $binlog, ErisGenerator $tables, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable(noWriteToBinlog: $parts[0], tables: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable(binlog: $parts[0], tables: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], tableWord: $parts[5]);
         }, \Tests\Generator\Operands::tuple(
-            $noWriteToBinlog,
+            $binlog,
             $tables,
             $options ?? Generators::constant([]),
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
         ));
     }
     /**
@@ -45,7 +47,7 @@ final class RepairTableGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'RepairTable/64' => new RepairTableGenerator(
-            noWriteToBinlog: Generators::constant(false),
+            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
             tables: \Tests\Generator\Operands::tuple(
                 new MaintainedTableGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
@@ -61,7 +63,7 @@ final class RepairTableGenerator implements ErisGenerator
             options: Generators::constant([])
         );
         yield 'RepairTable/284' => new RepairTableGenerator(
-            noWriteToBinlog: Generators::constant(false),
+            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
             tables: \Tests\Generator\Operands::tuple(
                 new MaintainedTableGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(

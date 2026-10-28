@@ -28,7 +28,7 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Swapping two tables through a third name
  *     $rename = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('RENAME TABLES a TO tmp, b TO a, tmp TO b');
- *     [count($rename->renamings), $rename->toString()] // => [3, 'RENAME TABLE a TO tmp, b TO a, tmp TO b']
+ *     [count($rename->renamings), $rename->toString()] // => [3, 'RENAME TABLES a TO tmp, b TO a, tmp TO b']
  */
 final class RenameTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -42,7 +42,7 @@ final class RenameTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
     /**
      * @param list<TableRenaming> $renamings The renames in order; at least one
      */
-    public function __construct(array $renamings, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(array $renamings, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -65,6 +65,6 @@ final class RenameTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function render(Output $out): void
     {
-        $out->keyword('RENAME', 'TABLE')->list($this->renamings);
+        $out->keyword('RENAME', $this->tableWord->value)->list($this->renamings);
     }
 }

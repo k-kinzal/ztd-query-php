@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use LogicException;
 use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -26,7 +26,6 @@ use MySqlMemory\Plan\Path\Transform\Materialize;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Json\JsonPath;
 use MySqlMemory\Value\Json\JsonSyntax;
-use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
@@ -65,6 +64,7 @@ final class Relations
      * Plans a relation and places its occurrences in the scope of the block.
      *
      * @throws SqlError When a relation cannot be read
+     * @throws LogicException When no planner implements the relation
      */
     public function plan(Relation $relation, Scope $scope): AccessPath
     {
@@ -76,7 +76,7 @@ final class Relations
             $relation instanceof NestedRelation, $relation instanceof OdbcJoin, $relation instanceof EscapedRelation => $this->plan($relation->relation, $scope),
             $relation instanceof Dual => new SingleRow(),
             $relation instanceof JsonTable => $this->jsonTable($relation, $scope),
-            default => throw StatementError::NotSupportedYet->error('relation ' . (new ReflectionClass($relation))->getShortName()),
+            default => throw new LogicException('No relation planner for ' . $relation::class),
         };
     }
 

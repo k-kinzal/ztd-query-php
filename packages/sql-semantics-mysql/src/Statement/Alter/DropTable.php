@@ -33,7 +33,7 @@ use SqlSemantics\Rendering\Output;
  * @example Resolving the dropped table to its declaration
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $drop = $semantics->analyze('drop tables if exists t, u cascade', []);
- *     [$drop->toString(), $drop->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
+ *     [$drop->toString(), $drop->behavior] // => ['DROP TABLES IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
  */
 final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
@@ -50,7 +50,7 @@ final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
      * @param list<TargetTable> $tables The tables in order; at least one
      * @param DropBehavior|null $behavior RESTRICT or CASCADE, when written
      */
-    public function __construct(public readonly bool $temporary, public readonly bool $ifExists, array $tables, public readonly ?DropBehavior $behavior = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly bool $temporary, public readonly bool $ifExists, array $tables, public readonly ?DropBehavior $behavior = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -90,7 +90,7 @@ final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         if ($this->temporary) {
             $out->keyword('TEMPORARY');
         }
-        $out->keyword('TABLE');
+        $out->keyword($this->tableWord->value);
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }

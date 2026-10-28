@@ -30,7 +30,7 @@ final class DropTableTest extends TestCase
 
     public function testRenderWritesEveryPart(): void
     {
-        self::assertSame('DROP TEMPORARY TABLE IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
+        self::assertSame('DROP TEMPORARY TABLES IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
     }
 
     public function testRenderRequiresDistinctTableIdentities(): void

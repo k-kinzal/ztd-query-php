@@ -57,11 +57,11 @@ final class MaintainedTables
      * @param list<string> $keywords The words before the table list, TABLE included
      * @param list<MaintainedTable> $tables
      */
-    public function render(Output $out, array $keywords, bool $noWriteToBinlog, array $tables): void
+    public function render(Output $out, array $keywords, ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $tables): void
     {
         $out->keyword($keywords[0]);
-        if ($noWriteToBinlog) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($binlog !== null) {
+            $out->keyword($binlog->value);
         }
         $out->keyword(...array_slice($keywords, 1))->list($tables);
     }

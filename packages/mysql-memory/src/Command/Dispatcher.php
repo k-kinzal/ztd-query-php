@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
+use LogicException;
 use MySqlMemory\Command\Write\ChangeCommand;
 use MySqlMemory\Command\Write\InsertCommand;
 use MySqlMemory\Command\Write\MultipleChangeCommand;
-use MySqlMemory\Error\Family\StatementError;
-use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement as MySql;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
@@ -222,12 +221,14 @@ final class Dispatcher
      * Queries, INSERT, UPDATE, DELETE and RESIGNAL choose their command from the statement;
      * every other kind takes its command from COMMANDS.
      *
-     * @throws \MySqlMemory\Error\SqlError When no command executes the statement
+     * @throws LogicException When no command implements the statement
      */
     public function command(\SqlSemantics\Statement\Node $statement): Command
     {
 
-        assert($statement instanceof Statement);
+        if (!$statement instanceof Statement) {
+            throw new LogicException('Command dispatch requires a semantic statement.');
+        }
         $command = self::COMMANDS[$statement::class] ?? null;
 
         return match (true) {
@@ -242,7 +243,7 @@ final class Dispatcher
                 default => new Program\RoutineCommand(false),
             },
             $command !== null => new $command(),
-            default => throw StatementError::NotSupportedYet->error((new ReflectionClass($statement))->getShortName()),
+            default => throw new LogicException('No statement executor for ' . $statement::class),
         };
     }
 

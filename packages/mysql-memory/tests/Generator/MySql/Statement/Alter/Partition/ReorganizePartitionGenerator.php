@@ -19,17 +19,17 @@ final class ReorganizePartitionGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<bool> $local Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions|null>|null $partitions Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition>>|null $definitions Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
-    public function __construct(ErisGenerator $local, ?ErisGenerator $partitions = null, ?ErisGenerator $definitions = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $binlog, ?ErisGenerator $partitions = null, ?ErisGenerator $definitions = null, ?ErisGenerator $inputSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition(local: $parts[0], partitions: $parts[1], definitions: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition(binlog: $parts[0], partitions: $parts[1], definitions: $parts[2], inputSource: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
-            $local,
+            $binlog,
             $partitions ?? Generators::constant(null),
             $definitions ?? Generators::constant([]),
             $inputSource ?? Generators::constant(null)

@@ -19,7 +19,7 @@ final class AnalyzeTableTest extends TestCase
 {
     public function testRenderWritesNoWriteToBinlogAndTheHistogram(): void
     {
-        self::assertSame('ANALYZE NO_WRITE_TO_BINLOG TABLE t UPDATE HISTOGRAM ON a', (new Semantics(Dialect::MySql))->analyze('analyze local table t update histogram on a')->toString());
+        self::assertSame('ANALYZE LOCAL TABLE t UPDATE HISTOGRAM ON a', (new Semantics(Dialect::MySql))->analyze('analyze local table t update histogram on a')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void

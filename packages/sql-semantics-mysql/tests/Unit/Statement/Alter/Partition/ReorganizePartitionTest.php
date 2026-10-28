@@ -28,7 +28,7 @@ final class ReorganizePartitionTest extends TestCase
     {
         $definitions = [new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p0'), null, [], []), new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p1'), null, [], [new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s'), [])])];
         $this->expectExceptionMessage('Wrong number of subpartitions defined, mismatch with previous setting');
-        new ReorganizePartition(false, new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions([new \SqlSemantics\Statement\Identifier\Name('old')]), $definitions);
+        new ReorganizePartition(null, new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions([new \SqlSemantics\Statement\Identifier\Name('old')]), $definitions);
     }
 
 }

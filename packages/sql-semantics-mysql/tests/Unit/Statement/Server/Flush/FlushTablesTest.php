@@ -18,7 +18,7 @@ final class FlushTablesTest extends TestCase
 {
     public function testRenderWritesTheLock(): void
     {
-        self::assertSame('FLUSH TABLE WITH READ LOCK', (new Semantics(Dialect::MySql))->analyze('flush tables with read lock')->toString());
+        self::assertSame('FLUSH TABLES WITH READ LOCK', (new Semantics(Dialect::MySql))->analyze('flush tables with read lock')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void

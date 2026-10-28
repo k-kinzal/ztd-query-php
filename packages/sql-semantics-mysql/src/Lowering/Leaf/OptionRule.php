@@ -42,7 +42,6 @@ final class OptionRule
         'opt_equal:' => false, 'opt_equal: equal' => true, 'opt_wild:' => false, 'opt_wild: . *' => true,
         'opt_storage:' => false, 'opt_storage: STORAGE_SYM' => true, 'opt_table:' => false, 'opt_table: TABLE_SYM' => true,
         'opt_comma:' => false, 'opt_comma: ,' => true, 'optional_braces:' => false, 'optional_braces: ( )' => true,
-        'opt_no_write_to_binlog:' => false, 'opt_no_write_to_binlog: NO_WRITE_TO_BINLOG' => true, 'opt_no_write_to_binlog: LOCAL_SYM' => true,
         'opt_key_or_index:' => false, 'opt_key_or_index: key_or_index' => true,
     ];
 
@@ -51,7 +50,7 @@ final class OptionRule
      */
     private const INERT = [
         'key_or_index: KEY_SYM' => true, 'key_or_index: INDEX_SYM' => true, 'keys_or_index: KEYS' => true, 'keys_or_index: INDEX_SYM' => true,
-        'keys_or_index: INDEXES' => true, 'table_or_tables: TABLE_SYM' => true, 'table_or_tables: TABLES' => true,
+        'keys_or_index: INDEXES' => true,
         'equal: EQ' => true, 'equal: SET_VAR' => true, 'not: NOT_SYM' => true, 'not: NOT2_SYM' => true,
         'charset: CHAR_SYM SET' => true, 'charset: CHARSET' => true, 'character_set: CHAR_SYM SET_SYM' => true, 'character_set: CHARSET' => true,
         'remember_name:' => true, 'remember_end:' => true, 'init_lex_create_info:' => true, 'clear_privileges:' => true,
@@ -90,6 +89,37 @@ final class OptionRule
         if (!isset(self::INERT[$form->signature])) {
             throw ImplementationGap::production($form);
         }
+    }
+
+    /**
+     * Retains an omitted logging modifier or its exact suppression keyword.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function binlog(Node $option): ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption
+    {
+        $form = $this->lowering->form($option);
+        return match ($form->signature) {
+            'opt_no_write_to_binlog:' => null,
+            'opt_no_write_to_binlog: NO_WRITE_TO_BINLOG' => \SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::NoWriteToBinlog,
+            'opt_no_write_to_binlog: LOCAL_SYM' => \SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::Local,
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Retains the singular or plural keyword of a table-list request.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function tableWord(Node $word): \SqlSemantics\Platform\MySql\Statement\Table\TableWord
+    {
+        $form = $this->lowering->form($word);
+        return match ($form->signature) {
+            'table_or_tables: TABLE_SYM' => \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table,
+            'table_or_tables: TABLES' => \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Tables,
+            default => throw ImplementationGap::production($form),
+        };
     }
 
     /**

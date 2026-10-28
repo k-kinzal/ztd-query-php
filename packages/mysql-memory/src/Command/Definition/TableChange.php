@@ -101,6 +101,11 @@ final class TableChange
     public ?\SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition $reorganization = null;
 
     /**
+     * The partitions rebuilt without changing their definitions or rows.
+     */
+    public ?\SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection $rebuiltPartitions = null;
+
+    /**
      * Whether a table option explicitly requests a new storage layout, even when its value is unchanged.
      */
     public bool $storageLayout = false;

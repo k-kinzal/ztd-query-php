@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command;
 
 use Closure;
-use MySqlMemory\Error\Family\StatementError;
+use LogicException;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
@@ -18,7 +18,6 @@ use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Assigner;
 use MySqlMemory\Variable\Scope as VariableScope;
 use Override;
-use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
@@ -115,6 +114,7 @@ final class SetCommand implements Command
      * Computes the value of one assignment and answers the action that assigns it.
      *
      * @param Written|null $inherited The scope of the assignment: the one it writes, or the last one an earlier assignment wrote (verified on a live 8.4 server)
+     * @throws LogicException When no executor implements the assignment
      */
     public function action(object $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session, ?Written $inherited = null): Closure
     {
@@ -153,7 +153,7 @@ final class SetCommand implements Command
             return $this->charset($item, $planner, $assigner, $session);
         }
 
-        throw StatementError::NotSupportedYet->error('SET ' . (new ReflectionClass($item))->getShortName());
+        throw new LogicException('No assignment executor for ' . $item::class);
     }
 
     /**

@@ -15,6 +15,44 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionChangeTest extends TestCase
 {
+    public function testAffectedCountsOnlyRebuiltPartitionsOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (a INT) PARTITION BY HASH (a) PARTITIONS 2; INSERT INTO t VALUES (1), (2), (3)');
+        $completion = $session->query('ALTER TABLE t REBUILD PARTITION NO_WRITE_TO_BINLOG P1')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $completion);
+        self::assertSame(2, $completion->affectedRows);
+        self::assertSame('Records: 2  Duplicates: 0  Warnings: 0', $completion->info);
+        $rows = $session->query('SELECT * FROM t ORDER BY a')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame([['1'], ['2'], ['3']], $rows->rows);
+    }
+
+    public function testRebuiltPreservesTheRowsAndReportsAnInPlaceCompletion(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (a INT) PARTITION BY HASH (a) PARTITIONS 2; INSERT INTO t VALUES (1), (2)');
+        $completion = $session->query('ALTER TABLE t REBUILD PARTITION LOCAL p0')[0];
+        $rows = $session->query('SELECT * FROM t ORDER BY a')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $completion);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame(0, $completion->affectedRows);
+        self::assertSame('Records: 0  Duplicates: 0  Warnings: 0', $completion->info);
+        self::assertSame([['1'], ['2']], $rows->rows);
+    }
+
+    public function testSelectedRefusesAnUnknownRebuildPartitionBeforeChangingRows(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (a INT) PARTITION BY HASH (a) PARTITIONS 2; INSERT INTO t VALUES (1), (2)');
+        $failure = $session->run('ALTER TABLE t REBUILD PARTITION p0, absent')[0];
+        $rows = $session->query('SELECT * FROM t ORDER BY a')[0];
+        self::assertInstanceOf(SqlError::class, $failure);
+        self::assertSame(1507, $failure->getCode());
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rows);
+        self::assertSame([['1'], ['2']], $rows->rows);
+    }
+
     public function testApplyPartitionsATableAnew(): void
     {
         $session = (new Instance())->connect();

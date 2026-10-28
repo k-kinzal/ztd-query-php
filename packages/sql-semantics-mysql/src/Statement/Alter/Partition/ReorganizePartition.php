@@ -35,11 +35,11 @@ final class ReorganizePartition implements StandaloneCommand
     public readonly array $definitions;
 
     /**
-     * @param bool $local Whether NO_WRITE_TO_BINLOG or LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param NamedPartitions|null $partitions The partitions to reorganize, or null for none written
      * @param list<PartitionDefinition> $definitions The new partitions in order; at least one exactly when partitions are named
      */
-    public function __construct(public readonly bool $local, public readonly ?NamedPartitions $partitions = null, array $definitions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, public readonly ?NamedPartitions $partitions = null, array $definitions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'REORGANIZE PARTITION holds a list of partition definitions.');
         (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions);
@@ -62,8 +62,8 @@ final class ReorganizePartition implements StandaloneCommand
     public function render(Output $out): void
     {
         $out->keyword('REORGANIZE', 'PARTITION');
-        if ($this->local) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->binlog !== null) {
+            $out->keyword($this->binlog->value);
         }
         if ($this->partitions !== null) {
             $out->node($this->partitions)->keyword('INTO')->symbol('(')->list($this->definitions)->symbol(')');

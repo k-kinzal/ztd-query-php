@@ -357,6 +357,14 @@ can differ for system views. Use `dimensions` for column dimensions and
 `columnType` only for the server's display text. The release catalogs retain
 these dimensions from the server rather than inferring them from that text.
 
+Maintenance and partition operations expose `binlog` as a nullable
+`Statement\Server\BinlogOption`: `Local` and `NoWriteToBinlog` both suppress
+binary logging, and null means the modifier was omitted. Legacy OPTIMIZE
+PARTITION also retains its ignored trailing modifier in `ignoredBinlog`.
+Statements that accept both TABLE and TABLES retain the selected
+`Statement\Table\TableWord` in `tableWord`. Rendering uses these values, so
+publication and direct construction preserve the caller's keyword choices.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

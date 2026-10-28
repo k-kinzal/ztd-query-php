@@ -25,10 +25,10 @@ final class CoalescePartition implements StandaloneCommand
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param bool $local Whether NO_WRITE_TO_BINLOG or LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param Numeral $count The number of partitions to remove
      */
-    public function __construct(public readonly bool $local, public readonly Numeral $count, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, public readonly Numeral $count, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 
@@ -45,8 +45,8 @@ final class CoalescePartition implements StandaloneCommand
     public function render(Output $out): void
     {
         $out->keyword('COALESCE', 'PARTITION');
-        if ($this->local) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->binlog !== null) {
+            $out->keyword($this->binlog->value);
         }
         $out->node($this->count);
     }

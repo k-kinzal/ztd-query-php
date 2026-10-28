@@ -19,16 +19,16 @@ final class CoalescePartitionGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<bool> $local Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $count Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
-    public function __construct(ErisGenerator $local, ErisGenerator $count, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $binlog, ErisGenerator $count, ?ErisGenerator $inputSource = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\CoalescePartition {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\CoalescePartition(local: $parts[0], count: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\CoalescePartition(binlog: $parts[0], count: $parts[1], inputSource: $parts[2]);
         }, \Tests\Generator\Operands::tuple(
-            $local,
+            $binlog,
             $count,
             $inputSource ?? Generators::constant(null)
         ));

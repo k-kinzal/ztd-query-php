@@ -77,6 +77,9 @@ an SQL error. Call `assertNoInternalFailure()` while retaining the database obje
 to distinguish that failure from a driver-visible disconnect or SQL refusal.
 The failure remains visible on later checks. An intentional SQL `SHUTDOWN` is not
 an internal failure.
+An unrecognized statement, query, relation, assignment, partition action or stored
+instruction at execution dispatch also fails internally. Missing execution rules
+are library defects and must not be reported as MySQL error 1235.
 System-table declarations describe result metadata separately from row execution.
 Reading rows without an implemented provider is an internal failure; it does not
 return an empty table. Unimplemented system-table mutations likewise fail

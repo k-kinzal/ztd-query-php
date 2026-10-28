@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition\Partition;
 
+use LogicException;
 use MySqlMemory\Command\Definition\TableChange;
 use MySqlMemory\Error\Family\PartitionError;
 use MySqlMemory\Error\Family\SchemaError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\CoalescePartition;
@@ -50,6 +49,7 @@ final class PartitionChange
      * Applies a partition action.
      *
      * @throws SqlError When the table refuses the action
+     * @throws LogicException When no implementation applies the action
      */
     public function apply(AlterCommand $command): void
     {
@@ -79,7 +79,8 @@ final class PartitionChange
             $command instanceof CoalescePartition => $layout->partitioning = $this->coalesced($clause, $ranged, (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($command->count)),
             $command instanceof DropPartition => $layout->partitioning = $this->dropped($clause, $ranged, $command->partitions),
             $command instanceof MaintainPartitions && $command->kind === MaintenanceKind::Truncate => $this->truncated($clause, $command),
-            default => throw StatementError::NotSupportedYet->error('ALTER TABLE ' . (new ReflectionClass($command))->getShortName()),
+            $command instanceof MaintainPartitions && $command->kind === MaintenanceKind::Rebuild => $this->rebuilt($clause, $command),
+            default => throw new LogicException('No partition alteration for ' . $command::class),
         };
     }
 
@@ -149,6 +150,43 @@ final class PartitionChange
      */
     public function truncated(PartitionClause $clause, MaintainPartitions $command): void
     {
+        array_push($this->change->emptied, ...$this->selected($clause, $command));
+    }
+
+    /**
+     * Rebuilds selected partitions without changing their definition or rows.
+     * MySQL 5.6 reports the selected rows copied by its legacy partition handler.
+     *
+     * @throws SqlError When a partition is unknown
+     */
+    public function rebuilt(PartitionClause $clause, MaintainPartitions $command): void
+    {
+        $this->selected($clause, $command);
+        $this->change->rebuiltPartitions = $command->partitions;
+    }
+
+    /**
+     * Counts the selected rows rebuilt by the legacy partition handler.
+     */
+    public function affected(\MySqlMemory\Dictionary\StoredTable $table, \MySqlMemory\Evaluation\Context $context): int
+    {
+        if ($context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $table->definition->partitioning === null) {
+            return 0;
+        }
+        $partitions = new \MySqlMemory\Storage\Partitions($table->definition, $table->definition->partitioning, $context);
+        $selection = $this->change->rebuiltPartitions;
+        $selected = $selection instanceof NamedPartitions ? $partitions->selected($selection->names) : null;
+        return count($partitions->ordered($table->data->rows, $selected));
+    }
+
+    /**
+     * Resolves every requested partition before a maintenance action changes storage.
+     *
+     * @return list<string> The selected partition names
+     * @throws SqlError When a partition is unknown
+     */
+    public function selected(PartitionClause $clause, MaintainPartitions $command): array
+    {
         $names = [];
         if ($clause->definitions === []) {
             $names = array_map(static fn (int $index): string => 'p' . $index, range(0, $this->count($clause) - 1));
@@ -159,9 +197,12 @@ final class PartitionChange
         $selected = $command->partitions instanceof NamedPartitions ? array_map(static fn ($name): string => $name->value, $command->partitions->names) : $names;
         foreach ($selected as $name) {
             if (!in_array(mb_strtolower($name), array_map(mb_strtolower(...), $names), true)) {
+                if ($command->kind === MaintenanceKind::Rebuild) {
+                    throw PartitionError::PartitionListError->error('REBUILD');
+                }
                 throw SchemaError::UnknownPartition->error($name, $this->change->table);
             }
-            $this->change->emptied[] = $name;
         }
+        return $selected;
     }
 }

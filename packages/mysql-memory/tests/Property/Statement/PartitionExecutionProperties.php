@@ -18,13 +18,44 @@ use SqlSemantics\Statement\AnalyzedStatement;
 use Tests\Generator\MySql\Statement\Partition\Method\HashMethodGenerator;
 
 /**
- * Runs generated partition restrictions before database objects can be changed.
+ * Executes generated partition operations with their declarations and session restrictions.
  */
 #[CoversNothing]
 #[Large]
 final class PartitionExecutionProperties extends TestCase
 {
     use TestTrait;
+
+    /**
+     * Dependent partition selection retains rows and reports the native version's copy count.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesRebuildPreservesGeneratedRowsAndReportsSelectedCopies(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Alter\Partition\MaintainPartitionsGenerator::withRows($release))->then(/** @param array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement, list<list<int>>, int} $sample */
+            static function (array $sample) use ($release): void {
+                [$create, $insert, $alter, $rows, $affected] = $sample;
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $create);
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $insert);
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $alter);
+                $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+                $session->text = 'Generated partition rebuild without SQL';
+                $execution = new Execution($session);
+                $execution->statement($create);
+                $execution->statement($insert);
+                $reply = $execution->statement($alter);
+                self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+                self::assertSame($affected, $reply->affectedRows);
+                self::assertSame('Records: ' . $reply->affectedRows . '  Duplicates: 0  Warnings: 0', $reply->info);
+                self::assertSame(0, $reply->warnings);
+                $table = $session->instance->dictionary->table('pbt', $create->name->name->value);
+                self::assertNotNull($table);
+                self::assertSame($rows, array_values($table->data->rows));
+                self::assertSame('Generated partition rebuild without SQL', $session->text);
+            }
+        );
+    }
 
     /**
      * Session-dependent methods refuse both preparation and execution without SQL input.

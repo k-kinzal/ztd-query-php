@@ -19,20 +19,22 @@ final class OptimizeTableGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<bool> $noWriteToBinlog Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable>> $tables Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
      */
-    public function __construct(ErisGenerator $noWriteToBinlog, ErisGenerator $tables, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $binlog, ErisGenerator $tables, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable(noWriteToBinlog: $parts[0], tables: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable(binlog: $parts[0], tables: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], tableWord: $parts[4]);
         }, \Tests\Generator\Operands::tuple(
-            $noWriteToBinlog,
+            $binlog,
             $tables,
             $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
         ));
     }
     /**
@@ -43,7 +45,7 @@ final class OptimizeTableGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'OptimizeTable/57' => new OptimizeTableGenerator(
-            noWriteToBinlog: Generators::constant(false),
+            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
             tables: \Tests\Generator\Operands::tuple(
                 new MaintainedTableGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(

@@ -54,7 +54,6 @@ use MySqlMemory\Command\WarningsCommand;
 use MySqlMemory\Command\Write\ChangeCommand;
 use MySqlMemory\Command\Write\InsertCommand;
 use MySqlMemory\Command\Write\MultipleChangeCommand;
-use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -70,7 +69,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Platform\MySql\Statement\Statement;
-use SqlSemantics\Statement\Script;
 
 #[CoversClass(Dispatcher::class)]
 #[Small]
@@ -204,22 +202,6 @@ final class DispatcherTest extends TestCase
                 $dispatcher->command($node($session->analyze("IMPORT TABLE FROM 'x'")))::class,
             ],
         );
-    }
-
-    public function testCommandRefusesAStatementNoCommandExecutes(): void
-    {
-        $node = static function (\SqlSemantics\Statement\AnalyzedStatement $analyzed): \SqlSemantics\Statement\Statement {
-            $statement = $analyzed instanceof Statement ? $analyzed : $analyzed;
-            return $statement;
-        };
-        $session = (new Instance())->connect();
-        $statement = new Script([$node($session->analyze('SELECT 1')), $node($session->analyze('SELECT 2'))]);
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1235);
-        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'Script'");
-
-        (new Dispatcher())->command($statement);
     }
 
     public function testCommandCompletesAnEmptyStatement(): void
