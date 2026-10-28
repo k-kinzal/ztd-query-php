@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 /**
  * The built-in functions whose name is a keyword of the grammar and whose arguments are a plain list of expressions.
  *
- * Each case holds the keyword the function is written with. The grammar
+ * Each case holds the canonical function identity; KeywordAlias retains a chosen synonym. The grammar
  * names them in function_call_keyword, function_call_nonkeyword,
  * function_call_conflict, geometry_function and grouping_operation. SUBSTR
  * and MID are the keyword SUBSTRING, SCHEMA() is DATABASE(), SESSION_USER()

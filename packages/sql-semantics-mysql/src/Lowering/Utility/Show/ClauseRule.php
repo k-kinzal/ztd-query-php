@@ -127,13 +127,13 @@ final class ClauseRule
         }
         if ($header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys) {
             \SqlSemantics\Diagnostic\Check::invariant(!$filter instanceof ShowLike, 'Index inspections admit only WHERE filters.');
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys($header->table, $header->extended, $header->database, $filter);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys($header->table, $header->extended, $header->database, $filter, listing: $header->listing);
         }
         return match (true) {
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents($header->database, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus($filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus($filter),
-            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases($filter, listing: $header->listing),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables($header->database, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus($header->scope, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables($header->scope, $filter),

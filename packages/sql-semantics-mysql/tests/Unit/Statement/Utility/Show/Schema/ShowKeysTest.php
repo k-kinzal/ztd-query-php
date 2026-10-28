@@ -31,10 +31,11 @@ final class ShowKeysTest extends TestCase
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED INDEX FROM t FROM db');
         self::assertInstanceOf(ShowKeys::class, $show);
         self::assertSame('Visible', $show->relationInformation()->shape->slots[13]->name?->value);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $show->field(2)->nullability);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW EXTENDED INDEXES FROM t FROM db', (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED INDEX FROM t FROM db')->toString());
+        self::assertSame('SHOW EXTENDED INDEX FROM t FROM db', (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED INDEX FROM t FROM db')->toString());
     }
 }

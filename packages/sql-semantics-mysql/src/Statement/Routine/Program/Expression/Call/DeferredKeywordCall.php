@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -44,10 +46,12 @@ final class DeferredKeywordCall implements DeferredOperand
     public readonly array $arguments;
 
     /**
+     * @param ?KeywordAlias $alias The selected synonym, or null for the canonical keyword
+     * @param ArgumentSyntax $syntax The separators naming or delimiting the arguments
      * @param KeywordFunction $function The fixed keyword function
      * @param list<Scalar|RowOperand|DeferredOperand> $arguments The arguments, including at least one deferred use
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?KeywordAlias $alias = null, public readonly ArgumentSyntax $syntax = ArgumentSyntax::Commas)
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
@@ -60,6 +64,8 @@ final class DeferredKeywordCall implements DeferredOperand
             $deferred = $deferred || !$argument instanceof Scalar;
         }
         Check::input($deferred, 'A deferred keyword call retains a preparation condition.');
+        Check::input($alias === null || $alias->function() === $function, 'A keyword synonym names the selected built-in function.');
+        Check::input($syntax === ArgumentSyntax::Commas || $function === KeywordFunction::Substring, 'Only SUBSTRING separates its arguments with FROM and FOR.');
         [$minimum, $maximum] = $function->arity();
         Check::input(count($items) >= $minimum && ($maximum === -1 || count($items) <= $maximum), 'The grammar does not accept this number of arguments for ' . $function->value . '.');
         $this->arguments = $items;
@@ -102,6 +108,16 @@ final class DeferredKeywordCall implements DeferredOperand
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value)->glue()->symbol('(')->list($this->arguments)->symbol(')');
+        $out->keyword($this->alias === null ? $this->function->value : $this->alias->value);
+        $out->glue()->symbol('(');
+        if ($this->syntax === ArgumentSyntax::FromFor) {
+            $out->node($this->arguments[0])->keyword('FROM')->node($this->arguments[1]);
+            if (isset($this->arguments[2])) {
+                $out->keyword('FOR')->node($this->arguments[2]);
+            }
+        } else {
+            $out->list($this->arguments);
+        }
+        $out->symbol(')');
     }
 }

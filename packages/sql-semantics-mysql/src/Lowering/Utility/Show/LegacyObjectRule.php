@@ -121,7 +121,7 @@ final class LegacyObjectRule
         $names = $this->lowering->names;
 
         return match ($kind) {
-            'databases' => $clauses->inspection(new ShowDatabases(), $form->node(1)),
+            'databases' => $clauses->inspection(new ShowDatabases(listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\DatabaseListing::from(strtoupper($form->token(0)->text))), $form->node(1)),
             'tables' => $clauses->inspection(new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2))), $form->node(3)),
             'triggers' => $clauses->inspection(new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2))), $form->node(3)),
             'events' => $clauses->inspection(new ShowEvents($clauses->database($form->node(1))), $form->node(2)),
@@ -166,7 +166,7 @@ final class LegacyObjectRule
         $this->lowering->options->skip($form->node(0));
         $clauses->preposition($form->node(1));
 
-        return $clauses->inspection(new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3))), $form->node(4));
+        return $clauses->inspection(new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(0))->token(0)->text))), $form->node(4));
     }
 
     /**

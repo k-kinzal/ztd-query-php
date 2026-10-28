@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 
@@ -30,12 +33,13 @@ final class SessionUser implements Node
      */
     public function render(Output $out): void
     {
-        $out->keyword('USER')->glue()->symbol('(')->glue()->symbol(')');
+        $out->keyword($this->alias === null ? 'USER' : $this->alias->value)->glue()->symbol('(')->glue()->symbol(')');
     }
     /**
      * Constructs this SQL form with optional completed semantics and an input range.
      */
-    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?KeywordAlias $alias = null)
     {
+        Check::input($alias === null || $alias->function() === KeywordFunction::User, 'The session account is named by USER or one of its synonyms.');
     }
 }

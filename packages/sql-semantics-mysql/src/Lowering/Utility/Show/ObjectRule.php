@@ -62,7 +62,7 @@ final class ObjectRule
         $clauses = new ClauseRule($this->lowering);
         switch ($form->signature) {
             case 'show_databases_stmt: SHOW DATABASES opt_wild_or_where':
-                return $clauses->inspection(new ShowDatabases(), $form->node(2));
+                return $clauses->inspection(new ShowDatabases(listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\DatabaseListing::from(strtoupper($form->token(1)->text))), $form->node(2));
             case 'show_tables_stmt: SHOW opt_show_cmd_type TABLES opt_db opt_wild_or_where':
                 return $clauses->inspection(new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3))), $form->node(4));
             case 'show_triggers_stmt: SHOW opt_full TRIGGERS_SYM opt_db opt_wild_or_where':
@@ -81,7 +81,7 @@ final class ObjectRule
                 $this->lowering->options->skip($form->node(2));
                 $clauses->preposition($form->node(3));
 
-                return $clauses->inspection(new ShowKeys($this->table($form, 4), $clauses->extended($form->node(1)), $clauses->database($form->node(5))), $form->node(6));
+                return $clauses->inspection(new ShowKeys($this->table($form, 4), $clauses->extended($form->node(1)), $clauses->database($form->node(5)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(2))->token(0)->text))), $form->node(6));
             default:
                 return $this->definition($form);
         }

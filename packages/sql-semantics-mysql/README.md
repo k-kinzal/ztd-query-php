@@ -365,6 +365,14 @@ Statements that accept both TABLE and TABLES retain the selected
 `Statement\Table\TableWord` in `tableWord`. Rendering uses these values, so
 publication and direct construction preserve the caller's keyword choices.
 
+Keyword calls keep their canonical `KeywordFunction` identity for typing and
+execution, and an optional `KeywordAlias` for synonyms such as SCHEMA,
+SYSTEM_USER, SUBSTR and GEOMCOLLECTION. `ArgumentSyntax` retains comma-separated
+or FROM/FOR operands of SUBSTRING. Deferred routine calls carry the same choices;
+account-position `SessionUser` accepts the USER synonyms. `ShowKeys::$listing`
+and `ShowDatabases::$listing` retain INDEX/INDEXES/KEYS and DATABASES/SCHEMAS.
+These choices survive publication and rendering without keeping SQL fragments.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

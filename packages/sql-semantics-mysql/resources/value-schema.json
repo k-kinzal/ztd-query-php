@@ -458,6 +458,7 @@
         "name": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\SessionUser": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\KeywordAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\User\\UserRenaming": {
@@ -841,13 +842,23 @@
         "to": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Json\\Path\\Index"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordCall": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\KeywordAlias",
         "arguments": "array",
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "parentheses": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
+        "syntax": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ArgumentSyntax",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ArgumentSyntax": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\KeywordAlias": {
         "name": "string",
         "value": "string"
     },
@@ -3183,9 +3194,11 @@
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredKeywordCall": {
+        "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\KeywordAlias",
         "arguments": "array",
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\KeywordFunction",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "syntax": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Keyword\\ArgumentSyntax",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Call\\DeferredPosition": {
@@ -5300,6 +5313,14 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "terminology": "SqlSemantics\\Platform\\MySql\\Statement\\Replication\\Terminology"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\DatabaseListing": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\IndexListing": {
+        "name": "string",
+        "value": "string"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowColumns": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "database": "?SqlSemantics\\Statement\\Identifier\\Name",
@@ -5329,7 +5350,8 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "filter": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowLike|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere|null",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "listing": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\DatabaseListing"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowEvents": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -5345,6 +5367,7 @@
         "filter": "?SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\ShowWhere",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "listing": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\IndexListing",
         "table": "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\InspectedTable"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Show\\Schema\\ShowOpenTables": {

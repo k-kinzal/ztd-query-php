@@ -23,7 +23,7 @@ final class ClauseRuleTest extends TestCase
 
     public function testWhereLowersTheQueryClause(): void
     {
-        self::assertSame('SHOW INDEXES FROM t WHERE 1', (new Semantics(Dialect::MySql))->analyze('show keys from t where 1')->toString());
+        self::assertSame('SHOW KEYS FROM t WHERE 1', (new Semantics(Dialect::MySql))->analyze('show keys from t where 1')->toString());
     }
 
     public function testDatabaseLowersTheClause(): void
@@ -68,7 +68,7 @@ final class ClauseRuleTest extends TestCase
 
     public function testExtendedLowersTheKeyword(): void
     {
-        self::assertSame('SHOW EXTENDED INDEXES FROM t', (new Semantics(Dialect::MySql))->analyze('show extended keys from t')->toString());
+        self::assertSame('SHOW EXTENDED KEYS FROM t', (new Semantics(Dialect::MySql))->analyze('show extended keys from t')->toString());
     }
 
     public function testScopeLowersTheKeywords(): void

@@ -31,8 +31,8 @@ use SqlSemantics\Statement\Scalar;
  * function_call_generic, opt_udf_expr_list, udf_expr_list, udf_expr. Each
  * keyword production names its function and the positions of its
  * arguments (an expression, or an expression list that continues the
- * arguments). SUBSTRING with FROM and FOR is SUBSTRING with commas (the
- * synonyms of CallNoise). Constructs: KeywordCall, CharCall, Trim,
+ * arguments). SUBSTRING retains FROM and FOR or commas; each call retains
+ * its selected keyword synonym. Constructs: KeywordCall, CharCall, Trim,
  * Position, FunctionCall, CallArgument. Terminates: the argument list is flattened in
  * a loop; every other child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html,
@@ -261,6 +261,8 @@ final class FunctionRule
      */
     public function keyword(Form $form, KeywordFunction $function, array $positions, ?int $list): KeywordCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall
     {
+        $alias = \SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias::tryFrom(strtoupper($form->token(0)->text));
+        $syntax = str_contains($form->signature, ' FROM ') ? \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax::FromFor : \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax::Commas;
         $arguments = [];
         foreach ($positions as $position) {
             $arguments[] = $this->lowering->expressions->operand($form->node($position));
@@ -269,14 +271,14 @@ final class FunctionRule
             array_push($arguments, ...$this->lowering->expressions->operands($form->node($list)));
         }
         if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall($function, $arguments);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall($function, $arguments, alias: $alias, syntax: $syntax);
         }
         $scalars = [];
         foreach ($arguments as $argument) {
             \SqlSemantics\Diagnostic\Check::invariant($argument instanceof Scalar, 'An ordinary keyword call retains only scalar arguments.');
             $scalars[] = $argument;
         }
-        return new KeywordCall($function, $scalars);
+        return new KeywordCall($function, $scalars, alias: $alias, syntax: $syntax);
     }
 
     /**

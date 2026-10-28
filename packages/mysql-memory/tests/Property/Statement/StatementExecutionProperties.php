@@ -31,6 +31,36 @@ final class StatementExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Index-listing alternatives read the index of their generated declaration.
+     */
+    #[Test]
+    #[DataProvider('providerMaintenanceReleases')]
+    public function satisfiesIndexInspectionReadsItsGeneratedTable(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowKeysGenerator::withTable($release))->then(static function (array $sample) use ($release): void {
+            [$definition, $request] = $sample;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $definition);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys::class, $request);
+            $index = $definition->elements[1];
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class, $index);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart::class, $index->parts[0]);
+            $database = $definition->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), ['character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'character_set_results' => 'utf8mb4', 'collation_connection' => 'utf8mb4_unicode_ci'], [$database]))->connect(database: $database);
+            $session->text = 'Generated index inspection without SQL';
+            $execution = new Execution($session);
+            self::assertInstanceOf(Completion::class, $execution->statement($definition));
+            $reply = $execution->statement($request);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertCount(1, $reply->rows);
+            self::assertSame($definition->name->name->value, $reply->rows[0][0]);
+            self::assertSame($index->name?->column->value, $reply->rows[0][2]);
+            self::assertSame(\MySqlMemory\Result\ColumnFlag::NotNull->value, $reply->columns[2]->flags & \MySqlMemory\Result\ColumnFlag::NotNull->value);
+            self::assertSame($index->parts[0]->column->value, $reply->rows[0][4]);
+            self::assertSame('Generated index inspection without SQL', $session->text);
+        });
+    }
+
+    /**
      * Keyword choices retain the dependent table and the native maintenance result.
      */
     #[Test]

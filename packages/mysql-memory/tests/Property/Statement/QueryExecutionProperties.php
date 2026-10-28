@@ -27,6 +27,44 @@ final class QueryExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Typed keyword alternatives preserve the function value and protocol metadata.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordReleases')]
+    public function satisfiesKeywordAlternativesExecuteTheirCanonicalFunction(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Call\KeywordCallGenerator::queries($release))->then(static function (\SqlSemantics\Statement\AnalyzedStatement $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated keyword alternatives without SQL';
+            $reply = (new Execution($session))->statement($statement);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertCount(1, $reply->rows);
+            self::assertCount(2, $reply->columns);
+            self::assertSame($reply->rows[0][1], $reply->rows[0][0]);
+            self::assertSame('selected', $reply->columns[0]->name);
+            self::assertSame('canonical', $reply->columns[1]->name);
+            self::assertSame($reply->columns[1]->type, $reply->columns[0]->type);
+            self::assertSame($reply->columns[1]->length, $reply->columns[0]->length);
+            self::assertSame($reply->columns[1]->decimals, $reply->columns[0]->decimals);
+            self::assertSame($reply->columns[1]->flags, $reply->columns[0]->flags);
+            self::assertSame($reply->columns[1]->charset, $reply->columns[0]->charset);
+            self::assertSame('Generated keyword alternatives without SQL', $session->text);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
+     */
+    public static function providerKeywordReleases(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * Executes the generated expression and preserves its result metadata.
      */
     #[Test]

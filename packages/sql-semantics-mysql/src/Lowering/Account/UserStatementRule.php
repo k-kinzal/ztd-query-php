@@ -190,7 +190,7 @@ final class UserStatementRule
             throw ImplementationGap::production($form);
         }
 
-        return new SessionUser();
+        return new SessionUser(alias: \SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias::tryFrom(strtoupper($form->token(0)->text)));
     }
 
     /**

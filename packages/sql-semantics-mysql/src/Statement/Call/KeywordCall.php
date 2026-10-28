@@ -9,6 +9,8 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -51,16 +53,20 @@ final class KeywordCall implements Scalar
     public readonly array $arguments;
 
     /**
+     * @param ?KeywordAlias $alias The selected synonym, or null for the canonical keyword
+     * @param ArgumentSyntax $syntax The separators naming or delimiting the arguments
      * @param KeywordFunction $function The function
      * @param list<Scalar> $arguments The arguments in order
      * @param OptionalWords $parentheses Whether the empty parentheses of CURRENT_USER are written; the other functions write their parentheses
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?KeywordAlias $alias = null, public readonly ArgumentSyntax $syntax = ArgumentSyntax::Commas)
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Function arguments are expressions.');
+        Check::input($alias === null || $alias->function() === $function, 'A keyword synonym names the selected built-in function.');
+        Check::input($syntax === ArgumentSyntax::Commas || $function === KeywordFunction::Substring, 'Only SUBSTRING separates its arguments with FROM and FOR.');
         [$minimum, $maximum] = $function->arity();
         Check::input(count($arguments) >= $minimum && ($maximum === -1 || count($arguments) <= $maximum), 'The grammar does not accept this number of arguments for ' . $function->value . '.');
         Check::input($parentheses === OptionalWords::Written || $function === KeywordFunction::CurrentUser, 'Only CURRENT_USER is written without parentheses.');
@@ -93,9 +99,18 @@ final class KeywordCall implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value);
+        $out->keyword($this->alias === null ? $this->function->value : $this->alias->value);
         if ($this->parentheses === OptionalWords::Written) {
-            $out->glue()->symbol('(')->list($this->arguments)->symbol(')');
+            $out->glue()->symbol('(');
+            if ($this->syntax === ArgumentSyntax::FromFor) {
+                $out->node($this->arguments[0])->keyword('FROM')->node($this->arguments[1]);
+                if (isset($this->arguments[2])) {
+                    $out->keyword('FOR')->node($this->arguments[2]);
+                }
+            } else {
+                $out->list($this->arguments);
+            }
+            $out->symbol(')');
         }
     }
 }

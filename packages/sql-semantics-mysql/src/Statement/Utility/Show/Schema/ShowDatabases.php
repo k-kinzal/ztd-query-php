@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Relation;
  * @visibility public
  * @example Reading the column named by the pattern
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW SCHEMAS LIKE 'a%'");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Database (a%)', "SHOW DATABASES LIKE 'a%'"]
+ *     [$show->field(0)->name?->value, $show->toString()] // => ['Database (a%)', "SHOW SCHEMAS LIKE 'a%'"]
  */
 final class ShowDatabases extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
@@ -38,7 +38,7 @@ final class ShowDatabases extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     /**
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
      */
-    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseListing $listing = DatabaseListing::Databases)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -73,6 +73,6 @@ final class ShowDatabases extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      */
     public function render(Output $out): void
     {
-        $out->keyword('SHOW', 'DATABASES')->node($this->filter);
+        $out->keyword('SHOW', $this->listing->value)->node($this->filter);
     }
 }

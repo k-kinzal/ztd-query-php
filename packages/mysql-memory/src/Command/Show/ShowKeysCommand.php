@@ -215,7 +215,7 @@ final class ShowKeysCommand implements Command
         return [
             Heading::text('Table', Field::VarString, 64, ColumnFlag::NotNull->value | ColumnFlag::Binary->value | ColumnFlag::NoDefaultValue->value, 0, 'Table', $table, 'tables'),
             new Heading('Non_unique', Field::Long, 2, ColumnFlag::NotNull->value | ColumnFlag::Numeric->value, 0, false, 'Non_unique', $table),
-            Heading::text('Key_name', Field::VarString, 64, 0, 0, 'Key_name', $table),
+            Heading::text('Key_name', Field::VarString, 64, ColumnFlag::NotNull->value, 0, 'Key_name', $table),
             new Heading('Seq_in_index', Field::Long, 10, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::NoDefaultValue->value | ColumnFlag::Numeric->value, 0, false, 'Seq_in_index', $table, 'index_column_usage'),
             Heading::text('Column_name', Field::VarString, 64, 0, 0, 'Column_name', $table),
             Heading::text('Collation', Field::VarString, 1, 0, 0, 'Collation', $table),

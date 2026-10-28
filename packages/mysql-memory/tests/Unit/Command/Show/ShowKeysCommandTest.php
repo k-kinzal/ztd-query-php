@@ -94,6 +94,7 @@ final class ShowKeysCommandTest extends TestCase
         self::assertCount(15, $headings);
         self::assertSame(['Table', 'Non_unique', 'Key_name'], array_map(static fn (Heading $heading): string => $heading->name, array_slice($headings, 0, 3)));
         self::assertSame('SHOW_STATISTICS', $headings[0]->table);
+        self::assertSame(\MySqlMemory\Result\ColumnFlag::NotNull->value, $headings[2]->flags & \MySqlMemory\Result\ColumnFlag::NotNull->value);
     }
 
     public function testTemporaryReadsTheIndexesOfATemporaryTableApart(): void

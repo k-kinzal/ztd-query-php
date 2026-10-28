@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Relation;
  * Rule: MYSQL-SHOW-KEYS-001. The table resolves by MYSQL-SHOW-TARGET-001; a database written
  * after it replaces the one written with the table name. EXTENDED, from
  * MySQL 8.0 on, also lists hidden index parts. INDEX, INDEXES and KEYS are
- * the same keyword (LeafNoise); the writer emits INDEXES. Only WHERE
+ * synonyms; the chosen index-listing keyword is retained. Only WHERE
  * filters the rows. The rows and the WHERE condition are derived by
  * MYSQL-SHOW-FACTS-001 from the layout of MYSQL-SHOW-ROWS-001. Terminates:
  * a fixed layout.
@@ -37,7 +37,7 @@ use SqlSemantics\Statement\Relation;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW KEYS FROM t WHERE Key_name = 'PRIMARY'");
- *     [$show->filter->condition->left->scalarInformation()->resolution->slot->name?->value, $show->toString()] // => ['Key_name', "SHOW INDEXES FROM t WHERE Key_name = 'PRIMARY'"]
+ *     [$show->filter->condition->left->scalarInformation()->resolution->slot->name?->value, $show->toString()] // => ['Key_name', "SHOW KEYS FROM t WHERE Key_name = 'PRIMARY'"]
  */
 final class ShowKeys extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
@@ -50,7 +50,7 @@ final class ShowKeys extends \SqlSemantics\Platform\MySql\Statement\SqlStatement
      * @param ?Name $database The database written after FROM or IN; null for the current database
      * @param ?ShowWhere $filter The WHERE clause
      */
-    public function __construct(public readonly InspectedTable $table, public readonly bool $extended = false, public readonly ?Name $database = null, public readonly ?ShowWhere $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly InspectedTable $table, public readonly bool $extended = false, public readonly ?Name $database = null, public readonly ?ShowWhere $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly IndexListing $listing = IndexListing::Indexes)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -88,7 +88,7 @@ final class ShowKeys extends \SqlSemantics\Platform\MySql\Statement\SqlStatement
         if ($this->extended) {
             $out->keyword('EXTENDED');
         }
-        $out->keyword('INDEXES', 'FROM')->node($this->table);
+        $out->keyword($this->listing->value, 'FROM')->node($this->table);
         if ($this->database !== null) {
             $out->keyword('FROM')->name($this->database, NameUse::Qualifier);
         }
