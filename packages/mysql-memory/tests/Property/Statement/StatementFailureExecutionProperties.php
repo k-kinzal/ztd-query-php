@@ -34,6 +34,42 @@ final class StatementFailureExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * A refused heartbeat stops at its own option after the generated preceding notices.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesGeneratedHeartbeatConditionsStopBeforeLaterOptions(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Replication\Source\ChangeReplicationSourceGenerator::refusedHeartbeats($release))->then(static function (array $parts) use ($release): void {
+            [$statement, $codes] = $parts;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource::class, $statement);
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated replication options without SQL';
+            try {
+                (new Execution($session))->statement($statement);
+                self::fail('The generated heartbeat exceeds its maximum.');
+            } catch (SqlError $error) {
+                self::assertSame(1624, $error->getCode());
+            }
+            self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
+            self::assertSame('Generated replication options without SQL', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * @param Generator<list<Statement>> $sequences Generated prerequisites and command
      */
     #[Test]

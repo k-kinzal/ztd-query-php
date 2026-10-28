@@ -39,6 +39,38 @@ final class ChangeReplicationSourceGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+
+    /**
+     * Composes a refused heartbeat between independently shrinkable option prefixes and suffixes.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, list<int>}>
+     */
+    public static function refusedHeartbeats(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $periods = Generators::oneOf(
+            Generators::map(static fn (int $value): string => (string) $value, Generators::choose(4294968, 4296000)),
+            Generators::map(static fn (int $fraction): string => '4294967.' . $fraction, Generators::choose(1, 9)),
+            Generators::map(static fn (int $exponent): string => '1e' . $exponent, Generators::choose(8, 300)),
+        );
+        return Generators::map(static function (array $parts) use ($release): array {
+            [$period, $before, $after] = $parts;
+            $terminology = (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($release);
+            $kind = \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::HeartbeatPeriod;
+            $options = [];
+            for ($index = 0; $index < $before; ++$index) {
+                $options[] = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption($terminology, $kind, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0.0001'));
+            }
+            $codes = [...array_fill(0, count($options), 1703), 1624];
+            $options[] = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption($terminology, $kind, $period);
+            for ($index = 0; $index < $after; ++$index) {
+                $options[] = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption($terminology, $kind, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0.0001'));
+            }
+            $statement = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource($terminology, $options);
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement), $codes];
+        }, \Tests\Generator\Operands::tuple(new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator($periods), Generators::choose(0, 3), Generators::choose(0, 3)));
+    }
+
     /**
      * Composes the statement's SQL forms from typed operand generators.
      *

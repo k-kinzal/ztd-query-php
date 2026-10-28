@@ -30,7 +30,9 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
  * than 0 or 1, and a fraction in the last two; an anonymous GTID UUID whose
  * first 36 characters are not a UUID in its text form. UUID values are
  * refused during lowering, before the SourceOption constructor publishes
- * them. Completed input checks retain RefusedSetting descriptors. Terminates: one pass over the options.
+ * them. Heartbeat requests retain their numeric value and an aborting notice
+ * when the period exceeds its bound. Completed input checks retain RefusedSetting
+ * descriptors. Terminates: one pass over the options.
  * Source: sql/sql_yacc.yy (source_def, master_def, TEXT_STRING_sys_nonewline,
  * assign_gtids_to_anonymous_transactions_def),
  * https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
@@ -84,7 +86,11 @@ final class SourceSettings
             $derivation->warn($warning, $option);
         }
         if ($error !== null) {
-            $derivation->report(new RefusedSetting($error, text: in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) && $option->value instanceof Text ? $option->value : null));
+            $problem = new RefusedSetting($error, text: in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) && $option->value instanceof Text ? $option->value : null);
+            $derivation->report($problem);
+            if ($error === ReplicationError::HeartbeatOutOfRange) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
+            }
         }
     }
 

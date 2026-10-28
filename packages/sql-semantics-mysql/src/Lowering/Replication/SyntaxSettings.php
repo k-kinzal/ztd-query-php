@@ -26,7 +26,7 @@ final class SyntaxSettings
     public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
     {
         $setting = $this->completed($node, $lowering);
-        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && in_array($setting->problem->error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::UntilCondition, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::HeartbeatOutOfRange], true))) {
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber || ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && in_array($setting->problem->error, [\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::UntilCondition, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed, \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid], true))) {
             return new \SqlSemantics\Construction\RejectedInput($setting->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
         }
 

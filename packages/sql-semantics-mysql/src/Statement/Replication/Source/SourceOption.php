@@ -28,8 +28,9 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Rejecting a forbidden line feed before deriving an operation
  *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a heartbeat that every supported release rejects
- *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::HeartbeatPeriod, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('4294967.5')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining the requested heartbeat beside its definition condition
+ *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 4294967.5');
+ *     [$change->options[0]->value->text, $change->warnings()[0]->message()] // => ['4294967.5', 'The heartbeat period is greater than 4294967 seconds (ER_REPLICA_HEARTBEAT_VALUE_OUT_OF_RANGE).']
  * @example Holding a typed option value
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3306'));
  *     $option->kind->value // => 'SOURCE_PORT'

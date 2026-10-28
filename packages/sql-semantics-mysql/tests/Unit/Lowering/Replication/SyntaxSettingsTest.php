@@ -67,6 +67,7 @@ final class SyntaxSettingsTest extends TestCase
             yield $release->value . ': large' => [$release, $prefix . ' TO 2000000001, SELECT', [new ParseFailure(new RefusedSetting(ReplicationError::FileNumberOutOfRange, new Numeral('2000000001')), true)]];
             yield $release->value . ': earlier line feed' => [$release, "RESET REPLICA FOR CHANNEL 'a\nb', " . ($release === GrammarRelease::MySql8044 ? 'MASTER' : 'BINARY LOGS AND GTIDS') . ' TO 0', [new ParseFailure(new RefusedSetting(ReplicationError::LineFeed, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")), true)]];
             yield $release->value . ': invalid UUID' => [$release, "CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS='invalid' trailing", [new ParseFailure(new RefusedSetting(ReplicationError::InvalidUuid, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid')), true)]];
+            yield $release->value . ': heartbeat' => [$release, 'CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=18446744073709551615 trailing', [new ParseFailure(new RefusedSetting(ReplicationError::HeartbeatOutOfRange), true)]];
             yield $release->value . ': accepted'  => [$release, $prefix . ' TO 2000000000, SELECT', []];
         }
     }
