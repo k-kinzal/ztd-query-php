@@ -231,7 +231,8 @@
 <span class="src-line" id="L190" data-diff="same"><a class="ln" href="#L190">190</a>            <span class="tok-kw">throw</span> <span class="tok-id">ImplementationGap</span>::<span class="tok-id">production</span>(<span class="tok-var">$form</span>);</span>
 <span class="src-line" id="L191" data-diff="same"><a class="ln" href="#L191">191</a>        }</span>
 <span class="src-line" id="L192" data-diff="same"><a class="ln" href="#L192">192</a></span>
-<span class="src-line" id="L193" data-diff="same"><a class="ln" href="#L193">193</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">SessionUser</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">193</span>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">SessionUser</span>();</span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">SessionUser</span>(<span class="tok-id">alias</span>: <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias</span>::<span class="tok-id">tryFrom</span>(<span class="tok-id">strtoupper</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">token</span>(<span class="tok-num">0</span>)-&gt;<span class="tok-id">text</span>)));</span>
 <span class="src-line" id="L194" data-diff="same"><a class="ln" href="#L194">194</a>    }</span>
 <span class="src-line" id="L195" data-diff="same"><a class="ln" href="#L195">195</a></span>
 <span class="src-line" id="L196" data-diff="same"><a class="ln" href="#L196">196</a>    <span class="tok-com">/**</span></span>
