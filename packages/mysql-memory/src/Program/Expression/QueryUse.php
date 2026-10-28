@@ -37,7 +37,7 @@ final class QueryUse
     /**
      * Prepares the query's already resolved dependencies without sibling conditions.
      */
-    public function prepare(\SqlSemantics\Statement\Query $query, \MySqlMemory\Evaluation\Compile\Compiler $compiler, bool $exists = false, bool $deferSetWidth = false, ?\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $write = null): void
+    public function prepare(\SqlSemantics\Statement\Query $query, \MySqlMemory\Evaluation\Compile\Compiler $compiler, bool $exists = false, bool $deferSetWidth = false, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|null $write = null): void
     {
         $session = $compiler->connection->session();
         \SqlSemantics\Diagnostic\Check::invariant($session !== null, 'A deferred query prepares in its invocation session.');

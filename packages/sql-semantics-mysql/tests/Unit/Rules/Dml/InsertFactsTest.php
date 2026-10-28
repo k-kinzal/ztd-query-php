@@ -35,6 +35,19 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class InsertFactsTest extends TestCase
 {
+    public function testQueryResolvesValuesInTheDestinationScope(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t(a INT)')->declarations();
+        $statement = $semantics->analyze('INSERT INTO t VALUES ROW(a)', $tables);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $statement);
+        self::assertSame([], $statement->diagnostics());
+        $values = $statement->values();
+        self::assertNotNull($values);
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $values->rows[0]->values[0]);
+        self::assertInstanceOf(ResolvedColumn::class, $values->rows[0]->values[0]->scalarInformation()->resolution);
+    }
+
     public function testRowsChecksEveryRowAgainstTheFirst(): void
     {
         $semantics = new Semantics(Dialect::MySql);

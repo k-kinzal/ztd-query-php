@@ -123,6 +123,48 @@ final class InsertExecutionProperties extends TestCase
     }
 
     /**
+     * Generated constraints stay attached to the same declaration during shrinking.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    public function satisfiesCompleteWritesUsePublishedOperandConditions(GrammarRelease $release): void
+    {
+        $this->forAll(InsertIntoGenerator::constraints($release))->then(static function (array $input) use ($release): void {
+            [$create, $missing, $declared, $code, $explainedMissing, $explainedDeclared] = $input;
+            self::assertInstanceOf(CreateTable::class, $create);
+            $database = $create->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), [], [$database]))->connect(database: $database);
+            $session->text = 'generated INSERT constraints without input SQL';
+            $execution = new Execution($session);
+            foreach ([$missing, $explainedMissing] as $request) {
+                self::assertInstanceOf(\SqlSemantics\Statement\AnalyzedStatement::class, $request);
+                try {
+                    $execution->statement($request);
+                    self::fail('The generated write target does not exist yet.');
+                } catch (SqlError $error) {
+                    self::assertSame(1146, $error->getCode());
+                }
+            }
+            self::assertInstanceOf(Completion::class, $execution->statement($create));
+            foreach ([$declared, $explainedDeclared] as $request) {
+                self::assertInstanceOf(\SqlSemantics\Statement\AnalyzedStatement::class, $request);
+                try {
+                    $execution->statement($request);
+                    self::fail('The generated write retains an operand constraint.');
+                } catch (SqlError $error) {
+                    self::assertSame($code, $error->getCode());
+                }
+            }
+            $table = $session->instance->dictionary->table($database, $create->name->name->value);
+            self::assertNotNull($table);
+            self::assertSame([], $table->data->rows);
+            self::assertSame('generated INSERT constraints without input SQL', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+            self::assertSame([], $session->running->using);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

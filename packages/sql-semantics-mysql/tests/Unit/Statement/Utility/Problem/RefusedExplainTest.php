@@ -15,11 +15,12 @@ final class RefusedExplainTest extends TestCase
 {
     public function testMessageRetainsTheExplainedSetWriteCondition(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() EXPLAIN INSERT INTO t SET a=ROW(1,2)');
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=ROW(1,2)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain::class, $operation->body);
-        self::assertSame('Operand should contain 1 column(s), not 2.', (new RefusedExplain($operation->body))->message());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet::class, $operation->body);
+        $explanation = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain($operation->body);
+        self::assertSame('Operand should contain 1 column(s), not 2.', (new RefusedExplain($explanation))->message());
     }
 
     public function testMessageRetainsTheCompletePreparationDependencies(): void

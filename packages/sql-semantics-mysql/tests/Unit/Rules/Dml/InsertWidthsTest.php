@@ -16,22 +16,24 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class InsertWidthsTest extends TestCase
 {
-    public function testProblemRejectsDifferentRowsBeforeOperationConstruction(): void
+    public function testProblemRetainsDifferentRowsOnTheCompleteRequest(): void
     {
         $into = new M\Dml\Insert\InsertInto(false, null, false, new M\Dml\WriteTarget(new QualifiedName(new Name('t'))));
         $rows = [new M\Dml\Insert\InsertedRow([new M\Literal\NumberLiteral('1')]), new M\Dml\Insert\InsertedRow([])];
         self::assertEquals(new M\Dml\Problem\ValueCountMismatch(1, 0, 2), (new InsertWidths())->problem($into, $rows));
-        $this->expectExceptionMessage('INSERT rows agree with each other and any explicit column count.');
-        new M\Dml\Insert\InsertRows($into, $rows);
+        $statement = new M\Dml\Insert\InsertRows($into, $rows);
+        self::assertSame($rows, $statement->rows);
+        self::assertTrue($statement->hasExecutionCondition());
     }
 
-    public function testProblemRejectsAnExplicitColumnMismatchBeforeOperationConstruction(): void
+    public function testProblemRetainsAnExplicitColumnMismatchOnTheCompleteRequest(): void
     {
         $into = new M\Dml\Insert\InsertInto(true, null, false, new M\Dml\WriteTarget(new QualifiedName(new Name('t'))), new M\Dml\Insert\ColumnList([new M\Name\ColumnUse(new Name('a'))]));
         $rows = [new M\Dml\Insert\InsertedRow([new M\Literal\NumberLiteral('1'), new M\Dml\DefaultRequest()])];
         self::assertEquals(new M\Dml\Problem\ValueCountMismatch(1, 2, 1), (new InsertWidths())->problem($into, $rows));
-        $this->expectExceptionMessage('INSERT rows agree with each other and any explicit column count.');
-        new M\Dml\Insert\InsertRows($into, $rows);
+        $statement = new M\Dml\Insert\InsertRows($into, $rows);
+        self::assertSame($rows, $statement->rows);
+        self::assertTrue($statement->hasExecutionCondition());
     }
 
     public function testProblemKeepsEmptyDefaultsAndUnresolvedDestinationWidths(): void

@@ -72,15 +72,7 @@ final class Problems
      */
     public function check(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
     {
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $operation->hasExecutionCondition()) {
-            (new \MySqlMemory\Command\Access\Load\Preparation())->check($operation, $session);
-        }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $operation->hasExecutionCondition()) {
-            (new \MySqlMemory\Program\Expression\QueryUse())->statement($operation, $session);
-        }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation && $operation->hasExecutionCondition()) {
-            (new \MySqlMemory\Program\Expression\EvaluationUse())->statement($operation, $session);
-        }
+        $this->operands($operation, $session);
         $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
         if ($operation instanceof MySqlStatement) {
@@ -115,6 +107,30 @@ final class Problems
         (new Problem\Location\Conditions())->check($operation, $session, $calls, $diagnostics, $prepared);
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $this->analysed($operation instanceof QueryPreparation && $operation->write !== null ? $operation->write : ($statement));
+        }
+    }
+
+    /**
+     * Applies statement-specific ordering to intrinsic operand conditions.
+     *
+     * @throws SqlError When a complete request cannot prepare its operands
+     */
+    public function operands(MySqlStatement|QueryPreparation $operation, Session $session): void
+    {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
+            (new \MySqlMemory\Program\Expression\InsertUse())->explained($operation, $session);
+        }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Command\Access\Load\Preparation())->check($operation, $session);
+        }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\QueryUse())->statement($operation, $session);
+        }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\EvaluationUse())->statement($operation, $session);
+        }
+        if (($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery) && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\InsertUse())->statement($operation, $session);
         }
     }
 

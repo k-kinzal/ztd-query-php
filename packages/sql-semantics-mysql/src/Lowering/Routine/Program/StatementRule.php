@@ -129,6 +129,15 @@ final class StatementRule
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             return $this->rejected($failure);
         }
+        if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery) && $statement->hasExecutionCondition()) {
+            $this->lowering->origins->forget($statement);
+            $retained = match (true) {
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($statement->into, $statement->rows, $statement->alias, $statement->onDuplicate, keyword: $statement->keyword),
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet($statement->into, $statement->assignments, $statement->alias, $statement->onDuplicate),
+                default => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery($statement->into, $statement->source, $statement->onDuplicate),
+            };
+            return $this->lowering->origins->record($retained, $node);
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $statement->hasExecutionCondition()) {
             $this->lowering->origins->forget($statement);
             return $this->lowering->origins->record((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($statement->query, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0), $node);
@@ -150,7 +159,7 @@ final class StatementRule
         if ($administrative !== null) {
             return $administrative;
         }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete) {
             return $failure->problem->write;
         }
         if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {

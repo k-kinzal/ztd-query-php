@@ -24,9 +24,9 @@ final class QueryPreparation
      * @param LanguageProfile $language The grammar and lexical interpretation
      * @param bool $exists Whether this query is prepared only as an existence test
      * @param bool $deferSetWidth Whether the surrounding legacy predicate binds its operand before fixed set widths
-     * @param \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|null $write The complete write owning this read, after its destination opens
+     * @param \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|null $write The complete write owning this read, after its destination opens
      */
-    public function __construct(public readonly Query $statement, public readonly StatementSemantics $facts, public readonly LanguageProfile $language, public readonly bool $exists = false, public readonly bool $deferSetWidth = false, public readonly ?\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $write = null)
+    public function __construct(public readonly Query $statement, public readonly StatementSemantics $facts, public readonly LanguageProfile $language, public readonly bool $exists = false, public readonly bool $deferSetWidth = false, public readonly \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|null $write = null)
     {
     }
 

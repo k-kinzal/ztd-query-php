@@ -161,13 +161,13 @@ final class Locator
     /**
      * Locates the names of assignments as the server resolves them: every assigned column, then every value.
      *
-     * @param list<Assignment> $assignments
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $assignments
      * @param list<int> $order
      */
     public function assignments(array $assignments, array $order): void
     {
-        $this->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $assignments), 'field list', [...$order, 0]);
-        $this->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $assignments), 'field list', [...$order, 1]);
+        $this->visit(array_map(static fn ($assignment): ColumnUse => $assignment->column, $assignments), 'field list', [...$order, 0]);
+        $this->visit(array_map(static fn ($assignment): \SqlSemantics\Statement\Operand => $assignment->value, $assignments), 'field list', [...$order, 1]);
     }
 
     /**

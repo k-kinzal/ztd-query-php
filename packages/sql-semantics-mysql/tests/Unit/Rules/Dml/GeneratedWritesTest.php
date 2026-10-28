@@ -119,6 +119,7 @@ final class GeneratedWritesTest extends TestCase
     {
         $insert = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t (a, b, c, d) VALUES (DEFAULT, (DEFAULT(a)), DEFAULT(a) + 0, NULL)');
         self::assertInstanceOf(InsertRows::class, $insert);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow::class, $insert->rows[0]);
         $values = $insert->rows[0]->values;
 
         self::assertSame([true, true, false, false, false], [...array_map(static fn ($value): bool => (new GeneratedWrites())->default($value), $values), (new GeneratedWrites())->default(null)]);

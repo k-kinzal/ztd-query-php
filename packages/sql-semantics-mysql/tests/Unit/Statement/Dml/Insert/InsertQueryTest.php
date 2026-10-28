@@ -23,6 +23,35 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class InsertQueryTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, bool}>
+     */
+    public static function providerConditions(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            yield $release->value . ' SELECT 1' => [$release->value, 'INSERT INTO t SELECT 1', false];
+            yield $release->value . ' SELECT *' => [$release->value, 'INSERT INTO t SELECT *', true];
+            yield $release->value . ' SELECT 1 ON DUPLICATE KEY UPDATE a = ROW(2, 3)' => [$release->value, 'INSERT INTO t SELECT 1 ON DUPLICATE KEY UPDATE a = ROW(2, 3)', true];
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerConditions')]
+    public function testHasExecutionConditionRetainsTheCompleteImmediateStatement(string $release, string $sql, bool $conditional): void
+    {
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertInstanceOf(InsertQuery::class, $operation);
+        self::assertSame($conditional, $operation->hasExecutionCondition());
+        $information = $operation->statementInformation();
+        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($information->profile->grammar, $information->profile->lexical, $information->client));
+        $operation->render($out);
+        self::assertSame($sql, (new \SqlSemantics\Rendering\Lexical())->join($out->canonical()));
+        self::assertSame($sql, $operation->toString());
+        self::assertSame('CREATE PROCEDURE p() ' . $sql, (new Semantics(Dialect::MySql, $release))->analyze('CREATE PROCEDURE p() ' . $sql)->toString());
+    }
+
     public function testDeriveStatementComparesTheQueryWidth(): void
     {
         $semantics = new Semantics(Dialect::MySql);

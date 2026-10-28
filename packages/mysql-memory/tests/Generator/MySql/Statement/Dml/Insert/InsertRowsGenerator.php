@@ -20,9 +20,9 @@ final class InsertRowsGenerator implements ErisGenerator
 
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto> $into Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow>> $rows Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>> $rows Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias|null>|null $alias Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment>>|null $onDuplicate Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>>|null $onDuplicate Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesKeyword>|null $keyword Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $valuesSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand

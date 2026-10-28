@@ -1399,15 +1399,6 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\InsertGrouping": {
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\GroupConcat|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\JsonObjectAggregate|SqlSemantics\\Platform\\MySql\\Statement\\Call\\Window\\WindowFunction"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\RefusedInsertQuery": {
-        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertQuery"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\RefusedInsertRows": {
-        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertRows"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\Insert\\RefusedInsertSet": {
-        "write": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredInsertSet"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadConflict": {
         "rule": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\LoadRule"
     },
@@ -3627,6 +3618,7 @@
         "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\RowAlias",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "into": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\InsertInto",
+        "keyword": "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Insert\\ValuesKeyword",
         "onDuplicate": "array",
         "rows": "array"
     },

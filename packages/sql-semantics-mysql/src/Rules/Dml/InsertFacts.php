@@ -163,15 +163,15 @@ final class InsertFacts
     public function query(InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $insert, Derivation $derivation, Environment $outer): void
     {
         [$target, $fact] = $this->target($insert->into, $derivation, $outer);
-        $values = $insert instanceof InsertQuery ? $insert->values() : null;
+        $values = (new ValueSources())->values($insert->source);
         $late = $this->late($derivation) && $values === null;
         $written = $late ? null : $this->columns($insert->into, $target, $fact, $derivation, $outer);
         if ($values !== null) {
-            foreach ([$values, ...$insert->wrappers()] as $source) {
+            foreach ([$values, ...(new ValueSources())->wrappers($insert->source)] as $source) {
                 $derivation->writes($source, $written ?? [], $insert->into->columns === null || $insert->into->columns->columns === []);
             }
         }
-        $rows = $derivation->query($insert->source, $outer);
+        $rows = $derivation->query($insert->source, $values === null ? $outer : new Environment($derivation->context, $outer, [$target]));
         $listed = count($insert->into->columns->columns ?? []);
         if ($late && $listed !== 0 && $rows->shape->complete() && count($rows->shape->slots) !== $listed && !$this->defaulted($insert)) {
             $derivation->report(new ValueCountMismatch($listed, count($rows->shape->slots), 1));
@@ -202,7 +202,7 @@ final class InsertFacts
             return;
         }
         if ($rows->shape->complete() && count($rows->shape->slots) !== count($written)) {
-            if (!$insert instanceof InsertQuery || $insert->values() === null) {
+            if ((new ValueSources())->values($insert->source) === null) {
                 $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
             }
 
@@ -217,7 +217,7 @@ final class InsertFacts
      */
     public function defaulted(InsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery $insert): bool
     {
-        $values = $insert instanceof InsertQuery ? $insert->values() : null;
+        $values = (new ValueSources())->values($insert->source);
         if ($values === null || ($insert->into->columns !== null && $insert->into->columns->columns !== [])) {
             return false;
         }

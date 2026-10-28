@@ -50,7 +50,7 @@ final class DeferredInsertRows implements ProgramStatement
      * @param list<Assignment|DeferredColumnAssignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When there is no row, or REPLACE has an alias or ON DUPLICATE KEY UPDATE
      */
-    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly InsertInto $into, array $rows, public readonly ?RowAlias $alias = null, array $onDuplicate = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesKeyword $keyword = \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesKeyword::Values)
     {
         $items = [];
         foreach (Check::listOf($rows, \SqlSemantics\Statement\Node::class, 'VALUES holds at least one row.', 1) as $row) {
@@ -112,7 +112,7 @@ final class DeferredInsertRows implements ProgramStatement
      */
     public function render(Output $out): void
     {
-        $out->node($this->into)->keyword('VALUES')->list($this->rows)->node($this->alias);
+        $out->node($this->into)->keyword($this->keyword->value)->list($this->rows)->node($this->alias);
         if ($this->onDuplicate !== []) {
             $out->keyword('ON', 'DUPLICATE', 'KEY', 'UPDATE')->list($this->onDuplicate);
         }

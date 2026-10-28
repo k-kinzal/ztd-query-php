@@ -225,7 +225,7 @@ final class ExplainRule
      *
      * @throws \SqlSemantics\Construction\RejectedInput When another input operand is refused
      */
-    public function deferred(Form $form): Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|W\DeferredInsertRows|W\DeferredInsertSet|W\DeferredInsertQuery|W\DeferredDelete|W\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets
+    public function deferred(Form $form): Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|W\DeferredDelete|W\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets
     {
         $node = $form->node(self::EXPLAINED[$form->signature] ?? throw ImplementationGap::production($form));
         if (isset(self::QUERIES[$node->name])) {
@@ -241,7 +241,7 @@ final class ExplainRule
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
                 return $failure->problem->query;
             }
-            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete) {
                 return $failure->problem->write;
             }
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets) {

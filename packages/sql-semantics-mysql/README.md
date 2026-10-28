@@ -87,14 +87,19 @@ example). Query bodies also appear directly in subqueries, INSERT sources and
 view definitions. They implement the shared `Query` role, not `Statement`.
 Construct a standalone query as `new QueryRoot($body)` and pass it to `Semantics::fromStatement()`. The root enforces constraints of the statement position; `inputRelation()`, result fields and rendered SQL remain available on that concrete result.
 
-`Statement\Dml\Insert\InsertRows` requires equal written row widths and, when a
-nonempty column list is explicit, the same number of values as listed columns.
-An omitted list leaves the destination width to catalog resolution. Stored
-instructions can retain incompatible widths and nonscalar duplicate-key values
-in `DeferredInsertRows` and `DeferredColumnAssignment`; these templates preserve
-the operands needed when an instruction is reached. They do not make a row operand
-an ordinary scalar assignment. Lowering a standalone contradictory INSERT raises
-`Construction\RejectedInput` with the complete typed instruction.
+`Statement\Dml\Insert\InsertRows`, `InsertSet` and `InsertQuery` retain complete
+write requests, including incompatible written widths, non-scalar values and
+query-column conditions. `hasExecutionCondition()` identifies intrinsic
+conditions that the consumer must prepare in dependency order. A missing target
+can take precedence over a value condition; an omitted column list leaves its
+width to catalog resolution. The published statement supplies the bindings for
+that preparation, without a replacement statement or another SQL analysis.
+
+Stored conditional writes use `DeferredInsertRows`, `DeferredInsertSet` and
+`DeferredInsertQuery` to defer preparation until their instruction is reached.
+They retain the same targets, values and duplicate-key assignments; VALUES and
+VALUE also remain distinct when rendered. A row operand remains distinct from
+an ordinary scalar assignment in both immediate and stored requests.
 
 Written declaration types implement `Statement\Type\DeclaredName`; VARCHAR and
 VARBINARY declarations require a length. Expression facts can instead hold

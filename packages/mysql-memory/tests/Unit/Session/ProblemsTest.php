@@ -21,6 +21,17 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class ProblemsTest extends TestCase
 {
+    public function testOperandsPreparesThePublishedWriteBeforeGeneralDiagnostics(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $write = $session->analyze('INSERT INTO absent SET a=ROW(1,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet::class, $write);
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+        (new Problems())->operands($write, $session);
+    }
+
     public function testResolutionPreparesAReachedTemplateBeforeOuterColumns(): void
     {
         $session = (new Instance())->connect();

@@ -34,21 +34,24 @@ final class DeferredInsertQuery implements ProgramStatement
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Assignment> The duplicate-key assignments in written order
+     * @var list<Assignment|DeferredColumnAssignment> The duplicate-key assignments in written order
      */
     public readonly array $onDuplicate;
 
     /**
      * @param InsertInto $into The complete write head
      * @param Query $source The complete retained read, including unused definitions
-     * @param list<Assignment> $onDuplicate The duplicate-key assignments
+     * @param list<Assignment|DeferredColumnAssignment> $onDuplicate The duplicate-key assignments
      */
     public function __construct(public readonly InsertInto $into, public readonly Query $source, array $onDuplicate = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
+        $items = Check::listOf($onDuplicate, \SqlSemantics\Statement\Node::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
+        foreach ($items as $item) {
+            Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'INSERT assignments retain their column and value roles.');
+        }
+        $this->onDuplicate = $items;
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($source) === null, 'A deferred read source is not an ordinary VALUES write.');
-        Check::input((new ReadColumns())->problem($source) !== null, 'A deferred query write retains an intrinsic read-column condition.');
+        Check::input((new ReadColumns())->problem($source) !== null || array_filter($this->onDuplicate, static fn ($assignment): bool => $assignment instanceof DeferredColumnAssignment) !== [], 'A deferred query write retains a read or assignment condition.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -66,7 +69,12 @@ final class DeferredInsertQuery implements ProgramStatement
     public function problem(): Diagnostic
     {
         $problem = (new ReadColumns())->problem($this->source);
-        Check::invariant($problem !== null, 'A deferred query write retains a read condition.');
+        foreach ($this->onDuplicate as $assignment) {
+            if ($problem === null && $assignment instanceof DeferredColumnAssignment) {
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Preparation\DeferredArguments())->problem([$assignment->value]);
+            }
+        }
+        Check::invariant($problem !== null, 'A deferred query write retains a read or assignment condition.');
         return $problem;
     }
 

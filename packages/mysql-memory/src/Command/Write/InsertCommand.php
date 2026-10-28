@@ -70,7 +70,12 @@ final class InsertCommand implements Command
         $context->strict = $context->modes->strict() && !$into->ignore;
         $session->transaction->touch($table);
         [$positions, $sources] = $this->sources($statement, $planner, $table, $context);
-        $rows = new Rows($table, $context, $planner, $into, $statement->onDuplicate, $session, $statement instanceof InsertQuery ? null : $statement->alias);
+        $updates = [];
+        foreach ($statement->onDuplicate as $assignment) {
+            \SqlSemantics\Diagnostic\Check::invariant($assignment instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Assignment, 'Non-scalar duplicate-key operands are refused during preparation.');
+            $updates[] = $assignment;
+        }
+        $rows = new Rows($table, $context, $planner, $into, $updates, $session, $statement instanceof InsertQuery ? null : $statement->alias);
         $queried = $statement instanceof InsertQuery && $statement->values() === null;
         $rows->sources = $queried ? $planner->carried[1] ?? null : null;
         foreach ($sources as $index => $values) {

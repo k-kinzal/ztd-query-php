@@ -66,11 +66,12 @@ final class InsertRuleTest extends TestCase
     }
 
     #[DataProvider('providerContradictoryWidths')]
-    public function testBuildRefusesContradictoryStandaloneWidths(string $sql, int $row): void
+    public function testBuildRetainsContradictoryStandaloneWidths(string $sql, int $row): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage("Column count doesn't match value count at row " . $row);
-        (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
+        self::assertContains("Column count doesn't match value count at row " . $row, array_map(static fn ($problem): string => $problem->message(), $operation->diagnostics()));
     }
 
     public function testTargetLowersTheLegacyTable(): void

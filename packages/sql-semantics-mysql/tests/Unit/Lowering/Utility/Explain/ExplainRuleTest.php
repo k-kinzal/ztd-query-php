@@ -71,17 +71,14 @@ final class ExplainRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $operation->body->statement);
     }
 
-    public function testDeferredRetainsTheExplanationAroundARefusedQueryWrite(): void
+    public function testDeferredRetainsTheExplanationAroundAConditionalQueryWrite(): void
     {
-        try {
-            (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR DATABASE d REPLACE INTO t SELECT *');
-            self::fail('A wildcard-only read needs deferred preparation.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain::class, $failure->problem);
-            self::assertSame('d', $failure->problem->explanation->database?->value);
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $failure->problem->explanation->statement);
-            self::assertTrue($failure->problem->explanation->statement->into->replace);
-        }
+        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR DATABASE d REPLACE INTO t SELECT *');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $statement);
+        self::assertSame('d', $statement->database?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $statement->statement);
+        self::assertTrue($statement->statement->hasExecutionCondition());
+        self::assertTrue($statement->statement->into->replace);
     }
     public function testTargetRejectsAnInvalidModernOutputName(): void
     {

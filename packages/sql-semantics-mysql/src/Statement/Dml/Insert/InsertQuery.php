@@ -27,10 +27,10 @@ use SqlSemantics\Statement\Query;
  * also applies to directly constructed statements, independently of parsing.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert-select.html. Status: Implemented.
  *
- * @example Refusing a read source with no relation for its star
+ * @example Retaining a read source with no relation for its star
  *     $head = new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(false, null, false, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()]);
- *     new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery($head, $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery($head, $query))->hasExecutionCondition() // => true
  *
  * @visibility public
  * @example Reading the source of an INSERT ... SELECT
@@ -42,14 +42,14 @@ final class InsertQuery extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Assignment> The assignments of ON DUPLICATE KEY UPDATE in written order
+     * @var list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> The assignments of ON DUPLICATE KEY UPDATE in written order
      */
     public readonly array $onDuplicate;
 
     /**
      * @param InsertInto $into The head: verb, modifiers, table and column list
      * @param Query $source The query whose rows are written
-     * @param list<Assignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $onDuplicate The assignments of ON DUPLICATE KEY UPDATE
      * @throws InvalidConstruction When REPLACE has ON DUPLICATE KEY UPDATE
      */
     public function __construct(public readonly InsertInto $into, public readonly Query $source, array $onDuplicate = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
@@ -57,11 +57,23 @@ final class InsertQuery extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
-        $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
+        $items = Check::listOf($onDuplicate, \SqlSemantics\Statement\Node::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
+        foreach ($items as $item) {
+            Check::input($item instanceof Assignment || $item instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment, 'INSERT assignments retain their column and value roles.');
+        }
+        $this->onDuplicate = $items;
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
-        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->hasDestination($source), 'An INSERT source supplies rows without an INTO result destination.');
-        Check::input($this->values() !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($source) === null, 'An INSERT read source has coherent fixed columns.');
+        Check::input($this->hasExecutionCondition() || !(new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->hasDestination($source), 'An INSERT source supplies rows without an INTO result destination.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Reports whether source columns or duplicate-key operands require ordered preparation.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return ($this->values() === null && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($this->source) !== null)
+            || array_filter($this->onDuplicate, static fn ($assignment): bool => $assignment instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) !== [];
     }
 
     /**
@@ -86,16 +98,7 @@ final class InsertQuery extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function wrappers(): array
     {
-        if ($this->values() === null) {
-            return [];
-        }
-        $wrappers = [];
-        $source = $this->source;
-        while ($source instanceof QueryStatement || $source instanceof ParenthesizedQuery || $source instanceof QueryExpression || $source instanceof ValuesClauses) {
-            $wrappers[] = $source;
-            $source = $source instanceof QueryExpression || $source instanceof ValuesClauses ? $source->body : $source->query;
-        }
-        return $wrappers;
+        return (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->wrappers($this->source);
     }
 
     /**

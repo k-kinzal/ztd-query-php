@@ -132,8 +132,8 @@ final class WriteOrder
             $locator->visit($statement->into, 'field list', [1]);
             $locator->visit(array_slice($statement->rows, 1), 'field list', [2]);
         } else {
-            $locator->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->assignments), 'field list', [1, 0]);
-            $locator->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->assignments), 'field list', [1, 1]);
+            $locator->visit(array_map(static fn ($assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->assignments), 'field list', [1, 0]);
+            $locator->visit(array_map(static fn ($assignment): ColumnUse => $assignment->column, $statement->assignments), 'field list', [1, 1]);
         }
         $locator->visit($statement->alias, 'field list', [3]);
         $locator->assignments($statement->onDuplicate, [4]);
@@ -153,9 +153,9 @@ final class WriteOrder
             return;
         }
         $locator->visit($statement->into, 'field list', [0]);
-        $locator->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->onDuplicate), 'field list', [1]);
+        $locator->visit(array_map(static fn ($assignment): ColumnUse => $assignment->column, $statement->onDuplicate), 'field list', [1]);
         $locator->visit($statement->source, 'field list', [2]);
-        $locator->visit(array_map(static fn (Assignment $assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->onDuplicate), 'field list', [3]);
+        $locator->visit(array_map(static fn ($assignment): \SqlSemantics\Statement\Operand => $assignment->value, $statement->onDuplicate), 'field list', [3]);
     }
 
     /**

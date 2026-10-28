@@ -222,9 +222,6 @@ final class InputErrors
     public function write(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertQuery,
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertRows,
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\RefusedInsertSet => (new \MySqlMemory\Program\Expression\InsertUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Delete\RefusedDelete => (new \MySqlMemory\Program\Expression\DeleteUse())->error($diagnostic->write, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedDeleteTargets => (new Dml\Targets())->unmatched($diagnostic, $session),

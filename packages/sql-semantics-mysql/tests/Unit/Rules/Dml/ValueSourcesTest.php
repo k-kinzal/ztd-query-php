@@ -16,6 +16,14 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Medium]
 final class ValueSourcesTest extends TestCase
 {
+    public function testWrappersRetainsUnusedValuesClausesOutsideRowExpressions(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t (VALUES ROW(1)) LIMIT 0');
+        self::assertInstanceOf(M\Dml\Insert\InsertQuery::class, $statement);
+        self::assertCount(2, (new ValueSources())->wrappers($statement->source));
+        self::assertSame([], (new ValueSources())->wrappers(new M\Query\Select([], [new M\Query\Star()])));
+    }
+
     public function testValuesSeparatesWrappersFromSetOperands(): void
     {
         $values = new M\Query\ValuesQuery([new M\Query\ValueRow([new M\Literal\NumberLiteral('1')])]);

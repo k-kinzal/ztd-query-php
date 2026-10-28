@@ -20,8 +20,9 @@ use SqlSemantics\Statement\Snapshot;
  * @example Describing a row with too many values
  *     $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch(1, 2, 2);
  *     [$problem->expected, $problem->actual, $problem->message()] // => [1, 2, "Column count doesn't match value count at row 2"]
- * @example Refusing contradictory written widths before publishing a statement
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) VALUES (1), (2, 3)') // throws \SqlSemantics\Construction\RejectedInput
+ * @example Publishing the complete write with its width condition
+ *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) VALUES (1), (2, 3)');
+ *     array_map(static fn ($problem): string => $problem->message(), $insert->diagnostics()) // => ["Column count doesn't match value count at row 2"]
  */
 final class ValueCountMismatch implements Diagnostic
 {

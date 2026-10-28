@@ -68,8 +68,8 @@ final class Preparation
      */
     public function conditional(\SqlSemantics\Statement\Statement $statement, Session $session): bool
     {
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable && $statement->hasExecutionCondition()) {
-            (new \MySqlMemory\Command\Access\Load\Preparation())->check($statement, $session);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
+            (new Problems())->operands($statement, $session);
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill) {
             (new \MySqlMemory\Command\Admin\KillCommand())->prepare($statement, $session);

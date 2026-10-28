@@ -17,6 +17,71 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRo
 #[Medium]
 final class InsertUseTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerImmediateConditions(): iterable
+    {
+        yield 'row width' => ['INSERT INTO t VALUES (1), (1, 2)', 1136];
+        yield 'row operand' => ['INSERT INTO t VALUE (ROW(a, 2))', 1241];
+        yield 'set operand' => ['INSERT INTO t SET a=ROW(a, 2)', 1241];
+        yield 'read columns' => ['INSERT INTO t SELECT *', 1096];
+        yield 'query duplicate' => ['INSERT INTO t SELECT 1 ON DUPLICATE KEY UPDATE a=ROW(a, 2)', 1241];
+    }
+
+    public function testExplainedUsesItsDeclaredDatabaseAndRestoresTheCaller(): void
+    {
+        $session = (new Instance('9.1.0', [], ['d', 'e']))->connect(database: 'e');
+        $session->query('CREATE TABLE t(a INT)');
+        $session->variables->database = 'd';
+        $explain = $session->analyze('EXPLAIN FOR DATABASE e INSERT INTO t VALUE(ROW(a,2))');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $explain);
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        try {
+            (new InsertUse())->explained($explain, $session);
+        } finally {
+            self::assertSame('d', $session->variables->database);
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerImmediateConditions')]
+    public function testStatementUsesPublishedBindings(string $sql, int $code): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $write = $session->analyze($sql);
+        self::assertTrue($write instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $write instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $write instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery);
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        (new InsertUse())->statement($write, $session);
+    }
+
+    public function testCheckUsesThePublishedMissingTableCondition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $write = $session->analyze('INSERT INTO absent SET a=ROW(1,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet::class, $write);
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Table 'd.absent' doesn't exist");
+        (new InsertUse())->check($write, $write->statementInformation(), $session);
+    }
+
+    public function testSourceIgnoresOuterValuesLimitBeforeDuplicateKeyPreparation(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $write = $session->analyze('INSERT INTO t (VALUES ROW(a)) LIMIT 0 ON DUPLICATE KEY UPDATE a=ROW(a,2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $write);
+        $session->text = 'unrelated invalid input';
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        (new InsertUse())->statement($write, $session);
+    }
+
     public function testSetKeepsDestinationBindingAheadOfTheDeferredConversion(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

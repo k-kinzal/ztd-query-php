@@ -35,6 +35,16 @@ final class DeferredInsertQueryTest extends TestCase
         self::assertSame('No tables used', $operation->body->problem()->message());
     }
 
+    public function testProblemRetainsValuesAndTheDuplicateKeyOperand(): void
+    {
+        $sql = 'CREATE PROCEDURE p() INSERT INTO t (VALUES ROW(1)) LIMIT 0 ON DUPLICATE KEY UPDATE a = ROW(1, 2)';
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(DeferredInsertQuery::class, $operation->body);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->body->problem()->message());
+        self::assertSame($sql, $operation->toString());
+    }
+
     public function testRenderKeepsTheDestinationAndDuplicateKeyAssignments(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT * ON DUPLICATE KEY UPDATE a = 2');

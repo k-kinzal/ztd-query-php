@@ -21,7 +21,7 @@ final class DeferredInsertQueryGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto> $into Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Query> $source Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment>>|null $onDuplicate Generated constructor operand
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>>|null $onDuplicate Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
     public function __construct(ErisGenerator $into, ErisGenerator $source, ?ErisGenerator $onDuplicate = null, ?ErisGenerator $inputSource = null)

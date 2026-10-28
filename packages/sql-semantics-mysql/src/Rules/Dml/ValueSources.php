@@ -30,6 +30,24 @@ final class ValueSources
         return $source instanceof ValuesQuery ? $source : null;
     }
     /**
+     * Identifies wrapper clauses ignored by a VALUES write, excluding row expressions.
+     *
+     * @return list<QueryStatement|ParenthesizedQuery|QueryExpression|ValuesClauses>
+     */
+    public function wrappers(Query $source): array
+    {
+        if ($this->values($source) === null) {
+            return [];
+        }
+        $wrappers = [];
+        while ($source instanceof QueryStatement || $source instanceof ParenthesizedQuery || $source instanceof QueryExpression || $source instanceof ValuesClauses) {
+            $wrappers[] = $source;
+            $source = $source instanceof QueryExpression || $source instanceof ValuesClauses ? $source->body : $source->query;
+        }
+        return $wrappers;
+    }
+
+    /**
      * Finds result destinations on an INSERT source's query spine.
      * Nested scalar subqueries and CTE definitions own their own query roles.
      */

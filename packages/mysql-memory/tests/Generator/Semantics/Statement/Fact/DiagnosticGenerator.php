@@ -41,7 +41,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\DuplicateColumnGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\ValueCountMismatchGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\WriteMisuseGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\Insert\RefusedInsertSetGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\LoadConflictGenerator::executionForms();
         yield from \Tests\Generator\Semantics\Statement\Reference\Column\AmbiguousColumnGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Routine\Problem\ProgramProblemGenerator::executionForms();
@@ -112,7 +111,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Account\Problem\RefusedGrantLevelGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Query\Problem\Option\RestrictedSelectOptionGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\Update\ConflictingUpdateGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\Insert\RefusedInsertQueryGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\Read\OrderingPositionGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Call\Problem\WindowConstraintGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Utility\Problem\RefusedConnectionExplainGenerator::executionForms();
@@ -195,7 +193,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Expression\Problem\TimeZoneConversionGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Replication\Problem\RefusedGroupStartGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperandGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\Insert\RefusedInsertRowsGenerator::executionForms();
     }
 
 }

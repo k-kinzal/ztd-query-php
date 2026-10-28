@@ -33,7 +33,7 @@ final class InsertNoteTest extends TestCase
         self::assertSame([[$statement->rows[0]->values[0]]], (new InsertNote())->values($statement));
     }
 
-    public function testRowUsesTheSameNamesForSetListsAndDuplicateUpdates(): void
+    public function testUpdatesUsesTheSameNamesForSetListsAndDuplicateUpdates(): void
     {
         $session = (new Instance(databases: ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT); EXPLAIN INSERT INTO t SET a=1 ON DUPLICATE KEY UPDATE a=2');
