@@ -108,33 +108,35 @@
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    }</span>
 <span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a></span>
 <span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a><span class="tok-com">     * Has nothing to derive: the request names no relation and no value.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">54</span><span class="tok-com">     * Has nothing to derive: the request names no relation and no value.</span></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     * Derives the donor account name conditions.</span></span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveStatement</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    {</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    }</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a><span class="tok-com">     * Writes the request.</span></span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>    {</span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;CLONE&#039;</span>, <span class="tok-str">&#039;INSTANCE&#039;</span>, <span class="tok-str">&#039;FROM&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">donor</span>)-&gt;<span class="tok-id">glue</span>()-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;:&#039;</span>)-&gt;<span class="tok-id">glue</span>()-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">port</span>);</span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;IDENTIFIED&#039;</span>, <span class="tok-str">&#039;BY&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">password</span>);</span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">directory</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Account\AccountNames</span>())-&gt;<span class="tok-id">derive</span>(<span class="tok-var">$derivation</span>, [<span class="tok-var">$this</span>-&gt;<span class="tok-id">donor</span>]);</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    }</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a></span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     * Writes the request.</span></span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    {</span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;CLONE&#039;</span>, <span class="tok-str">&#039;INSTANCE&#039;</span>, <span class="tok-str">&#039;FROM&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">donor</span>)-&gt;<span class="tok-id">glue</span>()-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;:&#039;</span>)-&gt;<span class="tok-id">glue</span>()-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">port</span>);</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;IDENTIFIED&#039;</span>, <span class="tok-str">&#039;BY&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">password</span>);</span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">directory</span> !== <span class="tok-id">null</span>) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">68</span>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DATA&#039;</span>, <span class="tok-str">&#039;DIRECTORY&#039;</span>)-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">directory</span>);</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DATA&#039;</span>, <span class="tok-str">&#039;DIRECTORY&#039;</span>);</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">equals</span>) {</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>                <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">assignment</span> ? <span class="tok-str">&#039;:=&#039;</span> : <span class="tok-str">&#039;=&#039;</span>);</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>            }</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">directory</span>);</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        }</span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">requireSsl</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(...(<span class="tok-var">$this</span>-&gt;<span class="tok-id">requireSsl</span> ? [<span class="tok-str">&#039;REQUIRE&#039;</span>, <span class="tok-str">&#039;SSL&#039;</span>] : [<span class="tok-str">&#039;REQUIRE&#039;</span>, <span class="tok-str">&#039;NO&#039;</span>, <span class="tok-str">&#039;SSL&#039;</span>]));</span>
-<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>        }</span>
-<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>    }</span>
-<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>}</span>
-<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;DATA&#039;</span>, <span class="tok-str">&#039;DIRECTORY&#039;</span>);</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">equals</span>) {</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>                <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">assignment</span> ? <span class="tok-str">&#039;:=&#039;</span> : <span class="tok-str">&#039;=&#039;</span>);</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>            }</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">directory</span>);</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>        }</span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">requireSsl</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(...(<span class="tok-var">$this</span>-&gt;<span class="tok-id">requireSsl</span> ? [<span class="tok-str">&#039;REQUIRE&#039;</span>, <span class="tok-str">&#039;SSL&#039;</span>] : [<span class="tok-str">&#039;REQUIRE&#039;</span>, <span class="tok-str">&#039;NO&#039;</span>, <span class="tok-str">&#039;SSL&#039;</span>]));</span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>        }</span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    }</span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>}</span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
