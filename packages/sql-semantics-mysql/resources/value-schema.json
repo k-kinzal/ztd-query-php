@@ -4357,12 +4357,21 @@
         "profile": "SqlSemantics\\Contract\\LanguageProfile",
         "warnings": "array"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Catalog\\ColumnDimensions": {
+        "characters": "?int",
+        "fraction": "?int",
+        "name": "string",
+        "octets": "?int",
+        "precision": "?int",
+        "scale": "?int"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Catalog\\SystemColumn": {
         "collation": "?string",
         "columnType": "string",
         "comment": "string",
         "database": "string",
         "default": "?string",
+        "dimensions": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Catalog\\ColumnDimensions",
         "domain": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Resolved\\Domain",
         "extra": "string",
         "flags": "int",

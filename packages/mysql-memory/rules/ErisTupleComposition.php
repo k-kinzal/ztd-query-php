@@ -48,7 +48,7 @@ final class ErisTupleComposition implements DynamicStaticMethodReturnTypeExtensi
 
     /**
      * Maps the known operand generators to their ordered output types.
-     * Unknown argument lists retain Eris's general list annotation.
+     * Homogeneous unpacked generators retain their element type and list shape.
      */
     public function getTypeFromStaticMethodCall(MethodReflection $methodReflection, StaticCall $methodCall, Scope $scope): ?Type
     {
@@ -56,6 +56,19 @@ final class ErisTupleComposition implements DynamicStaticMethodReturnTypeExtensi
         $values = [];
         foreach ($arguments as $argument) {
             if ($argument->unpack) {
+                $list = $scope->getType($argument->value);
+                $arrays = $list->getConstantArrays();
+                if (count($arguments) === 1 && count($arrays) === 1 && $arrays[0]->getOptionalKeys() === []) {
+                    $values = $arrays[0]->getValueTypes();
+                    break;
+                }
+                $items = $list->getIterableValueType();
+                if (count($arguments) === 1 && (new ObjectType(Generator::class))->isSuperTypeOf($items)->yes()) {
+                    return new GenericObjectType(Generator::class, [\PHPStan\Type\TypeCombinator::intersect(
+                        new \PHPStan\Type\ArrayType(new \PHPStan\Type\IntegerType(), $items->getTemplateType(Generator::class, 'T')),
+                        new \PHPStan\Type\Accessory\AccessoryArrayListType(),
+                    )]);
+                }
                 return null;
             }
             $values[] = $scope->getType($argument->value);

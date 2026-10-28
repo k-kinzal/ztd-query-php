@@ -82,12 +82,7 @@ final class ColumnsTest extends TestCase
 
     public function testNameAnswersTheNameOfAType(): void
     {
-        self::assertSame(['decimal', 'enum', 'bigint'], [(new Columns())->name('decimal(5,2) unsigned'), (new Columns())->name("enum('a','b')"), (new Columns())->name('BIGINT')]);
-    }
-
-    public function testNumericsAnswersThePrecisionAndScaleOfASystemType(): void
-    {
-        self::assertSame([[20, 0], [19, 0], [10, 2], [22, null], [12, null], [null, null]], [(new Columns())->numerics('bigint unsigned', 'bigint', 0), (new Columns())->numerics('bigint', 'bigint', 0), (new Columns())->numerics('decimal(10,2)', 'decimal', 10), (new Columns())->numerics('double', 'double', 0), (new Columns())->numerics('float', 'float', 0), (new Columns())->numerics('varchar(64)', 'varchar', 64)]);
+        self::assertSame(['decimal', 'bigint', 'varbinary'], [(new Columns())->name(\MySqlMemory\Typing\Domain::decimal(5, 2)), (new Columns())->name(\MySqlMemory\Typing\Domain::integer()), (new Columns())->name(\MySqlMemory\Typing\Domain::string(8, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary()))]);
     }
 
     public function testLengthsCountCharactersAndBytes(): void
@@ -97,7 +92,7 @@ final class ColumnsTest extends TestCase
 
     public function testPrecisionAnswersDigitsAndScale(): void
     {
-        self::assertSame([[7, 0], [8, 0], [12, null], [10, 3], [5, null], [null, null]], [(new Columns())->precision(Field::Int24, 9, 0, false, 0, 'mediumint'), (new Columns())->precision(Field::Int24, 8, 0, true, 0, 'mediumint unsigned'), (new Columns())->precision(Field::Float, 12, 31, false, 0, 'float'), (new Columns())->precision(Field::Double, 10, 3, false, 0, 'double(10,3)'), (new Columns())->precision(Field::Bit, 5, 0, false, 0, 'bit(5)'), (new Columns())->precision(Field::Date, 10, 0, false, 0, 'date')]);
+        self::assertSame([[7, 0], [8, 0], [12, null], [10, 3], [5, null], [null, null]], [(new Columns())->precision(Field::Int24, 9, 0, false, 0), (new Columns())->precision(Field::Int24, 8, 0, true, 0), (new Columns())->precision(Field::Float, 12, 31, false, 0), (new Columns())->precision(Field::Double, 10, 3, false, 0), (new Columns())->precision(Field::Bit, 5, 0, false, 0), (new Columns())->precision(Field::Date, 10, 0, false, 0)]);
     }
 
     public function testSridAnswersTheSystemASpatialColumnIsRestrictedTo(): void

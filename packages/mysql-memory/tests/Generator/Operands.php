@@ -23,6 +23,46 @@ use WeakMap;
 final class Operands
 {
     /**
+     * Uses a fixed Eris generation size while retaining the generator's own shrinking.
+     *
+     * @template T
+     * @param Generator<T> $generator The composed value generator
+     * @return Generator<T>
+     */
+    public static function sized(Generator $generator, int $size): Generator
+    {
+        return new /**
+         * @template V
+         * @implements Generator<V>
+         */ class ($generator, $size) implements Generator {
+            /** @param Generator<V> $generator */
+            public function __construct(private readonly Generator $generator, private readonly int $size)
+            {
+            }
+
+            /**
+             * @param int $size The caller's size, replaced by this composition's fixed size
+             * @return GeneratedValueSingle<V>
+             */
+            #[Override]
+            public function __invoke($size, \Eris\Random\RandomRange $rand): GeneratedValueSingle
+            {
+                return ($this->generator)($this->size, $rand);
+            }
+
+            /**
+             * @param GeneratedValue<mixed> $element The original or shrunk Eris value
+             * @return GeneratedValue<V>
+             */
+            #[Override]
+            public function shrink(GeneratedValue $element): GeneratedValue
+            {
+                return $this->generator->shrink($element);
+            }
+        };
+    }
+
+    /**
      * @param mixed ...$operands Constructor operands or Eris generators
      * @return Generator<list<mixed>>
      */

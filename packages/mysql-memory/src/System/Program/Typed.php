@@ -59,10 +59,10 @@ final class Typed
         $identifier = $text->type($domain, $type);
         $textual = $text->textual($domain);
         [$characters, $octets] = $columns->lengths($domain->field, $domain->length, $domain->members, $textual ? $domain->collation->charset->maxLength : 1, $domain->kind === Kind::String && $domain->field !== Field::Geometry);
-        [$precision, $scale] = $columns->precision($domain->field, $domain->length, $domain->decimals, $domain->unsigned, $domain->precision(), $identifier);
+        [$precision, $scale] = $columns->precision($domain->field, $domain->length, $domain->decimals, $domain->unsigned, $domain->precision());
 
         return [
-            'DATA_TYPE' => $columns->name($identifier),
+            'DATA_TYPE' => $columns->name($domain, $type),
             'CHARACTER_MAXIMUM_LENGTH' => $characters,
             'CHARACTER_OCTET_LENGTH' => $octets,
             'NUMERIC_PRECISION' => $precision,

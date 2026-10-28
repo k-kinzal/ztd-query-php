@@ -31,13 +31,14 @@ final class SystemColumn
      * @param string $originalName The name of the column a result reports the column reads
      * @param string $originalTable The table a result reports the column is read from
      * @param string $database The database a result reports the column is read from; empty for a column a view computes
-     * @param string $columnType The column type INFORMATION_SCHEMA.COLUMNS lists
+     * @param string $columnType Display text for COLUMN_TYPE; consumers use dimensions for its dimensions
      * @param string|null $default The default INFORMATION_SCHEMA.COLUMNS lists, or null
      * @param string $key The key INFORMATION_SCHEMA.COLUMNS lists: PRI, UNI, MUL or empty
      * @param string $extra The extra attributes INFORMATION_SCHEMA.COLUMNS lists
      * @param string $comment The comment of the column
      * @param string|null $collation The collation INFORMATION_SCHEMA.COLUMNS lists, or null for a column without one
      * @param bool $listedNullable Whether INFORMATION_SCHEMA.COLUMNS lists the column as nullable
+     * @param ColumnDimensions $dimensions The declared type dimensions, independent of result metadata
      */
     public function __construct(
         public readonly string $name,
@@ -54,6 +55,7 @@ final class SystemColumn
         public readonly string $comment,
         public readonly ?string $collation,
         public readonly bool $listedNullable,
+        public readonly ColumnDimensions $dimensions,
     ) {
     }
 }

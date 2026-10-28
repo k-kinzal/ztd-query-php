@@ -115,10 +115,11 @@ final class SystemSchemas
     /**
      * @param Instance $instance The server
      * @param GrammarRelease $release The release emulated
+     * @param SystemTables|null $catalog The supplied semantic catalog, or the selected release's catalog
      */
-    public function __construct(public readonly Instance $instance, public readonly GrammarRelease $release)
+    public function __construct(public readonly Instance $instance, public readonly GrammarRelease $release, ?SystemTables $catalog = null)
     {
-        $this->catalog = SystemTables::of($release);
+        $this->catalog = $catalog ?? SystemTables::of($release);
         foreach ($this->catalog->tables as $table) {
             $this->declared[spl_object_id($table->declaration)] = $table;
         }

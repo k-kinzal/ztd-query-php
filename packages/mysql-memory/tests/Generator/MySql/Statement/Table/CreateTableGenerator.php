@@ -99,11 +99,21 @@ final class CreateTableGenerator implements ErisGenerator
             new Option\TextOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::Comment), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'comment ' . $value, Generators::choose(0, 1000)))),
             new Option\RowFormatOptionGenerator(Generators::elements([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact])),
         );
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), Generators::vector(3, Generators::bool())), static function (array $parts): ErisGenerator {
-            $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($parts[2], new CreateTable($parts[0]->name, $parts[0]->elements, $parts[1], optionsCommas: $parts[3]));
-            \SqlSemantics\Diagnostic\Check::invariant($statement instanceof CreateTable, 'Generated options remain a complete table declaration.');
-            return Generators::constant([$parts, $statement]);
-        });
+        $operands = \Tests\Generator\Operands::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), Generators::vector(3, Generators::bool()));
+        return \Tests\Generator\Operands::bind($operands, self::optionSample(...));
+    }
+
+    /**
+     * Publishes a generated declaration after its shrinkable operands have been composed.
+     *
+     * @param array{CreateTable, list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption>, \SqlSemantics\Contract\AnalysisContext, list<bool>} $parts
+     * @return ErisGenerator<array{array{CreateTable, list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption>, \SqlSemantics\Contract\AnalysisContext, list<bool>}, CreateTable}>
+     */
+    public static function optionSample(array $parts): ErisGenerator
+    {
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($parts[2], new CreateTable($parts[0]->name, $parts[0]->elements, $parts[1], optionsCommas: $parts[3]));
+        \SqlSemantics\Diagnostic\Check::invariant($statement instanceof CreateTable, 'Generated options remain a complete table declaration.');
+        return Generators::constant([$parts, $statement]);
     }
 
     /**

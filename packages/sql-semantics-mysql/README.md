@@ -349,6 +349,14 @@ before conditions in later table options or partition expressions. The same
 lookup applies to directly constructed CREATE TABLE, CREATE INDEX and ALTER
 TABLE definitions. Analysis does not load or install plugins.
 
+`Statement\Table\Catalog\SystemColumn::$dimensions` contains the type name,
+character and byte lengths, numeric precision and scale, and fractional seconds
+precision reported by `INFORMATION_SCHEMA.COLUMNS`. These values describe the
+declared column; `SystemColumn::$domain` describes a result that reads it, which
+can differ for system views. Use `dimensions` for column dimensions and
+`columnType` only for the server's display text. The release catalogs retain
+these dimensions from the server rather than inferring them from that text.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

@@ -33,11 +33,12 @@ final class SystemColumnGenerator implements ErisGenerator
      * @param ErisGenerator<string> $comment Generated constructor operand
      * @param ErisGenerator<string|null> $collation Generated constructor operand
      * @param ErisGenerator<bool> $listedNullable Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\ColumnDimensions> $dimensions Generated declared type dimensions
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $domain, ErisGenerator $nullable, ErisGenerator $flags, ErisGenerator $originalName, ErisGenerator $originalTable, ErisGenerator $database, ErisGenerator $columnType, ErisGenerator $default, ErisGenerator $key, ErisGenerator $extra, ErisGenerator $comment, ErisGenerator $collation, ErisGenerator $listedNullable)
+    public function __construct(ErisGenerator $name, ErisGenerator $domain, ErisGenerator $nullable, ErisGenerator $flags, ErisGenerator $originalName, ErisGenerator $originalTable, ErisGenerator $database, ErisGenerator $columnType, ErisGenerator $default, ErisGenerator $key, ErisGenerator $extra, ErisGenerator $comment, ErisGenerator $collation, ErisGenerator $listedNullable, ErisGenerator $dimensions)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn(name: $parts[0], domain: $parts[1], nullable: $parts[2], flags: $parts[3], originalName: $parts[4], originalTable: $parts[5], database: $parts[6], columnType: $parts[7], default: $parts[8], key: $parts[9], extra: $parts[10], comment: $parts[11], collation: $parts[12], listedNullable: $parts[13]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn(name: $parts[0], domain: $parts[1], nullable: $parts[2], flags: $parts[3], originalName: $parts[4], originalTable: $parts[5], database: $parts[6], columnType: $parts[7], default: $parts[8], key: $parts[9], extra: $parts[10], comment: $parts[11], collation: $parts[12], listedNullable: $parts[13], dimensions: $parts[14]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $domain,
@@ -52,7 +53,8 @@ final class SystemColumnGenerator implements ErisGenerator
             $extra,
             $comment,
             $collation,
-            $listedNullable
+            $listedNullable,
+            $dimensions
         ));
     }
 
@@ -76,9 +78,10 @@ final class SystemColumnGenerator implements ErisGenerator
             Generators::constant($column->default),
             Generators::constant($column->key),
             Generators::constant($column->extra),
-            Generators::constant($column->comment),
+            Generators::map(static fn (int $value): string => 'generated comment ' . $value, \Tests\Generator\Operands::sized(Generators::nat(), 1000)),
             Generators::constant($column->collation),
             Generators::constant($column->listedNullable),
+            ColumnDimensionsGenerator::catalog(Generators::constant($column->dimensions)),
         ));
     }
 

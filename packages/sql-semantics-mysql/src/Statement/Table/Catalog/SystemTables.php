@@ -74,15 +74,15 @@ final class SystemTables
             $major = glob($directory . substr($release->value, 0, 7) . '*.php');
             $file = is_array($files) && $files !== [] ? $files[0] : (is_array($major) && $major !== [] ? $major[count($major) - 1] : $directory . GrammarRelease::MySql847->value . '.php');
             /**
- * @var list<array{string, string, string, string|null, int|null, string|null, string|null, string, string, list<array{string, string, string, string, int, int, int, int, string, int, string, string, string|null, string, string, string, string|null}>}> $entries
+ * @var list<array{string, string, string, string|null, int|null, string|null, string|null, string, string, list<array{string, string, string, string, int, int, int, int, string, int, string, string, string|null, string, string, string, string|null, array{string, int|null, int|null, int|null, int|null, int|null}}>}> $entries
  */
             $entries = require $file;
             $profile = new LanguageProfile($release);
             $tables = [];
             foreach ($entries as [$schema, $name, $type, $engine, $version, $format, $collation, $options, $comment, $columns]) {
                 $read = [];
-                foreach ($columns as [$column, $originalName, $originalTable, $database, $code, $length, $decimals, $flags, $columnCollation, $coercibility, $columnType, $listedNullable, $default, $key, $extra, $columnComment, $listedCollation]) {
-                    $read[] = new SystemColumn($column, self::domain($code, $length, $decimals, $flags, $columnCollation, $coercibility, $columnType), ($flags & 1) === 0, $flags, $originalName, $originalTable, $database, $columnType, $default, $key, $extra, $columnComment, $listedCollation, $listedNullable === 'YES');
+                foreach ($columns as [$column, $originalName, $originalTable, $database, $code, $length, $decimals, $flags, $columnCollation, $coercibility, $columnType, $listedNullable, $default, $key, $extra, $columnComment, $listedCollation, $dimensions]) {
+                    $read[] = new SystemColumn($column, self::domain($code, $length, $decimals, $flags, $columnCollation, $coercibility, $columnType), ($flags & 1) === 0, $flags, $originalName, $originalTable, $database, $columnType, $default, $key, $extra, $columnComment, $listedCollation, $listedNullable === 'YES', new ColumnDimensions(...$dimensions));
                 }
                 $declaration = new Table(
                     new QualifiedName(new Name($name), new Name($schema)),

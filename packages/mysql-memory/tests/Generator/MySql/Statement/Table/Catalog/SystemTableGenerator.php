@@ -53,12 +53,13 @@ final class SystemTableGenerator implements ErisGenerator
     /**
      * Selects a release catalog table and composes its complete ordered column metadata.
      *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable>|null $selected The table already selected by a dependent request
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable>
      */
-    public static function catalog(): ErisGenerator
+    public static function catalog(\SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847, ?ErisGenerator $selected = null): ErisGenerator
     {
-        $tables = \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables::of(\SqlSemantics\Contract\GrammarRelease::MySql847)->tables;
-        return \Tests\Generator\Operands::bind(Generators::elements($tables), static function (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable $table): self {
+        $tables = \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables::of($release)->tables;
+        return \Tests\Generator\Operands::bind($selected ?? Generators::elements($tables), static function (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable $table): self {
             $columns = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn $column) => SystemColumnGenerator::catalog(Generators::constant($column)), $table->columns);
             return new self(
                 Generators::constant($table->schema),
@@ -70,7 +71,7 @@ final class SystemTableGenerator implements ErisGenerator
                 Generators::constant($table->collation),
                 Generators::constant($table->options),
                 Generators::constant($table->comment),
-                Generators::tuple($columns),
+                \Tests\Generator\Operands::tuple(...$columns),
                 Generators::constant($table->declaration),
             );
         });
