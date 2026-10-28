@@ -43,7 +43,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\WriteMisuseGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\RefusedLoadAssignmentsGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\Insert\RefusedInsertSetGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\RefusedEvaluationGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\LoadConflictGenerator::executionForms();
         yield from \Tests\Generator\Semantics\Statement\Reference\Column\AmbiguousColumnGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Routine\Problem\ProgramProblemGenerator::executionForms();

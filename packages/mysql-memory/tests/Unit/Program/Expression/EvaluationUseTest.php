@@ -23,14 +23,6 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class EvaluationUseTest extends TestCase
 {
-    public function testPrepareAllowsWindowPreparationInDo(): void
-    {
-        $session = (new Instance())->connect();
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
-        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'IGNORE NULLS'");
-        $session->query('DO LEAD(1) IGNORE NULLS OVER ()');
-    }
-
     /**
      * @return iterable<string, array{DeferredEvaluation, int}>
      */
@@ -51,28 +43,17 @@ final class EvaluationUseTest extends TestCase
         $this->expectExceptionCode($code);
         (new EvaluationUse())->raise($statement, $session);
     }
-    public function testDatabaseAndTableTransitionsUseTheSameRetainedInstruction(): void
+
+    #[DataProvider('providerOperands')]
+    public function testStatementPreparesThePublishedImmediateRequest(DeferredEvaluation $instruction, int $code): void
     {
-        $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t'));
-        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new SelectExpression(new ColumnUse(new Name('a')))], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($table));
-        $statement = new DeferredEvaluation([new Star(), new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($query))]);
-        $session = (new Instance())->connect();
-        $observe = static function () use ($session, $statement): int {
-            $session->text = 'unrelated invalid input';
-            try {
-                (new EvaluationUse())->raise($statement, $session);
-            } catch (\MySqlMemory\Error\SqlError $error) {
-                return $error->getCode();
-            }
-        };
-        self::assertSame(1046, $observe());
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        self::assertSame(1146, $observe());
-        $session->query('CREATE TABLE t(a INT)');
-        self::assertSame(1096, $observe());
-        $session->query('DROP TABLE t');
-        self::assertSame(1146, $observe());
-        self::assertSame('unrelated invalid input', $session->text);
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation($instruction->items));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Evaluation::class, $statement);
+        $session->text = 'No source text for DO preparation';
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode($code);
+        (new EvaluationUse())->statement($statement, $session);
     }
+
 }

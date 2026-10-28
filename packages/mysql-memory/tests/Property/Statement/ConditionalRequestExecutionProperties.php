@@ -38,6 +38,53 @@ final class ConditionalRequestExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * DO prepares generated dependencies before its retained wildcard or row-width condition.
+     */
+    #[Test]
+    #[DataProvider('providerEvaluationReleases')]
+    public function satisfiesEvaluationRequestsReachTheirConditionAfterTheGeneratedTable(GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::dependent($release))->then(static function (array $sample) use ($release): void {
+            [$absent, $definition, $present, $code] = $sample;
+            self::assertInstanceOf(M\Dml\Evaluation::class, $absent);
+            self::assertInstanceOf(M\Table\CreateTable::class, $definition);
+            self::assertInstanceOf(M\Dml\Evaluation::class, $present);
+            $database = $definition->name->schema->value ?? 'pbt';
+            $session = (new Instance(substr($release->value, 6), databases: [$database]))->connect(database: $database);
+            $session->text = 'Generated DO requests without SQL';
+            $execution = new Execution($session);
+            try {
+                $execution->statement($absent);
+                self::fail('The generated subquery requires its absent table.');
+            } catch (SqlError $error) {
+                self::assertSame(1146, $error->getCode());
+            }
+            self::assertInstanceOf(Completion::class, $execution->statement($definition));
+            try {
+                $execution->statement($present);
+                self::fail('The complete DO request retains its preparation condition.');
+            } catch (SqlError $error) {
+                self::assertSame($code, $error->getCode());
+            }
+            self::assertSame('Generated DO requests without SQL', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+            self::assertSame([], $session->running->using);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerEvaluationReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * Missing catalog state is an ordinary SQL refusal; implementation failures escape.
      *
      * @param 'index'|'update'|'trigger'|'revoke' $family The generated statement family

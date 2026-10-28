@@ -28,17 +28,6 @@ final class EvaluationInputTest extends TestCase
         $session->variables->database = 'd';
         self::assertSame(1096, $reader->error(new EvaluationWildcard(requiresDatabase: true), $session)->getCode());
     }
-    public function testDeferredResolvesTheCompleteInstructionWithoutInputText(): void
-    {
-        $session = (new Instance())->connect();
-        $session->text = 'unrelated invalid input';
-        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]);
-        $instruction = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)]);
-        $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RefusedEvaluation($instruction);
-        self::assertSame(1241, (new EvaluationInput())->deferred($problem, $session)->getCode());
-        self::assertSame('unrelated invalid input', $session->text);
-        self::assertSame([], $session->diagnostics->conditions);
-    }
     public function testBeforeUsesTheFirstCompletedDependency(): void
     {
         $session = (new Instance())->connect();

@@ -380,6 +380,13 @@ names such as STDDEV_POP and VAR_POP. Their operation identities still determine
 typing and execution; ordinary calls, deferred calls and window aggregates retain
 the same keyword choices during publication.
 
+`Statement\Dml\Evaluation` retains every grammatical DO item, including a
+wildcard or a non-scalar projection. `hasExecutionCondition()` identifies a
+fixed preparation condition, and `problem()` describes it. These requests still
+render as DO statements. A consumer must resolve their operand dependencies
+before reporting the fixed condition. Stored `DeferredEvaluation` instructions
+retain the same operands, but prepare them only when the program reaches them.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

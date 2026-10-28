@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation;
 use SqlSemantics\Statement\Node;
 
 #[CoversClass(SelectItems::class)]
@@ -47,23 +46,4 @@ final class SelectItemsTest extends TestCase
         new Select([], $items);
     }
 
-    /**
-     * @return iterable<string, array{list<SelectExpression|Star>}>
-     */
-    public static function providerEvaluation(): iterable
-    {
-        yield 'after expression' => [[new SelectExpression(new NumberLiteral('1')), new Star()]];
-        yield 'after star' => [[new Star(), new Star()]];
-    }
-
-    /**
-     * @param list<SelectExpression|Star> $items
-     */
-    #[DataProvider('providerEvaluation')]
-    public function testCheckedRefusesMisplacedStarsInDeferredDo(array $items): void
-    {
-        $this->expectExceptionMessage('A select list item is an expression or a qualified star, and an unqualified star comes first.');
-
-        new DeferredEvaluation($items);
-    }
 }

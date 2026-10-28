@@ -1410,9 +1410,6 @@
         "where": "?SqlSemantics\\Statement\\Scalar",
         "with": "?SqlSemantics\\Platform\\MySql\\Statement\\Query\\WithClause"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedEvaluation": {
-        "evaluation": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Problem\\RefusedLoadAssignments": {
         "assignments": "array",
         "bulk": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions",

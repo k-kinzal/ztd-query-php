@@ -14,7 +14,6 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
-use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 
 /**
  * Executes DO: evaluates expressions and discards their values.
@@ -40,12 +39,12 @@ final class DoCommand implements Command
     #[Override]
     public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        assert($operation instanceof MySqlStatement);
+        \SqlSemantics\Diagnostic\Check::invariant($operation instanceof Evaluation, 'The DO command receives a complete evaluation statement.');
         $statement = $operation;
-        assert($statement instanceof Evaluation);
         $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $frame = new Frame($context);
         foreach ($statement->items as $item) {
+            \SqlSemantics\Diagnostic\Check::invariant($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression, 'A prepared DO item has a scalar result.');
             $planner->compiler->compile($item->expression, new Scope())->evaluate($frame);
         }
         $session->variables->foundRows = 1;

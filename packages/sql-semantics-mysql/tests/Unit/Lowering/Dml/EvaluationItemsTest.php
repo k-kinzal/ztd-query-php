@@ -21,12 +21,12 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class EvaluationItemsTest extends TestCase
 {
-    public function testReadRejectsAStarBeforePublishingAnEvaluation(): void
+    public function testReadRetainsAStarInTheCompleteEvaluation(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('No tables used');
-
-        (new Semantics(Dialect::MySql))->analyze('DO *');
+        $statement = (new Semantics(Dialect::MySql))->analyze('DO *');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Evaluation::class, $statement);
+        self::assertSame('No tables used', $statement->problem()?->message());
+        self::assertSame('DO *', $statement->toString());
     }
 
     public function testProgramRetainsWildcardsOnlyInAStoredInstruction(): void

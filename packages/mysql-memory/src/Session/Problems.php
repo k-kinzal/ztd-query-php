@@ -75,6 +75,9 @@ final class Problems
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $operation->hasExecutionCondition()) {
             (new \MySqlMemory\Program\Expression\QueryUse())->statement($operation, $session);
         }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation && $operation->hasExecutionCondition()) {
+            (new \MySqlMemory\Program\Expression\EvaluationUse())->statement($operation, $session);
+        }
         $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
         if ($operation instanceof MySqlStatement) {

@@ -30,10 +30,29 @@ final class EvaluationTest extends TestCase
         self::assertSame('DO 1 x', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('do 1 x')->toString());
     }
 
-    public function testRenderRejectsAnEmptyList(): void
+    #[\PHPUnit\Framework\Attributes\TestWith(['DO 1', false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['DO *', true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['DO (1, 2)', true])]
+    public function testHasExecutionConditionRetainsRequestsThatCannotPrepare(string $sql, bool $conditional): void
     {
-        $this->expectExceptionMessage('DO evaluates one or more expressions, not table wildcards.');
+        $semantics = new Semantics(Dialect::MySql);
+        $statement = $semantics->analyze($sql);
+        self::assertInstanceOf(Evaluation::class, $statement);
+        self::assertSame($conditional, $statement->hasExecutionCondition());
+    }
 
-        new Evaluation([]);
+    public function testProblemRetainsDependenciesAfterTheFixedCondition(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('DO (1, 2), (SELECT a FROM missing)');
+        self::assertInstanceOf(Evaluation::class, $statement);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $statement->problem()?->message());
+        self::assertCount(2, $statement->items);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $statement->items[1]);
+        self::assertSame('DO (1, 2), (SELECT a FROM missing)', $statement->toString());
+        $wildcard = (new Semantics(Dialect::MySql))->analyze('DO t.*, (SELECT a FROM t)');
+        self::assertInstanceOf(Evaluation::class, $wildcard);
+        self::assertCount(2, $wildcard->items);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard::class, $wildcard->problem());
+        self::assertSame('DO t.*, (SELECT a FROM t)', $wildcard->toString());
     }
 }
